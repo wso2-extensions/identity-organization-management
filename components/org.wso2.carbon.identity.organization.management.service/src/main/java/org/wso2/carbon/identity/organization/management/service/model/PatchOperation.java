@@ -21,26 +21,26 @@ package org.wso2.carbon.identity.organization.management.service.model;
 /**
  * This class represents a PATCH operation request body.
  */
-public class Operation {
+public class PatchOperation {
 
     private String path;
     private String value;
     private String op;
 
-    public Operation(String op, String path, String value) {
+    public PatchOperation(String op, String path, String value) {
 
         this.op = op;
         this.path = path;
         this.value = value;
     }
 
-    public Operation(String op, String path) {
+    public PatchOperation(String op, String path) {
 
         this.op = op;
         this.path = path;
     }
 
-    public Operation() {
+    public PatchOperation() {
 
     }
 

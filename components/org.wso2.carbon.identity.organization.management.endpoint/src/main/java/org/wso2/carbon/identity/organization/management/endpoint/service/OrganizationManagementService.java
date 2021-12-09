@@ -25,22 +25,22 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Child;
+import org.wso2.carbon.identity.organization.management.endpoint.model.ChildOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPOSTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Parent;
+import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.management.service.model.ChildOrganization;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
+import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
-import org.wso2.carbon.identity.organization.management.service.model.ParentOrganization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +129,7 @@ public class OrganizationManagementService {
         try {
             Organization organization = getOrganizationManager().patchOrganization(organizationId,
                     organizationPatchRequestItem.stream().map(op ->
-                            new Operation(op.getOperation() == null ? null : op.getOperation().toString(),
+                            new PatchOperation(op.getOperation() == null ? null : op.getOperation().toString(),
                                     op.getPath(), op.getValue())).collect(Collectors.toList()));
             return Response.ok().entity(getOrganizationResponse(organization)).build();
         } catch (OrganizationManagementClientException e) {
@@ -202,9 +202,9 @@ public class OrganizationManagementService {
         organizationResponse.setDescription(organization.getDescription());
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
-        ParentOrganization parentOrganization = organization.getParent();
-        if (parentOrganization != null) {
-            organizationResponse.setParent(getParentOrganization(parentOrganization));
+        ParentOrganizationDO parentOrganizationDO = organization.getParent();
+        if (parentOrganizationDO != null) {
+            organizationResponse.setParent(getParentOrganization(parentOrganizationDO));
         }
 
         List<Attribute> attributeList = getOrganizationAttributes(organization);
@@ -222,9 +222,9 @@ public class OrganizationManagementService {
         organizationResponse.setDescription(organization.getDescription());
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
-        ParentOrganization parentOrganization = organization.getParent();
-        if (parentOrganization != null) {
-            organizationResponse.setParent(getParentOrganization(parentOrganization));
+        ParentOrganizationDO parentOrganizationDO = organization.getParent();
+        if (parentOrganizationDO != null) {
+            organizationResponse.setParent(getParentOrganization(parentOrganizationDO));
         }
 
         setOrganizationChildren(organization, organizationResponse);
@@ -248,26 +248,26 @@ public class OrganizationManagementService {
         return attributeList;
     }
 
-    private Parent getParentOrganization(ParentOrganization parentOrganization) {
+    private ParentOrganization getParentOrganization(ParentOrganizationDO parentOrganizationDO) {
 
-        Parent parent = new Parent();
-        parent.setId(parentOrganization.getId());
-        parent.setSelf(parentOrganization.getSelf());
-        return parent;
+        ParentOrganization parentOrganization = new ParentOrganization();
+        parentOrganization.setId(parentOrganizationDO.getId());
+        parentOrganization.setSelf(parentOrganizationDO.getSelf());
+        return parentOrganization;
     }
 
     private void setOrganizationChildren(Organization organization, GetOrganizationResponse organizationResponse) {
 
         if (CollectionUtils.isNotEmpty(organization.getChildOrganizations())) {
-            List<Child> children = new ArrayList<>();
-            for (ChildOrganization childOrganization : organization.getChildOrganizations()) {
-                Child child = new Child();
-                child.setId(childOrganization.getId());
-                child.setSelf(childOrganization.getSelf());
-                children.add(child);
+            List<ChildOrganization> childOrganizations = new ArrayList<>();
+            for (ChildOrganizationDO childOrganizationDO : organization.getChildOrganizations()) {
+                ChildOrganization childOrganization = new ChildOrganization();
+                childOrganization.setId(childOrganizationDO.getId());
+                childOrganization.setSelf(childOrganizationDO.getSelf());
+                childOrganizations.add(childOrganization);
             }
-            if (!children.isEmpty()) {
-                organizationResponse.setChildren(children);
+            if (!childOrganizations.isEmpty()) {
+                organizationResponse.setChildren(childOrganizations);
             }
         }
     }

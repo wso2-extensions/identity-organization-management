@@ -30,11 +30,11 @@ public class Organization {
     private String id;
     private String name;
     private String description;
-    private ParentOrganization parent = new ParentOrganization();
+    private ParentOrganizationDO parent = new ParentOrganizationDO();
     private Instant lastModified;
     private Instant created;
     private List<OrganizationAttribute> attributes = new ArrayList<>();
-    private List<ChildOrganization> childOrganizations = new ArrayList<>();
+    private List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
 
     public String getId() {
 
@@ -66,12 +66,12 @@ public class Organization {
         this.description = description;
     }
 
-    public ParentOrganization getParent() {
+    public ParentOrganizationDO getParent() {
 
         return parent;
     }
 
-    public void setParent(ParentOrganization parent) {
+    public void setParent(ParentOrganizationDO parent) {
 
         this.parent = parent;
     }
@@ -106,12 +106,12 @@ public class Organization {
         this.attributes = attributes;
     }
 
-    public List<ChildOrganization> getChildOrganizations() {
+    public List<ChildOrganizationDO> getChildOrganizations() {
 
         return childOrganizations;
     }
 
-    public void setChildOrganizations(List<ChildOrganization> childOrganizations) {
+    public void setChildOrganizations(List<ChildOrganizationDO> childOrganizations) {
 
         this.childOrganizations = childOrganizations;
     }

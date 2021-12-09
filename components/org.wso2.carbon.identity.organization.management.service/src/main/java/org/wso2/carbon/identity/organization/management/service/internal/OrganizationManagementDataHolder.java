@@ -25,14 +25,13 @@ import org.wso2.carbon.identity.organization.management.service.dao.Organization
  */
 public class OrganizationManagementDataHolder {
 
-    private static final OrganizationManagementDataHolder organizationManagementDataHolder =
-            new OrganizationManagementDataHolder();
+    private static final OrganizationManagementDataHolder instance = new OrganizationManagementDataHolder();
     private OrganizationManagementDAO organizationManagementDAO;
 
 
     public static OrganizationManagementDataHolder getInstance() {
 
-        return organizationManagementDataHolder;
+        return instance;
     }
 
     public OrganizationManagementDAO getOrganizationManagementDAO() {

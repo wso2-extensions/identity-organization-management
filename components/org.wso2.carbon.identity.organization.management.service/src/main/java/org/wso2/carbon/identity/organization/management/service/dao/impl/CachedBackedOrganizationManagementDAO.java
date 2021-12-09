@@ -32,9 +32,9 @@ import org.wso2.carbon.identity.organization.management.service.cache.Organizati
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationCacheEntry;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.identity.organization.management.service.model.ParentOrganization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -146,10 +146,10 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
 
     @Override
     public void patchOrganization(String organizationId, String tenantDomain, Instant lastModifiedInstant,
-                                  List<Operation> operations) throws OrganizationManagementServerException {
+                                  List<PatchOperation> patchOperations) throws OrganizationManagementServerException {
 
         deleteOrganizationCacheById(organizationId, tenantDomain);
-        organizationManagementDAO.patchOrganization(organizationId, tenantDomain, lastModifiedInstant, operations);
+        organizationManagementDAO.patchOrganization(organizationId, tenantDomain, lastModifiedInstant, patchOperations);
     }
 
     @Override
@@ -228,12 +228,12 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
         ChildOrganizationsCacheKey cacheKey = new ChildOrganizationsCacheKey(organizationId);
         ChildOrganizationsCacheEntry cacheEntry = childOrganizationsCache.getValueFromCache(cacheKey, tenantDomain);
 
-        if (cacheEntry != null && CollectionUtils.isNotEmpty(cacheEntry.getChildrenOrganizations())) {
+        if (cacheEntry != null && CollectionUtils.isNotEmpty(cacheEntry.getChildOrganizations())) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(String.format("Cache hit for fetch child organizations. Organization id: %s, " +
                         "Tenant domain: %s", organizationId, tenantDomain));
             }
-            return cacheEntry.getChildrenOrganizations();
+            return cacheEntry.getChildOrganizations();
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("Cache miss for fetch child organizations. Organization id: %s, " +
@@ -273,7 +273,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
 
     private void addOrganizationToParentOrganizationCache(Organization organization, String tenantDomain) {
 
-        ParentOrganization parentOrganization = organization.getParent();
+        ParentOrganizationDO parentOrganization = organization.getParent();
         if (parentOrganization != null) {
             String parentOrganizationId = parentOrganization.getId();
             if (StringUtils.isNotBlank(parentOrganizationId)) {
@@ -284,7 +284,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
                         (childOrganizationsCacheKey, tenantDomain);
                 List<String> childOrganizations = new ArrayList<>();
                 if (entry != null) {
-                    childOrganizations = entry.getChildrenOrganizations();
+                    childOrganizations = entry.getChildOrganizations();
                     if (CollectionUtils.isNotEmpty(childOrganizations)) {
                         childOrganizations.add(organization.getId());
                     }

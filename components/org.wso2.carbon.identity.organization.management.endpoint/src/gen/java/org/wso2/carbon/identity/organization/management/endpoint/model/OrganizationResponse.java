@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Parent;
+import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import javax.validation.constraints.*;
 
 
@@ -41,7 +41,7 @@ public class OrganizationResponse  {
     private String description;
     private String created;
     private String lastModified;
-    private Parent parent;
+    private ParentOrganization parent;
     private List<Attribute> attributes = null;
 
 
@@ -141,7 +141,7 @@ public class OrganizationResponse  {
 
     /**
     **/
-    public OrganizationResponse parent(Parent parent) {
+    public OrganizationResponse parent(ParentOrganization parent) {
 
         this.parent = parent;
         return this;
@@ -150,10 +150,10 @@ public class OrganizationResponse  {
     @ApiModelProperty(value = "")
     @JsonProperty("parent")
     @Valid
-    public Parent getParent() {
+    public ParentOrganization getParent() {
         return parent;
     }
-    public void setParent(Parent parent) {
+    public void setParent(ParentOrganization parent) {
         this.parent = parent;
     }
 

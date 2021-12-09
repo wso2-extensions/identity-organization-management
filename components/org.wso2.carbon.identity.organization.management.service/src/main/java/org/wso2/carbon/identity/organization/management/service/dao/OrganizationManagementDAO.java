@@ -19,8 +19,8 @@
 package org.wso2.carbon.identity.organization.management.service.dao;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.time.Instant;
 import java.util.List;
@@ -135,11 +135,11 @@ public interface OrganizationManagementDAO {
      * @param organizationId      The organization ID.
      * @param tenantDomain        The tenant name corresponding to the tenant.
      * @param lastModifiedInstant The last modified time.
-     * @param operations          The list of patch operations.
+     * @param patchOperations          The list of patch operations.
      * @throws OrganizationManagementServerException The server exception thrown when patching an organization.
      */
     void patchOrganization(String organizationId, String tenantDomain, Instant lastModifiedInstant,
-                           List<Operation> operations) throws OrganizationManagementServerException;
+                           List<PatchOperation> patchOperations) throws OrganizationManagementServerException;
 
     /**
      * Update {@link Organization} by ID.

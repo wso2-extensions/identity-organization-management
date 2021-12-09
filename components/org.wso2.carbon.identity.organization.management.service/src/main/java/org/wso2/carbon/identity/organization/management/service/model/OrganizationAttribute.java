@@ -25,14 +25,6 @@ public class OrganizationAttribute {
 
     private String key;
     private String value;
-    private String attributeId;
-
-    public OrganizationAttribute(String key, String value, String attributeId) {
-
-        this.key = key;
-        this.value = value;
-        this.attributeId = attributeId;
-    }
 
     public OrganizationAttribute(String key, String value) {
 
@@ -42,16 +34,6 @@ public class OrganizationAttribute {
 
     public OrganizationAttribute() {
 
-    }
-
-    public String getAttributeId() {
-
-        return attributeId;
-    }
-
-    public void setAttributeId(String attributeId) {
-
-        this.attributeId = attributeId;
     }
 
     public String getKey() {

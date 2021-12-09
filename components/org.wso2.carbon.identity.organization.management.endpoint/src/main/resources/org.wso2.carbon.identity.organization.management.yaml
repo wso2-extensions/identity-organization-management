@@ -393,7 +393,7 @@ components:
           type: string
           example: '2021-10-25T12:31:53.406Z'
         parent:
-          $ref: '#/components/schemas/Parent'
+          $ref: '#/components/schemas/ParentOrganization'
         attributes:
           type: array
           items:
@@ -420,11 +420,11 @@ components:
           type: string
           example: '2021-10-25T12:31:53.406Z'
         parent:
-          $ref: '#/components/schemas/Parent'
+          $ref: '#/components/schemas/ParentOrganization'
         children:
           type: array
           items:
-            $ref: '#/components/schemas/Child'
+            $ref: '#/components/schemas/ChildOrganization'
         attributes:
           type: array
           items:
@@ -432,7 +432,7 @@ components:
     #-----------------------------------------------------
     # Organization Parent Object
     #-----------------------------------------------------
-    Parent:
+    ParentOrganization:
       type: object
       required:
         - id
@@ -447,7 +447,7 @@ components:
     #-----------------------------------------------------
     # Organization Child Object
     #-----------------------------------------------------
-    Child:
+    ChildOrganization:
       type: object
       required:
         - id

@@ -27,9 +27,9 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.sql.Timestamp;
@@ -290,16 +290,16 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
 
     @Override
     public void patchOrganization(String organizationId, String tenantDomain, Instant lastModifiedInstant,
-                                  List<Operation> operations) throws OrganizationManagementServerException {
+                                  List<PatchOperation> patchOperations) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
-                for (Operation operation : operations) {
-                    if (operation.getPath().startsWith(PATCH_PATH_ORG_ATTRIBUTES)) {
-                        patchOrganizationAttribute(organizationId, operation, tenantDomain);
+                for (PatchOperation patchOperation : patchOperations) {
+                    if (patchOperation.getPath().startsWith(PATCH_PATH_ORG_ATTRIBUTES)) {
+                        patchOrganizationAttribute(organizationId, patchOperation, tenantDomain);
                     } else {
-                        patchOrganizationField(organizationId, operation, tenantDomain);
+                        patchOrganizationField(organizationId, patchOperation, tenantDomain);
                     }
                 }
                 updateLastModifiedTime(organizationId, tenantDomain, lastModifiedInstant);
@@ -408,15 +408,15 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         return query;
     }
 
-    private void patchOrganizationField(String organizationId, Operation operation, String tenantDomain) throws
-            OrganizationManagementServerException {
+    private void patchOrganizationField(String organizationId, PatchOperation patchOperation, String tenantDomain)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
-                template.executeUpdate(buildQueryOrganization(operation.getPath()), namedPreparedStatement -> {
+                template.executeUpdate(buildQueryOrganization(patchOperation.getPath()), namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE,
-                            operation.getOp().equals(PATCH_OP_REMOVE) ? null : operation.getValue());
+                            patchOperation.getOp().equals(PATCH_OP_REMOVE) ? null : patchOperation.getValue());
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
                 });
                 return null;
@@ -426,30 +426,30 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
-    private void patchOrganizationAttribute(String organizationId, Operation operation, String tenantDomain) throws
-            OrganizationManagementServerException {
+    private void patchOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+            throws OrganizationManagementServerException {
 
-        String attributeKey = operation.getPath().replace(PATCH_PATH_ORG_ATTRIBUTES, "").trim();
-        operation.setPath(attributeKey);
-        if (operation.getOp().equals(PATCH_OP_ADD)) {
-            insertOrganizationAttribute(organizationId, operation, tenantDomain);
-        } else if (operation.getOp().equals(PATCH_OP_REPLACE)) {
-            updateOrganizationAttribute(organizationId, operation, tenantDomain);
+        String attributeKey = patchOperation.getPath().replace(PATCH_PATH_ORG_ATTRIBUTES, "").trim();
+        patchOperation.setPath(attributeKey);
+        if (patchOperation.getOp().equals(PATCH_OP_ADD)) {
+            insertOrganizationAttribute(organizationId, patchOperation, tenantDomain);
+        } else if (patchOperation.getOp().equals(PATCH_OP_REPLACE)) {
+            updateOrganizationAttribute(organizationId, patchOperation, tenantDomain);
         } else {
-            deleteOrganizationAttribute(organizationId, operation, tenantDomain);
+            deleteOrganizationAttribute(organizationId, patchOperation, tenantDomain);
         }
     }
 
-    private void insertOrganizationAttribute(String organizationId, Operation operation, String tenantDomain) throws
-            OrganizationManagementServerException {
+    private void insertOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_ATTRIBUTE, (namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, operation.getPath());
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, operation.getValue());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, patchOperation.getPath());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, patchOperation.getValue());
                 }), null, false);
                 return null;
             });
@@ -458,16 +458,16 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
-    private void updateOrganizationAttribute(String organizationId, Operation operation, String tenantDomain) throws
-            OrganizationManagementServerException {
+    private void updateOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeUpdate(UPDATE_ORGANIZATION_ATTRIBUTE_VALUE, preparedStatement -> {
-                    preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, operation.getValue());
+                    preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, patchOperation.getValue());
                     preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                    preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, operation.getPath());
+                    preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, patchOperation.getPath());
                 });
                 return null;
             });
@@ -477,18 +477,18 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
-    private void deleteOrganizationAttribute(String organizationId, Operation operation, String tenantDomain) throws
-            OrganizationManagementServerException {
+    private void deleteOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_ATTRIBUTE, namedPreparedStatement -> {
                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, operation.getPath());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, patchOperation.getPath());
             });
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_DELETE_ATTRIBUTE, e, operation.getPath(),
-                    organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_DELETE_ATTRIBUTE, e,
+                    patchOperation.getPath(), organizationId, tenantDomain);
         }
     }
 

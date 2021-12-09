@@ -19,8 +19,8 @@
 package org.wso2.carbon.identity.organization.management.service;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.util.List;
 
@@ -96,11 +96,11 @@ public interface OrganizationManager {
      * Patch organization and its attributes.
      *
      * @param organizationId The organization ID.
-     * @param operations     The list of patch operations.
+     * @param patchOperations     The list of patch operations.
      * @return the patched organization.
      * @throws OrganizationManagementException The exception thrown when patching an organization.
      */
-    Organization patchOrganization(String organizationId, List<Operation> operations) throws
+    Organization patchOrganization(String organizationId, List<PatchOperation> patchOperations) throws
             OrganizationManagementException;
 
     /**

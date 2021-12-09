@@ -25,8 +25,8 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Child;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Parent;
+import org.wso2.carbon.identity.organization.management.endpoint.model.ChildOrganization;
+import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import javax.validation.constraints.*;
 
 
@@ -42,8 +42,8 @@ public class GetOrganizationResponse  {
     private String description;
     private String created;
     private String lastModified;
-    private Parent parent;
-    private List<Child> children = null;
+    private ParentOrganization parent;
+    private List<ChildOrganization> children = null;
 
     private List<Attribute> attributes = null;
 
@@ -144,7 +144,7 @@ public class GetOrganizationResponse  {
 
     /**
     **/
-    public GetOrganizationResponse parent(Parent parent) {
+    public GetOrganizationResponse parent(ParentOrganization parent) {
 
         this.parent = parent;
         return this;
@@ -153,16 +153,16 @@ public class GetOrganizationResponse  {
     @ApiModelProperty(value = "")
     @JsonProperty("parent")
     @Valid
-    public Parent getParent() {
+    public ParentOrganization getParent() {
         return parent;
     }
-    public void setParent(Parent parent) {
+    public void setParent(ParentOrganization parent) {
         this.parent = parent;
     }
 
     /**
     **/
-    public GetOrganizationResponse children(List<Child> children) {
+    public GetOrganizationResponse children(List<ChildOrganization> children) {
 
         this.children = children;
         return this;
@@ -171,14 +171,14 @@ public class GetOrganizationResponse  {
     @ApiModelProperty(value = "")
     @JsonProperty("children")
     @Valid
-    public List<Child> getChildren() {
+    public List<ChildOrganization> getChildren() {
         return children;
     }
-    public void setChildren(List<Child> children) {
+    public void setChildren(List<ChildOrganization> children) {
         this.children = children;
     }
 
-    public GetOrganizationResponse addChildrenItem(Child childrenItem) {
+    public GetOrganizationResponse addChildrenItem(ChildOrganization childrenItem) {
         if (this.children == null) {
             this.children = new ArrayList<>();
         }

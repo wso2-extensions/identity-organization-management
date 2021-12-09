@@ -31,7 +31,7 @@ import org.wso2.carbon.identity.organization.management.service.dao.impl.CachedB
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
 
 /**
- * OSGI service component for organization management core bundle.
+ * OSGi service component for organization management core bundle.
  */
 @Component(name = "identity.organization.management.component",
            immediate = true)
@@ -40,9 +40,9 @@ public class OrganizationManagementServiceComponent {
     private static final Log LOG = LogFactory.getLog(OrganizationManagementServiceComponent.class);
 
     /**
-     * Register Organization Manager service in the OSGI context.
+     * Register Organization Manager service in the OSGi context.
      *
-     * @param componentContext OSGI service component context.
+     * @param componentContext OSGi service component context.
      */
     @Activate
     protected void activate(ComponentContext componentContext) {
@@ -58,7 +58,7 @@ public class OrganizationManagementServiceComponent {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Organization Management component activated successfully.");
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOG.error("Error while activating Organization Management module.", e);
         }
     }

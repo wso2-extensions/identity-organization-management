@@ -25,11 +25,11 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.internal.OrganizationManagementDataHolder;
-import org.wso2.carbon.identity.organization.management.service.model.ChildOrganization;
-import org.wso2.carbon.identity.organization.management.service.model.Operation;
+import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
-import org.wso2.carbon.identity.organization.management.service.model.ParentOrganization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -131,9 +131,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
             List<String> childOrganizationIds = getOrganizationManagementDAO().getChildOrganizationIds
                     (tenantId, organizationId, tenantDomain, organization);
             if (CollectionUtils.isNotEmpty(childOrganizationIds)) {
-                List<ChildOrganization> childOrganizations = new ArrayList<>();
+                List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
                 for (String childOrganizationId : childOrganizationIds) {
-                    ChildOrganization childOrganization = new ChildOrganization();
+                    ChildOrganizationDO childOrganization = new ChildOrganizationDO();
                     childOrganization.setId(childOrganizationId);
                     childOrganization.setSelf(buildURIForBody(childOrganizationId));
                     childOrganizations.add(childOrganization);
@@ -174,7 +174,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public Organization patchOrganization(String organizationId, List<Operation> operations) throws
+    public Organization patchOrganization(String organizationId, List<PatchOperation> patchOperations) throws
             OrganizationManagementException {
 
         String tenantDomain = getTenantDomain();
@@ -185,9 +185,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (!isOrganizationExistById(organizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId, tenantDomain);
         }
-        validateOrganizationPatchOperations(operations, organizationId, tenantDomain);
+        validateOrganizationPatchOperations(patchOperations, organizationId, tenantDomain);
 
-        getOrganizationManagementDAO().patchOrganization(organizationId, tenantDomain, Instant.now(), operations);
+        getOrganizationManagementDAO().patchOrganization(organizationId, tenantDomain, Instant.now(), patchOperations);
 
         Organization organization = getOrganizationManagementDAO().getOrganization(getTenantId(), organizationId,
                 tenantDomain);
@@ -347,7 +347,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     private void setParentOrganization(Organization organization) throws OrganizationManagementException {
 
-        ParentOrganization parentOrganization = organization.getParent();
+        ParentOrganizationDO parentOrganization = organization.getParent();
         String parentId = parentOrganization.getId().trim();
 
         /*
@@ -383,24 +383,24 @@ public class OrganizationManagerImpl implements OrganizationManager {
         validateOrganizationAttributes(organization);
     }
 
-    private void validateOrganizationPatchOperations(List<Operation> operations, String organizationId,
+    private void validateOrganizationPatchOperations(List<PatchOperation> patchOperations, String organizationId,
                                                      String tenantDomain) throws OrganizationManagementException {
 
-        for (Operation operation : operations) {
+        for (PatchOperation patchOperation : patchOperations) {
             // Validate requested patch operation.
-            if (StringUtils.isBlank(operation.getOp())) {
+            if (StringUtils.isBlank(patchOperation.getOp())) {
                 throw handleClientException(ERROR_CODE_PATCH_OPERATION_UNDEFINED, organizationId, getTenantDomain());
             }
-            String op = operation.getOp().trim();
+            String op = patchOperation.getOp().trim();
             if (!(PATCH_OP_ADD.equals(op) || PATCH_OP_REMOVE.equals(op) || PATCH_OP_REPLACE.equals(op))) {
                 throw handleClientException(ERROR_CODE_INVALID_PATCH_OPERATION, op);
             }
 
             // Validate path.
-            if (StringUtils.isBlank(operation.getPath())) {
+            if (StringUtils.isBlank(patchOperation.getPath())) {
                 throw handleClientException(ERROR_CODE_PATCH_REQUEST_PATH_UNDEFINED);
             }
-            String path = operation.getPath().trim();
+            String path = patchOperation.getPath().trim();
 
             /*
             Check if it is a supported path for patching.
@@ -414,11 +414,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
             // Validate value.
             String value;
             // Value is mandatory for Add and Replace operations.
-            if (StringUtils.isBlank(operation.getValue()) && !PATCH_OP_REMOVE.equals(op)) {
+            if (StringUtils.isBlank(patchOperation.getValue()) && !PATCH_OP_REMOVE.equals(op)) {
                 throw handleClientException(ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED);
             } else {
                 // Avoid NPEs down the road.
-                value = operation.getValue() != null ? operation.getValue().trim() : "";
+                value = patchOperation.getValue() != null ? patchOperation.getValue().trim() : "";
             }
 
             // Mandatory fields can only be 'Replaced'.
@@ -453,9 +453,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 }
             }
 
-            operation.setOp(op);
-            operation.setPath(path);
-            operation.setValue(value);
+            patchOperation.setOp(op);
+            patchOperation.setPath(path);
+            patchOperation.setValue(value);
         }
     }
 

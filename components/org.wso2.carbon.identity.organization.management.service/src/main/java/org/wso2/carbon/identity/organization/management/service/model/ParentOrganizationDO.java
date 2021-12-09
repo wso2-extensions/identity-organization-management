@@ -19,9 +19,9 @@
 package org.wso2.carbon.identity.organization.management.service.model;
 
 /**
- * This class represents the child organization of an organization.
+ * This class represents the parent organization of an organization.
  */
-public class ChildOrganization {
+public class ParentOrganizationDO {
 
     private String id;
     private String self;

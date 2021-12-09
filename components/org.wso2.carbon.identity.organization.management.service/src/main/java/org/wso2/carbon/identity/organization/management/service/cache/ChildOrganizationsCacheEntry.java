@@ -27,20 +27,20 @@ import java.util.List;
  */
 public class ChildOrganizationsCacheEntry extends CacheEntry {
 
-    private List<String> childrenOrganizations;
+    private List<String> childOrganizations;
 
-    public ChildOrganizationsCacheEntry(List<String> childrenOrganizations) {
+    public ChildOrganizationsCacheEntry(List<String> childOrganizations) {
 
-        this.childrenOrganizations = childrenOrganizations;
+        this.childOrganizations = childOrganizations;
     }
 
-    public List<String> getChildrenOrganizations() {
+    public List<String> getChildOrganizations() {
 
-        return childrenOrganizations;
+        return childOrganizations;
     }
 
-    public void setChildrenOrganizations(List<String> childrenOrganizations) {
+    public void setChildOrganizations(List<String> childOrganizations) {
 
-        this.childrenOrganizations = childrenOrganizations;
+        this.childOrganizations = childOrganizations;
     }
 }

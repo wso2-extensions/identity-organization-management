@@ -30,14 +30,14 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class Child  {
+public class ChildOrganization  {
   
     private String id;
     private String self;
 
     /**
     **/
-    public Child id(String id) {
+    public ChildOrganization id(String id) {
 
         this.id = id;
         return this;
@@ -57,7 +57,7 @@ public class Child  {
 
     /**
     **/
-    public Child self(String self) {
+    public ChildOrganization self(String self) {
 
         this.self = self;
         return this;
@@ -86,9 +86,9 @@ public class Child  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Child child = (Child) o;
-        return Objects.equals(this.id, child.id) &&
-            Objects.equals(this.self, child.self);
+        ChildOrganization childOrganization = (ChildOrganization) o;
+        return Objects.equals(this.id, childOrganization.id) &&
+            Objects.equals(this.self, childOrganization.self);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class Child  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class Child {\n");
+        sb.append("class ChildOrganization {\n");
         
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    self: ").append(toIndentedString(self)).append("\n");
