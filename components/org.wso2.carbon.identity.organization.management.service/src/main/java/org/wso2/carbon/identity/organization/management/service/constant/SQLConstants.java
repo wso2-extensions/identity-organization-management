@@ -54,7 +54,7 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "; AND UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
-    public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ID, UM_CREATED_TIME FROM UM_ORG WHERE " +
+    public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ID FROM UM_ORG WHERE " +
             "UM_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_CREATED_TIME";
 
     public static final String DELETE_ORGANIZATION_BY_ID = "DELETE FROM UM_ORG WHERE UM_TENANT_ID = :" +

@@ -114,7 +114,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
-                namedJdbcTemplate.executeInsert(INSERT_ORGANIZATION, namedPreparedStatement -> {
+                template.executeInsert(INSERT_ORGANIZATION, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organization.getId());
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_NAME, organization.getName());
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_DESCRIPTION, organization.getDescription());
@@ -139,17 +139,17 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
 
         String organizationId = organization.getId();
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-            namedJdbcTemplate.withTransaction(template -> {
-                template.executeBatchInsert(INSERT_ATTRIBUTE, (namedPreparedStatement -> {
-                    for (OrganizationAttribute attribute : organization.getAttributes()) {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, attribute.getKey());
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, attribute.getValue());
-                        namedPreparedStatement.addBatch();
-                    }
-                }), organizationId);
-                return null;
-            });
+        namedJdbcTemplate.withTransaction(template -> {
+            template.executeBatchInsert(INSERT_ATTRIBUTE, (namedPreparedStatement -> {
+                for (OrganizationAttribute attribute : organization.getAttributes()) {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_KEY, attribute.getKey());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_VALUE, attribute.getValue());
+                    namedPreparedStatement.addBatch();
+                }
+            }), organizationId);
+            return null;
+        });
     }
 
     @Override

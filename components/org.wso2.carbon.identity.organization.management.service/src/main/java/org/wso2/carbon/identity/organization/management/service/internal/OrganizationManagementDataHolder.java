@@ -28,7 +28,6 @@ public class OrganizationManagementDataHolder {
     private static final OrganizationManagementDataHolder instance = new OrganizationManagementDataHolder();
     private OrganizationManagementDAO organizationManagementDAO;
 
-
     public static OrganizationManagementDataHolder getInstance() {
 
         return instance;
