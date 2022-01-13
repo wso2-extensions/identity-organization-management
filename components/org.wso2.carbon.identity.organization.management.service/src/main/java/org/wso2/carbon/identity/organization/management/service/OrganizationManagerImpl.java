@@ -20,6 +20,13 @@ package org.wso2.carbon.identity.organization.management.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
+import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
+import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.core.model.OperationNode;
+import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
+import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -31,6 +38,7 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +46,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CREATE_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_KEY_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_VALUE_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PARENT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PATCH_OPERATION;
@@ -57,6 +70,13 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_REPLACE_NON_EXISTING_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REQUIRED_FIELDS_MISSING;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_CREATED_TIME_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_DESCRIPTION_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_LAST_MODIFIED_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_NAME_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
@@ -66,10 +86,13 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_DESCRIPTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
  * This class implements the {@link OrganizationManager} interface.
@@ -148,9 +171,29 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public List<String> getOrganizationIds() throws OrganizationManagementException {
+    public List<String> getOrganizationIds(String filter) throws OrganizationManagementException {
 
-        return getOrganizationManagementDAO().getOrganizationIds(getTenantId(), getTenantDomain());
+        int tenantId = getTenantId();
+        String tenantDomain = getTenantDomain();
+        List<String> authorizedOrganizationIds;
+        try {
+            authorizedOrganizationIds =  OrganizationManagementAuthorizationManager.getInstance()
+                    .getUserAuthorizedOrganizations(getUserId(), VIEW_ORGANIZATION_PERMISSION, tenantId);
+        } catch (OrganizationManagementAuthzServiceServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
+        }
+        if (StringUtils.isBlank(filter)) {
+            return authorizedOrganizationIds;
+        }
+        List<String> filteredOrganizationIdsInTenant = getOrganizationManagementDAO().getOrganizationIds(tenantId,
+                tenantDomain, getExpressionNodes(filter));
+        List<String> organizations = new ArrayList<>();
+        for (String orgId: authorizedOrganizationIds) {
+            if (filteredOrganizationIdsInTenant.contains(orgId)) {
+                organizations.add(orgId);
+            }
+        }
+        return organizations;
     }
 
     @Override
@@ -363,8 +406,22 @@ public class OrganizationManagerImpl implements OrganizationManager {
             }
             parentId = rootOrganizationId;
         }
+
+        if (!isUserAuthorizedToCreateOrganization(parentId)) {
+            throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
+        }
         parentOrganization.setId(parentId);
         parentOrganization.setSelf(buildURIForBody(parentId));
+    }
+
+    private boolean isUserAuthorizedToCreateOrganization(String parentId) throws OrganizationManagementServerException {
+
+        try {
+            return OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
+                    CREATE_ORGANIZATION_PERMISSION, parentId, getTenantId());
+        } catch (OrganizationManagementAuthzServiceServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION, e, parentId);
+        }
     }
 
     private void validateUpdateOrganizationRequest(String currentOrganizationName, Organization organization)
@@ -457,6 +514,58 @@ public class OrganizationManagerImpl implements OrganizationManager {
             patchOperation.setPath(path);
             patchOperation.setValue(value);
         }
+    }
+
+    private List<ExpressionNode> getExpressionNodes(String filter) throws OrganizationManagementClientException {
+
+        List<ExpressionNode> expressionNodes = new ArrayList<>();
+        try {
+            if (StringUtils.isNotBlank(filter)) {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filter);
+                Node rootNode = filterTreeBuilder.buildTree();
+                setExpressionNodeList(rootNode, expressionNodes);
+            }
+        } catch (IOException | IdentityException e) {
+            throw handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
+        }
+        return expressionNodes;
+    }
+
+    /**
+     * Sets the expression nodes required for the retrieval of organizations from the database.
+     *
+     * @param node       The node.
+     * @param expression The list of expression nodes.
+     */
+    private void setExpressionNodeList(Node node, List<ExpressionNode> expression) throws
+            OrganizationManagementClientException {
+
+        if (node instanceof ExpressionNode) {
+            ExpressionNode expressionNode  = (ExpressionNode) node;
+            String attributeValue = expressionNode.getAttributeValue();
+            if (StringUtils.isNotBlank(attributeValue)) {
+                if (isFilteringAttributeNotSupported(attributeValue)) {
+                    throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, attributeValue);
+                }
+                expression.add(expressionNode);
+            }
+        } else if (node instanceof OperationNode) {
+            String operation = ((OperationNode) node).getOperation();
+            if (!StringUtils.equalsIgnoreCase(operation, AND)) {
+                throw handleClientException(ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER);
+            }
+            setExpressionNodeList(node.getLeftNode(), expression);
+            setExpressionNodeList(node.getRightNode(), expression);
+        }
+    }
+
+    private boolean isFilteringAttributeNotSupported(String attributeValue) {
+
+        return !attributeValue.equalsIgnoreCase(ORGANIZATION_ID_FIELD) &&
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_NAME_FIELD) &&
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_DESCRIPTION_FIELD) &&
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_CREATED_TIME_FIELD) &&
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_LAST_MODIFIED_FIELD);
     }
 
     /**

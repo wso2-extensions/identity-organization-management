@@ -19,14 +19,17 @@
 package org.wso2.carbon.identity.organization.management.service.dao.impl;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
@@ -37,9 +40,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import static java.time.ZoneOffset.UTC;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ATTRIBUTE_COLUMN_MAP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CO;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EQ;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_ATTRIBUTE_KEY_EXIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
@@ -55,12 +63,15 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.LE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_DESCRIPTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ATTR_KEY_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ATTR_VALUE_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_CREATED_TIME_COLUMN;
@@ -78,6 +89,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_TENANT_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ATTRIBUTE;
@@ -240,15 +252,26 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public List<String> getOrganizationIds(int tenantId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public List<String> getOrganizationIds(int tenantId, String tenantDomain, List<ExpressionNode> expressionNodes)
+            throws OrganizationManagementServerException {
+
+        FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
+        appendFilterQuery(expressionNodes, filterQueryBuilder);
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String sqlStmt = GET_ORGANIZATIONS_BY_TENANT_ID + filterQueryBuilder.getFilterQuery() +
+                GET_ORGANIZATIONS_BY_TENANT_ID_TAIL;
 
         List<String> organizationIds = new ArrayList<>();
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            namedJdbcTemplate.executeQuery(GET_ORGANIZATIONS_BY_TENANT_ID,
+            namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> organizationIds.add(resultSet.getString(1)),
-                    namedPreparedStatement -> namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId));
+                    namedPreparedStatement -> {
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
+                    });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
         }
@@ -534,5 +557,108 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             }
         });
         return organization;
+    }
+
+    private void appendFilterQuery(List<ExpressionNode> expressionNodes, FilterQueryBuilder filterQueryBuilder) {
+
+        int count = 1;
+        StringBuilder filter = new StringBuilder();
+        if (CollectionUtils.isEmpty(expressionNodes)) {
+            filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
+        } else {
+            for (ExpressionNode expressionNode : expressionNodes) {
+                String operation = expressionNode.getOperation();
+                String value = expressionNode.getValue();
+                String attributeName = ATTRIBUTE_COLUMN_MAP.get(expressionNode.getAttributeValue());
+                if (StringUtils.isNotBlank(attributeName) && StringUtils.isNotBlank(value) && StringUtils
+                        .isNotBlank(operation)) {
+                    switch (operation) {
+                        case EQ: {
+                            equalFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case SW: {
+                            startWithFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case EW: {
+                            endWithFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case CO: {
+                            containsFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case GE: {
+                            greaterThanOrEqualFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case LE: {
+                            lessThanOrEqualFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (StringUtils.isBlank(filter.toString())) {
+                filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
+            } else {
+                filterQueryBuilder.setFilterQuery(filter.toString());
+            }
+        }
+    }
+
+    private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                    FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " = :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value);
+    }
+
+    private void startWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                        FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value + "%");
+    }
+
+    private void endWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                      FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue("%" + value);
+    }
+
+    private void containsFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                       FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue("%" + value + "%");
+    }
+
+    private void greaterThanOrEqualFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                                 FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " >= :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value);
+    }
+
+    private void lessThanOrEqualFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                              FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " <= :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value);
     }
 }

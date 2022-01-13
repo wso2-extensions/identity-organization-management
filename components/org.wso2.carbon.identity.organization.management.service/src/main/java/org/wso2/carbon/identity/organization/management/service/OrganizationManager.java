@@ -78,10 +78,11 @@ public interface OrganizationManager {
     /**
      * List or search organizations.
      *
+     * @param filter The filter string.
      * @return the list of organization IDs.
      * @throws OrganizationManagementException The exception thrown when listing organizations.
      */
-    List<String> getOrganizationIds() throws OrganizationManagementException;
+    List<String> getOrganizationIds(String filter) throws OrganizationManagementException;
 
     /**
      * Delete the organization identified by the provided ID.

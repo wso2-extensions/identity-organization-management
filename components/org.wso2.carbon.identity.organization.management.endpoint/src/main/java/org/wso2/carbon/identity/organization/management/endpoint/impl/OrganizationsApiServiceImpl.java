@@ -40,7 +40,7 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     @Override
     public Response organizationsGet(String filter, Integer limit, Long next, Long before) {
 
-        return organizationManagementService.getOrganizations();
+        return organizationManagementService.getOrganizations(filter);
     }
 
     @Override

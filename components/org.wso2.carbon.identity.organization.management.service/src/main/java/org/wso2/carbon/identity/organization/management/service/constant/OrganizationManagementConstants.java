@@ -18,6 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.service.constant;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Contains constants related to organization management.
  */
@@ -46,6 +50,36 @@ public class OrganizationManagementConstants {
 
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
+    public static final String ORGANIZATION_ID_FIELD = "id";
+    public static final String ORGANIZATION_DESCRIPTION_FIELD = "description";
+    public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
+    public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
+
+    public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "create";
+    public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "view";
+
+    public static final String EQ = "eq";
+    public static final String CO = "co";
+    public static final String SW = "sw";
+    public static final String EW = "ew";
+    public static final String GE = "ge";
+    public static final String LE = "le";
+    public static final String AND = "and";
+
+    private static Map<String, String> attributeColumnMap = new HashMap<>();
+
+    static {
+
+        attributeColumnMap.put(ORGANIZATION_NAME_FIELD, "UM_ORG_NAME");
+        attributeColumnMap.put(ORGANIZATION_ID_FIELD, "UM_ID");
+        attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, "UM_ORG_DESCRIPTION");
+        attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, "UM_CREATED_TIME");
+        attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, "UM_LAST_MODIFIED");
+    }
+
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for error messages related to organization management.
@@ -92,6 +126,14 @@ public class OrganizationManagementConstants {
                 "Cannot remove non existing attribute key: %s"),
         ERROR_CODE_PATCH_REQUEST_REPLACE_NON_EXISTING_ATTRIBUTE("60020", "Unable to patch the organization.",
                 "Cannot replace non existing attribute key: %s"),
+        ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION("60021", "Unable to create the organization.",
+                "Unauthorized request to add an organization to parent organization with ID: %s."), // 403
+        ERROR_CODE_INVALID_FILTER_FORMAT("60022", "Unable to retrieve organizations.", "Invalid " +
+                "format used for filtering."),
+        ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE("60023", "Unsupported filter attribute.",
+                "The filter attribute '%s' is not supported."),
+        ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER("60024", "Unsupported filter.",
+                "The complex query used for filtering is not supported."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -136,7 +178,10 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65017", "Unable to build created organization URL.",
                 "Server encountered an error while building URL for response header."),
         ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY("65018", "Unable to build the URL.",
-                "Server encountered an error while building URL for response body.");
+                "Server encountered an error while building URL for response body."),
+        ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION("65019", "Unable to create the organization.",
+                "Server encountered an error while evaluating authorization of user to create the " +
+                        "organization in parent organization with ID: %s.");
 
         private final String code;
         private final String message;

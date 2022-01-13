@@ -63,6 +63,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -93,10 +97,14 @@
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
+                            org.wso2.carbon.identity.base;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.cache;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.persistence;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.authz.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.authz.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.cache;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
