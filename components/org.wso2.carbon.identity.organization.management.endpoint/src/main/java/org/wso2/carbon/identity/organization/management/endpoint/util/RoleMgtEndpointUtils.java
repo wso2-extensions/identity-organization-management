@@ -38,7 +38,7 @@ import javax.ws.rs.core.Response;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
-import static org.wso2.carbon.identity.organization.management.endpoint.constants.RoleMgtEndPointConstants.CORRELATION_ID_MDC;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.CORRELATION_ID_MDC;
 
 /**
  * Role Management Endpoint util class.
@@ -46,6 +46,10 @@ import static org.wso2.carbon.identity.organization.management.endpoint.constant
 public class RoleMgtEndpointUtils {
     private static final Log log = LogFactory.getLog(RoleMgtEndpointUtils.class);
 
+    /**
+     * Get an instance of OrganizationUserRoleManager.
+     * @return an instance of OrganizationUserRoleManager
+     */
     public static OrganizationUserRoleManager getOrganizationUserRoleManager() {
 
         return (OrganizationUserRoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().
@@ -64,6 +68,10 @@ public class RoleMgtEndpointUtils {
         log.error(throwable.getMessage(), throwable);
     }
 
+    /**
+     * Get correlation ID.
+     * @return the correlation ID
+     */
     public static String getCorrelation() {
 
         String ref;
@@ -75,6 +83,10 @@ public class RoleMgtEndpointUtils {
         return ref;
     }
 
+    /**
+     * Check whether the correlation ID is present or not.
+     * @return whether the correlation ID is present or not.
+     */
     public static boolean isCorrelationIDPresent() {
 
         return MDC.get(CORRELATION_ID_MDC) != null;
@@ -90,6 +102,12 @@ public class RoleMgtEndpointUtils {
         return errorDTO;
     }
 
+    /**
+     * To handle bad request exceptions.
+     * @param e error
+     * @param log logger
+     * @return BadRequestResponse
+     */
     public static Response handleBadRequestResponse(OrganizationUserRoleMgtClientException e, Log log) {
 
         if (isNotFoundError(e)) {
@@ -106,11 +124,23 @@ public class RoleMgtEndpointUtils {
         throw buildBadRequestException(e.getDescription(), e.getMessage(), e.getErrorCode(), log, e);
     }
 
+    /**
+     * To handle server error responses.
+     * @param e error
+     * @param log logger
+     * @return InternalServerErrorException
+     */
     public static Response handleServerErrorResponse(OrganizationUserRoleMgtException e, Log log) {
 
         throw buildInternalServerErrorException(e.getErrorCode(), log, e);
     }
 
+    /**
+     * To handle unexpected server error responses.
+     * @param e error
+     * @param log logger
+     * @return InternalServerErrorException.
+     */
     public static Response handleUnexpectedServerError(Throwable e, Log log) {
 
         throw buildInternalServerErrorException(ERROR_CODE_UNEXPECTED.getCode(), log, e);
@@ -152,6 +182,15 @@ public class RoleMgtEndpointUtils {
         return false;
     }
 
+    /**
+     * To handle the build not found request exception.
+     * @param description error description
+     * @param message error message
+     * @param code error code
+     * @param log logger
+     * @param e error
+     * @return NotFoundException
+     */
     public static NotFoundException buildNotFoundRequestException(String description, String message, String code,
                                                                   Log log, Throwable e) {
 
@@ -160,6 +199,15 @@ public class RoleMgtEndpointUtils {
         return new NotFoundException(errorDTO);
     }
 
+    /**
+     * To handle forbidden exception.
+     * @param description error description
+     * @param message error message
+     * @param code error code
+     * @param log logger
+     * @param e error
+     * @return FprbiddenException
+     */
     public static ForbiddenException buildForbiddenException(String description, String message, String code, Log log,
                                                              Throwable e) {
 
@@ -168,6 +216,15 @@ public class RoleMgtEndpointUtils {
         return new ForbiddenException(errorDTO);
     }
 
+    /**
+     * To handle bad request exception.
+     * @param description error description
+     * @param message error message
+     * @param code error code
+     * @param log logger
+     * @param e error
+     * @return BadRequestException
+     */
     public static BadRequestException buildBadRequestException(String description, String message, String code, Log log,
                                                                Throwable e) {
 
@@ -176,6 +233,13 @@ public class RoleMgtEndpointUtils {
         return new BadRequestException(errorDTO);
     }
 
+    /**
+     * To handle Internal Server Error exception.
+     * @param code error code
+     * @param log logger
+     * @param e error
+     * @return InternalServerErrorException
+     */
     public static InternalServerErrorException buildInternalServerErrorException(String code, Log log, Throwable e) {
 
         Error errorDTO = getError(Response.Status.INTERNAL_SERVER_ERROR.toString(),
@@ -184,6 +248,15 @@ public class RoleMgtEndpointUtils {
         return new InternalServerErrorException(errorDTO);
     }
 
+    /**
+     * To handle conflict exception.
+     * @param description error description
+     * @param message error message
+     * @param code error code
+     * @param log logger
+     * @param e error
+     * @return ConflictRequestException
+     */
     public static ConflictRequestException buildConflictRequestException(String description, String message,
                                                                          String code, Log log, Throwable e) {
 
