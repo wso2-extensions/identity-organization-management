@@ -11,8 +11,10 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://localhost:9443/t/{tenant-domain}/api/identity/organization-mgt/v1.0'
+  - url: 'https://{server-url}/t/{tenant-domain}/api/identity/organization-mgt/v1.0'
     variables:
+      server-url:
+        default: 'localhost:9443'
       tenant-domain:
         default: carbon.super
 security:
@@ -230,6 +232,228 @@ paths:
       tags:
         - Organization
 
+  /organizations/{organization-id}/roles:
+    post:
+      summary: |
+        Create a user role mapping for an organization.
+      description: |
+        This API is used to create user role mappings for an organization.
+      parameters:
+        - name: organization-id
+          in: path
+          description: 'ID of the organization which the user-role mappings are added.'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: This represents user role mappings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleMappingDTO'
+        required: true
+      responses:
+        201:
+          description: Created
+          content: { }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Role Management
+
+  /organizations/{organization-id}/roles/{role-id}/users:
+    get:
+      summary: |
+        Retrieve the list of users who have specific role against an organization.
+      description: |
+        This API  is used to get the user list of an organization with a specific role.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization which, the users will be returned.
+          required: true
+          schema:
+            type: string
+        - name: role-id
+          in: path
+          description: ID of the role which, the user will be returned.
+          required: true
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: Number of items to be skipped before starting to collect the result set. (Should be 0 or positive)
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Max number of items to be returned. (Should be greater than 0)
+          schema:
+            type: integer
+        - name: attributes
+          in: query
+          description: Comma separated list of SCIM user attributes to be returned in the response.
+          schema:
+            type: string
+        - name: filter
+          in: query
+          description: SCIM filtering to fine tune the search results. Supported operations are 'eq', 'co', 'sw', 'ew', and 'and'.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Role Management
+
+  /organizations/{organization-id}/roles/{role-id}/users/{user-id}:
+    delete:
+      summary: |
+        Delete an organization user role mapping
+      description: |
+        This API is used to delete user role mappings for an organization.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization of which, the user role mappings will be deleted.
+          required: true
+          schema:
+            type: string
+        - name: role-id
+          in: path
+          description: ID of the role of which, the user will be deleted.
+          required: true
+          schema:
+            type: string
+        - name: user-id
+          in: path
+          description: ID of the user.
+          required: true
+          schema:
+            type: string
+        - name: includeSubOrgs
+          in: query
+          description: The deletion should proceed to sub orgs or not.
+          schema:
+            type: boolean
+      responses:
+        204:
+          description: No Content
+          content: { }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Role Management
+    patch:
+      summary: |
+        Update an organization user role mapping.
+      description: |
+        This API is used to update the inheritance of a user role assigned over an organization.
+        This will allow to change the includeSubOrgs property of the role mapping.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization of which, the user role mappings will be updated.
+          required: true
+          schema:
+            type: string
+        - name: role-id
+          in: path
+          description: ID of the role of which, the user will be updated.
+          required: true
+          schema:
+            type: string
+        - name: user-id
+          in: path
+          description: ID of the user.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: This represents the patch operation.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserRoleOperationDTO'
+        required: true
+      responses:
+        204:
+          description: Ok
+          content: { }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Role Management
+
+  /organizations/{organization-id}/users/{user-id}/roles:
+    get:
+      summary: |
+        Retrive the list of roles that a particular user has against an organization.
+      description: |
+        This API is used to get the list of roles for a user for an organization.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization of which, the users will be returned.
+          required: true
+          schema:
+            type: string
+        - name: user-id
+          in: path
+          description: ID of the user.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Role Management
+
 components:
   parameters:
     filterQueryParam:
@@ -290,6 +514,9 @@ components:
         default: false
 
   schemas:
+    #-----------------------------------------------------
+    # Error Response object
+    #-----------------------------------------------------
     Error:
       type: object
       required:
@@ -489,7 +716,128 @@ components:
           type: string
           description: The value to be used within the operations.
           example: 'XYZ Builders'
-
+    #-----------------------------------------------------
+    # User Role Mapping object
+    #-----------------------------------------------------
+    UserRoleMappingDTO:
+      required:
+        - roleId
+      type: object
+      properties:
+        roleId:
+          type: string
+          example: 7d4e3ac9-da93-4b7a-a2d0-84bb6c01dc25
+        users:
+          type: array
+          items:
+            required:
+              - userId
+            type: object
+            properties:
+              userId:
+                type: string
+                example: c4c3a320-e381-463a-846f-1c2bd083d38c
+              mandatory:
+                type: boolean
+                example: true
+              includeSubOrgs:
+                type: boolean
+                example: true
+    #-----------------------------------------------------
+    # User object
+    #-----------------------------------------------------
+    UserDTO:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        username:
+          type: string
+          example: PRIMARY/Lia
+        id:
+          type: string
+          example: 008bba85-451d-414b-87de-c03b5a1f4217
+        name:
+          type: object
+          properties:
+            givenName:
+              type: string
+              example: Lia
+            familyName:
+              type: string
+              example: Greene
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: home
+              value:
+                type: string
+                example: lia@gmail.com
+              primary:
+                type: boolean
+                example: true
+        assignedMeta:
+          type: array
+          example:
+            - mandatory: true
+              assignedAt:
+                orgId: b4526d91-a8bf-43d2-8b14-c548cf73065b
+                orgName: WSO2
+            - mandatory: false
+              assignedAt:
+                orgId: c4526761-a8bf-43d2-8b14-c548cf7306fc
+                orgName: WSO2BR
+          items:
+            type: object
+            properties:
+              mandatory:
+                type: boolean
+              assignedAt:
+                type: object
+                properties:
+                  orgId:
+                    type: string
+                  orgName:
+                    type: string
+    #-----------------------------------------------------
+    # Role object
+    #-----------------------------------------------------
+    RoleDTO:
+      required:
+        - roleId
+        - roleName
+      type: object
+      properties:
+        roleId:
+          type: string
+          example: 7d4e3ac9-da93-4b7a-a2d0-84bb6c01dc25
+        roleName:
+          type: string
+          example: Internal/User_Administrator
+    #-----------------------------------------------------
+    # User Role Operation object
+    #-----------------------------------------------------
+    UserRoleOperationDTO:
+      required:
+        - op
+        - path
+        - value
+      type: object
+      properties:
+        op:
+          type: string
+          example: replace
+        path:
+          type: string
+          example: /includeSubOrgs
+        value:
+          type: boolean
+          example: false
   #--------------------------------------------------------
   # Descriptions of Organization Management API responses.
   #--------------------------------------------------------
@@ -510,6 +858,8 @@ components:
       description: Authentication information is missing or invalid.
     Forbidden:
       description: Access forbidden.
+    Conflict:
+      description: Conflict response.
     ServerError:
       description: Internal server error.
       content:

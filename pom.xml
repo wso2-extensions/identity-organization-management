@@ -37,6 +37,7 @@
     <modules>
         <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.role.mgt.core</module>
     </modules>
 
     <dependencyManagement>
@@ -97,6 +98,24 @@
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
                 <version>${jackson-jaxrs-json-provider.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${fasterxml.jackson.annotation.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${fasterxml.jackson.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${fasterxml.jackson.annotation.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.felix</groupId>
@@ -107,6 +126,19 @@
                 <groupId>org.ops4j.pax.logging</groupId>
                 <artifactId>pax-logging-api</artifactId>
                 <version>${pax.logging.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons.logging.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
+                <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
+                <version>${wso2.carbon.identity.inbound.provisioning.scim2.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <!-- Kernel Dependencies -->
@@ -132,6 +164,20 @@
                 <groupId>org.wso2.carbon.utils</groupId>
                 <artifactId>org.wso2.carbon.database.utils</artifactId>
                 <version>${carbon.database.utils.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json.wso2</groupId>
+                <artifactId>json</artifactId>
+                <version>${json.wso2.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.role.mgt.core</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -277,6 +323,8 @@
         <maven.bundle.plugin.version>3.2.0</maven.bundle.plugin.version>
 
         <jackson-jaxrs-json-provider.version>2.9.9</jackson-jaxrs-json-provider.version>
+        <fasterxml.jackson.version>2.10.5</fasterxml.jackson.version>
+        <fasterxml.jackson.annotation.version>2.10.5</fasterxml.jackson.annotation.version>
         <cxf-bundle.version>3.2.8</cxf-bundle.version>
         <spring-web.version>5.1.1.RELEASE</spring-web.version>
         <swagger-jaxrs.version>1.5.20</swagger-jaxrs.version>
@@ -284,6 +332,9 @@
 
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
+        <commons.logging.version>1.2</commons.logging.version>
+        <wso2.carbon.identity.inbound.provisioning.scim2.version>1.5.79</wso2.carbon.identity.inbound.provisioning.scim2.version>
+        <json.wso2.version>3.0.0.wso2v1</json.wso2.version>
 
         <identity.organization.management.exp.pkg.version>${project.version}
         </identity.organization.management.exp.pkg.version>
