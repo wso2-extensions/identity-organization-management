@@ -55,7 +55,7 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
        ```
 
       |  UM_ID|UM_ORG_NAME|UM_ORG_DESCRIPTION|UM_CREATED_TIME|UM_LAST_MODIFIED|UM_STATUS|UM_TENANT_ID|UM_PARENT_ID
-            |---------|--------------------|------------------------------|-------------------------|-----------|--------------|--------------|-----
+      |---------|--------------------|------------------------------|-------------------------|-----------|--------------|--------------|-----
 
        ```
        CREATE TABLE IF NOT EXISTS UM_ORG_ATTRIBUTE ( 
@@ -67,7 +67,7 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
        FOREIGN KEY (UM_ORG_ID) REFERENCES UM_ORG(UM_ID) ON DELETE CASCADE );
        ```
       |  UM_ID|UM_ORG_ID|UM_ATTRIBUTE_KEY|UM_ATTRIBUTE_VALUE
-             |---------|--------------------|------------------------------|-------|
+      |---------|--------------------|------------------------------|-------|
       ```
       CREATE TABLE UM_USER_ROLE_ORG (
       UM_ID VARCHAR2(255) NOT NULL,
@@ -85,7 +85,7 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
        ```
 
       | UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-            |--------|---------|---------------|--------------------|---------------|-------------|---------|-----------|
+      |--------|---------|---------------|--------------------|---------------|-------------|---------|-----------|
     - Add the following `VIEW` to database.
       ```
       CREATE VIEW ORG_AUTHZ_VIEW AS
