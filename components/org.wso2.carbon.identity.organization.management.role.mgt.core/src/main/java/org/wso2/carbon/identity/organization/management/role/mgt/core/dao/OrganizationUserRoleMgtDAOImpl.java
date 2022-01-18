@@ -24,7 +24,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.database.utils.jdbc.JdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
@@ -125,14 +124,14 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                         organizationUserRoleMapping.getRoleId());
                                 namedPreparedStatement
                                         .setInt(String.format(DB_SCHEMA_COLUMN_NAME_HYBRID_ROLE_ID + "%d", i),
-                                        organizationUserRoleMapping.getHybridRoleId());
+                                                organizationUserRoleMapping.getHybridRoleId());
                                 namedPreparedStatement.setInt(String.format(DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%d", i),
                                         tenantID);
                                 namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_ORG_ID + "%d", i),
                                         organizationUserRoleMapping.getOrganizationId());
                                 namedPreparedStatement
                                         .setString(String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d", i),
-                                        organizationUserRoleMapping.getAssignedLevelOrganizationId());
+                                                organizationUserRoleMapping.getAssignedLevelOrganizationId());
                                 namedPreparedStatement.setInt(String.format(DB_SCHEMA_COLUMN_NAME_MANDATORY + "%d", i),
                                         organizationUserRoleMapping.isMandatory() ? 1 : 0);
                             }
@@ -249,7 +248,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                         tenantId);
                                 namedPreparedStatement
                                         .setString(String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d", i),
-                                        organizationUserRoleMapping.getAssignedLevelOrganizationId());
+                                                organizationUserRoleMapping.getAssignedLevelOrganizationId());
                                 namedPreparedStatement.setInt(String.format(DB_SCHEMA_COLUMN_NAME_MANDATORY + "%d", i),
                                         organizationUserRoleMapping.isMandatory() ? 1 : 0);
                             }
@@ -313,9 +312,9 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                         List<OrganizationUserRoleMapping> organizationUserRoleMappingsToDelete,
                                         int tenantId)
             throws OrganizationUserRoleMgtServerException {
-        JdbcTemplate jdbcTemplate = Utils.getNewJdbcTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
-            jdbcTemplate.withTransaction(template -> {
+            namedJdbcTemplate.withTransaction(template -> {
                 /*
                  We are getting the organization-user-role mappings accordingly for all the scenarios mentioned in
                  @{OrganizationUserRoleManagerImpl} Therefore, we only need to add the user role mappings,
@@ -324,24 +323,35 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                 // add organization-user-role mappings
                 if (CollectionUtils.isNotEmpty(organizationUserRoleMappingsToAdd)) {
                     template.executeInsert(queryForMultipleInserts(organizationUserRoleMappingsToAdd.size()),
-                            preparedStatement -> {
-                                int parameterIndex = 0;
-                                for (OrganizationUserRoleMapping organizationUserRoleMapping :
-                                        organizationUserRoleMappingsToAdd) {
-                                    preparedStatement.setString(++parameterIndex, Utils.generateUniqueID());
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getUserId());
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getRoleId());
-                                    preparedStatement.setInt(++parameterIndex,
-                                            organizationUserRoleMapping.getHybridRoleId());
-                                    preparedStatement.setInt(++parameterIndex, tenantId);
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getOrganizationId());
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getAssignedLevelOrganizationId());
-                                    preparedStatement.setInt(++parameterIndex,
-                                            organizationUserRoleMapping.isMandatory() ? 1 : 0);
+                            namedPreparedStatement -> {
+                                int n = organizationUserRoleMappingsToAdd.size();
+                                for (int i = 0; i < n; i++) {
+                                    OrganizationUserRoleMapping organizationUserRoleMapping =
+                                            organizationUserRoleMappingsToAdd.get(i);
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ID + "%d", i),
+                                                    Utils.generateUniqueID());
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_USER_ID + "%d", i),
+                                                    organizationUserRoleMapping.getUserId());
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d", i),
+                                                    organizationUserRoleMapping.getRoleId());
+                                    namedPreparedStatement
+                                            .setInt(String.format(DB_SCHEMA_COLUMN_NAME_HYBRID_ROLE_ID + "%d", i),
+                                                    organizationUserRoleMapping.getHybridRoleId());
+                                    namedPreparedStatement
+                                            .setInt(String.format(DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%d", i),
+                                                    tenantId);
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ORG_ID + "%d", i),
+                                                    organizationUserRoleMapping.getOrganizationId());
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d", i),
+                                                    organizationUserRoleMapping.getAssignedLevelOrganizationId());
+                                    namedPreparedStatement
+                                            .setInt(String.format(DB_SCHEMA_COLUMN_NAME_MANDATORY + "%d", i),
+                                                    organizationUserRoleMapping.isMandatory() ? 1 : 0);
                                 }
                             }, organizationUserRoleMappingsToAdd, false);
                 }
@@ -349,21 +359,29 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                 if (CollectionUtils.isNotEmpty(organizationUserRoleMappingsToDelete)) {
                     template.executeUpdate(
                             queryForMultipleRoleMappingDeletion(organizationUserRoleMappingsToDelete.size()),
-                            preparedStatement -> {
-                                int parameterIndex = 0;
-                                for (OrganizationUserRoleMapping organizationUserRoleMapping :
-                                        organizationUserRoleMappingsToDelete) {
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getOrganizationId());
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getUserId());
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getRoleId());
-                                    preparedStatement.setInt(++parameterIndex, tenantId);
-                                    preparedStatement.setString(++parameterIndex,
-                                            organizationUserRoleMapping.getAssignedLevelOrganizationId());
-                                    preparedStatement.setInt(++parameterIndex,
-                                            organizationUserRoleMapping.isMandatory() ? 1 : 0);
+                            namedPreparedStatement -> {
+                                int n = organizationUserRoleMappingsToDelete.size();
+                                for (int i = 0; i < n; i++) {
+                                    OrganizationUserRoleMapping organizationUserRoleMapping =
+                                            organizationUserRoleMappingsToDelete.get(i);
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ORG_ID + "%d", i),
+                                                    organizationUserRoleMapping.getOrganizationId());
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_USER_ID + "%d", i),
+                                                    organizationUserRoleMapping.getUserId());
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d", i),
+                                                    organizationUserRoleMapping.getRoleId());
+                                    namedPreparedStatement
+                                            .setInt(String.format(DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%d", i),
+                                                    tenantId);
+                                    namedPreparedStatement
+                                            .setString(String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d", i),
+                                                    organizationUserRoleMapping.getAssignedLevelOrganizationId());
+                                    namedPreparedStatement
+                                            .setInt(String.format(DB_SCHEMA_COLUMN_NAME_MANDATORY + "%d", i),
+                                                    organizationUserRoleMapping.isMandatory() ? 1 : 0);
                                 }
                             });
                 }

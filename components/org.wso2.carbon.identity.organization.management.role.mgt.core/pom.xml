@@ -75,27 +75,17 @@
                             version="${identity.organization.management.exp.pkg.version}",
                         </Export-Package>
                         <Import-Package>
-                            javax.sql,
-                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
-                            org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
-                            org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
-                            org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
-                            org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
-                            org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
-                            org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
-                            org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.persistence;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.inbound.provisioning.scim2;version="${wso2.carbon.identity.inbound.provisioning.scim2.version}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.constants;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.constants;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.handler;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.models;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.role.mgt.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}"
+                            org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
+                            org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
+                            org.apache.commons.logging; version="${import.package.version.commons.logging}",
+                            org.wso2.carbon.utils;version="${carbon.kernel.package.import.version.range}",
+                            org.apache.axiom.*; version="${axiom.osgi.version.range}",
+                            org.wso2.securevault.*,
+                            org.wso2.carbon.identity.core.*; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.base.*; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.database.utils.*;version="${org.wso2.carbon.database.utils.version.range}",
                         </Import-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -104,5 +94,7 @@
 
     <properties>
         <axiom.osgi.version.range>[1.2.11, 2.0.0)</axiom.osgi.version.range>
+        <import.package.version.commons.logging>[1.2.0,2.0.0)</import.package.version.commons.logging>
+
     </properties>
 </project>

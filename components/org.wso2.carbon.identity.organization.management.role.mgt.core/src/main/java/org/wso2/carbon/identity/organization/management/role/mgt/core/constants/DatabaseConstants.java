@@ -53,7 +53,7 @@ public class DatabaseConstants {
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d;,:" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MANDATORY + ";)";
+                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MANDATORY + "%1$d;)";
         public static final String GET_USERS_BY_ORG_AND_ROLE = "SELECT URO.UM_USER_ID, URO.MANDATORY, " +
                 "URO.ASSIGNED_AT, UO.UM_ORG_NAME FROM UM_USER_ROLE_ORG URO LEFT JOIN UM_ORG UO ON " +
                 "URO.ASSIGNED_AT = UO.UM_ID WHERE URO.ORG_ID = :" +

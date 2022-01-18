@@ -36,50 +36,50 @@ import javax.ws.rs.core.Response;
  */
 public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     @Autowired
-    private OrganizationManagementService organizationManagementService;
+    private OrganizationManagementService orgMgtService;
 
     @Override
     public Response organizationsGet(String filter, Integer limit, Long next, Long before) {
 
-        return organizationManagementService.getOrganizations();
+        return orgMgtService.getOrganizations();
     }
 
     @Override
     public Response organizationsOrganizationIdDelete(String organizationId, Boolean force) {
 
-        return organizationManagementService.deleteOrganization(organizationId, force);
+        return orgMgtService.deleteOrganization(organizationId, force);
     }
 
     @Override
     public Response organizationsOrganizationIdGet(String organizationId, Boolean showChildren) {
 
-        return organizationManagementService.getOrganization(organizationId, showChildren);
+        return orgMgtService.getOrganization(organizationId, showChildren);
     }
 
     @Override
     public Response organizationsOrganizationIdPatch(String organizationId, List<OrganizationPatchRequestItem>
             organizationPatchRequestItem) {
 
-        return organizationManagementService.patchOrganization(organizationId, organizationPatchRequestItem);
+        return orgMgtService.patchOrganization(organizationId, organizationPatchRequestItem);
     }
 
     @Override
     public Response organizationsOrganizationIdPut(String organizationId, OrganizationPUTRequest
             organizationPUTRequest) {
 
-        return organizationManagementService.updateOrganization(organizationId, organizationPUTRequest);
+        return orgMgtService.updateOrganization(organizationId, organizationPUTRequest);
     }
 
     @Override
     public Response organizationsPost(OrganizationPOSTRequest organizationPOSTRequest) {
 
-        return organizationManagementService.addOrganization(organizationPOSTRequest);
+        return orgMgtService.addOrganization(organizationPOSTRequest);
     }
 
     @Override
     public Response organizationsOrganizationIdRolesPost(String organizationId, UserRoleMappingDTO userRoleMappingDTO) {
 
-        return organizationManagementService.addOrganizationUserRoleMappings(organizationId, userRoleMappingDTO);
+        return orgMgtService.addOrganizationUserRoleMappings(organizationId, userRoleMappingDTO);
     }
 
     @Override
@@ -87,14 +87,14 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
                                                                    Integer offset, Integer limit,
                                                                    String attributes, String filter) {
 
-        return organizationManagementService
+        return orgMgtService
                 .getUsersFromOrganizationAndRole(organizationId, roleId, offset, limit, attributes, filter);
     }
 
     @Override
     public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(String organizationId, String roleId,
                                                                             String userId, Boolean includeSubOrgs) {
-        return organizationManagementService
+        return orgMgtService
                 .deleteOrganizationUserRoleMapping(organizationId, roleId, userId, includeSubOrgs);
     }
 
@@ -104,14 +104,14 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
                                                                            List<UserRoleOperationDTO>
                                                                                        userRoleOperationDTO) {
 
-        return organizationManagementService
+        return orgMgtService
                 .patchOrganizationUserRoleMapping(organizationId, roleId, userId, userRoleOperationDTO);
     }
 
     @Override
     public Response organizationsOrganizationIdUsersUserIdRolesGet(String organizationId, String userId) {
 
-        return organizationManagementService.getRolesFromOrganizationAndUser(organizationId, userId);
+        return orgMgtService.getRolesFromOrganizationAndUser(organizationId, userId);
     }
 
 }
