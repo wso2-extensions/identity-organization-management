@@ -23,22 +23,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.OrganizationUserRoleManager;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.BadRequestException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.ConflictRequestException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.ForbiddenException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.InternalServerErrorException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.NotFoundException;
+import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.OrganizationUserRoleManager;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 
-import javax.ws.rs.core.Response;
 import java.util.UUID;
 
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
+import javax.ws.rs.core.Response;
+
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.CORRELATION_ID_MDC;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 
 /**
  * Role Management Endpoint util class.

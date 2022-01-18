@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHeaders;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

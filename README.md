@@ -140,7 +140,7 @@ Alternatively can use `mvn clean install -DskipTests` or `mvn clean install Dmav
 ## Check the OSGI Service is working
 
 Run **WSO2 IS** using the following command to check the **OSGI** service.
-`sh wso2server.sh -dosgiConsole`
+`sh wso2server.sh -DosgiConsole`
 After deploying the **WSO2 IS** check the service is working or not by,
 `ss <jar filename>` and selecting the `jar` file.
 

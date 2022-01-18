@@ -28,8 +28,12 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleO
 import org.wso2.carbon.identity.organization.management.endpoint.service.OrganizationManagementService;
 
 import java.util.List;
+
 import javax.ws.rs.core.Response;
 
+/**
+ * Implementation of OrganizationsApiService
+ */
 public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     @Autowired
     private OrganizationManagementService organizationManagementService;
@@ -75,24 +79,33 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     @Override
     public Response organizationsOrganizationIdRolesPost(String organizationId, UserRoleMappingDTO userRoleMappingDTO) {
 
-        return organizationManagementService.addOrganizationUserRoleMappings( organizationId, userRoleMappingDTO);
+        return organizationManagementService.addOrganizationUserRoleMappings(organizationId, userRoleMappingDTO);
     }
 
     @Override
-    public Response organizationsOrganizationIdRolesRoleIdUsersGet(String organizationId, String roleId, Integer offset, Integer limit, String attributes, String filter) {
+    public Response organizationsOrganizationIdRolesRoleIdUsersGet(String organizationId, String roleId,
+                                                                   Integer offset, Integer limit,
+                                                                   String attributes, String filter) {
 
-        return organizationManagementService.getUsersFromOrganizationAndRole(organizationId, roleId, offset, limit, attributes, filter);
+        return organizationManagementService
+                .getUsersFromOrganizationAndRole(organizationId, roleId, offset, limit, attributes, filter);
     }
 
     @Override
-    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(String organizationId, String roleId, String userId, Boolean includeSubOrgs) {
-        return organizationManagementService.deleteOrganizationUserRoleMapping(organizationId, roleId, userId, includeSubOrgs);
+    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(String organizationId, String roleId,
+                                                                            String userId, Boolean includeSubOrgs) {
+        return organizationManagementService
+                .deleteOrganizationUserRoleMapping(organizationId, roleId, userId, includeSubOrgs);
     }
 
     @Override
-    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdPatch(String organizationId, String roleId, String userId, List<UserRoleOperationDTO> userRoleOperationDTO) {
+    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdPatch(String organizationId, String roleId,
+                                                                           String userId,
+                                                                           List<UserRoleOperationDTO>
+                                                                                       userRoleOperationDTO) {
 
-        return organizationManagementService.patchOrganizationUserRoleMapping(organizationId, roleId, userId, userRoleOperationDTO);
+        return organizationManagementService
+                .patchOrganizationUserRoleMapping(organizationId, roleId, userId, userRoleOperationDTO);
     }
 
     @Override
