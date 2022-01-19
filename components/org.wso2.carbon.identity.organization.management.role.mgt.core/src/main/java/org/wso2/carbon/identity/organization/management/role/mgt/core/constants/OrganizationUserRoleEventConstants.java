@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -22,6 +22,7 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.constants
  * Constant for Organization-User-Role event handler.
  */
 public class OrganizationUserRoleEventConstants {
+
     public static final String PRE_ASSIGN_ORGANIZATION_USER_ROLE = "PRE_ASSIGN_ORGANIZATION_USER_ROLE";
     public static final String POST_ASSIGN_ORGANIZATION_USER_ROLE = "POST_ASSIGN_ORGANIZATION_USER_ROLE";
     public static final String PRE_REVOKE_ORGANIZATION_USER_ROLE = "PRE_REVOKE_ORGANIZATION_USER_ROLE";

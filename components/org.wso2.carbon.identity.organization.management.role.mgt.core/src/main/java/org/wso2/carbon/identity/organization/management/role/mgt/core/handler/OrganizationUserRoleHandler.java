@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,7 +24,7 @@ import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMappingForEvent;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMappingUser;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserForUserRoleMapping;
 
 import java.util.Map;
 
@@ -40,22 +40,26 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
  * Handler class for Organization-User-Role mapping.
  */
 public class OrganizationUserRoleHandler extends AbstractEventHandler {
+
     private static final Log AUDIT = CarbonConstants.AUDIT_LOG;
     private static final String AUDIT_MESSAGE =
             "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : %s ";
 
     @Override
     public String getName() {
+
         return "OrganizationUserRoleHandler";
     }
 
     @Override
     public int getPriority(MessageContext messageContext) {
+
         return 51;
     }
 
     @Override
     public void handleEvent(Event event) {
+
         //common data
         Map<String, Object> eventProperties = event.getEventProperties();
         String status = eventProperties.get(STATUS) instanceof Status ?
@@ -81,6 +85,7 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
     }
 
     public String formatRoleMappingRevokeData(Object data) {
+
         OrganizationUserRoleMappingForEvent organizationUserRoleMappingForRevokeEvent =
                 data instanceof OrganizationUserRoleMappingForEvent ? (OrganizationUserRoleMappingForEvent) data :
                         new OrganizationUserRoleMappingForEvent();
@@ -96,11 +101,11 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
                         new OrganizationUserRoleMappingForEvent();
         String builder = "OrganizationId : " + organizationUserRoleMappingForRevokeEvent.getOrganizationId() +
                 ", RoleId : " + organizationUserRoleMappingForRevokeEvent.getRoleId();
-        for (UserRoleMappingUser userRoleMappingUser : organizationUserRoleMappingForRevokeEvent
+        for (UserForUserRoleMapping userForUserRoleMapping : organizationUserRoleMappingForRevokeEvent
                 .getUsersRoleInheritance()) {
-            builder = builder.concat(", { UserId : " + userRoleMappingUser.getUserId() +
-                    ", isMandatoryRole : " + userRoleMappingUser.isMandatoryRole() +
-                    ", isCascadedRole: " + userRoleMappingUser.isCascadedRole() + " }");
+            builder = builder.concat(", { UserId : " + userForUserRoleMapping.getUserId() +
+                    ", isMandatoryRole : " + userForUserRoleMapping.isMandatoryRole() +
+                    ", isCascadedRole: " + userForUserRoleMapping.isCascadedRole() + " }");
         }
         return builder;
     }

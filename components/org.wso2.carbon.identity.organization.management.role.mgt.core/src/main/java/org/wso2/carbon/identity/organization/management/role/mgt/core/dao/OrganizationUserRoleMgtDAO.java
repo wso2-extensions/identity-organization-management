@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -31,6 +31,7 @@ import java.util.List;
  * Organization Management-Role Management DAO.
  */
 public interface OrganizationUserRoleMgtDAO {
+
     /**
      * Add organization-user-role mappings.
      * @param organizationUserRoleMappings List of Organization-User-Role mappings.
@@ -48,7 +49,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param limit The limit of the results.
      * @param requestedAttributes The list of attributes.
      * @param tenantID The tenant ID.
-     * @param filter The filter.
+     * @param filter The filter to filter the results.
      * @return The List of RoleMembers.
      * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management exception.
      */
@@ -61,7 +62,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param deletionList List of organizations to be deleted for user role mappings.
      * @param userId ID of the user.
      * @param roleId ID of role.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     void deleteOrganizationsUserRoleMapping(List<OrganizationUserRoleMapping> deletionList, String userId,
@@ -80,7 +81,7 @@ public interface OrganizationUserRoleMgtDAO {
      * Get roleids by organization and user ids.
      * @param organizationId ID of the organization.
      * @param userId ID of the user.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @return List of Roles.
      * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management Server exception.
      */
@@ -91,7 +92,7 @@ public interface OrganizationUserRoleMgtDAO {
      * Updating the organization-user-role mappings on mandatory property.
      * @param organizationUserRoleMappingsToAdd List of Organization-User-Role mappings to add.
      * @param organizationUserRoleMappingsToDelete List of Organization-User-Role mappings to delete.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management Server exception.
      */
     void updateMandatoryProperty(List<OrganizationUserRoleMapping> organizationUserRoleMappingsToAdd,
@@ -105,7 +106,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param roleId ID of the role.
      * @param assignedLevel The assigned level of the role.
      * @param mandatory Mandatory or not.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @return The boolean value of whether the user exists or not.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
@@ -119,7 +120,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param organizationId ID of the organization.
      * @param userId ID of the user.
      * @param roleId ID of the role.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @return The mandatory value of the organization-user-role mapping.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
@@ -149,7 +150,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param organizationId ID of the organization.
      * @param userId ID of the user.
      * @param roleId ID of the role.
-     * @param tenantId Tenant ID.
+     * @param tenantId The tenant ID.
      * @return The assignedAt value of an organization-user-role mapping.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */

@@ -41,7 +41,7 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMappingUser;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserForUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleOperation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -207,7 +207,7 @@ public class OrganizationManagementService {
             UserRoleMapping newUserRoleMappings = new UserRoleMapping(userRoleMappingDTO.getRoleId(),
                     userRoleMappingDTO.getUsers()
                             .stream()
-                            .map(mapping -> new UserRoleMappingUser(mapping.getUserId(), mapping.getMandatory(),
+                            .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getMandatory(),
                                     mapping.getIncludeSubOrgs()))
                             .collect(Collectors.toList()));
             RoleMgtEndpointUtils.getOrganizationUserRoleManager()
@@ -475,6 +475,4 @@ public class OrganizationManagementService {
         return (OrganizationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getOSGiService
                 (OrganizationManager.class, null);
     }
-
-
 }

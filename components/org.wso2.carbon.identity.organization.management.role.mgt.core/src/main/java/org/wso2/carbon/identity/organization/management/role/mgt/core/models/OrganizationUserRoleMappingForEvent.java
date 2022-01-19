@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,30 +20,28 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 
 import java.util.List;
 
-/*
-* Organization-User-Role mapping for role assignment and revoke events.
-* */
-
 /**
  * Class for Organization-User-Role mapping for event.
  */
 public class OrganizationUserRoleMappingForEvent {
+
     private String organizationId;
     private String roleId;
     private String userId;
-    private List<UserRoleMappingUser> usersRoleInheritance;
+    private List<UserForUserRoleMapping> usersRoleInheritance;
 
     public OrganizationUserRoleMappingForEvent() {
     }
 
     public OrganizationUserRoleMappingForEvent(String organizationId, String userId, String roleId) {
+
         this.organizationId = organizationId;
         this.userId = userId;
         this.roleId = roleId;
     }
 
     public OrganizationUserRoleMappingForEvent(String organizationId, String roleId,
-                                               List<UserRoleMappingUser> usersRoleInheritance) {
+                                               List<UserForUserRoleMapping> usersRoleInheritance) {
 
         this.organizationId = organizationId;
         this.roleId = roleId;
@@ -51,30 +49,37 @@ public class OrganizationUserRoleMappingForEvent {
     }
 
     public String getOrganizationId() {
+
         return organizationId;
     }
 
     public void setOrganizationId(String organizationId) {
+
         this.organizationId = organizationId;
     }
 
     public String getRoleId() {
+
         return roleId;
     }
 
     public void setRoleId(String roleId) {
+
         this.roleId = roleId;
     }
 
     public String getUserId() {
+
         return userId;
     }
 
     public void setUserId(String userId) {
+
         this.userId = userId;
     }
 
-    public List<UserRoleMappingUser> getUsersRoleInheritance() {
+    public List<UserForUserRoleMapping> getUsersRoleInheritance() {
+
         return usersRoleInheritance;
     }
 

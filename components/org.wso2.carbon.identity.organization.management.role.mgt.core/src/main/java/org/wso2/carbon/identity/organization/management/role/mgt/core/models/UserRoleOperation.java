@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -22,34 +22,41 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
  * User Role Operation Implementation.
  */
 public class UserRoleOperation {
+
     private String path;
     private boolean value;
     private String op;
 
     public UserRoleOperation(String op, String path) {
+
         this.op = op;
         this.path = path;
     }
 
     public UserRoleOperation(String op, String path, boolean value) {
+
         this.op = op;
         this.path = path;
         this.value = value;
     }
 
     public String getPath() {
+
         return path;
     }
 
     public boolean getValue() {
+
         return value;
     }
 
     public void setValue(boolean value) {
+
         this.value = value;
     }
 
     public String getOp() {
+
         return op;
     }
 

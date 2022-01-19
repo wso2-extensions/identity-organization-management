@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -22,48 +22,58 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.exception
  * Organization User Role management exception.
  */
 public class OrganizationUserRoleMgtException extends Exception {
+
     private String errorCode;
     private String description;
 
     public OrganizationUserRoleMgtException() {
+
         super();
     }
 
     public OrganizationUserRoleMgtException(String message, String errorCode) {
+
         super(message);
         this.errorCode = errorCode;
     }
 
     public OrganizationUserRoleMgtException(String message, String errorCode, Throwable cause) {
+
         super(message, cause);
         this.errorCode = errorCode;
     }
 
     public OrganizationUserRoleMgtException(String message, String description, String errorCode) {
+
         super(message);
         this.errorCode = errorCode;
         this.description = description;
     }
 
     public OrganizationUserRoleMgtException(String message, String description, String errorCode, Throwable cause) {
+
         super(message, cause);
         this.errorCode = errorCode;
         this.description = description;
     }
 
     public OrganizationUserRoleMgtException(Throwable cause) {
+
         super(cause);
     }
 
     public String getErrorCode() {
+
         return errorCode;
     }
 
     public String getDescription() {
+
         return description;
     }
 
     public void setDescription(String description) {
+
         this.description = description;
     }
 }

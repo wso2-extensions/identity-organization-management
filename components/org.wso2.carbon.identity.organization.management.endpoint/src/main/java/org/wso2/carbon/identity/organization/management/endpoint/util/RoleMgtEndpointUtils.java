@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint.util;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.MDC;
@@ -207,7 +206,7 @@ public class RoleMgtEndpointUtils {
      * @param code error code
      * @param log logger
      * @param e error
-     * @return FprbiddenException
+     * @return ForbiddenException
      */
     public static ForbiddenException buildForbiddenException(String description, String message, String code, Log log,
                                                              Throwable e) {

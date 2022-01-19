@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -101,12 +101,14 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.uti
  * Implementation of OrganizationUserRoleMgtDAO.
  */
 public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDAO {
+
     private static final Log LOG = LogFactory.getLog(OrganizationUserRoleMgtDAOImpl.class);
 
     @Override
     public void addOrganizationUserRoleMappings(List<OrganizationUserRoleMapping> organizationUserRoleMappings,
                                                 int tenantID)
             throws OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
@@ -148,6 +150,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                                             List<String> requestedAttributes, int tenantID,
                                                             String filter)
             throws OrganizationUserRoleMgtServerException {
+
         boolean paginationReq = offset > -1 || limit > 0;
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
@@ -230,6 +233,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     public void deleteOrganizationsUserRoleMapping(List<OrganizationUserRoleMapping> deletionList,
                                                    String userId, String roleId, int tenantId)
             throws OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
@@ -265,6 +269,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public void deleteOrganizationsUserRoleMappings(String userId, int tenantId)
             throws OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedjdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             namedjdbcTemplate.withTransaction(template -> {
@@ -286,6 +291,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public List<Role> getRolesByOrganizationAndUser(String organizationId, String userId, int tenantID)
             throws OrganizationUserRoleMgtServerException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         List<Role> roles;
         try {
@@ -312,14 +318,15 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                         List<OrganizationUserRoleMapping> organizationUserRoleMappingsToDelete,
                                         int tenantId)
             throws OrganizationUserRoleMgtServerException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 /*
-                 We are getting the organization-user-role mappings accordingly for all the scenarios mentioned in
-                 @{OrganizationUserRoleManagerImpl} Therefore, we only need to add the user role mappings,
-                 delete the user role mappings and update the user role mappings accordingly.
-                 */
+                 * We are getting the organization-user-role mappings accordingly for all the scenarios mentioned in
+                 * @{OrganizationUserRoleManagerImpl} Therefore, we only need to add the user role mappings,
+                 * delete the user role mappings and update the user role mappings accordingly.
+                 * */
                 // add organization-user-role mappings
                 if (CollectionUtils.isNotEmpty(organizationUserRoleMappingsToAdd)) {
                     template.executeInsert(queryForMultipleInserts(organizationUserRoleMappingsToAdd.size()),
@@ -397,6 +404,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public boolean isOrganizationUserRoleMappingExists(String organizationId, String userId, String roleId, String
             assignedLevel, boolean mandatory, int tenantId) throws OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         int mappingsCount;
         try {
@@ -425,19 +433,20 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public int getDirectlyAssignedOrganizationUserRoleMappingInheritance(String organizationId, String
             userId, String roleId, int tenantId) throws OrganizationUserRoleMgtException {
+
         /*
-        Since this method is to get directly assigned organization-user-role mapping, assignedLevel(an org. id) =
-        @param{organizationId}
-        */
+         * Since this method is to get directly assigned organization-user-role mapping, assignedLevel(an org. id) =
+         * @param{organizationId}
+         * */
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         int directlyAssignedRoleMappingInheritance = -1;
         try {
             boolean mappingsExists = namedJdbcTemplate
                     .fetchSingleRecord(buildIsRoleMappingExistsQuery(organizationId, false),
                             /*
-                             We are not checking whether the role is mandatory or not. We want to get a user role
-                             mapping on params organizationId, userId, roleId, tenantId and assignedLevel
-                             */
+                             * We are not checking whether the role is mandatory or not. We want to get a user role
+                             * mapping on params organizationId, userId, roleId, tenantId and assignedLevel
+                             * */
                             (resultSet, rowNumber) ->
                                     resultSet.getInt(COUNT_COLUMN_NAME) > 0,
                             namedPreparedStatement -> {
@@ -460,10 +469,12 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ORG_ID, organizationId);
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT, organizationId);
                             });
-            /* Here, we get the mandatory and non-mandatory values of the organization-user-role mappings according to
+            /*
+             * Here, we get the mandatory and non-mandatory values of the organization-user-role mappings according to
              * the following parameters, userId, roleId, tenantId, organizationId, assignedAt value. There is a
              * possibility of having both mandatory and non-mandatory values due to this. But since we need to
-             * update the values according to priority we select the max value from those values.*/
+             * update the values according to priority we select the max value from those values.
+             * */
             directlyAssignedRoleMappingInheritance = results.stream().max(Integer::compare).get();
         } catch (DataAccessException e) {
             String message =
@@ -478,6 +489,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public Integer getRoleIdBySCIMGroupName(String roleName, int tenantId) throws
             OrganizationUserRoleMgtServerException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ROLE_ID_BY_SCIM_GROUP_NAME,
@@ -495,6 +507,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public List<ChildParentAssociation> getAllSubOrganizations(String organizationId) throws
             OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             return namedJdbcTemplate.executeQuery(FIND_ALL_CHILD_ORG_IDS,
@@ -512,6 +525,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     @Override
     public String getAssignedAtOfAnyOrganizationUserRoleMapping(String organizationId, String userId, String roleId,
                                                                 int tenantId) throws OrganizationUserRoleMgtException {
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         String assignedAt = null;
         try {
@@ -548,6 +562,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     private String queryForMultipleInserts(Integer numberOfMapings) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING);
 
@@ -557,11 +572,11 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                 sb.append(",");
             }
         }
-
         return sb.toString();
     }
 
     private String queryForMultipleRoleMappingDeletion(int numberOfOrganizations) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL);
         sb.append("(");

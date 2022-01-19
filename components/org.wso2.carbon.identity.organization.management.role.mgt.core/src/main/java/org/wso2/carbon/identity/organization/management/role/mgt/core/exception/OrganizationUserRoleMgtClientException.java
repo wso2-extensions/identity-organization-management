@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,15 +24,18 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.exception
 public class OrganizationUserRoleMgtClientException extends OrganizationUserRoleMgtException {
 
     public OrganizationUserRoleMgtClientException(String message, String description, String errorCode) {
+
         super(message, description, errorCode);
     }
 
     public OrganizationUserRoleMgtClientException(String message, String description, String errorCode,
                                                   Throwable cause) {
+
         super(message, description, errorCode, cause);
     }
 
     public OrganizationUserRoleMgtClientException(Throwable cause) {
+
         super(cause);
     }
 }

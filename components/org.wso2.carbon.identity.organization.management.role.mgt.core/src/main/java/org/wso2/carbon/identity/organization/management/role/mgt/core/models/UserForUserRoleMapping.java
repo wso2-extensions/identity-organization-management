@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -21,15 +21,17 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 /**
  * User object for User Role Mapping
  */
-public class UserRoleMappingUser {
+public class UserForUserRoleMapping {
+
     private String userId;
-    //Mandatory role if the role we are assigning is mandatory
-    //Cascaded role if the role we are assigning is non-mandatory and included for sub organizations
-    //if Mandatory role is true, then cascaded role is true.
+    // Mandatory role if the role we are assigning is mandatory
+    // Cascaded role if the role we are assigning is non-mandatory and included for sub organizations
+    // if Mandatory role is true, then cascaded role should be true.
     private boolean mandatoryRole;
     private boolean cascadedRole;
 
-    public UserRoleMappingUser(String userId, boolean mandatoryRole, boolean cascadedRole) {
+    public UserForUserRoleMapping(String userId, boolean mandatoryRole, boolean cascadedRole) {
+
         this.userId = userId;
         this.mandatoryRole = mandatoryRole;
         this.cascadedRole = cascadedRole;
@@ -56,10 +58,12 @@ public class UserRoleMappingUser {
     }
 
     public boolean isCascadedRole() {
+
         return cascadedRole;
     }
 
     public void setCascadedRole(boolean cascadedRole) {
+
         this.cascadedRole = cascadedRole;
     }
 }

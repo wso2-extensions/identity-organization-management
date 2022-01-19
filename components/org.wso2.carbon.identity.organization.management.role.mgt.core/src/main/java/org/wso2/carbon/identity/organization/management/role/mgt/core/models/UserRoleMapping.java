@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -25,11 +25,12 @@ import java.util.List;
  */
 public class UserRoleMapping {
 
-    private List<UserRoleMappingUser> users;
+    private List<UserForUserRoleMapping> users;
     private String roleId;
     private int hybridRoleId;
 
-    public UserRoleMapping(String roleId, List<UserRoleMappingUser> users) {
+    public UserRoleMapping(String roleId, List<UserForUserRoleMapping> users) {
+
         this.roleId = roleId;
         this.users = users;
     }
@@ -39,7 +40,7 @@ public class UserRoleMapping {
         this.roleId = roleId;
     }
 
-    public void setUsers(List<UserRoleMappingUser> users) {
+    public void setUsers(List<UserForUserRoleMapping> users) {
 
         this.users = users;
     }
@@ -54,7 +55,7 @@ public class UserRoleMapping {
         return roleId;
     }
 
-    public List<UserRoleMappingUser> getUsers() {
+    public List<UserForUserRoleMapping> getUsers() {
 
         return users;
     }

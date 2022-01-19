@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,6 +24,7 @@ import java.util.Map;
  * User representation.
  */
 public class RoleMember {
+
     private Map<String, Object> userAttributes;
 
     public RoleMember(Map<String, Object> userAttributes) {

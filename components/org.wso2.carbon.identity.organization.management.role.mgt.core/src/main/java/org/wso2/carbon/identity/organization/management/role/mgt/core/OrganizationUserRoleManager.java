@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -31,6 +31,7 @@ import java.util.List;
  * Interface for Organization-User-Role Management.
  */
 public interface OrganizationUserRoleManager {
+    
     /**
      * Create new {@link OrganizationUserRoleMapping}s in the database.
      * @param organizationId ID of the organization
@@ -44,10 +45,10 @@ public interface OrganizationUserRoleManager {
      * Get users by organization and role
      * @param organizationId ID of the organization.
      * @param roleId ID of the role.
-     * @param offset Offset.
-     * @param limit Limit.
+     * @param offset The offset of the results.
+     * @param limit The limit of the results.
      * @param requestedAttributes The list of requested attributes.
-     * @param filter Filter.
+     * @param filter The filter to filter the results.
      * @return A list of Role Members.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
@@ -69,41 +70,41 @@ public interface OrganizationUserRoleManager {
 
     /**
      * Delete organization-user-role mappings.
-     * @param organizationId
-     * @param userId
-     * @param roleId
-     * @param includeSubOrgs
-     * @throws OrganizationUserRoleMgtException
+     * @param organizationId ID of the organization.
+     * @param userId ID of the user.
+     * @param roleId ID of the role.
+     * @param includeSubOrgs Whether the sub-organization should be included or not.
+     * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
     void deleteOrganizationsUserRoleMapping(String organizationId, String userId, String roleId,
                                             boolean includeSubOrgs) throws OrganizationUserRoleMgtException;
 
     /**
      * Delete all organization-user-role mappings of a user.
-     * @param userId
-     * @throws OrganizationUserRoleMgtException
+     * @param userId ID of the user.
+     * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
     void deleteOrganizationsUserRoleMappings(String userId) throws OrganizationUserRoleMgtException;
 
     /**
      * Get roles by organization and user.
-     * @param organizationId
-     * @param userId
+     * @param organizationId ID of the organization.
+     * @param userId ID of the user.
      * @return The list of Roles.
-     * @throws OrganizationUserRoleMgtException
+     * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
     List<Role> getRolesByOrganizationAndUser(String organizationId, String userId)
             throws OrganizationUserRoleMgtException;
 
     /**
      * Fina whether there is a organization-user-role mapping or not
-     * @param organizationId
-     * @param userId
-     * @param roleId
-     * @param assignedLevel
-     * @param mandatory
+     * @param organizationId ID of the organization.
+     * @param userId ID of the user.
+     * @param roleId ID of the role.
+     * @param assignedLevel ID of the assigned level of organization-user-role mapping.
+     * @param mandatory Whether the organization-user-role mapping is mandatory or not.
      * @return Boolean value of whether an organization-user-role mapping exists.
-     * @throws OrganizationUserRoleMgtException
+     * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
     boolean isOrganizationUserRoleMappingExists(String organizationId, String userId, String roleId,
                                                 String assignedLevel, boolean mandatory)

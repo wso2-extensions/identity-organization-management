@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -36,19 +36,20 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.handler.Or
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * OSGI service component for organization and user role management core bundle.
+ * OSGi service component for organization and user role management core bundle.
  */
 @Component(
         name = "carbon.organization.and.user.role.mgt.component",
         immediate = true
 )
 public class OrganizationUserRoleMgtServiceComponent {
+
     private static final Log log = LogFactory.getLog(OrganizationUserRoleMgtServiceComponent.class);
 
     /**
      * Register Organization and User Role Manager service in the OSGI context.
      *
-     * @param componentContext OSGI service component context.
+     * @param componentContext OSGi service component context.
      */
     @Activate
     protected void activate(ComponentContext componentContext) {
