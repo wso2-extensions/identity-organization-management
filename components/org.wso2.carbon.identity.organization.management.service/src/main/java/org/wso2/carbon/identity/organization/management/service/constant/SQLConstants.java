@@ -23,6 +23,8 @@ package org.wso2.carbon.identity.organization.management.service.constant;
  */
 public class SQLConstants {
 
+    public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
+
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
             "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";, :" +
@@ -54,10 +56,16 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "; AND UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
-    public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ID FROM UM_ORG WHERE ";
+    public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT ORG_ID FROM UM_USER_ROLE_ORG " +
+            "INNER JOIN UM_ORG ON UM_USER_ROLE_ORG.ORG_ID = UM_ORG.UM_ID WHERE ";
 
-    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_TENANT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_CREATED_TIME";
+    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_USER_ROLE_ORG.UM_TENANT_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_HYBRID_ROLE_ID IN " +
+            "(SELECT UM_ID FROM UM_HYBRID_ROLE WHERE UM_ROLE_NAME IN (SELECT UM_ROLE_NAME " +
+            "FROM UM_ROLE_PERMISSION WHERE UM_PERMISSION_ID IN (SELECT UM_ID FROM UM_PERMISSION WHERE UM_RESOURCE_ID" +
+            " IN (" + PERMISSION_LIST_PLACEHOLDER + ")))) AND UM_ORG.UM_TENANT_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_ORG.UM_CREATED_TIME";
 
     public static final String DELETE_ORGANIZATION_BY_ID = "DELETE FROM UM_ORG WHERE UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ID = :" +
@@ -118,5 +126,6 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_PARENT_ID = "PARENT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_KEY = "KEY";
         public static final String DB_SCHEMA_COLUMN_NAME_VALUE = "VALUE";
+        public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";
     }
 }

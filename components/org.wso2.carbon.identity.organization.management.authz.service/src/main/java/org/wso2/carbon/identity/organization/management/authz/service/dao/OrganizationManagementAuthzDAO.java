@@ -20,16 +20,11 @@ package org.wso2.carbon.identity.organization.management.authz.service.dao;
 
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
-import java.util.List;
-
 /**
  * DAO to validate authorization capabilities of organization management.
  */
 public interface OrganizationManagementAuthzDAO {
 
     boolean isUserAuthorized(String userId, String resourceId, String orgId, int tenantId)
-            throws OrganizationManagementAuthzServiceServerException;
-
-    List<String> getUserAuthorizedOrganizations(String userId, String resourceId, int tenantId)
             throws OrganizationManagementAuthzServiceServerException;
 }

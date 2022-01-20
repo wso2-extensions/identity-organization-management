@@ -22,8 +22,6 @@ import org.wso2.carbon.identity.organization.management.authz.service.dao.Organi
 import org.wso2.carbon.identity.organization.management.authz.service.dao.OrganizationManagementAuthzDAOImpl;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
-import java.util.List;
-
 /**
  * Manager for organization management related authorization.
  */
@@ -65,22 +63,5 @@ public class OrganizationManagementAuthorizationManager {
 
         OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
         return organizationMgtAuthzDAO.isUserAuthorized(userId, resourceId, orgId, tenantId);
-    }
-
-    /**
-     * Get user authorized organizations for a given permission.
-     *
-     * @param userId     Unique identifier of the user.
-     * @param resourceId Required permission.
-     * @param tenantId   Tenant id.
-     * @return list of organization ids.
-     * @throws OrganizationManagementAuthzServiceServerException The server exception thrown when evaluating user's
-     *                                                           authorization.
-     */
-    public List<String> getUserAuthorizedOrganizations(String userId, String resourceId, int tenantId)
-            throws OrganizationManagementAuthzServiceServerException {
-
-        OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
-        return organizationMgtAuthzDAO.getUserAuthorizedOrganizations(userId, resourceId, tenantId);
     }
 }

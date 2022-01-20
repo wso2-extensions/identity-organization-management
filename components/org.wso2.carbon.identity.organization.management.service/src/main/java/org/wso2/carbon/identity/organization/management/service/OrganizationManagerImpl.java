@@ -52,7 +52,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_VALUE_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PARENT_ORGANIZATION;
@@ -86,7 +85,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_DESCRIPTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
@@ -173,27 +171,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
     @Override
     public List<String> getOrganizationIds(String filter) throws OrganizationManagementException {
 
-        int tenantId = getTenantId();
-        String tenantDomain = getTenantDomain();
-        List<String> authorizedOrganizationIds;
-        try {
-            authorizedOrganizationIds =  OrganizationManagementAuthorizationManager.getInstance()
-                    .getUserAuthorizedOrganizations(getUserId(), VIEW_ORGANIZATION_PERMISSION, tenantId);
-        } catch (OrganizationManagementAuthzServiceServerException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
-        }
-        if (StringUtils.isBlank(filter)) {
-            return authorizedOrganizationIds;
-        }
-        List<String> filteredOrganizationIdsInTenant = getOrganizationManagementDAO().getOrganizationIds(tenantId,
-                tenantDomain, getExpressionNodes(filter));
-        List<String> organizations = new ArrayList<>();
-        for (String orgId: authorizedOrganizationIds) {
-            if (filteredOrganizationIdsInTenant.contains(orgId)) {
-                organizations.add(orgId);
-            }
-        }
-        return organizations;
+        return getOrganizationManagementDAO().getOrganizationIds(getTenantId(), getTenantDomain(),
+                getExpressionNodes(filter));
     }
 
     @Override

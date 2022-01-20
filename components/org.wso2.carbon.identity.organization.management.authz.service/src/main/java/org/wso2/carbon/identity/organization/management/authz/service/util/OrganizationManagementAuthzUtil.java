@@ -29,6 +29,12 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.PERMISSION_SPLITTER;
+
 /**
  * This class provides utility functions for the organization management authorization.
  */
@@ -61,5 +67,21 @@ public class OrganizationManagementAuthzUtil {
     public static NamedJdbcTemplate getNewTemplate() {
 
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
+    }
+
+    public static List<String> getAllowedPermissions(String resourceId) {
+
+        String[] permissionParts = resourceId.split(PERMISSION_SPLITTER);
+        List<String> allowedPermissions = new ArrayList<>();
+        for (int i = 0; i < permissionParts.length - 1; i++) {
+            allowedPermissions.add(String.join(PERMISSION_SPLITTER,
+                    subArray(permissionParts, permissionParts.length - i)));
+        }
+        return allowedPermissions;
+    }
+
+    private static <T> T[] subArray(T[] array, int end) {
+
+        return Arrays.copyOfRange(array, 0, end);
     }
 }
