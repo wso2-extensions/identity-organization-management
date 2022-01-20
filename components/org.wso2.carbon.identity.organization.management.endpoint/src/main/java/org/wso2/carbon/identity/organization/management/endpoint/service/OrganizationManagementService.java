@@ -34,14 +34,13 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleOperationDTO;
-import org.wso2.carbon.identity.organization.management.endpoint.util.RoleMgtEndpointUtils;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserForUserRoleMapping;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleOperation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -53,8 +52,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,10 +60,12 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getOrganizationRoleResourceURI;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getOrganizationUserRoleManager;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getResourceLocation;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleClientErrorResponse;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleServerErrorResponse;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleUnexpectedServerError;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 
@@ -197,7 +196,8 @@ public class OrganizationManagementService {
 
     /**
      * Adding new organization-user-role mappings.
-     * @param organizationId ID of organization
+     *
+     * @param organizationId     ID of organization
      * @param userRoleMappingDTO DTO of user-role mapping
      * @return the response
      */
@@ -210,29 +210,32 @@ public class OrganizationManagementService {
                             .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getMandatory(),
                                     mapping.getIncludeSubOrgs()))
                             .collect(Collectors.toList()));
-            RoleMgtEndpointUtils.getOrganizationUserRoleManager()
+            getOrganizationUserRoleManager()
                     .addOrganizationUserRoleMappings(organizationId, newUserRoleMappings);
             return Response.created(getOrganizationRoleResourceURI(organizationId)).build();
         } catch (OrganizationUserRoleMgtClientException e) {
-            return RoleMgtEndpointUtils.handleBadRequestResponse(e, LOG);
+            return handleClientErrorResponse(e, LOG);
+        } catch (OrganizationUserRoleMgtException e) {
+            return handleServerErrorResponse(e, LOG);
         } catch (Throwable throwable) {
-            return RoleMgtEndpointUtils.handleUnexpectedServerError(throwable, LOG);
+            return handleUnexpectedServerError(throwable, LOG);
         }
     }
 
     /**
      * Get users from a particular organization and role.
+     *
      * @param organizationId ID of the organization.
-     * @param roleId ID of role.
-     * @param offset offset.
-     * @param limit limit.
-     * @param attributes attributes.
-     * @param filter filter.
+     * @param roleId         ID of role.
+     * @param offset         offset.
+     * @param limit          limit.
+     * @param attributes     attributes.
+     * @param filter         filter.
      * @return a list of users.
      */
     public Response getUsersFromOrganizationAndRole(String organizationId, String roleId,
-                                                                   Integer offset, Integer limit, String attributes,
-                                                                   String filter) {
+                                                    Integer offset, Integer limit, String attributes,
+                                                    String filter) {
 
         try {
             if ((limit != null && limit < 1) && (offset != null && offset < 0)) {
@@ -240,103 +243,101 @@ public class OrganizationManagementService {
                         .INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST, null);
             }
             // If pagination parameters are not set, then set them to -1
-            limit = limit == null ?  Integer.valueOf(-1) : limit;
+            limit = limit == null ? Integer.valueOf(-1) : limit;
             offset = offset == null ? Integer.valueOf(-1) : offset;
             List<String> requestedAttributes = attributes == null ? new ArrayList<>() :
-                    Arrays.stream(attributes.split(",")).map(String :: trim).collect(Collectors.toList());
+                    Arrays.stream(attributes.split(",")).map(String::trim).collect(Collectors.toList());
             if (!requestedAttributes.contains("userName")) {
                 requestedAttributes.add("userName");
             }
-            List<RoleMember> roleMembers = RoleMgtEndpointUtils.getOrganizationUserRoleManager()
+            List<RoleMember> roleMembers = getOrganizationUserRoleManager()
                     .getUsersByOrganizationAndRole(organizationId, roleId, offset, limit, requestedAttributes, filter);
             return Response.ok().entity(roleMembers.stream().map(RoleMember::getUserAttributes)
                     .collect(Collectors.toList())).build();
         } catch (OrganizationUserRoleMgtClientException e) {
-            return RoleMgtEndpointUtils.handleBadRequestResponse(e, LOG);
+            return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {
-            return RoleMgtEndpointUtils.handleServerErrorResponse(e, LOG);
-        } catch (Throwable e) {
-            return RoleMgtEndpointUtils.handleUnexpectedServerError(e, LOG);
+            return handleServerErrorResponse(e, LOG);
+        } catch (Throwable throwable) {
+            return handleUnexpectedServerError(throwable, LOG);
         }
     }
 
     /**
      * Delete organization-user-role mappings.
+     *
      * @param organizationId ID of the organization.
-     * @param roleId ID of role.
-     * @param userId ID of user.
+     * @param roleId         ID of role.
+     * @param userId         ID of user.
      * @param includeSubOrgs whether including sub-organizations or not.
      * @return whether the deletion is successful or not.
      */
     public Response deleteOrganizationUserRoleMapping(String organizationId, String roleId,
-                                                                            String userId, Boolean includeSubOrgs) {
+                                                      String userId, Boolean includeSubOrgs) {
 
         try {
-            RoleMgtEndpointUtils.getOrganizationUserRoleManager()
+            getOrganizationUserRoleManager()
                     .deleteOrganizationsUserRoleMapping(organizationId, userId, roleId, includeSubOrgs);
             return Response.noContent().build();
         } catch (OrganizationUserRoleMgtClientException e) {
-            return RoleMgtEndpointUtils.handleBadRequestResponse(e, LOG);
+            return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {
-            return RoleMgtEndpointUtils.handleServerErrorResponse(e, LOG);
+            return handleServerErrorResponse(e, LOG);
         } catch (Throwable throwable) {
-            return RoleMgtEndpointUtils.handleUnexpectedServerError(throwable, LOG);
+            return handleUnexpectedServerError(throwable, LOG);
         }
     }
 
     /**
      * Patching the mandatory field of organization-user-role mappings.
-     * @param organizationId ID of the organization.
-     * @param roleId ID of role.
-     * @param userId ID of user.
+     *
+     * @param organizationId       ID of the organization.
+     * @param roleId               ID of role.
+     * @param userId               ID of user.
      * @param userRoleOperationDTO DTO of user role operation.
      * @return whether the patch operation is successful or not.
      */
     public Response patchOrganizationUserRoleMapping(String organizationId, String roleId,
-                                                                           String userId,
-                                                                           List<UserRoleOperationDTO>
-                                                                                   userRoleOperationDTO) {
+                                                     String userId,
+                                                     List<UserRoleOperationDTO>
+                                                             userRoleOperationDTO) {
         try {
-            RoleMgtEndpointUtils.getOrganizationUserRoleManager()
+            getOrganizationUserRoleManager()
                     .patchOrganizationsUserRoleMapping(organizationId, roleId, userId,
-                    userRoleOperationDTO.stream().map(op -> new UserRoleOperation(op.getOp(), op.getPath(),
-                                    op.getValue()))
-                            .collect(Collectors.toList()));
+                            userRoleOperationDTO.stream().map(op -> new UserRoleOperation(op.getOp(), op.getPath(),
+                                            op.getValue()))
+                                    .collect(Collectors.toList()));
             return Response.noContent().build();
         } catch (OrganizationUserRoleMgtClientException e) {
-            return RoleMgtEndpointUtils.handleBadRequestResponse(e, LOG);
+            return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {
-            return RoleMgtEndpointUtils.handleServerErrorResponse(e, LOG);
+            return handleServerErrorResponse(e, LOG);
         } catch (Throwable throwable) {
-            return RoleMgtEndpointUtils.handleUnexpectedServerError(throwable, LOG);
+            return handleUnexpectedServerError(throwable, LOG);
         }
     }
 
     /**
      * Get roles list from of a user within an organization.
+     *
      * @param organizationId ID of the organization.
-     * @param userId ID of user.
+     * @param userId         ID of user.
      * @return A list of roles.
      */
     public Response getRolesFromOrganizationAndUser(String organizationId, String userId) {
         try {
-            List<Role> roles = RoleMgtEndpointUtils.getOrganizationUserRoleManager()
+            List<Role> roles = getOrganizationUserRoleManager()
                     .getRolesByOrganizationAndUser(organizationId, userId);
             return Response.ok().entity(roles).build();
         } catch (OrganizationUserRoleMgtClientException e) {
-            return RoleMgtEndpointUtils.handleBadRequestResponse(e, LOG);
+            return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {
-            return RoleMgtEndpointUtils.handleServerErrorResponse(e, LOG);
+            return handleServerErrorResponse(e, LOG);
         } catch (Throwable throwable) {
-            return RoleMgtEndpointUtils.handleUnexpectedServerError(throwable, LOG);
+            return handleUnexpectedServerError(throwable, LOG);
         }
     }
 
-
-    private URI getOrganizationRoleResourceURI(String organizationId) throws URISyntaxException {
-
-        return new URI(String.format(ORGANIZATION_ROLES_PATH, organizationId));
-    }
 
     private Organization getOrganizationFromPostRequest(OrganizationPOSTRequest organizationPOSTRequest) {
 

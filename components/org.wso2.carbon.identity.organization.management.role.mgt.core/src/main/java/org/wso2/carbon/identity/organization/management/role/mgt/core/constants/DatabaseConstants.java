@@ -26,7 +26,7 @@ public class DatabaseConstants {
     /**
      * H2 Database Constant List.
      */
-    public static final class H2Constants {
+    public static final class SQLConstants {
         public static final String COUNT_COLUMN_NAME = "COUNT(1)";
         public static final String VIEW_ID_COLUMN = "UM_ID";
         public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
@@ -99,18 +99,12 @@ public class DatabaseConstants {
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND ORG_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND ASSIGNED_AT = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + ";";
-        public static final String GET_ASSIGNED_AT_VALUE_OF_ORGANIZATION_USER_ROLE_MAPPING_LINK = "SELECT " +
-                "ASSIGNED_AT FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_ROLE_ID = :" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "; AND UM_TENANT_ID = :" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND ORG_ID = :" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + ";";
         public static final String FIND_ALL_CHILD_ORG_IDS =
                 "WITH childOrgs(UM_ID, UM_PARENT_ID) AS ( SELECT UM_ID , UM_PARENT_ID FROM UM_ORG WHERE " +
                         "UM_PARENT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
                         "; UNION ALL SELECT UO.UM_ID, UO.UM_PARENT_ID FROM UM_ORG UO JOIN childOrgs CO ON CO.UM_ID = " +
                         "UO.UM_PARENT_ID)" +
-                        "SELECT UM_ID, UM_PARENT_ID FROM childOrgs ORDER BY UM_ID";
+                        "SELECT UM_ID FROM childOrgs ORDER BY UM_ID";
     }
 
     /**

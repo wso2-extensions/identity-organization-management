@@ -19,18 +19,15 @@
 package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 
 /**
- * This class helps to get the id of the child organization and the id of the organization which
- * the role is inherited from.
+ * This class helps to get the id of the child organization.
  */
-public class ChildParentAssociation {
+public class Organization {
 
     private String organizationId;
-    private String parentOrgId;
 
-    public ChildParentAssociation(String organizationId, String parentOrgId) {
+    public Organization(String organizationId) {
 
         this.organizationId = organizationId;
-        this.parentOrgId = parentOrgId;
     }
 
     public String getOrganizationId() {

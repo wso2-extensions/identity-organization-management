@@ -24,6 +24,8 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.constants
 public class OrganizationUserRoleMgtConstants {
 
     public static final String PATCH_OP_REPLACE = "replace";
+    public static final String INCLUDE_SUB_ORGS = "/includeSubOrgs";
+    public static final String IS_MANDATORY = "/isMandatory";
     /**
      * Error messages.
      */

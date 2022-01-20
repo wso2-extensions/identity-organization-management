@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,52 +19,26 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
 
 
-import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
-import javax.xml.bind.annotation.*;
 
-public class UserRoleMappingDTOUsers  {
+public class UserAssignedMetaDTO {
   
-    private String userId;
     private Boolean mandatory;
-    private Boolean includeSubOrgs;
+    private UserAssignedAtDTO assignedAt;
 
     /**
     **/
-    public UserRoleMappingDTOUsers userId(String userId) {
-
-        this.userId = userId;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "c4c3a320-e381-463a-846f-1c2bd083d38c", required = true, value = "")
-    @JsonProperty("userId")
-    @Valid
-    @NotNull(message = "Property userId cannot be null.")
-
-    public String getUserId() {
-        return userId;
-    }
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    /**
-    **/
-    public UserRoleMappingDTOUsers mandatory(Boolean mandatory) {
+    public UserAssignedMetaDTO mandatory(Boolean mandatory) {
 
         this.mandatory = mandatory;
         return this;
     }
     
-    @ApiModelProperty(example = "true", value = "")
+    @ApiModelProperty(value = "")
     @JsonProperty("mandatory")
     @Valid
     public Boolean getMandatory() {
@@ -76,20 +50,20 @@ public class UserRoleMappingDTOUsers  {
 
     /**
     **/
-    public UserRoleMappingDTOUsers includeSubOrgs(Boolean includeSubOrgs) {
+    public UserAssignedMetaDTO assignedAt(UserAssignedAtDTO assignedAt) {
 
-        this.includeSubOrgs = includeSubOrgs;
+        this.assignedAt = assignedAt;
         return this;
     }
     
-    @ApiModelProperty(example = "true", value = "")
-    @JsonProperty("includeSubOrgs")
+    @ApiModelProperty(value = "")
+    @JsonProperty("assignedAt")
     @Valid
-    public Boolean getIncludeSubOrgs() {
-        return includeSubOrgs;
+    public UserAssignedAtDTO getAssignedAt() {
+        return assignedAt;
     }
-    public void setIncludeSubOrgs(Boolean includeSubOrgs) {
-        this.includeSubOrgs = includeSubOrgs;
+    public void setAssignedAt(UserAssignedAtDTO assignedAt) {
+        this.assignedAt = assignedAt;
     }
 
 
@@ -103,26 +77,24 @@ public class UserRoleMappingDTOUsers  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        UserRoleMappingDTOUsers userRoleMappingDTOUsers = (UserRoleMappingDTOUsers) o;
-        return Objects.equals(this.userId, userRoleMappingDTOUsers.userId) &&
-            Objects.equals(this.mandatory, userRoleMappingDTOUsers.mandatory) &&
-            Objects.equals(this.includeSubOrgs, userRoleMappingDTOUsers.includeSubOrgs);
+        UserAssignedMetaDTO userAssignedMetaDTO = (UserAssignedMetaDTO) o;
+        return Objects.equals(this.mandatory, userAssignedMetaDTO.mandatory) &&
+            Objects.equals(this.assignedAt, userAssignedMetaDTO.assignedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, mandatory, includeSubOrgs);
+        return Objects.hash(mandatory, assignedAt);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class UserRoleMappingDTOUsers {\n");
+        sb.append("class UserAssignedMetaDTO {\n");
         
-        sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
         sb.append("    mandatory: ").append(toIndentedString(mandatory)).append("\n");
-        sb.append("    includeSubOrgs: ").append(toIndentedString(includeSubOrgs)).append("\n");
+        sb.append("    assignedAt: ").append(toIndentedString(assignedAt)).append("\n");
         sb.append("}");
         return sb.toString();
     }

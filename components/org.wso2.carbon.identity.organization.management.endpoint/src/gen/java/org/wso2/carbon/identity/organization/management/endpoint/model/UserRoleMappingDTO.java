@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,24 +19,19 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTOUsers;
 import javax.validation.constraints.*;
 
 
-import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
-import javax.xml.bind.annotation.*;
 
 public class UserRoleMappingDTO  {
   
     private String roleId;
-    private List<UserRoleMappingDTOUsers> users = null;
+    private List<UserRoleMappingUsersDTO> users = null;
 
 
     /**
@@ -61,7 +56,7 @@ public class UserRoleMappingDTO  {
 
     /**
     **/
-    public UserRoleMappingDTO users(List<UserRoleMappingDTOUsers> users) {
+    public UserRoleMappingDTO users(List<UserRoleMappingUsersDTO> users) {
 
         this.users = users;
         return this;
@@ -70,14 +65,14 @@ public class UserRoleMappingDTO  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<UserRoleMappingDTOUsers> getUsers() {
+    public List<UserRoleMappingUsersDTO> getUsers() {
         return users;
     }
-    public void setUsers(List<UserRoleMappingDTOUsers> users) {
+    public void setUsers(List<UserRoleMappingUsersDTO> users) {
         this.users = users;
     }
 
-    public UserRoleMappingDTO addUsersItem(UserRoleMappingDTOUsers usersItem) {
+    public UserRoleMappingDTO addUsersItem(UserRoleMappingUsersDTO usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }

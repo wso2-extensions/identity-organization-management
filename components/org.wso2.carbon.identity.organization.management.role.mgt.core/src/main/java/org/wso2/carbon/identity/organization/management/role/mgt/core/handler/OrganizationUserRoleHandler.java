@@ -84,7 +84,7 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
         }
     }
 
-    public String formatRoleMappingRevokeData(Object data) {
+    private String formatRoleMappingRevokeData(Object data) {
 
         OrganizationUserRoleMappingForEvent organizationUserRoleMappingForRevokeEvent =
                 data instanceof OrganizationUserRoleMappingForEvent ? (OrganizationUserRoleMappingForEvent) data :

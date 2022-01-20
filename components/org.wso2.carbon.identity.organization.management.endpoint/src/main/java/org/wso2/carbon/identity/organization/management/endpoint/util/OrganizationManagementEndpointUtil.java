@@ -18,21 +18,35 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint.util;
 
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.MDC;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.OrganizationUserRoleManager;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ConflictErrorMessages;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ForbiddenErrorMessages;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.NotFoundErrorMessages;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.UUID;
 
 import javax.ws.rs.core.Response;
 
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_PATH;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
@@ -44,6 +58,43 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationManagementEndpointUtil {
 
     private static final Log LOG = LogFactory.getLog(OrganizationManagementEndpointUtil.class);
+
+    /**
+     * Get an instance of OrganizationUserRoleManager.
+     *
+     * @return an instance of OrganizationUserRoleManager
+     */
+    public static OrganizationUserRoleManager getOrganizationUserRoleManager() {
+
+        return (OrganizationUserRoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                getOSGiService(OrganizationUserRoleManager.class, null);
+    }
+
+    /**
+     * Get correlation ID.
+     *
+     * @return the correlation ID
+     */
+    public static String getCorrelation() {
+
+        String ref;
+        if (isCorrelationIDPresent()) {
+            ref = MDC.get(CORRELATION_ID_MDC).toString();
+        } else {
+            ref = UUID.randomUUID().toString();
+        }
+        return ref;
+    }
+
+    /**
+     * Check whether the correlation ID is present or not.
+     *
+     * @return whether the correlation ID is present or not.
+     */
+    public static boolean isCorrelationIDPresent() {
+
+        return MDC.get(CORRELATION_ID_MDC) != null;
+    }
 
     /**
      * Handles the response for client errors.
@@ -66,6 +117,27 @@ public class OrganizationManagementEndpointUtil {
     }
 
     /**
+     * Handles exceptions for Organization-User-Role management client exceptions.
+     *
+     * @param e   The error to be thrown.
+     * @param log The logger.
+     * @return The response for the error.
+     */
+    public static Response handleClientErrorResponse(OrganizationUserRoleMgtClientException e, Log log) {
+
+        if (isConflictError(e)) {
+            throw buildException(Response.Status.CONFLICT, log, e);
+        }
+        if (isForbiddenError(e)) {
+            throw buildException(Response.Status.FORBIDDEN, log, e);
+        }
+        if (isNotFoundError(e)) {
+            throw buildException(Response.Status.NOT_FOUND, log, e);
+        }
+        throw buildException(Response.Status.BAD_REQUEST, log, e);
+    }
+
+    /**
      * Handles the response for server errors.
      *
      * @param e   The server exception thrown.
@@ -77,15 +149,68 @@ public class OrganizationManagementEndpointUtil {
         throw buildException(Response.Status.INTERNAL_SERVER_ERROR, log, e);
     }
 
+    /**
+     * Handles the response for server errors.
+     *
+     * @param e   The server exception thrown.
+     * @param log The logger.
+     * @return The response for the server error.
+     */
+    public static Response handleServerErrorResponse(OrganizationUserRoleMgtException e, Log log) {
+
+        throw buildException(Response.Status.INTERNAL_SERVER_ERROR, log, e);
+    }
+
+    /**
+     * Handle the unexpected server errors.
+     *
+     * @param throwable The throwable error.
+     * @param log       The logger.
+     * @return The response of the server error.
+     */
+    public static Response handleUnexpectedServerError(Throwable throwable, Log log) {
+
+        throw buildException(ERROR_CODE_UNEXPECTED.getCode(), log, throwable);
+    }
+
     private static boolean isNotFoundError(OrganizationManagementClientException e) {
 
         return ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode());
+    }
 
+    private static boolean isNotFoundError(OrganizationUserRoleMgtClientException e) {
+
+        String code = e.getErrorCode().replace('-', '_');
+        return EnumUtils.isValidEnum(NotFoundErrorMessages.class, code);
     }
 
     private static boolean isConflictError(OrganizationManagementClientException e) {
 
         return ERROR_CODE_ORGANIZATION_NAME_CONFLICT.getCode().equals(e.getErrorCode());
+    }
+
+    private static boolean isConflictError(OrganizationUserRoleMgtClientException e) {
+
+        String code = e.getErrorCode().replace('-', '_');
+        return EnumUtils.isValidEnum(ConflictErrorMessages.class, code);
+    }
+
+    private static boolean isForbiddenError(OrganizationUserRoleMgtClientException e) {
+
+        String code = e.getErrorCode().replace('-', '_');
+        return EnumUtils.isValidEnum(ForbiddenErrorMessages.class, code);
+    }
+
+    private static OrganizationManagementEndpointException buildException(Response.Status status, Log log,
+                                                                          OrganizationUserRoleMgtException e) {
+
+        if (e instanceof OrganizationUserRoleMgtClientException) {
+            logDebug(log, e);
+        } else {
+            logError(log, e);
+        }
+        return new OrganizationManagementEndpointException(status, getError(e.getErrorCode(), e.getMessage(),
+                e.getDescription()));
     }
 
     private static OrganizationManagementEndpointException buildException(Response.Status status, Log log,
@@ -98,6 +223,14 @@ public class OrganizationManagementEndpointUtil {
         }
         return new OrganizationManagementEndpointException(status, getError(e.getErrorCode(), e.getMessage(),
                 e.getDescription()));
+    }
+
+    private static OrganizationManagementEndpointException buildException(String code, Log log, Throwable throwable) {
+
+        Error error = getError(code, Response.Status.INTERNAL_SERVER_ERROR.toString(),
+                Response.Status.INTERNAL_SERVER_ERROR.toString());
+        logError(log, throwable);
+        return new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
     }
 
     /**
@@ -126,11 +259,23 @@ public class OrganizationManagementEndpointUtil {
         }
     }
 
+    private static void logDebug(Log log, Throwable throwable) {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Response.Status.BAD_REQUEST, throwable);
+        }
+    }
+
     private static void logError(Log log, OrganizationManagementException e) {
 
         String errorMessageFormat = "errorCode: %s | message: %s";
         String errorMessage = String.format(errorMessageFormat, e.getErrorCode(), e.getDescription());
         log.error(errorMessage, e);
+    }
+
+    private static void logError(Log log, Throwable throwable) {
+
+        log.error(throwable.getMessage(), throwable);
     }
 
     /**
@@ -142,6 +287,18 @@ public class OrganizationManagementEndpointUtil {
     public static URI getResourceLocation(String organizationId) {
 
         return buildURIForHeader(V1_API_PATH_COMPONENT + ORGANIZATION_PATH + organizationId);
+    }
+
+    /**
+     * Get location of the created organization-user-role mapping.
+     *
+     * @param organizationId The unique identifier of the created organization-user-role mapping.
+     * @return URI
+     * @throws URISyntaxException To handle the URISyntax errors.
+     */
+    public static URI getOrganizationRoleResourceURI(String organizationId) throws URISyntaxException {
+
+        return new URI(String.format(ORGANIZATION_ROLES_PATH, organizationId));
     }
 
     private static URI buildURIForHeader(String endpoint) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -190,6 +190,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 201, message = "Created", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
@@ -213,6 +214,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 200, message = "Ok", response = UserDTO.class, responseContainer = "List"),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
@@ -236,6 +238,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 204, message = "No Content", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(@ApiParam(value = "ID of the organization of which, the user role mappings will be deleted.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be deleted.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId,     @Valid@ApiParam(value = "The deletion should proceed to sub orgs or not.")  @QueryParam("includeSubOrgs") Boolean includeSubOrgs) {
@@ -258,6 +261,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 204, message = "Ok", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesRoleIdUsersUserIdPatch(@ApiParam(value = "ID of the organization of which, the user role mappings will be updated.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be updated.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId, @ApiParam(value = "This represents the patch operation." ,required=true) @Valid List<UserRoleOperationDTO> userRoleOperationDTO) {
@@ -280,6 +284,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 200, message = "Ok", response = RoleDTO.class, responseContainer = "List"),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,56 +19,51 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
 
 
-import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
-import javax.xml.bind.annotation.*;
 
-public class UserDTOAssignedAt  {
+public class UserNameDTO {
   
-    private String orgId;
-    private String orgName;
+    private String givenName;
+    private String familyName;
 
     /**
     **/
-    public UserDTOAssignedAt orgId(String orgId) {
+    public UserNameDTO givenName(String givenName) {
 
-        this.orgId = orgId;
+        this.givenName = givenName;
         return this;
     }
     
-    @ApiModelProperty(value = "")
-    @JsonProperty("orgId")
+    @ApiModelProperty(example = "Lia", value = "")
+    @JsonProperty("givenName")
     @Valid
-    public String getOrgId() {
-        return orgId;
+    public String getGivenName() {
+        return givenName;
     }
-    public void setOrgId(String orgId) {
-        this.orgId = orgId;
+    public void setGivenName(String givenName) {
+        this.givenName = givenName;
     }
 
     /**
     **/
-    public UserDTOAssignedAt orgName(String orgName) {
+    public UserNameDTO familyName(String familyName) {
 
-        this.orgName = orgName;
+        this.familyName = familyName;
         return this;
     }
     
-    @ApiModelProperty(value = "")
-    @JsonProperty("orgName")
+    @ApiModelProperty(example = "Greene", value = "")
+    @JsonProperty("familyName")
     @Valid
-    public String getOrgName() {
-        return orgName;
+    public String getFamilyName() {
+        return familyName;
     }
-    public void setOrgName(String orgName) {
-        this.orgName = orgName;
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
     }
 
 
@@ -82,24 +77,24 @@ public class UserDTOAssignedAt  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        UserDTOAssignedAt userDTOAssignedAt = (UserDTOAssignedAt) o;
-        return Objects.equals(this.orgId, userDTOAssignedAt.orgId) &&
-            Objects.equals(this.orgName, userDTOAssignedAt.orgName);
+        UserNameDTO userNameDTO = (UserNameDTO) o;
+        return Objects.equals(this.givenName, userNameDTO.givenName) &&
+            Objects.equals(this.familyName, userNameDTO.familyName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(orgId, orgName);
+        return Objects.hash(givenName, familyName);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class UserDTOAssignedAt {\n");
+        sb.append("class UserNameDTO {\n");
         
-        sb.append("    orgId: ").append(toIndentedString(orgId)).append("\n");
-        sb.append("    orgName: ").append(toIndentedString(orgName)).append("\n");
+        sb.append("    givenName: ").append(toIndentedString(givenName)).append("\n");
+        sb.append("    familyName: ").append(toIndentedString(familyName)).append("\n");
         sb.append("}");
         return sb.toString();
     }

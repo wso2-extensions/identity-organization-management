@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,30 +19,21 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTOAssignedMeta;
-import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTOEmails;
-import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTOName;
 import javax.validation.constraints.*;
 
 
-import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
-import javax.xml.bind.annotation.*;
 
 public class UserDTO  {
   
     private String username;
     private String id;
-    private UserDTOName name;
-    private List<UserDTOEmails> emails = null;
-
-    private List<UserDTOAssignedMeta> assignedMeta = null;
+    private UserNameDTO name;
+    private List<UserAssignedMetaDTO> assignedMeta = null;
 
 
     /**
@@ -87,7 +78,7 @@ public class UserDTO  {
 
     /**
     **/
-    public UserDTO name(UserDTOName name) {
+    public UserDTO name(UserNameDTO name) {
 
         this.name = name;
         return this;
@@ -96,42 +87,16 @@ public class UserDTO  {
     @ApiModelProperty(value = "")
     @JsonProperty("name")
     @Valid
-    public UserDTOName getName() {
+    public UserNameDTO getName() {
         return name;
     }
-    public void setName(UserDTOName name) {
+    public void setName(UserNameDTO name) {
         this.name = name;
     }
 
     /**
     **/
-    public UserDTO emails(List<UserDTOEmails> emails) {
-
-        this.emails = emails;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("emails")
-    @Valid
-    public List<UserDTOEmails> getEmails() {
-        return emails;
-    }
-    public void setEmails(List<UserDTOEmails> emails) {
-        this.emails = emails;
-    }
-
-    public UserDTO addEmailsItem(UserDTOEmails emailsItem) {
-        if (this.emails == null) {
-            this.emails = new ArrayList<>();
-        }
-        this.emails.add(emailsItem);
-        return this;
-    }
-
-        /**
-    **/
-    public UserDTO assignedMeta(List<UserDTOAssignedMeta> assignedMeta) {
+    public UserDTO assignedMeta(List<UserAssignedMetaDTO> assignedMeta) {
 
         this.assignedMeta = assignedMeta;
         return this;
@@ -140,14 +105,14 @@ public class UserDTO  {
     @ApiModelProperty(example = "[{\"mandatory\":true,\"assignedAt\":{\"orgId\":\"b4526d91-a8bf-43d2-8b14-c548cf73065b\",\"orgName\":\"WSO2\"}},{\"mandatory\":false,\"assignedAt\":{\"orgId\":\"c4526761-a8bf-43d2-8b14-c548cf7306fc\",\"orgName\":\"WSO2BR\"}}]", value = "")
     @JsonProperty("assignedMeta")
     @Valid
-    public List<UserDTOAssignedMeta> getAssignedMeta() {
+    public List<UserAssignedMetaDTO> getAssignedMeta() {
         return assignedMeta;
     }
-    public void setAssignedMeta(List<UserDTOAssignedMeta> assignedMeta) {
+    public void setAssignedMeta(List<UserAssignedMetaDTO> assignedMeta) {
         this.assignedMeta = assignedMeta;
     }
 
-    public UserDTO addAssignedMetaItem(UserDTOAssignedMeta assignedMetaItem) {
+    public UserDTO addAssignedMetaItem(UserAssignedMetaDTO assignedMetaItem) {
         if (this.assignedMeta == null) {
             this.assignedMeta = new ArrayList<>();
         }
@@ -170,13 +135,12 @@ public class UserDTO  {
         return Objects.equals(this.username, userDTO.username) &&
             Objects.equals(this.id, userDTO.id) &&
             Objects.equals(this.name, userDTO.name) &&
-            Objects.equals(this.emails, userDTO.emails) &&
             Objects.equals(this.assignedMeta, userDTO.assignedMeta);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, id, name, emails, assignedMeta);
+        return Objects.hash(username, id, name, assignedMeta);
     }
 
     @Override
@@ -188,7 +152,6 @@ public class UserDTO  {
         sb.append("    username: ").append(toIndentedString(username)).append("\n");
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
-        sb.append("    emails: ").append(toIndentedString(emails)).append("\n");
         sb.append("    assignedMeta: ").append(toIndentedString(assignedMeta)).append("\n");
         sb.append("}");
         return sb.toString();

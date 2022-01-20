@@ -30,7 +30,7 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.ChildParentAssociation;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Organization;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleAssignedLevel;
@@ -45,37 +45,34 @@ import org.wso2.charon3.core.protocol.endpoints.UserResourceManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.AND;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.ASSIGNED_AT_ADDING;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.COUNT_COLUMN_NAME;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.DELETE_ALL_ORGANIZATION_USER_ROLE_MAPPINGS_BY_USERID;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.DELETE_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.FIND_ALL_CHILD_ORG_IDS;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_ASSIGNED_AT_VALUE_OF_ORGANIZATION_USER_ROLE_MAPPING_LINK;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_DIRECTLY_ASSIGNED_ORGANIZATION_USER_ROLE_MAPPING_LINK;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_ORGANIZATION_USER_ROLE_MAPPING;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_ROLES_BY_ORG_AND_USER;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_ROLE_ID_BY_SCIM_GROUP_NAME;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.GET_USERS_BY_ORG_AND_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.MANDATORY_ADDING;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.OR;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_ASSIGNED_AT_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_ASSIGNED_AT_NAME_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_ID_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_MANDATORY_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_PARENT_ID_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_ROLE_ID_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_ROLE_NAME_COLUMN;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.H2Constants.VIEW_USER_ID_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.AND;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.ASSIGNED_AT_ADDING;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.COUNT_COLUMN_NAME;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ALL_ORGANIZATION_USER_ROLE_MAPPINGS_BY_USERID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.FIND_ALL_CHILD_ORG_IDS;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_DIRECTLY_ASSIGNED_ORGANIZATION_USER_ROLE_MAPPING_LINK;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ORGANIZATION_USER_ROLE_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLES_BY_ORG_AND_USER;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_BY_SCIM_GROUP_NAME;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_USERS_BY_ORG_AND_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.MANDATORY_ADDING;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.OR;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ASSIGNED_AT_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ASSIGNED_AT_NAME_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ID_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_MANDATORY_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ROLE_ID_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ROLE_NAME_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_USER_ID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_HYBRID_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID;
@@ -214,7 +211,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                 }
             }
             // Sort role member list.
-            Collections.sort(roleMembers, (m1, m2) -> ((String) m1.getUserAttributes().get("userName")).compareTo(
+            roleMembers.sort((m1, m2) -> ((String) m1.getUserAttributes().get("userName")).compareTo(
                     String.valueOf(m2.getUserAttributes().get("userName"))));
 
             if (paginationReq && CollectionUtils.isNotEmpty(roleMembers)) {
@@ -494,7 +491,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ROLE_ID_BY_SCIM_GROUP_NAME,
                     (resultSet, rowNumber) ->
-                            resultSet.getInt(DatabaseConstants.H2Constants.VIEW_ID_COLUMN),
+                            resultSet.getInt(DatabaseConstants.SQLConstants.VIEW_ID_COLUMN),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_NAME, roleName);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
@@ -505,15 +502,14 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     @Override
-    public List<ChildParentAssociation> getAllSubOrganizations(String organizationId) throws
+    public List<Organization> getAllSubOrganizations(String organizationId) throws
             OrganizationUserRoleMgtException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             return namedJdbcTemplate.executeQuery(FIND_ALL_CHILD_ORG_IDS,
                     (resultSet, rowNumber) ->
-                            new ChildParentAssociation(resultSet.getString(VIEW_ID_COLUMN),
-                                    resultSet.getString(VIEW_PARENT_ID_COLUMN)),
+                            new Organization(resultSet.getString(VIEW_ID_COLUMN)),
                     namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID,
                             organizationId));
         } catch (DataAccessException e) {
@@ -522,53 +518,14 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         }
     }
 
-    @Override
-    public String getAssignedAtOfAnyOrganizationUserRoleMapping(String organizationId, String userId, String roleId,
-                                                                int tenantId) throws OrganizationUserRoleMgtException {
-
-        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        String assignedAt = null;
-        try {
-            boolean mappingExists = namedJdbcTemplate
-                    .fetchSingleRecord(buildIsRoleMappingExistsQuery(null, false),
-                            (resultSet, rowNumber) ->
-                                    resultSet.getInt(COUNT_COLUMN_NAME) == 1,
-                            namedPreparedStatement -> {
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_ID, roleId);
-                                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ORG_ID, organizationId);
-                            });
-            if (!mappingExists) {
-                return assignedAt;
-            }
-            assignedAt =
-                    namedJdbcTemplate.fetchSingleRecord(GET_ASSIGNED_AT_VALUE_OF_ORGANIZATION_USER_ROLE_MAPPING_LINK,
-                            (resultSet, rowNumber) -> resultSet.getString(VIEW_ASSIGNED_AT_COLUMN),
-                            namedPreparedStatement -> {
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_ID, roleId);
-                                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ORG_ID, organizationId);
-                            });
-        } catch (DataAccessException e) {
-            String message =
-                    String.format(String.valueOf(ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR), roleId,
-                            userId, organizationId);
-            throw new OrganizationUserRoleMgtServerException(message,
-                    ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR.getCode(), e);
-        }
-        return assignedAt;
-    }
-
-    private String queryForMultipleInserts(Integer numberOfMapings) {
+    private String queryForMultipleInserts(Integer numberOfMappings) {
 
         StringBuilder sb = new StringBuilder();
         sb.append(INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING);
 
-        for (int i = 0; i < numberOfMapings; i++) {
+        for (int i = 0; i < numberOfMappings; i++) {
             sb.append(String.format(INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES, i));
-            if (i != numberOfMapings - 1) {
+            if (i != numberOfMappings - 1) {
                 sb.append(",");
             }
         }
