@@ -35,10 +35,10 @@ public interface OrganizationUserRoleMgtDAO {
     /**
      * Add organization-user-role mappings.
      * @param organizationUserRoleMappings List of Organization-User-Role mappings.
-     * @param tenantID The tenant ID.
+     * @param tenantId The tenant ID.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
-    void addOrganizationUserRoleMappings(List<OrganizationUserRoleMapping> organizationUserRoleMappings, int tenantID)
+    void addOrganizationUserRoleMappings(List<OrganizationUserRoleMapping> organizationUserRoleMappings, int tenantId)
             throws OrganizationUserRoleMgtException;
 
     /**
@@ -48,13 +48,13 @@ public interface OrganizationUserRoleMgtDAO {
      * @param offset The offset of the results.
      * @param limit The limit of the results.
      * @param requestedAttributes The list of attributes.
-     * @param tenantID The tenant ID.
+     * @param tenantId The tenant ID.
      * @param filter The filter to filter the results.
      * @return The List of RoleMembers.
      * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management exception.
      */
     List<RoleMember> getUserIdsByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
-                                                     List<String> requestedAttributes, int tenantID, String filter)
+                                                     List<String> requestedAttributes, int tenantId, String filter)
             throws OrganizationUserRoleMgtServerException;
 
     /**
@@ -62,7 +62,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param deletionList List of organizations to be deleted for user role mappings.
      * @param userId ID of the user.
      * @param roleId ID of role.
-     * @param tenantId The tenant ID.
+     * @param tenantId The tenant Id.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     void deleteOrganizationsUserRoleMapping(List<OrganizationUserRoleMapping> deletionList, String userId,
