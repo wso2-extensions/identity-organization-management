@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.constants
 public class DatabaseConstants {
 
     /**
-     * H2 Database Constant List.
+     * Database Constant List.
      */
     public static final class SQLConstants {
         public static final String COUNT_COLUMN_NAME = "COUNT(1)";
