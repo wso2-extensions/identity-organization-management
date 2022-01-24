@@ -19,13 +19,18 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 
 
+import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
+import javax.xml.bind.annotation.*;
 
-public class UserAssignedAtDTO {
+public class UserAssignedAtDTO  {
   
     private String orgId;
     private String orgName;
@@ -38,7 +43,7 @@ public class UserAssignedAtDTO {
         return this;
     }
     
-    @ApiModelProperty(value = "")
+    @ApiModelProperty(example = "b4526d91-a8bf-43d2-8b14-c548cf73065b", value = "")
     @JsonProperty("orgId")
     @Valid
     public String getOrgId() {
@@ -56,7 +61,7 @@ public class UserAssignedAtDTO {
         return this;
     }
     
-    @ApiModelProperty(value = "")
+    @ApiModelProperty(example = "WSO2", value = "")
     @JsonProperty("orgName")
     @Valid
     public String getOrgName() {

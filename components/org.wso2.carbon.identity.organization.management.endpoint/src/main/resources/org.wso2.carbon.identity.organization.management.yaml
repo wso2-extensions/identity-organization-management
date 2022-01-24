@@ -740,19 +740,26 @@ components:
         users:
           type: array
           items:
-            required:
-              - userId
-            type: object
-            properties:
-              userId:
-                type: string
-                example: c4c3a320-e381-463a-846f-1c2bd083d38c
-              mandatory:
-                type: boolean
-                example: true
-              includeSubOrgs:
-                type: boolean
-                example: true
+            $ref: '#/components/schemas/UserRoleMappingUsersDTO'
+
+    #-----------------------------------------------------
+    # User Role Mapping Users Object
+    #-----------------------------------------------------
+    UserRoleMappingUsersDTO:
+      required:
+        - userId
+      type: object
+      properties:
+        userId:
+          type: string
+          example: c4c3a320-e381-463a-846f-1c2bd083d38c
+        mandatory:
+          type: boolean
+          example: true
+        includeSubOrgs:
+          type: boolean
+          example: true
+
     #-----------------------------------------------------
     # User object
     #-----------------------------------------------------
@@ -769,14 +776,7 @@ components:
           type: string
           example: 008bba85-451d-414b-87de-c03b5a1f4217
         name:
-          type: object
-          properties:
-            givenName:
-              type: string
-              example: Lia
-            familyName:
-              type: string
-              example: Greene
+          $ref: '#/components/schemas/UserNameDTO'
         assignedMeta:
           type: array
           example:
@@ -789,17 +789,45 @@ components:
                 orgId: c4526761-a8bf-43d2-8b14-c548cf7306fc
                 orgName: WSO2BR
           items:
-            type: object
-            properties:
-              mandatory:
-                type: boolean
-              assignedAt:
-                type: object
-                properties:
-                  orgId:
-                    type: string
-                  orgName:
-                    type: string
+            $ref: '#/components/schemas/UserAssignedMetaDTO'
+
+    #-----------------------------------------------------
+    # Username Object
+    #-----------------------------------------------------
+    UserNameDTO:
+      type: object
+      properties:
+        givenName:
+          type: string
+          example: Lia
+        familyName:
+          type: string
+          example: Greene
+
+    #-----------------------------------------------------
+    # User AssignedMeta Object
+    #-----------------------------------------------------
+    UserAssignedMetaDTO:
+      type: object
+      properties:
+        mandatory:
+          type: boolean
+        assignedAt:
+          $ref: '#/components/schemas/UserAssignedAtDTO'
+
+    #-----------------------------------------------------
+    # User AssignedAt Object
+    #-----------------------------------------------------
+    UserAssignedAtDTO:
+      type: object
+      properties:
+        orgId:
+          type: string
+          example: b4526d91-a8bf-43d2-8b14-c548cf73065b
+        orgName:
+          type: string
+          example: WSO2
+
     #-----------------------------------------------------
     # Role object
     #-----------------------------------------------------

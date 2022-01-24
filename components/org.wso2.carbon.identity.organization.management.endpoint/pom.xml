@@ -94,7 +94,6 @@
             <artifactId>jackson-jaxrs-json-provider</artifactId>
         </dependency>
 
-        <!--Project Dependencies-->
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>

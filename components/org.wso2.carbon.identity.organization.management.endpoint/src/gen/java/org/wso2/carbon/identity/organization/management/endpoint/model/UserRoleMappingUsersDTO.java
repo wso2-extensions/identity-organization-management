@@ -19,14 +19,18 @@
 package org.wso2.carbon.identity.organization.management.endpoint.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 
+import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
+import javax.xml.bind.annotation.*;
 
-public class UserRoleMappingUsersDTO {
+public class UserRoleMappingUsersDTO  {
   
     private String userId;
     private Boolean mandatory;
