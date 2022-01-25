@@ -106,6 +106,16 @@ public class Utils {
     }
 
     /**
+     * Get the user ID.
+     *
+     * @return the user ID.
+     */
+    public static String getUserId() {
+
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+    }
+
+    /**
      * Build URI prepending the user API context with the proxy context path to the endpoint.
      *
      * @param organizationId The organization ID.

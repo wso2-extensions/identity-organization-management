@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.service.dao;
 
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
@@ -98,12 +99,13 @@ public interface OrganizationManagementDAO {
     /**
      * Retrieve the IDs of the organizations residing in the given tenant.
      *
-     * @param tenantId     The tenant ID corresponding to the tenant where the organizations should be retrieved.
-     * @param tenantDomain The tenant name corresponding to the tenant where the organizations should be retrieved.
+     * @param tenantId        The tenant ID corresponding to the tenant where the organizations should be retrieved.
+     * @param tenantDomain    The tenant name corresponding to the tenant where the organizations should be retrieved.
+     * @param expressionNodes The list of filters.
      * @return the list of organization IDs.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organizations.
      */
-    List<String> getOrganizationIds(int tenantId, String tenantDomain) throws
+    List<String> getOrganizationIds(int tenantId, String tenantDomain, List<ExpressionNode> expressionNodes) throws
             OrganizationManagementServerException;
 
     /**

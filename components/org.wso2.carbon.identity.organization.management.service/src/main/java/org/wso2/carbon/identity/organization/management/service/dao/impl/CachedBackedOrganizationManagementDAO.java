@@ -22,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.service.cache.ChildOrganizationsCache;
 import org.wso2.carbon.identity.organization.management.service.cache.ChildOrganizationsCacheEntry;
 import org.wso2.carbon.identity.organization.management.service.cache.ChildOrganizationsCacheKey;
@@ -122,10 +123,10 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public List<String> getOrganizationIds(int tenantId, String tenantDomain)
+    public List<String> getOrganizationIds(int tenantId, String tenantDomain, List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
 
-        return organizationManagementDAO.getOrganizationIds(tenantId, tenantDomain);
+        return organizationManagementDAO.getOrganizationIds(tenantId, tenantDomain, expressionNodes);
     }
 
     @Override
