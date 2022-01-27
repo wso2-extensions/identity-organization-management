@@ -69,7 +69,7 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
       |  UM_ID|UM_ORG_ID|UM_ATTRIBUTE_KEY|UM_ATTRIBUTE_VALUE
       |---------|--------------------|------------------------------|-------|
       ```
-      CREATE TABLE UM_USER_ROLE_ORG (
+      CREATE TABLE IF NOT EXISTS UM_USER_ROLE_ORG (
       UM_ID VARCHAR2(255) NOT NULL,
       UM_USER_ID VARCHAR2(255) NOT NULL,
       UM_ROLE_ID VARCHAR2(1024) NOT NULL,
@@ -120,7 +120,7 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
       LEFT JOIN
       UM_ORG UO
       ON
-      URO.ORG_ID = UO.UM_ID
+      URO.ORG_ID = UO.UM_ID;
        ```
 
 ## Build

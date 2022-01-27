@@ -34,7 +34,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleOperationDTO;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
@@ -66,6 +65,7 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleClientErrorResponse;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleServerErrorResponse;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleUnexpectedServerError;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 
@@ -203,12 +203,14 @@ public class OrganizationManagementService {
      */
     public Response addOrganizationUserRoleMappings(String organizationId, UserRoleMappingDTO
             userRoleMappingDTO) {
+
         try {
             UserRoleMapping newUserRoleMappings = new UserRoleMapping(userRoleMappingDTO.getRoleId(),
                     userRoleMappingDTO.getUsers()
                             .stream()
                             .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getMandatory(),
-                                    mapping.getIncludeSubOrgs()))
+                                            mapping.getIncludeSubOrgs() == null ? mapping.getMandatory() :
+                                                    mapping.getIncludeSubOrgs()))
                             .collect(Collectors.toList()));
             getOrganizationUserRoleManager()
                     .addOrganizationUserRoleMappings(organizationId, newUserRoleMappings);
@@ -239,8 +241,7 @@ public class OrganizationManagementService {
 
         try {
             if ((limit != null && limit < 1) && (offset != null && offset < 0)) {
-                throw handleClientException(OrganizationUserRoleMgtConstants.ErrorMessages
-                        .INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST, null);
+                throw handleClientException(INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST, null);
             }
             // If pagination parameters are not set, then set them to -1
             limit = limit == null ? Integer.valueOf(-1) : limit;
@@ -277,7 +278,8 @@ public class OrganizationManagementService {
 
         try {
             getOrganizationUserRoleManager()
-                    .deleteOrganizationsUserRoleMapping(organizationId, userId, roleId, includeSubOrgs);
+                    .deleteOrganizationsUserRoleMapping(organizationId, userId, roleId,
+                            includeSubOrgs == null ? false : includeSubOrgs);
             return Response.noContent().build();
         } catch (OrganizationUserRoleMgtClientException e) {
             return handleClientErrorResponse(e, LOG);

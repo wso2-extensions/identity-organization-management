@@ -26,6 +26,7 @@ public class OrganizationUserRoleMgtConstants {
     public static final String PATCH_OP_REPLACE = "replace";
     public static final String INCLUDE_SUB_ORGS = "/includeSubOrgs";
     public static final String IS_MANDATORY = "/isMandatory";
+
     /**
      * Error messages.
      */
@@ -40,7 +41,7 @@ public class OrganizationUserRoleMgtConstants {
         DELETE_ORG_ROLE_USER_REQUEST_INVALID_MAPPING("ORG-60203", "Role mapping does not exist",
                 "%s"),
         ADD_ORG_ROLE_USER_REQUEST_INVALID_USER("ORG-60204", "Invalid user", "%s"),
-        DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205", "Invalid direct role mapping",
+        DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205", "Invalid organization user role mapping",
                 "%s"),
         PATCH_ORG_ROLE_USER_REQUEST_TOO_MANY_OPERATIONS("ORG-60206", "Too many operations",
                 "Only one patch operation is valid because only the includeSubOrg " +
@@ -55,16 +56,14 @@ public class OrganizationUserRoleMgtConstants {
                 "Patch operation path is not defined"),
         PATCH_ORG_ROLE_USER_REQUEST_INVALID_PATH("ORG-60211", "Invalid path",
                 "Patch path must be '/includeSubOrgs'"),
-        PATCH_ORG_ROLE_USER_REQUEST_INVALID_VALUE("ORG-60212", "Invalid value",
-                "Patch operation value must be a boolean"),
+        PATCH_ORG_ROLE_USER_REQUEST_OPERATION_MISSING("ORG-60212",
+                "Operation missing.", "The operation %s is missing."),
         PATCH_ORG_ROLE_USER_REQUEST_INVALID_BOOLEAN_VALUE("ORG-60213", "Invalid value",
                 "Patch operation boolean value error"),
         ADD_ORG_ROLE_USER_REQUEST_MAPPING_EXISTS("ORG-60214", "Mapping already exists", "%s"),
         INVALID_REQUEST("ORG-60215", "Invalid request", "Error while processing the request."),
-        ADD_ORG_ROLE_USER_REQUEST_INVALID_ORGANIZATION_PARAM("ORG-60215", "subOrganization value" +
+        ADD_ORG_ROLE_USER_REQUEST_INVALID_ORGANIZATION_PARAM("ORG-60216", "includeSubOrgs value" +
                 " must be true if mandatory value is true.", "Error while processing the request."),
-        DELETE_ORG_ROLE_USER_REQUEST_INVALID_BOOLEAN_VALUE("ORG-60216", "Invalid value",
-                "Delete operation boolean value error"),
 
         // Role Mgt Server Errors (ORG-65200 - ORG-65999)
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_ADD_ERROR("ORG-65200",
