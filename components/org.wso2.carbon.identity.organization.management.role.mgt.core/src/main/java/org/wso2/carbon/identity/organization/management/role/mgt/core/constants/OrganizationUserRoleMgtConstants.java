@@ -38,7 +38,8 @@ public class OrganizationUserRoleMgtConstants {
                 "Invalid users search/get request for an organization's role",
                 "Invalid pagination arguments. 'limit' should be greater than 0 and 'offset' " +
                         "should be greater than -1"),
-        DELETE_ORG_ROLE_USER_REQUEST_INVALID_MAPPING("ORG-60203", "Role mapping does not exist",
+        INVALID_ORGANIZATION_ID_OR_USER_ID("ORG-60203",
+                "Invalid organization id or user id for organization-user-role mapping.",
                 "%s"),
         ADD_ORG_ROLE_USER_REQUEST_INVALID_USER("ORG-60204", "Invalid user", "%s"),
         DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205", "Invalid organization user role mapping",
@@ -64,6 +65,22 @@ public class OrganizationUserRoleMgtConstants {
         INVALID_REQUEST("ORG-60215", "Invalid request", "Error while processing the request."),
         ADD_ORG_ROLE_USER_REQUEST_INVALID_ORGANIZATION_PARAM("ORG-60216", "includeSubOrgs value" +
                 " must be true if mandatory value is true.", "Error while processing the request."),
+        INVALID_ORGANIZATION_ID_OR_ROLE_ID("ORG-60217",
+                "Invalid organization id or role id for organization-user-role mappings.",
+                "%s"),
+        ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID("ORG-60218",
+                "roleId cannot be null when adding a new mapping.",
+                "roleId cannot be null when adding a new mapping for organization %s"),
+        ADD_ORG_ROLE_USER_REQUEST_NULL_USERS("ORG-60219",
+                "When adding a organization-user-role mapping users should be there.",
+                "users should be there when adding a organization-user-role mapping for organization %s"),
+        MANDATORY_FIELD_NULL("ORG-60220",
+                "When adding a organization-user-role mapping mandatory value should be there.",
+                "mandatory value should not be null when adding organization-user-role mapping for " +
+                        "organization %s"),
+        INVALID_MANDATORY_AND_INCLUDE_SUB_ORGS_VALUES("ORG-60221",
+                "includeSubOrgs value should be specified.",
+                "If mandatory value is false, you have to specify includeSubOrgs value."),
 
         // Role Mgt Server Errors (ORG-65200 - ORG-65999)
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_ADD_ERROR("ORG-65200",
@@ -128,7 +145,7 @@ public class OrganizationUserRoleMgtConstants {
      */
     public enum NotFoundErrorMessages {
 
-        ORG_60203, ORG_60204, ORG_60205
+        ORG_60203, ORG_60204, ORG_60205, ORG_60217
     }
 
     /**

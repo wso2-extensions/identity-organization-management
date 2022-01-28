@@ -66,6 +66,8 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_EVENTING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_USER_STORE_OPERATIONS_ERROR;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ORGANIZATION_ID_OR_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ORGANIZATION_ID_OR_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ROLE_NON_INTERNAL_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.PATCH_ORG_ROLE_USER_REQUEST_INVALID_BOOLEAN_VALUE;
@@ -167,9 +169,16 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
             throws OrganizationUserRoleMgtException {
 
         OrganizationUserRoleMgtDAO organizationUserRoleMgtDAO = new OrganizationUserRoleMgtDAOImpl();
-        return organizationUserRoleMgtDAO
+        List<RoleMember> users = organizationUserRoleMgtDAO
                 .getUserIdsByOrganizationAndRole(organizationId, roleId, offset, limit, requestedAttributes,
                         getTenantId(), filter);
+        if (users.size() == 0) {
+            throw handleClientException(INVALID_ORGANIZATION_ID_OR_ROLE_ID,
+                    String.format("Invalid organizationId: %s or roleId: %s for organization-user-role mappings.",
+                            organizationId, roleId));
+
+        }
+        return users;
     }
 
     @Override
@@ -362,7 +371,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
         if (directlyAssignedRoleMappingExist == -1) {
             throw handleClientException(DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING,
                     String.format("No assigned organization user role mapping found for organization: %s, " +
-                                    "user: %s, role: %s, directly assigned at organization: %s",
+                                    "user: %s, role: %s, assigned at organization: %s",
                             organizationId, userId, roleId, organizationId));
         }
 
@@ -437,7 +446,14 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
             throws OrganizationUserRoleMgtException {
 
         OrganizationUserRoleMgtDAO organizationUserRoleMgtDAO = new OrganizationUserRoleMgtDAOImpl();
-        return organizationUserRoleMgtDAO.getRolesByOrganizationAndUser(organizationId, userId, getTenantId());
+        List<Role> roles = organizationUserRoleMgtDAO.getRolesByOrganizationAndUser(organizationId, userId,
+                getTenantId());
+        if (roles.size() == 0) {
+            throw handleClientException(INVALID_ORGANIZATION_ID_OR_USER_ID,
+                    String.format("Invalid organizationId: %s or userId: %s for organization-user-role mappings.",
+                            organizationId, userId));
+        }
+        return roles;
     }
 
     @Override

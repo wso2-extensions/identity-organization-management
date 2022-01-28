@@ -227,10 +227,10 @@ public class OrganizationManagementEndpointUtil {
 
     private static OrganizationManagementEndpointException buildException(String code, Log log, Throwable throwable) {
 
-        Error error = getError(code, Response.Status.BAD_REQUEST.toString(),
-                Response.Status.BAD_REQUEST.toString());
+        Error error = getError(code, Response.Status.INTERNAL_SERVER_ERROR.toString(),
+                Response.Status.INTERNAL_SERVER_ERROR.toString());
         logError(log, throwable);
-        return new OrganizationManagementEndpointException(Response.Status.BAD_REQUEST, error);
+        return new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
     }
 
     /**

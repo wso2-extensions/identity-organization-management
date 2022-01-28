@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
+import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingUsersDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleOperationDTO;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
@@ -65,7 +66,11 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleClientErrorResponse;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleServerErrorResponse;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleUnexpectedServerError;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ADD_ORG_ROLE_USER_REQUEST_NULL_USERS;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_MANDATORY_AND_INCLUDE_SUB_ORGS_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.MANDATORY_FIELD_NULL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 
@@ -205,12 +210,13 @@ public class OrganizationManagementService {
             userRoleMappingDTO) {
 
         try {
+            validateAddOrganizationUserRoleMappingRequestBody(organizationId, userRoleMappingDTO);
             UserRoleMapping newUserRoleMappings = new UserRoleMapping(userRoleMappingDTO.getRoleId(),
                     userRoleMappingDTO.getUsers()
                             .stream()
                             .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getMandatory(),
-                                            mapping.getIncludeSubOrgs() == null ? mapping.getMandatory() :
-                                                    mapping.getIncludeSubOrgs()))
+                                    mapping.getIncludeSubOrgs() == null ? mapping.getMandatory() :
+                                            mapping.getIncludeSubOrgs()))
                             .collect(Collectors.toList()));
             getOrganizationUserRoleManager()
                     .addOrganizationUserRoleMappings(organizationId, newUserRoleMappings);
@@ -465,6 +471,27 @@ public class OrganizationManagementService {
             organization.setAttributes(null);
         }
         return getOrganizationManager().updateOrganization(organizationId, currentOrganizationName, organization);
+    }
+
+    private void validateAddOrganizationUserRoleMappingRequestBody(String organizationId,
+                                                                     UserRoleMappingDTO userRoleMappingDTO)
+            throws OrganizationUserRoleMgtClientException {
+
+        if (userRoleMappingDTO.getRoleId() == null) {
+            throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID, organizationId);
+        }
+        if (userRoleMappingDTO.getUsers() == null) {
+            throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_NULL_USERS, organizationId);
+        }
+        List<UserRoleMappingUsersDTO> usersList = userRoleMappingDTO.getUsers();
+        for (UserRoleMappingUsersDTO user : usersList) {
+            if (user.getMandatory() == null) {
+                throw handleClientException(MANDATORY_FIELD_NULL, organizationId);
+            }
+            if (user.getIncludeSubOrgs() == null && user.getMandatory() == false) {
+                throw handleClientException(INVALID_MANDATORY_AND_INCLUDE_SUB_ORGS_VALUES, null);
+            }
+        }
     }
 
     private Organization createOrganizationClone(Organization organization) {
