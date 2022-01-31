@@ -73,55 +73,17 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
       UM_ID VARCHAR2(255) NOT NULL,
       UM_USER_ID VARCHAR2(255) NOT NULL,
       UM_ROLE_ID VARCHAR2(1024) NOT NULL,
-      UM_HYBRID_ROLE_ID INTEGER NOT NULL,
       UM_TENANT_ID INTEGER DEFAULT 0,
       ORG_ID VARCHAR2(255) NOT NULL,
       ASSIGNED_AT VARCHAR2(255) NOT NULL,
       MANDATORY INTEGER DEFAULT 0,
       PRIMARY KEY (UM_ID),
-      CONSTRAINT FK_UM_USER_ROLE_ORG_UM_HYBRID_ROLE FOREIGN KEY (UM_HYBRID_ROLE_ID, UM_TENANT_ID) REFERENCES UM_HYBRID_ROLE(UM_ID, UM_TENANT_ID) ON DELETE CASCADE,
       CONSTRAINT FK_UM_USER_ROLE_ORG_UM_ORG FOREIGN KEY (ORG_ID) REFERENCES UM_ORG(UM_ID) ON DELETE CASCADE,
       CONSTRAINT FK_UM_USER_ROLE_ORG_ASSIGNED_AT FOREIGN KEY (ASSIGNED_AT) REFERENCES UM_ORG(UM_ID) ON DELETE CASCADE);
        ```
 
-      | UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-      |--------|---------|---------------|--------------------|---------------|-------------|---------|-----------|
-    - Add the following `VIEW` to database.
-      ```
-      CREATE VIEW ORG_AUTHZ_VIEW AS
-      SELECT
-      URP.UM_PERMISSION_ID,
-      URO.UM_ROLE_ID,
-      URO.UM_HYBRID_ROLE_ID,
-      URP.UM_ROLE_NAME,
-      URP.UM_IS_ALLOWED,
-      URP.UM_TENANT_ID,
-      URP.UM_DOMAIN_ID,
-      UP.UM_RESOURCE_ID,
-      UP.UM_ACTION,
-      UHR.UM_ID,
-      URO.UM_USER_ID,
-      URO.ORG_ID,
-      UO.UM_ORG_NAME
-      FROM
-      UM_USER_ROLE_ORG URO
-      LEFT JOIN
-      UM_HYBRID_ROLE UHR
-      ON
-      (UHR.UM_ID = URO.UM_HYBRID_ROLE_ID)
-      LEFT JOIN
-      UM_ROLE_PERMISSION URP
-      ON
-      (UHR.UM_ROLE_NAME = URP.UM_ROLE_NAME)
-      LEFT JOIN
-      UM_PERMISSION UP
-      ON
-      URP.UM_PERMISSION_ID = UP.UM_ID
-      LEFT JOIN
-      UM_ORG UO
-      ON
-      URO.ORG_ID = UO.UM_ID;
-       ```
+      | UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+      |--------|---------|---------------|---------------|-------------|---------|-----------|
 
 ## Build
 

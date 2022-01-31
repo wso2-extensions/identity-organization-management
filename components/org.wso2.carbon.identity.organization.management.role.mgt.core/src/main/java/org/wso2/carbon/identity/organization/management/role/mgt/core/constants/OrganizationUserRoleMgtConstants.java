@@ -26,6 +26,7 @@ public class OrganizationUserRoleMgtConstants {
     public static final String PATCH_OP_REPLACE = "replace";
     public static final String INCLUDE_SUB_ORGS = "/includeSubOrgs";
     public static final String IS_MANDATORY = "/isMandatory";
+    public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
 
     /**
      * Error messages.
@@ -89,8 +90,8 @@ public class OrganizationUserRoleMgtConstants {
                 "Error while deleting the organization user role mapping.", ""),
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR("ORG-65202",
                 "Error while retrieving the role : %s, for user : %s for organization : %s", ""),
-        ERROR_CODE_HYBRID_ROLE_ID_RETRIEVING_ERROR("ORG-65203",
-                "Error while retrieving the hybrid role id for role : %s", ""),
+        ERROR_CODE_HYBRID_ROLE_NAMES_RETRIEVING_ERROR("ORG-65203",
+                "Error while retrieving the hybrid role names for roleIds", ""),
         ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR("ORG-65204",
                 "Error while retrieving users for role: %s , organization : %s", ""),
         ERROR_CODE_ROLES_PER_ORG_USER_RETRIEVING_ERROR("ORG-65205",

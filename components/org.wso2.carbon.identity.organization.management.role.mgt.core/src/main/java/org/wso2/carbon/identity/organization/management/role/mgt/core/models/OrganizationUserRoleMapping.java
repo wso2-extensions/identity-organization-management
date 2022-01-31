@@ -21,23 +21,23 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 
 /**
  * Organization User Role Mapping.
- *
+ * <p>
  * =========================== Scenarios ===========================
  * Assume we have organizations A, B, C at three levels.
  * A is the parent organization of B and C is the child organization of B.
  * A --> B --> C
- *
+ * <p>
  * User U1 in A assigns a role R1. Does not let to propagate it to sub organizations.
  * (OrgId=ID(A), AssignedLevel=A, isMandatory=false)
- *
+ * <p>
  * User U1 in A assigns a role R1. But it is not mandatory. So user U1 in B or C can either
  * assign that role or let it pass. If user U1 in B wants it,
  * (OrgId=ID(A), AssignedLevel=A, isMandatory=false)
  * (OrgId=ID(B), AssignedLevel=B, isMandatory=false)
  * And then asks the user U1 in C whether he wants it or not.
- *
+ * <p>
  * If user U1 in C doesn't want it, the role won't be copied to the Organization C.
- *
+ * <p>
  * User U1 in A assigns a role R1. Say it to propagate and it is mandatory. So user U1 in B and C will automatically
  * add that role to their organizations.
  * (OrgId=ID(A), AssignedLevel=A, isMandatory=true)
@@ -48,18 +48,16 @@ public class OrganizationUserRoleMapping {
 
     private String organizationId;
     private String userId;
-    private int hybridRoleId;
     private String roleId;
     private String assignedLevelOrganizationId;
     private String assignedLevelOrganizationName;
     private boolean isMandatory;
 
-    public OrganizationUserRoleMapping(String organizationId, String userId, int hybridRoleId, String roleId,
+    public OrganizationUserRoleMapping(String organizationId, String userId, String roleId,
                                        String assignedLevelOrganizationId, boolean isMandatory) {
 
         this.organizationId = organizationId;
         this.userId = userId;
-        this.hybridRoleId = hybridRoleId;
         this.roleId = roleId;
         this.assignedLevelOrganizationId = assignedLevelOrganizationId;
         this.isMandatory = isMandatory;
@@ -98,16 +96,6 @@ public class OrganizationUserRoleMapping {
     public void setUserId(String userId) {
 
         this.userId = userId;
-    }
-
-    public int getHybridRoleId() {
-
-        return hybridRoleId;
-    }
-
-    public void setHybridRoleId(int hybridRoleId) {
-
-        this.hybridRoleId = hybridRoleId;
     }
 
     public String getRoleId() {

@@ -29,14 +29,12 @@ public class DatabaseConstants {
     public static final class SQLConstants {
         public static final String COUNT_COLUMN_NAME = "COUNT(1)";
         public static final String VIEW_ID_COLUMN = "UM_ID";
-        public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
         public static final String VIEW_USER_ID_COLUMN = "UM_USER_ID";
         public static final String VIEW_ROLE_ID_COLUMN = "UM_ROLE_ID";
         public static final String VIEW_ROLE_NAME_COLUMN = "UM_ROLE_NAME";
         public static final String VIEW_MANDATORY_COLUMN = "MANDATORY";
         public static final String VIEW_ASSIGNED_AT_COLUMN = "ASSIGNED_AT";
         public static final String VIEW_ASSIGNED_AT_NAME_COLUMN = "UM_ORG_NAME";
-        public static final String ORG_ID_ADDING = "ORG_ID = ?";
         public static final String ASSIGNED_AT_ADDING = "ASSIGNED_AT = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + ";";
         public static final String MANDATORY_ADDING = "MANDATORY = :" +
@@ -44,13 +42,12 @@ public class DatabaseConstants {
         public static final String AND = " AND ";
         public static final String OR = " OR ";
         public static final String INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING = "INSERT INTO UM_USER_ROLE_ORG (" +
-                "UM_ID, UM_USER_ID, UM_ROLE_ID, UM_HYBRID_ROLE_ID, UM_TENANT_ID, ORG_ID, ASSIGNED_AT, " +
+                "UM_ID, UM_USER_ID, UM_ROLE_ID, UM_TENANT_ID, ORG_ID, ASSIGNED_AT, " +
                 "MANDATORY) VALUES ";
         public static final String INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES = "(:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%1$d;,:" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_HYBRID_ROLE_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d;,:" +
@@ -78,7 +75,7 @@ public class DatabaseConstants {
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_TENANT_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
         public static final String GET_ROLES_BY_ORG_AND_USER =
-                "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME FROM ORG_AUTHZ_VIEW WHERE ORG_ID = :" +
+                "SELECT DISTINCT UM_ROLE_ID FROM UM_USER_ROLE_ORG WHERE ORG_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND UM_USER_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_TENANT_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
@@ -105,6 +102,9 @@ public class DatabaseConstants {
                         "; UNION ALL SELECT UO.UM_ID, UO.UM_PARENT_ID FROM UM_ORG UO JOIN childOrgs CO ON CO.UM_ID = " +
                         "UO.UM_PARENT_ID)" +
                         "SELECT UM_ID FROM childOrgs ORDER BY UM_ID";
+        public static final String GET_ROLE_ID_AND_NAME = "SELECT ATTR_VALUE, ROLE_NAME FROM IDN_SCIM_GROUP WHERE " +
+                "IDN_SCIM_GROUP.TENANT_ID = ? AND IDN_SCIM_GROUP.ATTR_NAME = ? AND ";
+        public static final String SCIM_GROUP_ATTR_VALUE = "IDN_SCIM_GROUP.ATTR_VALUE = ?";
     }
 
     /**
@@ -114,7 +114,6 @@ public class DatabaseConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ROLE_ID = "ROLE_ID";
-        public static final String DB_SCHEMA_COLUMN_NAME_HYBRID_ROLE_ID = "HYBRID_ROLE_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_TENANT_ID = "TENANT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ORG_ID = "ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT = "ASSIGNED_AT";

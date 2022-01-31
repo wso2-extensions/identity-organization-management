@@ -129,15 +129,6 @@ public interface OrganizationUserRoleMgtDAO {
             throws OrganizationUserRoleMgtException;
 
     /**
-     * Get role id by SCIM group name.
-     * @param roleName Name of the role.
-     * @param tenantId Tenant ID.
-     * @return The roleId
-     * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management exception.
-     */
-    Integer getRoleIdBySCIMGroupName(String roleName, int tenantId) throws OrganizationUserRoleMgtServerException;
-
-    /**
      * Get all the sub organizations and their immediate parents.
      * @param organizationId ID of the organization.
      * @return The child-parent association of all the sub-organizations.
