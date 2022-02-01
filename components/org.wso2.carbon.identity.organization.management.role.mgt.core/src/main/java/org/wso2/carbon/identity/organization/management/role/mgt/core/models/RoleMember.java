@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,15 +16,24 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.endpoint.constants;
+package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
+
+import java.util.Map;
 
 /**
- * Organization management endpoint constants.
+ * User representation.
  */
-public class OrganizationManagementEndpointConstants {
+public class RoleMember {
 
-    public static final String V1_API_PATH_COMPONENT = "v1.0/";
-    public static final String ORGANIZATION_PATH = "organizations/";
-    public static final String ORGANIZATION_ROLES_PATH = "organizations/%s/roles";
-    public static final String CORRELATION_ID_MDC = "Correlation-ID";
+    private Map<String, Object> userAttributes;
+
+    public RoleMember(Map<String, Object> userAttributes) {
+
+        this.userAttributes = userAttributes;
+    }
+
+    public Map<String, Object> getUserAttributes() {
+
+        return userAttributes;
+    }
 }
