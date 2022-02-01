@@ -50,6 +50,7 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getContext;
 
 /**
@@ -111,6 +112,10 @@ public class OrganizationManagementEndpointUtil {
 
         if (isConflictError(e)) {
             throw buildException(Response.Status.CONFLICT, log, e);
+        }
+
+        if (isForbiddenError(e)) {
+            throw buildException(Response.Status.FORBIDDEN, log, e);
         }
 
         throw buildException(Response.Status.BAD_REQUEST, log, e);
@@ -189,6 +194,10 @@ public class OrganizationManagementEndpointUtil {
         return ERROR_CODE_ORGANIZATION_NAME_CONFLICT.getCode().equals(e.getErrorCode());
     }
 
+    private static boolean isForbiddenError(OrganizationManagementClientException e) {
+
+        return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode());
+
     private static boolean isConflictError(OrganizationUserRoleMgtClientException e) {
 
         String code = e.getErrorCode().replace('-', '_');
@@ -211,6 +220,7 @@ public class OrganizationManagementEndpointUtil {
         }
         return new OrganizationManagementEndpointException(status, getError(e.getErrorCode(), e.getMessage(),
                 e.getDescription()));
+
     }
 
     private static OrganizationManagementEndpointException buildException(Response.Status status, Log log,

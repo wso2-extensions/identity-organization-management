@@ -84,12 +84,13 @@ public class OrganizationManagementService {
     /**
      * Retrieve organization IDs.
      *
+     * @param filter The filter string.
      * @return The list of organization IDs.
      */
-    public Response getOrganizations() {
+    public Response getOrganizations(String filter) {
 
         try {
-            List<String> organizationIds = getOrganizationManager().getOrganizationIds();
+            List<String> organizationIds = getOrganizationManager().getOrganizationIds(filter);
             return Response.ok().entity(getOrganizationsResponse(organizationIds)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
