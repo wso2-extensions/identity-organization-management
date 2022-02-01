@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -191,7 +191,6 @@ public class OrganizationsApi  {
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
-        @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesPost(@ApiParam(value = "ID of the organization which the user-role mappings are added.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents user role mappings." ,required=true) @Valid UserRoleMappingDTO userRoleMappingDTO) {
@@ -215,7 +214,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
-        @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesRoleIdUsersGet(@ApiParam(value = "ID of the organization which, the users will be returned.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role which, the user will be returned.",required=true) @PathParam("role-id") String roleId,     @Valid@ApiParam(value = "Number of items to be skipped before starting to collect the result set. (Should be 0 or positive)")  @QueryParam("offset") Integer offset,     @Valid@ApiParam(value = "Max number of items to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid@ApiParam(value = "Comma separated list of SCIM user attributes to be returned in the response.")  @QueryParam("attributes") String attributes,     @Valid@ApiParam(value = "SCIM filtering to fine tune the search results. Supported operations are 'eq', 'co', 'sw', 'ew', and 'and'.")  @QueryParam("filter") String filter) {
@@ -239,6 +238,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(@ApiParam(value = "ID of the organization of which, the user role mappings will be deleted.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be deleted.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId,     @Valid@ApiParam(value = "The deletion should proceed to sub orgs or not.")  @QueryParam("includeSubOrgs") Boolean includeSubOrgs) {
@@ -262,6 +262,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesRoleIdUsersUserIdPatch(@ApiParam(value = "ID of the organization of which, the user role mappings will be updated.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be updated.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId, @ApiParam(value = "This represents the patch operation." ,required=true) @Valid List<UserRoleOperationDTO> userRoleOperationDTO) {
@@ -285,7 +286,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
-        @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdUsersUserIdRolesGet(@ApiParam(value = "ID of the organization of which, the users will be returned.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId) {

@@ -293,7 +293,7 @@ public class OrganizationManagementEndpointUtil {
      * Get location of the created organization-user-role mapping.
      *
      * @param organizationId The unique identifier of the created organization-user-role mapping.
-     * @return URI
+     * @return URI the resource id.
      * @throws URISyntaxException To handle the URISyntax errors.
      */
     public static URI getOrganizationRoleResourceURI(String organizationId) {

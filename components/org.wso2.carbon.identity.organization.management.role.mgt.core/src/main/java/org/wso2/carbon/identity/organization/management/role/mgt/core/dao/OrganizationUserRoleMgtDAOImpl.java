@@ -30,7 +30,6 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Organization;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleAssignedLevel;
@@ -164,7 +163,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                 UserResourceManager userResourceManager = new UserResourceManager();
                 // Modify the given filter by adding the user ID.
                 String modifiedFilter;
-                if (StringUtils.isNotEmpty(filter)) {
+                if (StringUtils.isNotBlank(filter)) {
                     modifiedFilter = filter + " and id eq " + userId;
                 } else {
                     modifiedFilter = "id eq " + userId;
@@ -323,7 +322,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                             });
         } catch (DataAccessException e) {
             String message =
-                    String.format(String.valueOf(ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR), roleId,
+                    String.format(ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR.getMessage(), roleId,
                             userId, organizationId);
             throw new OrganizationUserRoleMgtServerException(message,
                     ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR.getCode(), e);
@@ -388,14 +387,14 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     @Override
-    public List<Organization> getAllSubOrganizations(String organizationId) throws
+    public List<String> getAllSubOrganizations(String organizationId) throws
             OrganizationUserRoleMgtException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
             return namedJdbcTemplate.executeQuery(FIND_ALL_CHILD_ORG_IDS,
                     (resultSet, rowNumber) ->
-                            new Organization(resultSet.getString(VIEW_ID_COLUMN)),
+                            resultSet.getString(VIEW_ID_COLUMN),
                     namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID,
                             organizationId));
         } catch (DataAccessException e) {
@@ -474,7 +473,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
 
         StringBuilder sb = new StringBuilder();
         sb.append(GET_ORGANIZATION_USER_ROLE_MAPPING);
-        if (StringUtils.isNotEmpty(assignedLevel)) {
+        if (StringUtils.isNotBlank(assignedLevel)) {
             sb.append(AND).append(ASSIGNED_AT_ADDING);
         }
         if (checkMandatory) {

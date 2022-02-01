@@ -251,13 +251,13 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, if user `U1` assign role `R1` to organization `A` it will be assigned to all the sub-organizations (B, C, D, E).
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|1
-  |URO2|U1|R1|1|-1234|B|A|1
-  |URO3|U1|R1|1|-1234|C|A|1
-  |URO4|U1|R1|1|-1234|D|A|1
-  |URO5|U1|R1|1|-1234|E|A|1
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|-----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|1
+  |URO2|U1|R1|-1234|B|A|1
+  |URO3|U1|R1|-1234|C|A|1
+  |URO4|U1|R1|-1234|D|A|1
+  |URO5|U1|R1|-1234|E|A|1
 
 
 - Removing or editing that **mandatory** role can **only** be done at the assigned level.
@@ -274,13 +274,13 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - If the user `U1` assigns role `R1` to organization `A` with `includeSubOrgs` it will be propagated to all the sub organizations as a new copy.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|0
-  |URO2|U1|R1|1|-1234|B|B|0
-  |URO3|U1|R1|1|-1234|C|C|0
-  |URO4|U1|R1|1|-1234|D|D|0
-  |URO5|U1|R1|1|-1234|E|E|0
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|-----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|0
+  |URO2|U1|R1|-1234|B|B|0
+  |URO3|U1|R1|-1234|C|C|0
+  |URO4|U1|R1|-1234|D|D|0
+  |URO5|U1|R1|-1234|E|E|0
 - Note the changes in `ASSIGNED_AT` column in these three scenarios.
 
 
@@ -290,12 +290,12 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
   |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|1
-  |URO2|U1|R1|1|-1234|B|A|1
-  |URO3|U1|R1|1|-1234|C|A|1
-  |URO4|U1|R1|1|-1234|D|A|1
-  |URO5|U1|R1|1|-1234|E|A|1
-  |URO6|U1|R1|1|-1234|A|A|0
+  |URO1|U1|R1|-1234|A|A|1
+  |URO2|U1|R1|-1234|B|A|1
+  |URO3|U1|R1|-1234|C|A|1
+  |URO4|U1|R1|-1234|D|A|1
+  |URO5|U1|R1|-1234|E|A|1
+  |URO6|U1|R1|-1234|A|A|0
 
 ### Patch organization-user-role mappings
 **API**
@@ -323,10 +323,10 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - And it always passes two operations `/includeSubOrgs` and `/isMandatory`.
 - If there are two organization-user-role mappings like following, it will always take precedent one. Meaning it will always select the **mandatory** user role mapping and adjust it accordingly.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|1
-  |URO2|U1|R1|1|-1234|A|A|0
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|----|-----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|1
+  |URO2|U1|R1|-1234|A|A|0
 - If there are two user role mappings like this, and we pass `/isMandatory` **true** and `/includeSubOrgs` **false** it will throw an error, since **mandatory roles should be propagated**.
 - If there are two user role mappings like this, and we pass `/isMandatory` **true** and `/includeSubOrgs` **true** it will remove the `URO2` mapping since it does not follow the **mandatory** property. Then only `URO1` will exist.
 - If there are two user role mappings like this, and we pass `/isMandatory` **false** and `/includeSubOrgs` **false** it will remove both the mappings and add a new mapping `URO3` with **mandatory** **false**.
@@ -336,11 +336,11 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 
 - If there are non-mandatory organization-user-role mappings as following, they will make adjustments according to the `/isMandatory` and `/includeSubOrgs` values.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|0
-  |URO2|U1|R1|1|-1234|B|B|0
-  |URO3|U1|R1|1|-1234|C|C|0
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|0
+  |URO2|U1|R1|-1234|B|B|0
+  |URO3|U1|R1|-1234|C|C|0
 
 - If `/isMandatory` **false** and `/includeSubOrgs` **true** it will add new user-role mappings for the sub-organizations if they don't exist.
 - If `/isMandatory` **false** and `/includeSubOrgs` **false** nothing will happen.
@@ -349,11 +349,11 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 
 - If there are mandatory organization-user-role mappings as following, they will make adjustments according to the `/isMandatory` and `/includeSubOrgs` values.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|1
-  |URO2|U1|R1|1|-1234|B|A|1
-  |URO3|U1|R1|1|-1234|C|A|1
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|-----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|1
+  |URO2|U1|R1|-1234|B|A|1
+  |URO3|U1|R1|-1234|C|A|1
 
 - If `/isMandatory` **false** and `/includeSubOrgs` **true** it will remove all the mandatory and non-mandatory user-role mappings and add them anew.
 - If `/isMandatory` **false** and `/includeSubOrgs` **false** it will remove all the mandatory and non-mandatory role mappings and make one user-role mapping in the mentioned organization.
@@ -375,10 +375,10 @@ includeSubOrgs
 - As mentioned in `patch operation` for **role-management** this will always take the precedent one.
 - If there are two organization-user-role mappings as given below, it will select the one with mandatory 1.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|1
-  |URO2|U1|R1|1|-1234|A|A|0
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|1
+  |URO2|U1|R1|-1234|A|A|0
 
 - If `includeSubOrgs=true` it will remove all the user-role mappings including mandatory and non-mandatory.
 - If `includeSubOrgs=false` it will give an error since, the priority is given to mandatory user-role mapping.

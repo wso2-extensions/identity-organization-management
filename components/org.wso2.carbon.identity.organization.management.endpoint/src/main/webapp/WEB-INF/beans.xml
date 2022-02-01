@@ -41,7 +41,6 @@
             </bean>
             <bean class="org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper.JsonProcessingExceptionMapper "/>
             <bean class="org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper.DefaultExceptionMapper "/>
-            <bean class="org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper.CustomExceptionMapper"/>
         </jaxrs:providers>
     </jaxrs:server>
 </beans>

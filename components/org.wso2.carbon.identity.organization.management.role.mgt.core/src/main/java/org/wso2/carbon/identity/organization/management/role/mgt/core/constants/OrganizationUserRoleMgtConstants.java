@@ -85,27 +85,41 @@ public class OrganizationUserRoleMgtConstants {
 
         // Role Mgt Server Errors (ORG-65200 - ORG-65999)
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_ADD_ERROR("ORG-65200",
-                "Error while creating the role mappings", ""),
+                "Error while creating the role mappings",
+                "Server encountered an error while creating the organization-user-role mappings."),
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_DELETE_ERROR("ORG-65201",
-                "Error while deleting the organization user role mapping.", ""),
+                "Error while deleting the organization user role mapping.",
+                "Server encountered an error while deleting the organization-user-role mappings."),
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR("ORG-65202",
-                "Error while retrieving the role : %s, for user : %s for organization : %s", ""),
+                "Error while retrieving the role : %s, for user : %s for organization : %s",
+                "Server encountered an error while retrieving the roles for a user of a " +
+                        "particular organization."),
         ERROR_CODE_HYBRID_ROLE_NAMES_RETRIEVING_ERROR("ORG-65203",
-                "Error while retrieving the hybrid role names for roleIds", ""),
+                "Error while retrieving the hybrid role names for roleIds",
+                "Server encountered an error while retrieving the role names using role ids."),
         ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR("ORG-65204",
-                "Error while retrieving users for role: %s , organization : %s", ""),
+                "Error while retrieving users for role: %s , organization : %s",
+                "Server encountered an error while retrieving users of a particular role in a " +
+                        "particular organization."),
         ERROR_CODE_ROLES_PER_ORG_USER_RETRIEVING_ERROR("ORG-65205",
-                "Error while retrieving roles for user: %s , organization : %s", ""),
-        ERROR_CODE_EVENTING_ERROR("ORG-65206", "Error while handling the event : %s", ""),
+                "Error while retrieving roles for user: %s , organization : %s", "Server encountered " +
+                "an error while retrieving the roles of a user  for a particular organization. "),
+        ERROR_CODE_EVENTING_ERROR("ORG-65206", "Error while handling the event : %s",
+                "Server encountered an error while handling the event."),
         ERROR_CODE_USER_STORE_OPERATIONS_ERROR("ORG-65207", "Error accessing user store : %s",
-                ""),
+                "Server encountered an error while accessing the user store."),
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_DELETE_PER_USER_ERROR("ORG-65208",
-                "Error while deleting organization user role mappings for user : %s", ""),
+                "Error while deleting organization user role mappings for user : %s",
+                "Server encountered an error while deleting the organization user role mappings."),
         ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_UPDATE_ERROR("ORG-65209",
-                "Error while updating mandatory property of organization mapping", ""),
-        ERROR_CODE_UNEXPECTED("ORG-65210", "Unexpected Error", ""),
+                "Error while updating mandatory property of organization mapping",
+                "Server encountered an error while updating the mandatory property of " +
+                        "organization-user-role mapping."),
+        ERROR_CODE_UNEXPECTED("ORG-65210", "Unexpected Error",
+                "Server encountered an unexpected error."),
         ERROR_CODE_ORGANIZATION_GET_CHILDREN_ERROR("ORG-65211",
-                "Error while retrieving the child organizations : %s", "");
+                "Error while retrieving the child organizations for parent id: %s",
+                "Server encountered an error while retrieving the child organizations.");
 
         private final String code;
         private final String message;

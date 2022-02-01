@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.role.mgt.core;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -29,7 +30,6 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.dao.Organi
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.internal.OrganizationUserRoleMgtDataHolder;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Organization;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMappingForEvent;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
@@ -122,27 +122,25 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                     boolean userExists = userStoreManager.isExistingUserWithID(userForUserRoleMapping.getUserId());
                     if (!userExists) {
                         throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_INVALID_USER,
-                                "No user exists with user Id: " + userForUserRoleMapping.getUserId());
+                                "No user exists with user Id: " + userForUserRoleMapping.getUserId() +
+                                        "for tenant id: " + getTenantId());
                     }
                     if (userForUserRoleMapping.hasMandatoryPrivilege()) {
                         if (!userForUserRoleMapping.hasIncludeSubOrgsPrivilege()) {
                             throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_INVALID_ORGANIZATION_PARAM, "");
                         }
-                        List<Organization> organizationsList = organizationUserRoleMgtDAO
+                        List<String> organizationsList = organizationUserRoleMgtDAO
                                 .getAllSubOrganizations(organizationId);
                         addOrganizationUserRoleMappingsFromList(organizationUserRoleMappings, userForUserRoleMapping,
-                                organizationId, roleId, organizationsList,
-                                true, true);
+                                organizationId, roleId, organizationsList, true, true);
                     } else if (userForUserRoleMapping.hasIncludeSubOrgsPrivilege()) {
-                        List<Organization> organizationsList = organizationUserRoleMgtDAO
+                        List<String> organizationsList = organizationUserRoleMgtDAO
                                 .getAllSubOrganizations(organizationId);
                         addOrganizationUserRoleMappingsFromList(organizationUserRoleMappings, userForUserRoleMapping,
-                                organizationId, roleId, organizationsList,
-                                false, true);
+                                organizationId, roleId, organizationsList, false, true);
                     } else {
                         addOrganizationUserRoleMappingsFromList(organizationUserRoleMappings, userForUserRoleMapping,
-                                organizationId, roleId, null,
-                                false, false);
+                                organizationId, roleId, null, false, false);
                     }
                 }
             }
@@ -228,7 +226,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
 
         List<OrganizationUserRoleMapping> addOrganizationUserRoleMappings = new ArrayList<>();
         List<OrganizationUserRoleMapping> deleteOrganizationUserRoleMappings = new ArrayList<>();
-        List<Organization> organizations = organizationUserRoleMgtDAO
+        List<String> organizations = organizationUserRoleMgtDAO
                 .getAllSubOrganizations(organizationId);
         /*
          * If directlyAssignedRoleMappingExist=1 it means that there is the possibility of having
@@ -252,8 +250,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                 deleteOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(organizationId, userId,
                         roleId, organizationId, false));
             }
-            for (Organization organization : organizations) {
-                String orgId = organization.getOrganizationId();
+            for (String orgId : organizations) {
                 checkMapping = organizationUserRoleMgtDAO.isOrganizationUserRoleMappingExists(orgId, userId, roleId,
                         orgId, false, getTenantId());
                 if (checkMapping) {
@@ -275,8 +272,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                         roleId, organizationId, false));
                 deleteOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(organizationId, userId,
                         roleId, organizationId, true));
-                for (Organization organization : organizations) {
-                    String orgId = organization.getOrganizationId();
+                for (String orgId : organizations) {
                     checkMapping = organizationUserRoleMgtDAO.isOrganizationUserRoleMappingExists(orgId, userId, roleId,
                             organizationId, true, getTenantId());
                     if (checkMapping) {
@@ -286,8 +282,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                 }
                 if (includeSubOrgsOp.getValue()) {
                     //add non-mandatory organization-user-role mappings
-                    for (Organization organization : organizations) {
-                        String orgId = organization.getOrganizationId();
+                    for (String orgId : organizations) {
                         addOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(orgId, userId, roleId,
                                 orgId, false));
                     }
@@ -304,8 +299,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                     deleteOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(organizationId, userId,
                             roleId, organizationId, false));
                     // then check for child organizations with non-mandatory and remove them.
-                    for (Organization organization : organizations) {
-                        String orgId = organization.getOrganizationId();
+                    for (String orgId : organizations) {
                         deleteOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(orgId, userId, roleId,
                                 orgId, false));
                     }
@@ -315,8 +309,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                      * */
                     addOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(organizationId, userId,
                             roleId, organizationId, true));
-                    for (Organization organization : organizations) {
-                        String orgId = organization.getOrganizationId();
+                    for (String orgId : organizations) {
                         addOrganizationUserRoleMappings.add(new OrganizationUserRoleMapping(orgId, userId,
                                 roleId, organizationId, true));
                     }
@@ -329,8 +322,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                      * we already have a mapping for parent organization. We will check whether there are mappings for
                      * sub organizations and add accordingly.
                      * */
-                    for (Organization organization : organizations) {
-                        String orgId = organization.getOrganizationId();
+                    for (String orgId : organizations) {
                         boolean checkMapping = organizationUserRoleMgtDAO.isOrganizationUserRoleMappingExists(orgId,
                                 userId, roleId, orgId, false, getTenantId());
                         //if there is not a mapping add it.
@@ -376,7 +368,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                             organizationId, userId, roleId, organizationId));
         }
 
-        List<Organization> subOrganizations = organizationUserRoleMgtDAO
+        List<String> subOrganizations = organizationUserRoleMgtDAO
                 .getAllSubOrganizations(organizationId);
         List<OrganizationUserRoleMapping> organizationListToBeDeleted = new ArrayList<>();
         if (directlyAssignedRoleMappingExist == 1) {
@@ -393,8 +385,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                 organizationListToBeDeleted.add(new OrganizationUserRoleMapping(organizationId, userId, roleId,
                         organizationId, false));
             }
-            for (Organization organization : subOrganizations) {
-                String orgId = organization.getOrganizationId();
+            for (String orgId : subOrganizations) {
                 checkMapping = organizationUserRoleMgtDAO.isOrganizationUserRoleMappingExists(orgId, userId, roleId,
                         orgId, false, getTenantId());
                 if (checkMapping) {
@@ -413,8 +404,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                     organizationId, false));
             boolean checkMapping;
             if (includeSubOrgs) {
-                for (Organization organization : subOrganizations) {
-                    String orgId = organization.getOrganizationId();
+                for (String orgId : subOrganizations) {
                     checkMapping = organizationUserRoleMgtDAO.isOrganizationUserRoleMappingExists(orgId, userId, roleId,
                             orgId, false, getTenantId());
                     if (checkMapping) {
@@ -496,23 +486,23 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                                                                  organizationUserRoleMappingList,
                                                          UserForUserRoleMapping userForUserRoleMapping,
                                                          String organizationId, String roleId,
-                                                         List<Organization> organizationsList, boolean isMandatory,
+                                                         List<String> organizationsList, boolean isMandatory,
                                                          boolean includeSubOrgs) {
-        //add starting organization to populate role mapping
+
         organizationUserRoleMappingList.add(populateOrganizationUserRoleMappings(organizationId, roleId,
                 organizationId, userForUserRoleMapping));
-        if (organizationsList == null) {
+        if (CollectionUtils.isEmpty(organizationsList)) {
             return;
         }
         if (isMandatory) {
-            for (Organization organization : organizationsList) {
+            for (String orgId : organizationsList) {
                 organizationUserRoleMappingList.add(populateOrganizationUserRoleMappings(
-                        organization.getOrganizationId(), roleId, organizationId, userForUserRoleMapping));
+                        orgId, roleId, organizationId, userForUserRoleMapping));
             }
         } else if (includeSubOrgs) {
-            for (Organization organization : organizationsList) {
-                organizationUserRoleMappingList.add(populateOrganizationUserRoleMappings(organization
-                        .getOrganizationId(), roleId, organization.getOrganizationId(), userForUserRoleMapping));
+            for (String orgId : organizationsList) {
+                organizationUserRoleMappingList.add(populateOrganizationUserRoleMappings(orgId, roleId, orgId,
+                        userForUserRoleMapping));
             }
         }
     }

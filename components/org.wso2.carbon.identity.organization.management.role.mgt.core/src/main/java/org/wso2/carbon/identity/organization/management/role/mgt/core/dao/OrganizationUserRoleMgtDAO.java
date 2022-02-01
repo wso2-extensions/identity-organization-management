@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.dao;
 
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Organization;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
@@ -134,5 +133,5 @@ public interface OrganizationUserRoleMgtDAO {
      * @return The child-parent association of all the sub-organizations.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
-    List<Organization> getAllSubOrganizations(String organizationId) throws OrganizationUserRoleMgtException;
+    List<String> getAllSubOrganizations(String organizationId) throws OrganizationUserRoleMgtException;
 }
