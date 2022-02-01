@@ -267,9 +267,9 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, if user `U1` assigns role `R1` to organization `A` only, that role will only be at organization A.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
-  |URO1|U1|R1|1|-1234|A|A|0
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|----|----|-----|-----
+  |URO1|U1|R1|-1234|A|A|0
 
 - If the user `U1` assigns role `R1` to organization `A` with `includeSubOrgs` it will be propagated to all the sub organizations as a new copy.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
@@ -288,8 +288,8 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, the user `U1` can assign role `R1` to organization `A` as a mandatory role and assign `R1` as non-mandatory without including sub-organizations.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_HYBRID_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
-  |-----|------|-----|----|-----|----|-----|-----
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |-----|------|-----|----|-----|----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|B|A|1
   |URO3|U1|R1|-1234|C|A|1

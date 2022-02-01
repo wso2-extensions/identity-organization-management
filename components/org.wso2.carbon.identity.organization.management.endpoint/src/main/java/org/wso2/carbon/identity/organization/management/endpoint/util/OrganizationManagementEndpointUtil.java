@@ -197,6 +197,7 @@ public class OrganizationManagementEndpointUtil {
     private static boolean isForbiddenError(OrganizationManagementClientException e) {
 
         return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode());
+    }
 
     private static boolean isConflictError(OrganizationUserRoleMgtClientException e) {
 
