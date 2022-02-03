@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
@@ -72,6 +71,7 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
@@ -209,7 +209,7 @@ public class OrganizationManagementService {
     private Organization getOrganizationFromPostRequest(OrganizationPOSTRequest organizationPOSTRequest) {
 
         Organization organization = new Organization();
-        organization.setId(UUID.randomUUID().toString());
+        organization.setId(generateUniqueID());
         organization.setName(organizationPOSTRequest.getName());
         organization.setDescription(organizationPOSTRequest.getDescription());
         organization.getParent().setId(organizationPOSTRequest.getParentId());

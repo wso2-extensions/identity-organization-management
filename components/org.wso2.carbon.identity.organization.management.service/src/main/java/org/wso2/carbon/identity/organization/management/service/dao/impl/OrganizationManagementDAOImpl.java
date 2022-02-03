@@ -338,7 +338,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     (resultSet, rowNumber) -> resultSet.getInt(COUNT_COLUMN), namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
                     });
-            return CollectionUtils.isNotEmpty(childOrganizationIds);
+            return childOrganizationIds.get(0) > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId,
                     tenantDomain);

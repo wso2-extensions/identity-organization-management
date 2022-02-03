@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
@@ -93,6 +92,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
@@ -207,10 +207,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
     public Organization patchOrganization(String organizationId, List<PatchOperation> patchOperations) throws
             OrganizationManagementException {
 
-        String tenantDomain = getTenantDomain();
         if (StringUtils.isBlank(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
+        String tenantDomain = getTenantDomain();
         organizationId = organizationId.trim();
         if (!isOrganizationExistById(organizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId, tenantDomain);
@@ -281,11 +281,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
         Instant now = Instant.now();
         organization.setCreated(now);
         organization.setLastModified(now);
-    }
-
-    private String generateUniqueID() {
-
-        return UUID.randomUUID().toString();
     }
 
     private void validateAddOrganizationRequest(Organization organization) throws OrganizationManagementException {

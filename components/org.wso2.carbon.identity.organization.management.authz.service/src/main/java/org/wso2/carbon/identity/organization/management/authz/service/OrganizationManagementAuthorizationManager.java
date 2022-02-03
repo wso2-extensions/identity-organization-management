@@ -27,19 +27,12 @@ import org.wso2.carbon.identity.organization.management.authz.service.exception.
  */
 public class OrganizationManagementAuthorizationManager {
 
-    private OrganizationManagementAuthorizationManager() {
-
-    }
-
-    private static class LazyHolder {
-
-        static final OrganizationManagementAuthorizationManager INSTANCE =
-                new OrganizationManagementAuthorizationManager();
-    }
+    private static final OrganizationManagementAuthorizationManager INSTANCE =
+            new OrganizationManagementAuthorizationManager();
 
     public static OrganizationManagementAuthorizationManager getInstance() {
 
-        return LazyHolder.INSTANCE;
+        return INSTANCE;
     }
 
     /**
