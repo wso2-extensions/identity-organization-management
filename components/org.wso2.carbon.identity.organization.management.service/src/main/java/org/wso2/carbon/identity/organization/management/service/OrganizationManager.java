@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.service;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
@@ -78,11 +79,16 @@ public interface OrganizationManager {
     /**
      * List or search organizations.
      *
-     * @param filter The filter string.
+     * @param limit     The maximum number of records to be returned.
+     * @param after     The pointer to next page.
+     * @param before    The pointer to previous page.
+     * @param sortOrder The sort order, ascending or descending.
+     * @param filter    The filter string.
      * @return the list of organization IDs.
      * @throws OrganizationManagementException The exception thrown when listing organizations.
      */
-    List<String> getOrganizationIds(String filter) throws OrganizationManagementException;
+    List<BasicOrganization> getOrganizations(Integer limit, String after, String before, String sortOrder,
+                                             String filter) throws OrganizationManagementException;
 
     /**
      * Delete the organization identified by the provided ID.

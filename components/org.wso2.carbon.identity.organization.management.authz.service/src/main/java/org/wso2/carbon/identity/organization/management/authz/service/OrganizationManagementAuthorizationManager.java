@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.organization.management.authz.service.exception.
  */
 public class OrganizationManagementAuthorizationManager {
 
-    private static OrganizationManagementAuthorizationManager organizationMgtAuthorizationManager =
+    private static volatile OrganizationManagementAuthorizationManager organizationMgtAuthorizationManager =
             new OrganizationManagementAuthorizationManager();
     private static final Object lock = new Object();
 

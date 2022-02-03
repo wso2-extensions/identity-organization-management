@@ -172,7 +172,8 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
             if (granted) {
                 Map<String, String> scopePermissionMap = SCOPE_PERMISSION_MAP;
                 List<String> permissions = new ArrayList<>();
-                for (String scope : scopePermissionMap.keySet()) {
+                for (Map.Entry<String, String> entry : scopePermissionMap.entrySet()) {
+                    String scope = entry.getKey();
                     for (String tokenScope : tokenScopes) {
                         if (StringUtils.equals(tokenScope, scope)) {
                             permissions.add(scopePermissionMap.get(scope));
