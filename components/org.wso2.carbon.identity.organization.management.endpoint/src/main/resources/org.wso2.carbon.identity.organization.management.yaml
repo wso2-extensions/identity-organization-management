@@ -353,7 +353,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: includeSubOrgs
+        - name: includeSubOrganizations
           in: query
           description: The deletion should proceed to sub orgs or not.
           schema:
@@ -379,7 +379,7 @@ paths:
         Update an organization user role mapping.
       description: |
         This API is used to update the inheritance of a user role assigned over an organization.
-        This will allow to change the includeSubOrgs property of the role mapping.
+        This will allow to change the includeSubOrganizations property of the role mapping.
       parameters:
         - name: organization-id
           in: path
@@ -755,10 +755,10 @@ components:
         userId:
           type: string
           example: c4c3a320-e381-463a-846f-1c2bd083d38c
-        mandatory:
+        forced:
           type: boolean
           example: true
-        includeSubOrgs:
+        includeSubOrganizations:
           type: boolean
           example: true
 
@@ -782,11 +782,11 @@ components:
         assignedMeta:
           type: array
           example:
-            - mandatory: true
+            - forced: true
               assignedAt:
                 orgId: b4526d91-a8bf-43d2-8b14-c548cf73065b
                 orgName: WSO2
-            - mandatory: false
+            - forced: false
               assignedAt:
                 orgId: c4526761-a8bf-43d2-8b14-c548cf7306fc
                 orgName: WSO2BR
@@ -812,7 +812,7 @@ components:
     UserAssignedMetaDTO:
       type: object
       properties:
-        mandatory:
+        forced:
           type: boolean
         assignedAt:
           $ref: '#/components/schemas/UserAssignedAtDTO'
@@ -860,7 +860,7 @@ components:
           example: replace
         path:
           type: string
-          example: /includeSubOrgs
+          example: /includeSubOrganizations
         value:
           type: boolean
           example: false

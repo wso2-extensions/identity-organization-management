@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.endpoint.service;
 
 import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -68,9 +69,10 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleUnexpectedServerError;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ADD_ORG_ROLE_USER_REQUEST_NULL_USERS;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_MANDATORY_AND_INCLUDE_SUB_ORGS_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.FORCED_FIELD_NULL;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_FORCED_AND_INCLUDE_SUB_ORGS_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.INVALID_ORGANIZATION_ROLE_USERS_GET_REQUEST;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.MANDATORY_FIELD_NULL;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.USER_ID_NULL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 
@@ -215,9 +217,9 @@ public class OrganizationManagementService {
             UserRoleMapping newUserRoleMappings = new UserRoleMapping(userRoleMappingDTO.getRoleId(),
                     userRoleMappingDTO.getUsers()
                             .stream()
-                            .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getMandatory(),
-                                    mapping.getIncludeSubOrgs() == null ? mapping.getMandatory() :
-                                            mapping.getIncludeSubOrgs()))
+                            .map(mapping -> new UserForUserRoleMapping(mapping.getUserId(), mapping.getForced(),
+                                    mapping.getIncludeSubOrganizations() == null ? mapping.getForced() :
+                                            mapping.getIncludeSubOrganizations()))
                             .collect(Collectors.toList()));
             getOrganizationUserRoleManager()
                     .addOrganizationUserRoleMappings(organizationId, newUserRoleMappings);
@@ -475,7 +477,7 @@ public class OrganizationManagementService {
     }
 
     private void validateAddOrganizationUserRoleMappingRequestBody(String organizationId,
-                                                                     UserRoleMappingDTO userRoleMappingDTO)
+                                                                   UserRoleMappingDTO userRoleMappingDTO)
             throws OrganizationUserRoleMgtClientException {
 
         if (userRoleMappingDTO.getRoleId() == null) {
@@ -486,11 +488,14 @@ public class OrganizationManagementService {
         }
         List<UserRoleMappingUsersDTO> usersList = userRoleMappingDTO.getUsers();
         for (UserRoleMappingUsersDTO user : usersList) {
-            if (user.getMandatory() == null) {
-                throw handleClientException(MANDATORY_FIELD_NULL, organizationId);
+            if (StringUtils.isBlank(user.getUserId())) {
+                throw handleClientException(USER_ID_NULL, organizationId);
             }
-            if (user.getIncludeSubOrgs() == null && user.getMandatory() == false) {
-                throw handleClientException(INVALID_MANDATORY_AND_INCLUDE_SUB_ORGS_VALUES, null);
+            if (user.getForced() == null) {
+                throw handleClientException(FORCED_FIELD_NULL, organizationId);
+            }
+            if (user.getIncludeSubOrganizations() == null && user.getForced() == false) {
+                throw handleClientException(INVALID_FORCED_AND_INCLUDE_SUB_ORGS_VALUES, null);
             }
         }
     }

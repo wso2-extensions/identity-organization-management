@@ -108,7 +108,7 @@ public class UserDTO  {
         return this;
     }
     
-    @ApiModelProperty(example = "[{\"mandatory\":true,\"assignedAt\":{\"orgId\":\"b4526d91-a8bf-43d2-8b14-c548cf73065b\",\"orgName\":\"WSO2\"}},{\"mandatory\":false,\"assignedAt\":{\"orgId\":\"c4526761-a8bf-43d2-8b14-c548cf7306fc\",\"orgName\":\"WSO2BR\"}}]", value = "")
+    @ApiModelProperty(example = "[{\"forced\":true,\"assignedAt\":{\"orgId\":\"b4526d91-a8bf-43d2-8b14-c548cf73065b\",\"orgName\":\"WSO2\"}},{\"forced\":false,\"assignedAt\":{\"orgId\":\"c4526761-a8bf-43d2-8b14-c548cf7306fc\",\"orgName\":\"WSO2BR\"}}]", value = "")
     @JsonProperty("assignedMeta")
     @Valid
     public List<UserAssignedMetaDTO> getAssignedMeta() {

@@ -241,9 +241,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(@ApiParam(value = "ID of the organization of which, the user role mappings will be deleted.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be deleted.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId,     @Valid@ApiParam(value = "The deletion should proceed to sub orgs or not.")  @QueryParam("includeSubOrgs") Boolean includeSubOrgs) {
+    public Response organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(@ApiParam(value = "ID of the organization of which, the user role mappings will be deleted.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the role of which, the user will be deleted.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the user.",required=true) @PathParam("user-id") String userId,     @Valid@ApiParam(value = "The deletion should proceed to sub orgs or not.")  @QueryParam("includeSubOrganizations") Boolean includeSubOrganizations) {
 
-        return delegate.organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(organizationId,  roleId,  userId,  includeSubOrgs );
+        return delegate.organizationsOrganizationIdRolesRoleIdUsersUserIdDelete(organizationId,  roleId,  userId,  includeSubOrganizations );
     }
 
     @Valid
@@ -251,7 +251,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}/users/{user-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update an organization user role mapping. ", notes = "This API is used to update the inheritance of a user role assigned over an organization. This will allow to change the includeSubOrgs property of the role mapping. ", response = Void.class, authorizations = {
+    @ApiOperation(value = "Update an organization user role mapping. ", notes = "This API is used to update the inheritance of a user role assigned over an organization. This will allow to change the includeSubOrganizations property of the role mapping. ", response = Void.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             

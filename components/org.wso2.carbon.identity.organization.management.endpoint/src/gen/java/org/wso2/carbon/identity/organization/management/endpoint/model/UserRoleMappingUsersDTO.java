@@ -33,8 +33,8 @@ import javax.xml.bind.annotation.*;
 public class UserRoleMappingUsersDTO  {
   
     private String userId;
-    private Boolean mandatory;
-    private Boolean includeSubOrgs;
+    private Boolean forced;
+    private Boolean includeSubOrganizations;
 
     /**
     **/
@@ -58,38 +58,38 @@ public class UserRoleMappingUsersDTO  {
 
     /**
     **/
-    public UserRoleMappingUsersDTO mandatory(Boolean mandatory) {
+    public UserRoleMappingUsersDTO forced(Boolean forced) {
 
-        this.mandatory = mandatory;
+        this.forced = forced;
         return this;
     }
     
     @ApiModelProperty(example = "true", value = "")
-    @JsonProperty("mandatory")
+    @JsonProperty("forced")
     @Valid
-    public Boolean getMandatory() {
-        return mandatory;
+    public Boolean getForced() {
+        return forced;
     }
-    public void setMandatory(Boolean mandatory) {
-        this.mandatory = mandatory;
+    public void setForced(Boolean forced) {
+        this.forced = forced;
     }
 
     /**
     **/
-    public UserRoleMappingUsersDTO includeSubOrgs(Boolean includeSubOrgs) {
+    public UserRoleMappingUsersDTO includeSubOrganizations(Boolean includeSubOrganizations) {
 
-        this.includeSubOrgs = includeSubOrgs;
+        this.includeSubOrganizations = includeSubOrganizations;
         return this;
     }
     
     @ApiModelProperty(example = "true", value = "")
-    @JsonProperty("includeSubOrgs")
+    @JsonProperty("includeSubOrganizations")
     @Valid
-    public Boolean getIncludeSubOrgs() {
-        return includeSubOrgs;
+    public Boolean getIncludeSubOrganizations() {
+        return includeSubOrganizations;
     }
-    public void setIncludeSubOrgs(Boolean includeSubOrgs) {
-        this.includeSubOrgs = includeSubOrgs;
+    public void setIncludeSubOrganizations(Boolean includeSubOrganizations) {
+        this.includeSubOrganizations = includeSubOrganizations;
     }
 
 
@@ -105,13 +105,13 @@ public class UserRoleMappingUsersDTO  {
         }
         UserRoleMappingUsersDTO userRoleMappingUsersDTO = (UserRoleMappingUsersDTO) o;
         return Objects.equals(this.userId, userRoleMappingUsersDTO.userId) &&
-            Objects.equals(this.mandatory, userRoleMappingUsersDTO.mandatory) &&
-            Objects.equals(this.includeSubOrgs, userRoleMappingUsersDTO.includeSubOrgs);
+            Objects.equals(this.forced, userRoleMappingUsersDTO.forced) &&
+            Objects.equals(this.includeSubOrganizations, userRoleMappingUsersDTO.includeSubOrganizations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, mandatory, includeSubOrgs);
+        return Objects.hash(userId, forced, includeSubOrganizations);
     }
 
     @Override
@@ -121,8 +121,8 @@ public class UserRoleMappingUsersDTO  {
         sb.append("class UserRoleMappingUsersDTO {\n");
         
         sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
-        sb.append("    mandatory: ").append(toIndentedString(mandatory)).append("\n");
-        sb.append("    includeSubOrgs: ").append(toIndentedString(includeSubOrgs)).append("\n");
+        sb.append("    forced: ").append(toIndentedString(forced)).append("\n");
+        sb.append("    includeSubOrganizations: ").append(toIndentedString(includeSubOrganizations)).append("\n");
         sb.append("}");
         return sb.toString();
     }

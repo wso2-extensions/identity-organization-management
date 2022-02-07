@@ -149,7 +149,7 @@ To disable checkstyle and findbugs plugins, comment the lines containing followi
   ]
 }
 ```
-- Here, an Organization is added to the database. And if there are mandatory organization-user-role mappings coming from the parent organization, those mandatory organization-user-role mappings are added too.
+- Here, an Organization is added to the database. And if there are forced organization-user-role mappings coming from the parent organization, those forced organization-user-role mappings are added too.
 
 ### Get organization
 **API**  
@@ -239,7 +239,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
     "users": [
         {
             "userId": "f88a990b-a08d-4078-85f4-f615ce03a980",
-            "mandatory": false,
+            "forced": false,
             "includeSubOrgs": true
         }
     ]
@@ -247,7 +247,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 ```
 **Notes**
 
-- Assigning a **mandatory** role it will be applied to the organization tree.
+- Assigning a **forced** role it will be applied to the organization tree.
 - For example, if user `U1` assign role `R1` to organization `A` it will be assigned to all the sub-organizations (B, C, D, E).
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
@@ -260,10 +260,10 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
   |URO5|U1|R1|-1234|E|A|1
 
 
-- Removing or editing that **mandatory** role can **only** be done at the assigned level.
+- Removing or editing that **forced** role can **only** be done at the assigned level.
 
 
-- When assigning a non-mandatory role to this hierarchy the user can assign it to that organization only or the all the organizations.
+- When assigning a non-forced role to this hierarchy the user can assign it to that organization only or the all the organizations.
 - For example, if user `U1` assigns role `R1` to organization `A` only, that role will only be at organization A.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
@@ -284,8 +284,8 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - Note the changes in `ASSIGNED_AT` column in these three scenarios.
 
 
-- Even if there exists a **mandatory** organization-user-role mapping, the same user can assign the same role as a non-mandatory role and vice-versa.
-- For example, the user `U1` can assign role `R1` to organization `A` as a mandatory role and assign `R1` as non-mandatory without including sub-organizations.
+- Even if there exists a **forced** organization-user-role mapping, the same user can assign the same role as a non-forced role and vice-versa.
+- For example, the user `U1` can assign role `R1` to organization `A` as a forced role and assign `R1` as non-forced without including sub-organizations.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
@@ -313,28 +313,28 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
     },
     {
         "op": "replace",
-        "path": "/isMandatory",
+        "path": "/isForced",
         "value": false
     }
 ]
 ```
 **Notes**
-- This API only updates the **mandatory** field and then makes adjustments accordingly.
-- And it always passes two operations `/includeSubOrgs` and `/isMandatory`.
-- If there are two organization-user-role mappings like following, it will always take precedent one. Meaning it will always select the **mandatory** user role mapping and adjust it accordingly.
+- This API only updates the **forced** field and then makes adjustments accordingly.
+- And it always passes two operations `/includeSubOrgs` and `/isForced`.
+- If there are two organization-user-role mappings like following, it will always take precedent one. Meaning it will always select the **forced** user role mapping and adjust it accordingly.
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
   |-----|------|----|-----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|A|A|0
-- If there are two user role mappings like this, and we pass `/isMandatory` **true** and `/includeSubOrgs` **false** it will throw an error, since **mandatory roles should be propagated**.
-- If there are two user role mappings like this, and we pass `/isMandatory` **true** and `/includeSubOrgs` **true** it will remove the `URO2` mapping since it does not follow the **mandatory** property. Then only `URO1` will exist.
-- If there are two user role mappings like this, and we pass `/isMandatory` **false** and `/includeSubOrgs` **false** it will remove both the mappings and add a new mapping `URO3` with **mandatory** **false**.
-- If there are two user role mappings like this, and we pass `isMandatory` **false** and `includeSubOrgs` **false** it will remove all the user-role mappings and add new user-role mappings for sub organizations as well.
+- If there are two user role mappings like this, and we pass `/isForced` **true** and `/includeSubOrgs` **false** it will throw an error, since **forced roles should be propagated**.
+- If there are two user role mappings like this, and we pass `/isForced` **true** and `/includeSubOrgs` **true** it will remove the `URO2` mapping since it does not follow the **forced** property. Then only `URO1` will exist.
+- If there are two user role mappings like this, and we pass `/isForced` **false** and `/includeSubOrgs` **false** it will remove both the mappings and add a new mapping `URO3` with **forced** **false**.
+- If there are two user role mappings like this, and we pass `isForced` **false** and `includeSubOrgs` **false** it will remove all the user-role mappings and add new user-role mappings for sub organizations as well.
 - This is due to the precedence behavior of the algorithm selecting a user-role mapping based on `um_user_id` , `um_role_id`, `org_id` and `tenant_id`.
 
 
-- If there are non-mandatory organization-user-role mappings as following, they will make adjustments according to the `/isMandatory` and `/includeSubOrgs` values.
+- If there are non-forced organization-user-role mappings as following, they will make adjustments according to the `/isForced` and `/includeSubOrgs` values.
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
   |-----|------|-----|----|----|-----|-----
@@ -342,12 +342,12 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
   |URO2|U1|R1|-1234|B|B|0
   |URO3|U1|R1|-1234|C|C|0
 
-- If `/isMandatory` **false** and `/includeSubOrgs` **true** it will add new user-role mappings for the sub-organizations if they don't exist.
-- If `/isMandatory` **false** and `/includeSubOrgs` **false** nothing will happen.
-- If `/isMandatory` **true** and `/includeSubOrgs` **false** it will give an error since **mandatory roles should be propagated to sub-organizations**.
-- If `/isMandatory` **true** and `/includeSubOrgs` **true** it will add new user-role mappings for sub-organizations and the given organization with mandatory property, while removing the non-mandatory roles in those with same `um_user_name`, `um_role_id` and `org_id`.
+- If `/isForced` **false** and `/includeSubOrgs` **true** it will add new user-role mappings for the sub-organizations if they don't exist.
+- If `/isForced` **false** and `/includeSubOrgs` **false** nothing will happen.
+- If `/isForced` **true** and `/includeSubOrgs` **false** it will give an error since **forced roles should be propagated to sub-organizations**.
+- If `/isForced` **true** and `/includeSubOrgs` **true** it will add new user-role mappings for sub-organizations and the given organization with forced property, while removing the non-forced roles in those with same `um_user_name`, `um_role_id` and `org_id`.
 
-- If there are mandatory organization-user-role mappings as following, they will make adjustments according to the `/isMandatory` and `/includeSubOrgs` values.
+- If there are forced organization-user-role mappings as following, they will make adjustments according to the `/isForced` and `/includeSubOrgs` values.
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
   |-----|------|-----|-----|----|-----|-----
@@ -355,10 +355,10 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
   |URO2|U1|R1|-1234|B|A|1
   |URO3|U1|R1|-1234|C|A|1
 
-- If `/isMandatory` **false** and `/includeSubOrgs` **true** it will remove all the mandatory and non-mandatory user-role mappings and add them anew.
-- If `/isMandatory` **false** and `/includeSubOrgs` **false** it will remove all the mandatory and non-mandatory role mappings and make one user-role mapping in the mentioned organization.
-- If `/isMandatory` **true** and `/includeSubOrgs` **false** it will give an error since **mandatory roles should be propagated to sub-organizations**.
-- If `/isMandatory` **true** and `/includeSubOrgs` **true** it will remove all the non-mandatory user-role mappings in the sub-organizations and the mentioned organization.
+- If `/isForced` **false** and `/includeSubOrgs` **true** it will remove all the forced and non-forced user-role mappings and add them anew.
+- If `/isForced` **false** and `/includeSubOrgs` **false** it will remove all the forced and non-forced role mappings and make one user-role mapping in the mentioned organization.
+- If `/isForced` **true** and `/includeSubOrgs` **false** it will give an error since **forced roles should be propagated to sub-organizations**.
+- If `/isForced` **true** and `/includeSubOrgs` **true** it will remove all the non-forced user-role mappings in the sub-organizations and the mentioned organization.
 
 ### Delete organization-user-role mappings
 **API**
@@ -373,17 +373,17 @@ includeSubOrgs
 **Notes**
 - This API deletes organization-user-role mappings.
 - As mentioned in `patch operation` for **role-management** this will always take the precedent one.
-- If there are two organization-user-role mappings as given below, it will select the one with mandatory 1.
+- If there are two organization-user-role mappings as given below, it will select the one with forced 1.
 
   |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
   |-----|------|-----|----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|A|A|0
 
-- If `includeSubOrgs=true` it will remove all the user-role mappings including mandatory and non-mandatory.
-- If `includeSubOrgs=false` it will give an error since, the priority is given to mandatory user-role mapping.
+- If `includeSubOrgs=true` it will remove all the user-role mappings including forced and non-forced.
+- If `includeSubOrgs=false` it will give an error since, the priority is given to forced user-role mapping.
 
-- If there are only non-mandatory user-role mappings, then if `includeSubOrgs=true` it will remove all the non-mandatory user-role mappings in sub-organizations and the mentioned organization, else if `includeSubOrgs=false` it will only remove the user-role mapping in that mentioned organization.
+- If there are only non-forced user-role mappings, then if `includeSubOrgs=true` it will remove all the non-forced user-role mappings in sub-organizations and the mentioned organization, else if `includeSubOrgs=false` it will only remove the user-role mapping in that mentioned organization.
 
 ### Get users from a certain organization having certain roles
 **API**

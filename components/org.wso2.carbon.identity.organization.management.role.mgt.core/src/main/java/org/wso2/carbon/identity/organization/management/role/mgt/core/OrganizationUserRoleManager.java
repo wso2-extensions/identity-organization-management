@@ -102,11 +102,11 @@ public interface OrganizationUserRoleManager {
      * @param userId ID of the user.
      * @param roleId ID of the role.
      * @param assignedLevel ID of the assigned level of organization-user-role mapping.
-     * @param mandatory Whether the organization-user-role mapping is mandatory or not.
+     * @param forced Whether the organization-user-role mapping is forced or not.
      * @return Boolean value of whether an organization-user-role mapping exists.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
     boolean isOrganizationUserRoleMappingExists(String organizationId, String userId, String roleId,
-                                                String assignedLevel, boolean mandatory)
+                                                String assignedLevel, boolean forced)
             throws OrganizationUserRoleMgtException;
 }

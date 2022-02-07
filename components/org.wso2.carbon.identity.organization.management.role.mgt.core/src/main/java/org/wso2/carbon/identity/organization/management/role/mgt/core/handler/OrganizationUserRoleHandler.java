@@ -104,8 +104,9 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
         for (UserForUserRoleMapping userForUserRoleMapping : organizationUserRoleMappingForRevokeEvent
                 .getUsersRoleInheritance()) {
             builder = builder.concat(", { UserId : " + userForUserRoleMapping.getUserId() +
-                    ", hasMandatoryPrivilege : " + userForUserRoleMapping.hasMandatoryPrivilege() +
-                    ", hasIncludeSubOrgsPrivilege: " + userForUserRoleMapping.hasIncludeSubOrgsPrivilege() + " }");
+                    ", hasForcedPrivilege : " + userForUserRoleMapping.hasForcedPrivilege() +
+                    ", hasIncludeSubOrganizationsPrivilege: " + userForUserRoleMapping.hasIncludeSubOrgsPrivilege() +
+                    " }");
         }
         return builder;
     }

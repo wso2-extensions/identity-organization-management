@@ -27,12 +27,6 @@ public class UserRoleOperation {
     private boolean value;
     private String op;
 
-    public UserRoleOperation(String op, String path) {
-
-        this.op = op;
-        this.path = path;
-    }
-
     public UserRoleOperation(String op, String path, boolean value) {
 
         this.op = op;

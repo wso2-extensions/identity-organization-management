@@ -27,13 +27,13 @@ public class UserForUserRoleMapping {
     // Mandatory role if the role we are assigning is mandatory
     // Cascaded role if the role we are assigning is non-mandatory and included for sub organizations
     // if Mandatory role is true, then cascaded role should be true.
-    private boolean mandatoryRolePrivilege;
+    private boolean forcedRolePrivilege;
     private boolean includeSubOrgsPrivilege;
 
-    public UserForUserRoleMapping(String userId, boolean mandatoryRolePrivilege, boolean includeSubOrgsPrivilege) {
+    public UserForUserRoleMapping(String userId, boolean forcedRolePrivilege, boolean includeSubOrgsPrivilege) {
 
         this.userId = userId;
-        this.mandatoryRolePrivilege = mandatoryRolePrivilege;
+        this.forcedRolePrivilege = forcedRolePrivilege;
         this.includeSubOrgsPrivilege = includeSubOrgsPrivilege;
     }
 
@@ -47,9 +47,9 @@ public class UserForUserRoleMapping {
         this.userId = userId;
     }
 
-    public boolean hasMandatoryPrivilege() {
+    public boolean hasForcedPrivilege() {
 
-        return mandatoryRolePrivilege;
+        return forcedRolePrivilege;
     }
 
 

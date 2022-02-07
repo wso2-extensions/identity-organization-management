@@ -33,25 +33,25 @@ import javax.xml.bind.annotation.*;
 
 public class UserAssignedMetaDTO  {
   
-    private Boolean mandatory;
+    private Boolean forced;
     private UserAssignedAtDTO assignedAt;
 
     /**
     **/
-    public UserAssignedMetaDTO mandatory(Boolean mandatory) {
+    public UserAssignedMetaDTO forced(Boolean forced) {
 
-        this.mandatory = mandatory;
+        this.forced = forced;
         return this;
     }
     
     @ApiModelProperty(value = "")
-    @JsonProperty("mandatory")
+    @JsonProperty("forced")
     @Valid
-    public Boolean getMandatory() {
-        return mandatory;
+    public Boolean getForced() {
+        return forced;
     }
-    public void setMandatory(Boolean mandatory) {
-        this.mandatory = mandatory;
+    public void setForced(Boolean forced) {
+        this.forced = forced;
     }
 
     /**
@@ -84,13 +84,13 @@ public class UserAssignedMetaDTO  {
             return false;
         }
         UserAssignedMetaDTO userAssignedMetaDTO = (UserAssignedMetaDTO) o;
-        return Objects.equals(this.mandatory, userAssignedMetaDTO.mandatory) &&
+        return Objects.equals(this.forced, userAssignedMetaDTO.forced) &&
             Objects.equals(this.assignedAt, userAssignedMetaDTO.assignedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mandatory, assignedAt);
+        return Objects.hash(forced, assignedAt);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class UserAssignedMetaDTO  {
         StringBuilder sb = new StringBuilder();
         sb.append("class UserAssignedMetaDTO {\n");
         
-        sb.append("    mandatory: ").append(toIndentedString(mandatory)).append("\n");
+        sb.append("    forced: ").append(toIndentedString(forced)).append("\n");
         sb.append("    assignedAt: ").append(toIndentedString(assignedAt)).append("\n");
         sb.append("}");
         return sb.toString();

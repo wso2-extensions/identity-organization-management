@@ -24,14 +24,12 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 public class RoleAssignment {
 
     private RoleAssignedLevel assignedAt;
-    private boolean isMandatory;
+    private boolean isForced;
 
-    public RoleAssignment() {
-    }
 
-    public RoleAssignment (boolean isMandatory, RoleAssignedLevel assignedAt) {
+    public RoleAssignment (boolean isForced, RoleAssignedLevel assignedAt) {
 
-        this.isMandatory = isMandatory;
+        this.isForced = isForced;
         this.assignedAt = assignedAt;
     }
 
@@ -45,13 +43,13 @@ public class RoleAssignment {
         this.assignedAt = assignedAt;
     }
 
-    public boolean isMandatory() {
+    public boolean isForced() {
 
-        return isMandatory;
+        return isForced;
     }
 
-    public void setMandatory(boolean mandatory) {
+    public void setForced(boolean forced) {
 
-        isMandatory = mandatory;
+        isForced = forced;
     }
 }

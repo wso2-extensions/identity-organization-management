@@ -64,7 +64,7 @@ public class UserRoleOperationDTO  {
         return this;
     }
     
-    @ApiModelProperty(example = "/includeSubOrgs", required = true, value = "")
+    @ApiModelProperty(example = "/includeSubOrganizations", required = true, value = "")
     @JsonProperty("path")
     @Valid
     @NotNull(message = "Property path cannot be null.")

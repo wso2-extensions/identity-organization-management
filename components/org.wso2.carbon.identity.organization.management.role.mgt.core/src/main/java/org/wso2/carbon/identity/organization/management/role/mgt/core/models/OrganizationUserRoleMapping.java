@@ -28,21 +28,21 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
  * A --> B --> C
  * <p>
  * User U1 in A assigns a role R1. Does not let to propagate it to sub organizations.
- * (OrgId=ID(A), AssignedLevel=A, isMandatory=false)
+ * (OrgId=ID(A), AssignedLevel=A, isForced=false)
  * <p>
  * User U1 in A assigns a role R1. But it is not mandatory. So user U1 in B or C can either
  * assign that role or let it pass. If user U1 in B wants it,
- * (OrgId=ID(A), AssignedLevel=A, isMandatory=false)
- * (OrgId=ID(B), AssignedLevel=B, isMandatory=false)
+ * (OrgId=ID(A), AssignedLevel=A, isForced=false)
+ * (OrgId=ID(B), AssignedLevel=B, isForced=false)
  * And then asks the user U1 in C whether he wants it or not.
  * <p>
  * If user U1 in C doesn't want it, the role won't be copied to the Organization C.
  * <p>
  * User U1 in A assigns a role R1. Say it to propagate and it is mandatory. So user U1 in B and C will automatically
  * add that role to their organizations.
- * (OrgId=ID(A), AssignedLevel=A, isMandatory=true)
- * (OrgId=ID(B), AssignedLevel=A, isMandatory=true)
- * (OrgId=ID(C), AssignedLevel=A, isMandatory=true)
+ * (OrgId=ID(A), AssignedLevel=A, isForced=true)
+ * (OrgId=ID(B), AssignedLevel=A, isForced=true)
+ * (OrgId=ID(C), AssignedLevel=A, isForced=true)
  */
 public class OrganizationUserRoleMapping {
 
@@ -51,28 +51,28 @@ public class OrganizationUserRoleMapping {
     private String roleId;
     private String assignedLevelOrganizationId;
     private String assignedLevelOrganizationName;
-    private boolean isMandatory;
+    private boolean isForced;
 
     public OrganizationUserRoleMapping(String organizationId, String userId, String roleId,
-                                       String assignedLevelOrganizationId, boolean isMandatory) {
+                                       String assignedLevelOrganizationId, boolean isForced) {
 
         this.organizationId = organizationId;
         this.userId = userId;
         this.roleId = roleId;
         this.assignedLevelOrganizationId = assignedLevelOrganizationId;
-        this.isMandatory = isMandatory;
+        this.isForced = isForced;
     }
 
     public OrganizationUserRoleMapping(String organizationId, String userId, String roleId,
                                        String assignedLevelOrganizationId, String assignedLevelOrganizationName,
-                                       boolean isMandatory) {
+                                       boolean isForced) {
 
         this.organizationId = organizationId;
         this.userId = userId;
         this.roleId = roleId;
         this.assignedLevelOrganizationId = assignedLevelOrganizationId;
         this.assignedLevelOrganizationName = assignedLevelOrganizationName;
-        this.isMandatory = isMandatory;
+        this.isForced = isForced;
     }
 
     public OrganizationUserRoleMapping() {
@@ -118,14 +118,14 @@ public class OrganizationUserRoleMapping {
         this.assignedLevelOrganizationId = assignedLevelOrganizationId;
     }
 
-    public boolean isMandatory() {
+    public boolean isForced() {
 
-        return isMandatory;
+        return isForced;
     }
 
-    public void setMandatory(boolean mandatory) {
+    public void setForced(boolean forced) {
 
-        isMandatory = mandatory;
+        isForced = forced;
     }
 
     public String getAssignedLevelOrganizationName() {
