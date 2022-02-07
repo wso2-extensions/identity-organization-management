@@ -76,13 +76,13 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
       UM_TENANT_ID INTEGER DEFAULT 0,
       ORG_ID VARCHAR2(255) NOT NULL,
       ASSIGNED_AT VARCHAR2(255) NOT NULL,
-      MANDATORY INTEGER DEFAULT 0,
+      FORCED INTEGER DEFAULT 0,
       PRIMARY KEY (UM_ID),
       CONSTRAINT FK_UM_USER_ROLE_ORG_UM_ORG FOREIGN KEY (ORG_ID) REFERENCES UM_ORG(UM_ID) ON DELETE CASCADE,
       CONSTRAINT FK_UM_USER_ROLE_ORG_ASSIGNED_AT FOREIGN KEY (ASSIGNED_AT) REFERENCES UM_ORG(UM_ID) ON DELETE CASCADE);
        ```
 
-      | UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+      | UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
       |--------|---------|---------------|---------------|-------------|---------|-----------|
 
 ## Build
@@ -251,7 +251,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, if user `U1` assign role `R1` to organization `A` it will be assigned to all the sub-organizations (B, C, D, E).
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|-----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|B|A|1
@@ -267,14 +267,14 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, if user `U1` assigns role `R1` to organization `A` only, that role will only be at organization A.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|0
 
 - If the user `U1` assigns role `R1` to organization `A` with `includeSubOrgs` it will be propagated to all the sub organizations as a new copy.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|-----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|0
   |URO2|U1|R1|-1234|B|B|0
@@ -288,7 +288,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - For example, the user `U1` can assign role `R1` to organization `A` as a forced role and assign `R1` as non-forced without including sub-organizations.
 - After that, the database table `UM_USER_ROLE_ORG` will look like this.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|----|-----|----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|B|A|1
@@ -323,7 +323,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 - And it always passes two operations `/includeSubOrgs` and `/isForced`.
 - If there are two organization-user-role mappings like following, it will always take precedent one. Meaning it will always select the **forced** user role mapping and adjust it accordingly.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|----|-----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|A|A|0
@@ -336,7 +336,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 
 - If there are non-forced organization-user-role mappings as following, they will make adjustments according to the `/isForced` and `/includeSubOrgs` values.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|0
   |URO2|U1|R1|-1234|B|B|0
@@ -349,7 +349,7 @@ https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizatio
 
 - If there are forced organization-user-role mappings as following, they will make adjustments according to the `/isForced` and `/includeSubOrgs` values.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|-----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|B|A|1
@@ -375,7 +375,7 @@ includeSubOrgs
 - As mentioned in `patch operation` for **role-management** this will always take the precedent one.
 - If there are two organization-user-role mappings as given below, it will select the one with forced 1.
 
-  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|MANDATORY
+  |UM_ID|UM_USER_ID|UM_ROLE_ID|UM_TENANT_ID|ORG_ID|ASSIGNED_AT|FORCED
   |-----|------|-----|----|----|-----|-----
   |URO1|U1|R1|-1234|A|A|1
   |URO2|U1|R1|-1234|A|A|0

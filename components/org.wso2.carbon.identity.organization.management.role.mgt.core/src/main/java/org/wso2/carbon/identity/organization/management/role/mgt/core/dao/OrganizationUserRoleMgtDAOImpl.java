@@ -433,6 +433,9 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
 
         String query = buildQueryForGettingRoleDetails(roleIdList.size());
         List<Role> roleList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(roleIdList)) {
+            return roleList;
+        }
         int paramIndex = 0;
         try (Connection connection = IdentityDatabaseUtil.getDBConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query);) {
