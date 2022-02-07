@@ -480,7 +480,7 @@ public class OrganizationManagementService {
                                                                    UserRoleMappingDTO userRoleMappingDTO)
             throws OrganizationUserRoleMgtClientException {
 
-        if (userRoleMappingDTO.getRoleId() == null) {
+        if (StringUtils.isBlank(userRoleMappingDTO.getRoleId())) {
             throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID, organizationId);
         }
         if (userRoleMappingDTO.getUsers() == null) {

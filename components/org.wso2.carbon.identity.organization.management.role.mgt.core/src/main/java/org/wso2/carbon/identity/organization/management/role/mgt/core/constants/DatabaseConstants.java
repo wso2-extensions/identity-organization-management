@@ -27,6 +27,7 @@ public class DatabaseConstants {
      * Database Constant List.
      */
     public static final class SQLConstants {
+
         public static final String COUNT_COLUMN_NAME = "COUNT(1)";
         public static final String VIEW_ID_COLUMN = "UM_ID";
         public static final String VIEW_USER_ID_COLUMN = "UM_USER_ID";
@@ -112,6 +113,7 @@ public class DatabaseConstants {
      * Placeholders for using NamedJdbcTemplate.
      */
     public static final class SQLPlaceholders {
+
         public static final String DB_SCHEMA_COLUMN_NAME_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ROLE_ID = "ROLE_ID";
