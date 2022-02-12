@@ -196,7 +196,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
          * But if only the includeSubOrganization operation is given then, we have to check for non-forced
          * organization-user-role mapping for sub organizations too.
          * */
-        if (userRoleOperations.size() == 0) {
+        if (CollectionUtils.isEmpty(userRoleOperations)) {
             return;
         }
         if (userRoleOperations.size() == 1) {

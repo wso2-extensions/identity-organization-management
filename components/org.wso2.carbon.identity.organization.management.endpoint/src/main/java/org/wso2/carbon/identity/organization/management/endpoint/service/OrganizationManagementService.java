@@ -234,7 +234,7 @@ public class OrganizationManagementService {
     }
 
     /**
-     * Get users from a particular organization and role.
+     * Get users from an organization which have been assigned a particular role.
      *
      * @param organizationId ID of the organization.
      * @param roleId         ID of role.
@@ -300,7 +300,7 @@ public class OrganizationManagementService {
     }
 
     /**
-     * Patching the mandatory field of organization-user-role mappings.
+     * Patching the forced field of organization-user-role mappings.
      *
      * @param organizationId       ID of the organization.
      * @param roleId               ID of role.
@@ -329,7 +329,7 @@ public class OrganizationManagementService {
     }
 
     /**
-     * Get roles list from of a user within an organization.
+     * Get roles assigned by a user within an organization.
      *
      * @param organizationId ID of the organization.
      * @param userId         ID of user.
@@ -483,10 +483,10 @@ public class OrganizationManagementService {
         if (StringUtils.isBlank(userRoleMappingDTO.getRoleId())) {
             throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID, organizationId);
         }
-        if (userRoleMappingDTO.getUsers() == null) {
+        List<UserRoleMappingUsersDTO> usersList = userRoleMappingDTO.getUsers();
+        if (usersList == null) {
             throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_NULL_USERS, organizationId);
         }
-        List<UserRoleMappingUsersDTO> usersList = userRoleMappingDTO.getUsers();
         for (UserRoleMappingUsersDTO user : usersList) {
             if (StringUtils.isBlank(user.getUserId())) {
                 throw handleClientException(USER_ID_NULL, organizationId);
@@ -494,7 +494,7 @@ public class OrganizationManagementService {
             if (user.getForced() == null) {
                 throw handleClientException(FORCED_FIELD_NULL, organizationId);
             }
-            if (user.getIncludeSubOrganizations() == null && user.getForced() == false) {
+            if (user.getIncludeSubOrganizations() == null && !user.getForced()) {
                 throw handleClientException(INVALID_FORCED_AND_INCLUDE_SUB_ORGS_VALUES, null);
             }
         }
