@@ -281,17 +281,16 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         String placeholder = String.join(", ", permissionPlaceholders);
         sqlStmt = sqlStmt.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
 
-        List<BasicOrganization> organizations = new ArrayList<>();
+        List<BasicOrganization> organizations;
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            namedJdbcTemplate.executeQuery(sqlStmt,
+            organizations = namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> {
                         BasicOrganization organization = new BasicOrganization();
                         organization.setId(resultSet.getString(1));
                         organization.setName(resultSet.getString(2));
                         organization.setCreated(resultSet.getTimestamp(3).toString());
-                        organizations.add(organization);
-                        return null;
+                        return organization;
                     },
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, getUserId());
@@ -416,10 +415,10 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        List<String> childOrganizationIds = new ArrayList<>();
+        List<String> childOrganizationIds;
         try {
-            namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
-                    (resultSet, rowNumber) -> childOrganizationIds.add(resultSet.getString(1)),
+            childOrganizationIds = namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
@@ -710,7 +709,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     private void greaterThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
-                                                 FilterQueryBuilder filterQueryBuilder) {
+                                          FilterQueryBuilder filterQueryBuilder) {
 
         String filterString = " > :FILTER_ID_" + count + "; AND ";
         filter.append(attributeName).append(filterString);
@@ -718,7 +717,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     private void lessThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
-                                              FilterQueryBuilder filterQueryBuilder) {
+                                       FilterQueryBuilder filterQueryBuilder) {
 
         String filterString = " < :FILTER_ID_" + count + "; AND ";
         filter.append(attributeName).append(filterString);
