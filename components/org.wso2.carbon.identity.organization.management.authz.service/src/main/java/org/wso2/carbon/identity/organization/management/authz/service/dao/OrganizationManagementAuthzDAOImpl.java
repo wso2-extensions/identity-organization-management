@@ -22,7 +22,6 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_PERMISSIONS_FOR_USER;
@@ -54,10 +53,10 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             throws OrganizationManagementAuthzServiceServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        List<String> permissions = new ArrayList<>();
+        List<String> permissions;
         try {
-            namedJdbcTemplate.executeQuery(GET_PERMISSIONS_FOR_USER,
-                    (resultSet, rowNumber) -> permissions.add(resultSet.getString(1)),
+            permissions = namedJdbcTemplate.executeQuery(GET_PERMISSIONS_FOR_USER,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);

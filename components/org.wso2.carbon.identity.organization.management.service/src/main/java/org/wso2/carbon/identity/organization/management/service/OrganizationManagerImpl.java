@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.internal.OrganizationManagementDataHolder;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
@@ -39,11 +40,13 @@ import org.wso2.carbon.identity.organization.management.service.model.ParentOrga
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
@@ -52,6 +55,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_VALUE_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PARENT_ORGANIZATION;
@@ -77,6 +81,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_LAST_MODIFIED_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_NAME_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_AFTER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_BEFORE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
@@ -86,6 +92,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
@@ -169,10 +176,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public List<String> getOrganizationIds(String filter) throws OrganizationManagementException {
+    public List<BasicOrganization> getOrganizations(Integer limit, String after, String before, String sortOrder,
+                                                    String filter) throws OrganizationManagementException {
 
-        return getOrganizationManagementDAO().getOrganizationIds(getTenantId(), getTenantDomain(),
-                getExpressionNodes(filter));
+        return getOrganizationManagementDAO().getOrganizations(getTenantId(), limit, getTenantDomain(), sortOrder,
+                getExpressionNodes(filter, after, before));
     }
 
     @Override
@@ -199,10 +207,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
     public Organization patchOrganization(String organizationId, List<PatchOperation> patchOperations) throws
             OrganizationManagementException {
 
-        String tenantDomain = getTenantDomain();
         if (StringUtils.isBlank(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
+        String tenantDomain = getTenantDomain();
         organizationId = organizationId.trim();
         if (!isOrganizationExistById(organizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId, tenantDomain);
@@ -273,11 +281,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
         Instant now = Instant.now();
         organization.setCreated(now);
         organization.setLastModified(now);
-    }
-
-    private String generateUniqueID() {
-
-        return UUID.randomUUID().toString();
     }
 
     private void validateAddOrganizationRequest(Organization organization) throws OrganizationManagementException {
@@ -495,12 +498,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
     }
 
-    private List<ExpressionNode> getExpressionNodes(String filter) throws OrganizationManagementClientException {
+    private List<ExpressionNode> getExpressionNodes(String filter, String after, String before)
+            throws OrganizationManagementClientException {
 
         List<ExpressionNode> expressionNodes = new ArrayList<>();
+        if (StringUtils.isBlank(filter)) {
+            filter = StringUtils.EMPTY;
+        }
+        String paginatedFilter = getPaginatedFilter(filter, after, before);
         try {
-            if (StringUtils.isNotBlank(filter)) {
-                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filter);
+            if (StringUtils.isNotBlank(paginatedFilter)) {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(paginatedFilter);
                 Node rootNode = filterTreeBuilder.buildTree();
                 setExpressionNodeList(rootNode, expressionNodes);
             }
@@ -508,6 +516,27 @@ public class OrganizationManagerImpl implements OrganizationManager {
             throw handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
         }
         return expressionNodes;
+    }
+
+    private String getPaginatedFilter(String paginatedFilter, String after, String before) throws
+            OrganizationManagementClientException {
+
+        try {
+            if (StringUtils.isNotBlank(before)) {
+                String decodedString = new String(Base64.getDecoder().decode(before), StandardCharsets.UTF_8);
+                Timestamp.valueOf(decodedString);
+                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and before gt " + decodedString :
+                        "before gt " + decodedString;
+            } else if (StringUtils.isNotBlank(after)) {
+                String decodedString = new String(Base64.getDecoder().decode(after), StandardCharsets.UTF_8);
+                Timestamp.valueOf(decodedString);
+                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and after lt " + decodedString :
+                        "after lt " + decodedString;
+            }
+        } catch (IllegalArgumentException e) {
+            throw handleClientException(ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION);
+        }
+        return paginatedFilter;
     }
 
     /**
@@ -544,7 +573,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 !attributeValue.equalsIgnoreCase(ORGANIZATION_NAME_FIELD) &&
                 !attributeValue.equalsIgnoreCase(ORGANIZATION_DESCRIPTION_FIELD) &&
                 !attributeValue.equalsIgnoreCase(ORGANIZATION_CREATED_TIME_FIELD) &&
-                !attributeValue.equalsIgnoreCase(ORGANIZATION_LAST_MODIFIED_FIELD);
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_LAST_MODIFIED_FIELD) &&
+                !attributeValue.equalsIgnoreCase(PAGINATION_AFTER) &&
+                !attributeValue.equalsIgnoreCase(PAGINATION_BEFORE);
     }
 
     /**

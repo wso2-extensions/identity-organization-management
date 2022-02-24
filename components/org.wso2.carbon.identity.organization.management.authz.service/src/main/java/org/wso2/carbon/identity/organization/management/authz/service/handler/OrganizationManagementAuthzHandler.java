@@ -170,12 +170,12 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 }
             }
             if (granted) {
-                Map<String, String> scopePermissionMap = SCOPE_PERMISSION_MAP;
                 List<String> permissions = new ArrayList<>();
-                for (String scope : scopePermissionMap.keySet()) {
+                for (Map.Entry<String, String> entry : SCOPE_PERMISSION_MAP.entrySet()) {
+                    String scope = entry.getKey();
                     for (String tokenScope : tokenScopes) {
                         if (StringUtils.equals(tokenScope, scope)) {
-                            permissions.add(scopePermissionMap.get(scope));
+                            permissions.add(entry.getValue());
                         }
                     }
                 }

@@ -55,6 +55,9 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
 
+    public static final String PAGINATION_AFTER = "after";
+    public static final String PAGINATION_BEFORE = "before";
+
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -66,6 +69,8 @@ public class OrganizationManagementConstants {
     public static final String EW = "ew";
     public static final String GE = "ge";
     public static final String LE = "le";
+    public static final String GT = "gt";
+    public static final String LT = "lt";
     public static final String AND = "and";
 
     private static Map<String, String> attributeColumnMap = new HashMap<>();
@@ -77,6 +82,8 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, "UM_ORG_DESCRIPTION");
         attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, "UM_CREATED_TIME");
         attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, "UM_LAST_MODIFIED");
+        attributeColumnMap.put(PAGINATION_AFTER, "UM_CREATED_TIME");
+        attributeColumnMap.put(PAGINATION_BEFORE, "UM_CREATED_TIME");
     }
 
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
@@ -134,6 +141,10 @@ public class OrganizationManagementConstants {
                 "The filter attribute '%s' is not supported."),
         ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER("60024", "Unsupported filter.",
                 "The complex query used for filtering is not supported."),
+        ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT("60025", "Invalid pagination parameters.",
+                "'limit' shouldn't be negative."),
+        ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION("60026", "Unable to retrieve organizations.", "Invalid " +
+                "cursor used for pagination."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -181,7 +192,9 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building URL for response body."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION("65019", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the " +
-                        "organization in parent organization with ID: %s.");
+                        "organization in parent organization with ID: %s."),
+        ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL("65020", "Unable to retrieve the organizations.",
+                "Server encountered an error while building paginated response URL.");
 
         private final String code;
         private final String message;

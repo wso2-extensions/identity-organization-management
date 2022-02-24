@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.service.cache.Organizati
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationCacheEntry;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
@@ -123,10 +124,11 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public List<String> getOrganizationIds(int tenantId, String tenantDomain, List<ExpressionNode> expressionNodes)
+    public List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String tenantDomain, String sortOrder,
+                                                    List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
 
-        return organizationManagementDAO.getOrganizationIds(tenantId, tenantDomain, expressionNodes);
+        return organizationManagementDAO.getOrganizations(tenantId, limit, tenantDomain, sortOrder, expressionNodes);
     }
 
     @Override

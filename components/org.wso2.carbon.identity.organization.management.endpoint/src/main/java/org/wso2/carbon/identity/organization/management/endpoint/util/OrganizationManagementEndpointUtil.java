@@ -32,7 +32,9 @@ import java.net.URI;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_PATH;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
@@ -151,7 +153,8 @@ public class OrganizationManagementEndpointUtil {
      */
     public static URI getResourceLocation(String organizationId) {
 
-        return buildURIForHeader(V1_API_PATH_COMPONENT + ORGANIZATION_PATH + organizationId);
+        return buildURIForHeader(V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH + PATH_SEPARATOR
+                + organizationId);
     }
 
     private static URI buildURIForHeader(String endpoint) {
@@ -168,4 +171,20 @@ public class OrganizationManagementEndpointUtil {
             throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
     }
+
+    public static String buildURIForPagination(String paginationURL) {
+
+        String context = getContext(V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH + paginationURL);
+
+        try {
+            return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
+        } catch (URLBuilderException e) {
+            LOG.error("Server encountered an error while building paginated URL for the response." , e);
+            Error error = getError(ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
+            throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
+        }
+    }
+
 }

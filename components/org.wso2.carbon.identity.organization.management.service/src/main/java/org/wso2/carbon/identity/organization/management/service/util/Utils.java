@@ -30,6 +30,8 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
+import java.util.UUID;
+
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_RESOURCE_PATH;
@@ -123,12 +125,10 @@ public class Utils {
      */
     public static String buildURIForBody(String organizationId) throws OrganizationManagementServerException {
 
-        String url;
         String context = getContext(String.format(ORGANIZATION_RESOURCE_PATH, organizationId));
 
         try {
-            url = ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
-            return url;
+            return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
         } catch (URLBuilderException e) {
             throw handleServerException(ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY, e);
         }
@@ -161,5 +161,15 @@ public class Utils {
             tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         }
         return tenantDomain;
+    }
+
+    /**
+     * Generate unique identifier for the organization.
+     *
+     * @return organization id.
+     */
+    public static String generateUniqueID() {
+
+        return UUID.randomUUID().toString();
     }
 }

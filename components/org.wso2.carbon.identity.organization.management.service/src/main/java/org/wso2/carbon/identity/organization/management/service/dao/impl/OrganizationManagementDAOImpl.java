@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
@@ -65,7 +66,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.LE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.LT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
@@ -109,6 +112,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_LIMIT;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION_ATTRIBUTE_VALUE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION_LAST_MODIFIED;
@@ -257,14 +261,15 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public List<String> getOrganizationIds(int tenantId, String tenantDomain, List<ExpressionNode> expressionNodes)
+    public List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String tenantDomain, String sortOrder,
+                                                    List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         appendFilterQuery(expressionNodes, filterQueryBuilder);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
         String sqlStmt = GET_ORGANIZATIONS_BY_TENANT_ID + filterQueryBuilder.getFilterQuery() +
-                GET_ORGANIZATIONS_BY_TENANT_ID_TAIL;
+                String.format(GET_ORGANIZATIONS_BY_TENANT_ID_TAIL, sortOrder);
 
         String permissionPlaceholder = "PERMISSION_";
         List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
@@ -276,11 +281,17 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         String placeholder = String.join(", ", permissionPlaceholders);
         sqlStmt = sqlStmt.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
 
-        List<String> organizationIds = new ArrayList<>();
+        List<BasicOrganization> organizations;
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            namedJdbcTemplate.executeQuery(sqlStmt,
-                    (resultSet, rowNumber) -> organizationIds.add(resultSet.getString(1)),
+            organizations = namedJdbcTemplate.executeQuery(sqlStmt,
+                    (resultSet, rowNumber) -> {
+                        BasicOrganization organization = new BasicOrganization();
+                        organization.setId(resultSet.getString(1));
+                        organization.setName(resultSet.getString(2));
+                        organization.setCreated(resultSet.getTimestamp(3).toString());
+                        return organization;
+                    },
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, getUserId());
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
@@ -292,11 +303,12 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                             namedPreparedStatement.setString(permissionPlaceholder + index, permission);
                             index++;
                         }
+                        namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, limit);
                     });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
         }
-        return organizationIds;
+        return organizations;
     }
 
     @Override
@@ -325,7 +337,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     (resultSet, rowNumber) -> resultSet.getInt(COUNT_COLUMN), namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
                     });
-            return CollectionUtils.isNotEmpty(childOrganizationIds);
+            return childOrganizationIds.get(0) > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId,
                     tenantDomain);
@@ -403,10 +415,10 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        List<String> childOrganizationIds = new ArrayList<>();
+        List<String> childOrganizationIds;
         try {
-            namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
-                    (resultSet, rowNumber) -> childOrganizationIds.add(resultSet.getString(1)),
+            childOrganizationIds = namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
@@ -624,6 +636,19 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                             count++;
                             break;
                         }
+                        case GT: {
+                            greaterThanFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case LT: {
+                            lessThanFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
                     }
                 }
             }
@@ -679,6 +704,22 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                                               FilterQueryBuilder filterQueryBuilder) {
 
         String filterString = " <= :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value);
+    }
+
+    private void greaterThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                          FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " > :FILTER_ID_" + count + "; AND ";
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(value);
+    }
+
+    private void lessThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                       FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = " < :FILTER_ID_" + count + "; AND ";
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(value);
     }
