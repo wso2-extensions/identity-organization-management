@@ -20,6 +20,8 @@ package org.wso2.carbon.identity.organization.management.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
@@ -38,6 +40,10 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
+import org.wso2.carbon.user.api.AuthorizationManager;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,10 +57,12 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CREATE_ORGANIZATION_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CREATE_ROOT_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_KEY_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ATTRIBUTE_VALUE_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
@@ -76,6 +84,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_CREATED_TIME_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_DESCRIPTION_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
@@ -108,10 +117,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
     public Organization addOrganization(Organization organization) throws
             OrganizationManagementException {
 
+        String tenantDomain = getTenantDomain();
         validateAddOrganizationRequest(organization);
-        setParentOrganization(organization);
+        setParentOrganization(organization, tenantDomain);
         setCreatedAndLastModifiedTime(organization);
-        getOrganizationManagementDAO().addOrganization(getTenantId(), getTenantDomain(), organization);
+        getOrganizationManagementDAO().addOrganization(getTenantId(), tenantDomain, organization);
         return organization;
     }
 
@@ -267,7 +277,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
     }
 
-    private void addRootOrganization() throws OrganizationManagementServerException {
+    private void addRootOrganization(String tenantDomain) throws OrganizationManagementException {
+
+        if (!isUserAuthorizedToCreateRootOrganization(tenantDomain)) {
+            throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION, tenantDomain);
+        }
 
         Organization organization = new Organization();
         organization.setId(generateUniqueID());
@@ -370,10 +384,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
     }
 
-    private void setParentOrganization(Organization organization) throws OrganizationManagementException {
+    private void setParentOrganization(Organization organization, String tenantDomain)
+            throws OrganizationManagementException {
 
         ParentOrganizationDO parentOrganization = organization.getParent();
         String parentId = parentOrganization.getId().trim();
+        boolean createOrganizationAuthorizationRequired = true;
 
         /*
         For parentId an alias as 'ROOT' is supported. This indicates that the organization should be created as an
@@ -383,17 +399,40 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (StringUtils.equals(ROOT, parentId)) {
             String rootOrganizationId = getOrganizationIdByName(ROOT);
             if (StringUtils.isBlank(rootOrganizationId)) {
-                addRootOrganization();
+                addRootOrganization(tenantDomain);
+                createOrganizationAuthorizationRequired = false;
                 rootOrganizationId = getOrganizationIdByName(ROOT);
             }
             parentId = rootOrganizationId;
         }
 
-        if (!isUserAuthorizedToCreateOrganization(parentId)) {
+        /*
+        For a first time organization creation in a tenant, the evaluation of user's authorization to create an
+        organization as a child of the given parent (ROOT organization) will not happen.
+        Having '/permission/admin/' assigned to the user would be sufficient in this scenario. This permission implies
+        that the user is authorized to create the ROOT organization in the tenant along with the organization that the
+        user is requesting to be created in the request.
+         */
+        if (createOrganizationAuthorizationRequired && !isUserAuthorizedToCreateOrganization(parentId)) {
             throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
         }
         parentOrganization.setId(parentId);
         parentOrganization.setSelf(buildURIForBody(parentId));
+    }
+
+    private boolean isUserAuthorizedToCreateRootOrganization(String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        try {
+            UserRealm tenantUserRealm = getRealmService().getTenantUserRealm(getTenantId());
+            AuthorizationManager authorizationManager = tenantUserRealm.getAuthorizationManager();
+            return authorizationManager.isUserAuthorized(username, CREATE_ROOT_ORGANIZATION_PERMISSION,
+                    CarbonConstants.UI_PERMISSION_ACTION);
+        } catch (UserStoreException e) {
+            throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION, e,
+                    tenantDomain);
+        }
     }
 
     private boolean isUserAuthorizedToCreateOrganization(String parentId) throws OrganizationManagementServerException {
@@ -549,7 +588,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             OrganizationManagementClientException {
 
         if (node instanceof ExpressionNode) {
-            ExpressionNode expressionNode  = (ExpressionNode) node;
+            ExpressionNode expressionNode = (ExpressionNode) node;
             String attributeValue = expressionNode.getAttributeValue();
             if (StringUtils.isNotBlank(attributeValue)) {
                 if (isFilteringAttributeNotSupported(attributeValue)) {
@@ -586,5 +625,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private OrganizationManagementDAO getOrganizationManagementDAO() {
 
         return OrganizationManagementDataHolder.getInstance().getOrganizationManagementDAO();
+    }
+
+    private RealmService getRealmService() {
+
+        return OrganizationManagementDataHolder.getInstance().getRealmService();
     }
 }

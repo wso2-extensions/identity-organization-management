@@ -58,6 +58,7 @@ public class OrganizationManagementConstants {
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
 
+    public static final String CREATE_ROOT_ORGANIZATION_PERMISSION = "/permission/admin/";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -145,6 +146,8 @@ public class OrganizationManagementConstants {
                 "'limit' shouldn't be negative."),
         ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION("60026", "Unable to retrieve organizations.", "Invalid " +
                 "cursor used for pagination."),
+        ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION("60027", "Unable to create the organization.",
+                "User is not authorized to create the root organization in tenant: %s."), // 403
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -194,7 +197,10 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while evaluating authorization of user to create the " +
                         "organization in parent organization with ID: %s."),
         ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL("65020", "Unable to retrieve the organizations.",
-                "Server encountered an error while building paginated response URL.");
+                "Server encountered an error while building paginated response URL."),
+        ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION("65021", "Unable to create the organization.",
+                "Server encountered an error while evaluating authorization of user to create the root " +
+                        "organization in tenant: %s.");
 
         private final String code;
         private final String message;
