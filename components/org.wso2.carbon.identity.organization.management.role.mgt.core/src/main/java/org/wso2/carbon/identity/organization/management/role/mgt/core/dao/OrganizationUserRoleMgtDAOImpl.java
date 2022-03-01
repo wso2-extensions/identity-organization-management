@@ -32,9 +32,7 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleAssignedLevel;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleAssignment;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils;
 import org.wso2.carbon.identity.scim2.common.impl.IdentitySCIMManager;
 import org.wso2.charon3.core.exceptions.CharonException;
@@ -95,6 +93,8 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_UPDATE_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ROLES_PER_ORG_USER_RETRIEVING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.SCIM_ROLE_ID_ATTR_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.getNewNamedJdbcTemplate;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleServerException;
@@ -123,9 +123,9 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     @Override
-    public List<RoleMember> getUserIdsByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
-                                                            List<String> requestedAttributes, int tenantId,
-                                                            String filter)
+    public List<Map<String, Object>> getUserIdsByOrganizationAndRole(String organizationId, String roleId, int offset,
+                                                                     int limit, List<String> requestedAttributes,
+                                                                     int tenantId, String filter)
             throws OrganizationUserRoleMgtServerException {
 
         boolean paginationReq = offset > -1 || limit > 0;
@@ -133,7 +133,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         List<OrganizationUserRoleMapping> organizationUserRoleMappings;
         Map<String, List<RoleAssignment>> userRoleAssignments = new HashMap<>();
-        List<RoleMember> roleMembers = new ArrayList<>();
+        List<Map<String, Object>> usersWithUserAttributesList = new ArrayList<>();
 
         try {
             organizationUserRoleMappings = namedJdbcTemplate.executeQuery(GET_USERS_BY_ORG_AND_ROLE,
@@ -152,8 +152,12 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
             organizationUserRoleMappings.stream().map(organizationUserRoleMapping -> userRoleAssignments
                             .computeIfAbsent(organizationUserRoleMapping.getUserId(), k -> new ArrayList<>())
                             .add(new RoleAssignment(organizationUserRoleMapping.isForced(),
-                                    new RoleAssignedLevel(organizationUserRoleMapping.getAssignedLevelOrganizationId(),
-                                            organizationUserRoleMapping.getAssignedLevelOrganizationName()))))
+                                    new HashMap<String, String>() {{
+                                        put(ORGANIZATION_ID,
+                                                organizationUserRoleMapping.getAssignedLevelOrganizationId());
+                                        put(ORGANIZATION_NAME,
+                                                organizationUserRoleMapping.getAssignedLevelOrganizationName());
+                                    }})))
                     .collect(Collectors.toList());
 
             for (Map.Entry<String, List<RoleAssignment>> entry : userRoleAssignments.entrySet()) {
@@ -186,16 +190,16 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                     Map<String, Object> userAttributes =
                             (Map<String, Object>) ((ArrayList) attributes.get("Resources")).get(0);
                     userAttributes.put("assignedMeta", entry.getValue());
-                    RoleMember roleMember = new RoleMember(userAttributes);
-                    roleMembers.add(roleMember);
+                    usersWithUserAttributesList.add(userAttributes);
                 }
             }
             // Sort role member list.
-            roleMembers.sort((m1, m2) -> ((String) m1.getUserAttributes().get("userName")).compareTo(
-                    String.valueOf(m2.getUserAttributes().get("userName"))));
+            usersWithUserAttributesList.sort((m1, m2) -> ((String) m1.get("userName")).compareTo(
+                    String.valueOf(m2.get("userName"))));
 
-            if (paginationReq && CollectionUtils.isNotEmpty(roleMembers)) {
-                return roleMembers.subList(offset < 0 ? 0 : offset, Math.min(offset + limit, roleMembers.size()));
+            if (paginationReq && CollectionUtils.isNotEmpty(usersWithUserAttributesList)) {
+                return usersWithUserAttributesList.subList(offset < 0 ? 0 : offset, Math.min(offset + limit,
+                        usersWithUserAttributesList.size()));
             }
         } catch (CharonException | IOException | DataAccessException e) {
             String message = String.format(String.valueOf(ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR), roleId,
@@ -203,7 +207,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
             throw new OrganizationUserRoleMgtServerException(message,
                     ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR.getCode(), e);
         }
-        return roleMembers;
+        return usersWithUserAttributesList;
     }
 
     @Override
@@ -406,11 +410,6 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         }
     }
 
-    /**
-     * @param organizationId ID of the organization.
-     * @return
-     * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception
-     */
     @Override
     public boolean checkOrganizationIdAvailability(String organizationId) throws OrganizationUserRoleMgtException {
 
@@ -436,10 +435,10 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         if (CollectionUtils.isEmpty(roleIdList)) {
             return roleList;
         }
-        int paramIndex = 0;
         try (Connection connection = IdentityDatabaseUtil.getDBConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query);) {
             connection.setAutoCommit(false);
+            int paramIndex = 0;
             preparedStatement.setInt(++paramIndex, tenantId);
             preparedStatement.setString(++paramIndex, SCIM_ROLE_ID_ATTR_NAME);
             for (String roleId : roleIdList) {

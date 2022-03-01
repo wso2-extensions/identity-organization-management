@@ -39,7 +39,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleO
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserForUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleOperation;
@@ -56,6 +55,7 @@ import org.wso2.carbon.identity.organization.management.service.model.PatchOpera
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -260,10 +260,9 @@ public class OrganizationManagementService {
             if (!requestedAttributes.contains("userName")) {
                 requestedAttributes.add("userName");
             }
-            List<RoleMember> roleMembers = getOrganizationUserRoleManager()
+            List<Map<String, Object>> usersWithUserAttributesList = getOrganizationUserRoleManager()
                     .getUsersByOrganizationAndRole(organizationId, roleId, offset, limit, requestedAttributes, filter);
-            return Response.ok().entity(roleMembers.stream().map(RoleMember::getUserAttributes)
-                    .collect(Collectors.toList())).build();
+            return Response.ok().entity(usersWithUserAttributesList).build();
         } catch (OrganizationUserRoleMgtClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {

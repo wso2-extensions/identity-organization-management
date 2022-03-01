@@ -24,9 +24,6 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 public class UserForUserRoleMapping {
 
     private String userId;
-    // Mandatory role if the role we are assigning is mandatory
-    // Cascaded role if the role we are assigning is non-mandatory and included for sub organizations
-    // if Mandatory role is true, then cascaded role should be true.
     private boolean forcedRolePrivilege;
     private boolean includeSubOrgsPrivilege;
 

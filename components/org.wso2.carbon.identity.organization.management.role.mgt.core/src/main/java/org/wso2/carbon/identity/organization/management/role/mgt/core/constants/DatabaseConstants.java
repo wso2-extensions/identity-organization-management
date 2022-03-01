@@ -55,8 +55,7 @@ public class DatabaseConstants {
         public static final String GET_USERS_BY_ORG_AND_ROLE = "SELECT URO.UM_USER_ID, URO.FORCED, " +
                 "URO.ASSIGNED_AT, UO.UM_ORG_NAME FROM UM_USER_ROLE_ORG URO LEFT JOIN UM_ORG UO ON " +
                 "URO.ASSIGNED_AT = UO.UM_ID WHERE URO.ORG_ID = :" +
-                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; " +
-                "AND URO.UM_ROLE_ID = :" +
+                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND URO.UM_ROLE_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "; AND URO.UM_TENANT_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
         public static final String DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL =
@@ -67,8 +66,7 @@ public class DatabaseConstants {
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "%1$d; AND UM_ROLE_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%1$d; AND UM_TENANT_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%1$d; AND ASSIGNED_AT = :" +
-                        SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d; AND " +
-                        "FORCED = :" +
+                        SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d; AND FORCED = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + "%1$d;";
         public static final String DELETE_ALL_ORGANIZATION_USER_ROLE_MAPPINGS_BY_USERID =
                 "DELETE FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +

@@ -33,6 +33,19 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
     private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
 
+    public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
+    public static final String PERMISSION_PLACEHOLDER = "PERMISSION_";
+    public static final String INTERNAL = "Internal/";
+
+    public static final String VIEW_ROLE_NAME_COLUMN = "UM_ROLE_NAME";
+    public static final String VIEW_SCIM_ATTR_VALUE_COLUMN = "ATTR_VALUE";
+
+    public static final String VIEW_ID_COLUMN = "UM_ID";
+    public static final String VIEW_USER_ID_COLUMN = "UM_USER_ID";
+    public static final String VIEW_ROLE_ID_COLUMN = "UM_ROLE_ID";
+    public static final String VIEW_ASSIGNED_AT_COLUMN = "ASSIGNED_AT";
+    public static final String VIEW_FORCED_COLUMN = "FORCED";
+
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
     public static final String VIEW_CREATED_TIME_COLUMN = "UM_CREATED_TIME";
@@ -181,7 +194,12 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building URL for response body."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION("65019", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the " +
-                        "organization in parent organization with ID: %s.");
+                        "organization in parent organization with ID: %s."),
+        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65020",
+                "Unable to add forced organization-user-role mappings",
+                "Server encountered an error while creating user role mappings."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65021", "Unable to get role names",
+                "Server encountered an error while retrieving role names.");
 
         private final String code;
         private final String message;

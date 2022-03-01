@@ -18,10 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint.util;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
@@ -37,15 +37,13 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.UUID;
 
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
@@ -69,32 +67,6 @@ public class OrganizationManagementEndpointUtil {
 
         return (OrganizationUserRoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().
                 getOSGiService(OrganizationUserRoleManager.class, null);
-    }
-
-    /**
-     * Get correlation ID.
-     *
-     * @return the correlation ID
-     */
-    public static String getCorrelation() {
-
-        String ref;
-        if (isCorrelationIDPresent()) {
-            ref = MDC.get(CORRELATION_ID_MDC).toString();
-        } else {
-            ref = UUID.randomUUID().toString();
-        }
-        return ref;
-    }
-
-    /**
-     * Check whether the correlation ID is present or not.
-     *
-     * @return whether the correlation ID is present or not.
-     */
-    public static boolean isCorrelationIDPresent() {
-
-        return MDC.get(CORRELATION_ID_MDC) != null;
     }
 
     /**
@@ -305,17 +277,11 @@ public class OrganizationManagementEndpointUtil {
      *
      * @param organizationId The organizationID.
      * @return URI the resource id.
-     * @throws URISyntaxException To handle the URISyntax errors.
      */
     public static URI getOrganizationRoleResourceURI(String organizationId) {
-        try {
-            return new URI(String.format(ORGANIZATION_ROLES_PATH, organizationId));
-        } catch (URISyntaxException e) {
-            LOG.error("Server encountered an error while building a URI");
-            Error error = getError(ERROR_CODE_UNEXPECTED.getCode(), ERROR_CODE_UNEXPECTED.getMessage(),
-                    ERROR_CODE_UNEXPECTED.getDescription());
-            throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
-        }
+
+        return buildURIForHeader(V1_API_PATH_COMPONENT +
+                String.format(ORGANIZATION_ROLES_PATH, organizationId));
     }
 
     private static URI buildURIForHeader(String endpoint) {
@@ -325,10 +291,18 @@ public class OrganizationManagementEndpointUtil {
             String url = ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
             return URI.create(url);
         } catch (URLBuilderException e) {
-            LOG.error("Server encountered an error while building URL for response header.");
-            Error error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getCode(),
-                    ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getMessage(),
-                    ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getDescription());
+            Error error;
+            if (StringUtils.contains(endpoint, ORGANIZATION_ROLES_PATH)) {
+                LOG.error("Server encountered an error while building URL for response header.");
+                error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getCode(),
+                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getMessage(),
+                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getDescription());
+            } else {
+                LOG.error("Server encountered an error while building URL for response header.");
+                error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getCode(),
+                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getMessage(),
+                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getDescription());
+            }
             throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
     }

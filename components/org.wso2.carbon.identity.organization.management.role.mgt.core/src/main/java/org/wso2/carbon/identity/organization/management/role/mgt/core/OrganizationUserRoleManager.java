@@ -21,46 +21,49 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleOperation;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for Organization-User-Role Management.
  */
 public interface OrganizationUserRoleManager {
-    
+
     /**
      * Create new {@link OrganizationUserRoleMapping}s in the database.
-     * @param organizationId ID of the organization
-     * @param userRoleMappings User-Role Mapping
+     *
+     * @param organizationId   ID of the organization.
+     * @param userRoleMappings User-Role Mapping.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     void addOrganizationUserRoleMappings(String organizationId, UserRoleMapping userRoleMappings)
             throws OrganizationUserRoleMgtException;
 
     /**
-     * Get users by organization and role
-     * @param organizationId ID of the organization.
-     * @param roleId ID of the role.
-     * @param offset The offset of the results.
-     * @param limit The limit of the results.
+     * Get users by organization and role.
+     *
+     * @param organizationId      ID of the organization.
+     * @param roleId              ID of the role.
+     * @param offset              The offset of the results.
+     * @param limit               The limit of the results.
      * @param requestedAttributes The list of requested attributes.
-     * @param filter The filter to filter the results.
+     * @param filter              The filter to filter the results.
      * @return A list of Role Members.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
-    List<RoleMember> getUsersByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
+    List<Map<String, Object>> getUsersByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
                                                    List<String> requestedAttributes, String filter)
             throws OrganizationUserRoleMgtException;
 
     /**
-     * Patch organization-user-role mappings
-     * @param organizationId ID of the organization.
-     * @param roleId ID of the role.
-     * @param userId ID of the user.
+     * Patch organization-user-role mappings.
+     *
+     * @param organizationId     ID of the organization.
+     * @param roleId             ID of the role.
+     * @param userId             ID of the user.
      * @param userRoleOperations List of user role operations.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
@@ -70,9 +73,10 @@ public interface OrganizationUserRoleManager {
 
     /**
      * Delete organization-user-role mappings.
+     *
      * @param organizationId ID of the organization.
-     * @param userId ID of the user.
-     * @param roleId ID of the role.
+     * @param userId         ID of the user.
+     * @param roleId         ID of the role.
      * @param includeSubOrgs Whether the sub-organization should be included or not.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
@@ -81,6 +85,7 @@ public interface OrganizationUserRoleManager {
 
     /**
      * Delete all organization-user-role mappings of a user.
+     *
      * @param userId ID of the user.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
@@ -88,8 +93,9 @@ public interface OrganizationUserRoleManager {
 
     /**
      * Get roles by organization and user.
+     *
      * @param organizationId ID of the organization.
-     * @param userId ID of the user.
+     * @param userId         ID of the user.
      * @return The list of Roles.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */
@@ -97,12 +103,13 @@ public interface OrganizationUserRoleManager {
             throws OrganizationUserRoleMgtException;
 
     /**
-     * Fina whether there is a organization-user-role mapping or not
+     * Find whether there is a organization-user-role mapping or not.
+     *
      * @param organizationId ID of the organization.
-     * @param userId ID of the user.
-     * @param roleId ID of the role.
-     * @param assignedLevel ID of the assigned level of organization-user-role mapping.
-     * @param forced Whether the organization-user-role mapping is forced or not.
+     * @param userId         ID of the user.
+     * @param roleId         ID of the role.
+     * @param assignedLevel  ID of the assigned level of organization-user-role mapping.
+     * @param forced         Whether the organization-user-role mapping is forced or not.
      * @return Boolean value of whether an organization-user-role mapping exists.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */

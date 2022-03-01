@@ -26,5 +26,4 @@ public class OrganizationManagementEndpointConstants {
     public static final String V1_API_PATH_COMPONENT = "v1.0/";
     public static final String ORGANIZATION_PATH = "organizations/";
     public static final String ORGANIZATION_ROLES_PATH = "organizations/%s/roles";
-    public static final String CORRELATION_ID_MDC = "Correlation-ID";
 }

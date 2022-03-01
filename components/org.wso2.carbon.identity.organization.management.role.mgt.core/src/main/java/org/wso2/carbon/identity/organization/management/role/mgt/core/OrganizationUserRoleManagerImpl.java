@@ -33,7 +33,6 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.internal.O
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMappingForEvent;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserForUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.UserRoleOperation;
@@ -88,7 +87,7 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.uti
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleServerException;
 
 /**
- * Impl class of OrganizationUserRoleManager.
+ * Implementation of OrganizationUserRoleManager.
  */
 public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleManager {
 
@@ -166,8 +165,9 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
     }
 
     @Override
-    public List<RoleMember> getUsersByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
-                                                          List<String> requestedAttributes, String filter)
+    public List<Map<String, Object>> getUsersByOrganizationAndRole(String organizationId, String roleId, int offset,
+                                                                   int limit, List<String> requestedAttributes,
+                                                                   String filter)
             throws OrganizationUserRoleMgtException {
 
         validateRoleId(roleId);
@@ -175,10 +175,10 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
         if (!organizationUserRoleMgtDAO.checkOrganizationIdAvailability(organizationId)) {
             throw handleClientException(INVALID_ORGANIZATION_ID, organizationId);
         }
-        List<RoleMember> users = organizationUserRoleMgtDAO
+        List<Map<String, Object>> usersWithUserAttributesList = organizationUserRoleMgtDAO
                 .getUserIdsByOrganizationAndRole(organizationId, roleId, offset, limit, requestedAttributes,
                         getTenantId(), filter);
-        return users;
+        return usersWithUserAttributesList;
     }
 
     @Override

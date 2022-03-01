@@ -30,6 +30,8 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
+import java.util.UUID;
+
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_RESOURCE_PATH;
@@ -152,6 +154,16 @@ public class Utils {
                     ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
         }
         return context;
+    }
+
+    /**
+     * Generate unique id for organization-user-role mappings.
+     *
+     * @return A unique id.
+     */
+    public static String generateUniqueID() {
+
+        return UUID.randomUUID().toString();
     }
 
     private static String getTenantDomainFromContext() {

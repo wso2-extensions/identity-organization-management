@@ -27,6 +27,8 @@ public class OrganizationUserRoleMgtConstants {
     public static final String INCLUDE_SUB_ORGS = "/includeSubOrganizations";
     public static final String IS_FORCED = "/isForced";
     public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
+    public static final String ORGANIZATION_ID = "organizationId";
+    public static final String ORGANIZATION_NAME = "organizationName";
 
     /**
      * Error messages.
@@ -45,7 +47,7 @@ public class OrganizationUserRoleMgtConstants {
         DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205", "Invalid organization user role mapping",
                 "%s"),
         PATCH_ORG_ROLE_USER_REQUEST_TOO_MANY_OPERATIONS("ORG-60206", "Too many operations",
-                "Only one patch operation is valid because only the includeSubOrg " +
+                "Only one patch operation is valid because only the includeSubOrganizations " +
                         "attribute can be changed."),
         PATCH_ORG_ROLE_USER_REQUEST_INVALID_MAPPING("ORG-60207", "Invalid mapping",
                 "No matching role mapping to be updated."),
@@ -56,7 +58,7 @@ public class OrganizationUserRoleMgtConstants {
         PATCH_ORG_ROLE_USER_REQUEST_PATH_UNDEFINED("ORG-60210", "Path undefined",
                 "Patch operation path is not defined"),
         PATCH_ORG_ROLE_USER_REQUEST_INVALID_PATH("ORG-60211", "Invalid path",
-                "Patch path must be '/includeSubOrgs'"),
+                "Patch path must be '/includeSubOrganizations'"),
         PATCH_ORG_ROLE_USER_REQUEST_OPERATION_MISSING("ORG-60212",
                 "Operation missing.", "The operation %s is missing."),
         PATCH_ORG_ROLE_USER_REQUEST_INVALID_BOOLEAN_VALUE("ORG-60213", "Invalid value",
@@ -79,8 +81,8 @@ public class OrganizationUserRoleMgtConstants {
                 "forced value should not be null when adding organization-user-role mapping for " +
                         "organization %s"),
         INVALID_FORCED_AND_INCLUDE_SUB_ORGS_VALUES("ORG-60221",
-                "includeSubOrgs value should be specified.",
-                "If forced value is false, you have to specify includeSubOrgs value."),
+                "includeSubOrganizations value should be specified.",
+                "If forced value is false, you have to specify includeSubOrganizations value."),
 
 
         // Role Mgt Server Errors (ORG-65200 - ORG-65999)
@@ -122,7 +124,9 @@ public class OrganizationUserRoleMgtConstants {
                 "Server encountered an error while retrieving the child organizations."),
         ERROR_CODE_ORGANIZATION_GET_ORGANIZATION_ID_ERROR("ORG-65212",
                 "Error while retrieving the organization id: %s",
-                "Server encountered an error while retrieving the organization.");
+                "Server encountered an error while retrieving the organization."),
+        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES("65017", "Unable to build create URL.",
+                "Server encountered an error while building URL for response header.");
 
         private final String code;
         private final String message;

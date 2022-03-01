@@ -22,9 +22,9 @@ import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.OrganizationUserRoleMapping;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.models.Role;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.models.RoleMember;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Organization Management-Role Management DAO.
@@ -54,8 +54,9 @@ public interface OrganizationUserRoleMgtDAO {
      * @return The List of RoleMembers.
      * @throws OrganizationUserRoleMgtServerException Organization-User-Role Management exception.
      */
-    List<RoleMember> getUserIdsByOrganizationAndRole(String organizationId, String roleId, int offset, int limit,
-                                                     List<String> requestedAttributes, int tenantId, String filter)
+    List<Map<String, Object>> getUserIdsByOrganizationAndRole(String organizationId, String roleId, int offset,
+                                                              int limit, List<String> requestedAttributes,
+                                                              int tenantId, String filter)
             throws OrganizationUserRoleMgtServerException;
 
     /**
@@ -64,7 +65,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param deletionList List of organizations to be deleted for user role mappings.
      * @param userId       ID of the user.
      * @param roleId       ID of role.
-     * @param tenantId     The tenant Id.
+     * @param tenantId     The tenant ID.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     void deleteOrganizationsUserRoleMapping(List<OrganizationUserRoleMapping> deletionList, String userId,
@@ -111,7 +112,7 @@ public interface OrganizationUserRoleMgtDAO {
      * @param userId         ID of the user.
      * @param roleId         ID of the role.
      * @param assignedLevel  The assigned level of the role.
-     * @param forced      forced or not.
+     * @param forced         forced or not.
      * @param tenantId       The tenant ID.
      * @return The boolean value of whether the user exists or not.
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
@@ -145,9 +146,11 @@ public interface OrganizationUserRoleMgtDAO {
     List<String> getAllSubOrganizations(String organizationId) throws OrganizationUserRoleMgtException;
 
     /**
+     * To validate whether the organization ID is available or not.
+     *
      * @param organizationId ID of the organization.
      * @return the availibility of organization ID.
-     * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception
+     * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     boolean checkOrganizationIdAvailability(String organizationId) throws OrganizationUserRoleMgtException;
 }

@@ -18,27 +18,28 @@
 
 package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 
+import java.util.Map;
+
 /**
  * Role inheritance and assigned level details.
  */
 public class RoleAssignment {
-
-    private RoleAssignedLevel assignedAt;
+    //Map of organization id and organization name.
+    private Map<String, String> assignedAt;
     private boolean isForced;
 
-
-    public RoleAssignment (boolean isForced, RoleAssignedLevel assignedAt) {
+    public RoleAssignment (boolean isForced, Map<String, String> assignedAt) {
 
         this.isForced = isForced;
         this.assignedAt = assignedAt;
     }
 
-    public RoleAssignedLevel getAssignedAt() {
+    public Map<String, String> getAssignedAt() {
 
         return assignedAt;
     }
 
-    public void setAssignedAt(RoleAssignedLevel assignedAt) {
+    public void setAssignedAt(Map<String, String> assignedAt) {
 
         this.assignedAt = assignedAt;
     }

@@ -41,6 +41,7 @@ import java.util.UUID;
 public class Utils {
 
     /**
+     * Creates a new instance of NamedJdbcTemplate.
      *
      * @return new instance of NamedJdbcTemplate.
      */
@@ -49,6 +50,7 @@ public class Utils {
     }
 
     /**
+     * Creates a new random UUID.
      *
      * @return new random unique universally unique identifier.
      */
@@ -57,6 +59,13 @@ public class Utils {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Throw an OrganizationUserRoleMgtClientException upon client side error in organization-user-role management.
+     *
+     * @param error The error enum.
+     * @param data  The error message data.
+     * @return OrganizationUserRoleMgtClientException.
+     */
     public static OrganizationUserRoleMgtClientException handleClientException(
             OrganizationUserRoleMgtConstants.ErrorMessages error, String data) {
 
@@ -69,6 +78,14 @@ public class Utils {
         return new OrganizationUserRoleMgtClientException(error.getMessage(), description, error.getCode());
     }
 
+    /**
+     * Throw an OrganizationUserRoleMgtServerException upon server side error in organization-user-role management.
+     *
+     * @param error The error enum.
+     * @param data  The error message data.
+     * @param e     Throwable object.
+     * @return OrganizationUserRoleMgtServerException.
+     */
     public static OrganizationUserRoleMgtServerException handleServerException(
             OrganizationUserRoleMgtConstants.ErrorMessages error, String data, Throwable e) {
         String message;
@@ -80,6 +97,13 @@ public class Utils {
         return new OrganizationUserRoleMgtServerException(message, error.getCode(), e);
     }
 
+    /**
+     * Throw an OrganizationUserRoleMgtServerException upon server side error in organization-user-role management.
+     *
+     * @param error The error enum.
+     * @param data  The error message data.
+     * @return
+     */
     public static OrganizationUserRoleMgtServerException handleServerException(
             OrganizationUserRoleMgtConstants.ErrorMessages error, String data) {
 
@@ -92,14 +116,29 @@ public class Utils {
         return new OrganizationUserRoleMgtServerException(message, error.getCode());
     }
 
+    /**
+     * Get user store manager using tenant ID.
+     *
+     * @param tenantId The id of the tenant.
+     * @return a user store manager.
+     * @throws UserStoreException throw UserStoreException if unable to retrieve a user store manager.
+     */
     public static UserStoreManager getUserStoreManager(int tenantId)
-            throws org.wso2.carbon.user.api.UserStoreException {
+            throws UserStoreException {
 
         RealmService realmService = OrganizationUserRoleMgtDataHolder.getInstance().getRealmService();
         UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
         return (UserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 
+    /**
+     * Getting the user ID from the username.
+     *
+     * @param username Username of the user.
+     * @param tenantId The tenant ID.
+     * @return The user ID of the user.
+     * @throws OrganizationUserRoleMgtServerException An OrganizationUserRoleMgtServerException.
+     */
     public static String getUserIdFromUserName(String username, int tenantId)
             throws OrganizationUserRoleMgtServerException {
 
@@ -117,11 +156,23 @@ public class Utils {
         }
     }
 
+    /**
+     * Get the tenant domain.
+     *
+     * @return the tenant domain.
+     */
     public static String getTenantDomain() {
+
         return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
     }
 
+    /**
+     * Get the tenant ID.
+     *
+     * @return the tenant id.
+     */
     public static int getTenantId() {
+
         return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
     }
 }

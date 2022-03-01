@@ -42,7 +42,6 @@
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.mgt.core</module>
-
     </modules>
 
     <dependencyManagement>
@@ -177,7 +176,6 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon</groupId>
-
                 <artifactId>org.wso2.carbon.user.core</artifactId>
                 <version>${carbon.kernel.version}</version>
             </dependency>
