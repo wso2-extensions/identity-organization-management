@@ -41,6 +41,9 @@ import java.net.URI;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_PATH;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.PATH_SEPARATOR;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES;
@@ -49,6 +52,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getContext;
 
 /**
@@ -168,7 +172,8 @@ public class OrganizationManagementEndpointUtil {
 
     private static boolean isForbiddenError(OrganizationManagementClientException e) {
 
-        return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode());
+        return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode()) ||
+                ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION.getCode().equals(e.getErrorCode());
     }
 
     private static boolean isConflictError(OrganizationUserRoleMgtClientException e) {
@@ -269,7 +274,8 @@ public class OrganizationManagementEndpointUtil {
      */
     public static URI getResourceLocation(String organizationId) {
 
-        return buildURIForHeader(V1_API_PATH_COMPONENT + ORGANIZATION_PATH + organizationId);
+        return buildURIForHeader(V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH + PATH_SEPARATOR
+                + organizationId);
     }
 
     /**
@@ -306,4 +312,20 @@ public class OrganizationManagementEndpointUtil {
             throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
     }
+
+    public static String buildURIForPagination(String paginationURL) {
+
+        String context = getContext(V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH + paginationURL);
+
+        try {
+            return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
+        } catch (URLBuilderException e) {
+            LOG.error("Server encountered an error while building paginated URL for the response." , e);
+            Error error = getError(ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
+            throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
+        }
+    }
+
 }

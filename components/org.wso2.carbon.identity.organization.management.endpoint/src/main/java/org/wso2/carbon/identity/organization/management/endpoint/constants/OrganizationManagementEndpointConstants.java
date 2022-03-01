@@ -23,6 +23,11 @@ package org.wso2.carbon.identity.organization.management.endpoint.constants;
  */
 public class OrganizationManagementEndpointConstants {
 
+    public static final String PATH_SEPARATOR = "/";
+    public static final String V1_API_PATH_COMPONENT = "v1.0";
+    public static final String ORGANIZATION_PATH = "organizations";
+    public static final String DESC_SORT_ORDER = "DESC";
+    public static final String ASC_SORT_ORDER = "ASC";
     public static final String V1_API_PATH_COMPONENT = "v1.0/";
     public static final String ORGANIZATION_PATH = "organizations/";
     public static final String ORGANIZATION_ROLES_PATH = "organizations/%s/roles";

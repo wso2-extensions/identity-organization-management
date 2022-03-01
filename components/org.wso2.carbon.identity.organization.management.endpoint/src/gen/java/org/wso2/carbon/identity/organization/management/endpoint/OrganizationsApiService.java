@@ -24,7 +24,6 @@ import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import java.io.InputStream;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
 import java.util.List;
@@ -32,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.RoleDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 
 public interface OrganizationsApiService {
 
-      public Response organizationsGet(String filter, Integer limit, Long next, Long before);
+      public Response organizationsGet(String filter, Integer limit, String after, String before);
 
       public Response organizationsOrganizationIdDelete(String organizationId, Boolean force);
 

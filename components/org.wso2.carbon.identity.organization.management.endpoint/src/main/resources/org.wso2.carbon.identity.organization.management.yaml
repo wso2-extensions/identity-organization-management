@@ -65,7 +65,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/filterQueryParam'
         - $ref: '#/components/parameters/limitQueryParam'
-        - $ref: '#/components/parameters/nextQueryParam'
+        - $ref: '#/components/parameters/afterQueryParam'
         - $ref: '#/components/parameters/beforeQueryParam'
       responses:
         '200':
@@ -73,9 +73,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/BasicOrganizationResponse'
+                $ref: '#/components/schemas/OrganizationsResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -493,19 +491,15 @@ components:
       description:
         Points to the previous range of data that can be retrieved.
       schema:
-        type: integer
-        format: int64
-        minimum: 0
-    nextQueryParam:
+        type: string
+    afterQueryParam:
       in: query
-      name: next
+      name: after
       required: false
       description:
         Points to the next range of data to be returned.
       schema:
-        type: integer
-        format: int64
-        minimum: 0
+        type: string
     showChildrenQueryParam:
       in: query
       name: showChildren
@@ -598,15 +592,51 @@ components:
         value:
           type: string
           example: "Sri Lanka"
+    OrganizationsResponse:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+          example:
+            [
+              {
+                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "next",
+              },  {
+                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "previous",
+              }
+            ]
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BasicOrganizationResponse'
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          description: Endpoint that will return the next or previous page of data.
+        rel:
+          type: string
+          description: Describes whether the provided link is to access the next or previous page of data.
+      readOnly: true
     BasicOrganizationResponse:
       type: object
       required:
         - id
+        - name
         - self
       properties:
         id:
           type: string
           example: 'b4526d91-a8bf-43d2-8b14-c548cf73065b'
+        name:
+          type: string
+          example: 'ABC Builders'
         self:
           type: string
           example: 't/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b'

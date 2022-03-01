@@ -24,7 +24,6 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import java.io.InputStream;
 import java.util.List;
 
-import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
 import java.util.List;
@@ -32,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.RoleDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
@@ -58,23 +58,23 @@ public class OrganizationsApi  {
     
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Retrieve organizations created for this tenant which matches the defined search criteria, if any.", notes = "This API is used to search and retrieve organizations created for this tenant.", response = BasicOrganizationResponse.class, responseContainer = "List", authorizations = {
+    @ApiOperation(value = "Retrieve organizations created for this tenant which matches the defined search criteria, if any.", notes = "This API is used to search and retrieve organizations created for this tenant.", response = OrganizationsResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Successful response", response = BasicOrganizationResponse.class, responseContainer = "List"),
+        @ApiResponse(code = 200, message = "Successful response", response = OrganizationsResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class),
         @ApiResponse(code = 501, message = "Not Implemented.", response = Error.class)
     })
-    public Response organizationsGet(    @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid @Min(0L)@ApiParam(value = "Points to the next range of data to be returned.")  @QueryParam("next") Long next,     @Valid @Min(0L)@ApiParam(value = "Points to the previous range of data that can be retrieved.")  @QueryParam("before") Long before) {
+    public Response organizationsGet(    @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid@ApiParam(value = "Points to the next range of data to be returned.")  @QueryParam("after") String after,     @Valid@ApiParam(value = "Points to the previous range of data that can be retrieved.")  @QueryParam("before") String before) {
 
-        return delegate.organizationsGet(filter,  limit,  next,  before );
+        return delegate.organizationsGet(filter,  limit,  after,  before );
     }
 
     @Valid

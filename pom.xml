@@ -221,6 +221,44 @@
                 <artifactId>org.wso2.carbon.database.utils</artifactId>
                 <version>${carbon.database.utils.version}</version>
             </dependency>
+
+            <!--Test Dependencies-->
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-testng-common</artifactId>
+                <version>${org.powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito</artifactId>
+                <version>${org.powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-testng</artifactId>
+                <version>${org.powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>org.jacoco.agent</artifactId>
+                <classifier>runtime</classifier>
+                <version>${jacoco.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2database.version}</version>
+                <scope>test</scope>
+          </dependency>
             <dependency>
                 <groupId>org.json.wso2</groupId>
                 <artifactId>json</artifactId>
@@ -273,7 +311,7 @@
                     <version>${spotbugs-maven-plugin.version}</version>
                     <configuration>
                         <effort>Max</effort>
-                        <threshold>High</threshold>
+                        <threshold>Medium</threshold>
                         <failOnError>true</failOnError>
                         <maxHeap>1024</maxHeap>
                         <plugins>
@@ -438,6 +476,12 @@
         <org.apache.commons.logging.imp.pkg.version.range>[1.2,2)</org.apache.commons.logging.imp.pkg.version.range>
         <org.apache.commons.collections.imp.pkg.version.range>[3.2.0,4.0.0)
         </org.apache.commons.collections.imp.pkg.version.range>
+
+        <org.powermock.version>1.7.4</org.powermock.version>
+        <jacoco.version>0.8.2</jacoco.version>
+        <testng.version>6.9.10</testng.version>
+        <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
+        <h2database.version>1.4.199</h2database.version>
 
         <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>
         <maven.checkstyleplugin.version>3.1.0</maven.checkstyleplugin.version>

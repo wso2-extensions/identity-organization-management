@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.*;
 public class BasicOrganizationResponse  {
   
     private String id;
+    private String name;
     private String self;
 
     /**
@@ -53,6 +54,26 @@ public class BasicOrganizationResponse  {
     }
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+    **/
+    public BasicOrganizationResponse name(String name) {
+
+        this.name = name;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "ABC Builders", required = true, value = "")
+    @JsonProperty("name")
+    @Valid
+    @NotNull(message = "Property name cannot be null.")
+
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
@@ -88,12 +109,13 @@ public class BasicOrganizationResponse  {
         }
         BasicOrganizationResponse basicOrganizationResponse = (BasicOrganizationResponse) o;
         return Objects.equals(this.id, basicOrganizationResponse.id) &&
+            Objects.equals(this.name, basicOrganizationResponse.name) &&
             Objects.equals(this.self, basicOrganizationResponse.self);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, self);
+        return Objects.hash(id, name, self);
     }
 
     @Override
@@ -103,6 +125,7 @@ public class BasicOrganizationResponse  {
         sb.append("class BasicOrganizationResponse {\n");
         
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
+        sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    self: ").append(toIndentedString(self)).append("\n");
         sb.append("}");
         return sb.toString();

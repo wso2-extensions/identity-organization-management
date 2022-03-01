@@ -27,24 +27,12 @@ import org.wso2.carbon.identity.organization.management.authz.service.exception.
  */
 public class OrganizationManagementAuthorizationManager {
 
-    private static OrganizationManagementAuthorizationManager organizationMgtAuthorizationManager =
+    private static final OrganizationManagementAuthorizationManager INSTANCE =
             new OrganizationManagementAuthorizationManager();
-    private static final Object lock = new Object();
-
-    private OrganizationManagementAuthorizationManager() {
-
-    }
 
     public static OrganizationManagementAuthorizationManager getInstance() {
 
-        if (organizationMgtAuthorizationManager == null) {
-            synchronized (lock) {
-                if (organizationMgtAuthorizationManager == null) {
-                    organizationMgtAuthorizationManager = new OrganizationManagementAuthorizationManager();
-                }
-            }
-        }
-        return organizationMgtAuthorizationManager;
+        return INSTANCE;
     }
 
     /**

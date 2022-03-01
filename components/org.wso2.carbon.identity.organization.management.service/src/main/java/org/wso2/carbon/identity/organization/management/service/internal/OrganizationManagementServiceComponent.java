@@ -24,11 +24,15 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.CachedBackedOrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * OSGi service component for organization management core bundle.
@@ -61,5 +65,38 @@ public class OrganizationManagementServiceComponent {
         } catch (Exception e) {
             LOG.error("Error while activating Organization Management module.", e);
         }
+    }
+
+    /**
+     * Set realm service implementation.
+     *
+     * @param realmService RealmService
+     */
+    @Reference(
+            name = "user.realmservice.default",
+            service = RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService"
+    )
+    protected void setRealmService(RealmService realmService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting the Realm Service.");
+        }
+        OrganizationManagementDataHolder.getInstance().setRealmService(realmService);
+    }
+
+    /**
+     * Unset realm service implementation.
+     *
+     * @param realmService RealmService
+     */
+    protected void unsetRealmService(RealmService realmService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unsetting the Realm Service.");
+        }
+        OrganizationManagementDataHolder.getInstance().setRealmService(null);
     }
 }

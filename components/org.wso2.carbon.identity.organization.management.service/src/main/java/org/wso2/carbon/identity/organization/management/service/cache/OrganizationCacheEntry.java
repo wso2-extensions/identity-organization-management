@@ -26,7 +26,8 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
  */
 public class OrganizationCacheEntry extends CacheEntry {
 
-    private Organization organization;
+    private static final long serialVersionUID = -2371613561621813431L;
+    private transient Organization organization;
 
     public OrganizationCacheEntry(Organization organization) {
 

@@ -24,14 +24,19 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ChildOrganization;
+import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.Link;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPOSTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingUsersDTO;
@@ -46,21 +51,38 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ASC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.DESC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.buildURIForPagination;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getError;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getResourceLocation;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleClientErrorResponse;
+import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleServerErrorResponse;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getOrganizationRoleResourceURI;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getOrganizationUserRoleManager;
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getResourceLocation;
@@ -75,6 +97,8 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.USER_ID_NULL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
  * Perform organization management related operations.
@@ -87,13 +111,19 @@ public class OrganizationManagementService {
      * Retrieve organization IDs.
      *
      * @param filter The filter string.
+     * @param limit  The maximum number of records to be returned.
+     * @param after  The pointer to next page.
+     * @param before The pointer to previous page.
      * @return The list of organization IDs.
      */
-    public Response getOrganizations(String filter) {
+    public Response getOrganizations(String filter, Integer limit, String after, String before) {
 
         try {
-            List<String> organizationIds = getOrganizationManager().getOrganizationIds(filter);
-            return Response.ok().entity(getOrganizationsResponse(organizationIds)).build();
+            limit = validateLimit(limit);
+            String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
+            List<BasicOrganization> organizations = getOrganizationManager().getOrganizations(limit + 1, after,
+                    before, sortOrder, filter);
+            return Response.ok().entity(getOrganizationsResponse(limit, after, before, filter, organizations)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -352,7 +382,7 @@ public class OrganizationManagementService {
     private Organization getOrganizationFromPostRequest(OrganizationPOSTRequest organizationPOSTRequest) {
 
         Organization organization = new Organization();
-        organization.setId(UUID.randomUUID().toString());
+        organization.setId(generateUniqueID());
         organization.setName(organizationPOSTRequest.getName());
         organization.setDescription(organizationPOSTRequest.getDescription());
         organization.getParent().setId(organizationPOSTRequest.getParentId());
@@ -442,18 +472,93 @@ public class OrganizationManagementService {
         }
     }
 
-    private List<BasicOrganizationResponse> getOrganizationsResponse(List<String> organizationIds) throws
-            OrganizationManagementServerException {
+    private int validateLimit(Integer limit) throws OrganizationManagementClientException {
 
-        List<BasicOrganizationResponse> organizationDTOs = new ArrayList<>();
-        for (String org : organizationIds) {
-            BasicOrganizationResponse organizationDTO = new BasicOrganizationResponse();
-            organizationDTO.setId(org);
-            organizationDTO.setSelf(buildURIForBody(org));
-
-            organizationDTOs.add(organizationDTO);
+        if (limit == null) {
+            int defaultItemsPerPage = IdentityUtil.getDefaultItemsPerPage();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("Given limit is null. Therefore the default limit is set to %s.",
+                        defaultItemsPerPage));
+            }
+            return defaultItemsPerPage;
         }
-        return organizationDTOs;
+
+        if (limit < 0) {
+            throw handleClientException(ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT);
+        }
+
+        int maximumItemsPerPage = IdentityUtil.getMaximumItemPerPage();
+        if (limit > maximumItemsPerPage) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("Given limit exceeds the maximum limit. Therefore the limit is set to %s.",
+                        maximumItemsPerPage));
+            }
+            return maximumItemsPerPage;
+        }
+
+        return limit;
+    }
+
+    private OrganizationsResponse getOrganizationsResponse(Integer limit, String after, String before, String filter,
+                                                           List<BasicOrganization> organizations)
+            throws OrganizationManagementServerException {
+
+        OrganizationsResponse organizationsResponse = new OrganizationsResponse();
+
+        if (CollectionUtils.isNotEmpty(organizations)) {
+            boolean hasMoreItems = organizations.size() > limit;
+            boolean needsReverse = StringUtils.isNotBlank(before);
+            boolean isFirstPage = (StringUtils.isBlank(before) && StringUtils.isBlank(after)) ||
+                    (StringUtils.isNotBlank(before) && !hasMoreItems);
+            boolean isLastPage = !hasMoreItems && (StringUtils.isNotBlank(after) || StringUtils.isBlank(before));
+
+            String url = "?limit=" + limit;
+            if (StringUtils.isNotBlank(filter)) {
+                try {
+                    url += "&filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8.name());
+                } catch (UnsupportedEncodingException e) {
+                    LOG.error("Server encountered an error while building pagination URL for the response.", e);
+                    Error error = getError(ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
+                            ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
+                            ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
+                    throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
+                }
+            }
+
+            if (hasMoreItems) {
+                organizations.remove(organizations.size() - 1);
+            }
+            if (needsReverse) {
+                Collections.reverse(organizations);
+            }
+            if (!isFirstPage) {
+                String encodedString = Base64.getEncoder().encodeToString(organizations.get(0).getCreated()
+                        .getBytes(StandardCharsets.UTF_8));
+                Link link = new Link();
+                link.setHref(URI.create(buildURIForPagination(url) + "&before=" + encodedString));
+                link.setRel("previous");
+                organizationsResponse.addLinksItem(link);
+            }
+            if (!isLastPage) {
+                String encodedString = Base64.getEncoder().encodeToString(organizations.get(organizations.size() - 1)
+                        .getCreated().getBytes(StandardCharsets.UTF_8));
+                Link link = new Link();
+                link.setHref(URI.create(buildURIForPagination(url) + "&after=" + encodedString));
+                link.setRel("next");
+                organizationsResponse.addLinksItem(link);
+            }
+
+            List<BasicOrganizationResponse> organizationDTOs = new ArrayList<>();
+            for (BasicOrganization organization : organizations) {
+                BasicOrganizationResponse organizationDTO = new BasicOrganizationResponse();
+                organizationDTO.setId(organization.getId());
+                organizationDTO.setName(organization.getName());
+                organizationDTO.setSelf(buildURIForBody(organization.getId()));
+                organizationDTOs.add(organizationDTO);
+            }
+            organizationsResponse.setOrganizations(organizationDTOs);
+        }
+        return organizationsResponse;
     }
 
     private Organization getUpdatedOrganization(String organizationId, OrganizationPUTRequest organizationPUTRequest)
