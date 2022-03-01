@@ -36,7 +36,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.RoleDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleOperationDTO;
-import org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApiService;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;

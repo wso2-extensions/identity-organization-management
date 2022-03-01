@@ -213,12 +213,16 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building paginated response URL."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION("65021", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the root " +
-                        "organization in tenant: %s.");
-        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65020",
-                "Unable to add forced organization-user-role mappings",
+                        "organization in tenant: %s."),
+        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65022",
+                "Unable to add forced organization-user-role mappings.",
                 "Server encountered an error while creating user role mappings."),
-        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65021", "Unable to get role names",
-                "Server encountered an error while retrieving role names.");
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65023", "Unable to get role names.",
+                "Server encountered an error while retrieving role names."),
+        ERROR_CODE_ERROR_CONNECTING_TO_IDENTITY_DB("65024", "Unable to connect to Identity Database.",
+                "Server encountered an error while connecting to identity database."),
+        ERROR_CODE_ERROR_RETRIEVING_DATA_FROM_IDENTITY_DB("65025", "Unable to retrieve data from Identity Database.",
+                "Server encountered an error while retrieving data from identity database.");
 
 
         private final String code;
