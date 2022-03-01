@@ -151,6 +151,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     }
 
     private String buildQueryForGettingRoleNames(int numberOfRoles) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(GET_ROLE_NAMES_FOR_TENANT).append("(");
         for (int i = 0; i < numberOfRoles; i++) {
@@ -164,6 +165,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     }
 
     private String buildQueryForGettingPermissions(List<String> roleNamesList) {
+
         StringBuilder sb = new StringBuilder();
         int numberOfRoles = roleNamesList.size();
         sb.append("(");
