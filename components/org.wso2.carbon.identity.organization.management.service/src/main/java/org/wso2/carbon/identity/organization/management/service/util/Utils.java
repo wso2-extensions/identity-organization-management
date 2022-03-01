@@ -154,6 +154,16 @@ public class Utils {
         return context;
     }
 
+    /**
+     * Generate unique id for organization-user-role mappings.
+     *
+     * @return A unique id.
+     */
+    public static String generateUniqueID() {
+
+        return UUID.randomUUID().toString();
+    }
+
     private static String getTenantDomainFromContext() {
 
         String tenantDomain = IdentityTenantUtil.getTenantDomainFromContext();

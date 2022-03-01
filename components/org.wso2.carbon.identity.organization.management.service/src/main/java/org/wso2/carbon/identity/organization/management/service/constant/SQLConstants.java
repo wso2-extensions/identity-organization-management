@@ -23,6 +23,9 @@ package org.wso2.carbon.identity.organization.management.service.constant;
  */
 public class SQLConstants {
 
+    public static final String OR = " OR ";
+    public static final String AND = " AND ";
+    public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME = ?";
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
 
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
@@ -60,7 +63,7 @@ public class SQLConstants {
             "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
             "UM_ORG.UM_ID WHERE ";
 
-    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
+   /* public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_USER_ROLE_ORG.UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_HYBRID_ROLE_ID IN " +
             "(SELECT UM_ID FROM UM_HYBRID_ROLE WHERE UM_ROLE_NAME IN (SELECT UM_ROLE_NAME " +
@@ -68,6 +71,21 @@ public class SQLConstants {
             " IN (" + PERMISSION_LIST_PLACEHOLDER + ")))) AND UM_ORG.UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_ORG.UM_CREATED_TIME %s LIMIT :" +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
+
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_ORG.UM_CREATED_TIME";*/
+
+    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_USER_ROLE_ORG.UM_TENANT_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; %s AND UM_ORG.UM_TENANT_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_ORG.UM_CREATED_TIME";
+
+
+    public static final String GET_ROLE_NAMES = "SELECT UM_ROLE_NAME " +
+            "FROM UM_ROLE_PERMISSION WHERE UM_PERMISSION_ID IN (SELECT UM_ID FROM UM_PERMISSION WHERE UM_RESOURCE_ID " +
+            "IN (" + PERMISSION_LIST_PLACEHOLDER + "))";
+
+    public static final String GET_ROLE_IDS_FOR_TENANT = "SELECT ATTR_VALUE FROM IDN_SCIM_GROUP WHERE " +
+            "IDN_SCIM_GROUP.TENANT_ID = ? AND IDN_SCIM_GROUP.ATTR_NAME = ? AND ";
 
     public static final String DELETE_ORGANIZATION_BY_ID = "DELETE FROM UM_ORG WHERE UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ID = :" +
@@ -111,8 +129,25 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
+    public static final String GET_ALL_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "SELECT * FROM UM_USER_ROLE_ORG" +
+            " WHERE ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
+            "; AND UM_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID +
+            "; AND FORCED = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + ";";
+
+    public static final String ADD_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "INSERT INTO UM_USER_ROLE_ORG (UM_ID, " +
+            "UM_USER_ID, UM_ROLE_ID, " +
+            "UM_TENANT_ID, ORG_ID, ASSIGNED_AT, FORCED) VALUES ";
+
+    public static final String ADD_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS_MAPPING = "(:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + "%1$d;)";
+
     public static final String COUNT_COLUMN = "COUNT(1)";
-    public static final String VIEW_ID_COLUMN = "UM_ID";
 
     /**
      * SQL Placeholders
@@ -130,5 +165,9 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_VALUE = "VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";
         public static final String DB_SCHEMA_LIMIT = "LIMIT";
+        public static final String DB_SCHEMA_COLUMN_NAME_FORCED = "FORCED";
+        public static final String DB_SCHEMA_COLUMN_NAME_ROLE_ID = "ROLE_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_ORG_ID = "ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT = "ASSIGNED_AT";
     }
 }

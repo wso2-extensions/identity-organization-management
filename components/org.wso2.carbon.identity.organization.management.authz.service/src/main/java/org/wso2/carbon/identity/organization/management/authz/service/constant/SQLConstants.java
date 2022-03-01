@@ -27,12 +27,22 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
  */
 public class SQLConstants {
 
+    public static final String OR = " OR ";
+    public static final String ROLE_ID = "UM_ROLE_ID";
+    public static final String ROLE_NAME = "UM_ROLE_NAME";
+    public static final String VIEW_COLUMN_ROLE_NAME = "ROLE_NAME";
+    public static final String SCIM_GROUP_ATTR_VALUE = "IDN_SCIM_GROUP.ATTR_VALUE = ?";
+
     public static final String GET_PERMISSIONS_FOR_USER = "SELECT UM_RESOURCE_ID FROM UM_PERMISSION WHERE UM_ID IN " +
-            "(SELECT UM_PERMISSION_ID FROM UM_ROLE_PERMISSION WHERE UM_ROLE_NAME IN " +
-            "(SELECT UM_ROLE_NAME FROM UM_HYBRID_ROLE WHERE UM_ID IN " +
-            "(SELECT UM_HYBRID_ROLE_ID FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID +
-            "; AND ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID +
-            "; AND UM_TENANT_ID = :" + DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; )))";
+            "(SELECT UM_PERMISSION_ID FROM UM_ROLE_PERMISSION WHERE %s)";
+
+    public static final String GET_ROLE_NAMES_FOR_TENANT = "SELECT ROLE_NAME FROM IDN_SCIM_GROUP WHERE " +
+            "IDN_SCIM_GROUP.TENANT_ID = ? AND IDN_SCIM_GROUP.ATTR_NAME = ? AND ";
+
+    public static final String GET_SCIM_ROLE_IDS_FOR_ORGANIZATION_USER_TENANT = "SELECT UM_ROLE_ID FROM " +
+            "UM_USER_ROLE_ORG WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; " +
+            "AND ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + "; " +
+            "AND UM_TENANT_ID = :" + DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
     /**
      * SQL placeholders.
