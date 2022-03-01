@@ -140,7 +140,9 @@
                             org.wso2.carbon.identity.organization.management.service.dao.impl;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.model;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}"
+                            org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>

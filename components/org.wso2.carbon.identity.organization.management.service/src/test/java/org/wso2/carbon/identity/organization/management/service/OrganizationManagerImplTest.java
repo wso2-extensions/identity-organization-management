@@ -40,6 +40,10 @@ import org.wso2.carbon.identity.organization.management.service.model.BasicOrgan
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
+import org.wso2.carbon.user.api.AuthorizationManager;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -81,6 +85,15 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     @Mock
     private OrganizationManagementDAO organizationManagementDAO;
 
+    @Mock
+    private RealmService realmService;
+
+    @Mock
+    private UserRealm userRealm;
+
+    @Mock
+    private AuthorizationManager authorizationManager;
+
     @BeforeMethod
     public void setUp() {
 
@@ -102,6 +115,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
         mockCarbonContext();
+
+        mockAuthorizationManager();
+        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
         OrganizationManagementAuthorizationManager authorizationManager =
                 mock(OrganizationManagementAuthorizationManager.class);
@@ -209,10 +225,25 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testAddRootOrganizationUserNotAuthorized() throws Exception {
+
+        Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
+        mockCarbonContext();
+
+        mockAuthorizationManager();
+        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(false);
+
+        organizationManager.addOrganization(sampleOrganization);
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationUserNotAuthorized() throws Exception {
 
         Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
         mockCarbonContext();
+
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationIdByName(anyInt(),
+                anyString(), anyString())).thenReturn(PARENT_ID);
 
         OrganizationManagementAuthorizationManager authorizationManager =
                 mock(OrganizationManagementAuthorizationManager.class);
@@ -560,6 +591,13 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         mockStatic(ServiceURL.class);
         when(ServiceURLBuilder.create().addPath(anyString())).thenReturn(serviceURLBuilder);
         when(ServiceURLBuilder.create().addPath(anyString()).build()).thenReturn(serviceURL);
+    }
+
+    private void mockAuthorizationManager() throws UserStoreException {
+
+        organizationManagementDataHolder.setRealmService(realmService);
+        when(organizationManagementDataHolder.getRealmService().getTenantUserRealm(anyInt())).thenReturn(userRealm);
+        when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
     }
 
     private Organization getOrganization(String name, String parent) {
