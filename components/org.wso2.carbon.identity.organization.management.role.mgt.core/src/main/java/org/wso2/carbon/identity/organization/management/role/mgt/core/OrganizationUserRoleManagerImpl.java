@@ -369,7 +369,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
 
         if (directlyAssignedRoleMappingExist == -1) {
             throw handleClientException(DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING,
-                    String.format("No assigned organization user role mapping found for organization: %s, " +
+                    String.format("No directly assigned organization user role mapping found for organization: %s, " +
                                     "user: %s, role: %s, assigned at organization: %s",
                             organizationId, userId, roleId, organizationId));
         }

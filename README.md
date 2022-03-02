@@ -8,27 +8,8 @@ For now, the implementation was done as an **OSGI bundle** and uses **H2 databas
 
     - Add the following configurations to use inbuilt H2 database.
       ```
-      [database.identity_db]
-      type = "h2"
-      url = "jdbc:h2:./repository/database/WSO2IDENTITY_DB;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=60000"
-      username = "wso2carbon"
-      password = "wso2carbon"
-      ```
-      ```
-      [database.shared_db]
-      type = "h2"
-      url = "jdbc:h2:./repository/database/WSO2SHARED_DB;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=60000"
-      username = "wso2carbon"
-      password = "wso2carbon"
-      ```
-      ```
       [database_configuration]
       enable_h2_console = "true"
-      ```
-    - Set H2 database as the primary user store.
-      ```
-      [user_store]
-      type = "database_unique_id"
       ```
     - Set `resource-access-control` to use the API.
       ```
