@@ -140,8 +140,8 @@ public class OrganizationManagementAuthzValve extends ValveBase {
 
     private boolean canHandle(String requestPath, String getHttpMethod) {
 
-        return !Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_ROLES, requestPath) &&
-                !Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_USERS, requestPath)
+        return !(Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_ROLES, requestPath)
+                || Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_USERS, requestPath))
                 && Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID, requestPath) &&
                 (HTTP_GET.equalsIgnoreCase(getHttpMethod) ||
                         HTTP_DELETE.equalsIgnoreCase(getHttpMethod) || HTTP_PUT.equalsIgnoreCase(getHttpMethod) ||
