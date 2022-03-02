@@ -260,12 +260,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.json.wso2</groupId>
-                <artifactId>json</artifactId>
-                <version>${json.wso2.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
                 <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
                 <version>${wso2.carbon.identity.inbound.provisioning.scim2.version}</version>
@@ -449,7 +443,7 @@
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
-        <carbon.identity.scim2.package.import.version.range>[1.5.122, 1.6.0)
+        <carbon.identity.scim2.package.import.version.range>[1.5.122, 2.0.0)
         </carbon.identity.scim2.package.import.version.range>
         <carbon.user.api.import.version.range>[1.0.1, 1.1.0)</carbon.user.api.import.version.range>
         <carbon.user.core.import.version.range>[4.7.0, 4.8.0)</carbon.user.core.import.version.range>
@@ -467,8 +461,6 @@
 
         <wso2.carbon.identity.inbound.provisioning.scim2.version>1.5.122
         </wso2.carbon.identity.inbound.provisioning.scim2.version>
-
-        <json.wso2.version>3.0.0.wso2v1</json.wso2.version>
 
         <openapi.tools.version>4.1.2</openapi.tools.version>
 

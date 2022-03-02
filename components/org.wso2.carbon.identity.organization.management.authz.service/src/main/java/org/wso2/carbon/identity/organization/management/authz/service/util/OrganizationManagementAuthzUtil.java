@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.authz.service.util;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
@@ -67,6 +68,16 @@ public class OrganizationManagementAuthzUtil {
     public static NamedJdbcTemplate getNewTemplate() {
 
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
+    }
+
+    /**
+     * Get a new Jdbc Template.
+     *
+     * @return a new Jdbc Template for Identity Database.
+     */
+    public static NamedJdbcTemplate getNewTemplateForIdentityDatabase() {
+
+        return new NamedJdbcTemplate(IdentityDatabaseUtil.getDataSource());
     }
 
     public static List<String> getAllowedPermissions(String resourceId) {

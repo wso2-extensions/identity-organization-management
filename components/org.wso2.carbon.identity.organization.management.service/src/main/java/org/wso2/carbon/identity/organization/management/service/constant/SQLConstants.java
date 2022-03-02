@@ -25,8 +25,26 @@ public class SQLConstants {
 
     public static final String OR = " OR ";
     public static final String AND = " AND ";
-    public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME = ?";
+    public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_NAME + "%d;";
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
+
+    public static final String VIEW_ROLE_NAME_COLUMN = "UM_ROLE_NAME";
+    public static final String VIEW_SCIM_ATTR_VALUE_COLUMN = "ATTR_VALUE";
+
+    public static final String VIEW_ID_COLUMN = "UM_ID";
+    public static final String VIEW_USER_ID_COLUMN = "UM_USER_ID";
+    public static final String VIEW_ROLE_ID_COLUMN = "UM_ROLE_ID";
+    public static final String VIEW_ASSIGNED_AT_COLUMN = "ASSIGNED_AT";
+    public static final String VIEW_FORCED_COLUMN = "FORCED";
+
+    public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
+    public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
+    public static final String VIEW_CREATED_TIME_COLUMN = "UM_CREATED_TIME";
+    public static final String VIEW_LAST_MODIFIED_COLUMN = "UM_LAST_MODIFIED";
+    public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
+    public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
+    public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
 
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
             "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID) VALUES (:" +
@@ -75,7 +93,9 @@ public class SQLConstants {
             "IN (" + PERMISSION_LIST_PLACEHOLDER + "))";
 
     public static final String GET_ROLE_IDS_FOR_TENANT = "SELECT ATTR_VALUE FROM IDN_SCIM_GROUP WHERE " +
-            "IDN_SCIM_GROUP.TENANT_ID = ? AND IDN_SCIM_GROUP.ATTR_NAME = ? AND ";
+            "IDN_SCIM_GROUP.TENANT_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND IDN_SCIM_GROUP.ATTR_NAME = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME + "; AND ";
 
     public static final String DELETE_ORGANIZATION_BY_ID = "DELETE FROM UM_ORG WHERE UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ID = :" +
@@ -159,5 +179,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_ROLE_ID = "ROLE_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ORG_ID = "ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT = "ASSIGNED_AT";
+        public static final String DB_SCHEMA_COLUMN_NAME_ATTR_NAME = "ATTR_NAME";
+        public static final String DB_SCHEMA_COLUMN_NAME_ROLE_NAME = "ROLE_NAME";
     }
 }

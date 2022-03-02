@@ -44,7 +44,7 @@ import static org.wso2.carbon.identity.organization.management.endpoint.constant
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
@@ -299,9 +299,9 @@ public class OrganizationManagementEndpointUtil {
             Error error;
             if (StringUtils.contains(endpoint, ORGANIZATION_ROLES_PATH)) {
                 LOG.error("Server encountered an error while building URL for response header.");
-                error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getCode(),
-                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getMessage(),
-                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES.getDescription());
+                error = getError(ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getCode(),
+                        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getMessage(),
+                        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getDescription());
             } else {
                 LOG.error("Server encountered an error while building URL for response header.");
                 error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getCode(),

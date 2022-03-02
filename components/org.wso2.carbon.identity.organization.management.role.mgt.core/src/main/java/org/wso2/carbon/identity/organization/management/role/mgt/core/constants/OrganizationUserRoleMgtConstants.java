@@ -44,8 +44,8 @@ public class OrganizationUserRoleMgtConstants {
         INVALID_ORGANIZATION_ID("ORG-60203", "Invalid organization id.",
                 "organization id %s does not exist."),
         ADD_ORG_ROLE_USER_REQUEST_INVALID_USER("ORG-60204", "Invalid user", "%s"),
-        DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205", "Invalid organization user role mapping",
-                "%s"),
+        DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING("ORG-60205",
+                "Invalid direct organization user role mapping.", "%s"),
         PATCH_ORG_ROLE_USER_REQUEST_TOO_MANY_OPERATIONS("ORG-60206", "Too many operations",
                 "Only one patch operation is valid because only the includeSubOrganizations " +
                         "attribute can be changed."),
@@ -125,8 +125,11 @@ public class OrganizationUserRoleMgtConstants {
         ERROR_CODE_ORGANIZATION_GET_ORGANIZATION_ID_ERROR("ORG-65212",
                 "Error while retrieving the organization id: %s",
                 "Server encountered an error while retrieving the organization."),
-        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES("65017", "Unable to build create URL.",
-                "Server encountered an error while building URL for response header.");
+        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR("65017", "Unable to build create URL.",
+                "Server encountered an error while building URL for response header."),
+        ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR("65018",
+                "Unable to retrieve data from Identity database.",
+                "Server encountered an error while retrieving data from identity database.");
 
         private final String code;
         private final String message;

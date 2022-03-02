@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtClientException;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.exception.OrganizationUserRoleMgtServerException;
@@ -47,6 +48,16 @@ public class Utils {
      */
     public static NamedJdbcTemplate getNewNamedJdbcTemplate() {
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
+    }
+
+    /**
+     * Get a new Jdbc Template.
+     *
+     * @return a new Jdbc Template for Identity Database.
+     */
+    public static NamedJdbcTemplate getNewTemplateForIdentityDatabase() {
+
+        return new NamedJdbcTemplate(IdentityDatabaseUtil.getDataSource());
     }
 
     /**

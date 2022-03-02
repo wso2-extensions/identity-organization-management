@@ -23,14 +23,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCIM_ROLE_ID_ATTR_NAME;
@@ -41,12 +35,15 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SCIM_GROUP_ATTR_VALUE;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_VALUE;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.VIEW_COLUMN_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getNewTemplate;
+import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getNewTemplateForIdentityDatabase;
 
 /**
  * Implementation of {@link OrganizationManagementAuthzDAO}.
@@ -120,32 +117,25 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         if (CollectionUtils.isEmpty(roleIdList)) {
             return null;
         }
-        List<String> roleNamesList = new ArrayList<>();
-        String query = buildQueryForGettingRoleNames(roleIdList.size());
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            connection.setAutoCommit(false);
-            int paramIndex = 0;
-            preparedStatement.setInt(++paramIndex, tenantId);
-            preparedStatement.setString(++paramIndex, SCIM_ROLE_ID_ATTR_NAME);
-            for (String roleId : roleIdList) {
-                preparedStatement.setString(++paramIndex, roleId);
-            }
-            try (ResultSet rst = preparedStatement.executeQuery()) {
-                while (rst.next()) {
-                    String roleName = rst.getString(VIEW_COLUMN_ROLE_NAME).split("/")[1].trim();
-                    roleNamesList.add(roleName);
-                }
-            } catch (SQLException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Error occurred while executing the query: ", e);
-                }
-            }
-            connection.commit();
-        } catch (SQLException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Error occurred while executing the query: ", e);
-            }
+        List<String> roleNamesList;
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplateForIdentityDatabase();
+        try {
+            roleNamesList = namedJdbcTemplate.withTransaction(template ->
+                    template.executeQuery(buildQueryForGettingRoleNames(roleIdList.size()),
+                            (resultSet, rowNumber) -> resultSet.getString(VIEW_COLUMN_ROLE_NAME)
+                                    .split("/")[1].trim(),
+                            namedPreparedStatement -> {
+                                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_NAME,
+                                        SCIM_ROLE_ID_ATTR_NAME);
+                                int index = 0;
+                                for (String roleId : roleIdList) {
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_VALUE + (index++),
+                                            roleId);
+                                }
+                            }));
+        } catch (TransactionException e) {
+            throw new OrganizationManagementAuthzServiceServerException(e);
         }
         return roleNamesList;
     }
@@ -155,7 +145,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         StringBuilder sb = new StringBuilder();
         sb.append(GET_ROLE_NAMES_FOR_TENANT).append("(");
         for (int i = 0; i < numberOfRoles; i++) {
-            sb.append(SCIM_GROUP_ATTR_VALUE);
+            sb.append(String.format(SCIM_GROUP_ATTR_VALUE, i));
             if (i != numberOfRoles - 1) {
                 sb.append(OR);
             }

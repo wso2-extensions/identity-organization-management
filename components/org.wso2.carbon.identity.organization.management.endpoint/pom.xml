@@ -110,10 +110,10 @@
             </exclusions>
         </dependency>
 
-        <dependency>
+ <!--       <dependency>
             <groupId>org.json.wso2</groupId>
             <artifactId>json</artifactId>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>
