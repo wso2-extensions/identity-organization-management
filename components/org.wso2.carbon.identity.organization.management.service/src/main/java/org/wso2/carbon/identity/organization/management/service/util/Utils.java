@@ -91,7 +91,7 @@ public class Utils {
     /**
      * Get a new Jdbc Template.
      *
-     * @return a new Jdbc Template for Identity Database.
+     * @return a new Jdbc Template Identity DB Connection.
      */
     public static NamedJdbcTemplate getNewTemplateForIdentityDatabase() {
 

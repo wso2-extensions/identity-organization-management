@@ -147,7 +147,7 @@ To disable checkstyle and findbugs plugins, comment the lines containing followi
 
 - This gives the list of organizations created by the tenant.
 
-### Delete organization.
+### Delete organization
 **API**  
 `https://localhost:9443/t/{tenant-id}/api/identity/organization-mgt/v1.0/organizations/{org-id}`
 
@@ -157,7 +157,7 @@ To disable checkstyle and findbugs plugins, comment the lines containing followi
 - This enables the deletion of an organization.
 - If the organization is in **ACTIVE** status it will give an error. To bypass such errors the query parameter `force` can be used.
 
-### Put organization.
+### Put organization
 **API**  
 `https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizations/{org-id}`
 
@@ -176,7 +176,7 @@ To disable checkstyle and findbugs plugins, comment the lines containing followi
 ```
 - Updates the whole organization.
 
-### Patch organization.
+### Patch organization
 `https://localhost:9443/t/{tenant}/api/identity/organization-mgt/v1.0/organizations/{org-id}`
 
 **Sample Request Body**
