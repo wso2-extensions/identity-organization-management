@@ -25,6 +25,7 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCIM_ROLE_ID_ATTR_NAME;
@@ -57,11 +58,11 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             throws OrganizationManagementAuthzServiceServerException {
 
         List<String> permissions = getAllowedPermissions(resourceId);
-        List<String> userPermissionList = getUserAssignedPermissions(tenantId, userId, orgId);
-        if (CollectionUtils.isEmpty(userPermissionList)) {
+        List<String> userPermissions = getUserAssignedPermissions(tenantId, userId, orgId);
+        if (CollectionUtils.isEmpty(userPermissions)) {
             return false;
         }
-        for (String userPermission : userPermissionList) {
+        for (String userPermission : userPermissions) {
             if (permissions.contains(userPermission)) {
                 return true;
             }
@@ -73,11 +74,11 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             throws OrganizationManagementAuthzServiceServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        List<String> permissions;
+        List<String> permissions = new ArrayList<>();
         try {
             List<String> roleNamesList = getRoleNames(userId, orgId, tenantId);
             if (CollectionUtils.isEmpty(roleNamesList)) {
-                return null;
+                return permissions;
             }
             permissions = namedJdbcTemplate.withTransaction(template ->
                     template.executeQuery(buildQueryForGettingPermissions(roleNamesList),
@@ -88,8 +89,8 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         return permissions;
     }
 
-    private List<String> getRolesAssignedByAUserInAnOrganization(String userId, String organizationId,
-                                                                 int tenantId)
+    private List<String> getRolesAssignedForAUserInOrganization(String userId, String organizationId,
+                                                                int tenantId)
             throws OrganizationManagementAuthzServiceServerException {
 
         List<String> roleList;
@@ -113,11 +114,11 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     private List<String> getRoleNames(String userId, String organizationId, int tenantId)
             throws OrganizationManagementAuthzServiceServerException {
 
-        List<String> roleIdList = getRolesAssignedByAUserInAnOrganization(userId, organizationId, tenantId);
+        List<String> roleIdList = getRolesAssignedForAUserInOrganization(userId, organizationId, tenantId);
+        List<String> roleNamesList = new ArrayList<>();
         if (CollectionUtils.isEmpty(roleIdList)) {
-            return null;
+            return roleNamesList;
         }
-        List<String> roleNamesList;
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplateForIdentityDatabase();
         try {
             roleNamesList = namedJdbcTemplate.withTransaction(template ->

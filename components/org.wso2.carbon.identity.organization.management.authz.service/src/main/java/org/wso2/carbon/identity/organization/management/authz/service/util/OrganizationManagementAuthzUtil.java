@@ -71,7 +71,7 @@ public class OrganizationManagementAuthzUtil {
     }
 
     /**
-     * Get a new Jdbc Template.
+     * Get a new Jdbc Template with Identity DB Connection.
      *
      * @return a new Jdbc Template for Identity Database.
      */

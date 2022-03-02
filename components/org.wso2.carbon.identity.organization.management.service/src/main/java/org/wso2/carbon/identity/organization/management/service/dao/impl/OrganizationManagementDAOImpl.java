@@ -794,10 +794,10 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private List<String> getSCIMRoleIdList(int tenantId) throws OrganizationManagementServerException {
 
         List<String> roleNamesList = getRoleNames();
+        List<String> roleIdList = new ArrayList<>();
         if (CollectionUtils.isEmpty(roleNamesList)) {
-            return null;
+            return roleIdList;
         }
-        List<String> roleIdList;
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplateForIdentityDatabase();
         try {
             roleIdList = namedJdbcTemplate.withTransaction(template -> template.executeQuery(

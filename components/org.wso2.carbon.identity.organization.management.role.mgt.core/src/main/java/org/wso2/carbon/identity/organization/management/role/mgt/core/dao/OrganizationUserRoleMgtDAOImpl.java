@@ -431,9 +431,9 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     private List<Role> getRoleIdAndRoleNameUsingSCIM(List<String> roleIdList, int tenantId) throws
             OrganizationUserRoleMgtServerException {
 
-        List<Role> roleList;
+        List<Role> roleList = new ArrayList<>();
         if (CollectionUtils.isEmpty(roleIdList)) {
-            return null;
+            return roleList;
         }
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplateForIdentityDatabase();
         try {
