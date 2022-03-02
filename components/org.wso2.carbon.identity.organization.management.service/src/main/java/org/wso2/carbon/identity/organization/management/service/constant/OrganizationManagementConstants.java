@@ -33,13 +33,9 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
     private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
 
-    public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
-    public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
-    public static final String VIEW_CREATED_TIME_COLUMN = "UM_CREATED_TIME";
-    public static final String VIEW_LAST_MODIFIED_COLUMN = "UM_LAST_MODIFIED";
-    public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
-    public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
-    public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
+    public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
+    public static final String PERMISSION_PLACEHOLDER = "PERMISSION_";
+    public static final String INTERNAL = "Internal/";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -200,7 +196,15 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building paginated response URL."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION("65021", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the root " +
-                        "organization in tenant: %s.");
+                        "organization in tenant: %s."),
+        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65022",
+                "Unable to add forced organization-user-role mappings.",
+                "Server encountered an error while creating user role mappings."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65023", "Unable to get role names.",
+                "Server encountered an error while retrieving role names."),
+        ERROR_CODE_ERROR_RETRIEVING_DATA_FROM_IDENTITY_DB("65024", "Unable to retrieve data from Identity Database.",
+                "Server encountered an error while retrieving data from identity database.");
+
 
         private final String code;
         private final String message;
