@@ -48,6 +48,8 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.HTTP_PATCH;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.HTTP_PUT;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.REGEX_FOR_URLS_WITH_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.REGEX_FOR_URLS_WITH_ORG_ID_ROLES;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.REGEX_FOR_URLS_WITH_ORG_ID_USERS;
 
 /**
  * The valve for organization management related authorization.
@@ -138,8 +140,11 @@ public class OrganizationManagementAuthzValve extends ValveBase {
 
     private boolean canHandle(String requestPath, String getHttpMethod) {
 
-        return Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID, requestPath) && (HTTP_GET.equalsIgnoreCase(getHttpMethod) ||
-                HTTP_DELETE.equalsIgnoreCase(getHttpMethod) || HTTP_PUT.equalsIgnoreCase(getHttpMethod) ||
-                HTTP_PATCH.equalsIgnoreCase(getHttpMethod));
+        return !Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_ROLES, requestPath) &&
+                !Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID_USERS, requestPath)
+                && Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID, requestPath) &&
+                (HTTP_GET.equalsIgnoreCase(getHttpMethod) ||
+                        HTTP_DELETE.equalsIgnoreCase(getHttpMethod) || HTTP_PUT.equalsIgnoreCase(getHttpMethod) ||
+                        HTTP_PATCH.equalsIgnoreCase(getHttpMethod));
     }
 }
