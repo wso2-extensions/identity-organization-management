@@ -34,11 +34,11 @@ public class AuthorizationConstants {
     public static final String REGEX_FOR_URLS_WITH_ORG_ID =
             "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}(.)*$";
     public static final String REGEX_FOR_URLS_WITH_ORG_ID_ROLES =
-            "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}" +
-                    "/roles(.)*$";
+            "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}(.)*" +
+                    "(/roles)$";
     public static final String REGEX_FOR_URLS_WITH_ORG_ID_USERS =
-            "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}" +
-                    "/users(.)*$";
+            "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}(.)*" +
+                    "(/users)$";
     public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
 
     public static final String HTTP_GET = "GET";
