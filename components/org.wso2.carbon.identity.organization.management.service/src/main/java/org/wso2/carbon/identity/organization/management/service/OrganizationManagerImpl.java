@@ -210,7 +210,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (!force) {
             validateOrganizationDelete(organizationId);
         }
-        getOrganizationManagementDAO().deleteOrganization(getTenantId(), organizationId.trim(), getTenantDomain());
+        getOrganizationManagementDAO().deleteOrganization(getTenantId(), organizationId.trim(), getTenantDomain(),
+                force);
     }
 
     @Override

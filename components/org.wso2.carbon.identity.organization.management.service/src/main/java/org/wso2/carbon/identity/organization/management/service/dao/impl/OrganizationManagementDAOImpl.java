@@ -312,7 +312,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain) throws
+    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain, Boolean force) throws
             OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
