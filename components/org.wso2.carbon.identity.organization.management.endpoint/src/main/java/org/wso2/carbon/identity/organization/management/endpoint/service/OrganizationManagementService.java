@@ -115,7 +115,7 @@ public class OrganizationManagementService {
     public Response deleteOrganization(String organizationId, Boolean force) {
 
         try {
-            getOrganizationManager().deleteOrganization(organizationId, force);
+            getOrganizationManager().deleteOrganization(organizationId, Boolean.TRUE.equals(force));
             return Response.noContent().build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
@@ -134,7 +134,8 @@ public class OrganizationManagementService {
     public Response getOrganization(String organizationId, Boolean showChildren) {
 
         try {
-            Organization organization = getOrganizationManager().getOrganization(organizationId, showChildren);
+            Organization organization = getOrganizationManager().getOrganization(organizationId,
+                    Boolean.TRUE.equals(showChildren));
             return Response.ok().entity(getOrganizationResponseWithChildren(organization)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);

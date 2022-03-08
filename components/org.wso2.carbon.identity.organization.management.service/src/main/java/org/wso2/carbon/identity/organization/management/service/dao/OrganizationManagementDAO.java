@@ -121,7 +121,7 @@ public interface OrganizationManagementDAO {
      * @param force          Enforces the forceful deletion of child organizations belonging to this organization.
      * @throws OrganizationManagementServerException The server exception thrown when deleting the organization.
      */
-    void deleteOrganization(int tenantId, String organizationId, String tenantDomain, Boolean force) throws
+    void deleteOrganization(int tenantId, String organizationId, String tenantDomain, boolean force) throws
             OrganizationManagementServerException;
 
     /**

@@ -74,7 +74,7 @@ public interface OrganizationManager {
      * @return the organization object.
      * @throws OrganizationManagementException The exception thrown when retrieving an organization.
      */
-    Organization getOrganization(String organizationId, Boolean showChildren) throws OrganizationManagementException;
+    Organization getOrganization(String organizationId, boolean showChildren) throws OrganizationManagementException;
 
     /**
      * List or search organizations.
@@ -97,7 +97,7 @@ public interface OrganizationManager {
      * @param force          Enforces the forceful deletion of child organizations belonging to this organization.
      * @throws OrganizationManagementException The exception thrown when deleting an organization.
      */
-    void deleteOrganization(String organizationId, Boolean force) throws OrganizationManagementException;
+    void deleteOrganization(String organizationId, boolean force) throws OrganizationManagementException;
 
     /**
      * Patch organization and its attributes.

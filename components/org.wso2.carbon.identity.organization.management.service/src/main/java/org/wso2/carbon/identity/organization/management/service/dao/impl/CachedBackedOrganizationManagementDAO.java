@@ -131,7 +131,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain, Boolean force)
+    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain, boolean force)
             throws OrganizationManagementServerException {
 
         deleteOrganizationCacheById(organizationId, tenantDomain);
@@ -329,13 +329,21 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     TODO: improve to support the cascade deletion of sub organizations when the parent organization is deleted,
      instead of clearing the cache based only on the tenant domain.
      */
-    private void deleteChildOrganizationCache(String tenantDomain, Boolean force) {
+    private void deleteChildOrganizationCache(String tenantDomain, boolean force) {
 
         if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("Clearing child organizations related cache entries in tenant domain: %s",
                     tenantDomain));
         }
         childOrganizationsCache.clear(tenantDomain);
+
+        /*
+        If the delete organization is defined as a forceful delete, it is required to remove child organization cache
+        entries as well.
+        Since the current implementation doesn't have a way to identify the child organization entries that should be
+        removed from the cache, the entire cache based on the tenant domain has been removed to avoid any incorrect
+        behaviors that can occur as a result of a forceful organization delete.
+         */
         if (force) {
             organizationByIdCache.clear(tenantDomain);
             organizationByNameCache.clear(tenantDomain);
