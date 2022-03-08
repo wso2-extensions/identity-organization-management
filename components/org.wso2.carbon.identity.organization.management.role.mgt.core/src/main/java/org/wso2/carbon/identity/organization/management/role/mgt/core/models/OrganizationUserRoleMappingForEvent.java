@@ -28,7 +28,7 @@ public class OrganizationUserRoleMappingForEvent {
     private String organizationId;
     private String roleId;
     private String userId;
-    private List<UserForUserRoleMapping> usersRoleInheritance;
+    private List<UserForUserRoleMapping> usersForUserRoleMapping;
 
     public OrganizationUserRoleMappingForEvent() {
     }
@@ -41,11 +41,11 @@ public class OrganizationUserRoleMappingForEvent {
     }
 
     public OrganizationUserRoleMappingForEvent(String organizationId, String roleId,
-                                               List<UserForUserRoleMapping> usersRoleInheritance) {
+                                               List<UserForUserRoleMapping> usersForUserRoleMapping) {
 
         this.organizationId = organizationId;
         this.roleId = roleId;
-        this.usersRoleInheritance = usersRoleInheritance;
+        this.usersForUserRoleMapping = usersForUserRoleMapping;
     }
 
     public String getOrganizationId() {
@@ -78,9 +78,9 @@ public class OrganizationUserRoleMappingForEvent {
         this.userId = userId;
     }
 
-    public List<UserForUserRoleMapping> getUsersRoleInheritance() {
+    public List<UserForUserRoleMapping> getUsersForUserRoleMapping() {
 
-        return usersRoleInheritance;
+        return usersForUserRoleMapping;
     }
 
 }

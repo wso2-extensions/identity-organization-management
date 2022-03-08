@@ -25,23 +25,23 @@ import java.util.Map;
  */
 public class RoleAssignment {
     //Map of organization id and organization name.
-    private Map<String, String> assignedAt;
+    private Map<String, String> orgIdAndNameOfAssignedLevel;
     private boolean isForced;
 
     public RoleAssignment (boolean isForced, Map<String, String> assignedAt) {
 
         this.isForced = isForced;
-        this.assignedAt = assignedAt;
+        this.orgIdAndNameOfAssignedLevel = assignedAt;
     }
 
-    public Map<String, String> getAssignedAt() {
+    public Map<String, String> getOrgIdAndNameOfAssignedLevel() {
 
-        return assignedAt;
+        return orgIdAndNameOfAssignedLevel;
     }
 
-    public void setAssignedAt(Map<String, String> assignedAt) {
+    public void setOrgIdAndNameOfAssignedLevel(Map<String, String> orgIdAndNameOfAssignedLevel) {
 
-        this.assignedAt = assignedAt;
+        this.orgIdAndNameOfAssignedLevel = orgIdAndNameOfAssignedLevel;
     }
 
     public boolean isForced() {

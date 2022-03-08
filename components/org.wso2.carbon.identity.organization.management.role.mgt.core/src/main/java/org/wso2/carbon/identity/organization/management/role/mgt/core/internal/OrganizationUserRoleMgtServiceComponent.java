@@ -32,7 +32,7 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.OrganizationUserRoleManager;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.OrganizationUserRoleManagerImpl;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.dao.OrganizationUserRoleMgtDAOImpl;
-import org.wso2.carbon.identity.organization.management.role.mgt.core.handler.OrganizationUserRoleHandler;
+import org.wso2.carbon.identity.organization.management.role.mgt.core.handler.OrganizationUserRoleAuditLogger;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -61,7 +61,7 @@ public class OrganizationUserRoleMgtServiceComponent {
             bundleContext.registerService(OrganizationUserRoleManager.class.getName(),
                     new OrganizationUserRoleManagerImpl(), null);
             bundleContext.registerService(
-                    AbstractEventHandler.class.getName(), new OrganizationUserRoleHandler(),
+                    AbstractEventHandler.class.getName(), new OrganizationUserRoleAuditLogger(),
                     null);
             if (log.isDebugEnabled()) {
                 log.debug("Organization and User Role Management component activated successfully.");

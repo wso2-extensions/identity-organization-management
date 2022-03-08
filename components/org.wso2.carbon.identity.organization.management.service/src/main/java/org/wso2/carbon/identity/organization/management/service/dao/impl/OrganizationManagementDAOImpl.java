@@ -762,29 +762,37 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_FORCED, 1);
                             }));
             if (CollectionUtils.isNotEmpty(organizationUserRoleMappingList)) {
-                int n = organizationUserRoleMappingList.size();
+                int numberOfOrganizationUserRoleMappings = organizationUserRoleMappingList.size();
                 namedJdbcTemplate.withTransaction(template ->
-                        template.executeInsert(buildQueryForOrganizationUserRoleMapping(n),
-                        namedPreparedStatement -> {
-                            for (int i = 0; i < n; i++) {
-                                OrganizationUserRoleMapping organizationUserRoleMapping =
-                                        organizationUserRoleMappingList.get(i);
-                                namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_ID + "%d", i),
-                                        Utils.generateUniqueID());
-                                namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_USER_ID + "%d", i),
-                                        organizationUserRoleMapping.getUserId());
-                                namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d", i),
-                                        organizationUserRoleMapping.getRoleId());
-                                namedPreparedStatement.setInt(String.format(DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%d", i),
-                                        tenantId);
-                                namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_ORG_ID + "%d", i),
-                                        organizationId);
-                                namedPreparedStatement.setString(String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d",
-                                        i), parentId);
-                                namedPreparedStatement.setInt(String.format(DB_SCHEMA_COLUMN_NAME_FORCED + "%d", i),
-                                        1); //since mandatory
-                            }
-                        }, organizationUserRoleMappingList, false));
+                        template.executeInsert(
+                                buildQueryForOrganizationUserRoleMapping(numberOfOrganizationUserRoleMappings),
+                                namedPreparedStatement -> {
+                                    for (int i = 0; i < numberOfOrganizationUserRoleMappings; i++) {
+                                        OrganizationUserRoleMapping organizationUserRoleMapping =
+                                                organizationUserRoleMappingList.get(i);
+                                        namedPreparedStatement.setString(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_ID + "%d", i),
+                                                Utils.generateUniqueID());
+                                        namedPreparedStatement.setString(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_USER_ID + "%d", i),
+                                                organizationUserRoleMapping.getUserId());
+                                        namedPreparedStatement.setString(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d", i),
+                                                organizationUserRoleMapping.getRoleId());
+                                        namedPreparedStatement.setInt(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_TENANT_ID + "%d", i),
+                                                tenantId);
+                                        namedPreparedStatement.setString(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_ORG_ID + "%d", i),
+                                                organizationId);
+                                        namedPreparedStatement.setString(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%d",
+                                                        i), parentId);
+                                        namedPreparedStatement.setInt(
+                                                String.format(DB_SCHEMA_COLUMN_NAME_FORCED + "%d", i),
+                                                1); //since mandatory
+                                    }
+                                }, organizationUserRoleMappingList, false));
             }
         } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING, e);

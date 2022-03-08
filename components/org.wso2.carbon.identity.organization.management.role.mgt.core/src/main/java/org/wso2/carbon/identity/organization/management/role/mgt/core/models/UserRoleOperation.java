@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 
 /**
- * User Role Operation Implementation.
+ * Implementation of user-role operation passed for the organization-user-role mappings.
  */
 public class UserRoleOperation {
 

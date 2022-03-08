@@ -39,7 +39,7 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 /**
  * Handler class for Organization-User-Role mapping.
  */
-public class OrganizationUserRoleHandler extends AbstractEventHandler {
+public class OrganizationUserRoleAuditLogger extends AbstractEventHandler {
 
     private static final Log AUDIT = CarbonConstants.AUDIT_LOG;
     private static final String AUDIT_MESSAGE =
@@ -48,7 +48,7 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
     @Override
     public String getName() {
 
-        return "OrganizationUserRoleHandler";
+        return "OrganizationUserRoleAuditLogger";
     }
 
     @Override
@@ -102,7 +102,7 @@ public class OrganizationUserRoleHandler extends AbstractEventHandler {
         String builder = "OrganizationId : " + organizationUserRoleMappingForRevokeEvent.getOrganizationId() +
                 ", RoleId : " + organizationUserRoleMappingForRevokeEvent.getRoleId();
         for (UserForUserRoleMapping userForUserRoleMapping : organizationUserRoleMappingForRevokeEvent
-                .getUsersRoleInheritance()) {
+                .getUsersForUserRoleMapping()) {
             builder = builder.concat(", { UserId : " + userForUserRoleMapping.getUserId() +
                     ", hasForcedPrivilege : " + userForUserRoleMapping.hasForcedPrivilege() +
                     ", hasIncludeSubOrganizationsPrivilege: " + userForUserRoleMapping.hasIncludeSubOrgsPrivilege() +
