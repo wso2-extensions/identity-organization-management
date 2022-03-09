@@ -342,7 +342,7 @@ public class OrganizationManagementService {
                             userRoleOperationDTO.stream().map(op -> new UserRoleOperation(op.getOp(), op.getPath(),
                                             op.getValue()))
                                     .collect(Collectors.toList()));
-            return Response.noContent().build();
+            return Response.ok().build();
         } catch (OrganizationUserRoleMgtClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationUserRoleMgtException e) {
