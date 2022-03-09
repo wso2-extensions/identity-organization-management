@@ -407,7 +407,7 @@ paths:
                 $ref: '#/components/schemas/UserRoleOperationDTO'
         required: true
       responses:
-        204:
+        200:
           description: Ok
           content: { }
         '400':
@@ -426,7 +426,7 @@ paths:
   /organizations/{organization-id}/users/{user-id}/roles:
     get:
       summary: |
-        Retrive the list of roles that a particular user has against an organization.
+        Retrieve the list of roles that a particular user has against an organization.
       description: |
         This API is used to get the list of roles for a user for an organization.
       parameters:

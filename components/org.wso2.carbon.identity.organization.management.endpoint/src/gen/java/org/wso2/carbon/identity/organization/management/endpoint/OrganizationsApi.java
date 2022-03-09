@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.RoleDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleMappingDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.UserRoleOperationDTO;
+import org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApiService;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -257,7 +258,7 @@ public class OrganizationsApi  {
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 204, message = "Ok", response = Void.class),
+        @ApiResponse(code = 200, message = "Ok", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
@@ -274,7 +275,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/users/{user-id}/roles")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Retrive the list of roles that a particular user has against an organization. ", notes = "This API is used to get the list of roles for a user for an organization. ", response = RoleDTO.class, responseContainer = "List", authorizations = {
+    @ApiOperation(value = "Retrieve the list of roles that a particular user has against an organization. ", notes = "This API is used to get the list of roles for a user for an organization. ", response = RoleDTO.class, responseContainer = "List", authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             

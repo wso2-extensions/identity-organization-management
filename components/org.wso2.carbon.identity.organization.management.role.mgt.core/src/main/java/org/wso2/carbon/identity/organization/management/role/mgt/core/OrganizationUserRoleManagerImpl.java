@@ -127,7 +127,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                     if (!userExists) {
                         throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_INVALID_USER,
                                 "No user exists with user Id: " + userForUserRoleMapping.getUserId() +
-                                        "for tenant id: " + getTenantId());
+                                        " for tenant id: " + getTenantId());
                     }
                     if (userForUserRoleMapping.hasForcedPrivilege()) {
                         if (!userForUserRoleMapping.hasIncludeSubOrgsPrivilege()) {
@@ -370,7 +370,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
         if (directlyAssignedRoleMappingExist == -1) {
             throw handleClientException(DELETE_ORG_ROLE_USER_REQUEST_INVALID_DIRECT_MAPPING,
                     String.format("No directly assigned organization user role mapping found for organization: %s, " +
-                                    "user: %s, role: %s, assigned at organization: %s",
+                                    "user: %s, role: %s, assigned at organization: %s.",
                             organizationId, userId, roleId, organizationId));
         }
 
@@ -541,7 +541,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
             String domain = groupNameParts[0];
             if (!"INTERNAL".equalsIgnoreCase(domain)) {
                 throw handleClientException(INVALID_ROLE_NON_INTERNAL_ROLE,
-                        "Provided role : " + groupName + ", is not an INTERNAL role");
+                        "Provided role : " + groupName + ", is not an INTERNAL role.");
             }
         } catch (IdentitySCIMException e) {
             throw new OrganizationUserRoleMgtServerException(e);
@@ -557,7 +557,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                     userForUserRoleMapping.hasForcedPrivilege());
             if (isRoleMappingExists) {
                 throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_MAPPING_EXISTS, String.format(
-                        "The role %s to user: %s over the organization: %s is already exists",
+                        "The role %s to user: %s over the organization: %s is already exists.",
                         userRoleMapping.getRoleId(), userForUserRoleMapping.getUserId(), organizationId));
             }
         }
@@ -613,7 +613,7 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
                 if (!userExists) {
                     throw handleClientException(ADD_ORG_ROLE_USER_REQUEST_INVALID_USER,
                             "No user exists with user Id: " + userId +
-                                    "for tenant id: " + getTenantId());
+                                    " for tenant id: " + getTenantId());
                 }
             }
         } catch (UserStoreException e) {
