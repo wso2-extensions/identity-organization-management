@@ -285,7 +285,7 @@ public class OrganizationManagementEndpointUtil {
      */
     public static URI getOrganizationRoleResourceURI(String organizationId) {
 
-        return buildURIForHeader(V1_API_PATH_COMPONENT +
+        return buildURIForHeader(V1_API_PATH_COMPONENT + PATH_SEPARATOR +
                 String.format(ORGANIZATION_ROLES_PATH, organizationId));
     }
 
