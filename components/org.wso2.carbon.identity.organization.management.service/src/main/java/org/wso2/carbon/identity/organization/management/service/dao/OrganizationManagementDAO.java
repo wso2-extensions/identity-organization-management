@@ -44,21 +44,6 @@ public interface OrganizationManagementDAO {
             OrganizationManagementServerException;
 
     /**
-     * Check if the {@link Organization} exists by name in a given tenant.
-     *
-     * @param tenantId         The tenant ID corresponding to the tenant where the organization existence should be
-     *                         checked.
-     * @param organizationName The organization name.
-     * @param tenantDomain     The tenant name corresponding to the tenant where the organization existence should be
-     *                         checked.
-     * @return true if the organization exists.
-     * @throws OrganizationManagementServerException The server exception thrown when checking for the organization
-     *                                               existence.
-     */
-    boolean isOrganizationExistByName(int tenantId, String organizationName, String tenantDomain) throws
-            OrganizationManagementServerException;
-
-    /**
      * Check if the {@link Organization} exists by organization Id in a given tenant.
      *
      * @param tenantId       The tenant ID corresponding to the tenant where the organization existence should be

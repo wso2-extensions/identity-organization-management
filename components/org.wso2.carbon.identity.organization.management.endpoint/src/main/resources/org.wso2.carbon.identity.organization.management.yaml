@@ -161,7 +161,7 @@ paths:
         - Organization
     put:
       description:
-        This API provides the capability to update a secret type by name.
+        This API provides the capability to update an organization.
       summary:
         Update an organization by ID.
       parameters:
@@ -312,6 +312,7 @@ components:
       required:
         - name
         - parentId
+        - type
       properties:
         name:
           type: string
@@ -319,6 +320,16 @@ components:
         description:
           type: string
           example: "Building constructions"
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain. This attribute should only be present for tenant type organization.
         parentId:
           type: string
           example: "b4526d91-a8bf-43d2-8b14-c548cf73065b"
@@ -362,13 +373,13 @@ components:
             $ref: '#/components/schemas/Link'
           example:
             [
-              {
-                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-                "rel": "next",
-              },  {
-                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-                "rel": "previous",
-              }
+            {
+              "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+              "rel": "next",
+            },  {
+              "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+              "rel": "previous",
+            }
             ]
         organizations:
           type: array
@@ -422,6 +433,16 @@ components:
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         attributes:
@@ -449,6 +470,16 @@ components:
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         children:

@@ -40,15 +40,6 @@ public interface OrganizationManager {
     Organization addOrganization(Organization organization) throws OrganizationManagementException;
 
     /**
-     * Check if the {@link Organization} exists by name.
-     *
-     * @param organizationName The organization name.
-     * @return true if the organization exists.
-     * @throws OrganizationManagementException The exception thrown when checking the organization existence.
-     */
-    boolean isOrganizationExistByName(String organizationName) throws OrganizationManagementException;
-
-    /**
      * Check if the {@link Organization} exists by ID.
      *
      * @param organizationId The organization ID.
@@ -114,12 +105,11 @@ public interface OrganizationManager {
      * Update organization and its attributes.
      *
      * @param organizationId          The organization ID.
-     * @param currentOrganizationName The organization name.
      * @param organization            The organization with values to be updated.
      * @return the updated organization.
      * @throws OrganizationManagementException The exception thrown when updating an organization.
      */
-    Organization updateOrganization(String organizationId, String currentOrganizationName, Organization organization)
+    Organization updateOrganization(String organizationId, Organization organization)
             throws OrganizationManagementException;
 
 }

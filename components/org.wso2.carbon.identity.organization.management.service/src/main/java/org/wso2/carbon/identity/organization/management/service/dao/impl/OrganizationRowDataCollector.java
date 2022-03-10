@@ -29,6 +29,8 @@ public class OrganizationRowDataCollector {
     private String name;
     private String description;
     private String parentId;
+    private String type;
+    private int tenantId;
     private Instant created;
     private Instant lastModified;
     private String attributeKey;
@@ -112,5 +114,25 @@ public class OrganizationRowDataCollector {
     public void setAttributeValue(String attributeValue) {
 
         this.attributeValue = attributeValue;
+    }
+
+    public String getType() {
+
+        return type;
+    }
+
+    public void setType(String type) {
+
+        this.type = type;
+    }
+
+    public int getTenantId() {
+
+        return tenantId;
+    }
+
+    public void setTenantId(int tenantId) {
+
+        this.tenantId = tenantId;
     }
 }

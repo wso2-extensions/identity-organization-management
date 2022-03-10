@@ -30,6 +30,8 @@ public class Organization {
     private String id;
     private String name;
     private String description;
+    private String type;
+    private String domain;
     private ParentOrganizationDO parent = new ParentOrganizationDO();
     private Instant lastModified;
     private Instant created;
@@ -114,5 +116,25 @@ public class Organization {
     public void setChildOrganizations(List<ChildOrganizationDO> childOrganizations) {
 
         this.childOrganizations = childOrganizations;
+    }
+
+    public String getType() {
+
+        return type;
+    }
+
+    public void setType(String type) {
+
+        this.type = type;
+    }
+
+    public String getDomain() {
+
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+
+        this.domain = domain;
     }
 }

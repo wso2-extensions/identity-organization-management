@@ -26,20 +26,15 @@ public class SQLConstants {
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
 
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
-            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID) VALUES (:" +
+            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID, UM_ORG_TYPE) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_DESCRIPTION + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_CREATED_TIME + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_LAST_MODIFIED + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID
-            + ";)";
+            + ";, :" +  SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE + ";)";
 
-    public static final String CHECK_ORGANIZATION_EXIST_BY_NAME = "SELECT COUNT(1) FROM UM_ORG WHERE UM_TENANT_ID = " +
-            ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ORG_NAME = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";";
-
-    public static final String CHECK_ORGANIZATION_EXIST_BY_ID = "SELECT COUNT(1) FROM UM_ORG WHERE UM_TENANT_ID = " +
-            ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ID = :" +
+    public static final String CHECK_ORGANIZATION_EXIST_BY_ID = "SELECT COUNT(1) FROM UM_ORG WHERE UM_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String GET_ORGANIZATION_ID_BY_NAME = "SELECT UM_ID FROM UM_ORG WHERE UM_TENANT_ID = " +
@@ -51,10 +46,9 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE + ";)";
 
     public static final String GET_ORGANIZATION_BY_ID = "SELECT UM_ORG.UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
-            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_PARENT_ID, UM_ATTRIBUTE_KEY, UM_ATTRIBUTE_VALUE FROM UM_ORG " +
-            "LEFT OUTER JOIN UM_ORG_ATTRIBUTE ON UM_ORG.UM_ID = UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE UM_ORG.UM_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "; AND UM_TENANT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
+            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_PARENT_ID, UM_ORG_TYPE, UM_TENANT_ID, UM_ATTRIBUTE_KEY, " +
+            "UM_ATTRIBUTE_VALUE FROM UM_ORG LEFT OUTER JOIN UM_ORG_ATTRIBUTE ON UM_ORG.UM_ID = " +
+            "UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE UM_ORG.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
             "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
@@ -108,11 +102,19 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";";
 
     public static final String GET_CHILD_ORGANIZATIONS = "SELECT UM_ID FROM UM_ORG WHERE UM_PARENT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND UM_TENANT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + ";";
 
     public static final String COUNT_COLUMN = "COUNT(1)";
     public static final String VIEW_ID_COLUMN = "UM_ID";
+    public static final String VIEW_CREATED_TIME_COLUMN = "UM_CREATED_TIME";
+    public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
+    public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
+    public static final String VIEW_LAST_MODIFIED_COLUMN = "UM_LAST_MODIFIED";
+    public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
+    public static final String VIEW_TENANT_ID_COLUMN = "UM_TENANT_ID";
+    public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
+    public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
+    public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
 
     /**
      * SQL Placeholders
@@ -126,6 +128,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_LAST_MODIFIED = "LAST_MODIFIED";
         public static final String DB_SCHEMA_COLUMN_NAME_TENANT_ID = "TENANT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_PARENT_ID = "PARENT_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_TYPE = "TYPE";
         public static final String DB_SCHEMA_COLUMN_NAME_KEY = "KEY";
         public static final String DB_SCHEMA_COLUMN_NAME_VALUE = "VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";

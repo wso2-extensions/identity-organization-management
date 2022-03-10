@@ -72,18 +72,6 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public boolean isOrganizationExistByName(int tenantId, String organizationName, String tenantDomain)
-            throws OrganizationManagementServerException {
-
-        Organization organization = getOrganizationFromCacheByName(organizationName, tenantDomain);
-        if (organization != null) {
-            return true;
-        }
-
-        return organizationManagementDAO.isOrganizationExistByName(tenantId, organizationName, tenantDomain);
-    }
-
-    @Override
     public boolean isOrganizationExistById(int tenantId, String organizationId, String tenantDomain)
             throws OrganizationManagementServerException {
 

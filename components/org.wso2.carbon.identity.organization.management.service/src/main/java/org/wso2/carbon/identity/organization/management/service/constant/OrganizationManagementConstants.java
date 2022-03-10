@@ -33,14 +33,6 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
     private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
 
-    public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
-    public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
-    public static final String VIEW_CREATED_TIME_COLUMN = "UM_CREATED_TIME";
-    public static final String VIEW_LAST_MODIFIED_COLUMN = "UM_LAST_MODIFIED";
-    public static final String VIEW_PARENT_ID_COLUMN = "UM_PARENT_ID";
-    public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
-    public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
-
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -88,6 +80,15 @@ public class OrganizationManagementConstants {
     }
 
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
+
+    /**
+     * Enum for organization types.
+     */
+    public enum OrganizationTypes {
+
+        STRUCTURAL,
+        TENANT
+    }
 
     /**
      * Enum for error messages related to organization management.
@@ -148,6 +149,18 @@ public class OrganizationManagementConstants {
                 "cursor used for pagination."),
         ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION("60027", "Unable to create the organization.",
                 "User is not authorized to create the root organization in tenant: %s."), // 403
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_EXTENSION_MISSING("60028", "Invalid field",
+                "An extension for the domain is required for tenant type organization."),
+        ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION("60029", "Unable to create the organization.",
+                "Invalid request body for tenant type organization."),
+        ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED("60030", "Unable to create the organization.",
+                "Organization type should be defined."),
+        ERROR_CODE_INVALID_ORGANIZATION_TYPE("60031", "Invalid organization type.", "The organization " +
+                "type should be 'TENANT' or 'STRUCTURAL'."),
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_REQUIRED_FIELDS_MISSING("60032", "Invalid request body.",
+                "Missing required field(s) for tenant type organization."),
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_UNAVAILABLE("60033", "Unable to create the organization.",
+                "A tenant with the provided domain already exists. Please provide a different domain name."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -161,12 +174,9 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS("65005", "Unable to retrieve child organizations.",
                 "Server encountered an error while retrieving the child organizations of organization " +
                         "with ID: %s in tenant: %s"),
-        ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME("65006", "Unable to check if the organization" +
-                " name is available.", "Server encountered an error while checking if an organization with " +
-                "name: %s exists in tenant: %s"),
         ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID("65007",
                 "Error while checking if the organization exists.",
-                "Server encountered an error while checking if the organization with ID: %s exists in tenant: %s."),
+                "Server encountered an error while checking if the organization with ID: %s exists."),
         ERROR_CODE_ERROR_PATCHING_ORGANIZATION("65008", "Unable to patch the organization.",
                 "Server encountered an error while patching the organization with ID: %s in tenant: %s."),
         ERROR_CODE_ERROR_UPDATING_ORGANIZATION("65009", "Unable to update the organization.",
@@ -200,7 +210,9 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building paginated response URL."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION("65021", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the root " +
-                        "organization in tenant: %s.");
+                        "organization in tenant: %s."),
+        ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION("65022", "Unable to create the organization.",
+                "Server encountered an error while creating the tenant.");
 
         private final String code;
         private final String message;
