@@ -567,6 +567,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     private String buildQueryForGettingRoleDetails(int numberOfRoles) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(GET_ROLE_ID_AND_NAME_FROM_ID).append("(");
         for (int i = 0; i < numberOfRoles; i++) {
@@ -580,6 +581,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     }
 
     private String buildQueryForGettingRoles(int numberOfRoles) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(GET_ROLE_ID_AND_NAME_FROM_NAME).append("(");
         for (int i = 0; i < numberOfRoles; i++) {
