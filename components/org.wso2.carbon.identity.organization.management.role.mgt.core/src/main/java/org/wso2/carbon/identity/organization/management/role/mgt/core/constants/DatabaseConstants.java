@@ -36,6 +36,7 @@ public class DatabaseConstants {
         public static final String VIEW_ASSIGNED_AT_COLUMN = "ASSIGNED_AT";
         public static final String VIEW_ASSIGNED_AT_NAME_COLUMN = "UM_ORG_NAME";
         public static final String VIEW_ROLE_NAME_COLUMN = "ROLE_NAME";
+        public static final String VIEW_UM_ROLE_NAME_COLUMN = "UM_ROLE_NAME";
         public static final String VIEW_ATTR_VALUE_COLUMN = "ATTR_VALUE";
         public static final String ASSIGNED_AT_ADDING = "ASSIGNED_AT = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + ";";
@@ -98,14 +99,23 @@ public class DatabaseConstants {
                         "; UNION ALL SELECT UO.UM_ID, UO.UM_PARENT_ID FROM UM_ORG UO JOIN childOrgs CO ON CO.UM_ID = " +
                         "UO.UM_PARENT_ID)" +
                         "SELECT UM_ID FROM childOrgs ORDER BY UM_ID";
-        public static final String GET_ROLE_ID_AND_NAME = "SELECT ATTR_VALUE, ROLE_NAME FROM IDN_SCIM_GROUP WHERE " +
-                "IDN_SCIM_GROUP.TENANT_ID = :" +
+        public static final String GET_ROLE_ID_AND_NAME_FROM_ID = "SELECT ATTR_VALUE, ROLE_NAME FROM IDN_SCIM_GROUP " +
+                "WHERE IDN_SCIM_GROUP.TENANT_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND IDN_SCIM_GROUP.ATTR_NAME = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME + "; AND ";
         public static final String SCIM_GROUP_ATTR_VALUE = "IDN_SCIM_GROUP.ATTR_VALUE = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_VALUE + "%d;";
         public static final String GET_ORGANIZATION_ID = "SELECT UM_ID FROM UM_ORG WHERE UM_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + ";";
+        public static final String GET_ROLE_NAMES_FROM_PERMISSIONS = "SELECT UM_ROLE_NAME FROM UM_ROLE_PERMISSION " +
+                "WHERE UM_PERMISSION_ID IN (SELECT UM_ID FROM UM_PERMISSION WHERE UM_RESOURCE_ID =:" +
+                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND UM_TENANT_ID=:" +
+                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";)";
+        public static final String GET_ROLE_ID_AND_NAME_FROM_NAME = "SELECT ATTR_VALUE, ROLE_NAME FROM " +
+                "IDN_SCIM_GROUP WHERE IDN_SCIM_GROUP.TENANT_ID =:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID +
+                "; AND IDN_SCIM_GROUP.ATTR_NAME=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME + "; AND ";
+        public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME=:" +
+                SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_NAME + "%d;";
     }
 
     /**
@@ -124,5 +134,6 @@ public class DatabaseConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_ROLE_NAME = "ROLE_NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_ATTR_VALUE = "ATTR_VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_ATTR_NAME = "ATTR_NAME";
+        public static final String DB_SCHEMA_COLUMN_NAME_RESOURCE_ID = "RESOURCE_ID";
     }
 }

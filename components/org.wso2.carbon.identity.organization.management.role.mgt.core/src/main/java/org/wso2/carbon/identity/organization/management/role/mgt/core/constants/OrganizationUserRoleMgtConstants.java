@@ -29,6 +29,7 @@ public class OrganizationUserRoleMgtConstants {
     public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
     public static final String ORGANIZATION_ID = "organizationId";
     public static final String ORGANIZATION_NAME = "organizationName";
+    public static final String INTERNAL = "Internal/";
 
     /**
      * Error messages.
@@ -129,7 +130,9 @@ public class OrganizationUserRoleMgtConstants {
                 "Server encountered an error while building URL for response header."),
         ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR("65018",
                 "Unable to retrieve data from Identity database.",
-                "Server encountered an error while retrieving data from identity database.");
+                "Server encountered an error while retrieving data from identity database."),
+        ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION("65019", "Unable to retrieve roles from database.",
+                "Server encountered an error while retrieving roles from database.");
 
         private final String code;
         private final String message;

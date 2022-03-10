@@ -58,12 +58,15 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ORGANIZATION_USER_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLES_BY_ORG_AND_USER;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_AND_NAME;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_AND_NAME_FROM_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_AND_NAME_FROM_NAME;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_NAMES_FROM_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_USERS_BY_ORG_AND_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.SCIM_GROUP_ATTR_VALUE;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.SCIM_GROUP_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ASSIGNED_AT_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ASSIGNED_AT_NAME_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ATTR_VALUE_COLUMN;
@@ -71,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ROLE_ID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_ROLE_NAME_COLUMN;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_UM_ROLE_NAME_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.VIEW_USER_ID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME;
@@ -79,7 +83,9 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_GET_CHILDREN_ERROR;
@@ -90,8 +96,10 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_RETRIEVING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_UPDATE_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ROLES_PER_ORG_USER_RETRIEVING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.INTERNAL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.SCIM_ROLE_ID_ATTR_NAME;
@@ -427,6 +435,63 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         }
     }
 
+    @Override
+    public List<Role> getRolesFromUserIdAndPermissionStringWithinTenant(String userId, String permission, int tenantId)
+            throws OrganizationUserRoleMgtException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewNamedJdbcTemplate();
+        List<Role> roleList;
+        try {
+            List<String> roleNameList = namedJdbcTemplate.withTransaction(
+                    template -> template.executeQuery(GET_ROLE_NAMES_FROM_PERMISSIONS,
+                            (resultSet, rowNumber) ->
+                                    resultSet.getString(VIEW_UM_ROLE_NAME_COLUMN),
+                            namedPreparedStatement -> {
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID, permission);
+                                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
+                            }));
+            // get role ids and names
+            roleList = getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(roleNameList, tenantId);
+        } catch (TransactionException e) {
+            throw new OrganizationUserRoleMgtServerException(
+                    ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION.getMessage(),
+                    ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION.getCode(), e);
+        }
+        return roleList;
+    }
+
+    private List<Role> getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(List<String> roleNameList, int tenantId) throws
+            OrganizationUserRoleMgtServerException {
+
+        List<Role> roleList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(roleNameList)) {
+            return roleList;
+        }
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplateForIdentityDatabase();
+        try {
+            roleList = namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+                    buildQueryForGettingRoles(roleNameList.size()),
+                    (resultSet, rowNumber) -> new Role(resultSet.getString(VIEW_ATTR_VALUE_COLUMN),
+                            resultSet.getString(VIEW_ROLE_NAME_COLUMN)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_NAME,
+                                SCIM_ROLE_ID_ATTR_NAME);
+                        int index = 0;
+                        for (String roleName : roleNameList) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_NAME +
+                                    (index++), INTERNAL + roleName);
+                        }
+                    }
+            ));
+        } catch (TransactionException e) {
+            throw new OrganizationUserRoleMgtServerException(
+                    ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR.getMessage(),
+                    ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR.getCode(), e);
+        }
+        return roleList;
+    }
+
     //get roleId and roleName using SCIM
     private List<Role> getRoleIdAndRoleNameUsingSCIM(List<String> roleIdList, int tenantId) throws
             OrganizationUserRoleMgtServerException {
@@ -503,9 +568,22 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
 
     private String buildQueryForGettingRoleDetails(int numberOfRoles) {
         StringBuilder sb = new StringBuilder();
-        sb.append(GET_ROLE_ID_AND_NAME).append("(");
+        sb.append(GET_ROLE_ID_AND_NAME_FROM_ID).append("(");
         for (int i = 0; i < numberOfRoles; i++) {
             sb.append(String.format(SCIM_GROUP_ATTR_VALUE, i));
+            if (i != numberOfRoles - 1) {
+                sb.append(OR);
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    private String buildQueryForGettingRoles(int numberOfRoles) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(GET_ROLE_ID_AND_NAME_FROM_NAME).append("(");
+        for (int i = 0; i < numberOfRoles; i++) {
+            sb.append(String.format(SCIM_GROUP_ROLE_NAME, i));
             if (i != numberOfRoles - 1) {
                 sb.append(OR);
             }

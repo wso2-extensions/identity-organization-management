@@ -153,4 +153,14 @@ public interface OrganizationUserRoleMgtDAO {
      * @throws OrganizationUserRoleMgtException Organization-User-Role Management exception.
      */
     boolean checkOrganizationIdAvailability(String organizationId) throws OrganizationUserRoleMgtException;
+
+    /**
+     * Get roles assigned for a user within a tenant using permission strings.
+     * @param userId ID of the user.
+     * @param permission The permission string.
+     * @param tenantId The tenant ID.
+     * @return A list of roles.
+     */
+    List<Role> getRolesFromUserIdAndPermissionStringWithinTenant(String userId, String permission, int tenantId)
+            throws OrganizationUserRoleMgtException;
 }
