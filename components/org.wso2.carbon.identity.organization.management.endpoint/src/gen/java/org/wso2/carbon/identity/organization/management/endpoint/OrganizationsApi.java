@@ -151,7 +151,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update an organization by ID.", notes = "This API provides the capability to update a secret type by name.", response = OrganizationResponse.class, authorizations = {
+    @ApiOperation(value = "Update an organization by ID.", notes = "This API provides the capability to update an organization by its id.", response = OrganizationResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
