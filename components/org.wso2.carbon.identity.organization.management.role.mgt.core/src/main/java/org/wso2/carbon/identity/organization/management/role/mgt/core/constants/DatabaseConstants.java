@@ -116,6 +116,11 @@ public class DatabaseConstants {
                 "; AND IDN_SCIM_GROUP.ATTR_NAME=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME + "; AND ";
         public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME=:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_NAME + "%d;";
+        public static final String GET_ROLES_FROM_USER_ID_AND_ROLE_ID =
+                "SELECT UM_ROLE_ID FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +
+                        SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; %s";
+        public static final String GET_ROLES_FROM_USER_ID_AND_ROLE_ID_PLACEHOLDER_FOR_ROLE_ID = "(UM_ROLE_ID=:"
+                + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d;)";
     }
 
     /**

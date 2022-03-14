@@ -132,6 +132,8 @@ public class OrganizationUserRoleMgtConstants {
                 "Unable to retrieve data from Identity database.",
                 "Server encountered an error while retrieving data from identity database."),
         ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION("65019", "Unable to retrieve roles from database.",
+                "Server encountered an error while retrieving roles from database."),
+        ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID("65020", "Unable to retrieve roles from database.",
                 "Server encountered an error while retrieving roles from database.");
 
         private final String code;

@@ -58,6 +58,8 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ORGANIZATION_USER_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLES_BY_ORG_AND_USER;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLES_FROM_USER_ID_AND_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLES_FROM_USER_ID_AND_ROLE_ID_PLACEHOLDER_FOR_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_AND_NAME_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_ID_AND_NAME_FROM_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.GET_ROLE_NAMES_FROM_PERMISSIONS;
@@ -97,6 +99,7 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_USER_ROLE_MAPPINGS_UPDATE_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_ROLES_PER_ORG_USER_RETRIEVING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_USERS_PER_ORG_ROLE_RETRIEVING_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.INTERNAL;
@@ -450,14 +453,43 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID, permission);
                                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
                             }));
-            // get role ids and names
-            roleList = getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(roleNameList, tenantId);
+            roleList = getRoleIdsUsingUserId(userId, getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(roleNameList,
+                    tenantId));
         } catch (TransactionException e) {
-            throw new OrganizationUserRoleMgtServerException(
-                    ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION.getMessage(),
+            throw new OrganizationUserRoleMgtServerException(ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION.getMessage(),
                     ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION.getCode(), e);
         }
         return roleList;
+    }
+
+    private List<Role> getRoleIdsUsingUserId(String userId, List<Role> roleList)
+            throws OrganizationUserRoleMgtException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewNamedJdbcTemplate();
+        List<String> roleIdList;
+        List<Role> filteredRoleList = new ArrayList<>();
+        try {
+            roleIdList = namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+                    buildQueryForGettingRoleNamesFromUserIdAndRoleId(roleList.size()),
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_ROLE_ID_COLUMN),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
+                        int index = 0;
+                        for (Role role : roleList) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_ID + (index++),
+                                    role.getRoleId());
+                        }
+                    }
+            ));
+        } catch (TransactionException e) {
+            throw new OrganizationUserRoleMgtServerException(ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID.getMessage(),
+                    ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID.getCode(), e);
+        }
+        if (CollectionUtils.isNotEmpty(roleIdList)) {
+            filteredRoleList = roleList.stream().filter(m -> roleIdList.contains(m.getRoleId()))
+                    .collect(Collectors.toList());
+        }
+        return filteredRoleList;
     }
 
     private List<Role> getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(List<String> roleNameList, int tenantId) throws
@@ -524,7 +556,20 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
         return roleList;
     }
 
-    private String queryForMultipleInserts(Integer numberOfMappings) {
+    private String buildQueryForGettingRoleNamesFromUserIdAndRoleId(int numberOfRoles) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(numberOfRoles > 0 ? AND : "");
+        for (int i = 0; i < numberOfRoles; i++) {
+            sb.append(String.format(GET_ROLES_FROM_USER_ID_AND_ROLE_ID_PLACEHOLDER_FOR_ROLE_ID, i));
+            if (i != numberOfRoles - 1) {
+                sb.append(OR);
+            }
+        }
+        return String.format(GET_ROLES_FROM_USER_ID_AND_ROLE_ID, sb);
+    }
+
+    private String queryForMultipleInserts(int numberOfMappings) {
 
         StringBuilder sb = new StringBuilder();
         sb.append(INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING);
