@@ -21,7 +21,7 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.models;
 import java.util.List;
 
 /**
- * Class for Organization-User-Role mapping for event.
+ * Organization-User-Role mapping class for event firings.
  */
 public class OrganizationUserRoleMappingForEvent {
 
