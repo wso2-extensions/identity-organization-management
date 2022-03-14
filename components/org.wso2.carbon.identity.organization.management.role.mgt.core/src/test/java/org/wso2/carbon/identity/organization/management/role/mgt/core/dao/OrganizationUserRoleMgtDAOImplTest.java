@@ -26,7 +26,10 @@ import org.apache.commons.lang.StringUtils;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 import org.wso2.carbon.database.utils.jdbc.JdbcUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils;
@@ -37,7 +40,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import javax.sql.DataSource;
 
@@ -148,8 +156,8 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
         try (Connection connection = getConnection()) {
             Connection spy = spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spy);
-            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO.getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId,
-                    USER_ID, ROLE_ID, TENANT_ID) == 1;
+            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO
+                    .getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId, USER_ID, ROLE_ID, TENANT_ID) == 1;
             if (StringUtils.equals(orgId, orgIds[0])) {
                 Assert.assertTrue(isOrgUserRoleMappingExists);
             } else if (StringUtils.equals(orgId, orgIds[0])) {
@@ -218,8 +226,8 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
         try (Connection connection = getConnection()) {
             Connection spy = spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spy);
-            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO.getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId,
-                    USER_ID, ROLE_ID, TENANT_ID) == 0;
+            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO
+                    .getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId, USER_ID, ROLE_ID, TENANT_ID) == 0;
             if (StringUtils.equals(orgId, orgIds[0])) {
                 Assert.assertTrue(isOrgUserRoleMappingExists);
             } else if (StringUtils.equals(orgId, orgIds[0])) {
@@ -279,7 +287,8 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
     }
 
     @Test(dataProvider = "dataForTestingNotForcedNotPropagatingOrganizationUserRoleMappingIsDirectlyAssigned")
-    public void testIfNotForcedNotPropagatingOrganizationUserRoleMappingIsDirectlyAssigned(String orgId) throws Exception {
+    public void testIfNotForcedNotPropagatingOrganizationUserRoleMappingIsDirectlyAssigned(String orgId)
+            throws Exception {
 
         // add only Not-forced, propagating organization-user-role mappings.
         removeAllOrganizationUserRoleMappings();
@@ -289,10 +298,8 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
         try (Connection connection = getConnection()) {
             Connection spy = spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spy);
-            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO.getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId,
-                    USER_ID, ROLE_ID, TENANT_ID) == 0;
-            System.out.println(isOrgUserRoleMappingExists);
-            System.out.println(orgIds[0]);
+            boolean isOrgUserRoleMappingExists = organizationUserRoleMgtDAO
+                    .getDirectlyAssignedOrganizationUserRoleMappingInheritance(orgId, USER_ID, ROLE_ID, TENANT_ID) == 0;
             if (StringUtils.equals(orgId, orgIds[0])) {
                 Assert.assertTrue(isOrgUserRoleMappingExists);
             } else if (StringUtils.equals(orgId, orgIds[0])) {
@@ -347,7 +354,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
         try (Connection connection = getConnection()) {
             int numberOfOrganizationUserRoleMappings = 4;
-            String sql = buildQueryForOrganizationUserRoleMappingInsert(numberOfOrganizationUserRoleMappings); //ORG-A,ORG-B,ORG-C,ORG-D
+            String sql = buildQueryForOrganizationUserRoleMappingInsert(numberOfOrganizationUserRoleMappings);
             PreparedStatement stm = connection.prepareStatement(sql);
             int parameterIndex = 0;
             for (int i = 0; i < numberOfOrganizationUserRoleMappings; i++) {
@@ -367,7 +374,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
         try (Connection connection = getConnection()) {
             int numberOfOrganizationUserRoleMappings = 4;
-            String sql = buildQueryForOrganizationUserRoleMappingInsert(numberOfOrganizationUserRoleMappings); //ORG-A,ORG-B,ORG-C,ORG-D
+            String sql = buildQueryForOrganizationUserRoleMappingInsert(numberOfOrganizationUserRoleMappings);
             PreparedStatement stm = connection.prepareStatement(sql);
             int parameterIndex = 0;
             for (int i = 0; i < numberOfOrganizationUserRoleMappings; i++) {
