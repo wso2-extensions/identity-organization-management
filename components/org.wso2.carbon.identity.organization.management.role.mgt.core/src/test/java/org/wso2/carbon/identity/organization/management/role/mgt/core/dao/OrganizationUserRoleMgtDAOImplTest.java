@@ -95,6 +95,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
     @AfterClass
     public void tearDown() throws Exception {
+
         closeH2Base();
     }
 
@@ -209,6 +210,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
     @DataProvider(name = "dataForTestingNotForcedPropagatingOrganizationUserRoleMappingIsDirectlyAssigned")
     public Object[][] dataForTestingNotForcedPropagatingOrganizationUserRoleMappingIsDirectlyAssigned() {
+
         return new Object[][]{
                 {orgIds[0]},
                 {orgIds[1]},
@@ -279,6 +281,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
     @DataProvider(name = "dataForTestingNotForcedNotPropagatingOrganizationUserRoleMappingIsDirectlyAssigned")
     public Object[][] dataForTestingNotForcedNotPropagatingOrganizationUserRoleMappingIsDirectlyAssigned() {
+
         return new Object[][]{
                 {orgIds[0]},
                 {orgIds[1]},
@@ -418,6 +421,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
     }
 
     private String buildQueryForOrganizationUserRoleMappingDelete() {
+
         StringBuilder sb = new StringBuilder("DELETE FROM UM_USER_ROLE_ORG WHERE ");
         for (int i = 0; i < orgIds.length; i++) {
             sb.append("ORG_ID='").append(orgIds[i]).append("'");
@@ -429,6 +433,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
     }
 
     private String buildQueryForOrganizationUserRoleMappingInsert(int numberOfOrganizationUserRoleMappings) {
+
         String query = "INSERT INTO UM_USER_ROLE_ORG (UM_ID, UM_USER_ID, UM_ROLE_ID, UM_TENANT_ID, ORG_ID, " +
                 "ASSIGNED_AT, FORCED) VALUES %s";
         StringBuilder sb = new StringBuilder();
@@ -497,6 +502,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
     }
 
     private void storeChildOrganizations() throws Exception {
+
         for (int i = 0; i < ORG_NAMES.length; i++) {
             orgIds[i] = generateUniqueID();
         }
@@ -508,6 +514,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
     }
 
     private void storeOrganization(String id, String name, String description, String parentId) throws Exception {
+
         try (Connection connection = getConnection()) {
             String sql = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, UM_CREATED_TIME, " +
                     "UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID) VALUES ( ?, ?, " +
@@ -523,5 +530,4 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
             statement.execute();
         }
     }
-
 }
