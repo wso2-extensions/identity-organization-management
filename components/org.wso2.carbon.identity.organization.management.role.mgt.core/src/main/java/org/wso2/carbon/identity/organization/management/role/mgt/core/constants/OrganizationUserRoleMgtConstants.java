@@ -26,7 +26,6 @@ public class OrganizationUserRoleMgtConstants {
     public static final String PATCH_OP_REPLACE = "replace";
     public static final String INCLUDE_SUB_ORGS = "/includeSubOrganizations";
     public static final String IS_FORCED = "/isForced";
-    public static final String SCIM_ROLE_ID_ATTR_NAME = "urn:ietf:params:scim:schemas:core:2.0:id";
     public static final String ORGANIZATION_ID = "organizationId";
     public static final String ORGANIZATION_NAME = "organizationName";
     public static final String INTERNAL = "Internal/";
@@ -72,7 +71,7 @@ public class OrganizationUserRoleMgtConstants {
                 "UserId value should not be null when adding organization-user-role mapping for " +
                         "organization %s"),
         ADD_ORG_ROLE_USER_REQUEST_NULL_ROLE_ID("ORG-60218",
-                "roleId cannot be null when adding a new mapping.",
+                "When adding a new role mapping, the role Id should be there.",
                 "roleId cannot be null when adding a new mapping for organization %s"),
         ADD_ORG_ROLE_USER_REQUEST_NULL_USERS("ORG-60219",
                 "When adding a organization-user-role mapping users should be there.",

@@ -89,7 +89,7 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
                                                                    String attributes, String filter) {
 
         return organizationManagementService
-                .getUsersFromOrganizationAndRole(organizationId, roleId, offset, limit, attributes, filter);
+                .getUsersFromOrganizationAndRole(organizationId, roleId, attributes, filter, offset, limit);
     }
 
     @Override

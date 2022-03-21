@@ -25,7 +25,7 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCIM_ROLE_ID_ATTR_NAME;
@@ -74,7 +74,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             throws OrganizationManagementAuthzServiceServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        List<String> permissions = new ArrayList<>();
+        List<String> permissions = Collections.emptyList();
         try {
             List<String> roleNamesList = getRoleNames(userId, orgId, tenantId);
             if (CollectionUtils.isEmpty(roleNamesList)) {
@@ -89,8 +89,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         return permissions;
     }
 
-    private List<String> getRolesAssignedForAUserInOrganization(String userId, String organizationId,
-                                                                int tenantId)
+    private List<String> getUserAssignedRolesInOrganization(String userId, String organizationId, int tenantId)
             throws OrganizationManagementAuthzServiceServerException {
 
         List<String> roleList;
@@ -114,8 +113,8 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     private List<String> getRoleNames(String userId, String organizationId, int tenantId)
             throws OrganizationManagementAuthzServiceServerException {
 
-        List<String> roleIdList = getRolesAssignedForAUserInOrganization(userId, organizationId, tenantId);
-        List<String> roleNamesList = new ArrayList<>();
+        List<String> roleIdList = getUserAssignedRolesInOrganization(userId, organizationId, tenantId);
+        List<String> roleNamesList = Collections.emptyList();
         if (CollectionUtils.isEmpty(roleIdList)) {
             return roleNamesList;
         }

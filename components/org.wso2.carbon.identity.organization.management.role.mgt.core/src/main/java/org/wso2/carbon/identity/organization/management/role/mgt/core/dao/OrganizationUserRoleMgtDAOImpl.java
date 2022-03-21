@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.role.mgt.core.dao;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.emory.mathcs.backport.java.util.Collections;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -38,6 +39,7 @@ import org.wso2.charon3.core.exceptions.CharonException;
 import org.wso2.charon3.core.extensions.UserManager;
 import org.wso2.charon3.core.protocol.SCIMResponse;
 import org.wso2.charon3.core.protocol.endpoints.UserResourceManager;
+import org.wso2.charon3.core.schema.SCIMConstants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,7 +107,6 @@ import static org.wso2.carbon.identity.organization.management.role.mgt.core.con
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.INTERNAL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ORGANIZATION_NAME;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.SCIM_ROLE_ID_ATTR_NAME;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.getNewNamedJdbcTemplate;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.getNewTemplateForIdentityDatabase;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.util.Utils.handleServerException;
@@ -467,7 +468,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
 
         NamedJdbcTemplate namedJdbcTemplate = getNewNamedJdbcTemplate();
         List<String> roleIdList;
-        List<Role> filteredRoleList = new ArrayList<>();
+        List<Role> filteredRoleList = Collections.emptyList();
         try {
             roleIdList = namedJdbcTemplate.withTransaction(template -> template.executeQuery(
                     buildQueryForGettingRoleNamesFromUserIdAndRoleId(roleList.size()),
@@ -495,7 +496,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     private List<Role> getRoleIdsAndRoleNamesUsingRoleNameAndTenantId(List<String> roleNameList, int tenantId) throws
             OrganizationUserRoleMgtServerException {
 
-        List<Role> roleList = new ArrayList<>();
+        List<Role> roleList = Collections.emptyList();
         if (CollectionUtils.isEmpty(roleNameList)) {
             return roleList;
         }
@@ -508,7 +509,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                     namedPreparedStatement -> {
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_NAME,
-                                SCIM_ROLE_ID_ATTR_NAME);
+                                SCIMConstants.CommonSchemaConstants.ID_URI);
                         int index = 0;
                         for (String roleName : roleNameList) {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_NAME +
@@ -528,7 +529,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
     private List<Role> getRoleIdAndRoleNameUsingSCIM(List<String> roleIdList, int tenantId) throws
             OrganizationUserRoleMgtServerException {
 
-        List<Role> roleList = new ArrayList<>();
+        List<Role> roleList = Collections.emptyList();
         if (CollectionUtils.isEmpty(roleIdList)) {
             return roleList;
         }
@@ -541,7 +542,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_NAME,
-                                        SCIM_ROLE_ID_ATTR_NAME);
+                                        SCIMConstants.CommonSchemaConstants.ID_URI);
                                 int index = 0;
                                 for (String roleId : roleIdList) {
                                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ATTR_VALUE +

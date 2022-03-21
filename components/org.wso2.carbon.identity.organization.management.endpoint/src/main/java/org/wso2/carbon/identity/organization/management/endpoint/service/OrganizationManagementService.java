@@ -263,15 +263,14 @@ public class OrganizationManagementService {
      *
      * @param organizationId ID of the organization.
      * @param roleId         ID of role.
-     * @param offset         offset.
-     * @param limit          limit.
      * @param attributes     attributes.
      * @param filter         filter.
+     * @param offset         offset.
+     * @param limit          limit.
      * @return a list of users.
      */
-    public Response getUsersFromOrganizationAndRole(String organizationId, String roleId,
-                                                    Integer offset, Integer limit, String attributes,
-                                                    String filter) {
+    public Response getUsersFromOrganizationAndRole(String organizationId, String roleId, String attributes,
+                                                    String filter, Integer offset, Integer limit) {
 
         try {
             if ((limit != null && limit < 1) && (offset != null && offset < 0)) {

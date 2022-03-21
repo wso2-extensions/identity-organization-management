@@ -353,7 +353,6 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
         // Fire Pre-Event
         fireEvent(PRE_REVOKE_ORGANIZATION_USER_ROLE, organizationId, null, Status.FAILURE);
 
-        //validate userId
         checkUserAvailability(userId);
 
         //validate roleId
@@ -443,16 +442,14 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
 
         OrganizationUserRoleMgtDAO organizationUserRoleMgtDAO = new OrganizationUserRoleMgtDAOImpl();
 
-        //validate userId
         checkUserAvailability(userId);
 
         //validate organizationId
         if (!organizationUserRoleMgtDAO.checkOrganizationIdAvailability(organizationId)) {
             throw handleClientException(INVALID_ORGANIZATION_ID, organizationId);
         }
-        List<Role> roles = organizationUserRoleMgtDAO.getRolesByOrganizationAndUser(organizationId, userId,
+        return organizationUserRoleMgtDAO.getRolesByOrganizationAndUser(organizationId, userId,
                 getTenantId());
-        return roles;
     }
 
     @Override
