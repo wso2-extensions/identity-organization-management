@@ -94,10 +94,9 @@ public interface OrganizationManager {
      * Delete the organization identified by the provided ID.
      *
      * @param organizationId The organization ID.
-     * @param force          Enforces the forceful deletion of child organizations belonging to this organization.
      * @throws OrganizationManagementException The exception thrown when deleting an organization.
      */
-    void deleteOrganization(String organizationId, boolean force) throws OrganizationManagementException;
+    void deleteOrganization(String organizationId) throws OrganizationManagementException;
 
     /**
      * Patch organization and its attributes.

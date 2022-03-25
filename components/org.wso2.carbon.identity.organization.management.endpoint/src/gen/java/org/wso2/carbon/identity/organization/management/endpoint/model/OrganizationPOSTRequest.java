@@ -80,6 +80,7 @@ public class OrganizationPOSTRequest  {
     }
 
     /**
+    * If the parentId is not present, the ROOT will be taken as the parent organization.
     **/
     public OrganizationPOSTRequest parentId(String parentId) {
 
@@ -87,11 +88,9 @@ public class OrganizationPOSTRequest  {
         return this;
     }
     
-    @ApiModelProperty(example = "b4526d91-a8bf-43d2-8b14-c548cf73065b", required = true, value = "")
+    @ApiModelProperty(example = "b4526d91-a8bf-43d2-8b14-c548cf73065b", value = "If the parentId is not present, the ROOT will be taken as the parent organization.")
     @JsonProperty("parentId")
     @Valid
-    @NotNull(message = "Property parentId cannot be null.")
-
     public String getParentId() {
         return parentId;
     }
