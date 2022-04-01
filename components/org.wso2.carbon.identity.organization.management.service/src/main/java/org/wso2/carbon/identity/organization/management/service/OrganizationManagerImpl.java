@@ -202,7 +202,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public Organization getOrganization(String organizationId, Boolean showChildren) throws
+    public Organization getOrganization(String organizationId, boolean showChildren) throws
             OrganizationManagementException {
 
         if (StringUtils.isBlank(organizationId)) {
@@ -250,7 +250,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public void deleteOrganization(String organizationId, Boolean force) throws OrganizationManagementException {
+    public void deleteOrganization(String organizationId, boolean force) throws OrganizationManagementException {
 
         if (StringUtils.isBlank(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
@@ -266,7 +266,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (!force) {
             validateOrganizationDelete(organizationId);
         }
-        getOrganizationManagementDAO().deleteOrganization(getTenantId(), organizationId.trim(), getTenantDomain());
+        getOrganizationManagementDAO().deleteOrganization(getTenantId(), organizationId.trim(), getTenantDomain(),
+                force);
     }
 
     @Override

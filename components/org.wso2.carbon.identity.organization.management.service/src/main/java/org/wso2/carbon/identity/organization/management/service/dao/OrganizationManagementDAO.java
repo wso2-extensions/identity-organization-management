@@ -103,9 +103,10 @@ public interface OrganizationManagementDAO {
      * @param tenantId       The tenant ID corresponding to the tenant where the organization should be deleted.
      * @param organizationId The organization ID.
      * @param tenantDomain   The tenant name corresponding to the tenant where the organization should be deleted.
+     * @param force          Enforces the forceful deletion of child organizations belonging to this organization.
      * @throws OrganizationManagementServerException The server exception thrown when deleting the organization.
      */
-    void deleteOrganization(int tenantId, String organizationId, String tenantDomain) throws
+    void deleteOrganization(int tenantId, String organizationId, String tenantDomain, boolean force) throws
             OrganizationManagementServerException;
 
     /**

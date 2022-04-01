@@ -161,7 +161,7 @@ paths:
         - Organization
     put:
       description:
-        This API provides the capability to update an organization.
+        This API provides the capability to update an organization by its id.
       summary:
         Update an organization by ID.
       parameters:
@@ -373,13 +373,13 @@ components:
             $ref: '#/components/schemas/Link'
           example:
             [
-            {
-              "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-              "rel": "next",
-            },  {
-              "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-              "rel": "previous",
-            }
+              {
+                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "next",
+              },  {
+                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "previous",
+              }
             ]
         organizations:
           type: array
