@@ -115,6 +115,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setAttributes(attributes);
 
             organizationManagementDAO.addOrganization(TENANT_ID, TENANT_DOMAIN, organization);
+            Assert.assertNotNull(organizationManagementDAO.getOrganization(TENANT_ID, orgId, TENANT_DOMAIN));
         }
     }
 
@@ -248,6 +249,22 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             } else if (StringUtils.equals(key, INVALID_DATA)) {
                 Assert.assertFalse(attributeExistByKey);
             }
+        }
+    }
+
+    @Test
+    public void testDeleteOrganization() throws Exception {
+
+        String id = generateUniqueID();
+        storeOrganization(id, "Dummy organization",
+                "This is a sample organization to test the delete functionality.", rootOrgId);
+
+        DataSource dataSource = mockDataSource();
+        try (Connection connection = getConnection()) {
+            Connection spy = spyConnection(connection);
+            when(dataSource.getConnection()).thenReturn(spy);
+            organizationManagementDAO.deleteOrganization(TENANT_ID, id, TENANT_DOMAIN);
+            Assert.assertNull(organizationManagementDAO.getOrganization(TENANT_ID, id, TENANT_DOMAIN));
         }
     }
 

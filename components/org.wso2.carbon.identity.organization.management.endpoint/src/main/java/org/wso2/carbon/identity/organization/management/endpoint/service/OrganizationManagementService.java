@@ -236,12 +236,13 @@ public class OrganizationManagementService {
         organizationResponse.setName(organization.getName());
         organizationResponse.setDescription(organization.getDescription());
 
-        String status = organization.getStatus();
-        if (StringUtils.equals(status, OrganizationResponse.StatusEnum.ACTIVE.toString())) {
-            organizationResponse.setStatus(OrganizationResponse.StatusEnum.ACTIVE);
-        } else {
-            organizationResponse.setStatus(OrganizationResponse.StatusEnum.DISABLED);
+        OrganizationResponse.StatusEnum status;
+        try {
+            status = OrganizationResponse.StatusEnum.valueOf(organization.getStatus());
+        } catch (IllegalArgumentException e) {
+            status = OrganizationResponse.StatusEnum.DISABLED;
         }
+        organizationResponse.setStatus(status);
 
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
@@ -265,12 +266,15 @@ public class OrganizationManagementService {
         organizationResponse.setDescription(organization.getDescription());
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
-        String status = organization.getStatus();
-        if (StringUtils.equals(status, OrganizationResponse.StatusEnum.ACTIVE.toString())) {
-            organizationResponse.setStatus(GetOrganizationResponse.StatusEnum.ACTIVE);
-        } else {
-            organizationResponse.setStatus(GetOrganizationResponse.StatusEnum.DISABLED);
+
+        GetOrganizationResponse.StatusEnum status;
+        try {
+            status = GetOrganizationResponse.StatusEnum.valueOf(organization.getStatus());
+        } catch (IllegalArgumentException e) {
+            status = GetOrganizationResponse.StatusEnum.DISABLED;
         }
+        organizationResponse.setStatus(status);
+
         ParentOrganizationDO parentOrganizationDO = organization.getParent();
         if (parentOrganizationDO != null) {
             organizationResponse.setParent(getParentOrganization(parentOrganizationDO));

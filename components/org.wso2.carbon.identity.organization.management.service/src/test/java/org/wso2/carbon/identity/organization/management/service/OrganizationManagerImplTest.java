@@ -49,6 +49,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
@@ -132,7 +133,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         mockBuildURI();
 
-        organizationManager.addOrganization(sampleOrganization);
+        Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
+        Assert.assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
+        Assert.assertEquals(addedOrganization.getName(), sampleOrganization.getName());
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -588,6 +591,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private Organization getOrganization(String name, String parent) {
 
         Organization organization = new Organization();
+        organization.setId(UUID.randomUUID().toString());
         organization.setName(name);
         organization.setDescription(ORG_DESCRIPTION);
         organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
