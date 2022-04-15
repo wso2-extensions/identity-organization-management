@@ -42,6 +42,9 @@
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.mgt.core</module>
+        <!--<module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
+        <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.organization.valve</module>-->
     </modules>
 
     <dependencyManagement>
@@ -180,7 +183,6 @@
                 <version>${carbon.kernel.version}</version>
             </dependency>
 
-            <!--Project Dependencies-->
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>

@@ -42,8 +42,8 @@ public class SQLConstants {
             DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND IDN_SCIM_GROUP.ATTR_NAME = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ATTR_NAME + "; AND ";
 
-    public static final String GET_SCIM_ROLE_IDS_FOR_ORGANIZATION_USER_TENANT = "SELECT UM_ROLE_ID FROM " +
-            "UM_USER_ROLE_ORG WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; " +
+    public static final String GET_SCIM_ROLE_IDS_FOR_ORGANIZATION_USER = "SELECT UM_ROLE_ID FROM " +
+            "UM_ORG_USER_ROLE WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; " +
             "AND ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + "; " +
             "AND UM_TENANT_ID = :" + DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 

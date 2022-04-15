@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint.util;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +43,6 @@ import static org.wso2.carbon.identity.organization.management.endpoint.constant
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.endpoint.constants.OrganizationManagementEndpointConstants.V1_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.OrganizationUserRoleMgtConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
@@ -297,17 +295,10 @@ public class OrganizationManagementEndpointUtil {
             return URI.create(url);
         } catch (URLBuilderException e) {
             Error error;
-            if (StringUtils.contains(endpoint, ORGANIZATION_ROLES_PATH)) {
-                LOG.error("Server encountered an error while building URL for response header.");
-                error = getError(ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getCode(),
-                        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getMessage(),
-                        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR.getDescription());
-            } else {
-                LOG.error("Server encountered an error while building URL for response header.");
-                error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getCode(),
-                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getMessage(),
-                        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getDescription());
-            }
+            LOG.error("Server encountered an error while building URL for response header.");
+            error = getError(ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getCode(),
+                    ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getMessage(),
+                    ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL.getDescription());
             throw new OrganizationManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
     }
@@ -319,7 +310,7 @@ public class OrganizationManagementEndpointUtil {
         try {
             return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
         } catch (URLBuilderException e) {
-            LOG.error("Server encountered an error while building paginated URL for the response." , e);
+            LOG.error("Server encountered an error while building paginated URL for the response.", e);
             Error error = getError(ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
                     ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
                     ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());

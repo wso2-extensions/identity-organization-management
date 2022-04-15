@@ -125,14 +125,12 @@ public class OrganizationUserRoleMgtConstants {
         ERROR_CODE_ORGANIZATION_GET_ORGANIZATION_ID_ERROR("ORG-65212",
                 "Error while retrieving the organization id: %s",
                 "Server encountered an error while retrieving the organization."),
-        ERROR_CODE_BUILDING_RESPONSE_HEADER_URL_FOR_ORG_ROLES_ERROR("65017", "Unable to build create URL.",
-                "Server encountered an error while building URL for response header."),
-        ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR("65018",
+        ERROR_CODE_RETRIEVING_DATA_FROM_IDENTITY_DB_ERROR("65017",
                 "Unable to retrieve data from Identity database.",
                 "Server encountered an error while retrieving data from identity database."),
-        ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION("65019", "Unable to retrieve roles from database.",
+        ERROR_CODE_RETRIEVING_ROLES_USING_PERMISSION("65018", "Unable to retrieve roles from database.",
                 "Server encountered an error while retrieving roles from database."),
-        ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID("65020", "Unable to retrieve roles from database.",
+        ERROR_CODE_RETRIEVING_ROLES_USING_USER_ID("65019", "Unable to retrieve roles from database.",
                 "Server encountered an error while retrieving roles from database.");
 
         private final String code;

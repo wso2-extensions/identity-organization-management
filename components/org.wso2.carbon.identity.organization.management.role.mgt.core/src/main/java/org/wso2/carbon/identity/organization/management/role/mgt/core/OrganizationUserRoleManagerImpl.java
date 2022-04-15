@@ -101,12 +101,10 @@ public class OrganizationUserRoleManagerImpl implements OrganizationUserRoleMana
 
         OrganizationUserRoleMgtDAO organizationUserRoleMgtDAO = new OrganizationUserRoleMgtDAOImpl();
 
-        //validate organization
         if (!organizationUserRoleMgtDAO.checkOrganizationIdAvailability(organizationId)) {
             throw handleClientException(INVALID_ORGANIZATION_ID, organizationId);
         }
 
-        // Validation of adding role mappings
         validateAddRoleMappingRequest(organizationId, userRoleMapping);
 
         //validate roleId

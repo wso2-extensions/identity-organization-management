@@ -44,7 +44,7 @@ public class DatabaseConstants {
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + ";";
         public static final String AND = " AND ";
         public static final String OR = " OR ";
-        public static final String INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING = "INSERT INTO UM_USER_ROLE_ORG (" +
+        public static final String INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING = "INSERT INTO UM_ORG_USER_ROLE (" +
                 "UM_ID, UM_USER_ID, UM_ROLE_ID, UM_TENANT_ID, ORG_ID, ASSIGNED_AT, " +
                 "FORCED) VALUES ";
         public static final String INSERT_INTO_ORGANIZATION_USER_ROLE_MAPPING_VALUES = "(:" +
@@ -56,13 +56,13 @@ public class DatabaseConstants {
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d;,:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + "%1$d;)";
         public static final String GET_USERS_BY_ORG_AND_ROLE = "SELECT URO.UM_USER_ID, URO.FORCED, " +
-                "URO.ASSIGNED_AT, UO.UM_ORG_NAME FROM UM_USER_ROLE_ORG URO LEFT JOIN UM_ORG UO ON " +
+                "URO.ASSIGNED_AT, UO.UM_ORG_NAME FROM UM_ORG_USER_ROLE URO LEFT JOIN UM_ORG UO ON " +
                 "URO.ASSIGNED_AT = UO.UM_ID WHERE URO.ORG_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND URO.UM_ROLE_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "; AND URO.UM_TENANT_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
         public static final String DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL =
-                "DELETE FROM UM_USER_ROLE_ORG WHERE ";
+                "DELETE FROM UM_ORG_USER_ROLE WHERE ";
         public static final String DELETE_ORGANIZATION_USER_ROLE_MAPPING_VALUES =
                 "ORG_ID= :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "%1$d; AND UM_USER_ID = :" +
@@ -72,22 +72,22 @@ public class DatabaseConstants {
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d; AND FORCED = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + "%1$d;";
         public static final String DELETE_ALL_ORGANIZATION_USER_ROLE_MAPPINGS_BY_USERID =
-                "DELETE FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +
+                "DELETE FROM UM_ORG_USER_ROLE WHERE UM_USER_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_TENANT_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
         public static final String GET_ROLES_BY_ORG_AND_USER =
-                "SELECT DISTINCT UM_ROLE_ID FROM UM_USER_ROLE_ORG WHERE ORG_ID = :" +
+                "SELECT DISTINCT UM_ROLE_ID FROM UM_ORG_USER_ROLE WHERE ORG_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND UM_USER_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_TENANT_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
-        public static final String GET_ORGANIZATION_USER_ROLE_MAPPING = "SELECT COUNT(1) FROM UM_USER_ROLE_ORG " +
+        public static final String GET_ORGANIZATION_USER_ROLE_MAPPING = "SELECT COUNT(1) FROM UM_ORG_USER_ROLE " +
                 "WHERE UM_USER_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_ROLE_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "; AND UM_TENANT_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND ORG_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + ";";
         public static final String GET_DIRECTLY_ASSIGNED_ORGANIZATION_USER_ROLE_MAPPING_LINK = "SELECT FORCED " +
-                "FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +
+                "FROM UM_ORG_USER_ROLE WHERE UM_USER_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_ROLE_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "; AND UM_TENANT_ID = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND ORG_ID = :" +
@@ -117,7 +117,7 @@ public class DatabaseConstants {
         public static final String SCIM_GROUP_ROLE_NAME = "IDN_SCIM_GROUP.ROLE_NAME=:" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_NAME + "%d;";
         public static final String GET_ROLES_FROM_USER_ID_AND_ROLE_ID =
-                "SELECT UM_ROLE_ID FROM UM_USER_ROLE_ORG WHERE UM_USER_ID = :" +
+                "SELECT UM_ROLE_ID FROM UM_ORG_USER_ROLE WHERE UM_USER_ID = :" +
                         SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; %s";
         public static final String GET_ROLES_FROM_USER_ID_AND_ROLE_ID_PLACEHOLDER_FOR_ROLE_ID = "(UM_ROLE_ID=:"
                 + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROLE_ID + "%d;)";

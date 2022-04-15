@@ -422,7 +422,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
     private String buildQueryForOrganizationUserRoleMappingDelete() {
 
-        StringBuilder sb = new StringBuilder("DELETE FROM UM_USER_ROLE_ORG WHERE ");
+        StringBuilder sb = new StringBuilder("DELETE FROM UM_ORG_USER_ROLE WHERE ");
         for (int i = 0; i < orgIds.length; i++) {
             sb.append("ORG_ID='").append(orgIds[i]).append("'");
             if (i != orgIds.length - 1) {
@@ -434,7 +434,7 @@ public class OrganizationUserRoleMgtDAOImplTest extends PowerMockTestCase {
 
     private String buildQueryForOrganizationUserRoleMappingInsert(int numberOfOrganizationUserRoleMappings) {
 
-        String query = "INSERT INTO UM_USER_ROLE_ORG (UM_ID, UM_USER_ID, UM_ROLE_ID, UM_TENANT_ID, ORG_ID, " +
+        String query = "INSERT INTO UM_ORG_USER_ROLE (UM_ID, UM_USER_ID, UM_ROLE_ID, UM_TENANT_ID, ORG_ID, " +
                 "ASSIGNED_AT, FORCED) VALUES %s";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < numberOfOrganizationUserRoleMappings; i++) {

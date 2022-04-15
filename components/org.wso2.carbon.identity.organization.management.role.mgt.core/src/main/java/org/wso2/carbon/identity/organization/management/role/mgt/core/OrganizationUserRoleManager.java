@@ -109,7 +109,8 @@ public interface OrganizationUserRoleManager {
      * @param userId         ID of the user.
      * @param roleId         ID of the role.
      * @param assignedLevel  ID of the assigned level of organization-user-role mapping.
-     * @param forced         Whether the organization-user-role mapping is forced or not.
+     * @param forced         Whether the organization-user-role mapping is forced or not. If forced it will be
+     *                       recursively applied to the all child organizations.
      * @return Boolean value of whether an organization-user-role mapping exists.
      * @throws OrganizationUserRoleMgtException Organization-User-Role management exception.
      */

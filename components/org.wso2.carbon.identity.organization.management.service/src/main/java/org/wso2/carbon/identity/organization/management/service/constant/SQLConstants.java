@@ -78,11 +78,11 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
     public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT DISTINCT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
-            "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
+            "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_ORG_USER_ROLE ON UM_ORG_USER_ROLE.ORG_ID = " +
             "UM_ORG.UM_ID WHERE ";
 
-    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_USER_ROLE_ORG.UM_TENANT_ID = :" +
+    public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_ORG_USER_ROLE.UM_USER_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_ORG_USER_ROLE.UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; %s AND UM_ORG.UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; ORDER BY UM_ORG.UM_CREATED_TIME %s LIMIT:" +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
@@ -139,12 +139,12 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND UM_TENANT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
 
-    public static final String GET_ALL_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "SELECT * FROM UM_USER_ROLE_ORG" +
+    public static final String GET_ALL_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "SELECT * FROM UM_ORG_USER_ROLE" +
             " WHERE ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
             "; AND UM_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID +
             "; AND FORCED = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + ";";
 
-    public static final String ADD_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "INSERT INTO UM_USER_ROLE_ORG (UM_ID, " +
+    public static final String ADD_FORCED_ORGANIZATION_USER_ROLE_MAPPINGS = "INSERT INTO UM_ORG_USER_ROLE (UM_ID, " +
             "UM_USER_ID, UM_ROLE_ID, " +
             "UM_TENANT_ID, ORG_ID, ASSIGNED_AT, FORCED) VALUES ";
 
