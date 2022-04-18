@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.AND;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.ASSIGNED_AT_ADDING;
-import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.COUNT_COLUMN_NAME;
+import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.COUNT_COLUMN_INDEX;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ALL_ORGANIZATION_USER_ROLE_MAPPINGS_BY_USERID;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ORGANIZATION_USER_ROLE_MAPPINGS_ASSIGNED_AT_ORG_LEVEL;
 import static org.wso2.carbon.identity.organization.management.role.mgt.core.constants.DatabaseConstants.SQLConstants.DELETE_ORGANIZATION_USER_ROLE_MAPPING_VALUES;
@@ -318,7 +318,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
             mappingsCount = namedJdbcTemplate
                     .fetchSingleRecord(buildIsRoleMappingExistsQuery(assignedLevel, true),
                             (resultSet, rowNumber) ->
-                                    resultSet.getInt(COUNT_COLUMN_NAME),
+                                    resultSet.getInt(COUNT_COLUMN_INDEX),
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_ID, roleId);
@@ -355,7 +355,7 @@ public class OrganizationUserRoleMgtDAOImpl implements OrganizationUserRoleMgtDA
                              * mapping on params organizationId, userId, roleId, tenantId and assignedLevel
                              * */
                             (resultSet, rowNumber) ->
-                                    resultSet.getInt(COUNT_COLUMN_NAME) > 0,
+                                    resultSet.getInt(COUNT_COLUMN_INDEX) > 0,
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROLE_ID, roleId);

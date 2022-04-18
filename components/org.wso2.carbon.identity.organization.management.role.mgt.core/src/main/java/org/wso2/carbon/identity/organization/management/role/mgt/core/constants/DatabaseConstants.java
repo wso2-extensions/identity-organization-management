@@ -28,7 +28,7 @@ public class DatabaseConstants {
      */
     public static final class SQLConstants {
 
-        public static final String COUNT_COLUMN_NAME = "COUNT(1)";
+        public static final int COUNT_COLUMN_INDEX = 1;
         public static final String VIEW_ID_COLUMN = "UM_ID";
         public static final String VIEW_USER_ID_COLUMN = "UM_USER_ID";
         public static final String VIEW_ROLE_ID_COLUMN = "UM_ROLE_ID";
