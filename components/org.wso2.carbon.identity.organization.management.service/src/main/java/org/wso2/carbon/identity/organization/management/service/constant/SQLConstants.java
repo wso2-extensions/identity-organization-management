@@ -157,8 +157,6 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_FORCED + "%1$d;)";
 
-    public static final int COUNT_COLUMN = 1;
-
     /**
      * SQL Placeholders
      */
