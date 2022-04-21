@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObjectMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
 
@@ -34,7 +34,7 @@ import javax.xml.bind.annotation.*;
 public class RolePostResponseObject  {
   
     private String displayName;
-    private RolePostResponseObjectMeta meta;
+    private RoleObjMeta meta;
     private String id;
 
     /**
@@ -57,7 +57,7 @@ public class RolePostResponseObject  {
 
     /**
     **/
-    public RolePostResponseObject meta(RolePostResponseObjectMeta meta) {
+    public RolePostResponseObject meta(RoleObjMeta meta) {
 
         this.meta = meta;
         return this;
@@ -66,10 +66,10 @@ public class RolePostResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("meta")
     @Valid
-    public RolePostResponseObjectMeta getMeta() {
+    public RoleObjMeta getMeta() {
         return meta;
     }
-    public void setMeta(RolePostResponseObjectMeta meta) {
+    public void setMeta(RoleObjMeta meta) {
         this.meta = meta;
     }
 

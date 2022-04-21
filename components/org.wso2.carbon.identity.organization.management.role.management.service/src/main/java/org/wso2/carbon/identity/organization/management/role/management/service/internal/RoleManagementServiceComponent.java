@@ -46,16 +46,17 @@ public class RoleManagementServiceComponent {
     private static final Log LOG = LogFactory.getLog(RoleManagementServiceComponent.class);
 
     @Activate
-    protected void activate(ComponentContext componentContext){
+    protected void activate(ComponentContext componentContext) {
 
-        try{
-        RoleManagementDataHolder.getInstance().setRoleManagementDAO(new RoleManagementDAOImpl());
-        BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(RoleManager.class.getName(), new RoleManagerImpl(), null);
+        try {
+            RoleManagementDataHolder.getInstance().setRoleManagementDAO(new RoleManagementDAOImpl());
+            BundleContext bundleContext = componentContext.getBundleContext();
+            bundleContext.registerService(RoleManager.class.getName(), new RoleManagerImpl(), null);
 
-        if(LOG.isDebugEnabled()){
-            LOG.debug("Organization Management - Role Management component activated successfully.");
-        }}catch(Throwable e){
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Organization Management - Role Management component activated successfully.");
+            }
+        } catch (Throwable e) {
             LOG.error("Error while activating Organization Management - Role Management Component", e);
         }
     }

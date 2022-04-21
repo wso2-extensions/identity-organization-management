@@ -21,11 +21,12 @@
 package org.wso2.carbon.identity.organization.management.role.management.service.util;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.poi.ss.formula.functions.Na;
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementClientException;
 
@@ -38,27 +39,30 @@ public class Utils {
 
     /**
      * Get an instance of NamedJdbcTemplate.
+     *
      * @return A new instance of NamedJdbcTemplate.
      */
-    public static NamedJdbcTemplate getNewNamedJdbcTemplate(){
+    public static NamedJdbcTemplate getNewNamedJdbcTemplate() {
 
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
     }
 
     /**
      * Get an instance of NamedJdbcTemplate for Identity Database.
+     *
      * @return A new Instance of NamedJdbcTemplate.
      */
-    public static NamedJdbcTemplate getNewTemplateForIdentityDatabase(){
+    public static NamedJdbcTemplate getNewTemplateForIdentityDatabase() {
 
         return new NamedJdbcTemplate(IdentityDatabaseUtil.getDataSource());
     }
 
     /**
      * Creates a new random unique id.
+     *
      * @return A unique id.
      */
-    public static String generateUniqueId(){
+    public static String generateUniqueId() {
 
         return UUID.randomUUID().toString();
     }
@@ -87,16 +91,53 @@ public class Utils {
      * Throw an RoleManagementClientException upon client side error in role management.
      *
      * @param error The error enum.
-     * @param data The error message data.
+     * @param data  The error message data.
      * @return RoleManagementClientException
      */
     public static RoleManagementClientException handleClientException(RoleManagementConstants.ErrorMessages error,
-                                                                      String... data){
+                                                                      String... data) {
         String description = error.getDescription();
         if (ArrayUtils.isNotEmpty(data)) {
             description = String.format(description, data);
         }
         return new RoleManagementClientException(error.getMessage(), description, error.getCode());
+    }
+
+    /**
+     * Builds the API context whether the tenant qualified URL is enabled or not. In tenant qualified mode the
+     * ServiceURLBuilder appends the tenant domain to the URI as a path param automatically. But in non tenant
+     * qualified mode we need to append the tenant domain to the path manually.
+     * Same goes for the organization qualified URL.
+     *
+     * @param endpoint Relative endpoint path.
+     * @return Context of the API.
+     */
+    public static String getContext(String endpoint) {
+
+        String context;
+        //TODO: organization qualified URL enabled check is not implemented.
+        if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
+            context = RoleManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
+        } else {
+            context = String.format(RoleManagementConstants.TENANT_CONTEXT_PATH_COMPONENT,
+                    getTenantDomainFromContext()) +
+                    RoleManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
+        }
+        return context;
+    }
+
+    /**
+     * Get tenant domain from context.
+     *
+     * @return The tenant domain.
+     */
+    private static String getTenantDomainFromContext() {
+
+        String tenantDomain = IdentityTenantUtil.getTenantDomainFromContext();
+        if (StringUtils.isBlank(tenantDomain)) {
+            tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        }
+        return tenantDomain;
     }
 
 }

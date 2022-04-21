@@ -48,6 +48,9 @@ public class Role {
         this.name = name;
     }
 
+    public Role(){
+    }
+
     public String getId() {
 
         return id;

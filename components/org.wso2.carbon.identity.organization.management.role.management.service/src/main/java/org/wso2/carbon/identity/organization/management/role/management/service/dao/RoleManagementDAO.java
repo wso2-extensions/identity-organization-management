@@ -27,6 +27,9 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 
 import java.util.List;
 
+/**
+ * Interface for role management data access object.
+ */
 public interface RoleManagementDAO {
 
     /**
@@ -43,14 +46,14 @@ public interface RoleManagementDAO {
     /**
      * Get a {@link Role} in the database.
      *
-     * @param roleId         ID of the role.
      * @param organizationId ID of the organization where role exists.
+     * @param roleId         ID of the role.
      * @param tenantId       The tenant ID.
      * @return The corresponding role.
      * @throws RoleManagementServerException The server exception is thrown when an error occurs
      *                                       during getting a role.
      */
-    Role getRoleById(String roleId, String organizationId, int tenantId) throws RoleManagementServerException;
+    Role getRoleById(String organizationId, String roleId, int tenantId) throws RoleManagementServerException;
 
     /**
      * Get all the roles of an organization.

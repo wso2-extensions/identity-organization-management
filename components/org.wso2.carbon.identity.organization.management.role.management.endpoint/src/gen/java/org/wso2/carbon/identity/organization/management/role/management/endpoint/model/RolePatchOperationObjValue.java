@@ -30,26 +30,26 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleObjOrganization  {
+public class RolePatchOperationObjValue  {
   
-    private String orgId;
+    private String value;
 
     /**
     **/
-    public RoleObjOrganization orgId(String orgId) {
+    public RolePatchOperationObjValue value(String value) {
 
-        this.orgId = orgId;
+        this.value = value;
         return this;
     }
     
-    @ApiModelProperty(example = "48e31bc5-1669-4de1-bb22-c71e443aeb8b", value = "")
-    @JsonProperty("org-id")
+    @ApiModelProperty(example = "7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
+    @JsonProperty("value")
     @Valid
-    public String getOrgId() {
-        return orgId;
+    public String getValue() {
+        return value;
     }
-    public void setOrgId(String orgId) {
-        this.orgId = orgId;
+    public void setValue(String value) {
+        this.value = value;
     }
 
 
@@ -63,22 +63,22 @@ public class RoleObjOrganization  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleObjOrganization roleObjOrganization = (RoleObjOrganization) o;
-        return Objects.equals(this.orgId, roleObjOrganization.orgId);
+        RolePatchOperationObjValue rolePatchOperationObjValue = (RolePatchOperationObjValue) o;
+        return Objects.equals(this.value, rolePatchOperationObjValue.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(orgId);
+        return Objects.hash(value);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleObjOrganization {\n");
+        sb.append("class RolePatchOperationObjValue {\n");
         
-        sb.append("    orgId: ").append(toIndentedString(orgId)).append("\n");
+        sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
     }

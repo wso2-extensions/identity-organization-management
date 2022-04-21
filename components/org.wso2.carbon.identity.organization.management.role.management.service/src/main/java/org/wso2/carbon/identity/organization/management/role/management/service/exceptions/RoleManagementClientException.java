@@ -23,7 +23,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
 /**
  * This class is to handle the client side errors in Role Management.
  */
-public class RoleManagementClientException extends RoleManagementException{
+public class RoleManagementClientException extends RoleManagementException {
 
     public RoleManagementClientException(String message, String description, String errorCode) {
 
@@ -31,7 +31,7 @@ public class RoleManagementClientException extends RoleManagementException{
     }
 
     public RoleManagementClientException(String message, String description, String errorCode,
-                                                 Throwable cause) {
+                                         Throwable cause) {
 
         super(message, description, errorCode, cause);
     }

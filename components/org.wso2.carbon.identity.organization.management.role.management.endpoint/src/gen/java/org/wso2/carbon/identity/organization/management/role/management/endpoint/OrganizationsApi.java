@@ -28,10 +28,10 @@ import org.wso2.carbon.identity.organization.management.role.management.endpoint
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.OrganizationsApiService;
 
@@ -70,9 +70,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response createRole(@ApiParam(value = "ID of the organization where the role is going to be created.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of permissions going to be assigned to the role." ,required=true) @Valid RoleRequestObject roleRequestObject) {
+    public Response createRole(@ApiParam(value = "ID of the organization where the role is going to be created.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of permissions going to be assigned to the role." ,required=true) @Valid RolePostRequestObject rolePostRequestObject) {
 
-        return delegate.createRole(organizationId,  roleRequestObject );
+        return delegate.createRole(organizationId,  rolePostRequestObject );
     }
 
     @Valid

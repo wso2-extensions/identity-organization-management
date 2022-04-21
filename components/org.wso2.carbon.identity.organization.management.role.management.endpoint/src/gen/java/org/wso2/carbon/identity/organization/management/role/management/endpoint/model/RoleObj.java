@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjOrganization;
 import javax.validation.constraints.*;
 
 
@@ -34,27 +33,8 @@ import javax.xml.bind.annotation.*;
 
 public class RoleObj  {
   
-    private RoleObjOrganization organization;
     private String displayName;
     private RoleObjMeta meta;
-
-    /**
-    **/
-    public RoleObj organization(RoleObjOrganization organization) {
-
-        this.organization = organization;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("organization")
-    @Valid
-    public RoleObjOrganization getOrganization() {
-        return organization;
-    }
-    public void setOrganization(RoleObjOrganization organization) {
-        this.organization = organization;
-    }
 
     /**
     **/
@@ -104,14 +84,13 @@ public class RoleObj  {
             return false;
         }
         RoleObj roleObj = (RoleObj) o;
-        return Objects.equals(this.organization, roleObj.organization) &&
-            Objects.equals(this.displayName, roleObj.displayName) &&
+        return Objects.equals(this.displayName, roleObj.displayName) &&
             Objects.equals(this.meta, roleObj.meta);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(organization, displayName, meta);
+        return Objects.hash(displayName, meta);
     }
 
     @Override
@@ -120,7 +99,6 @@ public class RoleObj  {
         StringBuilder sb = new StringBuilder();
         sb.append("class RoleObj {\n");
         
-        sb.append("    organization: ").append(toIndentedString(organization)).append("\n");
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
         sb.append("}");

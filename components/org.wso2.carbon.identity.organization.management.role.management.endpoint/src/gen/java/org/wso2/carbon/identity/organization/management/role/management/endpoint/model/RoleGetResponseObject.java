@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObjectGroups;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObjectUsers;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObjectMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
 
@@ -38,7 +38,7 @@ import javax.xml.bind.annotation.*;
 public class RoleGetResponseObject  {
   
     private String displayName;
-    private RolePostResponseObjectMeta meta;
+    private RoleObjMeta meta;
     private String id;
     private List<RoleGetResponseObjectUsers> users = null;
 
@@ -67,7 +67,7 @@ public class RoleGetResponseObject  {
 
     /**
     **/
-    public RoleGetResponseObject meta(RolePostResponseObjectMeta meta) {
+    public RoleGetResponseObject meta(RoleObjMeta meta) {
 
         this.meta = meta;
         return this;
@@ -76,10 +76,10 @@ public class RoleGetResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("meta")
     @Valid
-    public RolePostResponseObjectMeta getMeta() {
+    public RoleObjMeta getMeta() {
         return meta;
     }
-    public void setMeta(RolePostResponseObjectMeta meta) {
+    public void setMeta(RoleObjMeta meta) {
         this.meta = meta;
     }
 

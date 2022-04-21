@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementException;
 import org.wso2.carbon.identity.organization.management.role.management.service.internal.RoleManagementDataHolder;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 
@@ -44,19 +45,22 @@ import java.util.List;
 
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.AND;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ROLE_ID_FIELD;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ROLE_NAME_FIELD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ROLE_ID_FIELD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ROLE_NAME_FIELD;
 
+/**
+ * Implementation of Role Manager Interface.
+ */
 public class RoleManagerImpl implements RoleManager {
 
     private static final Log LOG = LogFactory.getLog(RoleManagerImpl.class);
 
     @Override
-    public Role addRole(String organizationId, String organizationDomain, Role role) throws
+    public Role addRole(String organizationId, Role role) throws
             RoleManagementException {
 
         // TODO: need to find how to get /o/organization
@@ -65,16 +69,36 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     @Override
-    public Role getRoleById(String roleId, String organizationId) throws RoleManagementException {
+    public Role getRoleById(String organizationId, String roleId) throws RoleManagementException {
 
         return getRoleManagementDAO().getRoleById(roleId, organizationId, Utils.getTenantId());
     }
 
     @Override
-    public List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter, String organizationId) throws RoleManagementException {
+    public List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter,
+                                           String organizationId) throws RoleManagementException {
 
         return getRoleManagementDAO().getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
                 getExpressionNodes(filter, after, before));
+    }
+
+    @Override
+    public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
+            throws RoleManagementException {
+
+        return getRoleManagementDAO().patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
+    }
+
+    @Override
+    public Role putRole(String organizationId, String roleId, Role role) throws RoleManagementException {
+
+        return getRoleManagementDAO().putRole(organizationId, roleId, role, Utils.getTenantId());
+    }
+
+    @Override
+    public void deleteRole(String organizationId, String roleId) throws RoleManagementException {
+
+        getRoleManagementDAO().deleteRole(organizationId, roleId);
     }
 
     /**

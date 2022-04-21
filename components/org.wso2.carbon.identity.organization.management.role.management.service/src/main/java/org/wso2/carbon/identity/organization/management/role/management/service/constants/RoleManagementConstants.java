@@ -20,16 +20,20 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service.constants;
 
-import org.wso2.carbon.identity.organization.management.role.management.service.models.FilterQueryBuilder;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Contains the constants of Role Management.
+ */
 public class RoleManagementConstants {
 
-    public static final String ROLE_MANAGEMENT_ERROR_CODE_PREFIX = "ROLE";
+    public static final String ORGANIZATION_RESOURCE_PATH = "v1.0/organizations/%s";
+    public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
+    public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
+    public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "api/identity/organization-mgt";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -61,25 +65,33 @@ public class RoleManagementConstants {
      */
     public enum ErrorMessages {
         // Client Errors (ROLE-60200 - ROLE-60999)
-        ERROR_REMOVING_REQUIRED_ATTRIBUTE("ROLE-60201", "Cannot remove the required attribute %s.",
+        ERROR_CODE_INVALID_REQUEST_BODY("ROLE-60201", "Invalid request body.",
+                "The format of the provided request body is incorrect."),
+        ERROR_REMOVING_REQUIRED_ATTRIBUTE("ROLE-60202", "Cannot remove the required attribute %s.",
                 "Cannot remove the required attribute %s with operation %s."),
-        ERROR_REMOVING_INVALID_ATTRIBUTE("ROLE-60202", "Invalid attribute %s.",
+        ERROR_REMOVING_INVALID_ATTRIBUTE("ROLE-60203", "Invalid attribute %s.",
                 "Invalid attribute %s for operation %s."),
-        ERROR_ADDING_REQUIRED_ATTRIBUTE("ROLE-60202",
+        ERROR_ADDING_REQUIRED_ATTRIBUTE("ROLE-60204",
                 "Cannot add the required attribute %s. This should be added at the initialization.",
                 "Cannot add the required attribute %s with operation %s."),
-        ERROR_ADDING_INVALID_ATTRIBUTE("ROLE-60203","Invalid attribute %s.",
+        ERROR_ADDING_INVALID_ATTRIBUTE("ROLE-60205", "Invalid attribute %s.",
                 "Invalid attribute %s for operation %s."),
-        ERROR_DISPLAY_NAME_MULTIPLE_VALUES("ROLE-60204", "The display name cannot have multiple values.",
+        ERROR_DISPLAY_NAME_MULTIPLE_VALUES("ROLE-60206", "The display name cannot have multiple values.",
                 "The display name should have single value."),
-        ERROR_CODE_INVALID_FILTER_FORMAT("ROLE-60205", "Unable to retrieve roles.", "Invalid" +
+        ERROR_CODE_INVALID_FILTER_FORMAT("ROLE-60207", "Unable to retrieve roles.", "Invalid" +
                 " format used for filtering."),
-        ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION("ROLE-60206", "Unable to retrieve organizations.", "Invalid " +
+        ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION("ROLE-60208", "Unable to retrieve organizations.", "Invalid " +
                 "cursor used for pagination."),
-        ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE("ROLE-60207", "Unsupported filter attribute.",
+        ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE("ROLE-60209", "Unsupported filter attribute.",
                 "The filter attribute '%s' is not supported."),
-        ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER("ROLE-60207", "Unsupported filter.",
+        ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER("ROLE-60210", "Unsupported filter.",
                 "The complex query used for filtering is not supported."),
+        ERROR_CODE_ERROR_BUILDING_ROLE_URI("ROLE-65011", "Unable to build create role URI.",
+                "Server encountered an error while building URL for role with roleId %s"),
+        ERROR_CODE_ERROR_BUILDING_GROUP_URI("ROLE-65012", "Unable to build create group URI.",
+                "Server encountered an error while building URL for group with groupId %s"),
+        ERROR_CODE_ERROR_BUILDING_USER_URI("ROLE-65013", "Unable to build create user URI.",
+                "Server encountered an error while building URL for user with userId %s"),
         // Server Errors (ROLE-65200 - ROLE-65999)
         ERROR_ADDING_ROLE_TO_ORGANIZATION("ROLE-65201", "Error adding role to the organization : %s.",
                 "Server encountered an error while adding a role to an organization."),
@@ -143,30 +155,36 @@ public class RoleManagementConstants {
     /**
      * Error Codes of Forbidden Error Messages.
      */
-    public enum ForbiddenErrorMessages {}
+    public enum ForbiddenErrorMessages {
+
+    }
 
     /**
      * Error Codes of Conflict Error Messages.
      */
-    public enum ConflictErrorMessages {}
+    public enum ConflictErrorMessages {
+
+    }
 
     /**
      * Error Codes of NotFound Error Messages.
      */
-    public enum NotFoundErrorMessages {}
+    public enum NotFoundErrorMessages {
+
+    }
 
     /**
      * Enum for Query Filter Operations
      */
     public enum FilterOperator {
 
-        EQ("","") {
+        EQ("", "") {
             @Override
             public String applyFilterBuilder(int count) {
                 return " = :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
             }
         },
-        SW("","%") {
+        SW("", "%") {
             @Override
             public String applyFilterBuilder(int count) {
                 return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";

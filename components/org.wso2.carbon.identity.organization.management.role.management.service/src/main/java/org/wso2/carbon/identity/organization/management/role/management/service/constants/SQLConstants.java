@@ -34,7 +34,8 @@ public class SQLConstants {
             ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID +
             ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";)";
 
-    public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_RM_GROUP_ROLE (UM_GROUP_ID, UM_ROLE_ID) VALUES ";
+    public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_RM_GROUP_ROLE (UM_GROUP_ID, UM_ROLE_ID) " +
+            "VALUES ";
 
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;,:" +
@@ -46,8 +47,8 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
 
-    public static final String ADD_ROLE_PERMISSION_MAPPING = "INSERT INTO UM_RM_PERMISSION_ROLE (UM_PERMISSION_ID, UM_ROLE_ID) " +
-            "VALUES ";
+    public static final String ADD_ROLE_PERMISSION_MAPPING = "INSERT INTO UM_RM_PERMISSION_ROLE " +
+            "(UM_PERMISSION_ID, UM_ROLE_ID) VALUES ";
 
     public static final String ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%$d;,:" +
@@ -69,8 +70,8 @@ public class SQLConstants {
             "UM_ID IN (SELECT UM_ID FROM UM_RM_PERMISSION_ROLE WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
-    public static final String GET_PERMISSIONS_WITH_ID_FROM_ROLE_ID = "SELECT UM_ID, UM_RESOURCE_ID FROM UM_PERMISSION WHERE " +
-            "UM_ID IN (SELECT UM_ID FROM UM_RM_PERMISSION_ROLE WHERE UM_ROLE_ID=:" +
+    public static final String GET_PERMISSIONS_WITH_ID_FROM_ROLE_ID = "SELECT UM_ID, UM_RESOURCE_ID FROM " +
+            "UM_PERMISSION WHERE UM_ID IN (SELECT UM_ID FROM UM_RM_PERMISSION_ROLE WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
     public static final String GET_ROLES_FROM_ORGANIZATION_ID = "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME FROM " +
@@ -103,9 +104,9 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_ID:=" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
-    public static final String REPLACE_DISPLAY_NAME_OF_ROLE = "UPDATE UM_RM_ROLE SET UM_ROLE_NAME=:"+
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME+"; WHERE UM_ROLE_ID=:"+
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID+";";
+    public static final String REPLACE_DISPLAY_NAME_OF_ROLE = "UPDATE UM_RM_ROLE SET UM_ROLE_NAME=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; WHERE UM_ROLE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
 
     /**

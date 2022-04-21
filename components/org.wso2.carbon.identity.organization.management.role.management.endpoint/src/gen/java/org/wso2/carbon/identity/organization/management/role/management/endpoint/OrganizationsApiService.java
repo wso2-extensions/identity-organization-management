@@ -28,17 +28,17 @@ import org.wso2.carbon.identity.organization.management.role.management.endpoint
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
 import javax.ws.rs.core.Response;
 
 
 public interface OrganizationsApiService {
 
-      public Response createRole(String organizationId, RoleRequestObject roleRequestObject);
+      public Response createRole(String organizationId, RolePostRequestObject rolePostRequestObject);
 
       public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer startIndex, Integer count);
 

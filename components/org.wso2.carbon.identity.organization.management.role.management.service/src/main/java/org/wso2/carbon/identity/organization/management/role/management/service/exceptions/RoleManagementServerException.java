@@ -23,7 +23,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
 /**
  * This class is to handle the server side errors in Role Management.
  */
-public class RoleManagementServerException extends RoleManagementException{
+public class RoleManagementServerException extends RoleManagementException {
 
     public RoleManagementServerException(String message, String errorCode) {
 
@@ -36,7 +36,7 @@ public class RoleManagementServerException extends RoleManagementException{
     }
 
     public RoleManagementServerException(String message, String description, String errorCode,
-                                                 Throwable cause) {
+                                         Throwable cause) {
 
         super(message, description, errorCode, cause);
     }

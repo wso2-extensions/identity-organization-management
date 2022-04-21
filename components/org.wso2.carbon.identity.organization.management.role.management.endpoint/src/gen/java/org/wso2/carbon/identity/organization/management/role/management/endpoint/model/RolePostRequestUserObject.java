@@ -30,45 +30,26 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePostResponseObjectMeta  {
+public class RolePostRequestUserObject  {
   
-    private String location;
-    private String resourceType;
+    private String value;
 
     /**
     **/
-    public RolePostResponseObjectMeta location(String location) {
+    public RolePostRequestUserObject value(String value) {
 
-        this.location = location;
+        this.value = value;
         return this;
     }
     
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0", value = "")
-    @JsonProperty("location")
+    @ApiModelProperty(example = "008bba85-451d-414b-87de-c03b5a1f4217", value = "")
+    @JsonProperty("value")
     @Valid
-    public String getLocation() {
-        return location;
+    public String getValue() {
+        return value;
     }
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    /**
-    **/
-    public RolePostResponseObjectMeta resourceType(String resourceType) {
-
-        this.resourceType = resourceType;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "Role", value = "")
-    @JsonProperty("resourceType")
-    @Valid
-    public String getResourceType() {
-        return resourceType;
-    }
-    public void setResourceType(String resourceType) {
-        this.resourceType = resourceType;
+    public void setValue(String value) {
+        this.value = value;
     }
 
 
@@ -82,24 +63,22 @@ public class RolePostResponseObjectMeta  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePostResponseObjectMeta rolePostResponseObjectMeta = (RolePostResponseObjectMeta) o;
-        return Objects.equals(this.location, rolePostResponseObjectMeta.location) &&
-            Objects.equals(this.resourceType, rolePostResponseObjectMeta.resourceType);
+        RolePostRequestUserObject rolePostRequestUserObject = (RolePostRequestUserObject) o;
+        return Objects.equals(this.value, rolePostRequestUserObject.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(location, resourceType);
+        return Objects.hash(value);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePostResponseObjectMeta {\n");
+        sb.append("class RolePostRequestUserObject {\n");
         
-        sb.append("    location: ").append(toIndentedString(location)).append("\n");
-        sb.append("    resourceType: ").append(toIndentedString(resourceType)).append("\n");
+        sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
     }

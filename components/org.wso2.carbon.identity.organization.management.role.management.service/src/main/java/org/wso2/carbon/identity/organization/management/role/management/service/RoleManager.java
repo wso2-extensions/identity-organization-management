@@ -21,34 +21,36 @@
 package org.wso2.carbon.identity.organization.management.role.management.service;
 
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementException;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 
 import java.util.List;
 
+/**
+ * Interface for Role Management.
+ */
 public interface RoleManager {
 
     /**
      * Add a role
      *
-     * @param organizationDomain The organization domain where the organization corresponding to
-     *                           organizationId is present.
-     * @param organizationId     The ID of the organization where we add the role.
-     * @param role               Role that is going to be added.
+     * @param organizationId The ID of the organization where we add the role.
+     * @param role           Role that is going to be added.
      * @return Basic role info for the response object.
      * @throws RoleManagementException This exception is thrown when an error happens when adding a role.
      */
-    Role addRole(String organizationDomain, String organizationId, Role role) throws RoleManagementException;
+    Role addRole(String organizationId, Role role) throws RoleManagementException;
 
     /**
      * Get a role from role ID.
      *
-     * @param roleId         The ID of the role we want.
      * @param organizationId The ID of the organization where role is in.
+     * @param roleId         The ID of the role we want.
      * @return A role.
      * @throws RoleManagementException This exception is thrown when an error happens when getting a role
      *                                 from role ID.
      */
-    Role getRoleById(String roleId, String organizationId) throws RoleManagementException;
+    Role getRoleById(String organizationId, String roleId) throws RoleManagementException;
 
     /**
      * Get roles of a particular organization.
@@ -66,5 +68,35 @@ public interface RoleManager {
     List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter,
                                     String organizationId) throws RoleManagementException;
 
-    Role patchRole() throws RoleManagementException;
+    /**
+     * Patch a particular role inside an organization.
+     *
+     * @param organizationId  The ID of the organization.
+     * @param roleId          The ID of the role.
+     * @param patchOperations The patch operation list.
+     * @return The role after being patched.
+     * @throws RoleManagementException This exception is thrown when an error happens when patching the role.
+     */
+    Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
+            throws RoleManagementException;
+
+    /**
+     * Patch a particular role inside an organization.
+     *
+     * @param organizationId The ID of the organization.
+     * @param roleId         The ID of the role,
+     * @param role           The details of role to be changed.
+     * @return The updated role.
+     * @throws RoleManagementException This exception is thrown when an error occurs when patching the role.
+     */
+    Role putRole(String organizationId, String roleId, Role role) throws RoleManagementException;
+
+    /**
+     * Delete a particular role inside an organization.
+     *
+     * @param organizationId The ID of the organization.
+     * @param roleId         The ID of the role.
+     * @throws RoleManagementException This exception is thrown when an error occurs when deleting the role.
+     */
+    void deleteRole(String organizationId, String roleId) throws RoleManagementException;
 }

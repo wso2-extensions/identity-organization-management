@@ -89,7 +89,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoleRequestObject'
+              $ref: '#/components/schemas/RolePostRequestObject'
         required: true
       responses:
         201:
@@ -336,7 +336,7 @@ components:
     #------------------------------------------------------------------------
     # The Role Request Object.
     #------------------------------------------------------------------------
-    RoleRequestObject:
+    RolePostRequestObject:
       type: object
       required:
         - displayName
@@ -347,20 +347,34 @@ components:
         users:
           type: array
           items:
-            type: object
-            example:
-              value: '008bba85-451d-414b-87de-c03b5a1f4217'
+            $ref: '#/components/schemas/RolePostRequestUserObject'
         groups:
           type: array
           items:
-            type: object
-            example:
-              value: "7bac6a86-1f21-4937-9fb1-5be4a93ef469"
+            $ref: '#/components/schemas/RolePostRequestGroupObject'
         permissions:
           type: array
           items:
             type: string
             example: "/permission/admin/login"
+    #------------------------------------------------------------------------
+    # The Role POST Request User Object.
+    #------------------------------------------------------------------------
+    RolePostRequestUserObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '008bba85-451d-414b-87de-c03b5a1f4217'
+    #------------------------------------------------------------------------
+    # The Role POST Request Group Object.
+    #------------------------------------------------------------------------
+    RolePostRequestGroupObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
     #------------------------------------------------------------------------
     # The Role POST Response Object.
     #------------------------------------------------------------------------
@@ -379,6 +393,9 @@ components:
         id:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0efe3de0'
+    #------------------------------------------------------------------------
+    # The Role POST Response Meta Object.
+    #------------------------------------------------------------------------
     #------------------------------------------------------------------------
     # The Role GET Response Object.
     #------------------------------------------------------------------------
@@ -500,8 +517,10 @@ components:
           type: array
           items:
             type: object
-            example:
-              value: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+            properties:
+              value:
+                type: string
+                example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
     #------------------------------------------------------------------------
     # The Role PATCH Response Object.
     #------------------------------------------------------------------------
