@@ -24,6 +24,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroupObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUserObject;
 import javax.validation.constraints.*;
 
 
@@ -35,9 +37,9 @@ import javax.xml.bind.annotation.*;
 public class RolePutRequestObject  {
   
     private String displayName;
-    private List<Object> users = null;
+    private List<RolePutRequestUserObject> users = null;
 
-    private List<Object> groups = null;
+    private List<RolePutRequestGroupObject> groups = null;
 
     private List<String> permissions = null;
 
@@ -62,7 +64,7 @@ public class RolePutRequestObject  {
 
     /**
     **/
-    public RolePutRequestObject users(List<Object> users) {
+    public RolePutRequestObject users(List<RolePutRequestUserObject> users) {
 
         this.users = users;
         return this;
@@ -71,14 +73,14 @@ public class RolePutRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<Object> getUsers() {
+    public List<RolePutRequestUserObject> getUsers() {
         return users;
     }
-    public void setUsers(List<Object> users) {
+    public void setUsers(List<RolePutRequestUserObject> users) {
         this.users = users;
     }
 
-    public RolePutRequestObject addUsersItem(Object usersItem) {
+    public RolePutRequestObject addUsersItem(RolePutRequestUserObject usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }
@@ -88,7 +90,7 @@ public class RolePutRequestObject  {
 
         /**
     **/
-    public RolePutRequestObject groups(List<Object> groups) {
+    public RolePutRequestObject groups(List<RolePutRequestGroupObject> groups) {
 
         this.groups = groups;
         return this;
@@ -97,14 +99,14 @@ public class RolePutRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("groups")
     @Valid
-    public List<Object> getGroups() {
+    public List<RolePutRequestGroupObject> getGroups() {
         return groups;
     }
-    public void setGroups(List<Object> groups) {
+    public void setGroups(List<RolePutRequestGroupObject> groups) {
         this.groups = groups;
     }
 
-    public RolePutRequestObject addGroupsItem(Object groupsItem) {
+    public RolePutRequestObject addGroupsItem(RolePutRequestGroupObject groupsItem) {
         if (this.groups == null) {
             this.groups = new ArrayList<>();
         }

@@ -18,23 +18,18 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.*;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.*;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.service.OrganizationManagementService;
-
 import java.util.List;
 import javax.ws.rs.core.Response;
 
 public class OrganizationsApiServiceImpl implements OrganizationsApiService {
 
-    @Autowired
-    private OrganizationManagementService organizationManagementService;
-
     @Override
-    public Response createRole(String organizationId, RoleRequestObject roleRequestObject) {
+    public Response createRole(String organizationId, RolePostRequestObject rolePostRequestObject) {
 
-        return organizationManagementService.createRole();
+        // do some magic!
+        return Response.ok().entity("magic!").build();
     }
 
     @Override

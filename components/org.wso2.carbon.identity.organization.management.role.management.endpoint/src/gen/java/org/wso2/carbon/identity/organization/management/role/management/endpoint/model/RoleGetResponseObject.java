@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObjectGroups;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObjectUsers;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroupObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUserObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
@@ -40,9 +40,9 @@ public class RoleGetResponseObject  {
     private String displayName;
     private RoleObjMeta meta;
     private String id;
-    private List<RoleGetResponseObjectUsers> users = null;
+    private List<RoleGetResponseUserObject> users = null;
 
-    private List<RoleGetResponseObjectGroups> groups = null;
+    private List<RoleGetResponseGroupObject> groups = null;
 
     private List<String> permissions = null;
 
@@ -103,7 +103,7 @@ public class RoleGetResponseObject  {
 
     /**
     **/
-    public RoleGetResponseObject users(List<RoleGetResponseObjectUsers> users) {
+    public RoleGetResponseObject users(List<RoleGetResponseUserObject> users) {
 
         this.users = users;
         return this;
@@ -112,14 +112,14 @@ public class RoleGetResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<RoleGetResponseObjectUsers> getUsers() {
+    public List<RoleGetResponseUserObject> getUsers() {
         return users;
     }
-    public void setUsers(List<RoleGetResponseObjectUsers> users) {
+    public void setUsers(List<RoleGetResponseUserObject> users) {
         this.users = users;
     }
 
-    public RoleGetResponseObject addUsersItem(RoleGetResponseObjectUsers usersItem) {
+    public RoleGetResponseObject addUsersItem(RoleGetResponseUserObject usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }
@@ -129,7 +129,7 @@ public class RoleGetResponseObject  {
 
         /**
     **/
-    public RoleGetResponseObject groups(List<RoleGetResponseObjectGroups> groups) {
+    public RoleGetResponseObject groups(List<RoleGetResponseGroupObject> groups) {
 
         this.groups = groups;
         return this;
@@ -138,14 +138,14 @@ public class RoleGetResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("groups")
     @Valid
-    public List<RoleGetResponseObjectGroups> getGroups() {
+    public List<RoleGetResponseGroupObject> getGroups() {
         return groups;
     }
-    public void setGroups(List<RoleGetResponseObjectGroups> groups) {
+    public void setGroups(List<RoleGetResponseGroupObject> groups) {
         this.groups = groups;
     }
 
-    public RoleGetResponseObject addGroupsItem(RoleGetResponseObjectGroups groupsItem) {
+    public RoleGetResponseObject addGroupsItem(RoleGetResponseGroupObject groupsItem) {
         if (this.groups == null) {
             this.groups = new ArrayList<>();
         }

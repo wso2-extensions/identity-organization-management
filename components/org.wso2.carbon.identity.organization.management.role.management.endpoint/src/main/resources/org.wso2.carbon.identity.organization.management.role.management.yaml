@@ -394,9 +394,6 @@ components:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0efe3de0'
     #------------------------------------------------------------------------
-    # The Role POST Response Meta Object.
-    #------------------------------------------------------------------------
-    #------------------------------------------------------------------------
     # The Role GET Response Object.
     #------------------------------------------------------------------------
     RoleGetResponseObject:
@@ -417,36 +414,46 @@ components:
         users:
           type: array
           items:
-            type: object
-            properties:
-              $ref:
-                type: string
-                example:  'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45'
-              id:
-                type: string
-                example: "3a12bae9-4386-44be-befd-caf349297f45"
-              display:
-                type: string
-                example: "kim"
+            $ref: '#/components/schemas/RoleGetResponseUserObject'
         groups:
           type: array
           items:
-            type: object
-            properties:
-              $ref:
-                type: string
-                example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469'
-              display:
-                type: string
-                example:  'PRIMARY/manager'
-              value:
-                type: string
-                example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+            $ref: '#/components/schemas/RoleGetResponseGroupObject'
         permissions:
           type: array
           items:
             type: string
             example: '/permission/admin/login'
+    #------------------------------------------------------------------------
+    # The Role GET Response User Object.
+    #------------------------------------------------------------------------
+    RoleGetResponseUserObject:
+      type: object
+      properties:
+        $ref:
+          type: string
+          example:  'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45'
+        id:
+          type: string
+          example: "3a12bae9-4386-44be-befd-caf349297f45"
+        display:
+          type: string
+          example: "kim"
+    #------------------------------------------------------------------------
+    # The Role GET Response Group Object.
+    #------------------------------------------------------------------------
+    RoleGetResponseGroupObject:
+      type: object
+      properties:
+        $ref:
+          type: string
+          example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+        display:
+          type: string
+          example:  'PRIMARY/manager'
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
     #------------------------------------------------------------------------
     # The Role PUT Request Object.
     #------------------------------------------------------------------------
@@ -459,20 +466,34 @@ components:
         users:
           type: array
           items:
-            type: object
-            example:
-              value: '409ca90b-2ba6-4474-9a45-2cf7376e6e43'
+            $ref: '#/components/schemas/RolePutRequestUserObject'
         groups:
           type: array
           items:
-            type: object
-            example:
-              value: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+            $ref: '#/components/schemas/RolePutRequestGroupObject'
         permissions:
           type: array
           items:
             type: string
             example: '/permission/admin/manage/add'
+    #------------------------------------------------------------------------
+    # The Role PUT Request User Object.
+    #------------------------------------------------------------------------
+    RolePutRequestUserObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '409ca90b-2ba6-4474-9a45-2cf7376e6e43'
+    #------------------------------------------------------------------------
+    # The Role PUT Request Group Object.
+    #------------------------------------------------------------------------
+    RolePutRequestGroupObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
     #------------------------------------------------------------------------
     # The Role PUT Response Object.
     #------------------------------------------------------------------------

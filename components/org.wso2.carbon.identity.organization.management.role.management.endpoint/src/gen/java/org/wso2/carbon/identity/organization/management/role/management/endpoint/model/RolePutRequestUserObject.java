@@ -30,57 +30,19 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleGetResponseObjectGroups  {
+public class RolePutRequestUserObject  {
   
-    private String $ref;
-    private String display;
     private String value;
 
     /**
     **/
-    public RoleGetResponseObjectGroups $ref(String $ref) {
-
-        this.$ref = $ref;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
-    @JsonProperty("$ref")
-    @Valid
-    public String get$Ref() {
-        return $ref;
-    }
-    public void set$Ref(String $ref) {
-        this.$ref = $ref;
-    }
-
-    /**
-    **/
-    public RoleGetResponseObjectGroups display(String display) {
-
-        this.display = display;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "PRIMARY/manager", value = "")
-    @JsonProperty("display")
-    @Valid
-    public String getDisplay() {
-        return display;
-    }
-    public void setDisplay(String display) {
-        this.display = display;
-    }
-
-    /**
-    **/
-    public RoleGetResponseObjectGroups value(String value) {
+    public RolePutRequestUserObject value(String value) {
 
         this.value = value;
         return this;
     }
     
-    @ApiModelProperty(example = "7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
+    @ApiModelProperty(example = "409ca90b-2ba6-4474-9a45-2cf7376e6e43", value = "")
     @JsonProperty("value")
     @Valid
     public String getValue() {
@@ -101,25 +63,21 @@ public class RoleGetResponseObjectGroups  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleGetResponseObjectGroups roleGetResponseObjectGroups = (RoleGetResponseObjectGroups) o;
-        return Objects.equals(this.$ref, roleGetResponseObjectGroups.$ref) &&
-            Objects.equals(this.display, roleGetResponseObjectGroups.display) &&
-            Objects.equals(this.value, roleGetResponseObjectGroups.value);
+        RolePutRequestUserObject rolePutRequestUserObject = (RolePutRequestUserObject) o;
+        return Objects.equals(this.value, rolePutRequestUserObject.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash($ref, display, value);
+        return Objects.hash(value);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleGetResponseObjectGroups {\n");
+        sb.append("class RolePutRequestUserObject {\n");
         
-        sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
-        sb.append("    display: ").append(toIndentedString(display)).append("\n");
         sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
