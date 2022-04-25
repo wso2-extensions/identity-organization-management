@@ -163,7 +163,7 @@ paths:
         - Organization
     put:
       description:
-        This API provides the capability to update a secret type by name.
+        This API provides the capability to update an organization by its id.
       summary:
         Update an organization by ID.
       parameters:
