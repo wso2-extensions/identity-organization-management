@@ -540,6 +540,7 @@ components:
       type: object
       required:
         - name
+        - type
       properties:
         name:
           type: string
@@ -547,6 +548,16 @@ components:
         description:
           type: string
           example: "Building constructions"
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain. This attribute should only be present for tenant type organization.
         parentId:
           type: string
           example: "b4526d91-a8bf-43d2-8b14-c548cf73065b"
@@ -663,6 +674,16 @@ components:
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         attributes:
@@ -697,6 +718,16 @@ components:
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         children:

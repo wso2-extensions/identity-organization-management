@@ -76,6 +76,41 @@ public enum StatusEnum {
     private StatusEnum status;
     private String created;
     private String lastModified;
+
+@XmlType(name="TypeEnum")
+@XmlEnum(String.class)
+public enum TypeEnum {
+
+    @XmlEnumValue("TENANT") TENANT(String.valueOf("TENANT")), @XmlEnumValue("STRUCTURAL") STRUCTURAL(String.valueOf("STRUCTURAL"));
+
+
+    private String value;
+
+    TypeEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static TypeEnum fromValue(String value) {
+        for (TypeEnum b : TypeEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private TypeEnum type;
+    private String domain;
     private ParentOrganization parent;
     private List<ChildOrganization> children = null;
 
@@ -202,6 +237,43 @@ public enum StatusEnum {
 
     /**
     **/
+    public GetOrganizationResponse type(TypeEnum type) {
+
+        this.type = type;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "TENANT", value = "")
+    @JsonProperty("type")
+    @Valid
+    public TypeEnum getType() {
+        return type;
+    }
+    public void setType(TypeEnum type) {
+        this.type = type;
+    }
+
+    /**
+    * Defines the tenant domain of tenant type organization.
+    **/
+    public GetOrganizationResponse domain(String domain) {
+
+        this.domain = domain;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "abc.com", value = "Defines the tenant domain of tenant type organization.")
+    @JsonProperty("domain")
+    @Valid
+    public String getDomain() {
+        return domain;
+    }
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    /**
+    **/
     public GetOrganizationResponse parent(ParentOrganization parent) {
 
         this.parent = parent;
@@ -288,6 +360,8 @@ public enum StatusEnum {
             Objects.equals(this.status, getOrganizationResponse.status) &&
             Objects.equals(this.created, getOrganizationResponse.created) &&
             Objects.equals(this.lastModified, getOrganizationResponse.lastModified) &&
+            Objects.equals(this.type, getOrganizationResponse.type) &&
+            Objects.equals(this.domain, getOrganizationResponse.domain) &&
             Objects.equals(this.parent, getOrganizationResponse.parent) &&
             Objects.equals(this.children, getOrganizationResponse.children) &&
             Objects.equals(this.attributes, getOrganizationResponse.attributes);
@@ -295,7 +369,7 @@ public enum StatusEnum {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, status, created, lastModified, parent, children, attributes);
+        return Objects.hash(id, name, description, status, created, lastModified, type, domain, parent, children, attributes);
     }
 
     @Override
@@ -310,6 +384,8 @@ public enum StatusEnum {
         sb.append("    status: ").append(toIndentedString(status)).append("\n");
         sb.append("    created: ").append(toIndentedString(created)).append("\n");
         sb.append("    lastModified: ").append(toIndentedString(lastModified)).append("\n");
+        sb.append("    type: ").append(toIndentedString(type)).append("\n");
+        sb.append("    domain: ").append(toIndentedString(domain)).append("\n");
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
         sb.append("    children: ").append(toIndentedString(children)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");

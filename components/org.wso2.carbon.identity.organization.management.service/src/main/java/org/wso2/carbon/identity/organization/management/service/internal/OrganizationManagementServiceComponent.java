@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.CachedBackedOrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
+import org.wso2.carbon.tenant.mgt.services.TenantMgtService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -98,5 +99,27 @@ public class OrganizationManagementServiceComponent {
             LOG.debug("Unsetting the Realm Service.");
         }
         OrganizationManagementDataHolder.getInstance().setRealmService(null);
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.tenant.mgt",
+            service = org.wso2.carbon.tenant.mgt.services.TenantMgtService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetTenantMgtService")
+    protected void setTenantMgtService(TenantMgtService tenantMgtService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting the Tenant Management Service.");
+        }
+        OrganizationManagementDataHolder.getInstance().setTenantMgtService(tenantMgtService);
+    }
+
+    protected void unsetTenantMgtService(TenantMgtService tenantMgtService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unsetting the Tenant Management Service.");
+        }
+        OrganizationManagementDataHolder.getInstance().setTenantMgtService(null);
     }
 }

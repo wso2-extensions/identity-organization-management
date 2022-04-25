@@ -96,6 +96,15 @@ public class OrganizationManagementConstants {
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
+     * Enum for organization types.
+     */
+    public enum OrganizationTypes {
+
+        STRUCTURAL,
+        TENANT
+    }
+
+    /**
      * Enum for organization status.
      */
     public enum OrganizationStatus {
@@ -171,6 +180,18 @@ public class OrganizationManagementConstants {
                 "To set the child organization status as active, parent organization should be in active status."),
         ERROR_CODE_CREATE_REQUEST_PARENT_ORGANIZATION_IS_DISABLED("60031", "Parent organization is disabled.",
                 "To create a child organization in organization with ID: %s, it should be in active status."),
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_EXTENSION_MISSING("60032", "Invalid field",
+                "An extension for the domain is required for tenant type organization."),
+        ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION("60033", "Unable to create the organization.",
+                "Invalid request body for tenant type organization."),
+        ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED("60034", "Unable to create the organization.",
+                "Organization type should be defined."),
+        ERROR_CODE_INVALID_ORGANIZATION_TYPE("60035", "Invalid organization type.", "The organization " +
+                "type should be 'TENANT' or 'STRUCTURAL'."),
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_REQUIRED_FIELDS_MISSING("60036", "Invalid request body.",
+                "Missing required field(s) for tenant type organization."),
+        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_UNAVAILABLE("60037", "Unable to create the organization.",
+                "A tenant with the provided domain already exists. Please provide a different domain name."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -189,7 +210,7 @@ public class OrganizationManagementConstants {
                 "name: %s exists in tenant: %s"),
         ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID("65007",
                 "Error while checking if the organization exists.",
-                "Server encountered an error while checking if the organization with ID: %s exists in tenant: %s."),
+                "Server encountered an error while checking if the organization with ID: %s exists."),
         ERROR_CODE_ERROR_PATCHING_ORGANIZATION("65008", "Unable to patch the organization.",
                 "Server encountered an error while patching the organization with ID: %s in tenant: %s."),
         ERROR_CODE_ERROR_UPDATING_ORGANIZATION("65009", "Unable to update the organization.",
@@ -241,7 +262,9 @@ public class OrganizationManagementConstants {
                 "the parent organization.", "Server encountered an error while checking the status of the parent " +
                 "organization of organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS("65025", "Unable to retrieve the status of the organization.",
-                "Server encountered an error while checking the status of the organization with ID: %s.");
+                "Server encountered an error while checking the status of the organization with ID: %s."),
+        ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION("65026", "Unable to create the organization.",
+                "Server encountered an error while creating the tenant.");
 
 
         private final String code;
