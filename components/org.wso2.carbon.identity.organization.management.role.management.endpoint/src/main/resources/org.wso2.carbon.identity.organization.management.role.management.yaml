@@ -23,38 +23,17 @@ security:
   - BasicAuth: [ ]
 
 paths:
-  /organizations/{organization-id}/roles:
+  /roles:
     get:
       summary:
         Get roles inside an organization.
       description:
         This API returs roles according to the specified filter, sort and pagination parameters.
       parameters:
-        - name: organization-id
-          in: path
-          description: ID of the organization where roles are getting retrieved.
-          required: true
-          schema:
-            type: string
-        - name: filter
-          in: query
-          description: Filter expression for filtering.
-          required: false
-          schema:
-            type: string
-        - name: startIndex
-          in: query
-          description: The 1-based index of the first query result
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: count
-          description: Specifies the desired maximum number of query results per page.
-          in: query
-          schema:
-            type: integer
-            format: int32
+        - $ref: '#/components/parameters/filterQueryParam'
+        - $ref: '#/components/parameters/limitQueryParam'
+        - $ref: '#/components/parameters/afterQueryParam'
+        - $ref: '#/components/parameters/beforeQueryParam'
       responses:
         200:
           description: Valid roles are found.
@@ -77,13 +56,6 @@ paths:
       description:
         This API creates a role inside an organization and returns the details of the created role including its unique id.
       operationId: createRole
-      parameters:
-        - name: organization-id
-          in: path
-          description: ID of the organization where the role is going to be created.
-          required: true
-          schema:
-            type: string
       requestBody:
         description: This represents a set of permissions going to be assigned to the role.
         content:
@@ -113,19 +85,13 @@ paths:
       tags:
         - Organization Role Management
 
-  /organizations/{organization-id}/roles/{role-id}:
+  /roles/{role-id}:
     get:
       summary:
         Get Role by ID
       description:
         This API returns the role details of a particular role using its unique id.
       parameters:
-        - name : organization-id
-          in : path
-          description: ID of the organization where the role is.
-          required: true
-          schema:
-            type: string
         - name: role-id
           in: path
           description: ID of the role.
@@ -156,12 +122,6 @@ paths:
       description:
         This API updates the role details and returns the updated role details using a PUT operation.
       parameters:
-        - name: organization-id
-          in : path
-          description: ID of the organization where the role is.
-          required: true
-          schema:
-            type: string
         - name: role-id
           in: path
           description: ID of the role.
@@ -200,12 +160,6 @@ paths:
       summary: Delete a role inside an organization.
       description: This API deletes a particular role inside an organization using its unique ID.
       parameters:
-        - name: organization-id
-          in : path
-          description: ID of the organization where the role is.
-          required: true
-          schema:
-            type: string
         - name: role-id
           in: path
           description: ID of the role.
@@ -233,12 +187,6 @@ paths:
       tags:
         - Organization Role Management
       parameters:
-        - name: organization-id
-          in : path
-          description: ID of the organization where the role is.
-          required: true
-          schema:
-            type: string
         - name: role-id
           in: path
           description: ID of the role.
@@ -273,6 +221,41 @@ paths:
           $ref: '#/components/responses/ErrorServerError'
 
 components:
+  parameters:
+    filterQueryParam:
+      in: query
+      name: filter
+      required: false
+      description:
+        Condition to filter the retrieval of records.
+      schema:
+        type: string
+    limitQueryParam:
+      in: query
+      name: limit
+      required: false
+      description:
+        Maximum number of records to be returned. (Should be greater than 0)
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+    beforeQueryParam:
+      in: query
+      name: before
+      required: false
+      description:
+        Points to the previous range of data that can be retrieved.
+      schema:
+        type: string
+    afterQueryParam:
+      in: query
+      name: after
+      required: false
+      description:
+        Points to the next range of data to be returned.
+      schema:
+        type: string
   schemas:
     #------------------------------------------------------------------------
     # Error response object.
@@ -305,19 +288,38 @@ components:
     RolesListResponseObject:
       type: object
       properties:
-        totalResults:
-          type: integer
-          example: 3
-        startIndex:
-          type: integer
-          example: 1
-        itemsPerPage:
-          type: integer
-          example: 3
-        resources:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+          example:
+            [
+              {
+                "href": "/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "next",
+              },  {
+              "href": "/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+              "rel": "previous",
+            }
+            ]
+        roles:
           type: array
           items:
             $ref: '#/components/schemas/RoleObj'
+    #------------------------------------------------------------------------
+    # The Link Object.
+    #------------------------------------------------------------------------
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          description: Endpoint that will return the next or previous page of data.
+        rel:
+          type: string
+          description: Describes whether the provided link is to access the next or previous page of data.
+      readOnly: true
     #------------------------------------------------------------------------
     # The Roles List Response Object.
     #------------------------------------------------------------------------

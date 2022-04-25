@@ -18,14 +18,14 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.factories;
 
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.OrganizationsApiService;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.impl.OrganizationsApiServiceImpl;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.RolesApiService;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.impl.RolesApiServiceImpl;
 
-public class OrganizationsApiServiceFactory {
+public class RolesApiServiceFactory {
 
-   private final static OrganizationsApiService service = new OrganizationsApiServiceImpl();
+   private final static RolesApiService service = new RolesApiServiceImpl();
 
-   public static OrganizationsApiService getOrganizationsApi()
+   public static RolesApiService getRolesApi()
    {
       return service;
    }

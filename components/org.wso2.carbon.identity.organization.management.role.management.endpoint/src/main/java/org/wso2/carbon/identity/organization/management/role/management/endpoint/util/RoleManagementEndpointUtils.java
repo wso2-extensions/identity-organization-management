@@ -48,6 +48,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.e
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constants.RoleManagementEndpointConstants.USER_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constants.RoleManagementEndpointConstants.V1_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_GROUP_URI;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
 
@@ -117,6 +118,22 @@ public class RoleManagementEndpointUtils {
         return error;
     }
 
+    public static URI buildURIForPagination(String paginationUrl) {
+
+        String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + PATH_SEPARATOR + paginationUrl;
+        try {
+            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
+                    build().getRelativePublicURL());
+        } catch (URLBuilderException e) {
+            LOG.error("Server encountered an error while building paginated URL for the response.", e);
+            Error error = RoleManagementEndpointUtils.getError(
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
+                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
+            throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
+        }
+    }
+
     /**
      * URI builder for Roles, Groups and Users.
      */
@@ -160,7 +177,7 @@ public class RoleManagementEndpointUtils {
          * To build a URI of a resource.
          *
          * @param organizationId The ID of the organization.
-         * @param id The ID of the resource.
+         * @param id             The ID of the resource.
          * @return URI.
          */
         public abstract URI buildURI(String organizationId, String id);

@@ -30,7 +30,7 @@
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"/>
     <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer"/>
 <!--    <bean class="org.wso2.carbon.identity.organization.management.endpoint.impl.OrganizationsApiServiceImpl"/>-->
-<!--    <bean class="org.wso2.carbon.identity.organization.management.endpoint.service.OrganizationManagementService"/>-->
+<!--    <bean class="org.wso2.carbon.identity.organization.management.endpoint.service.RoleManagementApiService"/>-->
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
 <!--            <bean class="org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApi"/>-->

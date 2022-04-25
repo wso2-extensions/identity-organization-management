@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Link;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObj;
 import javax.validation.constraints.*;
 
@@ -35,89 +36,60 @@ import javax.xml.bind.annotation.*;
 
 public class RolesListResponseObject  {
   
-    private Integer totalResults;
-    private Integer startIndex;
-    private Integer itemsPerPage;
-    private List<RoleObj> resources = null;
+    private List<Link> links = null;
+
+    private List<RoleObj> roles = null;
 
 
     /**
     **/
-    public RolesListResponseObject totalResults(Integer totalResults) {
+    public RolesListResponseObject links(List<Link> links) {
 
-        this.totalResults = totalResults;
+        this.links = links;
         return this;
     }
     
-    @ApiModelProperty(example = "3", value = "")
-    @JsonProperty("totalResults")
+    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
+    @JsonProperty("links")
     @Valid
-    public Integer getTotalResults() {
-        return totalResults;
+    public List<Link> getLinks() {
+        return links;
     }
-    public void setTotalResults(Integer totalResults) {
-        this.totalResults = totalResults;
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 
-    /**
-    **/
-    public RolesListResponseObject startIndex(Integer startIndex) {
-
-        this.startIndex = startIndex;
+    public RolesListResponseObject addLinksItem(Link linksItem) {
+        if (this.links == null) {
+            this.links = new ArrayList<>();
+        }
+        this.links.add(linksItem);
         return this;
     }
-    
-    @ApiModelProperty(example = "1", value = "")
-    @JsonProperty("startIndex")
-    @Valid
-    public Integer getStartIndex() {
-        return startIndex;
-    }
-    public void setStartIndex(Integer startIndex) {
-        this.startIndex = startIndex;
-    }
 
-    /**
+        /**
     **/
-    public RolesListResponseObject itemsPerPage(Integer itemsPerPage) {
+    public RolesListResponseObject roles(List<RoleObj> roles) {
 
-        this.itemsPerPage = itemsPerPage;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "3", value = "")
-    @JsonProperty("itemsPerPage")
-    @Valid
-    public Integer getItemsPerPage() {
-        return itemsPerPage;
-    }
-    public void setItemsPerPage(Integer itemsPerPage) {
-        this.itemsPerPage = itemsPerPage;
-    }
-
-    /**
-    **/
-    public RolesListResponseObject resources(List<RoleObj> resources) {
-
-        this.resources = resources;
+        this.roles = roles;
         return this;
     }
     
     @ApiModelProperty(value = "")
-    @JsonProperty("resources")
+    @JsonProperty("roles")
     @Valid
-    public List<RoleObj> getResources() {
-        return resources;
+    public List<RoleObj> getRoles() {
+        return roles;
     }
-    public void setResources(List<RoleObj> resources) {
-        this.resources = resources;
+    public void setRoles(List<RoleObj> roles) {
+        this.roles = roles;
     }
 
-    public RolesListResponseObject addResourcesItem(RoleObj resourcesItem) {
-        if (this.resources == null) {
-            this.resources = new ArrayList<>();
+    public RolesListResponseObject addRolesItem(RoleObj rolesItem) {
+        if (this.roles == null) {
+            this.roles = new ArrayList<>();
         }
-        this.resources.add(resourcesItem);
+        this.roles.add(rolesItem);
         return this;
     }
 
@@ -133,15 +105,13 @@ public class RolesListResponseObject  {
             return false;
         }
         RolesListResponseObject rolesListResponseObject = (RolesListResponseObject) o;
-        return Objects.equals(this.totalResults, rolesListResponseObject.totalResults) &&
-            Objects.equals(this.startIndex, rolesListResponseObject.startIndex) &&
-            Objects.equals(this.itemsPerPage, rolesListResponseObject.itemsPerPage) &&
-            Objects.equals(this.resources, rolesListResponseObject.resources);
+        return Objects.equals(this.links, rolesListResponseObject.links) &&
+            Objects.equals(this.roles, rolesListResponseObject.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(totalResults, startIndex, itemsPerPage, resources);
+        return Objects.hash(links, roles);
     }
 
     @Override
@@ -150,10 +120,8 @@ public class RolesListResponseObject  {
         StringBuilder sb = new StringBuilder();
         sb.append("class RolesListResponseObject {\n");
         
-        sb.append("    totalResults: ").append(toIndentedString(totalResults)).append("\n");
-        sb.append("    startIndex: ").append(toIndentedString(startIndex)).append("\n");
-        sb.append("    itemsPerPage: ").append(toIndentedString(itemsPerPage)).append("\n");
-        sb.append("    resources: ").append(toIndentedString(resources)).append("\n");
+        sb.append("    links: ").append(toIndentedString(links)).append("\n");
+        sb.append("    roles: ").append(toIndentedString(roles)).append("\n");
         sb.append("}");
         return sb.toString();
     }

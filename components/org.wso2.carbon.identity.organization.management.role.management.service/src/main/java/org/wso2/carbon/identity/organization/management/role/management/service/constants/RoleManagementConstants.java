@@ -92,6 +92,10 @@ public class RoleManagementConstants {
                 "Server encountered an error while building URL for group with groupId %s"),
         ERROR_CODE_ERROR_BUILDING_USER_URI("ROLE-65013", "Unable to build create user URI.",
                 "Server encountered an error while building URL for user with userId %s"),
+        ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT("ROLE-65014",
+                "Invalid pagination parameters.", "The 'limit' should not be negative."),
+        ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL("65015", "Unable to retrieve the roles.",
+                "Server encountered an error while building paginated response URL."),
         // Server Errors (ROLE-65200 - ROLE-65999)
         ERROR_ADDING_ROLE_TO_ORGANIZATION("ROLE-65201", "Error adding role to the organization : %s.",
                 "Server encountered an error while adding a role to an organization."),
