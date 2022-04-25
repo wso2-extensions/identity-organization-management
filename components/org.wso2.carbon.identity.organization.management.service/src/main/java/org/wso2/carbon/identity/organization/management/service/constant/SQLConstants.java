@@ -55,7 +55,7 @@ public class SQLConstants {
             "UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE UM_ORG.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
-            "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
+            "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
             "UM_ORG.UM_ID WHERE ";
 
     public static final String GET_ORGANIZATIONS_BY_TENANT_ID_TAIL = "UM_USER_ROLE_ORG.UM_USER_ID = :" +
@@ -118,8 +118,6 @@ public class SQLConstants {
 
     public static final String GET_ORGANIZATION_STATUS = "SELECT UM_STATUS FROM UM_ORG WHERE UM_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
-
-    public static final String COUNT_COLUMN = "COUNT(1)";
 
     /**
      * SQL Placeholders
