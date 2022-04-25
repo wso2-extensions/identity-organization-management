@@ -75,10 +75,11 @@ public class OrganizationManagementConstants {
     static {
 
         attributeColumnMap.put(ORGANIZATION_NAME_FIELD, "UM_ORG_NAME");
-        attributeColumnMap.put(ORGANIZATION_ID_FIELD, "UM_ID");
+        attributeColumnMap.put(ORGANIZATION_ID_FIELD, "UM_ORG.UM_ID");
         attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, "UM_ORG_DESCRIPTION");
         attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, "UM_CREATED_TIME");
         attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, "UM_LAST_MODIFIED");
+        attributeColumnMap.put(PARENT_ID_FIELD, "UM_PARENT_ID");
         attributeColumnMap.put(PAGINATION_AFTER, "UM_CREATED_TIME");
         attributeColumnMap.put(PAGINATION_BEFORE, "UM_CREATED_TIME");
     }

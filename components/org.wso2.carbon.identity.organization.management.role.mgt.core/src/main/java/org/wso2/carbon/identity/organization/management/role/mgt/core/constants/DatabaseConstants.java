@@ -92,7 +92,7 @@ public class DatabaseConstants {
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ORG_ID + "; AND ASSIGNED_AT = :" +
                 SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ASSIGNED_AT + ";";
         public static final String FIND_ALL_CHILD_ORG_IDS =
-                "WITH childOrgs(UM_ID, UM_PARENT_ID) AS ( SELECT UM_ID , UM_PARENT_ID FROM UM_ORG WHERE " +
+                "WITH RECURSIVE childOrgs(UM_ID, UM_PARENT_ID) AS ( SELECT UM_ID , UM_PARENT_ID FROM UM_ORG WHERE " +
                         "UM_PARENT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
                         "; UNION ALL SELECT UO.UM_ID, UO.UM_PARENT_ID FROM UM_ORG UO JOIN childOrgs CO ON CO.UM_ID = " +
                         "UO.UM_PARENT_ID)" +
