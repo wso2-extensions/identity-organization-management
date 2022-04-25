@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -70,6 +71,7 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.handleServerErrorResponse;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -109,13 +111,12 @@ public class OrganizationManagementService {
      * Delete an organization.
      *
      * @param organizationId Unique identifier for the requested organization to be deleted.
-     * @param force          Enforces the forceful deletion of child organizations belonging to this organization.
      * @return Organization deletion response.
      */
-    public Response deleteOrganization(String organizationId, Boolean force) {
+    public Response deleteOrganization(String organizationId) {
 
         try {
-            getOrganizationManager().deleteOrganization(organizationId, Boolean.TRUE.equals(force));
+            getOrganizationManager().deleteOrganization(organizationId);
             return Response.noContent().build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
@@ -213,7 +214,13 @@ public class OrganizationManagementService {
         organization.setId(generateUniqueID());
         organization.setName(organizationPOSTRequest.getName());
         organization.setDescription(organizationPOSTRequest.getDescription());
-        organization.getParent().setId(organizationPOSTRequest.getParentId());
+        organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+        String parentId = organizationPOSTRequest.getParentId();
+        if (StringUtils.isNotBlank(parentId)) {
+            organization.getParent().setId(parentId);
+        } else {
+            organization.getParent().setId(ROOT);
+        }
         List<Attribute> organizationAttributes = organizationPOSTRequest.getAttributes();
         if (CollectionUtils.isNotEmpty(organizationAttributes)) {
             organization.setAttributes(organizationAttributes.stream().map(attribute ->
@@ -228,6 +235,15 @@ public class OrganizationManagementService {
         organizationResponse.setId(organization.getId());
         organizationResponse.setName(organization.getName());
         organizationResponse.setDescription(organization.getDescription());
+
+        OrganizationResponse.StatusEnum status;
+        try {
+            status = OrganizationResponse.StatusEnum.valueOf(organization.getStatus());
+        } catch (IllegalArgumentException e) {
+            status = OrganizationResponse.StatusEnum.DISABLED;
+        }
+        organizationResponse.setStatus(status);
+
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
         ParentOrganizationDO parentOrganizationDO = organization.getParent();
@@ -250,6 +266,15 @@ public class OrganizationManagementService {
         organizationResponse.setDescription(organization.getDescription());
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
+
+        GetOrganizationResponse.StatusEnum status;
+        try {
+            status = GetOrganizationResponse.StatusEnum.valueOf(organization.getStatus());
+        } catch (IllegalArgumentException e) {
+            status = GetOrganizationResponse.StatusEnum.DISABLED;
+        }
+        organizationResponse.setStatus(status);
+
         ParentOrganizationDO parentOrganizationDO = organization.getParent();
         if (parentOrganizationDO != null) {
             organizationResponse.setParent(getParentOrganization(parentOrganizationDO));
@@ -280,7 +305,7 @@ public class OrganizationManagementService {
 
         ParentOrganization parentOrganization = new ParentOrganization();
         parentOrganization.setId(parentOrganizationDO.getId());
-        parentOrganization.setSelf(parentOrganizationDO.getSelf());
+        parentOrganization.setRef(parentOrganizationDO.getRef());
         return parentOrganization;
     }
 
@@ -291,7 +316,7 @@ public class OrganizationManagementService {
             for (ChildOrganizationDO childOrganizationDO : organization.getChildOrganizations()) {
                 ChildOrganization childOrganization = new ChildOrganization();
                 childOrganization.setId(childOrganizationDO.getId());
-                childOrganization.setSelf(childOrganizationDO.getSelf());
+                childOrganization.setRef(childOrganizationDO.getRef());
                 childOrganizations.add(childOrganization);
             }
             if (!childOrganizations.isEmpty()) {
@@ -381,7 +406,7 @@ public class OrganizationManagementService {
                 BasicOrganizationResponse organizationDTO = new BasicOrganizationResponse();
                 organizationDTO.setId(organization.getId());
                 organizationDTO.setName(organization.getName());
-                organizationDTO.setSelf(buildURIForBody(organization.getId()));
+                organizationDTO.setRef(buildURIForBody(organization.getId()));
                 organizationDTOs.add(organizationDTO);
             }
             organizationsResponse.setOrganizations(organizationDTOs);
@@ -398,6 +423,17 @@ public class OrganizationManagementService {
 
         organization.setName(organizationPUTRequest.getName());
         organization.setDescription(organizationPUTRequest.getDescription());
+
+        OrganizationPUTRequest.StatusEnum statusEnum = organizationPUTRequest.getStatus();
+        if (statusEnum != null) {
+            String organizationStatus = statusEnum.toString();
+            if (StringUtils.isNotBlank(organizationStatus)) {
+                organization.setStatus(organizationStatus);
+            }
+        } else {
+            organization.setStatus(null);
+        }
+
         List<Attribute> organizationAttributes = organizationPUTRequest.getAttributes();
         if (CollectionUtils.isNotEmpty(organizationAttributes)) {
             organization.setAttributes(organizationAttributes.stream().map(attribute ->

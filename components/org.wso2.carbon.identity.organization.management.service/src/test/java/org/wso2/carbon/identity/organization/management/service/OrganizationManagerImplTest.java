@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.internal.OrganizationManagementDataHolder;
@@ -48,6 +49,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
@@ -116,6 +118,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
         mockCarbonContext();
 
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationStatus(anyString(),
+                anyString())).thenReturn(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+
         mockAuthorizationManager();
         when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
@@ -128,7 +133,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         mockBuildURI();
 
-        organizationManager.addOrganization(sampleOrganization);
+        Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
+        Assert.assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
+        Assert.assertEquals(addedOrganization.getName(), sampleOrganization.getName());
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -245,6 +252,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationIdByName(anyInt(),
                 anyString(), anyString())).thenReturn(PARENT_ID);
 
+        mockAuthorizationManager();
+        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
         OrganizationManagementAuthorizationManager authorizationManager =
                 mock(OrganizationManagementAuthorizationManager.class);
         mockStatic(OrganizationManagementAuthorizationManager.class);
@@ -363,39 +372,29 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         organizationManager.getOrganizations(10, "MjAyNjkzMjg=", null, "ASC", "name co xyz");
     }
 
-    @DataProvider(name = "dataForDeleteOrganization")
-    public Object[][] dataForDeleteOrganization() {
-
-        return new Object[][]{
-
-                {true},
-                {false}
-        };
-    }
-
-    @Test(dataProvider = "dataForDeleteOrganization")
-    public void testDeleteOrganization(boolean force) throws Exception {
+    @Test
+    public void testDeleteOrganization() throws Exception {
 
         mockCarbonContext();
         when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
                 anyString(), anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, force);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
-    @Test(dataProvider = "dataForDeleteOrganization", expectedExceptions = OrganizationManagementClientException.class)
-    public void testDeleteOrganizationWithEmptyOrganizationId(boolean force) throws Exception {
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testDeleteOrganizationWithEmptyOrganizationId() throws Exception {
 
         mockCarbonContext();
-        organizationManager.deleteOrganization(StringUtils.EMPTY, force);
+        organizationManager.deleteOrganization(StringUtils.EMPTY);
     }
 
-    @Test(dataProvider = "dataForDeleteOrganization", expectedExceptions = OrganizationManagementClientException.class)
-    public void testDeleteOrganizationWithInvalidOrganizationId(boolean force) throws Exception {
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testDeleteOrganizationWithInvalidOrganizationId() throws Exception {
 
         mockCarbonContext();
         when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
                 anyString(), anyString())).thenReturn(false);
-        organizationManager.deleteOrganization(ORG_ID, force);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -406,18 +405,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
                 anyString(), anyString())).thenReturn(true);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().hasChildOrganizations(anyString(),
                 anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, false);
-    }
-
-    @Test
-    public void testForceDeleteOrganizationWithChildOrganizations() throws Exception {
-
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().hasChildOrganizations(anyString(),
-                anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, true);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
     @Test
@@ -603,8 +591,10 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private Organization getOrganization(String name, String parent) {
 
         Organization organization = new Organization();
+        organization.setId(UUID.randomUUID().toString());
         organization.setName(name);
         organization.setDescription(ORG_DESCRIPTION);
+        organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
         organization.getParent().setId(parent);
         return organization;
     }

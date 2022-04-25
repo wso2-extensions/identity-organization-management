@@ -33,7 +33,7 @@ import javax.xml.bind.annotation.*;
 public class ChildOrganization  {
   
     private String id;
-    private String self;
+    private String ref;
 
     /**
     **/
@@ -57,22 +57,22 @@ public class ChildOrganization  {
 
     /**
     **/
-    public ChildOrganization self(String self) {
+    public ChildOrganization ref(String ref) {
 
-        this.self = self;
+        this.ref = ref;
         return this;
     }
     
     @ApiModelProperty(example = "t/carbon.super/api/identity/organization-mgt/v1.0/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14", required = true, value = "")
-    @JsonProperty("self")
+    @JsonProperty("ref")
     @Valid
-    @NotNull(message = "Property self cannot be null.")
+    @NotNull(message = "Property ref cannot be null.")
 
-    public String getSelf() {
-        return self;
+    public String getRef() {
+        return ref;
     }
-    public void setSelf(String self) {
-        this.self = self;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
 
@@ -88,12 +88,12 @@ public class ChildOrganization  {
         }
         ChildOrganization childOrganization = (ChildOrganization) o;
         return Objects.equals(this.id, childOrganization.id) &&
-            Objects.equals(this.self, childOrganization.self);
+            Objects.equals(this.ref, childOrganization.ref);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, self);
+        return Objects.hash(id, ref);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class ChildOrganization  {
         sb.append("class ChildOrganization {\n");
         
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
-        sb.append("    self: ").append(toIndentedString(self)).append("\n");
+        sb.append("    ref: ").append(toIndentedString(ref)).append("\n");
         sb.append("}");
         return sb.toString();
     }

@@ -34,7 +34,7 @@ public class BasicOrganizationResponse  {
   
     private String id;
     private String name;
-    private String self;
+    private String ref;
 
     /**
     **/
@@ -78,22 +78,22 @@ public class BasicOrganizationResponse  {
 
     /**
     **/
-    public BasicOrganizationResponse self(String self) {
+    public BasicOrganizationResponse ref(String ref) {
 
-        this.self = self;
+        this.ref = ref;
         return this;
     }
     
     @ApiModelProperty(example = "t/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b", required = true, value = "")
-    @JsonProperty("self")
+    @JsonProperty("ref")
     @Valid
-    @NotNull(message = "Property self cannot be null.")
+    @NotNull(message = "Property ref cannot be null.")
 
-    public String getSelf() {
-        return self;
+    public String getRef() {
+        return ref;
     }
-    public void setSelf(String self) {
-        this.self = self;
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
 
@@ -110,12 +110,12 @@ public class BasicOrganizationResponse  {
         BasicOrganizationResponse basicOrganizationResponse = (BasicOrganizationResponse) o;
         return Objects.equals(this.id, basicOrganizationResponse.id) &&
             Objects.equals(this.name, basicOrganizationResponse.name) &&
-            Objects.equals(this.self, basicOrganizationResponse.self);
+            Objects.equals(this.ref, basicOrganizationResponse.ref);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, self);
+        return Objects.hash(id, name, ref);
     }
 
     @Override
@@ -126,7 +126,7 @@ public class BasicOrganizationResponse  {
         
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
-        sb.append("    self: ").append(toIndentedString(self)).append("\n");
+        sb.append("    ref: ").append(toIndentedString(ref)).append("\n");
         sb.append("}");
         return sb.toString();
     }
