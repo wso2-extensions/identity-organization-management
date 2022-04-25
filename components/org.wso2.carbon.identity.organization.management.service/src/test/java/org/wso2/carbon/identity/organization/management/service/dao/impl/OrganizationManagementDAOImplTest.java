@@ -29,6 +29,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.database.utils.jdbc.JdbcUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
@@ -103,6 +104,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setDescription("org1 description.");
             organization.setCreated(Instant.now());
             organization.setLastModified(Instant.now());
+            organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
 
             ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
             parentOrganizationDO.setId(rootOrgId);
@@ -113,6 +115,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setAttributes(attributes);
 
             organizationManagementDAO.addOrganization(TENANT_ID, TENANT_DOMAIN, organization);
+            Assert.assertNotNull(organizationManagementDAO.getOrganization(TENANT_ID, orgId, TENANT_DOMAIN));
         }
     }
 
@@ -246,6 +249,22 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             } else if (StringUtils.equals(key, INVALID_DATA)) {
                 Assert.assertFalse(attributeExistByKey);
             }
+        }
+    }
+
+    @Test
+    public void testDeleteOrganization() throws Exception {
+
+        String id = generateUniqueID();
+        storeOrganization(id, "Dummy organization",
+                "This is a sample organization to test the delete functionality.", rootOrgId);
+
+        DataSource dataSource = mockDataSource();
+        try (Connection connection = getConnection()) {
+            Connection spy = spyConnection(connection);
+            when(dataSource.getConnection()).thenReturn(spy);
+            organizationManagementDAO.deleteOrganization(TENANT_ID, id, TENANT_DOMAIN);
+            Assert.assertNull(organizationManagementDAO.getOrganization(TENANT_ID, id, TENANT_DOMAIN));
         }
     }
 

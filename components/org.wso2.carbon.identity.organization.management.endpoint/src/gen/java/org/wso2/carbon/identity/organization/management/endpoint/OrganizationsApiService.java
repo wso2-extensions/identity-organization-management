@@ -43,7 +43,7 @@ public interface OrganizationsApiService {
 
       public Response organizationsGet(String filter, Integer limit, String after, String before);
 
-      public Response organizationsOrganizationIdDelete(String organizationId, Boolean force);
+      public Response organizationsOrganizationIdDelete(String organizationId);
 
       public Response organizationsOrganizationIdGet(String organizationId, Boolean showChildren);
 

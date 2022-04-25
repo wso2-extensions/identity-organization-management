@@ -22,6 +22,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_CREATED_TIME_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_DESCRIPTION_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_ID_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_LAST_MODIFIED_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_NAME_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.VIEW_PARENT_ID_COLUMN;
+
 /**
  * Contains constants related to organization management.
  */
@@ -42,6 +49,7 @@ public class OrganizationManagementConstants {
     public static final String PATCH_OP_REPLACE = "REPLACE";
     public static final String PATCH_PATH_ORG_NAME = "/name";
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
+    public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
 
     public static final String PARENT_ID_FIELD = "parentId";
@@ -50,11 +58,12 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_DESCRIPTION_FIELD = "description";
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
+    public static final String ORGANIZATION_STATUS_FIELD = "status";
 
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
 
-    public static final String CREATE_ROOT_ORGANIZATION_PERMISSION = "/permission/admin/";
+    public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -74,17 +83,26 @@ public class OrganizationManagementConstants {
 
     static {
 
-        attributeColumnMap.put(ORGANIZATION_NAME_FIELD, "UM_ORG_NAME");
-        attributeColumnMap.put(ORGANIZATION_ID_FIELD, "UM_ORG.UM_ID");
-        attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, "UM_ORG_DESCRIPTION");
-        attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, "UM_CREATED_TIME");
-        attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, "UM_LAST_MODIFIED");
-        attributeColumnMap.put(PARENT_ID_FIELD, "UM_PARENT_ID");
-        attributeColumnMap.put(PAGINATION_AFTER, "UM_CREATED_TIME");
-        attributeColumnMap.put(PAGINATION_BEFORE, "UM_CREATED_TIME");
+        attributeColumnMap.put(ORGANIZATION_NAME_FIELD, VIEW_NAME_COLUMN);
+        attributeColumnMap.put(ORGANIZATION_ID_FIELD, "UM_ORG." + VIEW_ID_COLUMN);
+        attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, VIEW_DESCRIPTION_COLUMN);
+        attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, VIEW_CREATED_TIME_COLUMN);
+        attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, VIEW_LAST_MODIFIED_COLUMN);
+        attributeColumnMap.put(PARENT_ID_FIELD, VIEW_PARENT_ID_COLUMN);
+        attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
+        attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
 
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
+
+    /**
+     * Enum for organization status.
+     */
+    public enum OrganizationStatus {
+
+        ACTIVE,
+        DISABLED
+    }
 
     /**
      * Enum for error messages related to organization management.
@@ -145,6 +163,14 @@ public class OrganizationManagementConstants {
                 "cursor used for pagination."),
         ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION("60027", "Unable to create the organization.",
                 "User is not authorized to create the root organization in tenant: %s."), // 403
+        ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS("60028", "Unsupported status provided.",
+                "Organization status must be 'ACTIVE' or 'DISABLED'."),
+        ERROR_CODE_ACTIVE_CHILD_ORGANIZATIONS_EXIST("60029", "Active child organizations exist.",
+                "Organization with ID: %s can't be disabled as there are active child organizations."),
+        ERROR_CODE_PARENT_ORGANIZATION_IS_DISABLED("60030", "Parent organization is disabled.",
+                "To set the child organization status as active, parent organization should be in active status."),
+        ERROR_CODE_CREATE_REQUEST_PARENT_ORGANIZATION_IS_DISABLED("60031", "Parent organization is disabled.",
+                "To create a child organization in organization with ID: %s, it should be in active status."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -204,7 +230,18 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65023", "Unable to get role names.",
                 "Server encountered an error while retrieving role names."),
         ERROR_CODE_ERROR_RETRIEVING_DATA_FROM_IDENTITY_DB("65024", "Unable to retrieve data from Identity Database.",
-                "Server encountered an error while retrieving data from identity database.");
+                "Server encountered an error while retrieving data from identity database."),
+        ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_TO_ROOT_AUTHORIZATION("65022", "Unable to create the " +
+                "organization.", "Server encountered an error while evaluating authorization of user to create " +
+                "a child organization in root of tenant: %s."),
+        ERROR_CODE_ERROR_CHECKING_ACTIVE_CHILD_ORGANIZATIONS("65023", "Unable to retrieve active child " +
+                "organizations.", "Server encountered an error while retrieving the active child organizations " +
+                "of organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_PARENT_ORGANIZATION_STATUS("65024", "Unable to retrieve the status of " +
+                "the parent organization.", "Server encountered an error while checking the status of the parent " +
+                "organization of organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS("65025", "Unable to retrieve the status of the organization.",
+                "Server encountered an error while checking the status of the organization with ID: %s.");
 
 
         private final String code;

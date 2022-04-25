@@ -29,6 +29,7 @@ public class OrganizationRowDataCollector {
     private String name;
     private String description;
     private String parentId;
+    private String status;
     private Instant created;
     private Instant lastModified;
     private String attributeKey;
@@ -112,5 +113,15 @@ public class OrganizationRowDataCollector {
     public void setAttributeValue(String attributeValue) {
 
         this.attributeValue = attributeValue;
+    }
+
+    public String getStatus() {
+
+        return status;
+    }
+
+    public void setStatus(String status) {
+
+        this.status = status;
     }
 }

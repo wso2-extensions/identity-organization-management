@@ -46,9 +46,9 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     }
 
     @Override
-    public Response organizationsOrganizationIdDelete(String organizationId, Boolean force) {
+    public Response organizationsOrganizationIdDelete(String organizationId) {
 
-        return organizationManagementService.deleteOrganization(organizationId, force);
+        return organizationManagementService.deleteOrganization(organizationId);
     }
 
     @Override

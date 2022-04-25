@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.service.cache.Organizati
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationByNameCache;
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationByNameCacheKey;
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationCacheEntry;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -131,12 +132,11 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain, boolean force)
+    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain)
             throws OrganizationManagementServerException {
 
         deleteOrganizationCacheById(organizationId, tenantDomain);
-        deleteChildOrganizationCache(tenantDomain, force);
-        organizationManagementDAO.deleteOrganization(tenantId, organizationId, tenantDomain, force);
+        organizationManagementDAO.deleteOrganization(tenantId, organizationId, tenantDomain);
     }
 
     @Override
@@ -185,6 +185,44 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             addChildOrganizationsToCache(organization, childOrganizationIds, tenantDomain);
         }
         return childOrganizationIds;
+    }
+
+    @Override
+    public boolean hasActiveChildOrganizations(String organizationId) throws OrganizationManagementServerException {
+
+        return organizationManagementDAO.hasActiveChildOrganizations(organizationId);
+    }
+
+    @Override
+    public boolean isParentOrganizationDisabled(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
+        if (organization != null) {
+            ParentOrganizationDO parent = organization.getParent();
+            if (parent != null) {
+                String parentId = parent.getId();
+                if (StringUtils.isNotBlank(parentId)) {
+                    Organization parentOrganization = getOrganizationFromCacheById(parentId, tenantDomain);
+                    if (parentOrganization != null) {
+                        return StringUtils.equals(parentOrganization.getStatus(),
+                                OrganizationManagementConstants.OrganizationStatus.DISABLED.toString());
+                    }
+                }
+            }
+        }
+        return organizationManagementDAO.isParentOrganizationDisabled(organizationId, tenantDomain);
+    }
+
+    @Override
+    public String getOrganizationStatus(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
+        if (organization != null) {
+            return organization.getStatus();
+        }
+        return organizationManagementDAO.getOrganizationStatus(organizationId, tenantDomain);
     }
 
     private Organization getOrganizationFromCacheById(String organizationId, String tenantDomain) {
@@ -323,30 +361,5 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
 
         organizationByIdCache.clearCacheEntry(organizationByIdCacheKey, tenantDomain);
         organizationByNameCache.clearCacheEntry(organizationByNameCacheKey, tenantDomain);
-    }
-
-    /*
-    TODO: improve to support the cascade deletion of sub organizations when the parent organization is deleted,
-     instead of clearing the cache based only on the tenant domain.
-     */
-    private void deleteChildOrganizationCache(String tenantDomain, boolean force) {
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Clearing child organizations related cache entries in tenant domain: %s",
-                    tenantDomain));
-        }
-        childOrganizationsCache.clear(tenantDomain);
-
-        /*
-        If the delete organization is defined as a forceful delete, it is required to remove child organization cache
-        entries as well.
-        Since the current implementation doesn't have a way to identify the child organization entries that should be
-        removed from the cache, the entire cache based on the tenant domain has been removed to avoid any incorrect
-        behaviors that can occur as a result of a forceful organization delete.
-         */
-        if (force) {
-            organizationByIdCache.clear(tenantDomain);
-            organizationByNameCache.clear(tenantDomain);
-        }
     }
 }
