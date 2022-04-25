@@ -26,21 +26,19 @@ public class SQLConstants {
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
 
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
-            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS, UM_TENANT_ID, UM_PARENT_ID) VALUES (:" +
+            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS, UM_TENANT_ID, UM_PARENT_ID, UM_ORG_TYPE) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_DESCRIPTION + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_CREATED_TIME + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_LAST_MODIFIED + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_STATUS + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID
-            + ";)";
+            + ";, :" +  SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE + ";)";
 
-    public static final String CHECK_ORGANIZATION_EXIST_BY_NAME = "SELECT COUNT(1) FROM UM_ORG WHERE UM_TENANT_ID = " +
-            ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ORG_NAME = :" +
+    public static final String CHECK_ORGANIZATION_EXIST_BY_NAME = "SELECT COUNT(1) FROM UM_ORG WHERE UM_ORG_NAME = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";";
 
-    public static final String CHECK_ORGANIZATION_EXIST_BY_ID = "SELECT COUNT(1) FROM UM_ORG WHERE UM_TENANT_ID = " +
-            ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + "; AND UM_ID = :" +
+    public static final String CHECK_ORGANIZATION_EXIST_BY_ID = "SELECT COUNT(1) FROM UM_ORG WHERE UM_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String GET_ORGANIZATION_ID_BY_NAME = "SELECT UM_ID FROM UM_ORG WHERE UM_TENANT_ID = " +
@@ -52,10 +50,9 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE + ";)";
 
     public static final String GET_ORGANIZATION_BY_ID = "SELECT UM_ORG.UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
-            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS, UM_PARENT_ID, UM_ATTRIBUTE_KEY, UM_ATTRIBUTE_VALUE FROM " +
-            "UM_ORG LEFT OUTER JOIN UM_ORG_ATTRIBUTE ON UM_ORG.UM_ID = UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE " +
-            "UM_ORG.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "; AND UM_TENANT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
+            "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS, UM_PARENT_ID, UM_ORG_TYPE, UM_TENANT_ID, " +
+            "UM_ATTRIBUTE_KEY, UM_ATTRIBUTE_VALUE FROM UM_ORG LEFT OUTER JOIN UM_ORG_ATTRIBUTE ON UM_ORG.UM_ID = " +
+            "UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE UM_ORG.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String GET_ORGANIZATIONS_BY_TENANT_ID = "SELECT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
             "UM_ORG.UM_CREATED_TIME FROM UM_ORG INNER JOIN UM_USER_ROLE_ORG ON UM_USER_ROLE_ORG.ORG_ID = " +
@@ -110,8 +107,7 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";";
 
     public static final String GET_CHILD_ORGANIZATIONS = "SELECT UM_ID FROM UM_ORG WHERE UM_PARENT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND UM_TENANT_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID + ";";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + ";";
 
     public static final String CHECK_CHILD_ORGANIZATIONS_STATUS = "SELECT COUNT(1) FROM UM_ORG WHERE UM_PARENT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND UM_STATUS = :" +
@@ -133,6 +129,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_NAME_NAME = "NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_DESCRIPTION = "DESCRIPTION";
+        public static final String DB_SCHEMA_COLUMN_NAME_TYPE = "TYPE";
         public static final String DB_SCHEMA_COLUMN_NAME_CREATED_TIME = "CREATED_TIME";
         public static final String DB_SCHEMA_COLUMN_NAME_LAST_MODIFIED = "LAST_MODIFIED";
         public static final String DB_SCHEMA_COLUMN_NAME_TENANT_ID = "TENANT_ID";
