@@ -245,13 +245,6 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_EVALUATING_ADD_ROOT_ORGANIZATION_AUTHORIZATION("65021", "Unable to create the organization.",
                 "Server encountered an error while evaluating authorization of user to create the root " +
                         "organization in tenant: %s."),
-        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65022",
-                "Unable to add forced organization-user-role mappings.",
-                "Server encountered an error while creating user role mappings."),
-        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65023", "Unable to get role names.",
-                "Server encountered an error while retrieving role names."),
-        ERROR_CODE_ERROR_RETRIEVING_DATA_FROM_IDENTITY_DB("65024", "Unable to retrieve data from Identity Database.",
-                "Server encountered an error while retrieving data from identity database."),
         ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_TO_ROOT_AUTHORIZATION("65022", "Unable to create the " +
                 "organization.", "Server encountered an error while evaluating authorization of user to create " +
                 "a child organization in root of tenant: %s."),
@@ -264,7 +257,14 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS("65025", "Unable to retrieve the status of the organization.",
                 "Server encountered an error while checking the status of the organization with ID: %s."),
         ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION("65026", "Unable to create the organization.",
-                "Server encountered an error while creating the tenant.");
+                "Server encountered an error while creating the tenant."),
+        ERROR_CODE_ERROR_ADDING_ORGANIZATION_ROLE_MAPPING("65027",
+                "Unable to add forced organization-user-role mappings.",
+                "Server encountered an error while creating user role mappings."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_NAMES("65028", "Unable to get role names.",
+                "Server encountered an error while retrieving role names."),
+        ERROR_CODE_ERROR_RETRIEVING_DATA_FROM_IDENTITY_DB("65029", "Unable to retrieve data from Identity Database.",
+                "Server encountered an error while retrieving data from identity database.");
 
 
         private final String code;
