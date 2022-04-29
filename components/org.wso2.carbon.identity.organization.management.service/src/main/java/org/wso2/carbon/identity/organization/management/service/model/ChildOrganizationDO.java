@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.management.service.model;
 public class ChildOrganizationDO {
 
     private String id;
-    private String self;
+    private String ref;
 
     public String getId() {
 
@@ -36,13 +36,13 @@ public class ChildOrganizationDO {
         this.id = id;
     }
 
-    public String getSelf() {
+    public String getRef() {
 
-        return self;
+        return ref;
     }
 
-    public void setSelf(String self) {
+    public void setRef(String ref) {
 
-        this.self = self;
+        this.ref = ref;
     }
 }

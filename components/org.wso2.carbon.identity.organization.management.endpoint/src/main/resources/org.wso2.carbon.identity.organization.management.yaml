@@ -163,7 +163,7 @@ paths:
         - Organization
     put:
       description:
-        This API provides the capability to update a secret type by name.
+        This API provides the capability to update an organization by its id.
       summary:
         Update an organization by ID.
       parameters:
@@ -213,7 +213,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/forceQueryParam'
       responses:
         '204':
           description: Successfully deleted
@@ -509,15 +508,6 @@ components:
       schema:
         type: boolean
         default: false
-    forceQueryParam:
-      in: query
-      name: force
-      required: false
-      description:
-        Enforces the forceful deletion of an organization along with the belonging sub organizations.
-      schema:
-        type: boolean
-        default: false
 
   schemas:
     #-----------------------------------------------------
@@ -550,7 +540,7 @@ components:
       type: object
       required:
         - name
-        - parentId
+        - type
       properties:
         name:
           type: string
@@ -558,9 +548,20 @@ components:
         description:
           type: string
           example: "Building constructions"
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain. This attribute should only be present for tenant type organization.
         parentId:
           type: string
           example: "b4526d91-a8bf-43d2-8b14-c548cf73065b"
+          description: "If the parentId is not present, the ROOT will be taken as the parent organization."
         attributes:
           type: array
           items:
@@ -569,6 +570,7 @@ components:
       type: object
       required:
         - name
+        - status
       properties:
         name:
           type: string
@@ -576,6 +578,10 @@ components:
         description:
           type: string
           example: "Building constructions"
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+          example: ACTIVE
         attributes:
           type: array
           items:
@@ -629,7 +635,7 @@ components:
       required:
         - id
         - name
-        - self
+        - ref
       properties:
         id:
           type: string
@@ -637,7 +643,7 @@ components:
         name:
           type: string
           example: 'ABC Builders'
-        self:
+        ref:
           type: string
           example: 't/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     OrganizationResponse:
@@ -645,6 +651,9 @@ components:
       required:
         - id
         - name
+        - status
+        - created
+        - lastModified
       properties:
         id:
           type: string
@@ -655,12 +664,26 @@ components:
         description:
           type: string
           example: 'Building constructions'
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+          example: ACTIVE
         created:
           type: string
           example: '2021-10-25T12:31:53.406Z'
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         attributes:
@@ -672,6 +695,9 @@ components:
       required:
         - id
         - name
+        - status
+        - created
+        - lastModified
       properties:
         id:
           type: string
@@ -682,12 +708,26 @@ components:
         description:
           type: string
           example: 'Building constructions'
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+          example: ACTIVE
         created:
           type: string
           example: '2021-10-25T12:31:53.406Z'
         lastModified:
           type: string
           example: '2021-10-25T12:31:53.406Z'
+        type:
+          type: string
+          example: "TENANT"
+          enum:
+            - TENANT
+            - STRUCTURAL
+        domain:
+          type: string
+          example: "abc.com"
+          description: Defines the tenant domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         children:
@@ -705,12 +745,12 @@ components:
       type: object
       required:
         - id
-        - self
+        - ref
       properties:
         id:
           type: string
           example: 'b4526d91-a8bf-43d2-8b14-c548cf73065b'
-        self:
+        ref:
           type: string
           example: 't/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     #-----------------------------------------------------
@@ -720,12 +760,12 @@ components:
       type: object
       required:
         - id
-        - self
+        - ref
       properties:
         id:
           type: string
           example: 'd8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
-        self:
+        ref:
           type: string
           example: 't/carbon.super/api/identity/organization-mgt/v1.0/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
 

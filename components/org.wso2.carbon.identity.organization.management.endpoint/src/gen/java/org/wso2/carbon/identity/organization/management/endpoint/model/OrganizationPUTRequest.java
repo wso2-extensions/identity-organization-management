@@ -37,6 +37,40 @@ public class OrganizationPUTRequest  {
   
     private String name;
     private String description;
+
+@XmlType(name="StatusEnum")
+@XmlEnum(String.class)
+public enum StatusEnum {
+
+    @XmlEnumValue("ACTIVE") ACTIVE(String.valueOf("ACTIVE")), @XmlEnumValue("DISABLED") DISABLED(String.valueOf("DISABLED"));
+
+
+    private String value;
+
+    StatusEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static StatusEnum fromValue(String value) {
+        for (StatusEnum b : StatusEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private StatusEnum status;
     private List<Attribute> attributes = null;
 
 
@@ -80,6 +114,26 @@ public class OrganizationPUTRequest  {
 
     /**
     **/
+    public OrganizationPUTRequest status(StatusEnum status) {
+
+        this.status = status;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "ACTIVE", required = true, value = "")
+    @JsonProperty("status")
+    @Valid
+    @NotNull(message = "Property status cannot be null.")
+
+    public StatusEnum getStatus() {
+        return status;
+    }
+    public void setStatus(StatusEnum status) {
+        this.status = status;
+    }
+
+    /**
+    **/
     public OrganizationPUTRequest attributes(List<Attribute> attributes) {
 
         this.attributes = attributes;
@@ -118,12 +172,13 @@ public class OrganizationPUTRequest  {
         OrganizationPUTRequest organizationPUTRequest = (OrganizationPUTRequest) o;
         return Objects.equals(this.name, organizationPUTRequest.name) &&
             Objects.equals(this.description, organizationPUTRequest.description) &&
+            Objects.equals(this.status, organizationPUTRequest.status) &&
             Objects.equals(this.attributes, organizationPUTRequest.attributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, attributes);
+        return Objects.hash(name, description, status, attributes);
     }
 
     @Override
@@ -134,6 +189,7 @@ public class OrganizationPUTRequest  {
         
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    description: ").append(toIndentedString(description)).append("\n");
+        sb.append("    status: ").append(toIndentedString(status)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
         sb.append("}");
         return sb.toString();

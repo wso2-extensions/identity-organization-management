@@ -221,6 +221,11 @@
                 <artifactId>org.wso2.carbon.database.utils</artifactId>
                 <version>${carbon.database.utils.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.multitenancy</groupId>
+                <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
+                <version>${carbon.multitenancy.version}</version>
+            </dependency>
 
             <!--Test Dependencies-->
             <dependency>
@@ -408,6 +413,8 @@
         <carbon.kernel.version>4.7.0-m5</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
 
+        <carbon.commons.imp.pkg.version.range>[4.7.0, 5.0.0)</carbon.commons.imp.pkg.version.range>
+
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
         <osgi.service.component.imp.pkg.version.range>[1.2.0, 2.0.0)</osgi.service.component.imp.pkg.version.range>
         <axiom.osgi.imp.pkg.version.range>[1.2.11, 2.0.0)</axiom.osgi.imp.pkg.version.range>
@@ -438,6 +445,10 @@
         </identity.organization.management.exp.pkg.version>
         <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
+
+        <carbon.multitenancy.version>4.9.17</carbon.multitenancy.version>
+        <carbon.multitenancy.package.import.version.range>[4.9.0,5.0.0)
+        </carbon.multitenancy.package.import.version.range>
 
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)

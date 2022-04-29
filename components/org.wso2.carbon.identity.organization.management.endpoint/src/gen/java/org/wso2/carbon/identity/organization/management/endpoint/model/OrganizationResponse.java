@@ -39,8 +39,77 @@ public class OrganizationResponse  {
     private String id;
     private String name;
     private String description;
+
+@XmlType(name="StatusEnum")
+@XmlEnum(String.class)
+public enum StatusEnum {
+
+    @XmlEnumValue("ACTIVE") ACTIVE(String.valueOf("ACTIVE")), @XmlEnumValue("DISABLED") DISABLED(String.valueOf("DISABLED"));
+
+
+    private String value;
+
+    StatusEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static StatusEnum fromValue(String value) {
+        for (StatusEnum b : StatusEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private StatusEnum status;
     private String created;
     private String lastModified;
+
+@XmlType(name="TypeEnum")
+@XmlEnum(String.class)
+public enum TypeEnum {
+
+    @XmlEnumValue("TENANT") TENANT(String.valueOf("TENANT")), @XmlEnumValue("STRUCTURAL") STRUCTURAL(String.valueOf("STRUCTURAL"));
+
+
+    private String value;
+
+    TypeEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static TypeEnum fromValue(String value) {
+        for (TypeEnum b : TypeEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private TypeEnum type;
+    private String domain;
     private ParentOrganization parent;
     private List<Attribute> attributes = null;
 
@@ -105,15 +174,37 @@ public class OrganizationResponse  {
 
     /**
     **/
+    public OrganizationResponse status(StatusEnum status) {
+
+        this.status = status;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "ACTIVE", required = true, value = "")
+    @JsonProperty("status")
+    @Valid
+    @NotNull(message = "Property status cannot be null.")
+
+    public StatusEnum getStatus() {
+        return status;
+    }
+    public void setStatus(StatusEnum status) {
+        this.status = status;
+    }
+
+    /**
+    **/
     public OrganizationResponse created(String created) {
 
         this.created = created;
         return this;
     }
     
-    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", value = "")
+    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", required = true, value = "")
     @JsonProperty("created")
     @Valid
+    @NotNull(message = "Property created cannot be null.")
+
     public String getCreated() {
         return created;
     }
@@ -129,14 +220,53 @@ public class OrganizationResponse  {
         return this;
     }
     
-    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", value = "")
+    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", required = true, value = "")
     @JsonProperty("lastModified")
     @Valid
+    @NotNull(message = "Property lastModified cannot be null.")
+
     public String getLastModified() {
         return lastModified;
     }
     public void setLastModified(String lastModified) {
         this.lastModified = lastModified;
+    }
+
+    /**
+    **/
+    public OrganizationResponse type(TypeEnum type) {
+
+        this.type = type;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "TENANT", value = "")
+    @JsonProperty("type")
+    @Valid
+    public TypeEnum getType() {
+        return type;
+    }
+    public void setType(TypeEnum type) {
+        this.type = type;
+    }
+
+    /**
+    * Defines the domain of tenant type organization.
+    **/
+    public OrganizationResponse domain(String domain) {
+
+        this.domain = domain;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "abc.com", value = "Defines the domain of tenant type organization.")
+    @JsonProperty("domain")
+    @Valid
+    public String getDomain() {
+        return domain;
+    }
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
     /**
@@ -198,15 +328,18 @@ public class OrganizationResponse  {
         return Objects.equals(this.id, organizationResponse.id) &&
             Objects.equals(this.name, organizationResponse.name) &&
             Objects.equals(this.description, organizationResponse.description) &&
+            Objects.equals(this.status, organizationResponse.status) &&
             Objects.equals(this.created, organizationResponse.created) &&
             Objects.equals(this.lastModified, organizationResponse.lastModified) &&
+            Objects.equals(this.type, organizationResponse.type) &&
+            Objects.equals(this.domain, organizationResponse.domain) &&
             Objects.equals(this.parent, organizationResponse.parent) &&
             Objects.equals(this.attributes, organizationResponse.attributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, created, lastModified, parent, attributes);
+        return Objects.hash(id, name, description, status, created, lastModified, type, domain, parent, attributes);
     }
 
     @Override
@@ -218,8 +351,11 @@ public class OrganizationResponse  {
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    description: ").append(toIndentedString(description)).append("\n");
+        sb.append("    status: ").append(toIndentedString(status)).append("\n");
         sb.append("    created: ").append(toIndentedString(created)).append("\n");
         sb.append("    lastModified: ").append(toIndentedString(lastModified)).append("\n");
+        sb.append("    type: ").append(toIndentedString(type)).append("\n");
+        sb.append("    domain: ").append(toIndentedString(domain)).append("\n");
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
         sb.append("}");

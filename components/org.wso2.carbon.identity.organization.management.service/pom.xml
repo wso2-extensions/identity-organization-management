@@ -67,6 +67,10 @@
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.multitenancy</groupId>
+            <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
+        </dependency>
 
         <!--Test Dependencies-->
         <dependency>
@@ -141,8 +145,12 @@
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.model;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.stratos.common.constants;version="${carbon.commons.imp.pkg.version.range}",
+                            org.wso2.carbon.stratos.common.exception;version="${carbon.commons.imp.pkg.version.range}",
+                            org.wso2.carbon.tenant.mgt.services;version="${carbon.multitenancy.package.import.version.range}",
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
-                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}"
+                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>
