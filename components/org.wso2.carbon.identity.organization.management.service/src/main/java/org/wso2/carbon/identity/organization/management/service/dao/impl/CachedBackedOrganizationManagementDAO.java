@@ -72,7 +72,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public boolean isOrganizationExistByName(int tenantId, String organizationName, String tenantDomain)
+    public boolean isOrganizationExistByName(String organizationName, String tenantDomain)
             throws OrganizationManagementServerException {
 
         Organization organization = getOrganizationFromCacheByName(organizationName, tenantDomain);
@@ -80,11 +80,11 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             return true;
         }
 
-        return organizationManagementDAO.isOrganizationExistByName(tenantId, organizationName, tenantDomain);
+        return organizationManagementDAO.isOrganizationExistByName(organizationName, tenantDomain);
     }
 
     @Override
-    public boolean isOrganizationExistById(int tenantId, String organizationId, String tenantDomain)
+    public boolean isOrganizationExistById(String organizationId, String tenantDomain)
             throws OrganizationManagementServerException {
 
         Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
@@ -92,7 +92,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             return true;
         }
 
-        return organizationManagementDAO.isOrganizationExistById(tenantId, organizationId, tenantDomain);
+        return organizationManagementDAO.isOrganizationExistById(organizationId, tenantDomain);
     }
 
     @Override
