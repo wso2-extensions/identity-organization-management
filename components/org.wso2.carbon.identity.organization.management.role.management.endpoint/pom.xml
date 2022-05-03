@@ -99,22 +99,6 @@
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.role.mgt.core</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
-                    <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.role.management.service</artifactId>
@@ -143,6 +127,7 @@
                         </resource>
                     </webResources>
                     <warName>api#identity#organization-mgt#v1.0</warName>
+                    <webXml>src/main/webapp/WEB-INF/web.xml</webXml>
                 </configuration>
             </plugin>
             <plugin>

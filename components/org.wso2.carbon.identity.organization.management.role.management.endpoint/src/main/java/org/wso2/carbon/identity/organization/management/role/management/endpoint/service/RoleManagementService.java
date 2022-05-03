@@ -27,8 +27,27 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.exceptions.RoleManagementEndpointException;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.*;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Link;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroupObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObj;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObj;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObjValue;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroupObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroupObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObjectMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.util.RoleManagementEndpointUtils;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementException;
@@ -57,9 +76,9 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 /**
  * The service class for Role Management in Organization Management.
  */
-public class RoleManagementApiService {
+public class RoleManagementService {
 
-    private static final Log LOG = LogFactory.getLog(RoleManagementApiService.class);
+    private static final Log LOG = LogFactory.getLog(RoleManagementService.class);
 
     /**
      * Service for creating a role inside an organization.
@@ -131,7 +150,8 @@ public class RoleManagementApiService {
             String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
             List<Role> roles = RoleManagementEndpointUtils.getRoleManager()
                     .getOrganizationRoles(limitValue + 1, after, before, sortOrder, filter, organizationId);
-            return Response.ok().entity(getRoleListResponse(limitValue, after, before, filter, organizationId, roles)).build();
+            return Response.ok().entity(getRoleListResponse(limitValue, after, before, filter, organizationId, roles))
+                    .build();
         } catch (RoleManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
         } catch (RoleManagementException e) {
@@ -333,7 +353,7 @@ public class RoleManagementApiService {
                                                         List<Role> roles) {
 
         RolesListResponseObject responseObject = new RolesListResponseObject();
-        if(CollectionUtils.isNotEmpty(roles)){
+        if (CollectionUtils.isNotEmpty(roles)) {
             boolean hasMoreItems = roles.size() > limit;
             boolean needsReverse = StringUtils.isNotBlank(before);
             boolean isFirstPage = (StringUtils.isBlank(before) && StringUtils.isBlank(after)) ||

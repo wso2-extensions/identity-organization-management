@@ -20,7 +20,6 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service.dao;
 
-import edu.emory.mathcs.backport.java.util.Collections;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
@@ -39,6 +38,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +56,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_GROUPS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_PERMISSIONS_USING_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_ROLES_FROM_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.ErrorMessages.ERROR_GETTING_USERS_USING_ROLE_ID;
@@ -80,6 +81,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.ADD_ROLE_UM_RM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.ADD_ROLE_USER_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.AND;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE;
@@ -90,6 +92,8 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_GROUPS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_PERMISSIONS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_PERMISSIONS_WITH_ID_FROM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_PERMISSION_ID_FROM_STRING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_PERMISSION_ID_FROM_STRING_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.GET_ROLE_FROM_ID;
@@ -108,6 +112,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.SQLPlaceholders.DB_SCHEMA_LIMIT;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constants.SQLConstants.TENANT_ID_APPENDER;
 
 /**
  * Implementation of RoleManagementDAO Interface.
@@ -236,7 +241,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         // when replacing groups, users or permissions, remove them and add
         // cannot add or remove displayName since displayName is required
         try {
-            namedJdbcTemplate.withTransaction(template -> {
+            return namedJdbcTemplate.withTransaction(template -> {
                 for (PatchOperation patchOp : patchOperations) {
                     String op = patchOp.getOp().trim();
                     if (StringUtils.equalsIgnoreCase(op, PATCH_OP_ADD)) {
@@ -247,14 +252,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
                     }
                 }
-                return null;
+                return getRoleById(organizationId, roleId, tenantId);
             });
         } catch (TransactionException e) {
             throw new RoleManagementServerException(ERROR_PATCHING_ROLE.getCode(),
                     String.format(ERROR_PATCHING_ROLE.getMessage(), organizationId),
                     ERROR_PATCHING_ROLE.getDescription(), e);
         }
-        return null;
     }
 
 
@@ -271,24 +275,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         });
                 return null;
             });
-            // After deleting the role, delete the mappings.
-            // users, permissions, groups and TODO: if the role exist inside the groups
-            // To do that get all the groups, permissions and users with the role Id
-            List<BasicUser> users = getUsersFromRoleId(roleId);
-            List<BasicGroup> groups = getGroupsFromRoleId(roleId);
-            List<BasicPermission> permissions = getPermissionsWithIdFromRoleId(roleId);
-            if (CollectionUtils.isNotEmpty(users)) {
-                removeUsersFromRole(users.stream().map(BasicUser::getId)
-                        .collect(Collectors.toList()), roleId);
-            }
-            if (CollectionUtils.isNotEmpty(groups)) {
-                removeGroupsFromRole(groups.stream().map(BasicGroup::getGroupId)
-                        .collect(Collectors.toList()), roleId);
-            }
-            if (CollectionUtils.isNotEmpty(permissions)) {
-                removePermissionsFromRole(permissions.stream().map(BasicPermission::getId).map(v -> Integer.toString(v))
-                        .collect(Collectors.toList()), roleId);
-            }
         } catch (TransactionException e) {
             throw new RoleManagementServerException(ERROR_REMOVING_ROLE_FROM_ORGANIZATION.getCode(),
                     String.format(ERROR_REMOVING_ROLE_FROM_ORGANIZATION.getMessage(), roleId, organizationId),
@@ -488,7 +474,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     template -> template.executeQuery(GET_GROUPS_FROM_ROLE_ID,
                             (resultSet, rowNumber) ->
                                     new BasicGroup(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID),
-                                    resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME)),
+                                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME)),
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
                             }));
@@ -593,18 +579,19 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
     }
 
-    private void addPermissionsToRole(List<String> permissionList, String roleId) throws RoleManagementServerException {
+    private void addPermissionsToRole(List<String> permissions, String roleId) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        int numberOfPermissions = permissionList.size();
         try {
             namedJdbcTemplate.withTransaction(template -> {
+                List<Integer> permissionList = getPermissionIdsFromString(permissions, Utils.getTenantId());
+                int numberOfPermissions = permissionList.size();
                 template.executeInsert(buildQueryForInsertingValues(numberOfPermissions, ADD_ROLE_PERMISSION_MAPPING,
                                 ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES),
                         namedPreparedStatement -> {
                             for (int i = 0; i < numberOfPermissions; i++) {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + i,
-                                        permissionList.get(i));
+                                        permissionList.get(i).toString());
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                             }
                         }, permissionList, false);
@@ -614,6 +601,31 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             throw new RoleManagementServerException(ERROR_ADDING_PERMISSION_TO_ROLE.getCode(),
                     String.format(ERROR_ADDING_PERMISSION_TO_ROLE.getMessage(), roleId),
                     ERROR_ADDING_PERMISSION_TO_ROLE.getDescription(), e);
+        }
+    }
+
+    private List<Integer> getPermissionIdsFromString(List<String> permissionStrings, int tenantId)
+            throws RoleManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
+        int numberOfPermissions = permissionStrings.size();
+        try {
+            List<Integer> permissionIds = namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+                    buildQueryForGettingPermissionIdsFromString(numberOfPermissions),
+                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID),
+                    namedPreparedStatement -> {
+                        for (int i = 0; i < numberOfPermissions; i++) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + i,
+                                    permissionStrings.get(i));
+                        }
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
+                    }
+            ));
+            return permissionIds;
+        } catch (TransactionException e) {
+            throw new RoleManagementServerException(ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getCode(),
+                    ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getMessage(),
+                    ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getDescription(), e);
         }
     }
 
@@ -712,6 +724,20 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 sb.append(OR);
             }
         }
+        return sb.toString();
+    }
+
+    private String buildQueryForGettingPermissionIdsFromString(int numberOfElements) {
+
+        StringBuilder sb = new StringBuilder(GET_PERMISSION_ID_FROM_STRING);
+        sb.append("(");
+        for (int i = 0; i < numberOfElements; i++) {
+            sb.append(String.format(GET_PERMISSION_ID_FROM_STRING_VALUES, i));
+            if (i != numberOfElements - 1) {
+                sb.append(OR);
+            }
+        }
+        sb.append(")").append(AND).append(TENANT_ID_APPENDER);
         return sb.toString();
     }
 

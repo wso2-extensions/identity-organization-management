@@ -115,7 +115,6 @@ public class Utils {
     public static String getContext(String endpoint) {
 
         String context;
-        //TODO: organization qualified URL enabled check is not implemented.
         if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
             context = RoleManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
         } else {

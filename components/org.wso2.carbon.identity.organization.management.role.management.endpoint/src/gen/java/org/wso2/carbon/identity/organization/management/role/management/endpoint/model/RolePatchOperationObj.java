@@ -40,7 +40,7 @@ public class RolePatchOperationObj  {
 @XmlEnum(String.class)
 public enum OpEnum {
 
-    @XmlEnumValue("add") ADD(String.valueOf("add")), @XmlEnumValue("remove") REMOVE(String.valueOf("remove")), @XmlEnumValue("replace") REPLACE(String.valueOf("replace"));
+    @XmlEnumValue("ADD") ADD(String.valueOf("ADD")), @XmlEnumValue("REMOVE") REMOVE(String.valueOf("REMOVE")), @XmlEnumValue("REPLACE") REPLACE(String.valueOf("REPLACE"));
 
 
     private String value;

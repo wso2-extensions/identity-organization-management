@@ -51,8 +51,16 @@ public class SQLConstants {
             "(UM_PERMISSION_ID, UM_ROLE_ID) VALUES ";
 
     public static final String ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES = "(:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%$d;,:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%$d;)";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
+
+    public static final String GET_PERMISSION_ID_FROM_STRING = "SELECT UM_ID FROM UM_PERMISSION WHERE ";
+
+    public static final String GET_PERMISSION_ID_FROM_STRING_VALUES = "UM_RESOURCE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "%d;";
+
+    public static final String TENANT_ID_APPENDER = "UM_TENANT_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
 
     public static final String GET_ROLE_FROM_ID = "SELECT * FROM UM_RM_ROLE WHERE UM_ROLE_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
@@ -101,7 +109,7 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d";
 
     public static final String DELETE_ROLE_FROM_ORGANIZATION = "DELETE FROM UM_RM_ROLE WHERE UM_ORG_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_ID:=" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String REPLACE_DISPLAY_NAME_OF_ROLE = "UPDATE UM_RM_ROLE SET UM_ROLE_NAME=:" +

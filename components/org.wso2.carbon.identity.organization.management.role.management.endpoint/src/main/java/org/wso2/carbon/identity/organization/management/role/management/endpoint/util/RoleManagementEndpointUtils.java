@@ -35,7 +35,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.constants.RoleManagementConstants.NotFoundErrorMessages;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exceptions.RoleManagementException;
-import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 
 import java.net.URI;
 

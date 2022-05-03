@@ -63,7 +63,6 @@ public class RoleManagerImpl implements RoleManager {
     public Role addRole(String organizationId, Role role) throws
             RoleManagementException {
 
-        // TODO: need to find how to get /o/organization
         getRoleManagementDAO().addRole(organizationId, Utils.getTenantId(), role);
         return new Role(role.getId(), role.getName());
     }

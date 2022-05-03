@@ -10,14 +10,12 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://{server-url}/t/{tenant-domain}/o/{organization-domain}/api/identity/organization-mgt/v1.0'
+  - url: 'https://{server-url}/t/{tenant-domain}/api/identity/organization-mgt/v1.0'
     variables:
       server-url:
         default: 'localhost:9443'
       tenant-domain:
         default: carbon.super
-      organization-domain:
-        default: carbon
 security:
   - OAuth2: [ ]
   - BasicAuth: [ ]
@@ -532,7 +530,10 @@ components:
       properties:
         op:
           type: string
-          enum: ['add', 'remove', 'replace']
+          enum:
+            - ADD
+            - REMOVE
+            - REPLACE
         path:
           type: string
           example: groups

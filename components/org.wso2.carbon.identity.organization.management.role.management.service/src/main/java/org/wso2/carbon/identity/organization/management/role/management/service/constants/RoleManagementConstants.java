@@ -30,10 +30,10 @@ import java.util.stream.Stream;
  */
 public class RoleManagementConstants {
 
-    public static final String ORGANIZATION_RESOURCE_PATH = "v1.0/organizations/%s";
+    public static final String ORGANIZATION_RESOURCE_PATH = "/v1.0/organizations/%s";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
     public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
-    public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "api/identity/organization-mgt";
+    public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -127,7 +127,10 @@ public class RoleManagementConstants {
                 "Error removing a role: %s from organization: %s",
                 "Server encountered an error while removing a role from organization."),
         ERROR_REPLACING_DISPLAY_NAME_OF_ROLE("ROLE-65215", "Error replacing display name %s of role %",
-                "Server encountered an error while replacing the display name.");
+                "Server encountered an error while replacing the display name."),
+        ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING("ROLE-65216",
+                "Error getting permission ids using resource id.",
+                "Server encountered an error while retrieving the permission ids");
 
         private final String code;
         private final String message;

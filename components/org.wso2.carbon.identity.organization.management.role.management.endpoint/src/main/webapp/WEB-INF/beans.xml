@@ -29,11 +29,11 @@
     <context:annotation-config/>
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"/>
     <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer"/>
-<!--    <bean class="org.wso2.carbon.identity.organization.management.endpoint.impl.OrganizationsApiServiceImpl"/>-->
-<!--    <bean class="org.wso2.carbon.identity.organization.management.endpoint.service.RoleManagementApiService"/>-->
+    <bean class="org.wso2.carbon.identity.organization.management.role.management.endpoint.service.RoleManagementService"/>
+    <bean class="org.wso2.carbon.identity.organization.management.role.management.endpoint.impl.RolesApiServiceImpl"/>
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
-<!--            <bean class="org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApi"/>-->
+        <bean class="org.wso2.carbon.identity.organization.management.role.management.endpoint.RolesApi"/>-
         </jaxrs:serviceBeans>
         <jaxrs:providers>
             <bean class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider">
@@ -43,8 +43,7 @@
                     </bean>
                 </constructor-arg>
             </bean>
-<!--            <bean class="org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper.JsonProcessingExceptionMapper "/>-->
-<!--            <bean class="org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper.DefaultExceptionMapper "/>-->
+            <bean class="org.wso2.carbon.identity.organization.management.role.management.endpoint.exceptions.mapper.DefaultExceptionMapper"/>
         </jaxrs:providers>
     </jaxrs:server>
 </beans>
