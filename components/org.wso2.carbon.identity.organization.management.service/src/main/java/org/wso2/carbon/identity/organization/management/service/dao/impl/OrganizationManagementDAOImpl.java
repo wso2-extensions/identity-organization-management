@@ -26,7 +26,6 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -642,12 +641,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 organization.setId(collector.getId());
                 organization.setName(collector.getName());
                 organization.setDescription(collector.getDescription());
-                String type = collector.getType();
                 organization.setType(collector.getType());
-                if (StringUtils.equals(OrganizationManagementConstants.OrganizationTypes.TENANT.toString(), type)) {
-                    String tenantDomain = IdentityTenantUtil.getTenantDomain(collector.getTenantId());
-                    organization.setDomain(tenantDomain);
-                }
                 organization.getParent().setId(collector.getParentId());
                 organization.setCreated(collector.getCreated());
                 organization.setLastModified(collector.getLastModified());

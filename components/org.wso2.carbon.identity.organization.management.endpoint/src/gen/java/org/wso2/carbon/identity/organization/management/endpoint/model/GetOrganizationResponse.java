@@ -110,7 +110,6 @@ public enum TypeEnum {
 }
 
     private TypeEnum type;
-    private String domain;
     private ParentOrganization parent;
     private List<ChildOrganization> children = null;
 
@@ -243,33 +242,16 @@ public enum TypeEnum {
         return this;
     }
     
-    @ApiModelProperty(example = "TENANT", value = "")
+    @ApiModelProperty(example = "TENANT", required = true, value = "")
     @JsonProperty("type")
     @Valid
+    @NotNull(message = "Property type cannot be null.")
+
     public TypeEnum getType() {
         return type;
     }
     public void setType(TypeEnum type) {
         this.type = type;
-    }
-
-    /**
-    * Defines the tenant domain of tenant type organization.
-    **/
-    public GetOrganizationResponse domain(String domain) {
-
-        this.domain = domain;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "abc.com", value = "Defines the tenant domain of tenant type organization.")
-    @JsonProperty("domain")
-    @Valid
-    public String getDomain() {
-        return domain;
-    }
-    public void setDomain(String domain) {
-        this.domain = domain;
     }
 
     /**
@@ -361,7 +343,6 @@ public enum TypeEnum {
             Objects.equals(this.created, getOrganizationResponse.created) &&
             Objects.equals(this.lastModified, getOrganizationResponse.lastModified) &&
             Objects.equals(this.type, getOrganizationResponse.type) &&
-            Objects.equals(this.domain, getOrganizationResponse.domain) &&
             Objects.equals(this.parent, getOrganizationResponse.parent) &&
             Objects.equals(this.children, getOrganizationResponse.children) &&
             Objects.equals(this.attributes, getOrganizationResponse.attributes);
@@ -369,7 +350,7 @@ public enum TypeEnum {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, status, created, lastModified, type, domain, parent, children, attributes);
+        return Objects.hash(id, name, description, status, created, lastModified, type, parent, children, attributes);
     }
 
     @Override
@@ -385,7 +366,6 @@ public enum TypeEnum {
         sb.append("    created: ").append(toIndentedString(created)).append("\n");
         sb.append("    lastModified: ").append(toIndentedString(lastModified)).append("\n");
         sb.append("    type: ").append(toIndentedString(type)).append("\n");
-        sb.append("    domain: ").append(toIndentedString(domain)).append("\n");
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
         sb.append("    children: ").append(toIndentedString(children)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
