@@ -217,7 +217,6 @@ public class OrganizationManagementService {
         organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
         OrganizationPOSTRequest.TypeEnum type = organizationPOSTRequest.getType();
         organization.setType(type != null ? type.toString() : null);
-        organization.setDomain(organizationPOSTRequest.getDomain());
         String parentId = organizationPOSTRequest.getParentId();
         if (StringUtils.isNotBlank(parentId)) {
             organization.getParent().setId(parentId);
@@ -253,7 +252,6 @@ public class OrganizationManagementService {
         String type = organization.getType();
         if (StringUtils.equals(type, OrganizationResponse.TypeEnum.TENANT.toString())) {
             organizationResponse.setType(OrganizationResponse.TypeEnum.TENANT);
-            organizationResponse.setDomain(organization.getDomain());
         } else {
             organizationResponse.setType(OrganizationResponse.TypeEnum.STRUCTURAL);
         }
@@ -290,11 +288,9 @@ public class OrganizationManagementService {
         String type = organization.getType();
         if (StringUtils.equals(type, GetOrganizationResponse.TypeEnum.TENANT.toString())) {
             organizationResponse.setType(GetOrganizationResponse.TypeEnum.TENANT);
-            organizationResponse.setDomain(organization.getDomain());
         } else {
             organizationResponse.setType(GetOrganizationResponse.TypeEnum.STRUCTURAL);
         }
-
 
         ParentOrganizationDO parentOrganizationDO = organization.getParent();
         if (parentOrganizationDO != null) {
@@ -379,7 +375,7 @@ public class OrganizationManagementService {
 
         OrganizationsResponse organizationsResponse = new OrganizationsResponse();
 
-        if (CollectionUtils.isNotEmpty(organizations)) {
+        if (limit != 0 && CollectionUtils.isNotEmpty(organizations)) {
             boolean hasMoreItems = organizations.size() > limit;
             boolean needsReverse = StringUtils.isNotBlank(before);
             boolean isFirstPage = (StringUtils.isBlank(before) && StringUtils.isBlank(after)) ||

@@ -96,9 +96,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_REPLACE_NON_EXISTING_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REQUIRED_FIELDS_MISSING;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_EXTENSION_MISSING;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_UNAVAILABLE;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_TENANT_TYPE_ORGANIZATION_REQUIRED_FIELDS_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -132,8 +129,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
-import static org.wso2.carbon.stratos.common.constants.TenantConstants.ErrorMessage.ERROR_CODE_EMPTY_EXTENSION;
-import static org.wso2.carbon.stratos.common.constants.TenantConstants.ErrorMessage.ERROR_CODE_EXISTING_DOMAIN;
 
 /**
  * This class implements the {@link OrganizationManager} interface.
@@ -151,7 +146,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         setCreatedAndLastModifiedTime(organization);
         if (StringUtils.equals(TENANT.toString(),
                 organization.getType())) {
-            tenantDomain = organization.getDomain();
+            tenantDomain = organization.getId();
             tenantId = createTenant(tenantDomain);
         }
         getOrganizationManagementDAO().addOrganization(tenantId, tenantDomain, organization);
@@ -350,17 +345,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (StringUtils.isBlank(organizationType)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED);
         }
-        if (StringUtils.equals(organizationType, TENANT.toString())) {
-            validateAddOrganizationTenantType(organization.getDomain());
-        } else if (!StringUtils.equals(organizationType, STRUCTURAL.toString())) {
+
+        if (!StringUtils.equals(organizationType, STRUCTURAL.toString()) &&
+                !StringUtils.equals(organizationType, TENANT.toString())) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_TYPE);
-        }
-    }
-
-    private void validateAddOrganizationTenantType(String domain) throws OrganizationManagementClientException {
-
-        if (StringUtils.isBlank(domain)) {
-            throw handleClientException(ERROR_CODE_TENANT_TYPE_ORGANIZATION_REQUIRED_FIELDS_MISSING);
         }
     }
 
@@ -728,13 +716,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             getTenantMgtService().addTenant(createTenantInfoBean(domain));
         } catch (TenantMgtException e) {
             if (e instanceof TenantManagementClientException) {
-                if (ERROR_CODE_EMPTY_EXTENSION.getCode().equals(e.getErrorCode())) {
-                    throw handleClientException(ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_EXTENSION_MISSING);
-                } else if (ERROR_CODE_EXISTING_DOMAIN.getCode().equals(e.getErrorCode())) {
-                    throw handleClientException(ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_UNAVAILABLE);
-                } else {
-                    throw handleClientException(ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION);
-                }
+                throw handleClientException(ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION);
             } else {
                 throw handleServerException(ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION, e);
             }

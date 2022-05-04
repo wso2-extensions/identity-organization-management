@@ -181,18 +181,12 @@ public class OrganizationManagementConstants {
                 "To set the child organization status as active, parent organization should be in active status."),
         ERROR_CODE_CREATE_REQUEST_PARENT_ORGANIZATION_IS_DISABLED("60031", "Parent organization is disabled.",
                 "To create a child organization in organization with ID: %s, it should be in active status."),
-        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_EXTENSION_MISSING("60032", "Invalid field",
-                "An extension for the domain is required for tenant type organization."),
-        ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION("60033", "Unable to create the organization.",
+        ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION("60032", "Unable to create the organization.",
                 "Invalid request body for tenant type organization."),
-        ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED("60034", "Unable to create the organization.",
+        ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED("60033", "Unable to create the organization.",
                 "Organization type should be defined."),
-        ERROR_CODE_INVALID_ORGANIZATION_TYPE("60035", "Invalid organization type.", "The organization " +
+        ERROR_CODE_INVALID_ORGANIZATION_TYPE("60034", "Invalid organization type.", "The organization " +
                 "type should be 'TENANT' or 'STRUCTURAL'."),
-        ERROR_CODE_TENANT_TYPE_ORGANIZATION_REQUIRED_FIELDS_MISSING("60036", "Invalid request body.",
-                "Missing required field(s) for tenant type organization."),
-        ERROR_CODE_TENANT_TYPE_ORGANIZATION_DOMAIN_UNAVAILABLE("60037", "Unable to create the organization.",
-                "A tenant with the provided domain already exists. Please provide a different domain name."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",

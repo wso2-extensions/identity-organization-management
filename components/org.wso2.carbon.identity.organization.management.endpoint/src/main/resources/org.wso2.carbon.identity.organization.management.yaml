@@ -315,10 +315,6 @@ components:
           enum:
             - TENANT
             - STRUCTURAL
-        domain:
-          type: string
-          example: "abc.com"
-          description: Defines the tenant domain. This attribute should only be present for tenant type organization.
         parentId:
           type: string
           example: "b4526d91-a8bf-43d2-8b14-c548cf73065b"
@@ -415,6 +411,7 @@ components:
         - status
         - created
         - lastModified
+        - type
       properties:
         id:
           type: string
@@ -441,10 +438,6 @@ components:
           enum:
             - TENANT
             - STRUCTURAL
-        domain:
-          type: string
-          example: "abc.com"
-          description: Defines the domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         attributes:
@@ -459,6 +452,7 @@ components:
         - status
         - created
         - lastModified
+        - type
       properties:
         id:
           type: string
@@ -485,10 +479,6 @@ components:
           enum:
             - TENANT
             - STRUCTURAL
-        domain:
-          type: string
-          example: "abc.com"
-          description: Defines the tenant domain of tenant type organization.
         parent:
           $ref: '#/components/schemas/ParentOrganization'
         children:

@@ -71,7 +71,6 @@ public enum TypeEnum {
 }
 
     private TypeEnum type;
-    private String domain;
     private String parentId;
     private List<Attribute> attributes = null;
 
@@ -135,25 +134,6 @@ public enum TypeEnum {
     }
 
     /**
-    * Defines the tenant domain. This attribute should only be present for tenant type organization.
-    **/
-    public OrganizationPOSTRequest domain(String domain) {
-
-        this.domain = domain;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "abc.com", value = "Defines the tenant domain. This attribute should only be present for tenant type organization.")
-    @JsonProperty("domain")
-    @Valid
-    public String getDomain() {
-        return domain;
-    }
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    /**
     * If the parentId is not present, the ROOT will be taken as the parent organization.
     **/
     public OrganizationPOSTRequest parentId(String parentId) {
@@ -213,14 +193,13 @@ public enum TypeEnum {
         return Objects.equals(this.name, organizationPOSTRequest.name) &&
             Objects.equals(this.description, organizationPOSTRequest.description) &&
             Objects.equals(this.type, organizationPOSTRequest.type) &&
-            Objects.equals(this.domain, organizationPOSTRequest.domain) &&
             Objects.equals(this.parentId, organizationPOSTRequest.parentId) &&
             Objects.equals(this.attributes, organizationPOSTRequest.attributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, type, domain, parentId, attributes);
+        return Objects.hash(name, description, type, parentId, attributes);
     }
 
     @Override
@@ -232,7 +211,6 @@ public enum TypeEnum {
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    description: ").append(toIndentedString(description)).append("\n");
         sb.append("    type: ").append(toIndentedString(type)).append("\n");
-        sb.append("    domain: ").append(toIndentedString(domain)).append("\n");
         sb.append("    parentId: ").append(toIndentedString(parentId)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
         sb.append("}");
