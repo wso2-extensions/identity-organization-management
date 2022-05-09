@@ -46,8 +46,6 @@ public interface OrganizationManagementDAO {
     /**
      * Check if the {@link Organization} exists by name in a given tenant.
      *
-     * @param tenantId         The tenant ID corresponding to the tenant where the organization existence should be
-     *                         checked.
      * @param organizationName The organization name.
      * @param tenantDomain     The tenant name corresponding to the tenant where the organization existence should be
      *                         checked.
@@ -55,14 +53,12 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when checking for the organization
      *                                               existence.
      */
-    boolean isOrganizationExistByName(int tenantId, String organizationName, String tenantDomain) throws
+    boolean isOrganizationExistByName(String organizationName, String tenantDomain) throws
             OrganizationManagementServerException;
 
     /**
      * Check if the {@link Organization} exists by organization Id in a given tenant.
      *
-     * @param tenantId       The tenant ID corresponding to the tenant where the organization existence should be
-     *                       checked.
      * @param organizationId The organization ID.
      * @param tenantDomain   The tenant name corresponding to the tenant where the organization existence should be
      *                       checked.
@@ -70,7 +66,7 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when checking for the organization
      *                                               existence.
      */
-    boolean isOrganizationExistById(int tenantId, String organizationId, String tenantDomain) throws
+    boolean isOrganizationExistById(String organizationId, String tenantDomain) throws
             OrganizationManagementServerException;
 
     /**
@@ -184,4 +180,40 @@ public interface OrganizationManagementDAO {
      */
     List<String> getChildOrganizationIds(int tenantId, String organizationId, String tenantDomain, Organization
             organization) throws OrganizationManagementServerException;
+
+    /**
+     * Check if the organization has any child organizations with the status as 'ACTIVE'.
+     *
+     * @param organizationId The organization ID.
+     * @return true if 'ACTIVE' child organizations exist.
+     * @throws OrganizationManagementServerException The server exception thrown when checking if the organization has
+     *                                               any child organizations with the status as 'ACTIVE'.
+     */
+    boolean hasActiveChildOrganizations(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Check if the parent organization of an organization is having the status as 'DISABLED'.
+     *
+     * @param organizationId The organization ID.
+     * @param tenantDomain   The tenant name.
+     * @return true if the parent organization status is 'DISABLED'.
+     * @throws OrganizationManagementServerException The server exception thrown when checking if the parent
+     *                                               organization status is 'DISABLED'.
+     */
+    boolean isParentOrganizationDisabled(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException;
+
+    /**
+     * Retrieve the status of the organization.
+     *
+     * @param organizationId The organization ID.
+     * @param tenantDomain   The tenant name.
+     * @return the status of the organization.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the status of the
+     *                                               organization.
+     */
+    String getOrganizationStatus(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException;
+
+
 }

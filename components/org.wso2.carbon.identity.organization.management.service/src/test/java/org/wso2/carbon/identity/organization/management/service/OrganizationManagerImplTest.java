@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.internal.OrganizationManagementDataHolder;
@@ -48,6 +49,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
@@ -57,6 +59,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.wso2.carbon.base.MultitenantConstants.SUPER_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationTypes.STRUCTURAL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
@@ -116,6 +119,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
         mockCarbonContext();
 
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationStatus(anyString(),
+                anyString())).thenReturn(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+
         mockAuthorizationManager();
         when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
@@ -128,7 +134,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         mockBuildURI();
 
-        organizationManager.addOrganization(sampleOrganization);
+        Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
+        Assert.assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
+        Assert.assertEquals(addedOrganization.getName(), sampleOrganization.getName());
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -218,8 +226,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         Organization organization = getOrganization(ORG_NAME, ROOT);
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyString(),
+                anyString())).thenReturn(true);
 
         organizationManager.addOrganization(organization);
     }
@@ -245,6 +253,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationIdByName(anyInt(),
                 anyString(), anyString())).thenReturn(PARENT_ID);
 
+        mockAuthorizationManager();
+        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
         OrganizationManagementAuthorizationManager authorizationManager =
                 mock(OrganizationManagementAuthorizationManager.class);
         mockStatic(OrganizationManagementAuthorizationManager.class);
@@ -363,69 +373,48 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         organizationManager.getOrganizations(10, "MjAyNjkzMjg=", null, "ASC", "name co xyz");
     }
 
-    @DataProvider(name = "dataForDeleteOrganization")
-    public Object[][] dataForDeleteOrganization() {
-
-        return new Object[][]{
-
-                {true},
-                {false}
-        };
-    }
-
-    @Test(dataProvider = "dataForDeleteOrganization")
-    public void testDeleteOrganization(boolean force) throws Exception {
+    @Test
+    public void testDeleteOrganization() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, force);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
-    @Test(dataProvider = "dataForDeleteOrganization", expectedExceptions = OrganizationManagementClientException.class)
-    public void testDeleteOrganizationWithEmptyOrganizationId(boolean force) throws Exception {
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testDeleteOrganizationWithEmptyOrganizationId() throws Exception {
 
         mockCarbonContext();
-        organizationManager.deleteOrganization(StringUtils.EMPTY, force);
+        organizationManager.deleteOrganization(StringUtils.EMPTY);
     }
 
-    @Test(dataProvider = "dataForDeleteOrganization", expectedExceptions = OrganizationManagementClientException.class)
-    public void testDeleteOrganizationWithInvalidOrganizationId(boolean force) throws Exception {
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testDeleteOrganizationWithInvalidOrganizationId() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(false);
-        organizationManager.deleteOrganization(ORG_ID, force);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(false);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testDeleteOrganizationWithChildOrganizations() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().hasChildOrganizations(anyString(),
                 anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, false);
-    }
-
-    @Test
-    public void testForceDeleteOrganizationWithChildOrganizations() throws Exception {
-
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().hasChildOrganizations(anyString(),
-                anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID, true);
+        organizationManager.deleteOrganization(ORG_ID);
     }
 
     @Test
     public void testPatchOrganization() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
                 anyString())).thenReturn(sampleOrganization);
@@ -452,8 +441,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testPatchOrganizationWithInvalidOrganizationId() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(false);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_ADD, PATCH_PATH_ORG_DESCRIPTION,
                 NEW_ORG_DESCRIPTION);
@@ -485,8 +474,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testPatchOrganizationWithInvalidPatchRequest(String op, String path, String value) throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(op, path, value);
         patchOperations.add(patchOperation);
@@ -497,10 +486,10 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testPatchOrganizationNameUnavailable() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyString(),
+                anyString())).thenReturn(true);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_REPLACE, PATCH_PATH_ORG_NAME,
                 "new value");
@@ -512,8 +501,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testPatchOrganizationRemoveNonExistingAttribute() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().isAttributeExistByKey(anyString(),
                 anyString(), anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
@@ -527,8 +516,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testPatchOrganizationReplaceNonExistingAttribute() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().isAttributeExistByKey(anyString(),
                 anyString(), anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
@@ -542,8 +531,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testUpdateOrganization() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(true);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(true);
         Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
         when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
                 anyString())).thenReturn(sampleOrganization);
@@ -562,8 +551,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testUpdateOrganizationWithInvalidOrganizationId() throws Exception {
 
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyInt(),
-                anyString(), anyString())).thenReturn(false);
+        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
+                anyString())).thenReturn(false);
         organizationManager.updateOrganization(ORG_ID, ORG_NAME
                 , getOrganization(ORG_NAME, PARENT_ID));
     }
@@ -603,9 +592,12 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private Organization getOrganization(String name, String parent) {
 
         Organization organization = new Organization();
+        organization.setId(UUID.randomUUID().toString());
         organization.setName(name);
         organization.setDescription(ORG_DESCRIPTION);
+        organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
         organization.getParent().setId(parent);
+        organization.setType(STRUCTURAL.toString());
         return organization;
     }
 

@@ -37,6 +37,40 @@ public class OrganizationPOSTRequest  {
   
     private String name;
     private String description;
+
+@XmlType(name="TypeEnum")
+@XmlEnum(String.class)
+public enum TypeEnum {
+
+    @XmlEnumValue("TENANT") TENANT(String.valueOf("TENANT")), @XmlEnumValue("STRUCTURAL") STRUCTURAL(String.valueOf("STRUCTURAL"));
+
+
+    private String value;
+
+    TypeEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static TypeEnum fromValue(String value) {
+        for (TypeEnum b : TypeEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private TypeEnum type;
     private String parentId;
     private List<Attribute> attributes = null;
 
@@ -81,17 +115,36 @@ public class OrganizationPOSTRequest  {
 
     /**
     **/
+    public OrganizationPOSTRequest type(TypeEnum type) {
+
+        this.type = type;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "TENANT", required = true, value = "")
+    @JsonProperty("type")
+    @Valid
+    @NotNull(message = "Property type cannot be null.")
+
+    public TypeEnum getType() {
+        return type;
+    }
+    public void setType(TypeEnum type) {
+        this.type = type;
+    }
+
+    /**
+    * If the parentId is not present, the ROOT will be taken as the parent organization.
+    **/
     public OrganizationPOSTRequest parentId(String parentId) {
 
         this.parentId = parentId;
         return this;
     }
     
-    @ApiModelProperty(example = "b4526d91-a8bf-43d2-8b14-c548cf73065b", required = true, value = "")
+    @ApiModelProperty(example = "b4526d91-a8bf-43d2-8b14-c548cf73065b", value = "If the parentId is not present, the ROOT will be taken as the parent organization.")
     @JsonProperty("parentId")
     @Valid
-    @NotNull(message = "Property parentId cannot be null.")
-
     public String getParentId() {
         return parentId;
     }
@@ -139,13 +192,14 @@ public class OrganizationPOSTRequest  {
         OrganizationPOSTRequest organizationPOSTRequest = (OrganizationPOSTRequest) o;
         return Objects.equals(this.name, organizationPOSTRequest.name) &&
             Objects.equals(this.description, organizationPOSTRequest.description) &&
+            Objects.equals(this.type, organizationPOSTRequest.type) &&
             Objects.equals(this.parentId, organizationPOSTRequest.parentId) &&
             Objects.equals(this.attributes, organizationPOSTRequest.attributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, parentId, attributes);
+        return Objects.hash(name, description, type, parentId, attributes);
     }
 
     @Override
@@ -156,6 +210,7 @@ public class OrganizationPOSTRequest  {
         
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    description: ").append(toIndentedString(description)).append("\n");
+        sb.append("    type: ").append(toIndentedString(type)).append("\n");
         sb.append("    parentId: ").append(toIndentedString(parentId)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
         sb.append("}");

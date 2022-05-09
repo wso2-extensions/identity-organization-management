@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.service.cache.Organizati
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationByNameCache;
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationByNameCacheKey;
 import org.wso2.carbon.identity.organization.management.service.cache.OrganizationCacheEntry;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -39,7 +40,6 @@ import org.wso2.carbon.identity.organization.management.service.model.ParentOrga
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,7 +72,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
     }
 
     @Override
-    public boolean isOrganizationExistByName(int tenantId, String organizationName, String tenantDomain)
+    public boolean isOrganizationExistByName(String organizationName, String tenantDomain)
             throws OrganizationManagementServerException {
 
         Organization organization = getOrganizationFromCacheByName(organizationName, tenantDomain);
@@ -80,11 +80,11 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             return true;
         }
 
-        return organizationManagementDAO.isOrganizationExistByName(tenantId, organizationName, tenantDomain);
+        return organizationManagementDAO.isOrganizationExistByName(organizationName, tenantDomain);
     }
 
     @Override
-    public boolean isOrganizationExistById(int tenantId, String organizationId, String tenantDomain)
+    public boolean isOrganizationExistById(String organizationId, String tenantDomain)
             throws OrganizationManagementServerException {
 
         Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
@@ -92,7 +92,7 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             return true;
         }
 
-        return organizationManagementDAO.isOrganizationExistById(tenantId, organizationId, tenantDomain);
+        return organizationManagementDAO.isOrganizationExistById(organizationId, tenantDomain);
     }
 
     @Override
@@ -136,7 +136,6 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             throws OrganizationManagementServerException {
 
         deleteOrganizationCacheById(organizationId, tenantDomain);
-        deleteChildOrganizationCache(tenantDomain);
         organizationManagementDAO.deleteOrganization(tenantId, organizationId, tenantDomain);
     }
 
@@ -186,6 +185,44 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
             addChildOrganizationsToCache(organization, childOrganizationIds, tenantDomain);
         }
         return childOrganizationIds;
+    }
+
+    @Override
+    public boolean hasActiveChildOrganizations(String organizationId) throws OrganizationManagementServerException {
+
+        return organizationManagementDAO.hasActiveChildOrganizations(organizationId);
+    }
+
+    @Override
+    public boolean isParentOrganizationDisabled(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
+        if (organization != null) {
+            ParentOrganizationDO parent = organization.getParent();
+            if (parent != null) {
+                String parentId = parent.getId();
+                if (StringUtils.isNotBlank(parentId)) {
+                    Organization parentOrganization = getOrganizationFromCacheById(parentId, tenantDomain);
+                    if (parentOrganization != null) {
+                        return StringUtils.equals(parentOrganization.getStatus(),
+                                OrganizationManagementConstants.OrganizationStatus.DISABLED.toString());
+                    }
+                }
+            }
+        }
+        return organizationManagementDAO.isParentOrganizationDisabled(organizationId, tenantDomain);
+    }
+
+    @Override
+    public String getOrganizationStatus(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
+        if (organization != null) {
+            return organization.getStatus();
+        }
+        return organizationManagementDAO.getOrganizationStatus(organizationId, tenantDomain);
     }
 
     private Organization getOrganizationFromCacheById(String organizationId, String tenantDomain) {
@@ -285,9 +322,8 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
 
                 ChildOrganizationsCacheEntry entry = childOrganizationsCache.getValueFromCache
                         (childOrganizationsCacheKey, tenantDomain);
-                List<String> childOrganizations = new ArrayList<>();
                 if (entry != null) {
-                    childOrganizations = entry.getChildOrganizations();
+                    List<String> childOrganizations = entry.getChildOrganizations();
                     if (CollectionUtils.isNotEmpty(childOrganizations)) {
                         childOrganizations.add(organization.getId());
                     }
@@ -297,9 +333,9 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
                                 organization.getName()));
                     }
                     childOrganizationsCache.clearCacheEntry(childOrganizationsCacheKey, tenantDomain);
+                    entry = new ChildOrganizationsCacheEntry(childOrganizations);
+                    childOrganizationsCache.addToCache(childOrganizationsCacheKey, entry, tenantDomain);
                 }
-                entry = new ChildOrganizationsCacheEntry(childOrganizations);
-                childOrganizationsCache.addToCache(childOrganizationsCacheKey, entry, tenantDomain);
             }
         }
     }
@@ -315,25 +351,15 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
 
     private void deleteOrganizationFromCache(Organization organization, String tenantDomain) {
 
-        OrganizationByIdCacheKey secretByIdCacheKey = new OrganizationByIdCacheKey(organization.getId());
-        OrganizationByNameCacheKey secretByNameCacheKey = new OrganizationByNameCacheKey(organization.getName());
+        OrganizationByIdCacheKey organizationByIdCacheKey = new OrganizationByIdCacheKey(organization.getId());
+        OrganizationByNameCacheKey organizationByNameCacheKey = new OrganizationByNameCacheKey(organization.getName());
 
         if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("Clearing cache entries of organization with id: %s, name: %s in" +
                     " tenant domain: %s", organization.getId(), organization.getName(), tenantDomain));
         }
 
-        organizationByIdCache.clearCacheEntry(secretByIdCacheKey, tenantDomain);
-        organizationByNameCache.clearCacheEntry(secretByNameCacheKey, tenantDomain);
-    }
-
-    // TODO: improve to support the cascade deletion instead of clearing the cache based only on the tenant domain.
-    private void deleteChildOrganizationCache(String tenantDomain) {
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Clearing child organizations related cache entries in tenant domain: %s",
-                    tenantDomain));
-        }
-        childOrganizationsCache.clear(tenantDomain);
+        organizationByIdCache.clearCacheEntry(organizationByIdCacheKey, tenantDomain);
+        organizationByNameCache.clearCacheEntry(organizationByNameCacheKey, tenantDomain);
     }
 }

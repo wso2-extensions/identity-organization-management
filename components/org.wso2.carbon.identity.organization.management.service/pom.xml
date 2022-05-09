@@ -15,13 +15,12 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.2-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -66,6 +65,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.multitenancy</groupId>
+            <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
         </dependency>
 
         <!--Test Dependencies-->
@@ -141,8 +144,12 @@
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.model;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.stratos.common.constants;version="${carbon.commons.imp.pkg.version.range}",
+                            org.wso2.carbon.stratos.common.exception;version="${carbon.commons.imp.pkg.version.range}",
+                            org.wso2.carbon.tenant.mgt.services;version="${carbon.multitenancy.package.import.version.range}",
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
-                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}"
+                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>

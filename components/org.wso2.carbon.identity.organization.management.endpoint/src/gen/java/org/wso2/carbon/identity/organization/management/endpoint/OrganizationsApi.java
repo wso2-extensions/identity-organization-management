@@ -96,9 +96,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdDelete(@ApiParam(value = "ID of the organization to be deleted.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Enforces the forceful deletion of an organization along with the belonging sub organizations.", defaultValue="false") @DefaultValue("false")  @QueryParam("force") Boolean force) {
+    public Response organizationsOrganizationIdDelete(@ApiParam(value = "ID of the organization to be deleted.",required=true) @PathParam("organization-id") String organizationId) {
 
-        return delegate.organizationsOrganizationIdDelete(organizationId,  force );
+        return delegate.organizationsOrganizationIdDelete(organizationId );
     }
 
     @Valid
@@ -155,7 +155,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update an organization by ID.", notes = "This API provides the capability to update a secret type by name.", response = OrganizationResponse.class, authorizations = {
+    @ApiOperation(value = "Update an organization by ID.", notes = "This API provides the capability to update an organization by its id.", response = OrganizationResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             

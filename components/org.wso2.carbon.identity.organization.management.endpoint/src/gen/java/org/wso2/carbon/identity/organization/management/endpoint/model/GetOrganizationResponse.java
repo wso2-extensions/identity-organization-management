@@ -40,8 +40,76 @@ public class GetOrganizationResponse  {
     private String id;
     private String name;
     private String description;
+
+@XmlType(name="StatusEnum")
+@XmlEnum(String.class)
+public enum StatusEnum {
+
+    @XmlEnumValue("ACTIVE") ACTIVE(String.valueOf("ACTIVE")), @XmlEnumValue("DISABLED") DISABLED(String.valueOf("DISABLED"));
+
+
+    private String value;
+
+    StatusEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static StatusEnum fromValue(String value) {
+        for (StatusEnum b : StatusEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private StatusEnum status;
     private String created;
     private String lastModified;
+
+@XmlType(name="TypeEnum")
+@XmlEnum(String.class)
+public enum TypeEnum {
+
+    @XmlEnumValue("TENANT") TENANT(String.valueOf("TENANT")), @XmlEnumValue("STRUCTURAL") STRUCTURAL(String.valueOf("STRUCTURAL"));
+
+
+    private String value;
+
+    TypeEnum(String v) {
+        value = v;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    public static TypeEnum fromValue(String value) {
+        for (TypeEnum b : TypeEnum.values()) {
+            if (b.value.equals(value)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+}
+
+    private TypeEnum type;
     private ParentOrganization parent;
     private List<ChildOrganization> children = null;
 
@@ -108,15 +176,37 @@ public class GetOrganizationResponse  {
 
     /**
     **/
+    public GetOrganizationResponse status(StatusEnum status) {
+
+        this.status = status;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "ACTIVE", required = true, value = "")
+    @JsonProperty("status")
+    @Valid
+    @NotNull(message = "Property status cannot be null.")
+
+    public StatusEnum getStatus() {
+        return status;
+    }
+    public void setStatus(StatusEnum status) {
+        this.status = status;
+    }
+
+    /**
+    **/
     public GetOrganizationResponse created(String created) {
 
         this.created = created;
         return this;
     }
     
-    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", value = "")
+    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", required = true, value = "")
     @JsonProperty("created")
     @Valid
+    @NotNull(message = "Property created cannot be null.")
+
     public String getCreated() {
         return created;
     }
@@ -132,14 +222,36 @@ public class GetOrganizationResponse  {
         return this;
     }
     
-    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", value = "")
+    @ApiModelProperty(example = "2021-10-25T12:31:53.406Z", required = true, value = "")
     @JsonProperty("lastModified")
     @Valid
+    @NotNull(message = "Property lastModified cannot be null.")
+
     public String getLastModified() {
         return lastModified;
     }
     public void setLastModified(String lastModified) {
         this.lastModified = lastModified;
+    }
+
+    /**
+    **/
+    public GetOrganizationResponse type(TypeEnum type) {
+
+        this.type = type;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "TENANT", required = true, value = "")
+    @JsonProperty("type")
+    @Valid
+    @NotNull(message = "Property type cannot be null.")
+
+    public TypeEnum getType() {
+        return type;
+    }
+    public void setType(TypeEnum type) {
+        this.type = type;
     }
 
     /**
@@ -227,8 +339,10 @@ public class GetOrganizationResponse  {
         return Objects.equals(this.id, getOrganizationResponse.id) &&
             Objects.equals(this.name, getOrganizationResponse.name) &&
             Objects.equals(this.description, getOrganizationResponse.description) &&
+            Objects.equals(this.status, getOrganizationResponse.status) &&
             Objects.equals(this.created, getOrganizationResponse.created) &&
             Objects.equals(this.lastModified, getOrganizationResponse.lastModified) &&
+            Objects.equals(this.type, getOrganizationResponse.type) &&
             Objects.equals(this.parent, getOrganizationResponse.parent) &&
             Objects.equals(this.children, getOrganizationResponse.children) &&
             Objects.equals(this.attributes, getOrganizationResponse.attributes);
@@ -236,7 +350,7 @@ public class GetOrganizationResponse  {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, created, lastModified, parent, children, attributes);
+        return Objects.hash(id, name, description, status, created, lastModified, type, parent, children, attributes);
     }
 
     @Override
@@ -248,8 +362,10 @@ public class GetOrganizationResponse  {
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    name: ").append(toIndentedString(name)).append("\n");
         sb.append("    description: ").append(toIndentedString(description)).append("\n");
+        sb.append("    status: ").append(toIndentedString(status)).append("\n");
         sb.append("    created: ").append(toIndentedString(created)).append("\n");
         sb.append("    lastModified: ").append(toIndentedString(lastModified)).append("\n");
+        sb.append("    type: ").append(toIndentedString(type)).append("\n");
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
         sb.append("    children: ").append(toIndentedString(children)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");

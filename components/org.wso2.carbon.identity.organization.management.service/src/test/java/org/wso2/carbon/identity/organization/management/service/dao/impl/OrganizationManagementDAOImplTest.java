@@ -29,6 +29,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.database.utils.jdbc.JdbcUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationTypes.STRUCTURAL;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 
 @PrepareForTest({Utils.class, JdbcUtils.class})
@@ -103,6 +105,8 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setDescription("org1 description.");
             organization.setCreated(Instant.now());
             organization.setLastModified(Instant.now());
+            organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+            organization.setType(STRUCTURAL.toString());
 
             ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
             parentOrganizationDO.setId(rootOrgId);
@@ -113,6 +117,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setAttributes(attributes);
 
             organizationManagementDAO.addOrganization(TENANT_ID, TENANT_DOMAIN, organization);
+            Assert.assertNotNull(organizationManagementDAO.getOrganization(TENANT_ID, orgId, TENANT_DOMAIN));
         }
     }
 
@@ -133,8 +138,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
         try (Connection connection = getConnection()) {
             Connection spy = spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spy);
-            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistByName(TENANT_ID,
-                    name, TENANT_DOMAIN);
+            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistByName(name, TENANT_DOMAIN);
             if (StringUtils.equals(name, ORG_NAME)) {
                 Assert.assertTrue(organizationExistByName);
             } else if (StringUtils.equals(name, INVALID_DATA)) {
@@ -160,8 +164,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
         try (Connection connection = getConnection()) {
             Connection spy = spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spy);
-            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistById(TENANT_ID,
-                    id, TENANT_DOMAIN);
+            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistById(id, TENANT_DOMAIN);
             if (StringUtils.equals(id, orgId)) {
                 Assert.assertTrue(organizationExistByName);
             } else if (StringUtils.equals(id, INVALID_DATA)) {
@@ -249,6 +252,22 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
         }
     }
 
+    @Test
+    public void testDeleteOrganization() throws Exception {
+
+        String id = generateUniqueID();
+        storeOrganization(id, "Dummy organization",
+                "This is a sample organization to test the delete functionality.", rootOrgId);
+
+        DataSource dataSource = mockDataSource();
+        try (Connection connection = getConnection()) {
+            Connection spy = spyConnection(connection);
+            when(dataSource.getConnection()).thenReturn(spy);
+            organizationManagementDAO.deleteOrganization(TENANT_ID, id, TENANT_DOMAIN);
+            Assert.assertNull(organizationManagementDAO.getOrganization(TENANT_ID, id, TENANT_DOMAIN));
+        }
+    }
+
     private DataSource mockDataSource() {
 
         DataSource dataSource = mock(DataSource.class);
@@ -316,8 +335,8 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
 
         try (Connection connection = getConnection()) {
             String sql = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, UM_CREATED_TIME, " +
-                    "UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID) VALUES ( ?, ?, " +
-                    "?, ?, ?, ?, ?)";
+                    "UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID, UM_ORG_TYPE) VALUES ( ?, ?, " +
+                    "?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, id);
             statement.setString(2, name);
@@ -326,6 +345,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             statement.setTimestamp(5, Timestamp.from(Instant.now()), CALENDAR);
             statement.setInt(6, TENANT_ID);
             statement.setString(7, parentId);
+            statement.setString(8, STRUCTURAL.toString());
             statement.execute();
         }
     }
