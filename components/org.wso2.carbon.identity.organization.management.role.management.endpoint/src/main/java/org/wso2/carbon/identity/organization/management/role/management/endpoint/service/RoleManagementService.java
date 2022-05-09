@@ -1,21 +1,19 @@
 /*
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
- *  * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
- *  *
- *  * WSO2 Inc. licenses this file to you under the Apache License,
- *  * Version 2.0 (the "License"); you may not use this file except
- *  * in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing,
- *  * software distributed under the License is distributed on an
- *  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  * KIND, either express or implied.  See the License for the
- *  * specific language governing permissions and limitations
- *  * under the License.
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.service;
@@ -143,8 +141,19 @@ public class RoleManagementService {
         }
     }
 
+    /**
+     * Get the roles inside an organization.
+     *
+     * @param organizationId The ID of the organization.
+     * @param filter         Param for filtering the results.
+     * @param limit          Param for limiting the results.
+     * @param before         The previous result page pointer.
+     * @param after          The next result page pointer.
+     * @return The roles inside an organization.
+     */
     public Response getRolesOfOrganization(String organizationId, String filter, Integer limit, String before,
                                            String after) {
+
         try {
             int limitValue = validateLimit(limit);
             String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
@@ -335,6 +344,13 @@ public class RoleManagementService {
         return responseObject;
     }
 
+    /**
+     * Generate a response object for put operation.
+     *
+     * @param role    The role which needed to be included in the response.
+     * @param roleURI The URI of the role.
+     * @return A RolePutResponseObject.
+     */
     private RolePutResponseObject getRolePutResponse(Role role, URI roleURI) {
 
         RolePutResponseObjectMeta roleObjMeta = new RolePutResponseObjectMeta();
@@ -348,6 +364,17 @@ public class RoleManagementService {
         return responseObject;
     }
 
+    /**
+     * Generate a response object for get operation.
+     *
+     * @param limit Param for limiting the results.
+     * @param after The next result page pointer.
+     * @param before The previous result page pointer.
+     * @param filter Param for filtering the results.
+     * @param organizationId The ID of the organization.
+     * @param roles List of roles.
+     * @return The RoleListResponseObject.
+     */
     private RolesListResponseObject getRoleListResponse(int limit, String after, String before, String filter,
                                                         String organizationId,
                                                         List<Role> roles) {
@@ -411,6 +438,12 @@ public class RoleManagementService {
         return responseObject;
     }
 
+    /**
+     *
+     * @param limit The param for limiting results.
+     * @return The limit.
+     * @throws RoleManagementClientException This exception is thrown if the limit is not valid.
+     */
     private int validateLimit(Integer limit) throws RoleManagementClientException {
 
         if (limit == null) {

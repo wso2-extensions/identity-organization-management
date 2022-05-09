@@ -1,21 +1,19 @@
 /*
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
- *  * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
- *  *
- *  * WSO2 Inc. licenses this file to you under the Apache License,
- *  * Version 2.0 (the "License"); you may not use this file except
- *  * in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing,
- *  * software distributed under the License is distributed on an
- *  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  * KIND, either express or implied.  See the License for the
- *  * specific language governing permissions and limitations
- *  * under the License.
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.util;
@@ -120,7 +118,7 @@ public class RoleManagementEndpointUtils {
 
     public static URI buildURIForPagination(String paginationUrl) {
 
-        String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + PATH_SEPARATOR + paginationUrl;
+        String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + paginationUrl;
         try {
             return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
                     build().getRelativePublicURL());
@@ -158,8 +156,8 @@ public class RoleManagementEndpointUtils {
         };
 
         private static URI getUri(String organizationId, String id, String path, ErrorMessages errorMessage) {
-            String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH + PATH_SEPARATOR
-                    + organizationId + PATH_SEPARATOR + path + PATH_SEPARATOR + id;
+            String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
+                    PATH_SEPARATOR + organizationId + PATH_SEPARATOR + path + PATH_SEPARATOR + id;
             try {
                 return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
                         build().getAbsolutePublicURL());

@@ -21,7 +21,7 @@ security:
   - BasicAuth: [ ]
 
 paths:
-  /roles:
+  /organizations/{organization-id}/roles:
     get:
       summary:
         Get roles inside an organization.
@@ -32,6 +32,12 @@ paths:
         - $ref: '#/components/parameters/limitQueryParam'
         - $ref: '#/components/parameters/afterQueryParam'
         - $ref: '#/components/parameters/beforeQueryParam'
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
       responses:
         200:
           description: Valid roles are found.
@@ -53,6 +59,13 @@ paths:
         Create a role inside an organization.
       description:
         This API creates a role inside an organization and returns the details of the created role including its unique id.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
       operationId: createRole
       requestBody:
         description: This represents a set of permissions going to be assigned to the role.
@@ -83,7 +96,7 @@ paths:
       tags:
         - Organization Role Management
 
-  /roles/{role-id}:
+  /organizations/{organization-id}/roles/{role-id}:
     get:
       summary:
         Get Role by ID
@@ -93,6 +106,12 @@ paths:
         - name: role-id
           in: path
           description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
           required: true
           schema:
             type: string
@@ -123,6 +142,12 @@ paths:
         - name: role-id
           in: path
           description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
           required: true
           schema:
             type: string
@@ -164,6 +189,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
       responses:
         204:
           description: Role is deleted.
@@ -188,6 +219,12 @@ paths:
         - name: role-id
           in: path
           description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
           required: true
           schema:
             type: string
