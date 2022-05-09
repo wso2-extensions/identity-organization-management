@@ -1,0 +1,647 @@
+openapi: 3.0.0
+info:
+  version: 'v1'
+  title: 'WSO2 Identity Server - Organization Management - Role Management'
+  contact:
+    name: WSO2
+    url: 'http://wso2.com/products/identity-server'
+    email: iam-dev@wso2.org
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: 'https://{server-url}/t/{tenant-domain}/api/identity/organization-mgt/v1.0'
+    variables:
+      server-url:
+        default: 'localhost:9443'
+      tenant-domain:
+        default: carbon.super
+security:
+  - OAuth2: [ ]
+  - BasicAuth: [ ]
+
+paths:
+  /organizations/{organization-id}/roles:
+    get:
+      summary:
+        Get roles inside an organization.
+      description:
+        This API returs roles according to the specified filter, sort and pagination parameters.
+      parameters:
+        - $ref: '#/components/parameters/filterQueryParam'
+        - $ref: '#/components/parameters/limitQueryParam'
+        - $ref: '#/components/parameters/afterQueryParam'
+        - $ref: '#/components/parameters/beforeQueryParam'
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Valid roles are found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolesListResponseObject'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+
+      tags:
+        - Organization Role Management
+    post:
+      summary:
+        Create a role inside an organization.
+      description:
+        This API creates a role inside an organization and returns the details of the created role including its unique id.
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      operationId: createRole
+      requestBody:
+        description: This represents a set of permissions going to be assigned to the role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePostRequestObject'
+        required: true
+      responses:
+        201:
+          description: Valid role is created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePostResponseObject'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          $ref: '#/components/responses/ErrorConflict'
+        '500':
+          $ref: '#/components/responses/ErrorServerError'
+      tags:
+        - Organization Role Management
+
+  /organizations/{organization-id}/roles/{role-id}:
+    get:
+      summary:
+        Get Role by ID
+      description:
+        This API returns the role details of a particular role using its unique id.
+      parameters:
+        - name: role-id
+          in: path
+          description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Valid role is found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleGetResponseObject'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '500':
+          $ref: '#/components/responses/ErrorServerError'
+      tags:
+        - Organization Role Management
+    put:
+      summary: Update Role - PUT
+      description:
+        This API updates the role details and returns the updated role details using a PUT operation.
+      parameters:
+        - name: role-id
+          in: path
+          description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: This represents a set of values that need to be changed in the role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePutRequestObject'
+        required: false
+      responses:
+        200:
+          description: Role is Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePutResponseObject'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '406':
+          $ref: '#/components/responses/ErrorNotAcceptable'
+        '500':
+          $ref: '#/components/responses/ErrorServerError'
+      tags:
+        - Organization Role Management
+    delete:
+      summary: Delete a role inside an organization.
+      description: This API deletes a particular role inside an organization using its unique ID.
+      parameters:
+        - name: role-id
+          in: path
+          description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Role is deleted.
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '500':
+          $ref: '#/components/responses/ErrorServerError'
+      tags:
+        - Organization Role Management
+    patch:
+      summary: Update Role - PATCH
+      description: This API updates the role details and returns the updated role details inside a PATCH operation.
+      tags:
+        - Organization Role Management
+      parameters:
+        - name: role-id
+          in: path
+          description: ID of the role.
+          required: true
+          schema:
+            type: string
+        - name: organization-id
+          in: path
+          description: ID of the organization.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: This represents a set of values that need to be changed in the role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePatchRequestObject'
+        required: false
+      responses:
+        200:
+          description: Role is Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePatchResponseObject'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '406':
+          $ref: '#/components/responses/ErrorNotAcceptable'
+        '500':
+          $ref: '#/components/responses/ErrorServerError'
+
+components:
+  parameters:
+    filterQueryParam:
+      in: query
+      name: filter
+      required: false
+      description:
+        Condition to filter the retrieval of records.
+      schema:
+        type: string
+    limitQueryParam:
+      in: query
+      name: limit
+      required: false
+      description:
+        Maximum number of records to be returned. (Should be greater than 0)
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+    beforeQueryParam:
+      in: query
+      name: before
+      required: false
+      description:
+        Points to the previous range of data that can be retrieved.
+      schema:
+        type: string
+    afterQueryParam:
+      in: query
+      name: after
+      required: false
+      description:
+        Points to the next range of data to be returned.
+      schema:
+        type: string
+  schemas:
+    #------------------------------------------------------------------------
+    # Error response object.
+    #------------------------------------------------------------------------
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: ORG-00000
+          description: An error code.
+        message:
+          type: string
+          example: Some error message
+          description: An error message.
+        description:
+          type: string
+          example: Some error description
+          description: An error description.
+        traceId:
+          type: string
+          example: e0fbcfeb-3617-43c4-8dd0-7b7d38e13047
+          description: An error trace identifier.
+    #------------------------------------------------------------------------
+    # The Roles Search Response Object.
+    #------------------------------------------------------------------------
+    RolesListResponseObject:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+          example:
+            [
+              {
+                "href": "/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "rel": "next",
+              },  {
+              "href": "/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+              "rel": "previous",
+            }
+            ]
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleObj'
+    #------------------------------------------------------------------------
+    # The Link Object.
+    #------------------------------------------------------------------------
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          description: Endpoint that will return the next or previous page of data.
+        rel:
+          type: string
+          description: Describes whether the provided link is to access the next or previous page of data.
+      readOnly: true
+    #------------------------------------------------------------------------
+    # The Roles List Response Object.
+    #------------------------------------------------------------------------
+    RoleObj:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        meta:
+          type: object
+          properties:
+            location:
+              type: string
+              example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+    #------------------------------------------------------------------------
+    # The Role Request Object.
+    #------------------------------------------------------------------------
+    RolePostRequestObject:
+      type: object
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          example: "loginRole"
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolePostRequestUserObject'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolePostRequestGroupObject'
+        permissions:
+          type: array
+          items:
+            type: string
+            example: "/permission/admin/login"
+    #------------------------------------------------------------------------
+    # The Role POST Request User Object.
+    #------------------------------------------------------------------------
+    RolePostRequestUserObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '008bba85-451d-414b-87de-c03b5a1f4217'
+    #------------------------------------------------------------------------
+    # The Role POST Request Group Object.
+    #------------------------------------------------------------------------
+    RolePostRequestGroupObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+    #------------------------------------------------------------------------
+    # The Role POST Response Object.
+    #------------------------------------------------------------------------
+    RolePostResponseObject:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        meta:
+          type: object
+          properties:
+            location:
+              type: string
+              example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+        id:
+          type: string
+          example: '4645709c-ea8c-4495-8590-e1fa0efe3de0'
+    #------------------------------------------------------------------------
+    # The Role GET Response Object.
+    #------------------------------------------------------------------------
+    RoleGetResponseObject:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        meta:
+          type: object
+          properties:
+            location:
+              type: string
+              example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+        id:
+          type: string
+          example: "4645709c-ea8c-4495-8590-e1fa0efe3de0"
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleGetResponseUserObject'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleGetResponseGroupObject'
+        permissions:
+          type: array
+          items:
+            type: string
+            example: '/permission/admin/login'
+    #------------------------------------------------------------------------
+    # The Role GET Response User Object.
+    #------------------------------------------------------------------------
+    RoleGetResponseUserObject:
+      type: object
+      properties:
+        $ref:
+          type: string
+          example:  'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45'
+        id:
+          type: string
+          example: "3a12bae9-4386-44be-befd-caf349297f45"
+        display:
+          type: string
+          example: "kim"
+    #------------------------------------------------------------------------
+    # The Role GET Response Group Object.
+    #------------------------------------------------------------------------
+    RoleGetResponseGroupObject:
+      type: object
+      properties:
+        $ref:
+          type: string
+          example: 'https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+        display:
+          type: string
+          example:  'PRIMARY/manager'
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+    #------------------------------------------------------------------------
+    # The Role PUT Request Object.
+    #------------------------------------------------------------------------
+    RolePutRequestObject:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolePutRequestUserObject'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolePutRequestGroupObject'
+        permissions:
+          type: array
+          items:
+            type: string
+            example: '/permission/admin/manage/add'
+    #------------------------------------------------------------------------
+    # The Role PUT Request User Object.
+    #------------------------------------------------------------------------
+    RolePutRequestUserObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '409ca90b-2ba6-4474-9a45-2cf7376e6e43'
+    #------------------------------------------------------------------------
+    # The Role PUT Request Group Object.
+    #------------------------------------------------------------------------
+    RolePutRequestGroupObject:
+      type: object
+      properties:
+        value:
+          type: string
+          example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+    #------------------------------------------------------------------------
+    # The Role PUT Response Object.
+    #------------------------------------------------------------------------
+    RolePutResponseObject:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        meta:
+          type: object
+          properties:
+            location:
+              type: string
+              example: 'https://localhost:9443/t/carbon.super/o/organization/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
+        id:
+          type: string
+          example: '4645709c-ea8c-4495-8590-e1fa0fe3de0'
+    #------------------------------------------------------------------------
+    # The Role PATCH Request Object.
+    #------------------------------------------------------------------------
+    RolePatchRequestObject:
+      type: object
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolePatchOperationObj'
+    #------------------------------------------------------------------------
+    # The Role PATCH Operation Object.
+    #------------------------------------------------------------------------
+    RolePatchOperationObj:
+      type: object
+      properties:
+        op:
+          type: string
+          enum:
+            - ADD
+            - REMOVE
+            - REPLACE
+        path:
+          type: string
+          example: groups
+        value:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+                example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+    #------------------------------------------------------------------------
+    # The Role PATCH Response Object.
+    #------------------------------------------------------------------------
+    RolePatchResponseObject:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: 'loginRole'
+        meta:
+          type: object
+          properties:
+            location:
+              type: string
+              example: 'https://localhost:9443/t/carbon.super/o/organization/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
+        id:
+          type: string
+          example: '4645709c-ea8c-4495-8590-e1fa0fe3de0'
+
+  #-------------------------------------------------------------------------
+  # Descriptions of Organization Management Role Management API Responses.
+  #-------------------------------------------------------------------------
+  responses:
+    ErrorBadRequest:
+      description: Invalid input in the request.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    ErrorNotFound:
+      description: Requested resource is not found.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    ErrorUnauthorized:
+      description: Authentication information is missing or invalid.
+    ErrorForbidden:
+      description: Access forbidden.
+    ErrorConflict:
+      description: Conflict response.
+    ErrorNotAcceptable:
+      description: Not acceptable.
+    ErrorServerError:
+      description: Internal server error.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+  #-------------------------------------------------------------------------
+  # Applicable authentication mechanisms.
+  #-------------------------------------------------------------------------
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: 'https://localhost:9443/oauth2/authorize'
+          tokenUrl: 'https://localhost:9443/oauth2/token'
+          scopes: { }
