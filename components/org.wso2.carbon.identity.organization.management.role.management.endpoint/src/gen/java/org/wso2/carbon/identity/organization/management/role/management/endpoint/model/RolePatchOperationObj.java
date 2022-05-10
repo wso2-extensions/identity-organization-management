@@ -24,7 +24,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObjValue;
 import javax.validation.constraints.*;
 
 
@@ -70,7 +69,7 @@ public enum OpEnum {
 
     private OpEnum op;
     private String path;
-    private List<RolePatchOperationObjValue> value = null;
+    private List<String> value = null;
 
 
     /**
@@ -81,7 +80,7 @@ public enum OpEnum {
         return this;
     }
     
-    @ApiModelProperty(value = "")
+    @ApiModelProperty(example = "ADD", value = "")
     @JsonProperty("op")
     @Valid
     public OpEnum getOp() {
@@ -111,7 +110,7 @@ public enum OpEnum {
 
     /**
     **/
-    public RolePatchOperationObj value(List<RolePatchOperationObjValue> value) {
+    public RolePatchOperationObj value(List<String> value) {
 
         this.value = value;
         return this;
@@ -120,14 +119,14 @@ public enum OpEnum {
     @ApiModelProperty(value = "")
     @JsonProperty("value")
     @Valid
-    public List<RolePatchOperationObjValue> getValue() {
+    public List<String> getValue() {
         return value;
     }
-    public void setValue(List<RolePatchOperationObjValue> value) {
+    public void setValue(List<String> value) {
         this.value = value;
     }
 
-    public RolePatchOperationObj addValueItem(RolePatchOperationObjValue valueItem) {
+    public RolePatchOperationObj addValueItem(String valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }

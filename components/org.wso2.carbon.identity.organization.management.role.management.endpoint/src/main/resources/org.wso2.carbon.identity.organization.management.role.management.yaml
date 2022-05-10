@@ -571,17 +571,15 @@ components:
             - ADD
             - REMOVE
             - REPLACE
+          example: ADD
         path:
           type: string
           example: groups
         value:
           type: array
           items:
-            type: object
-            properties:
-              value:
-                type: string
-                example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+            type: string
+            example: '7bac6a86-1f21-4937-9fb1-5be4a93ef469'
     #------------------------------------------------------------------------
     # The Role PATCH Response Object.
     #------------------------------------------------------------------------

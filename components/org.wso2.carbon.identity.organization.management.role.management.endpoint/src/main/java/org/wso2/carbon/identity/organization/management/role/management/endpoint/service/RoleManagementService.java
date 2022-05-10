@@ -33,7 +33,6 @@ import org.wso2.carbon.identity.organization.management.role.management.endpoint
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObj;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObj;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObjValue;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroupObject;
@@ -184,8 +183,7 @@ public class RoleManagementService {
             List<PatchOperation> patchOperations = new ArrayList<>();
 
             for (RolePatchOperationObj rolePatchOperationObj : patchOperationObjs) {
-                List<String> values = rolePatchOperationObj.getValue().stream().
-                        map(RolePatchOperationObjValue::getValue).collect(Collectors.toList());
+                List<String> values = rolePatchOperationObj.getValue();
                 PatchOperation patchOperation = new PatchOperation(rolePatchOperationObj.getOp().toString(),
                         rolePatchOperationObj.getPath(), values);
                 patchOperations.add(patchOperation);
@@ -429,7 +427,7 @@ public class RoleManagementService {
                 RoleObjMeta roleObjMeta = new RoleObjMeta();
                 roleObjMeta.setLocation(RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId,
                         role.getId()).toString());
-                roleObj.setDisplayName(role.getId());
+                roleObj.setDisplayName(role.getName());
                 roleObj.setMeta(roleObjMeta);
                 roleDTOs.add(roleObj);
             }
