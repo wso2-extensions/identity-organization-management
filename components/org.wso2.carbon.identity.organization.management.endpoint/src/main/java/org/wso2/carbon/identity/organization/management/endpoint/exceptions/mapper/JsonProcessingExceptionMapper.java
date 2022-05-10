@@ -32,7 +32,7 @@ import static org.wso2.carbon.identity.organization.management.endpoint.util.Org
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_REQUEST_BODY;
 
 /**
- * Handles exception when an incorrect json requests body is received.
+ * Handles exceptions when an incorrect json requests body is received.
  * Sends a default error response.
  */
 public class JsonProcessingExceptionMapper implements ExceptionMapper<JsonProcessingException> {

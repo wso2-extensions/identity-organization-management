@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.management.endpoint.constants;
 
 /**
- * Organization management endpoint constant.
+ * Organization management endpoint constants.
  */
 public class OrganizationManagementEndpointConstants {
 
