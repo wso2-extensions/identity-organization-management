@@ -25,7 +25,6 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -86,16 +85,6 @@ public class Utils {
     public static NamedJdbcTemplate getNewTemplate() {
 
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
-    }
-
-    /**
-     * Get a new Jdbc Template.
-     *
-     * @return a new Jdbc Template Identity DB Connection.
-     */
-    public static NamedJdbcTemplate getNewTemplateForIdentityDatabase() {
-
-        return new NamedJdbcTemplate(IdentityDatabaseUtil.getDataSource());
     }
 
     /**
