@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.management.authz.service.exception;
 
 /**
- * Handles server exception that can occur during the evaluation of authorization for organization management
+ * Handles server exceptions that can occur during the evaluation of authorization for organization management
  * related operations.
  */
 public class OrganizationManagementAuthzServiceServerException extends Exception {
