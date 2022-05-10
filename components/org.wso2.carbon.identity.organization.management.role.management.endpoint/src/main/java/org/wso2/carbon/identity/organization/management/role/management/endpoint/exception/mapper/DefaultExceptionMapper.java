@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,37 +16,37 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.endpoint.exceptions.mapper;
+package org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.util.RoleManagementEndpointUtils;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import static org.wso2.carbon.identity.organization.management.endpoint.util.OrganizationManagementEndpointUtil.getError;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_REQUEST_BODY;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_REQUEST_BODY;
+
 
 /**
- * Handles exception when an incorrect json requests body is received.
+ * Handles exception when an incorrect JSON request is received.
  * Sends a default error response.
  */
-public class JsonProcessingExceptionMapper implements ExceptionMapper<JsonProcessingException> {
+public class DefaultExceptionMapper implements ExceptionMapper<JsonProcessingException> {
 
-    private static final Log LOG = LogFactory.getLog(JsonProcessingExceptionMapper.class);
+    private static final Log LOG = LogFactory.getLog(DefaultExceptionMapper.class);
 
     @Override
     public Response toResponse(JsonProcessingException e) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Provided JSON request content is not in the valid format.", e);
+            LOG.debug("Provided JSON request content is not in the valid format ", e);
         }
-
-        Error error = getError(ERROR_CODE_INVALID_REQUEST_BODY.getCode(),
+        Error error = RoleManagementEndpointUtils.getError(ERROR_CODE_INVALID_REQUEST_BODY.getCode(),
                 ERROR_CODE_INVALID_REQUEST_BODY.getMessage(), ERROR_CODE_INVALID_REQUEST_BODY.getDescription());
         return Response.status(Response.Status.BAD_REQUEST).entity(error)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON).build();

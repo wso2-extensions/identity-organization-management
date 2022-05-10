@@ -16,26 +16,43 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.authz.service.exception;
+package org.wso2.carbon.identity.organization.management.role.management.service.models;
 
 /**
- * Handles server exception that can occur during the evaluation of authorization for organization management
- * related operations.
+ * This class represents a basic model of a User.
  */
-public class OrganizationManagementAuthzServiceServerException extends Exception {
+public class BasicUser {
 
-    public OrganizationManagementAuthzServiceServerException(String message) {
+    private String id;
+    private String userName;
 
-        super(message);
+    public BasicUser(String id, String userName) {
+
+        this.id = id;
+        this.userName = userName;
     }
 
-    public OrganizationManagementAuthzServiceServerException(String message, Throwable cause) {
-
-        super(message, cause);
+    public BasicUser(String id) {
+        this.id = id;
     }
 
-    public OrganizationManagementAuthzServiceServerException(Throwable cause) {
+    public String getId() {
 
-        super(cause);
+        return id;
+    }
+
+    public void setId(String id) {
+
+        this.id = id;
+    }
+
+    public String getUserName() {
+
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+
+        this.userName = userName;
     }
 }
