@@ -414,6 +414,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     removePermissionsFromRole(permissions.stream().map(BasicPermission::getId).
                             map(i -> Integer.toString(i)).collect(Collectors.toList()), roleId);
                 }
+                checkPermissionsExist(values, Utils.getTenantId(), roleId);
                 addPermissionsToRole(values, roleId);
             }
         }
