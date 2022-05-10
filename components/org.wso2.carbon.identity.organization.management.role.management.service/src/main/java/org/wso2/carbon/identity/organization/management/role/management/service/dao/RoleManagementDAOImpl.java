@@ -320,6 +320,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             roleId);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
+                    checkPermissionsExist(role.getPermissions(), tenantId, role.getId());
                     addPermissionsToRole(role.getPermissions(), roleId);
                 }
                 return null;
