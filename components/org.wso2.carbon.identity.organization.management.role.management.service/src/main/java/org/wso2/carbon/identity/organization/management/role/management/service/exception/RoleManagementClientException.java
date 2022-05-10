@@ -16,26 +16,21 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.authz.service.exception;
+package org.wso2.carbon.identity.organization.management.role.management.service.exception;
 
 /**
- * Handles server exception that can occur during the evaluation of authorization for organization management
- * related operations.
+ * This class is to handle the client side errors in Role Management.
  */
-public class OrganizationManagementAuthzServiceServerException extends Exception {
+public class RoleManagementClientException extends RoleManagementException {
 
-    public OrganizationManagementAuthzServiceServerException(String message) {
+    public RoleManagementClientException(String message, String description, String errorCode) {
 
-        super(message);
+        super(message, description, errorCode);
     }
 
-    public OrganizationManagementAuthzServiceServerException(String message, Throwable cause) {
+    public RoleManagementClientException(String message, String description, String errorCode,
+                                         Throwable cause) {
 
-        super(message, cause);
-    }
-
-    public OrganizationManagementAuthzServiceServerException(Throwable cause) {
-
-        super(cause);
+        super(message, description, errorCode, cause);
     }
 }

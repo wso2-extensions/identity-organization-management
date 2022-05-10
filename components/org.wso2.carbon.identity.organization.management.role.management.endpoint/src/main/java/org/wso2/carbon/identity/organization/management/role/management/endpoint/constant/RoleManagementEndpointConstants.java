@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,16 +16,20 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.endpoint.constants;
+package org.wso2.carbon.identity.organization.management.role.management.endpoint.constant;
 
 /**
- * Organization management endpoint constant.
+ * Constants of Role Management Endpoint module.
  */
-public class OrganizationManagementEndpointConstants {
+public class RoleManagementEndpointConstants {
 
     public static final String PATH_SEPARATOR = "/";
     public static final String V1_API_PATH_COMPONENT = "v1.0";
     public static final String ORGANIZATION_PATH = "organizations";
+    public static final String ROLE_PATH = "roles";
+    public static final String GROUP_PATH = "groups";
+    public static final String USER_PATH = "users";
     public static final String DESC_SORT_ORDER = "DESC";
     public static final String ASC_SORT_ORDER = "ASC";
+    public static final String ORGANIZATION_ROLES_PATH = "organizations/%s/roles";
 }

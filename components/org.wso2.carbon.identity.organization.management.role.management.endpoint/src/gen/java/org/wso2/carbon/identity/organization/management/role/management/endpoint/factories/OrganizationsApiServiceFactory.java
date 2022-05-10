@@ -16,16 +16,17 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.endpoint.constants;
+package org.wso2.carbon.identity.organization.management.role.management.endpoint.factories;
 
-/**
- * Organization management endpoint constant.
- */
-public class OrganizationManagementEndpointConstants {
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.OrganizationsApiService;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.impl.OrganizationsApiServiceImpl;
 
-    public static final String PATH_SEPARATOR = "/";
-    public static final String V1_API_PATH_COMPONENT = "v1.0";
-    public static final String ORGANIZATION_PATH = "organizations";
-    public static final String DESC_SORT_ORDER = "DESC";
-    public static final String ASC_SORT_ORDER = "ASC";
+public class OrganizationsApiServiceFactory {
+
+   private final static OrganizationsApiService service = new OrganizationsApiServiceImpl();
+
+   public static OrganizationsApiService getOrganizationsApi()
+   {
+      return service;
+   }
 }

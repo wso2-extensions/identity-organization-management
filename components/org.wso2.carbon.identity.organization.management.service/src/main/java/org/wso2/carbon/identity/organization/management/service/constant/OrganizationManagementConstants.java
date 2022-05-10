@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Contains constants related to organization management.
+ * Contains constant related to organization management.
  */
 public class OrganizationManagementConstants {
 
