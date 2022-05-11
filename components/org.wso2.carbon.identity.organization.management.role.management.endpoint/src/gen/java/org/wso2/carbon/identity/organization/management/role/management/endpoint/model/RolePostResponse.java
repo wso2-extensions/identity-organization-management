@@ -22,9 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObj;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
 
@@ -33,38 +31,67 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePatchRequestObject  {
+public class RolePostResponse  {
   
-    private List<RolePatchOperationObj> operations = null;
-
+    private String displayName;
+    private RoleObjMeta meta;
+    private String id;
 
     /**
     **/
-    public RolePatchRequestObject operations(List<RolePatchOperationObj> operations) {
+    public RolePostResponse displayName(String displayName) {
 
-        this.operations = operations;
+        this.displayName = displayName;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "loginRole", value = "")
+    @JsonProperty("displayName")
+    @Valid
+    public String getDisplayName() {
+        return displayName;
+    }
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+    **/
+    public RolePostResponse meta(RoleObjMeta meta) {
+
+        this.meta = meta;
         return this;
     }
     
     @ApiModelProperty(value = "")
-    @JsonProperty("operations")
+    @JsonProperty("meta")
     @Valid
-    public List<RolePatchOperationObj> getOperations() {
-        return operations;
+    public RoleObjMeta getMeta() {
+        return meta;
     }
-    public void setOperations(List<RolePatchOperationObj> operations) {
-        this.operations = operations;
+    public void setMeta(RoleObjMeta meta) {
+        this.meta = meta;
     }
 
-    public RolePatchRequestObject addOperationsItem(RolePatchOperationObj operationsItem) {
-        if (this.operations == null) {
-            this.operations = new ArrayList<>();
-        }
-        this.operations.add(operationsItem);
+    /**
+    **/
+    public RolePostResponse id(String id) {
+
+        this.id = id;
         return this;
     }
-
     
+    @ApiModelProperty(example = "4645709c-ea8c-4495-8590-e1fa0efe3de0", value = "")
+    @JsonProperty("id")
+    @Valid
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+
+
 
     @Override
     public boolean equals(java.lang.Object o) {
@@ -75,22 +102,26 @@ public class RolePatchRequestObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePatchRequestObject rolePatchRequestObject = (RolePatchRequestObject) o;
-        return Objects.equals(this.operations, rolePatchRequestObject.operations);
+        RolePostResponse rolePostResponse = (RolePostResponse) o;
+        return Objects.equals(this.displayName, rolePostResponse.displayName) &&
+            Objects.equals(this.meta, rolePostResponse.meta) &&
+            Objects.equals(this.id, rolePostResponse.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(operations);
+        return Objects.hash(displayName, meta, id);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePatchRequestObject {\n");
+        sb.append("class RolePostResponse {\n");
         
-        sb.append("    operations: ").append(toIndentedString(operations)).append("\n");
+        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
+        sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
+        sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("}");
         return sb.toString();
     }

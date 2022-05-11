@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUser;
 import javax.validation.constraints.*;
 
 
@@ -34,27 +34,29 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePutRequestObject  {
+public class RolePutRequest  {
   
     private String displayName;
-    private List<RolePutRequestUserObject> users = null;
+    private List<RolePutRequestUser> users = null;
 
-    private List<RolePutRequestGroupObject> groups = null;
+    private List<RolePutRequestGroup> groups = null;
 
     private List<String> permissions = null;
 
 
     /**
     **/
-    public RolePutRequestObject displayName(String displayName) {
+    public RolePutRequest displayName(String displayName) {
 
         this.displayName = displayName;
         return this;
     }
     
-    @ApiModelProperty(example = "loginRole", value = "")
+    @ApiModelProperty(example = "loginRole", required = true, value = "")
     @JsonProperty("displayName")
     @Valid
+    @NotNull(message = "Property displayName cannot be null.")
+
     public String getDisplayName() {
         return displayName;
     }
@@ -64,7 +66,7 @@ public class RolePutRequestObject  {
 
     /**
     **/
-    public RolePutRequestObject users(List<RolePutRequestUserObject> users) {
+    public RolePutRequest users(List<RolePutRequestUser> users) {
 
         this.users = users;
         return this;
@@ -73,14 +75,14 @@ public class RolePutRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<RolePutRequestUserObject> getUsers() {
+    public List<RolePutRequestUser> getUsers() {
         return users;
     }
-    public void setUsers(List<RolePutRequestUserObject> users) {
+    public void setUsers(List<RolePutRequestUser> users) {
         this.users = users;
     }
 
-    public RolePutRequestObject addUsersItem(RolePutRequestUserObject usersItem) {
+    public RolePutRequest addUsersItem(RolePutRequestUser usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }
@@ -90,7 +92,7 @@ public class RolePutRequestObject  {
 
         /**
     **/
-    public RolePutRequestObject groups(List<RolePutRequestGroupObject> groups) {
+    public RolePutRequest groups(List<RolePutRequestGroup> groups) {
 
         this.groups = groups;
         return this;
@@ -99,14 +101,14 @@ public class RolePutRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("groups")
     @Valid
-    public List<RolePutRequestGroupObject> getGroups() {
+    public List<RolePutRequestGroup> getGroups() {
         return groups;
     }
-    public void setGroups(List<RolePutRequestGroupObject> groups) {
+    public void setGroups(List<RolePutRequestGroup> groups) {
         this.groups = groups;
     }
 
-    public RolePutRequestObject addGroupsItem(RolePutRequestGroupObject groupsItem) {
+    public RolePutRequest addGroupsItem(RolePutRequestGroup groupsItem) {
         if (this.groups == null) {
             this.groups = new ArrayList<>();
         }
@@ -116,7 +118,7 @@ public class RolePutRequestObject  {
 
         /**
     **/
-    public RolePutRequestObject permissions(List<String> permissions) {
+    public RolePutRequest permissions(List<String> permissions) {
 
         this.permissions = permissions;
         return this;
@@ -132,7 +134,7 @@ public class RolePutRequestObject  {
         this.permissions = permissions;
     }
 
-    public RolePutRequestObject addPermissionsItem(String permissionsItem) {
+    public RolePutRequest addPermissionsItem(String permissionsItem) {
         if (this.permissions == null) {
             this.permissions = new ArrayList<>();
         }
@@ -151,11 +153,11 @@ public class RolePutRequestObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePutRequestObject rolePutRequestObject = (RolePutRequestObject) o;
-        return Objects.equals(this.displayName, rolePutRequestObject.displayName) &&
-            Objects.equals(this.users, rolePutRequestObject.users) &&
-            Objects.equals(this.groups, rolePutRequestObject.groups) &&
-            Objects.equals(this.permissions, rolePutRequestObject.permissions);
+        RolePutRequest rolePutRequest = (RolePutRequest) o;
+        return Objects.equals(this.displayName, rolePutRequest.displayName) &&
+            Objects.equals(this.users, rolePutRequest.users) &&
+            Objects.equals(this.groups, rolePutRequest.groups) &&
+            Objects.equals(this.permissions, rolePutRequest.permissions);
     }
 
     @Override
@@ -167,7 +169,7 @@ public class RolePutRequestObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePutRequestObject {\n");
+        sb.append("class RolePutRequest {\n");
         
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    users: ").append(toIndentedString(users)).append("\n");

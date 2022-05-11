@@ -26,24 +26,24 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.RoleManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Link;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUser;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObj;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperationObj;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestUserObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUserObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObjectMeta;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperation;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestUser;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestUser;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponse;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.util.RoleManagementEndpointUtils;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
@@ -80,14 +80,14 @@ public class RoleManagementService {
      * Service for creating a role inside an organization.
      *
      * @param organizationId        The ID of the organization.
-     * @param rolePostRequestObject The object created from request body.
+     * @param rolePostRequest The object created from request body.
      * @return The role creation response.
      */
-    public Response createRole(String organizationId, RolePostRequestObject rolePostRequestObject) {
+    public Response createRole(String organizationId, RolePostRequest rolePostRequest) {
 
         try {
             Role role = RoleManagementEndpointUtils.getRoleManager().addRole(organizationId,
-                    generateRoleFromPostRequest(rolePostRequestObject));
+                    generateRoleFromPostRequest(rolePostRequest));
             String roleId = role.getId();
             URI roleURI = RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId, roleId);
             return Response.created(roleURI).entity
@@ -171,20 +171,20 @@ public class RoleManagementService {
      *
      * @param organizationId         The ID of the organization.
      * @param roleId                 The ID of the role.
-     * @param rolePatchRequestObject The request object created using request body.
+     * @param rolePatchRequest The request object created using request body.
      * @return The role patch response.
      */
     public Response patchRole(String organizationId, String roleId,
-                              RolePatchRequestObject rolePatchRequestObject) {
+                              RolePatchRequest rolePatchRequest) {
 
         try {
-            List<RolePatchOperationObj> patchOperationObjs = rolePatchRequestObject.getOperations();
+            List<RolePatchOperation> patchOperationList = rolePatchRequest.getOperations();
             List<PatchOperation> patchOperations = new ArrayList<>();
 
-            for (RolePatchOperationObj rolePatchOperationObj : patchOperationObjs) {
-                List<String> values = rolePatchOperationObj.getValue();
-                PatchOperation patchOperation = new PatchOperation(rolePatchOperationObj.getOp().toString(),
-                        rolePatchOperationObj.getPath(), values);
+            for (RolePatchOperation rolePatchOperation : patchOperationList) {
+                List<String> values = rolePatchOperation.getValue();
+                PatchOperation patchOperation = new PatchOperation(rolePatchOperation.getOp().toString(),
+                        rolePatchOperation.getPath(), values);
                 patchOperations.add(patchOperation);
             }
 
@@ -205,15 +205,15 @@ public class RoleManagementService {
      *
      * @param organizationId       The organization ID.
      * @param roleId               The role ID.
-     * @param rolePutRequestObject The request object created using request body.
+     * @param rolePutRequest The request object created using request body.
      * @return Put role response.
      */
-    public Response putRole(String organizationId, String roleId, RolePutRequestObject rolePutRequestObject) {
+    public Response putRole(String organizationId, String roleId, RolePutRequest rolePutRequest) {
         try {
-            String displayName = rolePutRequestObject.getDisplayName();
-            List<RolePutRequestUserObject> users = rolePutRequestObject.getUsers();
-            List<RolePutRequestGroupObject> groups = rolePutRequestObject.getGroups();
-            List<String> permissions = rolePutRequestObject.getPermissions();
+            String displayName = rolePutRequest.getDisplayName();
+            List<RolePutRequestUser> users = rolePutRequest.getUsers();
+            List<RolePutRequestGroup> groups = rolePutRequest.getGroups();
+            List<String> permissions = rolePutRequest.getPermissions();
 
             Role role = RoleManagementEndpointUtils.getRoleManager().putRole(organizationId, roleId,
                     new Role(roleId, displayName,
@@ -231,94 +231,94 @@ public class RoleManagementService {
     }
 
     /**
-     * Generating a Role object from the RoleRequestObject.
+     * Generating a Role object from the RoleRequest.
      *
-     * @param rolePostRequestObject The request object coming from the API.
+     * @param rolePostRequest The request object coming from the API.
      * @return A role object.
      */
-    private Role generateRoleFromPostRequest(RolePostRequestObject rolePostRequestObject) {
+    private Role generateRoleFromPostRequest(RolePostRequest rolePostRequest) {
 
         Role role = new Role();
         role.setId(Utils.generateUniqueId());
-        role.setName(rolePostRequestObject.getDisplayName());
-        role.setUsers(rolePostRequestObject.getUsers().stream().map(RolePostRequestUserObject::getValue)
+        role.setName(rolePostRequest.getDisplayName());
+        role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
                 .map(BasicUser::new).collect(Collectors.toList()));
-        role.setGroups(rolePostRequestObject.getGroups().stream().map(RolePostRequestGroupObject::getValue)
+        role.setGroups(rolePostRequest.getGroups().stream().map(RolePostRequestGroup::getValue)
                 .map(BasicGroup::new).collect(Collectors.toList()));
-        role.setPermissions(rolePostRequestObject.getPermissions());
+        role.setPermissions(rolePostRequest.getPermissions());
 
         return role;
     }
 
     /**
-     * Generating a RolePostResponseObject object for the response.
+     * Generating a RolePostResponse object for the response.
      *
      * @param role    A role object.
      * @param roleURI The URI of the role.
-     * @return A RolePostResponseObject.
+     * @return A RolePostResponse.
      */
-    private RolePostResponseObject getRolePostResponse(Role role, URI roleURI) {
+    private RolePostResponse getRolePostResponse(Role role, URI roleURI) {
 
         RoleObjMeta roleObjMeta = new RoleObjMeta();
         roleObjMeta.location(roleURI.toString());
 
-        RolePostResponseObject responseObject = new RolePostResponseObject();
-        responseObject.setId(role.getId());
-        responseObject.setDisplayName(role.getName());
-        responseObject.setMeta(roleObjMeta);
+        RolePostResponse response = new RolePostResponse();
+        response.setId(role.getId());
+        response.setDisplayName(role.getName());
+        response.setMeta(roleObjMeta);
 
-        return responseObject;
+        return response;
     }
 
     /**
-     * Generating  RoleGetResponseObject for the response.
+     * Generating  RoleGetResponse for the response.
      *
      * @param organizationId The ID of the organization.
      * @param role           A role object.
      * @param roleURI        The URI of the role.
-     * @return A RoleGetResponseObject.
+     * @return A RoleGetResponse.
      */
-    private RoleGetResponseObject getRoleGetResponse(String organizationId, Role role, URI roleURI) {
+    private RoleGetResponse getRoleGetResponse(String organizationId, Role role, URI roleURI) {
 
         RoleObjMeta roleObjMeta = new RoleObjMeta();
         roleObjMeta.location(roleURI.toString());
 
-        RoleGetResponseObject responseObject = new RoleGetResponseObject();
-        responseObject.setId(role.getId());
-        responseObject.setDisplayName(role.getName());
-        responseObject.setMeta(roleObjMeta);
-        responseObject.setPermissions(role.getPermissions());
+        RoleGetResponse response = new RoleGetResponse();
+        response.setId(role.getId());
+        response.setDisplayName(role.getName());
+        response.setMeta(roleObjMeta);
+        response.setPermissions(role.getPermissions());
 
-        List<RoleGetResponseGroupObject> groups = new ArrayList<>();
-        List<RoleGetResponseUserObject> users = new ArrayList<>();
+        List<RoleGetResponseGroup> groups = new ArrayList<>();
+        List<RoleGetResponseUser> users = new ArrayList<>();
 
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
             List<BasicGroup> roleGroups = role.getGroups();
             for (BasicGroup basicGroup : roleGroups) {
-                RoleGetResponseGroupObject group = new RoleGetResponseGroupObject();
+                RoleGetResponseGroup group = new RoleGetResponseGroup();
                 group.value(basicGroup.getGroupId());
-                group.display(basicGroup.getGroupName());
+                group.displayName(basicGroup.getGroupName());
                 group.$ref(RoleManagementEndpointUtils.URIBuilder.GROUP_URI.
                         buildURI(organizationId, basicGroup.getGroupId()).toString());
                 groups.add(group);
             }
-            responseObject.setGroups(groups);
+            response.setGroups(groups);
         }
 
         if (CollectionUtils.isNotEmpty(role.getUsers())) {
             List<BasicUser> roleUsers = role.getUsers();
             for (BasicUser basicUser : roleUsers) {
-                RoleGetResponseUserObject user = new RoleGetResponseUserObject();
+                RoleGetResponseUser user = new RoleGetResponseUser();
                 user.id(basicUser.getId());
-                user.display(basicUser.getUserName());
+                user.displayName(basicUser.getUserName());
                 user.$ref(RoleManagementEndpointUtils.URIBuilder.USER_URI.
                         buildURI(organizationId, basicUser.getId()).toString());
                 users.add(user);
             }
-            responseObject.setUsers(users);
+            response.setUsers(users);
         }
 
-        return responseObject;
+        return response;
     }
 
     /**
@@ -326,19 +326,19 @@ public class RoleManagementService {
      *
      * @param role    The role which needed to be included in the response.
      * @param roleURI The URI of the role.
-     * @return A RolePatchResponseObject.
+     * @return A RolePatchResponse.
      */
-    private RolePatchResponseObject getRolePatchResponse(Role role, URI roleURI) {
+    private RolePatchResponse getRolePatchResponse(Role role, URI roleURI) {
 
-        RolePutResponseObjectMeta roleObjMeta = new RolePutResponseObjectMeta();
+        RolePutResponseMeta roleObjMeta = new RolePutResponseMeta();
         roleObjMeta.setLocation(roleURI.toString());
 
-        RolePatchResponseObject responseObject = new RolePatchResponseObject();
-        responseObject.setDisplayName(role.getName());
-        responseObject.setMeta(roleObjMeta);
-        responseObject.setId(role.getId());
+        RolePatchResponse response = new RolePatchResponse();
+        response.setDisplayName(role.getName());
+        response.setMeta(roleObjMeta);
+        response.setId(role.getId());
 
-        return responseObject;
+        return response;
     }
 
     /**
@@ -346,14 +346,14 @@ public class RoleManagementService {
      *
      * @param role    The role which needed to be included in the response.
      * @param roleURI The URI of the role.
-     * @return A RolePutResponseObject.
+     * @return A RolePutResponse.
      */
-    private RolePutResponseObject getRolePutResponse(Role role, URI roleURI) {
+    private RolePutResponse getRolePutResponse(Role role, URI roleURI) {
 
-        RolePutResponseObjectMeta roleObjMeta = new RolePutResponseObjectMeta();
+        RolePutResponseMeta roleObjMeta = new RolePutResponseMeta();
         roleObjMeta.setLocation(roleURI.toString());
 
-        RolePutResponseObject responseObject = new RolePutResponseObject();
+        RolePutResponse responseObject = new RolePutResponse();
         responseObject.setDisplayName(role.getName());
         responseObject.setMeta(roleObjMeta);
         responseObject.setId(role.getId());
@@ -370,13 +370,13 @@ public class RoleManagementService {
      * @param filter Param for filtering the results.
      * @param organizationId The ID of the organization.
      * @param roles List of roles.
-     * @return The RoleListResponseObject.
+     * @return The RoleListResponse.
      */
-    private RolesListResponseObject getRoleListResponse(int limit, String after, String before, String filter,
+    private RolesListResponse getRoleListResponse(int limit, String after, String before, String filter,
                                                         String organizationId,
                                                         List<Role> roles) {
 
-        RolesListResponseObject responseObject = new RolesListResponseObject();
+        RolesListResponse response = new RolesListResponse();
         if (CollectionUtils.isNotEmpty(roles)) {
             boolean hasMoreItems = roles.size() > limit;
             boolean needsReverse = StringUtils.isNotBlank(before);
@@ -408,7 +408,7 @@ public class RoleManagementService {
                 link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url) +
                         "&before=" + encodedString));
                 link.setRel("previous");
-                responseObject.addLinksItem(link);
+                response.addLinksItem(link);
             }
             if (!isLastPage) {
                 String encodedString = Base64.getEncoder().encodeToString(roles.get(roles.size() - 1)
@@ -417,7 +417,7 @@ public class RoleManagementService {
                 link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url) +
                         "&after=" + encodedString));
                 link.setRel("next");
-                responseObject.addLinksItem(link);
+                response.addLinksItem(link);
             }
 
             List<RoleObj> roleDTOs = new ArrayList<>();
@@ -426,13 +426,14 @@ public class RoleManagementService {
                 RoleObjMeta roleObjMeta = new RoleObjMeta();
                 roleObjMeta.setLocation(RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId,
                         role.getId()).toString());
+                roleObj.setId(role.getId());
                 roleObj.setDisplayName(role.getName());
                 roleObj.setMeta(roleObjMeta);
                 roleDTOs.add(roleObj);
             }
-            responseObject.setRoles(roleDTOs);
+            response.setRoles(roleDTOs);
         }
-        return responseObject;
+        return response;
     }
 
     /**

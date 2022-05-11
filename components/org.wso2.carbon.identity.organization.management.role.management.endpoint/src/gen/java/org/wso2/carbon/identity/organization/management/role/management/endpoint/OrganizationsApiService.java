@@ -25,20 +25,20 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import java.io.InputStream;
 import java.util.List;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponse;
 import javax.ws.rs.core.Response;
 
 
 public interface OrganizationsApiService {
 
-      public Response createRole(String organizationId, RolePostRequestObject rolePostRequestObject);
+      public Response createRole(String organizationId, RolePostRequest rolePostRequest);
 
       public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer limit, String after, String before);
 
@@ -46,7 +46,7 @@ public interface OrganizationsApiService {
 
       public Response organizationsOrganizationIdRolesRoleIdGet(String roleId, String organizationId);
 
-      public Response organizationsOrganizationIdRolesRoleIdPatch(String roleId, String organizationId, RolePatchRequestObject rolePatchRequestObject);
+      public Response organizationsOrganizationIdRolesRoleIdPatch(String roleId, String organizationId, RolePatchRequest rolePatchRequest);
 
-      public Response organizationsOrganizationIdRolesRoleIdPut(String roleId, String organizationId, RolePutRequestObject rolePutRequestObject);
+      public Response organizationsOrganizationIdRolesRoleIdPut(String roleId, String organizationId, RolePutRequest rolePutRequest);
 }

@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchOperation;
 import javax.validation.constraints.*;
 
 
@@ -30,67 +33,38 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleGetResponseUserObject  {
+public class RolePatchRequest  {
   
-    private String $ref;
-    private String id;
-    private String display;
+    private List<RolePatchOperation> operations = null;
+
 
     /**
     **/
-    public RoleGetResponseUserObject $ref(String $ref) {
+    public RolePatchRequest operations(List<RolePatchOperation> operations) {
 
-        this.$ref = $ref;
+        this.operations = operations;
         return this;
     }
     
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45", value = "")
-    @JsonProperty("$ref")
+    @ApiModelProperty(value = "")
+    @JsonProperty("operations")
     @Valid
-    public String get$Ref() {
-        return $ref;
+    public List<RolePatchOperation> getOperations() {
+        return operations;
     }
-    public void set$Ref(String $ref) {
-        this.$ref = $ref;
+    public void setOperations(List<RolePatchOperation> operations) {
+        this.operations = operations;
     }
 
-    /**
-    **/
-    public RoleGetResponseUserObject id(String id) {
-
-        this.id = id;
+    public RolePatchRequest addOperationsItem(RolePatchOperation operationsItem) {
+        if (this.operations == null) {
+            this.operations = new ArrayList<>();
+        }
+        this.operations.add(operationsItem);
         return this;
     }
+
     
-    @ApiModelProperty(example = "3a12bae9-4386-44be-befd-caf349297f45", value = "")
-    @JsonProperty("id")
-    @Valid
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-    **/
-    public RoleGetResponseUserObject display(String display) {
-
-        this.display = display;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "kim", value = "")
-    @JsonProperty("display")
-    @Valid
-    public String getDisplay() {
-        return display;
-    }
-    public void setDisplay(String display) {
-        this.display = display;
-    }
-
-
 
     @Override
     public boolean equals(java.lang.Object o) {
@@ -101,26 +75,22 @@ public class RoleGetResponseUserObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleGetResponseUserObject roleGetResponseUserObject = (RoleGetResponseUserObject) o;
-        return Objects.equals(this.$ref, roleGetResponseUserObject.$ref) &&
-            Objects.equals(this.id, roleGetResponseUserObject.id) &&
-            Objects.equals(this.display, roleGetResponseUserObject.display);
+        RolePatchRequest rolePatchRequest = (RolePatchRequest) o;
+        return Objects.equals(this.operations, rolePatchRequest.operations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash($ref, id, display);
+        return Objects.hash(operations);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleGetResponseUserObject {\n");
+        sb.append("class RolePatchRequest {\n");
         
-        sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
-        sb.append("    id: ").append(toIndentedString(id)).append("\n");
-        sb.append("    display: ").append(toIndentedString(display)).append("\n");
+        sb.append("    operations: ").append(toIndentedString(operations)).append("\n");
         sb.append("}");
         return sb.toString();
     }

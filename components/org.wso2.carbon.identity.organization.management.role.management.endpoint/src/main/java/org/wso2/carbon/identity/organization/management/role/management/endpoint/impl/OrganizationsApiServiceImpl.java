@@ -20,9 +20,9 @@ package org.wso2.carbon.identity.organization.management.role.management.endpoin
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.OrganizationsApiService;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequest;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.service.RoleManagementService;
 
 import javax.ws.rs.core.Response;
@@ -36,9 +36,9 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     private RoleManagementService roleManagementService;
 
     @Override
-    public Response createRole(String organizationId, RolePostRequestObject rolePostRequestObject) {
+    public Response createRole(String organizationId, RolePostRequest rolePostRequest) {
 
-        return roleManagementService.createRole(organizationId, rolePostRequestObject);
+        return roleManagementService.createRole(organizationId, rolePostRequest);
     }
 
     @Override
@@ -62,15 +62,15 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
 
     @Override
     public Response organizationsOrganizationIdRolesRoleIdPatch(String roleId, String organizationId,
-                                                                RolePatchRequestObject rolePatchRequestObject) {
+                                                                RolePatchRequest rolePatchRequest) {
 
-        return roleManagementService.patchRole(organizationId, roleId, rolePatchRequestObject);
+        return roleManagementService.patchRole(organizationId, roleId, rolePatchRequest);
     }
 
     @Override
     public Response organizationsOrganizationIdRolesRoleIdPut(String roleId, String organizationId,
-                                                              RolePutRequestObject rolePutRequestObject) {
+                                                              RolePutRequest rolePutRequest) {
 
-        return roleManagementService.putRole(organizationId, roleId, rolePutRequestObject);
+        return roleManagementService.putRole(organizationId, roleId, rolePutRequest);
     }
 }

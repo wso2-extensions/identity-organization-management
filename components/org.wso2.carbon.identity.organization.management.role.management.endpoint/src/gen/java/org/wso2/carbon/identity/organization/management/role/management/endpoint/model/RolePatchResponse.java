@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseMeta;
 import javax.validation.constraints.*;
 
 
@@ -30,26 +31,64 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePutRequestUserObject  {
+public class RolePatchResponse  {
   
-    private String value;
+    private String displayName;
+    private RolePutResponseMeta meta;
+    private String id;
 
     /**
     **/
-    public RolePutRequestUserObject value(String value) {
+    public RolePatchResponse displayName(String displayName) {
 
-        this.value = value;
+        this.displayName = displayName;
         return this;
     }
     
-    @ApiModelProperty(example = "409ca90b-2ba6-4474-9a45-2cf7376e6e43", value = "")
-    @JsonProperty("value")
+    @ApiModelProperty(example = "loginRole", value = "")
+    @JsonProperty("displayName")
     @Valid
-    public String getValue() {
-        return value;
+    public String getDisplayName() {
+        return displayName;
     }
-    public void setValue(String value) {
-        this.value = value;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+    **/
+    public RolePatchResponse meta(RolePutResponseMeta meta) {
+
+        this.meta = meta;
+        return this;
+    }
+    
+    @ApiModelProperty(value = "")
+    @JsonProperty("meta")
+    @Valid
+    public RolePutResponseMeta getMeta() {
+        return meta;
+    }
+    public void setMeta(RolePutResponseMeta meta) {
+        this.meta = meta;
+    }
+
+    /**
+    **/
+    public RolePatchResponse id(String id) {
+
+        this.id = id;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
+    @JsonProperty("id")
+    @Valid
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
     }
 
 
@@ -63,22 +102,26 @@ public class RolePutRequestUserObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePutRequestUserObject rolePutRequestUserObject = (RolePutRequestUserObject) o;
-        return Objects.equals(this.value, rolePutRequestUserObject.value);
+        RolePatchResponse rolePatchResponse = (RolePatchResponse) o;
+        return Objects.equals(this.displayName, rolePatchResponse.displayName) &&
+            Objects.equals(this.meta, rolePatchResponse.meta) &&
+            Objects.equals(this.id, rolePatchResponse.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(displayName, meta, id);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePutRequestUserObject {\n");
+        sb.append("class RolePatchResponse {\n");
         
-        sb.append("    value: ").append(toIndentedString(value)).append("\n");
+        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
+        sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
+        sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("}");
         return sb.toString();
     }

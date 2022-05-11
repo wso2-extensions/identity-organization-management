@@ -32,7 +32,7 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePatchOperationObj  {
+public class RolePatchOperation  {
   
 
 @XmlType(name="OpEnum")
@@ -74,7 +74,7 @@ public enum OpEnum {
 
     /**
     **/
-    public RolePatchOperationObj op(OpEnum op) {
+    public RolePatchOperation op(OpEnum op) {
 
         this.op = op;
         return this;
@@ -92,7 +92,7 @@ public enum OpEnum {
 
     /**
     **/
-    public RolePatchOperationObj path(String path) {
+    public RolePatchOperation path(String path) {
 
         this.path = path;
         return this;
@@ -110,7 +110,7 @@ public enum OpEnum {
 
     /**
     **/
-    public RolePatchOperationObj value(List<String> value) {
+    public RolePatchOperation value(List<String> value) {
 
         this.value = value;
         return this;
@@ -126,7 +126,7 @@ public enum OpEnum {
         this.value = value;
     }
 
-    public RolePatchOperationObj addValueItem(String valueItem) {
+    public RolePatchOperation addValueItem(String valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -145,10 +145,10 @@ public enum OpEnum {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePatchOperationObj rolePatchOperationObj = (RolePatchOperationObj) o;
-        return Objects.equals(this.op, rolePatchOperationObj.op) &&
-            Objects.equals(this.path, rolePatchOperationObj.path) &&
-            Objects.equals(this.value, rolePatchOperationObj.value);
+        RolePatchOperation rolePatchOperation = (RolePatchOperation) o;
+        return Objects.equals(this.op, rolePatchOperation.op) &&
+            Objects.equals(this.path, rolePatchOperation.path) &&
+            Objects.equals(this.value, rolePatchOperation.value);
     }
 
     @Override
@@ -160,7 +160,7 @@ public enum OpEnum {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePatchOperationObj {\n");
+        sb.append("class RolePatchOperation {\n");
         
         sb.append("    op: ").append(toIndentedString(op)).append("\n");
         sb.append("    path: ").append(toIndentedString(path)).append("\n");
