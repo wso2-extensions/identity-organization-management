@@ -30,51 +30,13 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleGetResponseGroupObject  {
+public class RolePutRequestGroup  {
   
-    private String $ref;
-    private String display;
     private String value;
 
     /**
     **/
-    public RoleGetResponseGroupObject $ref(String $ref) {
-
-        this.$ref = $ref;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
-    @JsonProperty("$ref")
-    @Valid
-    public String get$Ref() {
-        return $ref;
-    }
-    public void set$Ref(String $ref) {
-        this.$ref = $ref;
-    }
-
-    /**
-    **/
-    public RoleGetResponseGroupObject display(String display) {
-
-        this.display = display;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "PRIMARY/manager", value = "")
-    @JsonProperty("display")
-    @Valid
-    public String getDisplay() {
-        return display;
-    }
-    public void setDisplay(String display) {
-        this.display = display;
-    }
-
-    /**
-    **/
-    public RoleGetResponseGroupObject value(String value) {
+    public RolePutRequestGroup value(String value) {
 
         this.value = value;
         return this;
@@ -101,25 +63,21 @@ public class RoleGetResponseGroupObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleGetResponseGroupObject roleGetResponseGroupObject = (RoleGetResponseGroupObject) o;
-        return Objects.equals(this.$ref, roleGetResponseGroupObject.$ref) &&
-            Objects.equals(this.display, roleGetResponseGroupObject.display) &&
-            Objects.equals(this.value, roleGetResponseGroupObject.value);
+        RolePutRequestGroup rolePutRequestGroup = (RolePutRequestGroup) o;
+        return Objects.equals(this.value, rolePutRequestGroup.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash($ref, display, value);
+        return Objects.hash(value);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleGetResponseGroupObject {\n");
+        sb.append("class RolePutRequestGroup {\n");
         
-        sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
-        sb.append("    display: ").append(toIndentedString(display)).append("\n");
         sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();

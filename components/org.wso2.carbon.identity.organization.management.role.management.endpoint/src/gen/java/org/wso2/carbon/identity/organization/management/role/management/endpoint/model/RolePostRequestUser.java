@@ -30,19 +30,19 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePutRequestGroupObject  {
+public class RolePostRequestUser  {
   
     private String value;
 
     /**
     **/
-    public RolePutRequestGroupObject value(String value) {
+    public RolePostRequestUser value(String value) {
 
         this.value = value;
         return this;
     }
     
-    @ApiModelProperty(example = "7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
+    @ApiModelProperty(example = "008bba85-451d-414b-87de-c03b5a1f4217", value = "")
     @JsonProperty("value")
     @Valid
     public String getValue() {
@@ -63,8 +63,8 @@ public class RolePutRequestGroupObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePutRequestGroupObject rolePutRequestGroupObject = (RolePutRequestGroupObject) o;
-        return Objects.equals(this.value, rolePutRequestGroupObject.value);
+        RolePostRequestUser rolePostRequestUser = (RolePostRequestUser) o;
+        return Objects.equals(this.value, rolePostRequestUser.value);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class RolePutRequestGroupObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePutRequestGroupObject {\n");
+        sb.append("class RolePostRequestUser {\n");
         
         sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");

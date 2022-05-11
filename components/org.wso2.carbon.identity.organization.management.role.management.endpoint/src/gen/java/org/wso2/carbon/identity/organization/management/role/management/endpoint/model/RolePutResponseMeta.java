@@ -30,26 +30,26 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePostRequestUserObject  {
+public class RolePutResponseMeta  {
   
-    private String value;
+    private String location;
 
     /**
     **/
-    public RolePostRequestUserObject value(String value) {
+    public RolePutResponseMeta location(String location) {
 
-        this.value = value;
+        this.location = location;
         return this;
     }
     
-    @ApiModelProperty(example = "008bba85-451d-414b-87de-c03b5a1f4217", value = "")
-    @JsonProperty("value")
+    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
+    @JsonProperty("location")
     @Valid
-    public String getValue() {
-        return value;
+    public String getLocation() {
+        return location;
     }
-    public void setValue(String value) {
-        this.value = value;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
 
@@ -63,22 +63,22 @@ public class RolePostRequestUserObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePostRequestUserObject rolePostRequestUserObject = (RolePostRequestUserObject) o;
-        return Objects.equals(this.value, rolePostRequestUserObject.value);
+        RolePutResponseMeta rolePutResponseMeta = (RolePutResponseMeta) o;
+        return Objects.equals(this.location, rolePutResponseMeta.location);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(location);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePostRequestUserObject {\n");
+        sb.append("class RolePutResponseMeta {\n");
         
-        sb.append("    value: ").append(toIndentedString(value)).append("\n");
+        sb.append("    location: ").append(toIndentedString(location)).append("\n");
         sb.append("}");
         return sb.toString();
     }

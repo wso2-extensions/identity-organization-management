@@ -42,7 +42,7 @@ public class RoleObjMeta  {
         return this;
     }
     
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0", value = "")
+    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0", value = "")
     @JsonProperty("location")
     @Valid
     public String getLocation() {

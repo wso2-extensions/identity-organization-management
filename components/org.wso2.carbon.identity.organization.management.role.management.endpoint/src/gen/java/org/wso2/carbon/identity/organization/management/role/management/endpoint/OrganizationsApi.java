@@ -25,14 +25,14 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequestObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponseObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePatchResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutRequest;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponse;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolesListResponse;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.OrganizationsApiService;
 
 import javax.validation.Valid;
@@ -55,24 +55,24 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Create a role inside an organization.", notes = "This API creates a role inside an organization and returns the details of the created role including its unique id.", response = RolePostResponseObject.class, authorizations = {
+    @ApiOperation(value = "Create a role inside an organization.", notes = "This API creates a role inside an organization, assigns users, groups and permissions, and returns the details of the created role including its unique id.", response = RolePostResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 201, message = "Valid role is created.", response = RolePostResponseObject.class),
+        @ApiResponse(code = 201, message = "Valid role is created.", response = RolePostResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
-        @ApiResponse(code = 409, message = "Conflict response.", response = Void.class),
+        @ApiResponse(code = 409, message = "Conflict response.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response createRole(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of permissions going to be assigned to the role." ,required=true) @Valid RolePostRequestObject rolePostRequestObject) {
+    public Response createRole(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "Represents display name, set of permissions, set of groups, set of users that are to be assigned to the role." ,required=true) @Valid RolePostRequest rolePostRequest) {
 
-        return delegate.createRole(organizationId,  rolePostRequestObject );
+        return delegate.createRole(organizationId,  rolePostRequest );
     }
 
     @Valid
@@ -80,17 +80,18 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get roles inside an organization.", notes = "This API returs roles according to the specified filter, sort and pagination parameters.", response = RolesListResponseObject.class, authorizations = {
+    @ApiOperation(value = "Get roles inside an organization.", notes = "This API returns roles in an organization based on the provided filter, sort and pagination parameters", response = RolesListResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Valid roles are found.", response = RolesListResponseObject.class),
+        @ApiResponse(code = 200, message = "Successful response.", response = RolesListResponse.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
-        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class)
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
+        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
     public Response organizationsOrganizationIdRolesGet(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid@ApiParam(value = "Points to the next range of data to be returned.")  @QueryParam("after") String after,     @Valid@ApiParam(value = "Points to the previous range of data that can be retrieved.")  @QueryParam("before") String before) {
 
@@ -126,14 +127,14 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get Role by ID", notes = "This API returns the role details of a particular role using its unique id.", response = RoleGetResponseObject.class, authorizations = {
+    @ApiOperation(value = "Get Role by ID", notes = "This API returns the role details of a particular role using its unique id.", response = RoleGetResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 201, message = "Valid role is found.", response = RoleGetResponseObject.class),
+        @ApiResponse(code = 200, message = "Valid role is found.", response = RoleGetResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
@@ -150,24 +151,23 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update Role - PATCH", notes = "This API updates the role details and returns the updated role details inside a PATCH operation.", response = RolePatchResponseObject.class, authorizations = {
+    @ApiOperation(value = "Update Role - PATCH", notes = "This API updates the role details and returns the updated role details inside a PATCH operation.", response = RolePatchResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Role is Updated.", response = RolePatchResponseObject.class),
+        @ApiResponse(code = 200, message = "Role is Updated.", response = RolePatchResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
-        @ApiResponse(code = 406, message = "Not acceptable.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdRolesRoleIdPatch(@ApiParam(value = "ID of the role.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of values that need to be changed in the role." ) @Valid RolePatchRequestObject rolePatchRequestObject) {
+    public Response organizationsOrganizationIdRolesRoleIdPatch(@ApiParam(value = "ID of the role.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of values that need to be changed in the role." ,required=true) @Valid RolePatchRequest rolePatchRequest) {
 
-        return delegate.organizationsOrganizationIdRolesRoleIdPatch(roleId,  organizationId,  rolePatchRequestObject );
+        return delegate.organizationsOrganizationIdRolesRoleIdPatch(roleId,  organizationId,  rolePatchRequest );
     }
 
     @Valid
@@ -175,14 +175,14 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update Role - PUT", notes = "This API updates the role details and returns the updated role details using a PUT operation.", response = RolePutResponseObject.class, authorizations = {
+    @ApiOperation(value = "Update Role - PUT", notes = "This API updates the role details and returns the updated role details using a PUT operation.", response = RolePutResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Role is Updated.", response = RolePutResponseObject.class),
+        @ApiResponse(code = 200, message = "Role is successfully updated.", response = RolePutResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
@@ -190,9 +190,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 406, message = "Not acceptable.", response = Void.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdRolesRoleIdPut(@ApiParam(value = "ID of the role.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of values that need to be changed in the role." ) @Valid RolePutRequestObject rolePutRequestObject) {
+    public Response organizationsOrganizationIdRolesRoleIdPut(@ApiParam(value = "ID of the role.",required=true) @PathParam("role-id") String roleId, @ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "This represents a set of values that need to be changed in the role." ,required=true) @Valid RolePutRequest rolePutRequest) {
 
-        return delegate.organizationsOrganizationIdRolesRoleIdPut(roleId,  organizationId,  rolePutRequestObject );
+        return delegate.organizationsOrganizationIdRolesRoleIdPut(roleId,  organizationId,  rolePutRequest );
     }
 
 }

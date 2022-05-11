@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObjectMeta;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseMeta;
 import javax.validation.constraints.*;
 
 
@@ -31,15 +31,15 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePutResponseObject  {
+public class RolePutResponse  {
   
     private String displayName;
-    private RolePutResponseObjectMeta meta;
+    private RolePutResponseMeta meta;
     private String id;
 
     /**
     **/
-    public RolePutResponseObject displayName(String displayName) {
+    public RolePutResponse displayName(String displayName) {
 
         this.displayName = displayName;
         return this;
@@ -57,7 +57,7 @@ public class RolePutResponseObject  {
 
     /**
     **/
-    public RolePutResponseObject meta(RolePutResponseObjectMeta meta) {
+    public RolePutResponse meta(RolePutResponseMeta meta) {
 
         this.meta = meta;
         return this;
@@ -66,16 +66,16 @@ public class RolePutResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("meta")
     @Valid
-    public RolePutResponseObjectMeta getMeta() {
+    public RolePutResponseMeta getMeta() {
         return meta;
     }
-    public void setMeta(RolePutResponseObjectMeta meta) {
+    public void setMeta(RolePutResponseMeta meta) {
         this.meta = meta;
     }
 
     /**
     **/
-    public RolePutResponseObject id(String id) {
+    public RolePutResponse id(String id) {
 
         this.id = id;
         return this;
@@ -102,10 +102,10 @@ public class RolePutResponseObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePutResponseObject rolePutResponseObject = (RolePutResponseObject) o;
-        return Objects.equals(this.displayName, rolePutResponseObject.displayName) &&
-            Objects.equals(this.meta, rolePutResponseObject.meta) &&
-            Objects.equals(this.id, rolePutResponseObject.id);
+        RolePutResponse rolePutResponse = (RolePutResponse) o;
+        return Objects.equals(this.displayName, rolePutResponse.displayName) &&
+            Objects.equals(this.meta, rolePutResponse.meta) &&
+            Objects.equals(this.id, rolePutResponse.id);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class RolePutResponseObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePutResponseObject {\n");
+        sb.append("class RolePutResponse {\n");
         
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    meta: ").append(toIndentedString(meta)).append("\n");

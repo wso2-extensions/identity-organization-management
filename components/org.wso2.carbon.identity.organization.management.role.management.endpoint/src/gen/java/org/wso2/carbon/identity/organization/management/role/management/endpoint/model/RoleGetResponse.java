@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUser;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
@@ -35,21 +35,21 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleGetResponseObject  {
+public class RoleGetResponse  {
   
     private String displayName;
     private RoleObjMeta meta;
     private String id;
-    private List<RoleGetResponseUserObject> users = null;
+    private List<RoleGetResponseUser> users = null;
 
-    private List<RoleGetResponseGroupObject> groups = null;
+    private List<RoleGetResponseGroup> groups = null;
 
     private List<String> permissions = null;
 
 
     /**
     **/
-    public RoleGetResponseObject displayName(String displayName) {
+    public RoleGetResponse displayName(String displayName) {
 
         this.displayName = displayName;
         return this;
@@ -67,7 +67,7 @@ public class RoleGetResponseObject  {
 
     /**
     **/
-    public RoleGetResponseObject meta(RoleObjMeta meta) {
+    public RoleGetResponse meta(RoleObjMeta meta) {
 
         this.meta = meta;
         return this;
@@ -85,7 +85,7 @@ public class RoleGetResponseObject  {
 
     /**
     **/
-    public RoleGetResponseObject id(String id) {
+    public RoleGetResponse id(String id) {
 
         this.id = id;
         return this;
@@ -103,7 +103,7 @@ public class RoleGetResponseObject  {
 
     /**
     **/
-    public RoleGetResponseObject users(List<RoleGetResponseUserObject> users) {
+    public RoleGetResponse users(List<RoleGetResponseUser> users) {
 
         this.users = users;
         return this;
@@ -112,14 +112,14 @@ public class RoleGetResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<RoleGetResponseUserObject> getUsers() {
+    public List<RoleGetResponseUser> getUsers() {
         return users;
     }
-    public void setUsers(List<RoleGetResponseUserObject> users) {
+    public void setUsers(List<RoleGetResponseUser> users) {
         this.users = users;
     }
 
-    public RoleGetResponseObject addUsersItem(RoleGetResponseUserObject usersItem) {
+    public RoleGetResponse addUsersItem(RoleGetResponseUser usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }
@@ -129,7 +129,7 @@ public class RoleGetResponseObject  {
 
         /**
     **/
-    public RoleGetResponseObject groups(List<RoleGetResponseGroupObject> groups) {
+    public RoleGetResponse groups(List<RoleGetResponseGroup> groups) {
 
         this.groups = groups;
         return this;
@@ -138,14 +138,14 @@ public class RoleGetResponseObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("groups")
     @Valid
-    public List<RoleGetResponseGroupObject> getGroups() {
+    public List<RoleGetResponseGroup> getGroups() {
         return groups;
     }
-    public void setGroups(List<RoleGetResponseGroupObject> groups) {
+    public void setGroups(List<RoleGetResponseGroup> groups) {
         this.groups = groups;
     }
 
-    public RoleGetResponseObject addGroupsItem(RoleGetResponseGroupObject groupsItem) {
+    public RoleGetResponse addGroupsItem(RoleGetResponseGroup groupsItem) {
         if (this.groups == null) {
             this.groups = new ArrayList<>();
         }
@@ -155,7 +155,7 @@ public class RoleGetResponseObject  {
 
         /**
     **/
-    public RoleGetResponseObject permissions(List<String> permissions) {
+    public RoleGetResponse permissions(List<String> permissions) {
 
         this.permissions = permissions;
         return this;
@@ -171,7 +171,7 @@ public class RoleGetResponseObject  {
         this.permissions = permissions;
     }
 
-    public RoleGetResponseObject addPermissionsItem(String permissionsItem) {
+    public RoleGetResponse addPermissionsItem(String permissionsItem) {
         if (this.permissions == null) {
             this.permissions = new ArrayList<>();
         }
@@ -190,13 +190,13 @@ public class RoleGetResponseObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleGetResponseObject roleGetResponseObject = (RoleGetResponseObject) o;
-        return Objects.equals(this.displayName, roleGetResponseObject.displayName) &&
-            Objects.equals(this.meta, roleGetResponseObject.meta) &&
-            Objects.equals(this.id, roleGetResponseObject.id) &&
-            Objects.equals(this.users, roleGetResponseObject.users) &&
-            Objects.equals(this.groups, roleGetResponseObject.groups) &&
-            Objects.equals(this.permissions, roleGetResponseObject.permissions);
+        RoleGetResponse roleGetResponse = (RoleGetResponse) o;
+        return Objects.equals(this.displayName, roleGetResponse.displayName) &&
+            Objects.equals(this.meta, roleGetResponse.meta) &&
+            Objects.equals(this.id, roleGetResponse.id) &&
+            Objects.equals(this.users, roleGetResponse.users) &&
+            Objects.equals(this.groups, roleGetResponse.groups) &&
+            Objects.equals(this.permissions, roleGetResponse.permissions);
     }
 
     @Override
@@ -208,7 +208,7 @@ public class RoleGetResponseObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleGetResponseObject {\n");
+        sb.append("class RoleGetResponse {\n");
         
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    meta: ").append(toIndentedString(meta)).append("\n");

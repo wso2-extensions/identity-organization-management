@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroupObject;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestUserObject;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestGroup;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePostRequestUser;
 import javax.validation.constraints.*;
 
 
@@ -34,19 +34,19 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePostRequestObject  {
+public class RolePostRequest  {
   
     private String displayName;
-    private List<RolePostRequestUserObject> users = null;
+    private List<RolePostRequestUser> users = null;
 
-    private List<RolePostRequestGroupObject> groups = null;
+    private List<RolePostRequestGroup> groups = null;
 
     private List<String> permissions = null;
 
 
     /**
     **/
-    public RolePostRequestObject displayName(String displayName) {
+    public RolePostRequest displayName(String displayName) {
 
         this.displayName = displayName;
         return this;
@@ -66,7 +66,7 @@ public class RolePostRequestObject  {
 
     /**
     **/
-    public RolePostRequestObject users(List<RolePostRequestUserObject> users) {
+    public RolePostRequest users(List<RolePostRequestUser> users) {
 
         this.users = users;
         return this;
@@ -75,14 +75,14 @@ public class RolePostRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("users")
     @Valid
-    public List<RolePostRequestUserObject> getUsers() {
+    public List<RolePostRequestUser> getUsers() {
         return users;
     }
-    public void setUsers(List<RolePostRequestUserObject> users) {
+    public void setUsers(List<RolePostRequestUser> users) {
         this.users = users;
     }
 
-    public RolePostRequestObject addUsersItem(RolePostRequestUserObject usersItem) {
+    public RolePostRequest addUsersItem(RolePostRequestUser usersItem) {
         if (this.users == null) {
             this.users = new ArrayList<>();
         }
@@ -92,7 +92,7 @@ public class RolePostRequestObject  {
 
         /**
     **/
-    public RolePostRequestObject groups(List<RolePostRequestGroupObject> groups) {
+    public RolePostRequest groups(List<RolePostRequestGroup> groups) {
 
         this.groups = groups;
         return this;
@@ -101,14 +101,14 @@ public class RolePostRequestObject  {
     @ApiModelProperty(value = "")
     @JsonProperty("groups")
     @Valid
-    public List<RolePostRequestGroupObject> getGroups() {
+    public List<RolePostRequestGroup> getGroups() {
         return groups;
     }
-    public void setGroups(List<RolePostRequestGroupObject> groups) {
+    public void setGroups(List<RolePostRequestGroup> groups) {
         this.groups = groups;
     }
 
-    public RolePostRequestObject addGroupsItem(RolePostRequestGroupObject groupsItem) {
+    public RolePostRequest addGroupsItem(RolePostRequestGroup groupsItem) {
         if (this.groups == null) {
             this.groups = new ArrayList<>();
         }
@@ -118,7 +118,7 @@ public class RolePostRequestObject  {
 
         /**
     **/
-    public RolePostRequestObject permissions(List<String> permissions) {
+    public RolePostRequest permissions(List<String> permissions) {
 
         this.permissions = permissions;
         return this;
@@ -134,7 +134,7 @@ public class RolePostRequestObject  {
         this.permissions = permissions;
     }
 
-    public RolePostRequestObject addPermissionsItem(String permissionsItem) {
+    public RolePostRequest addPermissionsItem(String permissionsItem) {
         if (this.permissions == null) {
             this.permissions = new ArrayList<>();
         }
@@ -153,11 +153,11 @@ public class RolePostRequestObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePostRequestObject rolePostRequestObject = (RolePostRequestObject) o;
-        return Objects.equals(this.displayName, rolePostRequestObject.displayName) &&
-            Objects.equals(this.users, rolePostRequestObject.users) &&
-            Objects.equals(this.groups, rolePostRequestObject.groups) &&
-            Objects.equals(this.permissions, rolePostRequestObject.permissions);
+        RolePostRequest rolePostRequest = (RolePostRequest) o;
+        return Objects.equals(this.displayName, rolePostRequest.displayName) &&
+            Objects.equals(this.users, rolePostRequest.users) &&
+            Objects.equals(this.groups, rolePostRequest.groups) &&
+            Objects.equals(this.permissions, rolePostRequest.permissions);
     }
 
     @Override
@@ -169,7 +169,7 @@ public class RolePostRequestObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePostRequestObject {\n");
+        sb.append("class RolePostRequest {\n");
         
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    users: ").append(toIndentedString(users)).append("\n");

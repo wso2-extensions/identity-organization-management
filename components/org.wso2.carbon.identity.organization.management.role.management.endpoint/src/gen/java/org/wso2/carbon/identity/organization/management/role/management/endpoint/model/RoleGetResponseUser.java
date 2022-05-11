@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RolePutResponseObjectMeta;
 import javax.validation.constraints.*;
 
 
@@ -31,57 +30,39 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolePatchResponseObject  {
+public class RoleGetResponseUser  {
   
-    private String displayName;
-    private RolePutResponseObjectMeta meta;
+    private String $ref;
     private String id;
+    private String displayName;
 
     /**
     **/
-    public RolePatchResponseObject displayName(String displayName) {
+    public RoleGetResponseUser $ref(String $ref) {
 
-        this.displayName = displayName;
+        this.$ref = $ref;
         return this;
     }
     
-    @ApiModelProperty(example = "loginRole", value = "")
-    @JsonProperty("displayName")
+    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45", value = "")
+    @JsonProperty("$ref")
     @Valid
-    public String getDisplayName() {
-        return displayName;
+    public String get$Ref() {
+        return $ref;
     }
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void set$Ref(String $ref) {
+        this.$ref = $ref;
     }
 
     /**
     **/
-    public RolePatchResponseObject meta(RolePutResponseObjectMeta meta) {
-
-        this.meta = meta;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("meta")
-    @Valid
-    public RolePutResponseObjectMeta getMeta() {
-        return meta;
-    }
-    public void setMeta(RolePutResponseObjectMeta meta) {
-        this.meta = meta;
-    }
-
-    /**
-    **/
-    public RolePatchResponseObject id(String id) {
+    public RoleGetResponseUser id(String id) {
 
         this.id = id;
         return this;
     }
     
-    @ApiModelProperty(example = "4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
+    @ApiModelProperty(example = "3a12bae9-4386-44be-befd-caf349297f45", value = "")
     @JsonProperty("id")
     @Valid
     public String getId() {
@@ -89,6 +70,24 @@ public class RolePatchResponseObject  {
     }
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+    **/
+    public RoleGetResponseUser displayName(String displayName) {
+
+        this.displayName = displayName;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "kim", value = "")
+    @JsonProperty("displayName")
+    @Valid
+    public String getDisplayName() {
+        return displayName;
+    }
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
 
@@ -102,26 +101,26 @@ public class RolePatchResponseObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolePatchResponseObject rolePatchResponseObject = (RolePatchResponseObject) o;
-        return Objects.equals(this.displayName, rolePatchResponseObject.displayName) &&
-            Objects.equals(this.meta, rolePatchResponseObject.meta) &&
-            Objects.equals(this.id, rolePatchResponseObject.id);
+        RoleGetResponseUser roleGetResponseUser = (RoleGetResponseUser) o;
+        return Objects.equals(this.$ref, roleGetResponseUser.$ref) &&
+            Objects.equals(this.id, roleGetResponseUser.id) &&
+            Objects.equals(this.displayName, roleGetResponseUser.displayName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(displayName, meta, id);
+        return Objects.hash($ref, id, displayName);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolePatchResponseObject {\n");
+        sb.append("class RoleGetResponseUser {\n");
         
-        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
-        sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
+        sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
+        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("}");
         return sb.toString();
     }

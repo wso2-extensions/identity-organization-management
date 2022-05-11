@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObjMeta;
 import javax.validation.constraints.*;
 
 
@@ -31,64 +30,26 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RoleObj  {
+public class RolePostRequestGroup  {
   
-    private String id;
-    private String displayName;
-    private RoleObjMeta meta;
+    private String value;
 
     /**
     **/
-    public RoleObj id(String id) {
+    public RolePostRequestGroup value(String value) {
 
-        this.id = id;
+        this.value = value;
         return this;
     }
     
-    @ApiModelProperty(example = "4645709c-ea8c-4495-8590-e1fa0efe3de0", value = "")
-    @JsonProperty("id")
+    @ApiModelProperty(example = "7bac6a86-1f21-4937-9fb1-5be4a93ef469", value = "")
+    @JsonProperty("value")
     @Valid
-    public String getId() {
-        return id;
+    public String getValue() {
+        return value;
     }
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-    **/
-    public RoleObj displayName(String displayName) {
-
-        this.displayName = displayName;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "loginRole", value = "")
-    @JsonProperty("displayName")
-    @Valid
-    public String getDisplayName() {
-        return displayName;
-    }
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    /**
-    **/
-    public RoleObj meta(RoleObjMeta meta) {
-
-        this.meta = meta;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("meta")
-    @Valid
-    public RoleObjMeta getMeta() {
-        return meta;
-    }
-    public void setMeta(RoleObjMeta meta) {
-        this.meta = meta;
+    public void setValue(String value) {
+        this.value = value;
     }
 
 
@@ -102,26 +63,22 @@ public class RoleObj  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RoleObj roleObj = (RoleObj) o;
-        return Objects.equals(this.id, roleObj.id) &&
-            Objects.equals(this.displayName, roleObj.displayName) &&
-            Objects.equals(this.meta, roleObj.meta);
+        RolePostRequestGroup rolePostRequestGroup = (RolePostRequestGroup) o;
+        return Objects.equals(this.value, rolePostRequestGroup.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, displayName, meta);
+        return Objects.hash(value);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RoleObj {\n");
+        sb.append("class RolePostRequestGroup {\n");
         
-        sb.append("    id: ").append(toIndentedString(id)).append("\n");
-        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
-        sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
+        sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
     }

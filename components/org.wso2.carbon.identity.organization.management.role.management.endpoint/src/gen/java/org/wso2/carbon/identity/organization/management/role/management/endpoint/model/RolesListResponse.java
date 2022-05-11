@@ -34,7 +34,7 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class RolesListResponseObject  {
+public class RolesListResponse  {
   
     private List<Link> links = null;
 
@@ -43,13 +43,13 @@ public class RolesListResponseObject  {
 
     /**
     **/
-    public RolesListResponseObject links(List<Link> links) {
+    public RolesListResponse links(List<Link> links) {
 
         this.links = links;
         return this;
     }
     
-    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/o/carbon/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
+    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
     @JsonProperty("links")
     @Valid
     public List<Link> getLinks() {
@@ -59,7 +59,7 @@ public class RolesListResponseObject  {
         this.links = links;
     }
 
-    public RolesListResponseObject addLinksItem(Link linksItem) {
+    public RolesListResponse addLinksItem(Link linksItem) {
         if (this.links == null) {
             this.links = new ArrayList<>();
         }
@@ -69,7 +69,7 @@ public class RolesListResponseObject  {
 
         /**
     **/
-    public RolesListResponseObject roles(List<RoleObj> roles) {
+    public RolesListResponse roles(List<RoleObj> roles) {
 
         this.roles = roles;
         return this;
@@ -85,7 +85,7 @@ public class RolesListResponseObject  {
         this.roles = roles;
     }
 
-    public RolesListResponseObject addRolesItem(RoleObj rolesItem) {
+    public RolesListResponse addRolesItem(RoleObj rolesItem) {
         if (this.roles == null) {
             this.roles = new ArrayList<>();
         }
@@ -104,9 +104,9 @@ public class RolesListResponseObject  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RolesListResponseObject rolesListResponseObject = (RolesListResponseObject) o;
-        return Objects.equals(this.links, rolesListResponseObject.links) &&
-            Objects.equals(this.roles, rolesListResponseObject.roles);
+        RolesListResponse rolesListResponse = (RolesListResponse) o;
+        return Objects.equals(this.links, rolesListResponse.links) &&
+            Objects.equals(this.roles, rolesListResponse.roles);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class RolesListResponseObject  {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class RolesListResponseObject {\n");
+        sb.append("class RolesListResponse {\n");
         
         sb.append("    links: ").append(toIndentedString(links)).append("\n");
         sb.append("    roles: ").append(toIndentedString(roles)).append("\n");
