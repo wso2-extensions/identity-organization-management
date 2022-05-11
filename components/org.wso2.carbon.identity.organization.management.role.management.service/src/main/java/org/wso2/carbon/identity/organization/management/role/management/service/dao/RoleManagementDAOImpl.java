@@ -216,7 +216,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         List<Role> roleList;
         try {
-            roleList = namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+            roleList = namedJdbcTemplate.executeQuery(
                     sqlStm,
                     (resultSet, rowNumber) -> new Role(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
@@ -228,9 +228,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         }
                         namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, limit);
                     }
-            ));
+            );
             return roleList;
-        } catch (TransactionException e) {
+        } catch (DataAccessException e) {
             throw new RoleManagementServerException(ERROR_GETTING_ROLES_FROM_ORGANIZATION.getCode(),
                     String.format(ERROR_GETTING_ROLES_FROM_ORGANIZATION.getMessage(), organizationId),
                     ERROR_GETTING_ROLES_FROM_ORGANIZATION.getDescription(), e);

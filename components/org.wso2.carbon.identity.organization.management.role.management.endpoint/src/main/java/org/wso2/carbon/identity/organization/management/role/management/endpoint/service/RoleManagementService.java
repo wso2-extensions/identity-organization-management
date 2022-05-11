@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.service;
 
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
