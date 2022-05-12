@@ -139,8 +139,6 @@ paths:
               $ref: '#/components/schemas/OrganizationPatchRequest'
         required: true
       responses:
-        204:
-          description: Ok
         '200':
           description: Successful response
           content:
@@ -178,8 +176,6 @@ paths:
               $ref: '#/components/schemas/OrganizationPUTRequest'
         required: true
       responses:
-        204:
-          description: Ok
         '200':
           description: Successful response
           content:
