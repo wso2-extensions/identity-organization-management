@@ -25,14 +25,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME;
+
 /**
  * Contains the constant of Role Management.
  */
 public class RoleManagementConstants {
 
-    public static final String ORGANIZATION_RESOURCE_PATH = "/v1.0/organizations/%s";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
-    public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt";
 
     public static final String ROLE_ACTION = "ui.execute";
@@ -51,13 +52,16 @@ public class RoleManagementConstants {
 
     public static final String ROLE_ID_FIELD = "id";
     public static final String ROLE_NAME_FIELD = "name";
+    public static final String BEFORE = "before";
+    public static final String AFTER = "after";
 
     public static final String COMMA_SEPARATOR = ",";
 
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Stream.of(new String[][]{
-            {"name", "UM_ROLE_NAME"},
-            {"id", "UM_ROLE_ID"},
-            {"orgId", "UM_ORG_ID"}
+            {ROLE_NAME_FIELD, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME},
+            {ROLE_ID_FIELD, DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID},
+            {BEFORE, DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID},
+            {AFTER, DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID}
     }).collect(Collectors.collectingAndThen(Collectors.toMap(data -> data[0], data -> data[1]),
             Collections::<String, String>unmodifiableMap));
 

@@ -149,8 +149,8 @@ public class RoleManagementService {
      * @param after          The next result page pointer.
      * @return The roles inside an organization.
      */
-    public Response getRolesOfOrganization(String organizationId, String filter, Integer limit, String before,
-                                           String after) {
+    public Response getRolesOfOrganization(String organizationId, String filter, Integer limit, String after,
+                                           String before) {
 
         try {
             int limitValue = validateLimit(limit);
@@ -405,7 +405,7 @@ public class RoleManagementService {
                 String encodedString = Base64.getEncoder().encodeToString(roles.get(0).getId()
                         .getBytes(StandardCharsets.UTF_8));
                 Link link = new Link();
-                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url) +
+                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url, organizationId) +
                         "&before=" + encodedString));
                 link.setRel("previous");
                 response.addLinksItem(link);
@@ -414,7 +414,7 @@ public class RoleManagementService {
                 String encodedString = Base64.getEncoder().encodeToString(roles.get(roles.size() - 1)
                         .getId().getBytes(StandardCharsets.UTF_8));
                 Link link = new Link();
-                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url) +
+                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url, organizationId) +
                         "&after=" + encodedString));
                 link.setRel("next");
                 response.addLinksItem(link);

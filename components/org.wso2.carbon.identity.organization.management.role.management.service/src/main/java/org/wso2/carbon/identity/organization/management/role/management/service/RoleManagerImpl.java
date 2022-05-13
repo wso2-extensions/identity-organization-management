@@ -36,13 +36,13 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AFTER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.BEFORE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
@@ -149,14 +149,13 @@ public class RoleManagerImpl implements RoleManager {
             RoleManagementClientException {
 
         try {
+            //pagination is done with the uuid(role id) comparison
             if (StringUtils.isNotBlank(before)) {
                 String decodedString = new String(Base64.getDecoder().decode(before), StandardCharsets.UTF_8);
-                Timestamp.valueOf(decodedString);
                 paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and before gt " + decodedString :
                         "before gt " + decodedString;
             } else if (StringUtils.isNotBlank(after)) {
                 String decodedString = new String(Base64.getDecoder().decode(after), StandardCharsets.UTF_8);
-                Timestamp.valueOf(decodedString);
                 paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and after lt " + decodedString :
                         "after lt " + decodedString;
             }
@@ -201,7 +200,7 @@ public class RoleManagerImpl implements RoleManager {
      */
     private boolean isFilteringAttributeNotSupported(String attributeValue) {
 
-        return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) &&
-                !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD);
+        return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) && !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD) &&
+                !attributeValue.equalsIgnoreCase(BEFORE) && !attributeValue.equalsIgnoreCase(AFTER);
     }
 }
