@@ -49,7 +49,7 @@ public class RolesListResponse  {
         return this;
     }
     
-    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
+    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&after=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
     @JsonProperty("links")
     @Valid
     public List<Link> getLinks() {

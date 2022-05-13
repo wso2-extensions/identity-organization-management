@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.GROUP_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_PATH;
+import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ROLE_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.USER_PATH;
@@ -122,12 +123,13 @@ public class RoleManagementEndpointUtils {
      * @param paginationUrl The pagination URL.
      * @return The URI.
      */
-    public static URI buildURIForPagination(String paginationUrl) {
+    public static URI buildURIForPagination(String paginationUrl, String organizationId) {
 
-        String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + paginationUrl;
+        String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR +
+                String.format(ORGANIZATION_ROLES_PATH, organizationId) + paginationUrl;
         try {
             return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
-                    build().getRelativePublicURL());
+                    build().getAbsolutePublicURL());
         } catch (URLBuilderException e) {
             LOG.error("Server encountered an error while building paginated URL for the response.", e);
             Error error = RoleManagementEndpointUtils.getError(
