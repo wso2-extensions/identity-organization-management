@@ -19,8 +19,7 @@
 package org.wso2.carbon.identity.organization.management.role.management.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
@@ -33,6 +32,8 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,9 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.BEFORE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_ID_FIELD;
@@ -55,47 +59,85 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
  */
 public class RoleManagerImpl implements RoleManager {
 
-    private static final Log LOG = LogFactory.getLog(RoleManagerImpl.class);
-
     @Override
-    public Role addRole(String organizationId, Role role) throws
-            RoleManagementException {
+    public Role addRole(String organizationId, Role role) throws RoleManagementException {
 
-        getRoleManagementDAO().addRole(organizationId, Utils.getTenantId(), role);
-        return new Role(role.getId(), role.getName());
+        try {
+            boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
+            if (!checkOrganizationExists) {
+                throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+            }
+            boolean checkRoleNameExists = getRoleManagementDAO().checkRoleExists(organizationId, null,
+                    StringUtils.strip(role.getName()));
+            if (checkRoleNameExists) {
+                throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, role.getName());
+            }
+            getRoleManagementDAO().addRole(organizationId, Utils.getTenantId(), role);
+            return new Role(role.getId(), role.getName());
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     @Override
     public Role getRoleById(String organizationId, String roleId) throws RoleManagementException {
 
-        return getRoleManagementDAO().getRoleById(organizationId, roleId, Utils.getTenantId());
+        try {
+            validateOrganizationAndRoleId(organizationId, roleId);
+            return getRoleManagementDAO().getRoleById(organizationId, roleId, Utils.getTenantId());
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     @Override
     public List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter,
                                            String organizationId) throws RoleManagementException {
 
-        return getRoleManagementDAO().getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
-                getExpressionNodes(filter, after, before));
+        try {
+            boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
+            if (!checkOrganizationExists) {
+                throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+            }
+            return getRoleManagementDAO().getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
+                    getExpressionNodes(filter, after, before));
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     @Override
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws RoleManagementException {
 
-        return getRoleManagementDAO().patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
+        try {
+            validateOrganizationAndRoleId(organizationId, roleId);
+            return getRoleManagementDAO().patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     @Override
     public Role putRole(String organizationId, String roleId, Role role) throws RoleManagementException {
 
-        return getRoleManagementDAO().putRole(organizationId, roleId, role, Utils.getTenantId());
+        try {
+            validateOrganizationAndRoleId(organizationId, roleId);
+            return getRoleManagementDAO().putRole(organizationId, roleId, role, Utils.getTenantId());
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     @Override
     public void deleteRole(String organizationId, String roleId) throws RoleManagementException {
 
-        getRoleManagementDAO().deleteRole(organizationId, roleId);
+        try {
+            validateOrganizationAndRoleId(organizationId, roleId);
+            getRoleManagementDAO().deleteRole(organizationId, roleId);
+        } catch (OrganizationManagementException e) {
+            throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        }
     }
 
     /**
@@ -108,11 +150,20 @@ public class RoleManagerImpl implements RoleManager {
         return RoleManagementDataHolder.getInstance().getRoleManagementDAO();
     }
 
+    /**
+     * Get an instance of OrganizationManager
+     */
+    private OrganizationManager getOrganizationManager() {
+
+        return (OrganizationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                .getOSGiService(OrganizationManager.class, null);
+    }
 
     /**
      * Getting the expression nodes for cursor-based pagination.
+     *
      * @param filter The filter.
-     * @param after The next pointer to the page.
+     * @param after  The next pointer to the page.
      * @param before The previous pointer to the page.
      * @return The list of expression nodes.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
@@ -139,9 +190,10 @@ public class RoleManagerImpl implements RoleManager {
 
     /**
      * Getting the paginated filter.
+     *
      * @param paginatedFilter The paginated filter.
-     * @param after The next pointer to page.
-     * @param before The previous pointer to page.
+     * @param after           The next pointer to page.
+     * @param before          The previous pointer to page.
      * @return The paginated filter.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
      */
@@ -167,7 +219,8 @@ public class RoleManagerImpl implements RoleManager {
 
     /**
      * Set the expressions to nodes.
-     * @param node The node object.
+     *
+     * @param node       The node object.
      * @param expression The list of expression nodes.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
      */
@@ -195,6 +248,7 @@ public class RoleManagerImpl implements RoleManager {
 
     /**
      * Check whether the filtering can be applied to the attributes.
+     *
      * @param attributeValue The attribute value.
      * @return Returns true if the filtering attribute is neither the id nor the name.
      */
@@ -202,5 +256,31 @@ public class RoleManagerImpl implements RoleManager {
 
         return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) && !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD) &&
                 !attributeValue.equalsIgnoreCase(BEFORE) && !attributeValue.equalsIgnoreCase(AFTER);
+    }
+
+    /**
+     * Check whether the organization ID and role ID exists.
+     *
+     * @param organizationId The ID of the organization.
+     * @param roleId         The ID of the role.
+     * @return True if both organization ID and role ID exist.
+     * @throws RoleManagementException         This exception is thrown if any error occurs while checking the
+     *                                         validity of the role id.
+     * @throws OrganizationManagementException This exception is thrown if any error occurs while checking the
+     *                                         validity of the organization id.
+     */
+    private boolean validateOrganizationAndRoleId(String organizationId, String roleId) throws
+            RoleManagementException, OrganizationManagementException {
+
+        boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
+        if (!checkOrganizationExists) {
+            throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        }
+        boolean checkRoleIdExists = getRoleManagementDAO().checkRoleExists(organizationId, null,
+                StringUtils.strip(roleId));
+        if (!checkRoleIdExists) {
+            throw Utils.handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
+        }
+        return checkRoleIdExists && checkOrganizationExists;
     }
 }

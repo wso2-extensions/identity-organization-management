@@ -35,7 +35,7 @@ public interface RoleManager {
      * @param organizationId The ID of the organization where we add the role.
      * @param role           Role that is going to be added.
      * @return Basic role info for the response object.
-     * @throws RoleManagementException This exception is thrown when an error happens when adding a role.
+     * @throws RoleManagementException This exception is thrown when an error occurs when adding a role.
      */
     Role addRole(String organizationId, Role role) throws RoleManagementException;
 

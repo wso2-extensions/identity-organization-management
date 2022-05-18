@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.role.management.service.dao;
 
 import org.wso2.carbon.identity.core.model.ExpressionNode;
+import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementServerException;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
@@ -102,4 +103,15 @@ public interface RoleManagementDAO {
      *                                       the role.
      */
     Role putRole(String organizationId, String roleId, Role role, int tenantId) throws RoleManagementServerException;
+    /**
+     * Check whether a role exists inside an organization.
+     *
+     * @param organizationId The ID of the organization.
+     * @param roleId         The ID of the role.
+     * @param roleName       The displayName of the role.
+     * @return Whether there exists a role or not.
+     * @throws RoleManagementException The exception is thrown when an error occurs during checking
+     *                                       whether the role exists.
+     */
+    boolean checkRoleExists(String organizationId, String roleId, String roleName) throws RoleManagementException;
 }

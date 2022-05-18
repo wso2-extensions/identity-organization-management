@@ -39,17 +39,11 @@ import java.net.URI;
 
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.GROUP_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.PATH_SEPARATOR;
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ROLE_PATH;
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.USER_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.V1_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_GROUP_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
 
 /**
  * The utility class for role management endpoints.
@@ -63,8 +57,8 @@ public class RoleManagementEndpointUtils {
      */
     public static RoleManager getRoleManager() {
 
-        return (RoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                getOSGiService(RoleManager.class, null);
+        return (RoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                .getOSGiService(RoleManager.class, null);
     }
 
     /**
@@ -128,8 +122,8 @@ public class RoleManagementEndpointUtils {
         String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR +
                 String.format(ORGANIZATION_ROLES_PATH, organizationId) + paginationUrl;
         try {
-            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
-                    build().getAbsolutePublicURL());
+            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint))
+                    .build().getAbsolutePublicURL());
         } catch (URLBuilderException e) {
             LOG.error("Server encountered an error while building paginated URL for the response.", e);
             Error error = RoleManagementEndpointUtils.getError(
@@ -141,65 +135,29 @@ public class RoleManagementEndpointUtils {
     }
 
     /**
-     * URI builder for Roles, Groups and Users.
+     * Get the URI from context.
+     *
+     * @param organizationId The organization ID.
+     * @param id             The id of the resource.
+     * @param path           The path for the resource.
+     * @param errorMessage   The error message specific to the resources.
+     * @return The URI.
      */
-    public enum URIBuilder {
-        ROLE_URI {
-            @Override
-            public URI buildURI(String organizationId, String id) {
+    public static URI getUri(String organizationId, String id, String path, ErrorMessages errorMessage) {
 
-                return getUri(organizationId, id, ROLE_PATH, ERROR_CODE_ERROR_BUILDING_ROLE_URI);
-            }
-        },
-        GROUP_URI {
-            @Override
-            public URI buildURI(String organizationId, String id) {
-
-                return getUri(organizationId, id, GROUP_PATH, ERROR_CODE_ERROR_BUILDING_GROUP_URI);
-            }
-        },
-        USER_URI {
-            @Override
-            public URI buildURI(String organizationId, String id) {
-
-                return getUri(organizationId, id, USER_PATH, ERROR_CODE_ERROR_BUILDING_USER_URI);
-            }
-        };
-
-        /**
-         * Get the URI from context.
-         *
-         * @param organizationId The organization ID.
-         * @param id             The id of the resource.
-         * @param path           The path for the resource.
-         * @param errorMessage   The error message specific to the resources.
-         * @return The URI.
-         */
-        private static URI getUri(String organizationId, String id, String path, ErrorMessages errorMessage) {
-
-            String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
-                    PATH_SEPARATOR + organizationId + PATH_SEPARATOR + path + PATH_SEPARATOR + id;
-            try {
-                return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint)).
-                        build().getAbsolutePublicURL());
-            } catch (URLBuilderException e) {
-                Error error = getError(errorMessage.getCode(),
-                        errorMessage.getMessage(),
-                        String.format(errorMessage.getDescription(), id));
-                LOG.error(String.format("Server encountered an error while building URL for %s ",
-                        path.substring(0, path.length() - 1)) + id);
-                throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
-            }
+        String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
+                PATH_SEPARATOR + organizationId + PATH_SEPARATOR + path + PATH_SEPARATOR + id;
+        try {
+            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint))
+                    .build().getAbsolutePublicURL());
+        } catch (URLBuilderException e) {
+            Error error = getError(errorMessage.getCode(),
+                    errorMessage.getMessage(),
+                    String.format(errorMessage.getDescription(), id));
+            LOG.error(String.format("Server encountered an error while building URL for %s ",
+                    path.substring(0, path.length() - 1)) + id);
+            throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
-
-        /**
-         * To build a URI of a resource.
-         *
-         * @param organizationId The ID of the organization.
-         * @param id             The ID of the resource.
-         * @return URI.
-         */
-        public abstract URI buildURI(String organizationId, String id);
     }
 
     /**
@@ -258,7 +216,7 @@ public class RoleManagementEndpointUtils {
     }
 
     /**
-     * If debug is enabled log the errors.
+     * If debug is enabled, log the role management errors.
      *
      * @param log Log instance.
      * @param e   The role management exception.
@@ -273,7 +231,7 @@ public class RoleManagementEndpointUtils {
     }
 
     /**
-     * Log the error.
+     * Log the error if it is a role management exception.
      *
      * @param log Log instance.
      * @param e   The role management exception.
