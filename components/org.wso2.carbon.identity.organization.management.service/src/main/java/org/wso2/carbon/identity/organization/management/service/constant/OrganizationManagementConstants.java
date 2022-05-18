@@ -227,7 +227,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_PATCHING_ORGANIZATION_UPDATE_ATTRIBUTE("65015", "Unable to patch the organization.",
                 "Server encountered an error while updating attribute: %s of organization with ID: %s in tenant: %s."),
         ERROR_CODE_ERROR_ADDING_ORGANIZATION("65016", "Unable to create the organization.",
-                "Server encountered an error while creating the organization in tenant: %s."),
+                "Server encountered an error while creating the organization."),
         ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65017", "Unable to build created organization URL.",
                 "Server encountered an error while building URL for response header."),
         ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY("65018", "Unable to build the URL.",
@@ -252,7 +252,15 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS("65025", "Unable to retrieve the status of the organization.",
                 "Server encountered an error while checking the status of the organization with ID: %s."),
         ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION("65026", "Unable to create the organization.",
-                "Server encountered an error while creating the tenant.");
+                "Server encountered an error while creating the tenant."),
+        ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT("65027", "Unable to deactivate the tenant.",
+                "Server encountered an error while deactivating the tenant of the tenant type organization with " +
+                        "ID: %s."),
+        ERROR_CODE_ERROR_ACTIVATING_ORGANIZATION_TENANT("65028", "Unable to activate the tenant.",
+                "Server encountered an error while activating the tenant of the tenant type organization with " +
+                        "ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_TYPE("65029", "Unable to retrieve the organization type.",
+                "Server encountered an error while retrieving the type of the organization with ID: %s."),;
 
         private final String code;
         private final String message;

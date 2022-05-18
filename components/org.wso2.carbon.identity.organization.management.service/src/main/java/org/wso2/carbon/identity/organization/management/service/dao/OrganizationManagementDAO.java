@@ -215,5 +215,13 @@ public interface OrganizationManagementDAO {
     String getOrganizationStatus(String organizationId, String tenantDomain) throws
             OrganizationManagementServerException;
 
-
+    /**
+     * Retrieve the type of the organization.
+     *
+     * @param organizationId The organization ID.
+     * @param tenantDomain   The tenant name.
+     * @return the organization type.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization type.
+     */
+    String getOrganizationType(String organizationId, String tenantDomain) throws OrganizationManagementServerException;
 }

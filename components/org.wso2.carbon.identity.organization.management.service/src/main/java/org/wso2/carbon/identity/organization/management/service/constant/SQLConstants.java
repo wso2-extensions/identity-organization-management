@@ -119,8 +119,11 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_STATUS = "SELECT UM_STATUS FROM UM_ORG WHERE UM_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
+    public static final String GET_ORGANIZATION_TYPE = "SELECT UM_ORG_TYPE FROM UM_ORG WHERE UM_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
+
     /**
-     * SQL Placeholders
+     * SQL Placeholders.
      */
     public static final class SQLPlaceholders {
 
