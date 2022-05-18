@@ -19,16 +19,10 @@ public class EnterpriseIDPErrorConstants {
      */
     public enum ErrorMessages {
 
-        USERNAME_PARAMETER_NOT_FOUND("ELA-66001",
-                "Cannot find the username parameter in the request."),
-        USERNAME_IS_NOT_AN_EMAIL_ERROR("ELA-66002",
-                "The username in the request should be an email address."),
-        EMAIL_DOMAIN_IS_NOT_REGISTERED_FOR_ENTERPRISE_IDP_LOGIN("ELA-66003",
-                "The email domain is not registered for Enterprise IDP Login."),
+        ORG_PARAMETER_NOT_FOUND("ELA-66001",
+                "Cannot find the org parameter in the request."),
         ENTERPRISE_IDP_LOGIN_FAILED("ELA-66004", "Enterprise IDP Login failed."),
-        ORG_NOT_FOUND("ELA-66005", "Organization could not be found."),
-        EMAIL_DOMAIN_NOT_ASSOCIATED("ELA-66006",
-                "The organization is not associated with the email domain.");
+        ORG_NOT_FOUND("ELA-66005", "Organization could not be found.");
         private final String code;
         private final String message;
 
