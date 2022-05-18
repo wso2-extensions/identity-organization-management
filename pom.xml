@@ -45,8 +45,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.enterprise.idp.authenticator</module>
-        <module>components/org.wso2.carbon.identity.organization.management.enterprise.login.mgt.core</module>
+        <module>components/org.wso2.carbon.identity.organization.management.authn</module>
     </modules>
 
     <dependencyManagement>
@@ -153,7 +152,7 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
-                <artifactId>org.wso2.carbon.identity.organization.management.enterprise.login.mgt.core</artifactId>
+                <artifactId>org.wso2.carbon.identity.organization.management.login.mgt.core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
