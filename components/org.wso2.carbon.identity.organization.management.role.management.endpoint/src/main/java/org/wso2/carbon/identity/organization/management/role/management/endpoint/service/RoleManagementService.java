@@ -67,6 +67,12 @@ import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ASC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.DESC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.GROUP_PATH;
+import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ROLE_PATH;
+import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.USER_PATH;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_GROUP_URI;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
 
 /**
@@ -79,7 +85,7 @@ public class RoleManagementService {
     /**
      * Service for creating a role inside an organization.
      *
-     * @param organizationId        The ID of the organization.
+     * @param organizationId  The ID of the organization.
      * @param rolePostRequest The object created from request body.
      * @return The role creation response.
      */
@@ -88,10 +94,9 @@ public class RoleManagementService {
         try {
             Role role = RoleManagementEndpointUtils.getRoleManager().addRole(organizationId,
                     generateRoleFromPostRequest(rolePostRequest));
-            String roleId = role.getId();
-            URI roleURI = RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId, roleId);
-            return Response.created(roleURI).entity
-                    (getRolePostResponse(role, roleURI)).build();
+            URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, role.getId(), ROLE_PATH,
+                    ERROR_CODE_ERROR_BUILDING_ROLE_URI);
+            return Response.created(roleURI).entity(getRolePostResponse(role, roleURI)).build();
         } catch (RoleManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
         } catch (RoleManagementException e) {
@@ -129,9 +134,9 @@ public class RoleManagementService {
 
         try {
             Role role = RoleManagementEndpointUtils.getRoleManager().getRoleById(organizationId, roleId);
-            URI roleURI = RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId, roleId);
-            return Response.ok().entity
-                    (getRoleGetResponse(organizationId, role, roleURI)).build();
+            URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,
+                    ERROR_CODE_ERROR_BUILDING_ROLE_URI);
+            return Response.ok().entity(getRoleGetResponse(organizationId, role, roleURI)).build();
         } catch (RoleManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
         } catch (RoleManagementException e) {
@@ -169,13 +174,12 @@ public class RoleManagementService {
     /**
      * Service for patching a role using role ID and organization ID.
      *
-     * @param organizationId         The ID of the organization.
-     * @param roleId                 The ID of the role.
+     * @param organizationId   The ID of the organization.
+     * @param roleId           The ID of the role.
      * @param rolePatchRequest The request object created using request body.
      * @return The role patch response.
      */
-    public Response patchRole(String organizationId, String roleId,
-                              RolePatchRequest rolePatchRequest) {
+    public Response patchRole(String organizationId, String roleId, RolePatchRequest rolePatchRequest) {
 
         try {
             List<RolePatchOperation> patchOperationList = rolePatchRequest.getOperations();
@@ -190,8 +194,8 @@ public class RoleManagementService {
 
             Role role = RoleManagementEndpointUtils.getRoleManager().patchRole(organizationId, roleId,
                     patchOperations);
-            URI roleURI = RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId, roleId);
-
+            URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,
+                    ERROR_CODE_ERROR_BUILDING_ROLE_URI);
             return Response.ok().entity(getRolePatchResponse(role, roleURI)).build();
         } catch (RoleManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
@@ -203,8 +207,8 @@ public class RoleManagementService {
     /**
      * Patching a role using PUT request.
      *
-     * @param organizationId       The organization ID.
-     * @param roleId               The role ID.
+     * @param organizationId The organization ID.
+     * @param roleId         The role ID.
      * @param rolePutRequest The request object created using request body.
      * @return Put role response.
      */
@@ -220,7 +224,8 @@ public class RoleManagementService {
                             groups.stream().map(g -> new BasicGroup(g.getValue())).collect(Collectors.toList()),
                             users.stream().map(u -> new BasicUser(u.getValue())).collect(Collectors.toList()),
                             permissions));
-            URI roleURI = RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId, roleId);
+            URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,
+                    ERROR_CODE_ERROR_BUILDING_ROLE_URI);
 
             return Response.ok().entity(getRolePutResponse(role, roleURI)).build();
         } catch (RoleManagementClientException e) {
@@ -240,7 +245,7 @@ public class RoleManagementService {
 
         Role role = new Role();
         role.setId(Utils.generateUniqueId());
-        role.setName(rolePostRequest.getDisplayName());
+        role.setName(StringUtils.strip(rolePostRequest.getDisplayName()));
         role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
                 .map(BasicUser::new).collect(Collectors.toList()));
         role.setGroups(rolePostRequest.getGroups().stream().map(RolePostRequestGroup::getValue)
@@ -289,36 +294,56 @@ public class RoleManagementService {
         response.setMeta(roleObjMeta);
         response.setPermissions(role.getPermissions());
 
-        List<RoleGetResponseGroup> groups = new ArrayList<>();
-        List<RoleGetResponseUser> users = new ArrayList<>();
-
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
-            List<BasicGroup> roleGroups = role.getGroups();
-            for (BasicGroup basicGroup : roleGroups) {
-                RoleGetResponseGroup group = new RoleGetResponseGroup();
-                group.value(basicGroup.getGroupId());
-                group.displayName(basicGroup.getGroupName());
-                group.$ref(RoleManagementEndpointUtils.URIBuilder.GROUP_URI.
-                        buildURI(organizationId, basicGroup.getGroupId()).toString());
-                groups.add(group);
-            }
-            response.setGroups(groups);
+            response.setGroups(getGroupsForResponseObject(role.getGroups(), organizationId));
         }
 
         if (CollectionUtils.isNotEmpty(role.getUsers())) {
-            List<BasicUser> roleUsers = role.getUsers();
-            for (BasicUser basicUser : roleUsers) {
-                RoleGetResponseUser user = new RoleGetResponseUser();
-                user.id(basicUser.getId());
-                user.displayName(basicUser.getUserName());
-                user.$ref(RoleManagementEndpointUtils.URIBuilder.USER_URI.
-                        buildURI(organizationId, basicUser.getId()).toString());
-                users.add(user);
-            }
-            response.setUsers(users);
+            response.setUsers(getUsersForResponseObject(role.getUsers(), organizationId));
         }
 
         return response;
+    }
+
+    /**
+     * Set the groups for the response if they exist.
+     *
+     * @param roleGroups     The groups assigned to a role.
+     * @param organizationId The organizationId.
+     * @return The RoleGetResponseGroup list.
+     */
+    private List<RoleGetResponseGroup> getGroupsForResponseObject(List<BasicGroup> roleGroups, String organizationId) {
+
+        List<RoleGetResponseGroup> groups = new ArrayList<>();
+        for (BasicGroup basicGroup : roleGroups) {
+            RoleGetResponseGroup group = new RoleGetResponseGroup();
+            group.value(basicGroup.getGroupId());
+            group.displayName(basicGroup.getGroupName());
+            group.$ref(RoleManagementEndpointUtils.getUri(organizationId, basicGroup.getGroupId(), GROUP_PATH,
+                    ERROR_CODE_ERROR_BUILDING_GROUP_URI).toString());
+            groups.add(group);
+        }
+        return groups;
+    }
+
+    /**
+     * Set the users for the response if they exist.
+     *
+     * @param roleUsers      The users assigned to a role.
+     * @param organizationId The organizationId.
+     * @return The RoleGetResponseUser list.
+     */
+    private List<RoleGetResponseUser> getUsersForResponseObject(List<BasicUser> roleUsers, String organizationId) {
+        List<RoleGetResponseUser> users = new ArrayList<>();
+        for (BasicUser basicUser : roleUsers) {
+            RoleGetResponseUser user = new RoleGetResponseUser();
+            user.id(basicUser.getId());
+            user.displayName(basicUser.getUserName());
+            user.$ref(RoleManagementEndpointUtils.getUri(organizationId, basicUser.getId(), USER_PATH,
+                    ERROR_CODE_ERROR_BUILDING_USER_URI).toString());
+            users.add(user);
+        }
+        return users;
     }
 
     /**
@@ -364,17 +389,16 @@ public class RoleManagementService {
     /**
      * Generate a response object for get operation.
      *
-     * @param limit Param for limiting the results.
-     * @param after The next result page pointer.
-     * @param before The previous result page pointer.
-     * @param filter Param for filtering the results.
+     * @param limit          Param for limiting the results.
+     * @param after          The next result page pointer.
+     * @param before         The previous result page pointer.
+     * @param filter         Param for filtering the results.
      * @param organizationId The ID of the organization.
-     * @param roles List of roles.
+     * @param roles          List of roles.
      * @return The RoleListResponse.
      */
     private RolesListResponse getRoleListResponse(int limit, String after, String before, String filter,
-                                                        String organizationId,
-                                                        List<Role> roles) {
+                                                  String organizationId, List<Role> roles) {
 
         RolesListResponse response = new RolesListResponse();
         if (CollectionUtils.isNotEmpty(roles)) {
@@ -424,8 +448,8 @@ public class RoleManagementService {
             for (Role role : roles) {
                 RoleObj roleObj = new RoleObj();
                 RoleObjMeta roleObjMeta = new RoleObjMeta();
-                roleObjMeta.setLocation(RoleManagementEndpointUtils.URIBuilder.ROLE_URI.buildURI(organizationId,
-                        role.getId()).toString());
+                roleObjMeta.setLocation(RoleManagementEndpointUtils.getUri(organizationId, role.getId(), ROLE_PATH,
+                        ERROR_CODE_ERROR_BUILDING_ROLE_URI).toString());
                 roleObj.setId(role.getId());
                 roleObj.setDisplayName(role.getName());
                 roleObj.setMeta(roleObjMeta);
@@ -437,7 +461,6 @@ public class RoleManagementService {
     }
 
     /**
-     *
      * @param limit The param for limiting results.
      * @return The limit.
      * @throws RoleManagementClientException This exception is thrown if the limit is not valid.
@@ -453,9 +476,10 @@ public class RoleManagementService {
             return defaultItemsPerPage;
         }
 
-        if (limit < 0) {
+        if (limit < 0 || limit == 0) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT);
         }
+
 
         int maximumItemsPerPage = IdentityUtil.getMaximumItemPerPage();
         if (limit > maximumItemsPerPage) {
@@ -465,7 +489,6 @@ public class RoleManagementService {
             }
             return maximumItemsPerPage;
         }
-
         return limit;
     }
 }

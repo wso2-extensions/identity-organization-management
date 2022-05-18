@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
+import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementServerException;
 
 import java.util.UUID;
 
@@ -56,9 +57,9 @@ public class Utils {
     }
 
     /**
-     * Creates a new random unique id.
+     * Creates a new random unique ID.
      *
-     * @return A unique id.
+     * @return A unique ID.
      */
     public static String generateUniqueId() {
 
@@ -90,7 +91,7 @@ public class Utils {
      *
      * @param error The error enum.
      * @param data  The error message data.
-     * @return RoleManagementClientException
+     * @return RoleManagementClientException.
      */
     public static RoleManagementClientException handleClientException(RoleManagementConstants.ErrorMessages error,
                                                                       String... data) {
@@ -99,6 +100,23 @@ public class Utils {
             description = String.format(description, data);
         }
         return new RoleManagementClientException(error.getMessage(), description, error.getCode());
+    }
+
+    /**
+     * Throw an RoleManagementServerException upon client side error in role management.
+     *
+     * @param error The error enum.
+     * @param cause The throwable cause.
+     * @param data  The error message data.
+     * @return RoleManagementServerException.
+     */
+    public static RoleManagementServerException handleServerException(RoleManagementConstants.ErrorMessages error,
+                                                                      Throwable cause, String... data) {
+        String description = error.getDescription();
+        if (ArrayUtils.isNotEmpty(data)) {
+            description = String.format(description, data);
+        }
+        return new RoleManagementServerException(error.getMessage(), description, error.getCode(), cause);
     }
 
     /**

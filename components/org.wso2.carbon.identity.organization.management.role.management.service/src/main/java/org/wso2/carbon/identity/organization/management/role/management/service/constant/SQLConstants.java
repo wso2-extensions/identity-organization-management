@@ -35,6 +35,14 @@ public class SQLConstants {
     public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, UM_ROLE_ID) " +
             "VALUES ";
 
+    public static final String CHECK_ROLE_NAME_EXISTS = "COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_NAME=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; AND UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
+
+    public static final String CHECK_ROLE_EXISTS = "COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
+
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
@@ -63,8 +71,8 @@ public class SQLConstants {
     public static final String UM_ACTION_APPENDER = "UM_ACTION=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION +
             ";";
 
-    public static final String CHECK_PERMISSION_EXISTS = "SELECT UM_ID FROM UM_ORG_PERMISSION WHERE UM_RESOURCE_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "; AND UM_TENANT_ID=:" +
+    public static final String CHECK_PERMISSION_EXISTS = "SELECT COUNT(1) FROM UM_ORG_PERMISSION WHERE " +
+            "UM_RESOURCE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "; AND UM_TENANT_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "; AND UM_ACTION=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION + ";";
 
@@ -73,11 +81,11 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "; AND UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
-    public static final String CHECK_GROUP_ROLE_MAPPING_EXIST = "SELECT COUNT(1) FROM UM_ORG_ROLE_GROUP WHERE " +
+    public static final String CHECK_GROUP_ROLE_MAPPING_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE_GROUP WHERE " +
             "UM_GROUP_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "; AND UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
-    public static final String CHECK_PERMISSION_ROLE_MAPPING_EXIST = "SELECT COUNT(1) FROM UM_ORG_ROLE_PERMISSION " +
+    public static final String CHECK_PERMISSION_ROLE_MAPPING_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE_PERMISSION " +
             "WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_PERMISSION_ID " +
             "IN (SELECT UM_ID FROM UM_ORG_PERMISSION WHERE UM_RESOURCE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "; AND UM_TENANT_ID=:" +
@@ -140,7 +148,7 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
-    public static final String REPLACE_DISPLAY_NAME_OF_ROLE = "UPDATE UM_ORG_ROLE SET UM_ROLE_NAME=:" +
+    public static final String UPDATE_ROLE_DISPLAY_NAME = "UPDATE UM_ORG_ROLE SET UM_ROLE_NAME=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
