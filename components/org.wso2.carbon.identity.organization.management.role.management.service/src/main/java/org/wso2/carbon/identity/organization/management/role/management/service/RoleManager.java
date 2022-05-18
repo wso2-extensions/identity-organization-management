@@ -30,7 +30,7 @@ import java.util.List;
 public interface RoleManager {
 
     /**
-     * Add a role
+     * Add a role.
      *
      * @param organizationId The ID of the organization where we add the role.
      * @param role           Role that is going to be added.

@@ -246,8 +246,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     if (StringUtils.equalsIgnoreCase(op, PATCH_OP_ADD)) {
                         patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues());
                     } else if (StringUtils.equalsIgnoreCase(op, PATCH_OP_REMOVE)) {
-                        /* if values are passed they should be on the path param. Therefore, if values are passed with this, it should
-                        give errors. */
+                        /* if values are passed they should be on the path param. Therefore, if values are passed
+                        with this, it should give errors. */
                         if (patchOp.getValues() != null) {
                             throw Utils.handleClientException(ERROR_CODE_REMOVE_OP_VALUES, null);
                         }
@@ -467,10 +467,10 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     PATCH_OP_REMOVE.toLowerCase());
         }
 
-        List<String> conditions = new ArrayList<>();
+        //List<String> conditions = new ArrayList<>();
         // get the conditions associated with the path.
-        String pathValues = StringUtils.strip(path.split("\\[")[1].replace("\\]", ""))
-                .toLowerCase();
+        // String pathValues = StringUtils.strip(path.split("\\[")[1].replace("\\]", ""))
+        //        .toLowerCase();
 
         // if patchPath equals the StringUtils.strip(path) remove all values in the path for the particular role.
         if (StringUtils.equals(patchPath, StringUtils.strip(path))) {
