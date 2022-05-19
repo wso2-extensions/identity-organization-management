@@ -75,11 +75,11 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.management.idp.authenticator.internal
+                            org.wso2.carbon.identity.organization.management.application.authn.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.management.idp.authenticator.internal,
-                            org.wso2.carbon.identity.organization.management.idp.authenticator.*; version="${project.version}"
+                            !org.wso2.carbon.identity.organization.management.application.authn.internal,
+                            org.wso2.carbon.identity.organization.management.application.authn.*; version="${project.version}"
                         </Export-Package>
                         <Import-Package>
                             javax.servlet.http; version="${javax.servlet.imp.pkg.version.range}",
@@ -105,7 +105,7 @@
                             org.wso2.carbon.identity.application.common.*;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.oauth.*; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc.*; version="${identity.outbound.auth.oidc.import.version.range}",
-                            org.wso2.carbon.identity.organization.application.*;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.application.*;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

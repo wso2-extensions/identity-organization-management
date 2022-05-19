@@ -102,6 +102,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     @Override
     public Optional<String> resolveOrganizationSpResourceId(String orgName, String parentApplication,
                                                             String parentTenant) throws OrgApplicationMgtException {
+
         try {
             int inboundSpTenantId = IdentityTenantUtil.getTenantId(parentTenant);
             int outboundSpTenantId = IdentityTenantUtil.getTenantId(orgName);
