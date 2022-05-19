@@ -18,15 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
-import java.io.InputStream;
-import java.util.List;
-
+import org.wso2.carbon.identity.organization.management.endpoint.model.ApplicationSharedDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
-import java.util.List;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPOSTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
@@ -34,12 +35,23 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApiService;
 
-import javax.validation.Valid;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
-import io.swagger.annotations.*;
+import java.util.List;
 
-import javax.validation.constraints.*;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 
 @Path("/organizations")
 @Api(description = "The organizations API")
@@ -190,6 +202,35 @@ public class OrganizationsApi  {
     public Response organizationsPost(@ApiParam(value = "This represents the organization to be added." ,required=true) @Valid OrganizationPOSTRequest organizationPOSTRequest) {
 
         return delegate.organizationsPost(organizationPOSTRequest );
+    }
+
+    @Valid
+    @POST
+    @Path("/{organization-id}/applications/{application-id}/share")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @ApiOperation(value = "Share application from the parent tenant to given organization ", notes = "This API creates an internal application to delegate access from ", response = ApplicationSharedDTO.class, authorizations = {
+        @Authorization(value = "BasicAuth"),
+        @Authorization(value = "OAuth2", scopes = {
+
+        })
+    }, tags={ "Organization Role Management" })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Ok", response = ApplicationSharedDTO.class),
+        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
+        @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
+        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
+    })
+    public Response shareOrgApplication(
+            @ApiParam(value = "ID of the parent organization where the application is created." ,required=true)
+            @PathParam("organization-id") String organizationId,
+            @ApiParam(value = "ID of the application which will be shared to child orgs.",required=true)
+            @PathParam("application-id") String applicationId,
+            @ApiParam(value = "This represents user role mappings." ,required=true) @Valid List<String> childOrgs) {
+
+        return delegate.shareOrgApplication(organizationId, applicationId, childOrgs);
     }
 
 }

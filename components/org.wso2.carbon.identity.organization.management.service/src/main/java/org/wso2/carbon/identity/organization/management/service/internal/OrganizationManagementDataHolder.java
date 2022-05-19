@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.service.internal;
 
+import org.wso2.carbon.identity.organization.management.service.dao.OrganizationApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtService;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -29,6 +30,7 @@ public class OrganizationManagementDataHolder {
 
     private static final OrganizationManagementDataHolder instance = new OrganizationManagementDataHolder();
     private OrganizationManagementDAO organizationManagementDAO;
+    private OrganizationApplicationMgtDAO organizationApplicationMgtDAO;
     private RealmService realmService;
     private TenantMgtService tenantMgtService;
 
@@ -45,6 +47,16 @@ public class OrganizationManagementDataHolder {
     public void setOrganizationManagementDAO(OrganizationManagementDAO organizationManagementDAO) {
 
         this.organizationManagementDAO = organizationManagementDAO;
+    }
+
+    public OrganizationApplicationMgtDAO getOrganizationApplicationMgtDAO() {
+
+        return organizationApplicationMgtDAO;
+    }
+
+    public void setOrganizationApplicationMgtDAO(OrganizationApplicationMgtDAO organizationApplicationMgtDAO) {
+
+        this.organizationApplicationMgtDAO = organizationApplicationMgtDAO;
     }
 
     public RealmService getRealmService() {

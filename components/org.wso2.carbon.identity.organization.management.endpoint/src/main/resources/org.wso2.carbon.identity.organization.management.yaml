@@ -222,6 +222,54 @@ paths:
           $ref: '#/components/responses/ServerError'
       tags:
         - Organization
+  /organizations/{organization-id}/applications/{application-id}/share:
+    post:
+      summary: |
+        Share application from the parent tenant to given organization
+      description: |
+        This API creates an internal application to delegate access from
+      operationId: shareOrgApplication
+      parameters:
+        - name: organization-id
+          in: path
+          description: ID of the parent organization where the application is created.
+          required: true
+          schema:
+            type: string
+        - name: application-id
+          in: path
+          description: ID of the application which will be shared to child orgs.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: This represents user role mappings.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+        required: true
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationSharedDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      tags:
+        - Organization Application Management
 
 components:
   parameters:
@@ -546,6 +594,15 @@ components:
           description: The value to be used within the operations.
           example: 'XYZ Builders'
 
+    #-----------------------------------------------------
+    # Application shared object
+    #-----------------------------------------------------
+    ApplicationSharedDTO:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'Success'
   #--------------------------------------------------------
   # Descriptions of Organization Management API responses.
   #--------------------------------------------------------
