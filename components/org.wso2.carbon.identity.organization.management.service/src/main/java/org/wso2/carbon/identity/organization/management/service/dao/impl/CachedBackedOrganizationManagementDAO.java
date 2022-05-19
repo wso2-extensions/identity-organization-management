@@ -225,6 +225,17 @@ public class CachedBackedOrganizationManagementDAO implements OrganizationManage
         return organizationManagementDAO.getOrganizationStatus(organizationId, tenantDomain);
     }
 
+    @Override
+    public String getOrganizationType(String organizationId, String tenantDomain) throws
+            OrganizationManagementServerException {
+
+        Organization organization = getOrganizationFromCacheById(organizationId, tenantDomain);
+        if (organization != null) {
+            return organization.getType();
+        }
+        return organizationManagementDAO.getOrganizationType(organizationId, tenantDomain);
+    }
+
     private Organization getOrganizationFromCacheById(String organizationId, String tenantDomain) {
 
         OrganizationByIdCacheKey cacheKey = new OrganizationByIdCacheKey(organizationId);
