@@ -7,7 +7,7 @@
  * You may not alter or remove any copyright or other notice from copies of this content.
  */
 
-package org.wso2.carbon.identity.organization.management.authenticator.util;
+package org.wso2.carbon.identity.organization.management.application.authn.util;
 
 /**
  * This class holds the constants related with enterprise login authenticator.

@@ -7,7 +7,7 @@
  * You may not alter or remove any copyright or other notice from copies of this content.
  */
 
-package org.wso2.carbon.identity.organization.management.authenticator.internal;
+package org.wso2.carbon.identity.organization.management.application.authn.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,14 +21,14 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
-import org.wso2.carbon.identity.organization.management.authenticator.EnterpriseIDPAuthenticator;
-import org.wso2.carbon.identity.organization.management.authn.core.EnterpriseLoginManagementService;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticator;
 
 /**
  * This class contains the service component of the organization management enterprise idp login authenticator.
  */
 @Component(
-        name = "org.wso2.carbon.identity.org.mgt.idp.authenticator.component",
+        name = "org.wso2.identity.organization.application.authenticator.component",
         immediate = true
 )
 public class EnterpriseIDPAuthenticatorServiceComponent {
@@ -101,27 +101,27 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         EnterpriseIDPAuthenticatorDataHolder.getInstance().setOAuthAdminService(null);
     }
 
-    @Reference(name = "org.wso2.carbon.identity.org.mgt.login.mgt.core.component",
-               service = EnterpriseLoginManagementService.class,
+    @Reference(name = "org.wso2.identity.organization.application.management.component",
+               service = OrgApplicationManager.class,
                cardinality = ReferenceCardinality.MANDATORY,
                policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetEnterpriseLoginManagementService")
-    protected void setEnterpriseLoginManagementService(
-            EnterpriseLoginManagementService enterpriseLoginManagementService) {
+               unbind = "unsetOrgApplicationManager")
+    protected void setOrgApplicationManager(
+            OrgApplicationManager orgApplicationManager) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Enterprise Login Management Service is set in the Enterprise IDP Authenticator");
+            log.debug("Organization Application Manager is set in the Authenticator");
         }
         EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                .setEnterpriseLoginManagementService(enterpriseLoginManagementService);
+                .setOrgApplicationManager(orgApplicationManager);
     }
 
-    protected void unsetEnterpriseLoginManagementService(
-            EnterpriseLoginManagementService enterpriseLoginManagementService) {
+    protected void unsetOrgApplicationManager(
+            OrgApplicationManager orgApplicationManager) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Enterprise Login Management Service is unset in the Enterprise IDP Authenticator");
+            log.debug("Organization Application Manager is unset in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setEnterpriseLoginManagementService(null);
+        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrgApplicationManager(null);
     }
 }

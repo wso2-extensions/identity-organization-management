@@ -58,6 +58,10 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.application</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -101,6 +105,7 @@
                             org.wso2.carbon.identity.application.common.*;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.oauth.*; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc.*; version="${identity.outbound.auth.oidc.import.version.range}",
+                            org.wso2.carbon.identity.organization.application.*;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

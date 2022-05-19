@@ -22,6 +22,8 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 
+import java.util.Optional;
+
 /**
  * Interface for Organization Application Management.
  */
@@ -30,5 +32,8 @@ public interface OrgApplicationManager {
     ServiceProvider getOrgApplication(String applicationId, String tenantDomain) throws OrgApplicationMgtException;
 
     String shareOrganizationApplication(Organization parent, Organization childOrg, ServiceProvider serviceProvider)
+            throws OrgApplicationMgtException;
+
+    Optional<String> resolveOrganizationSpResourceId(String orgName, String parentApplication, String parentTenant)
             throws OrgApplicationMgtException;
 }

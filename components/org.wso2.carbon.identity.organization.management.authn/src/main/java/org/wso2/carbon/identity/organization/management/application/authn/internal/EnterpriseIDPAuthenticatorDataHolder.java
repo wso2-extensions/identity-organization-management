@@ -7,24 +7,24 @@
  * You may not alter or remove any copyright or other notice from copies of this content.
  */
 
-package org.wso2.carbon.identity.organization.management.authenticator.internal;
+package org.wso2.carbon.identity.organization.management.application.authn.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
-import org.wso2.carbon.identity.organization.management.authn.core.EnterpriseLoginManagementService;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 
 /**
  * This class acts as a data holder to the enterprise idp login authenticator service.
  */
 public class EnterpriseIDPAuthenticatorDataHolder {
 
-    private static EnterpriseIDPAuthenticatorDataHolder instance = new EnterpriseIDPAuthenticatorDataHolder();
+    private static final EnterpriseIDPAuthenticatorDataHolder instance = new EnterpriseIDPAuthenticatorDataHolder();
 
     private ApplicationManagementService applicationManagementService;
 
     private OAuthAdminServiceImpl oAuthAdminService;
 
-    private EnterpriseLoginManagementService enterpriseLoginManagementService;
+    private OrgApplicationManager orgApplicationManager;
 
     private EnterpriseIDPAuthenticatorDataHolder() {
 
@@ -55,13 +55,13 @@ public class EnterpriseIDPAuthenticatorDataHolder {
         this.oAuthAdminService = oAuthAdminService;
     }
 
-    public EnterpriseLoginManagementService getEnterpriseLoginManagementService() {
+    public OrgApplicationManager getOrgApplicationManager() {
 
-        return enterpriseLoginManagementService;
+        return orgApplicationManager;
     }
 
-    public void setEnterpriseLoginManagementService(EnterpriseLoginManagementService enterpriseLoginManagementService) {
+    public void setOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
 
-        this.enterpriseLoginManagementService = enterpriseLoginManagementService;
+        this.orgApplicationManager = orgApplicationManager;
     }
 }

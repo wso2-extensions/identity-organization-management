@@ -7,7 +7,7 @@
  * You may not alter or remove any copyright or other notice from copies of this content.
  */
 
-package org.wso2.carbon.identity.organization.management.authenticator;
+package org.wso2.carbon.identity.organization.management.application.authn;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -30,8 +30,8 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
-import org.wso2.carbon.identity.organization.management.authenticator.internal.EnterpriseIDPAuthenticatorDataHolder;
-import org.wso2.carbon.identity.organization.management.authn.core.exceptions.EnterpriseLoginManagementException;
+import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
+import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,9 +47,9 @@ import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthen
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_AUTHZ_URL;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.OAuth2.CALLBACK_URL;
-import static org.wso2.carbon.identity.organization.management.authenticator.util.EnterpriseIDPErrorConstants.ErrorMessages.ENTERPRISE_IDP_LOGIN_FAILED;
-import static org.wso2.carbon.identity.organization.management.authenticator.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_NOT_FOUND;
-import static org.wso2.carbon.identity.organization.management.authenticator.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_PARAMETER_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ENTERPRISE_IDP_LOGIN_FAILED;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_PARAMETER_NOT_FOUND;
 
 
 /**
@@ -119,18 +119,19 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             organizationName = runtimeParams.get(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER);
 
             // Get the outbound service provider of the organization.
-            String outboundSpUUID;
+            String sharedApplicationId;
             ServiceProvider outboundServiceProvider;
             ApplicationManagementService applicationManagementService =
                     EnterpriseIDPAuthenticatorDataHolder.getInstance()
                             .getApplicationManagementService();
             try {
-                outboundSpUUID = EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                        .getEnterpriseLoginManagementService()
-                        .resolveOrganizationSpResourceId(organizationName, inboundSp, inboundSpTenant);
-                outboundServiceProvider = applicationManagementService.getApplicationByResourceId(outboundSpUUID,
+                sharedApplicationId = EnterpriseIDPAuthenticatorDataHolder.getInstance()
+                        .getOrgApplicationManager().resolveOrganizationSpResourceId(organizationName, inboundSp,
+                                inboundSpTenant).orElse(null);
+
+                outboundServiceProvider = applicationManagementService.getApplicationByResourceId(sharedApplicationId,
                         organizationName);
-            } catch (EnterpriseLoginManagementException | IdentityApplicationManagementException e) {
+            } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Error on getting outbound service provider of the organization. "
                             + "Organization: %s, Inbound service provider: %s", organizationName, inboundSp));

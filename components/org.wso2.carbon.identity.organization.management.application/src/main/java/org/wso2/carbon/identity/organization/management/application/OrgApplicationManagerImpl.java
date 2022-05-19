@@ -21,6 +21,7 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
@@ -94,6 +95,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             return sharedApplicationId;
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException e) {
+            throw new OrgApplicationMgtException(e);
+        }
+    }
+
+    @Override
+    public Optional<String> resolveOrganizationSpResourceId(String orgName, String parentApplication,
+                                                            String parentTenant) throws OrgApplicationMgtException {
+        try {
+            int inboundSpTenantId = IdentityTenantUtil.getTenantId(parentTenant);
+            int outboundSpTenantId = IdentityTenantUtil.getTenantId(orgName);
+            String inboundSpResourceId = OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService().
+                    getServiceProvider(parentApplication, parentTenant).getApplicationResourceId();
+            return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO()
+                    .getSharedApplicationResourceId(inboundSpTenantId, outboundSpTenantId, inboundSpResourceId);
+        } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
             throw new OrgApplicationMgtException(e);
         }
     }
