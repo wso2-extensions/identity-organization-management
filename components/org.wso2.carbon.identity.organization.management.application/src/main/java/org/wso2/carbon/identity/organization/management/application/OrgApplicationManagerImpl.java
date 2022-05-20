@@ -2,6 +2,7 @@ package org.wso2.carbon.identity.organization.management.application;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
@@ -18,6 +19,8 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,13 +49,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public String shareOrganizationApplication(Organization parent, Organization childOrg,
+    public String shareOrganizationApplication(Organization parentOrg, Organization sharedOrg,
                                                ServiceProvider rootApplication) throws OrgApplicationMgtException {
 
         try {
             ServiceURL commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build();
             String callbackUrl = commonAuthServiceUrl.getAbsolutePublicURL();
             //String allowedOrigin = commonAuthServiceUrl.getAbsolutePublicUrlWithoutPath();
+
+            int parentOrgTenantId = getTenantId();
+            int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getDomain());
+
+            //Use tenant of the organization to whom the application getting shared.
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getDomain(), true);
+            RealmService realmService = OrgApplicationMgtDataHolder.getInstance().getRealmService();
+            String sharedOrgAdmin = realmService.getTenantUserRealm(sharedOrgTenantId).getRealmConfiguration().
+                    getAdminUserName();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
             // Prepare consumer oauth application.
             OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
@@ -85,17 +99,19 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
 
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
-                    childOrg.getDomain(), getAuthenticatedUsername());
+                    sharedOrg.getDomain(), getAuthenticatedUsername());
 
             OrgApplicationMgtDataHolder.getInstance()
-                    .getOrgApplicationMgtDAO().addSharedApplication(getTenantId(),
-                            rootApplication.getApplicationResourceId(),
-                            IdentityTenantUtil.getTenantId(childOrg.getDomain()), sharedApplicationId,
-                            getAuthenticatedUsername());
+                    .getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
+                            rootApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId,
+                            sharedOrgAdmin);
 
             return sharedApplicationId;
-        } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException e) {
+        } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
+                | UserStoreException e) {
             throw new OrgApplicationMgtException(e);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
     }
 

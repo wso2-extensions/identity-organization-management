@@ -214,7 +214,7 @@ public class OrganizationsApi  {
         @Authorization(value = "OAuth2", scopes = {
 
         })
-    }, tags={ "Organization Role Management" })
+    }, tags={ "Organization Application Management" })
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "Ok", response = ApplicationSharedDTO.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
