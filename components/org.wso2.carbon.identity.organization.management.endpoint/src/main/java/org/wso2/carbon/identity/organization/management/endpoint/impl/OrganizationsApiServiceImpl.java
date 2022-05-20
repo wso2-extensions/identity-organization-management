@@ -76,8 +76,8 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     }
 
     @Override
-    public Response shareOrgApplication(String organizationId, String applicationId, List<String> childOrgs) {
+    public Response shareOrgApplication(String organizationId, String applicationId, List<String> sharedOrg) {
 
-        return organizationManagementService.shareOrganizationApplication(organizationId, applicationId, childOrgs);
+        return organizationManagementService.shareOrganizationApplication(organizationId, applicationId, sharedOrg);
     }
 }

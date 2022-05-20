@@ -153,11 +153,6 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
-                <artifactId>org.wso2.carbon.identity.organization.management.login.mgt.core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.application</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
@@ -201,9 +196,14 @@
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
-            <version>${carbon.identity.framework.version}</version>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.cors.mgt.core</artifactId>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
@@ -447,7 +447,10 @@
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
 
-        <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
+        <identity.inbound.auth.oauth.version>6.7.116</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.import.version.range>[6.7.116, 6.8.0)</identity.inbound.auth.oauth.import.version.range>
+	
+	<identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>

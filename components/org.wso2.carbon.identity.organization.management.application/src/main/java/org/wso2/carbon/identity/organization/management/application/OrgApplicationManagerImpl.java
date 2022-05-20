@@ -58,11 +58,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             //String allowedOrigin = commonAuthServiceUrl.getAbsolutePublicUrlWithoutPath();
 
             int parentOrgTenantId = getTenantId();
-            int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getDomain());
+            int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
 
             //Use tenant of the organization to whom the application getting shared.
             PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getDomain(), true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
             RealmService realmService = OrgApplicationMgtDataHolder.getInstance().getRealmService();
             String sharedOrgAdmin = realmService.getTenantUserRealm(sharedOrgTenantId).getRealmConfiguration().
                     getAdminUserName();
@@ -99,7 +99,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
 
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
-                    sharedOrg.getDomain(), getAuthenticatedUsername());
+                    sharedOrg.getId(), getAuthenticatedUsername());
 
             OrgApplicationMgtDataHolder.getInstance()
                     .getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,

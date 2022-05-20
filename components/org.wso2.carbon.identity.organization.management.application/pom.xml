@@ -26,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.organization.management.application</artifactId>
-    <name>WSO2 - Application management for Organizations</name>
+    <name>WSO2 - Organization Application Management</name>
     <packaging>bundle</packaging>
 
     <dependencies>

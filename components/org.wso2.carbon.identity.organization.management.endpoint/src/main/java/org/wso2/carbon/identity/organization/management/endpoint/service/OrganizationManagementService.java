@@ -217,16 +217,16 @@ public class OrganizationManagementService {
      *
      * @param organizationId
      * @param applicationId
-     * @param childOrgs
+     * @param sharedOrg
      * @return
      */
-    public Response shareOrganizationApplication(String organizationId, String applicationId, List<String> childOrgs) {
+    public Response shareOrganizationApplication(String organizationId, String applicationId, List<String> sharedOrg) {
 
         try {
             String tenantDomain = getTenantDomain();
             Organization organization = getOrganizationManager().getOrganization(organizationId, Boolean.TRUE);
 
-            if (!Objects.equals(tenantDomain, organization.getDomain())) {
+            if (!Objects.equals(tenantDomain, organization.getId())) {
                 //TODO: Fix
                 LOG.warn("Org doesn't match with requested tenant");
             }
@@ -237,9 +237,9 @@ public class OrganizationManagementService {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
 
-            List<ChildOrganizationDO> filteredChildOrgs = childOrgs == null || childOrgs.isEmpty() ?
+            List<ChildOrganizationDO> filteredChildOrgs = sharedOrg == null || sharedOrg.isEmpty() ?
                     organization.getChildOrganizations() :
-                    organization.getChildOrganizations().stream().filter(o -> childOrgs.contains(o.getId()))
+                    organization.getChildOrganizations().stream().filter(o -> sharedOrg.contains(o.getId()))
                             .collect(Collectors.toList());
 
             List<String> created = new ArrayList<>();
