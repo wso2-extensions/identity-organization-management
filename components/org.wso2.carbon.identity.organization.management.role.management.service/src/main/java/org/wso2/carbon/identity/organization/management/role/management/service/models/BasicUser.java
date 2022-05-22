@@ -33,6 +33,7 @@ public class BasicUser {
     }
 
     public BasicUser(String id) {
+
         this.id = id;
     }
 

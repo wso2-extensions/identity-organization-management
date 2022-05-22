@@ -41,19 +41,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AFTER;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.BEFORE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_ID_FIELD;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_NAME_FIELD;
-
 /**
  * Implementation of Role Manager Interface.
  */
@@ -99,8 +91,11 @@ public class RoleManagerImpl implements RoleManager {
             if (!checkOrganizationExists) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
             }
+            List<ExpressionNode> expressionNodes = new ArrayList<>();
+            List<String> operators = new ArrayList<>();
+            getExpressionNodes(filter, after, before, expressionNodes, operators);
             return getRoleManagementDAO().getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
-                    getExpressionNodes(filter, after, before));
+                    expressionNodes, operators);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
@@ -165,13 +160,13 @@ public class RoleManagerImpl implements RoleManager {
      * @param filter The filter.
      * @param after  The next pointer to the page.
      * @param before The previous pointer to the page.
-     * @return The list of expression nodes.
+     * @param expressionNodes The array list to contain nodes.
+     * @param operators The array list to contain operators.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
      */
-    private List<ExpressionNode> getExpressionNodes(String filter, String after, String before)
-            throws RoleManagementClientException {
+    private void getExpressionNodes(String filter, String after, String before, List<ExpressionNode> expressionNodes,
+                                    List<String> operators) throws RoleManagementClientException {
 
-        List<ExpressionNode> expressionNodes = new ArrayList<>();
         if (StringUtils.isBlank(filter)) {
             filter = StringUtils.EMPTY;
         }
@@ -180,12 +175,11 @@ public class RoleManagerImpl implements RoleManager {
             if (StringUtils.isNotBlank(paginatedFilter)) {
                 FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(paginatedFilter);
                 Node rootNode = filterTreeBuilder.buildTree();
-                setExpressionNodeList(rootNode, expressionNodes);
+                Utils.setExpressionNodeAndOperatorLists(rootNode, expressionNodes, operators, true);
             }
         } catch (IOException | IdentityException e) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
         }
-        return expressionNodes;
     }
 
     /**
@@ -218,47 +212,6 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     /**
-     * Set the expressions to nodes.
-     *
-     * @param node       The node object.
-     * @param expression The list of expression nodes.
-     * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
-     */
-    private void setExpressionNodeList(Node node, List<ExpressionNode> expression) throws
-            RoleManagementClientException {
-
-        if (node instanceof ExpressionNode) {
-            ExpressionNode expressionNode = (ExpressionNode) node;
-            String attributeValue = expressionNode.getAttributeValue();
-            if (StringUtils.isNotBlank(attributeValue)) {
-                if (isFilteringAttributeNotSupported(attributeValue)) {
-                    throw Utils.handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, attributeValue);
-                }
-                expression.add(expressionNode);
-            }
-        } else if (node instanceof OperationNode) {
-            String operation = ((OperationNode) node).getOperation();
-            if (!StringUtils.equalsIgnoreCase(operation, AND)) {
-                throw Utils.handleClientException(ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER);
-            }
-            setExpressionNodeList(node.getLeftNode(), expression);
-            setExpressionNodeList(node.getRightNode(), expression);
-        }
-    }
-
-    /**
-     * Check whether the filtering can be applied to the attributes.
-     *
-     * @param attributeValue The attribute value.
-     * @return Returns true if the filtering attribute is neither the id nor the name.
-     */
-    private boolean isFilteringAttributeNotSupported(String attributeValue) {
-
-        return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) && !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD) &&
-                !attributeValue.equalsIgnoreCase(BEFORE) && !attributeValue.equalsIgnoreCase(AFTER);
-    }
-
-    /**
      * Check whether the organization ID and role ID exists.
      *
      * @param organizationId The ID of the organization.
@@ -276,8 +229,8 @@ public class RoleManagerImpl implements RoleManager {
         if (!checkOrganizationExists) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
-        boolean checkRoleIdExists = getRoleManagementDAO().checkRoleExists(organizationId, null,
-                StringUtils.strip(roleId));
+        boolean checkRoleIdExists = getRoleManagementDAO().checkRoleExists(organizationId, StringUtils.strip(roleId),
+                null);
         if (!checkRoleIdExists) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
         }

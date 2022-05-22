@@ -74,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PATCH_OP_REMOVE;
 
 /**
  * The service class for Role Management in Organization Management.
@@ -187,9 +188,16 @@ public class RoleManagementService {
 
             for (RolePatchOperation rolePatchOperation : patchOperationList) {
                 List<String> values = rolePatchOperation.getValue();
-                PatchOperation patchOperation = new PatchOperation(rolePatchOperation.getOp().toString(),
-                        rolePatchOperation.getPath(), values);
-                patchOperations.add(patchOperation);
+                if (values == null && StringUtils.equalsIgnoreCase(StringUtils.strip(rolePatchOperation.getOp()
+                        .toString()), PATCH_OP_REMOVE)) {
+                    PatchOperation patchOperation = new PatchOperation(StringUtils.strip(rolePatchOperation.getOp()
+                            .toString()), StringUtils.strip(rolePatchOperation.getPath()));
+                    patchOperations.add(patchOperation);
+                } else {
+                    PatchOperation patchOperation = new PatchOperation(StringUtils.strip(rolePatchOperation.getOp()
+                            .toString()), StringUtils.strip(rolePatchOperation.getPath()), values);
+                    patchOperations.add(patchOperation);
+                }
             }
 
             Role role = RoleManagementEndpointUtils.getRoleManager().patchRole(organizationId, roleId,

@@ -45,8 +45,10 @@ public class RoleManagementConstants {
     public static final String GROUPS = "GROUPS";
     public static final String USERS = "USERS";
     public static final String PERMISSIONS = "PERMISSIONS";
+
     public static final String DISPLAY_NAME = "displayName";
-    public static final String AND = "and";
+    public static final String AND_OPERATOR = "and";
+    public static final String OR_OPERATOR = "or";
 
     public static final String FILTER_ID_PLACEHOLDER = "FILTER_ID_%d";
 
@@ -65,7 +67,6 @@ public class RoleManagementConstants {
     }).collect(Collectors.collectingAndThen(Collectors.toMap(data -> data[0], data -> data[1]),
             Collections::<String, String>unmodifiableMap));
 
-
     /**
      * Error messages for Organization Management - Role Management.
      */
@@ -74,13 +75,13 @@ public class RoleManagementConstants {
         // Client Errors (ORM-60200 - ORM-60999)
         ERROR_CODE_INVALID_REQUEST_BODY("ORM-60201", "Invalid request body.",
                 "The format of the provided request body is incorrect."),
-        ERROR_REMOVING_REQUIRED_ATTRIBUTE("ORM-60202", "Cannot remove the required attribute.",
+        ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE("ORM-60202", "Cannot remove a required attribute.",
                 "Cannot remove the required attribute %s with operation %s."),
-        ERROR_REMOVING_INVALID_ATTRIBUTE("ORM-60203", "Invalid attribute.",
+        ERROR_CODE_REMOVING_INVALID_ATTRIBUTE("ORM-60203", "Invalid attribute.",
                 "Invalid attribute %s for operation %s."),
-        ERROR_ADDING_INVALID_ATTRIBUTE("ORM-60205", "Invalid attribute.",
+        ERROR_CODE_ADDING_INVALID_ATTRIBUTE("ORM-60205", "Invalid attribute.",
                 "Invalid attribute %s for operation %s."),
-        ERROR_DISPLAY_NAME_MULTIPLE_VALUES("ORM-60206", "The display name cannot have multiple values.",
+        ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES("ORM-60206", "The display name cannot have multiple values.",
                 "The display name should have single value."),
         ERROR_CODE_INVALID_FILTER_FORMAT("ORM-60207", "Unable to retrieve roles.", "Invalid" +
                 " format used for filtering."),
@@ -111,44 +112,44 @@ public class RoleManagementConstants {
         ERROR_CODE_REMOVE_OP_VALUES("ORM-65020", "Remove patch operation values are passed with the path.",
                 "Remove patch operation values are pased along with the path."),
         // Server Errors (ORM-65200 - ORM-65999)
-        ERROR_ADDING_ROLE_TO_ORGANIZATION("ORM-65201", "Error adding role to the organization.",
+        ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION("ORM-65201", "Error adding role to the organization.",
                 "Server encountered an error while adding a role to an organization %s."),
-        ERROR_ADDING_GROUP_TO_ROLE("ORM-65202", "Error adding group(s) to role.",
+        ERROR_CODE_ADDING_GROUP_TO_ROLE("ORM-65202", "Error adding group(s) to role.",
                 "Server encountered an error while adding a group to the role %s."),
-        ERROR_ADDING_USER_TO_ROLE("ORM-65603", "Error adding user(s) to role.",
+        ERROR_CODE_ADDING_USER_TO_ROLE("ORM-65603", "Error adding user(s) to role.",
                 "Server encountered an error while adding a user to the role."),
-        ERROR_ADDING_PERMISSION_TO_ROLE("ORM-65204", "Error adding permission(s) to role.",
+        ERROR_CODE_ADDING_PERMISSION_TO_ROLE("ORM-65204", "Error adding permission(s) to role.",
                 "Server encountered an error while adding a permission to the role %s"),
-        ERROR_GETTING_ROLE_FROM_ID("ORM-65205", "Error getting role.",
+        ERROR_CODE_GETTING_ROLE_FROM_ID("ORM-65205", "Error getting role.",
                 "Server encountered an error while retrieving role from role id %s."),
-        ERROR_GETTING_USERS_USING_ROLE_ID("ORM-65206", "Error getting users.",
+        ERROR_CODE_GETTING_USERS_USING_ROLE_ID("ORM-65206", "Error getting users.",
                 "Server encountered an error while retrieving user(s) from role id %s."),
-        ERROR_GETTING_GROUPS_USING_ROLE_ID("ORM-65207", "Error getting users of role Id.",
+        ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID("ORM-65207", "Error getting users of role Id.",
                 "Server encountered an error while retrieving user(s) from role id %s."),
-        ERROR_GETTING_PERMISSIONS_USING_ROLE_ID("ORM-65208", "Error getting permissions for the role.",
+        ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID("ORM-65208", "Error getting permissions for the role.",
                 "Server encountered an error while retrieving permission(s) from role id %s."),
-        ERROR_GETTING_ROLES_FROM_ORGANIZATION("ORM-65209", "Error getting roles from organization.",
+        ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION("ORM-65209", "Error getting roles from organization.",
                 "Server encountered an error while retrieving role(s) from organization %s."),
-        ERROR_PATCHING_ROLE("ORM-65210", "Error patching a role from organization.",
+        ERROR_CODE_PATCHING_ROLE("ORM-65210", "Error patching a role from organization.",
                 "Server encountered an error while patching a role in the organization %s"),
-        ERROR_REMOVING_USERS_FROM_ROLE("ORM-65211", "Error removing a user from role.",
+        ERROR_CODE_REMOVING_USERS_FROM_ROLE("ORM-65211", "Error removing a user from role.",
                 "Server encountered an error while removing users from the role %s"),
-        ERROR_REMOVING_GROUPS_FROM_ROLE("ORM-65212", "Error removing a group from role.",
+        ERROR_CODE_REMOVING_GROUPS_FROM_ROLE("ORM-65212", "Error removing a group from role.",
                 "Server encountered an error while removing groups from the role %s"),
-        ERROR_REMOVING_PERMISSIONS_FROM_ROLE("ORM-65213", "Error removing a permission from role.",
+        ERROR_CODE_REMOVING_PERMISSIONS_FROM_ROLE("ORM-65213", "Error removing a permission from role.",
                 "Server encountered an error while removing permissions from the role %s."),
-        ERROR_REMOVING_ROLE_FROM_ORGANIZATION("ORM-65214",
+        ERROR_CODE_REMOVING_ROLE_FROM_ORGANIZATION("ORM-65214",
                 "Error removing a role from an organization.",
                 "Server encountered an error while removing a role %s from organization %s."),
-        ERROR_REPLACING_DISPLAY_NAME_OF_ROLE("ORM-65215", "Error replacing display name of role",
+        ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE("ORM-65215", "Error replacing display name of role",
                 "Server encountered an error while replacing the display name %s of role %s"),
-        ERROR_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING("ORM-65216",
+        ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING("ORM-65216",
                 "Error getting permission ids using resource id.",
                 "Server encountered an error while retrieving the permission ids"),
-        ERROR_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME("ORM-65217",
+        ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME("ORM-65217",
                 "Error getting role from role name and organization id.",
                 "Server encountered an error while retrieving a role %s from organization %s"),
-        ERROR_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID("ORM-65218",
+        ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID("ORM-65218",
                 "Error getting role from role id and organization id.",
                 "Sever encountered an error while retrieving a role %s from organization %s");
 
@@ -180,28 +181,7 @@ public class RoleManagementConstants {
     }
 
     /**
-     * Error Codes of Forbidden Error Messages.
-     */
-    public enum ForbiddenErrorMessages {
-
-    }
-
-    /**
-     * Error Codes of Conflict Error Messages.
-     */
-    public enum ConflictErrorMessages {
-
-    }
-
-    /**
-     * Error Codes of NotFound Error Messages.
-     */
-    public enum NotFoundErrorMessages {
-
-    }
-
-    /**
-     * Enum for Query Filter Operations.
+     * Enum for Filter Operations.
      */
     public enum FilterOperator {
 
@@ -209,56 +189,56 @@ public class RoleManagementConstants {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " = :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " = :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         SW("", "%") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         EW("%", "") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         CO("%", "%") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " like :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         GE("", "") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " >= :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " >= :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         LE("", "") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " <= :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " <= :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         GT("", "") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " > :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " > :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         },
         LT("", "") {
             @Override
             public String applyFilterBuilder(int count) {
 
-                return " < :" + String.format(FILTER_ID_PLACEHOLDER, count) + "; AND ";
+                return " < :" + String.format(FILTER_ID_PLACEHOLDER, count) + ";";
             }
         };
 
