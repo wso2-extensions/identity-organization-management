@@ -30,32 +30,45 @@ public class PatchOperation {
     private List<String> values;
 
     public PatchOperation(String op, String path, List<String> values) {
+
         this.op = op;
         this.path = path;
         this.values = values;
     }
 
+    public PatchOperation(String op, String path) {
+
+        this.op = op;
+        this.path = path;
+    }
+
     public String getOp() {
+
         return op;
     }
 
     public void setOp(String op) {
+
         this.op = op;
     }
 
     public String getPath() {
+
         return path;
     }
 
     public void setPath(String path) {
+
         this.path = path;
     }
 
     public List<String> getValues() {
+
         return values;
     }
 
     public void setValues(List<String> values) {
+
         this.values = values;
     }
 }

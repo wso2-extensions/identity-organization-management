@@ -35,11 +35,11 @@ public class SQLConstants {
     public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, UM_ROLE_ID) " +
             "VALUES ";
 
-    public static final String CHECK_ROLE_NAME_EXISTS = "COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_NAME=:" +
+    public static final String CHECK_ROLE_NAME_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_NAME=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; AND UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
-    public static final String CHECK_ROLE_EXISTS = "COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_ID=:" +
+    public static final String CHECK_ROLE_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
@@ -120,6 +120,18 @@ public class SQLConstants {
 
     public static final String GET_ROLES_FROM_ORGANIZATION_ID = "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME FROM " +
             "UM_ORG_ROLE WHERE ";
+
+    public static final String GET_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE ";
+
+    public static final String GET_USER_IDS_FROM_ROLE_ID = "SELECT UM_USER_ID FROM UM_ORG_ROLE_USER WHERE ";
+
+    public static final String GET_PERMISSION_STRINGS_FROM_ROLE_ID = "SELECT UM_ID FROM UM_ORG_PERMISSION WHERE ";
+
+    public static final String GET_IDS_FROM_ROLE_ID_TAIL = "UM_ROLE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+
+    public static final String GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL = "UM_ID IN (SELECT UM_PERMISSION_ID FROM " +
+            "UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
     public static final String GET_ROLES_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_TENANT_ID=:" +

@@ -62,11 +62,13 @@ public interface RoleManagementDAO {
      * @param tenantId        The tenant ID.
      * @param limit           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
+     * @param operators The list containing the and, or operators.
      * @return A list of Roles.
      * @throws RoleManagementServerException The server exception is thrown when an error occurs during getting a role.
      */
     List<Role> getOrganizationRoles(String organizationId, String sortOrder, int tenantId, int limit,
-                                    List<ExpressionNode> expressionNodes) throws RoleManagementServerException;
+                                    List<ExpressionNode> expressionNodes, List<String> operators)
+            throws RoleManagementServerException;
 
     /**
      * Patch a {@link Role} inside an organization.
@@ -103,6 +105,7 @@ public interface RoleManagementDAO {
      *                                       the role.
      */
     Role putRole(String organizationId, String roleId, Role role, int tenantId) throws RoleManagementServerException;
+
     /**
      * Check whether a role exists inside an organization.
      *
@@ -111,7 +114,7 @@ public interface RoleManagementDAO {
      * @param roleName       The displayName of the role.
      * @return Whether there exists a role or not.
      * @throws RoleManagementException The exception is thrown when an error occurs during checking
-     *                                       whether the role exists.
+     *                                 whether the role exists.
      */
     boolean checkRoleExists(String organizationId, String roleId, String roleName) throws RoleManagementException;
 }
