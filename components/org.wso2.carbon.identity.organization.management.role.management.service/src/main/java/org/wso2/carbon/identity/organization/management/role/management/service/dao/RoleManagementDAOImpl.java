@@ -74,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_ROLE_FROM_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_USERS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
@@ -221,7 +222,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         appendFilterQueryGetRoles(expressionNodes, operators, filterQueryBuilder);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
 
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQueryBuilder.getFilterQuery() +
+        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQueryBuilder.getFilterQuery() + AND +
                 String.format(GET_ROLES_FROM_ORGANIZATION_ID_TAIL, sortOrder);
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
@@ -256,7 +257,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 for (PatchOperation patchOp : patchOperations) {
                     String op = patchOp.getOp().trim();
                     if (StringUtils.equalsIgnoreCase(op, PATCH_OP_ADD)) {
-                        patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues());
+                        patchOperationAdd(roleId, organizationId, patchOp.getPath(), patchOp.getValues());
                     } else if (StringUtils.equalsIgnoreCase(op, PATCH_OP_REMOVE)) {
                         /* If values are passed they should be on the path param. Therefore, if values are passed
                         with this, it should give errors. */
@@ -265,7 +266,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         }
                         patchOperationRemove(roleId, patchOp.getPath());
                     } else if (StringUtils.equalsIgnoreCase(op, PATCH_OP_REPLACE)) {
-                        patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
+                        patchOperationReplace(roleId, organizationId, patchOp.getPath(), patchOp.getValues());
                     }
                 }
                 return getRoleById(organizationId, roleId, tenantId);
@@ -418,13 +419,17 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws RoleManagementException The exception is thrown when an error occurs during patch
      *                                 operation.
      */
-    private void patchOperationReplace(String roleId, String path, List<String> values)
+    private void patchOperationReplace(String roleId, String organizationId, String path, List<String> values)
             throws RoleManagementException {
 
         if (CollectionUtils.isNotEmpty(values)) {
             if (StringUtils.equals(path, DISPLAY_NAME)) {
-                if (CollectionUtils.size(values) > 1) {
+                if (values.size() > 1) {
                     throw Utils.handleClientException(ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES);
+                }
+                if (checkRoleExists(organizationId, null, values.get(0))) {
+                    throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, values.get(0),
+                            organizationId);
                 }
                 replaceDisplayName(values.get(0), roleId);
             } else if (StringUtils.equalsIgnoreCase(path, USERS)) {
@@ -494,7 +499,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_GROUP_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() +
+                    String query = GET_GROUP_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
                             GET_IDS_FROM_ROLE_ID_TAIL;
                     List<String> groupsList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue, patchPath);
                     if (CollectionUtils.isNotEmpty(groupsList)) {
@@ -504,7 +509,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_USER_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_USER_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() +
+                    String query = GET_USER_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
                             GET_IDS_FROM_ROLE_ID_TAIL;
                     List<String> userList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue, patchPath);
                     if (CollectionUtils.isNotEmpty(userList)) {
@@ -514,7 +519,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_PERMISSION_STRINGS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() +
+                    String query = GET_PERMISSION_STRINGS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
                             GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL;
                     List<String> permissionList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue,
                             patchPath);
@@ -556,7 +561,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param values The value for the patch operation.
      * @throws RoleManagementException The exception is thrown when an error occurs during patch operation.
      */
-    private void patchOperationAdd(String roleId, String path, List<String> values)
+    private void patchOperationAdd(String roleId, String organizationId, String path, List<String> values)
             throws RoleManagementException {
 
         if (CollectionUtils.isNotEmpty(values)) {
@@ -602,8 +607,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             } else if (StringUtils.equals(path, DISPLAY_NAME)) {
                 // if it is display name just replace the display name.
                 // if there are multiple values for display name throw an exception.
-                if (CollectionUtils.size(values) > 1) {
+                if (values.size() > 1) {
                     throw Utils.handleClientException(ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES);
+                }
+                if (checkRoleExists(organizationId, null, values.get(0))) {
+                    throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, values.get(0),
+                            organizationId);
                 }
                 replaceDisplayName(values.get(0), roleId);
             } else {
@@ -1223,12 +1232,15 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
-            namedJdbcTemplate.executeUpdate(UPDATE_ROLE_DISPLAY_NAME,
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, displayName);
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
-                    });
-        } catch (DataAccessException e) {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeUpdate(UPDATE_ROLE_DISPLAY_NAME,
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, displayName);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
+                        });
+                return null;
+            });
+        } catch (TransactionException e) {
             throw new RoleManagementServerException(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE.getCode(),
                     String.format(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE.getMessage(), displayName, roleId));
         }

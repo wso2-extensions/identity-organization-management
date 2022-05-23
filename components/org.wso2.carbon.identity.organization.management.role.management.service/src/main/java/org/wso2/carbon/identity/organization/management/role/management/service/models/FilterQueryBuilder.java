@@ -27,7 +27,7 @@ import java.util.Map;
 public class FilterQueryBuilder {
 
     private Map<String, String> stringParameters = new HashMap<>();
-    private int count = 1;
+    private int count = 0;
     private String filter;
 
     public Map<String, String> getFilterAttributeValue() {

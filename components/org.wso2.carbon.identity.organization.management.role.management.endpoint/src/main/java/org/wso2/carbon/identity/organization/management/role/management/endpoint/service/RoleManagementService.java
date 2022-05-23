@@ -199,7 +199,6 @@ public class RoleManagementService {
                     patchOperations.add(patchOperation);
                 }
             }
-
             Role role = RoleManagementEndpointUtils.getRoleManager().patchRole(organizationId, roleId,
                     patchOperations);
             URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,

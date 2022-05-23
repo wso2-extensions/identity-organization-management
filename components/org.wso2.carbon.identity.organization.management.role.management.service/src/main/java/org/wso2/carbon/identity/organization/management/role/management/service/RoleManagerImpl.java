@@ -45,6 +45,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
+
 /**
  * Implementation of Role Manager Interface.
  */
@@ -61,7 +62,7 @@ public class RoleManagerImpl implements RoleManager {
             boolean checkRoleNameExists = getRoleManagementDAO().checkRoleExists(organizationId, null,
                     StringUtils.strip(role.getName()));
             if (checkRoleNameExists) {
-                throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, role.getName());
+                throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, role.getName(), organizationId);
             }
             getRoleManagementDAO().addRole(organizationId, Utils.getTenantId(), role);
             return new Role(role.getId(), role.getName());
@@ -156,11 +157,11 @@ public class RoleManagerImpl implements RoleManager {
     /**
      * Getting the expression nodes for cursor-based pagination.
      *
-     * @param filter The filter.
-     * @param after  The next pointer to the page.
-     * @param before The previous pointer to the page.
+     * @param filter          The filter.
+     * @param after           The next pointer to the page.
+     * @param before          The previous pointer to the page.
      * @param expressionNodes The array list to contain nodes.
-     * @param operators The array list to contain operators.
+     * @param operators       The array list to contain operators.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
      */
     private void getExpressionNodes(String filter, String after, String before, List<ExpressionNode> expressionNodes,
