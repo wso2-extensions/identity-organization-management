@@ -22,6 +22,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
  * Base Exception class for Role Management.
  */
 public class RoleManagementException extends Exception {
+
     private String errorCode;
     private String description;
 
