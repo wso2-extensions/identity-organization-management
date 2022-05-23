@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.util;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -27,10 +26,7 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.RoleManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
-import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ConflictErrorMessages;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages;
-import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ForbiddenErrorMessages;
-import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.NotFoundErrorMessages;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
@@ -43,7 +39,11 @@ import static org.wso2.carbon.identity.organization.management.role.management.e
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
 
 /**
  * The utility class for role management endpoints.
@@ -168,8 +168,7 @@ public class RoleManagementEndpointUtils {
      */
     private static boolean isConflictError(RoleManagementException e) {
 
-        String code = e.getErrorCode().replace("-", "_");
-        return EnumUtils.isValidEnum(ConflictErrorMessages.class, code);
+        return ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES.getCode().equals(e.getErrorCode());
     }
 
     /**
@@ -180,8 +179,7 @@ public class RoleManagementEndpointUtils {
      */
     private static boolean isForbiddenError(RoleManagementException e) {
 
-        String code = e.getErrorCode().replace("-", "_");
-        return EnumUtils.isValidEnum(ForbiddenErrorMessages.class, code);
+        return ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE.getCode().equals(e.getErrorCode());
     }
 
     /**
@@ -192,8 +190,8 @@ public class RoleManagementEndpointUtils {
      */
     private static boolean isNotFoundError(RoleManagementException e) {
 
-        String code = e.getErrorCode().replace("-", "_");
-        return EnumUtils.isValidEnum(NotFoundErrorMessages.class, code);
+        return ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode()) || ERROR_CODE_INVALID_ROLE.getCode()
+                .equals(e.getErrorCode());
     }
 
     /**

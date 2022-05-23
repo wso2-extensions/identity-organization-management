@@ -55,9 +55,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVE_OP_VALUES;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID;
@@ -67,7 +64,9 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USERS_USING_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVE_OP_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_INVALID_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_PERMISSIONS_FROM_ROLE;
@@ -75,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_ROLE_FROM_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_USERS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PATCH_OP_ADD;
@@ -607,7 +607,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
                 replaceDisplayName(values.get(0), roleId);
             } else {
-                throw Utils.handleClientException(ERROR_CODE_ADDING_INVALID_ATTRIBUTE, path, PATCH_OP_ADD.toLowerCase());
+                throw Utils.handleClientException(ERROR_CODE_ADDING_INVALID_ATTRIBUTE, path,
+                        PATCH_OP_ADD.toLowerCase());
             }
         }
     }
@@ -699,7 +700,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param expressionNodes    The list of expression nodes.
      * @param filterQueryBuilder The FilerQueryBuilder object.
      */
-    private void appendFilterQueryGetRoles(List<ExpressionNode> expressionNodes, List<String> operators, FilterQueryBuilder filterQueryBuilder) {
+    private void appendFilterQueryGetRoles(List<ExpressionNode> expressionNodes, List<String> operators,
+                                           FilterQueryBuilder filterQueryBuilder) {
 
         StringBuilder filter = new StringBuilder();
         if (CollectionUtils.isEmpty(expressionNodes)) {

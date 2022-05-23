@@ -110,7 +110,7 @@ public class RoleManagementConstants {
         ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED("ORM-65019", "Role name or id is required.",
                 "Role name or id is required to check whether the role exists in organization %s."),
         ERROR_CODE_REMOVE_OP_VALUES("ORM-65020", "Remove patch operation values are passed with the path.",
-                "Remove patch operation values are pased along with the path."),
+                "Remove patch operation values are passed along with the path."),
         // Server Errors (ORM-65200 - ORM-65999)
         ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION("ORM-65201", "Error adding role to the organization.",
                 "Server encountered an error while adding a role to an organization %s."),

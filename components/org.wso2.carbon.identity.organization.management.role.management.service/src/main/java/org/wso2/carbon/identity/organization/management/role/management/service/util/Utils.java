@@ -26,7 +26,6 @@ import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.Node;
 import org.wso2.carbon.identity.core.model.OperationNode;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
@@ -35,10 +34,14 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import java.util.List;
 import java.util.UUID;
 
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.*;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AFTER;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.BEFORE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_ID_FIELD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_NAME_FIELD;
 
 /**
  * Utility class containing utility functions for role management.
@@ -157,11 +160,12 @@ public class Utils {
     /**
      * Setting the expression nodes list and operators list for filtering.
      *
-     * @param node       The root node.
-     * @param expression The expression nodes list.
-     * @param operators  The operators list.
+     * @param node                    The root node.
+     * @param expression              The expression nodes list.
+     * @param operators               The operators list.
      * @param checkFilteringAttribute If checking the filtering attribute is necessary its true, else false.
-     * @throws RoleManagementClientException Throws an exception if the operators passed by client are not valid operators.
+     * @throws RoleManagementClientException Throws an exception if the operators passed by client
+     *                                       are not valid operators.
      */
     public static void setExpressionNodeAndOperatorLists(Node node, List<ExpressionNode> expression,
                                                          List<String> operators, boolean checkFilteringAttribute)
