@@ -33,7 +33,7 @@ import javax.xml.bind.annotation.*;
 public class RoleGetResponseGroup  {
   
     private String $ref;
-    private String displayName;
+    private String display;
     private String value;
 
     /**
@@ -56,20 +56,20 @@ public class RoleGetResponseGroup  {
 
     /**
     **/
-    public RoleGetResponseGroup displayName(String displayName) {
+    public RoleGetResponseGroup display(String display) {
 
-        this.displayName = displayName;
+        this.display = display;
         return this;
     }
     
     @ApiModelProperty(example = "PRIMARY/manager", value = "")
-    @JsonProperty("displayName")
+    @JsonProperty("display")
     @Valid
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplay() {
+        return display;
     }
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void setDisplay(String display) {
+        this.display = display;
     }
 
     /**
@@ -103,13 +103,13 @@ public class RoleGetResponseGroup  {
         }
         RoleGetResponseGroup roleGetResponseGroup = (RoleGetResponseGroup) o;
         return Objects.equals(this.$ref, roleGetResponseGroup.$ref) &&
-            Objects.equals(this.displayName, roleGetResponseGroup.displayName) &&
+            Objects.equals(this.display, roleGetResponseGroup.display) &&
             Objects.equals(this.value, roleGetResponseGroup.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash($ref, displayName, value);
+        return Objects.hash($ref, display, value);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class RoleGetResponseGroup  {
         sb.append("class RoleGetResponseGroup {\n");
         
         sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
-        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
+        sb.append("    display: ").append(toIndentedString(display)).append("\n");
         sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();

@@ -62,7 +62,7 @@ public interface RoleManagementDAO {
      * @param tenantId        The tenant ID.
      * @param limit           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
-     * @param operators The list containing the and, or operators.
+     * @param operators       The list containing the and, or operators.
      * @return A list of Roles.
      * @throws RoleManagementServerException The server exception is thrown when an error occurs during getting a role.
      */
@@ -117,4 +117,17 @@ public interface RoleManagementDAO {
      *                                 whether the role exists.
      */
     boolean checkRoleExists(String organizationId, String roleId, String roleName) throws RoleManagementException;
+
+    /**
+     * Check whether a user exists inside a tenant.
+     *
+     * @param userId   The ID of the user.
+     * @param tenantId The ID of the tenant.
+     * @return If there is a user then returns true, else false.
+     * @throws RoleManagementServerException The exception is thrown when an error occurs during checking the
+     *                                       user existence.
+     */
+    boolean checkUserExists(String userId, int tenantId) throws RoleManagementServerException;
+
+    boolean checkGroupExists(String groupId, int tenantId) throws RoleManagementServerException;
 }

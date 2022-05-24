@@ -252,7 +252,7 @@ public class RoleManagementService {
 
         Role role = new Role();
         role.setId(Utils.generateUniqueId());
-        role.setName(StringUtils.strip(rolePostRequest.getDisplayName()));
+        role.setDisplayName(StringUtils.strip(rolePostRequest.getDisplayName()));
         role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
                 .map(BasicUser::new).collect(Collectors.toList()));
         role.setGroups(rolePostRequest.getGroups().stream().map(RolePostRequestGroup::getValue)
@@ -276,7 +276,7 @@ public class RoleManagementService {
 
         RolePostResponse response = new RolePostResponse();
         response.setId(role.getId());
-        response.setDisplayName(role.getName());
+        response.setDisplayName(role.getDisplayName());
         response.setMeta(roleObjMeta);
 
         return response;
@@ -297,7 +297,7 @@ public class RoleManagementService {
 
         RoleGetResponse response = new RoleGetResponse();
         response.setId(role.getId());
-        response.setDisplayName(role.getName());
+        response.setDisplayName(role.getDisplayName());
         response.setMeta(roleObjMeta);
         response.setPermissions(role.getPermissions());
 
@@ -325,7 +325,7 @@ public class RoleManagementService {
         for (BasicGroup basicGroup : roleGroups) {
             RoleGetResponseGroup group = new RoleGetResponseGroup();
             group.value(basicGroup.getGroupId());
-            group.displayName(basicGroup.getGroupName());
+            group.display(basicGroup.getGroupName());
             group.$ref(RoleManagementEndpointUtils.getUri(organizationId, basicGroup.getGroupId(), GROUP_PATH,
                     ERROR_CODE_ERROR_BUILDING_GROUP_URI).toString());
             groups.add(group);
@@ -344,8 +344,8 @@ public class RoleManagementService {
         List<RoleGetResponseUser> users = new ArrayList<>();
         for (BasicUser basicUser : roleUsers) {
             RoleGetResponseUser user = new RoleGetResponseUser();
-            user.id(basicUser.getId());
-            user.displayName(basicUser.getUserName());
+            user.value(basicUser.getId());
+            user.display(basicUser.getUserName());
             user.$ref(RoleManagementEndpointUtils.getUri(organizationId, basicUser.getId(), USER_PATH,
                     ERROR_CODE_ERROR_BUILDING_USER_URI).toString());
             users.add(user);
@@ -366,7 +366,7 @@ public class RoleManagementService {
         roleObjMeta.setLocation(roleURI.toString());
 
         RolePatchResponse response = new RolePatchResponse();
-        response.setDisplayName(role.getName());
+        response.setDisplayName(role.getDisplayName());
         response.setMeta(roleObjMeta);
         response.setId(role.getId());
 
@@ -386,7 +386,7 @@ public class RoleManagementService {
         roleObjMeta.setLocation(roleURI.toString());
 
         RolePutResponse responseObject = new RolePutResponse();
-        responseObject.setDisplayName(role.getName());
+        responseObject.setDisplayName(role.getDisplayName());
         responseObject.setMeta(roleObjMeta);
         responseObject.setId(role.getId());
 
@@ -458,7 +458,7 @@ public class RoleManagementService {
                 roleObjMeta.setLocation(RoleManagementEndpointUtils.getUri(organizationId, role.getId(), ROLE_PATH,
                         ERROR_CODE_ERROR_BUILDING_ROLE_URI).toString());
                 roleObj.setId(role.getId());
-                roleObj.setDisplayName(role.getName());
+                roleObj.setDisplayName(role.getDisplayName());
                 roleObj.setMeta(roleObjMeta);
                 roleDTOs.add(roleObj);
             }

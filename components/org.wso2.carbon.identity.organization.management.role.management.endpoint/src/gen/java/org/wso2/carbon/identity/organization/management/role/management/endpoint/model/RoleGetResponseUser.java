@@ -33,8 +33,8 @@ import javax.xml.bind.annotation.*;
 public class RoleGetResponseUser  {
   
     private String $ref;
-    private String id;
-    private String displayName;
+    private String display;
+    private String value;
 
     /**
     **/
@@ -56,38 +56,38 @@ public class RoleGetResponseUser  {
 
     /**
     **/
-    public RoleGetResponseUser id(String id) {
+    public RoleGetResponseUser display(String display) {
 
-        this.id = id;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "3a12bae9-4386-44be-befd-caf349297f45", value = "")
-    @JsonProperty("id")
-    @Valid
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-    **/
-    public RoleGetResponseUser displayName(String displayName) {
-
-        this.displayName = displayName;
+        this.display = display;
         return this;
     }
     
     @ApiModelProperty(example = "kim", value = "")
-    @JsonProperty("displayName")
+    @JsonProperty("display")
     @Valid
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplay() {
+        return display;
     }
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void setDisplay(String display) {
+        this.display = display;
+    }
+
+    /**
+    **/
+    public RoleGetResponseUser value(String value) {
+
+        this.value = value;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "3a12bae9-4386-44be-befd-caf349297f45", value = "")
+    @JsonProperty("value")
+    @Valid
+    public String getValue() {
+        return value;
+    }
+    public void setValue(String value) {
+        this.value = value;
     }
 
 
@@ -103,13 +103,13 @@ public class RoleGetResponseUser  {
         }
         RoleGetResponseUser roleGetResponseUser = (RoleGetResponseUser) o;
         return Objects.equals(this.$ref, roleGetResponseUser.$ref) &&
-            Objects.equals(this.id, roleGetResponseUser.id) &&
-            Objects.equals(this.displayName, roleGetResponseUser.displayName);
+            Objects.equals(this.display, roleGetResponseUser.display) &&
+            Objects.equals(this.value, roleGetResponseUser.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash($ref, id, displayName);
+        return Objects.hash($ref, display, value);
     }
 
     @Override
@@ -119,8 +119,8 @@ public class RoleGetResponseUser  {
         sb.append("class RoleGetResponseUser {\n");
         
         sb.append("    $ref: ").append(toIndentedString($ref)).append("\n");
-        sb.append("    id: ").append(toIndentedString(id)).append("\n");
-        sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
+        sb.append("    display: ").append(toIndentedString(display)).append("\n");
+        sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
     }

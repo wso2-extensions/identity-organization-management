@@ -59,12 +59,12 @@ public class Role {
         this.id = id;
     }
 
-    public String getName() {
+    public String getDisplayName() {
 
         return name;
     }
 
-    public void setName(String name) {
+    public void setDisplayName(String name) {
 
         this.name = name;
     }

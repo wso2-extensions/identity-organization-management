@@ -29,7 +29,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManagerImpl;
-import org.wso2.carbon.identity.organization.management.role.management.service.dao.RoleManagementDAOImpl;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -47,7 +48,7 @@ public class RoleManagementServiceComponent {
     protected void activate(ComponentContext componentContext) {
 
         try {
-            RoleManagementDataHolder.getInstance().setRoleManagementDAO(new RoleManagementDAOImpl());
+            RoleManagementDataHolder.getInstance().setOrganizationManager(new OrganizationManagerImpl());
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(RoleManager.class.getName(), new RoleManagerImpl(), null);
 
@@ -79,5 +80,28 @@ public class RoleManagementServiceComponent {
             LOG.debug("Unset the Realm Service.");
         }
         RoleManagementDataHolder.getInstance().setRealmService(null);
+    }
+
+    @Reference(
+            name = "organization.service",
+            service = org.wso2.carbon.identity.organization.management.service.OrganizationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManager"
+    )
+    protected void setOrganizationManager(OrganizationManager organizationManager) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting the organization management service.");
+        }
+        RoleManagementDataHolder.getInstance().setOrganizationManager(organizationManager);
+    }
+
+    protected void unsetOrganizationManager(OrganizationManager organizationManager) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unset organization management service.");
+        }
+        RoleManagementDataHolder.getInstance().setOrganizationManager(null);
     }
 }

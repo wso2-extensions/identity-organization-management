@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service.internal;
 
-import org.wso2.carbon.identity.organization.management.role.management.service.dao.RoleManagementDAO;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -27,7 +27,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 public class RoleManagementDataHolder {
 
     private static final RoleManagementDataHolder ROLE_MANAGEMENT_DATA_HOLDER = new RoleManagementDataHolder();
-    private RoleManagementDAO roleManagementDAO;
+    private OrganizationManager organizationManager;
     private RealmService realmService;
 
     public static RoleManagementDataHolder getInstance() {
@@ -35,14 +35,14 @@ public class RoleManagementDataHolder {
         return ROLE_MANAGEMENT_DATA_HOLDER;
     }
 
-    public RoleManagementDAO getRoleManagementDAO() {
+    public OrganizationManager getOrganizationManager() {
 
-        return roleManagementDAO;
+        return organizationManager;
     }
 
-    public void setRoleManagementDAO(RoleManagementDAO roleManagementDAO) {
+    public void setOrganizationManager(OrganizationManager organizationManager) {
 
-        this.roleManagementDAO = roleManagementDAO;
+        this.organizationManager = organizationManager;
     }
 
     public RealmService getRealmService() {
