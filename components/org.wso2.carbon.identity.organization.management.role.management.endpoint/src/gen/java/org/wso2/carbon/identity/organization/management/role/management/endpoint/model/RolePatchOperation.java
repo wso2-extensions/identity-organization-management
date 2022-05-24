@@ -39,7 +39,7 @@ public class RolePatchOperation  {
 @XmlEnum(String.class)
 public enum OpEnum {
 
-    @XmlEnumValue("ADD") ADD(String.valueOf("ADD")), @XmlEnumValue("REMOVE") REMOVE(String.valueOf("REMOVE")), @XmlEnumValue("REPLACE") REPLACE(String.valueOf("REPLACE"));
+    @XmlEnumValue("add") ADD(String.valueOf("add")), @XmlEnumValue("remove") REMOVE(String.valueOf("remove")), @XmlEnumValue("replace") REPLACE(String.valueOf("replace"));
 
 
     private String value;
@@ -80,7 +80,7 @@ public enum OpEnum {
         return this;
     }
     
-    @ApiModelProperty(example = "ADD", value = "")
+    @ApiModelProperty(example = "add", value = "")
     @JsonProperty("op")
     @Valid
     public OpEnum getOp() {

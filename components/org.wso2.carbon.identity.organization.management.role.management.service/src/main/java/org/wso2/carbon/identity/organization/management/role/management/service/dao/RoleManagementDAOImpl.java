@@ -57,6 +57,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION;
@@ -64,6 +65,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USERS_USING_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USER_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVE_OP_VALUES;
@@ -75,6 +77,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_USERS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_NOT_NULL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
@@ -93,11 +96,13 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.AND;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_NAME_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
@@ -152,7 +157,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 template.executeInsert(ADD_ROLE_UM_ORG_ROLE,
                         namedPreparedStatement -> {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, role.getId());
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getName());
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getDisplayName());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
                             namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                         }, role, false);
@@ -221,8 +226,10 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         appendFilterQueryGetRoles(expressionNodes, operators, filterQueryBuilder);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                filterQueryBuilder.getFilterQuery() + AND : "";
 
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQueryBuilder.getFilterQuery() + AND +
+        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery +
                 String.format(GET_ROLES_FROM_ORGANIZATION_ID_TAIL, sortOrder);
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
@@ -318,7 +325,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
                 template.executeUpdate(UPDATE_ROLE_DISPLAY_NAME,
                         namedPreparedStatement -> {
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getName());
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getDisplayName());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, role.getId());
                         });
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
@@ -371,6 +378,40 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
     }
 
+    @Override
+    public boolean checkUserExists(String userId, int tenantId) throws RoleManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
+        try {
+            Integer value = namedJdbcTemplate.fetchSingleRecord(CHECK_USER_EXISTS,
+                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
+                    });
+            return value != null && value > 0;
+        } catch (DataAccessException e) {
+            throw Utils.handleServerException(ERROR_CODE_GETTING_USER_VALIDITY, e, userId);
+        }
+    }
+
+    @Override
+    public boolean checkGroupExists(String groupId, int tenantId) throws RoleManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
+        try {
+            Integer value = namedJdbcTemplate.fetchSingleRecord(CHECK_GROUP_EXISTS,
+                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, groupId);
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
+                    });
+            return value != null && value > 0;
+        } catch (DataAccessException e) {
+            throw Utils.handleServerException(ERROR_CODE_GETTING_GROUP_VALIDITY, e, groupId);
+        }
+    }
+
     /**
      * Check whether the permissions exist in the UM_ORG_PERMISSION TABLE and if not add them.
      *
@@ -384,24 +425,30 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
+        List<String> nonExistingPermissions = new ArrayList<>();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 for (String permission : permissions) {
-                    Integer value = template.fetchSingleRecord(CHECK_PERMISSION_EXISTS,
+                    int value = template.fetchSingleRecord(CHECK_PERMISSION_EXISTS,
                             (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, permission);
                                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ACTION, ROLE_ACTION);
                             });
-                    if (value == null) {
-                        template.executeInsert(ADD_PERMISSION_IF_NOT_EXISTS,
-                                namedPreparedStatement -> {
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, permission);
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ACTION, ROLE_ACTION);
-                                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
-                                }, permission, false);
+                    if (value == 0) {
+                        nonExistingPermissions.add(permission);
                     }
+                }
+                if (CollectionUtils.isNotEmpty(nonExistingPermissions)) {
+                    template.executeBatchInsert(ADD_PERMISSION_IF_NOT_EXISTS, (namedPreparedStatement -> {
+                        for (String permission : nonExistingPermissions) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, permission);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ACTION, ROLE_ACTION);
+                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
+                            namedPreparedStatement.addBatch();
+                        }
+                    }), null);
                 }
                 return null;
             });
@@ -430,6 +477,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (checkRoleExists(organizationId, null, values.get(0))) {
                     throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, values.get(0),
                             organizationId);
+                }
+                if (StringUtils.isBlank(values.get(0))) {
+                    throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
                 }
                 replaceDisplayName(values.get(0), roleId);
             } else if (StringUtils.equalsIgnoreCase(path, USERS)) {
@@ -499,8 +549,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_GROUP_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
-                            GET_IDS_FROM_ROLE_ID_TAIL;
+                    String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                            filterQueryBuilder.getFilterQuery() + AND : "";
+                    String query = GET_GROUP_IDS_FROM_ROLE_ID + filterQuery + GET_IDS_FROM_ROLE_ID_TAIL;
                     List<String> groupsList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue, patchPath);
                     if (CollectionUtils.isNotEmpty(groupsList)) {
                         removeGroupsFromRole(groupsList, roleId);
@@ -509,8 +560,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_USER_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_USER_IDS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
-                            GET_IDS_FROM_ROLE_ID_TAIL;
+                    String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                            filterQueryBuilder.getFilterQuery() + AND : "";
+                    String query = GET_USER_IDS_FROM_ROLE_ID + filterQuery + GET_IDS_FROM_ROLE_ID_TAIL;
                     List<String> userList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue, patchPath);
                     if (CollectionUtils.isNotEmpty(userList)) {
                         removeUsersFromRole(userList, roleId);
@@ -519,7 +571,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     appendFilterQueryPatchRemoveOp(expressionNodes, operators, filterQueryBuilder,
                             DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID);
                     Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-                    String query = GET_PERMISSION_STRINGS_FROM_ROLE_ID + filterQueryBuilder.getFilterQuery() + AND +
+                    String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                            filterQueryBuilder.getFilterQuery() + AND : "";
+                    String query = GET_PERMISSION_STRINGS_FROM_ROLE_ID + filterQuery +
                             GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL;
                     List<String> permissionList = patchRemoveOpDataGrabber(query, roleId, filterAttributeValue,
                             patchPath);
@@ -613,6 +667,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (checkRoleExists(organizationId, null, values.get(0))) {
                     throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, values.get(0),
                             organizationId);
+                }
+                if (StringUtils.isBlank(values.get(0))) {
+                    throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
                 }
                 replaceDisplayName(values.get(0), roleId);
             } else {

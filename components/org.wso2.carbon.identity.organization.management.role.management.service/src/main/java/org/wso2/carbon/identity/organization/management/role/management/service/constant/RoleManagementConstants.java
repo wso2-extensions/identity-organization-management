@@ -107,11 +107,14 @@ public class RoleManagementConstants {
                 "Role name %s exists in organization %s"),
         ERROR_CODE_INVALID_ROLE("ORM-65019", "The role doesn't exist.",
                 "The role: %s doesn't exist."),
-        ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED("ORM-65019", "Role name or id is required.",
+        ERROR_CODE_ROLE_NAME_OR_ID_REQUIRED("ORM-65020", "Role name or id is required.",
                 "Role name or id is required to check whether the role exists in organization %s."),
-        ERROR_CODE_REMOVE_OP_VALUES("ORM-65020",
+        ERROR_CODE_ROLE_NAME_NOT_NULL("ORM-65021", "Role name cannot be null", "Role name cannot be null."),
+        ERROR_CODE_REMOVE_OP_VALUES("ORM-65022",
                 "Remove patch operation values are passed with the path.",
                 "Remove patch operation values are passed along with the path."),
+        ERROR_CODE_INVALID_USER_ID("ORM-65023", "Invalid user.", "Invalid user %s"),
+        ERROR_CODE_INVALID_GROUP_ID("ORM-65024", "Invalid group.", "Invalid group %s"),
         // Server Errors (ORM-65200 - ORM-65999)
         ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION("ORM-65201", "Error adding role to the organization.",
                 "Server encountered an error while adding a role to an organization %s."),
@@ -152,7 +155,11 @@ public class RoleManagementConstants {
                 "Server encountered an error while retrieving a role %s from organization %s"),
         ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID("ORM-65218",
                 "Error getting role from role id and organization id.",
-                "Sever encountered an error while retrieving a role %s from organization %s");
+                "Sever encountered an error while retrieving a role %s from organization %s"),
+        ERROR_CODE_GETTING_USER_VALIDITY("ORM-65219", "Error getting user from user id.",
+                "Server encountered an error while retrieving a user %s."),
+        ERROR_CODE_GETTING_GROUP_VALIDITY("ORM-65220", "Error getting group from group id.",
+                "Server encountered an error while retrieving a group %s.");
 
         private final String code;
         private final String message;
