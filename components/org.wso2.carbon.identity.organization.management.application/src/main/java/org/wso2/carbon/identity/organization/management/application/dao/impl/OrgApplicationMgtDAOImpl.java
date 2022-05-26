@@ -1,76 +1,89 @@
+/*
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.wso2.carbon.identity.organization.management.application.dao.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
+import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
+import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtServerException;
+import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.VIEW_SHARED_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USERNAME;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.handleServerException;
 
 /**
- *
+ * This class implements the {@link OrgApplicationMgtDAO} interface.
  */
 public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
-    public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (PARENT_APP_ID, PARENT_TENANT_ID, " +
-            "SHARED_APP_ID, SHARED_TENANT_ID, USERNAME) VALUES (?, ?, ?, ?, ?);";
-
-    public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
-            "PARENT_TENANT_ID = ? AND SHARED_TENANT_ID = ? AND PARENT_APP_ID = ? ;";
-
     private static final Log LOG = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
 
-    public void addSharedApplication(int tenantId, String parentAppId, int sharedTenantId,
-                                     String sharedAppId, String username) throws OrgApplicationMgtException {
+    @Override
+    public void addSharedApplication(int tenantId, String parentAppId, int sharedTenantId, String sharedAppId,
+                                     String username) throws OrgApplicationMgtServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
-            try (PreparedStatement ps = connection.prepareStatement(INSERT_SHARED_APP)) {
-
-                ps.setString(1, parentAppId);
-                ps.setInt(2, tenantId);
-                ps.setString(3, sharedAppId);
-                ps.setInt(4, sharedTenantId);
-                ps.setString(5, username);
-                ps.execute();
-
-                IdentityDatabaseUtil.commitTransaction(connection);
-            } catch (SQLException e) {
-                IdentityDatabaseUtil.rollbackTransaction(connection);
-                LOG.error(e);
-                throw new OrgApplicationMgtException(e);
-            }
-        } catch (SQLException e) {
-            LOG.error(e);
-            throw new OrgApplicationMgtException(e);
+        NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeInsert(INSERT_SHARED_APP, namedPreparedStatement -> {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, parentAppId);
+                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, tenantId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
+                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USERNAME, username);
+                }, null, false);
+                return null;
+            });
+        } catch (TransactionException e) {
+            throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e);
         }
     }
 
     @Override
-    public Optional<String> getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
-            throws OrgApplicationMgtException {
+    public String getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
+            throws OrgApplicationMgtServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement ps = connection.prepareStatement(GET_SHARED_APP_ID)) {
-
-                ps.setInt(1, parentTenantId);
-                ps.setInt(2, sharedTenantId);
-                ps.setString(3, parentAppId);
-                ResultSet rs = ps.executeQuery();
-                String sharedAppId = "";
-                while (rs.next()) {
-                    sharedAppId = rs.getString("SHARED_APP_ID");
-                }
-                rs.close();
-                return Optional.ofNullable(sharedAppId);
-            } catch (SQLException e) {
-                LOG.error(e);
-                throw new OrgApplicationMgtException(e);
-            }
-
+        NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
+        String sharedAppId;
+        try {
+            sharedAppId = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_APP_ID,
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_SHARED_APP_ID),
+                    namedPreparedStatement -> {
+                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, parentTenantId);
+                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, parentAppId);
+                    });
+            return sharedAppId;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID, e, parentAppId);
+        }
     }
 }

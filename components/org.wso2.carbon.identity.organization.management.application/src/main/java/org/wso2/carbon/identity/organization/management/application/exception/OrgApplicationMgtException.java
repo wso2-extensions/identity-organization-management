@@ -19,17 +19,12 @@
 package org.wso2.carbon.identity.organization.management.application.exception;
 
 /**
- * Organization User Role management exception.
+ * Organization application management exception.
  */
 public class OrgApplicationMgtException extends Exception {
 
     private String errorCode;
     private String description;
-
-    public OrgApplicationMgtException() {
-
-        super();
-    }
 
     public OrgApplicationMgtException(String message, String errorCode) {
 
@@ -55,11 +50,6 @@ public class OrgApplicationMgtException extends Exception {
         super(message, cause);
         this.errorCode = errorCode;
         this.description = description;
-    }
-
-    public OrgApplicationMgtException(Throwable cause) {
-
-        super(cause);
     }
 
     public String getErrorCode() {

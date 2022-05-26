@@ -29,10 +29,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
-import org.wso2.carbon.identity.organization.management.service.dao.OrganizationApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.CachedBackedOrganizationManagementDAO;
-import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtService;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -61,10 +59,6 @@ public class OrganizationManagementServiceComponent {
             OrganizationManagementDAO organizationMgtDao = new CachedBackedOrganizationManagementDAO
                     (new OrganizationManagementDAOImpl());
             OrganizationManagementDataHolder.getInstance().setOrganizationManagementDAO(organizationMgtDao);
-
-            OrganizationApplicationMgtDAO organizationApplicationMgtDAO = new OrganizationApplicationMgtDAOImpl();
-            OrganizationManagementDataHolder.getInstance().
-                    setOrganizationApplicationMgtDAO(organizationApplicationMgtDAO);
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Organization Management component activated successfully.");

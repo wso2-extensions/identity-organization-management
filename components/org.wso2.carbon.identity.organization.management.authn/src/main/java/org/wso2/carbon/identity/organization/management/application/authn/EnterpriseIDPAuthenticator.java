@@ -127,7 +127,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             try {
                 sharedApplicationId = EnterpriseIDPAuthenticatorDataHolder.getInstance()
                         .getOrgApplicationManager().resolveOrganizationSpResourceId(organizationName, inboundSp,
-                                inboundSpTenant).orElse(null);
+                                inboundSpTenant);
 
                 outboundServiceProvider = applicationManagementService.getApplicationByResourceId(sharedApplicationId,
                         organizationName);

@@ -1,17 +1,15 @@
 package org.wso2.carbon.identity.organization.management.application.dao;
 
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
-
-import java.util.Optional;
+import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtServerException;
 
 /**
  *
  */
 public interface OrgApplicationMgtDAO {
 
-    void addSharedApplication(int parentTenantId, String parentAppId, int sharedTenantId,
-                              String sharedApplication, String username) throws OrgApplicationMgtException;
+    void addSharedApplication(int parentTenantId, String parentAppId, int sharedTenantId, String sharedApplication,
+                              String username) throws OrgApplicationMgtServerException;
 
-    Optional<String> getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
-            throws OrgApplicationMgtException;
+    String getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
+            throws OrgApplicationMgtServerException;
 }

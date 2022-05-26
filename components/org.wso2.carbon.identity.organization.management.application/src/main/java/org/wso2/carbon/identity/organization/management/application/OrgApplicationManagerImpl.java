@@ -24,9 +24,12 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORG_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 
@@ -44,7 +47,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             return getApplicationManagementService().getApplicationByResourceId(applicationId, tenantDomain);
         } catch (IdentityApplicationManagementException e) {
-            throw new OrgApplicationMgtException(e);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORG_APPLICATION, e, applicationId);
         }
     }
 
@@ -109,14 +112,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return sharedApplicationId;
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
                 | UserStoreException e) {
-            throw new OrgApplicationMgtException(e);
+            throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
     @Override
-    public Optional<String> resolveOrganizationSpResourceId(String orgName, String parentApplication,
+    public String resolveOrganizationSpResourceId(String orgName, String parentApplication,
                                                             String parentTenant) throws OrgApplicationMgtException {
 
         try {
@@ -127,7 +130,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO()
                     .getSharedApplicationResourceId(inboundSpTenantId, outboundSpTenantId, inboundSpResourceId);
         } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
-            throw new OrgApplicationMgtException(e);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, parentApplication);
         }
     }
 

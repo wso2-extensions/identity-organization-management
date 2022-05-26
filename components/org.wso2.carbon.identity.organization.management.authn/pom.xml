@@ -96,16 +96,18 @@
                             org.wso2.carbon.identity.application.authentication.framework.util;
                             org.wso2.carbon.identity.application.authentication.framework.inbound;
                             org.wso2.carbon.identity.application.authentication.framework.model;
-                            org.wso2.carbon.identity.application.common.model;
                             org.wso2.carbon.identity.base;
                             org.wso2.carbon.identity.core;
                             org.wso2.carbon.identity.core.util;
-                            org.wso2.carbon.identity.application.common.util;
                             org.wso2.carbon.identity.application.mgt;
-                            org.wso2.carbon.identity.application.common.*;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.oauth.*; version="${identity.inbound.auth.oauth.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc.*; version="${identity.outbound.auth.oidc.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.application.*;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.common;
+                            org.wso2.carbon.identity.application.common.model;
+                            org.wso2.carbon.identity.application.common.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth;
+                            org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.application;
+                            org.wso2.carbon.identity.organization.management.application.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>
