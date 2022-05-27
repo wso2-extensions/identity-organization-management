@@ -65,28 +65,20 @@ public class RoleManagerImpl implements RoleManager {
 
         try {
             boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
-            List<String> userIdList = role.getUsers().stream().map(BasicUser::getId).collect(Collectors.toList());
-            List<String> groupIdList = role.getGroups().stream().map(BasicGroup::getGroupId)
-                    .collect(Collectors.toList());
             if (!checkOrganizationExists) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
             }
             if (StringUtils.isBlank(role.getDisplayName())) {
                 throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
             }
-            boolean checkRoleNameExists = getRoleManagementDAO().checkRoleExists(organizationId, null,
+            boolean checkRoleNameExists = roleManagementDAO.checkRoleExists(organizationId, null,
                     StringUtils.strip(role.getDisplayName()));
             if (checkRoleNameExists) {
                 throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_ALREADY_EXISTS, role.getDisplayName(),
                         organizationId);
             }
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                checkUserValidity(userIdList, Utils.getTenantId());
-            }
-            if (CollectionUtils.isNotEmpty(groupIdList)) {
-                checkGroupValidity(groupIdList, Utils.getTenantId());
-            }
-            getRoleManagementDAO().addRole(organizationId, Utils.getTenantId(), role);
+            checkGroupUserListsValidity(role);
+            roleManagementDAO.addRole(organizationId, Utils.getTenantId(), role);
             return new Role(role.getId(), role.getDisplayName());
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -98,7 +90,7 @@ public class RoleManagerImpl implements RoleManager {
 
         try {
             validateOrganizationAndRoleId(organizationId, roleId);
-            return getRoleManagementDAO().getRoleById(organizationId, roleId, Utils.getTenantId());
+            return roleManagementDAO.getRoleById(organizationId, roleId, Utils.getTenantId());
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
@@ -116,7 +108,7 @@ public class RoleManagerImpl implements RoleManager {
             List<ExpressionNode> expressionNodes = new ArrayList<>();
             List<String> operators = new ArrayList<>();
             getExpressionNodes(filter, after, before, expressionNodes, operators);
-            return getRoleManagementDAO().getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
+            return roleManagementDAO.getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
                     expressionNodes, operators);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -129,7 +121,7 @@ public class RoleManagerImpl implements RoleManager {
 
         try {
             validateOrganizationAndRoleId(organizationId, roleId);
-            return getRoleManagementDAO().patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
+            return roleManagementDAO.patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
@@ -143,16 +135,8 @@ public class RoleManagerImpl implements RoleManager {
             if (StringUtils.isBlank(role.getDisplayName())) {
                 throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
             }
-            List<String> userIdList = role.getUsers().stream().map(BasicUser::getId).collect(Collectors.toList());
-            List<String> groupIdList = role.getGroups().stream().map(BasicGroup::getGroupId)
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                checkUserValidity(userIdList, Utils.getTenantId());
-            }
-            if (CollectionUtils.isNotEmpty(groupIdList)) {
-                checkGroupValidity(groupIdList, Utils.getTenantId());
-            }
-            return getRoleManagementDAO().putRole(organizationId, roleId, role, Utils.getTenantId());
+            checkGroupUserListsValidity(role);
+            return roleManagementDAO.putRole(organizationId, roleId, role, Utils.getTenantId());
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
@@ -163,20 +147,10 @@ public class RoleManagerImpl implements RoleManager {
 
         try {
             validateOrganizationAndRoleId(organizationId, roleId);
-            getRoleManagementDAO().deleteRole(organizationId, roleId);
+            roleManagementDAO.deleteRole(organizationId, roleId);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
-    }
-
-    /**
-     * Get an instance of RoleManagementDAO.
-     *
-     * @return An instance of RoleManagementDAO.
-     */
-    private RoleManagementDAO getRoleManagementDAO() {
-
-        return roleManagementDAO;
     }
 
     /**
@@ -261,7 +235,7 @@ public class RoleManagerImpl implements RoleManager {
         if (!checkOrganizationExists) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
-        boolean checkRoleIdExists = getRoleManagementDAO().checkRoleExists(organizationId, StringUtils.strip(roleId),
+        boolean checkRoleIdExists = roleManagementDAO.checkRoleExists(organizationId, StringUtils.strip(roleId),
                 null);
         if (!checkRoleIdExists) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
@@ -273,12 +247,12 @@ public class RoleManagerImpl implements RoleManager {
      *
      * @param userIdList The user ID list.
      * @param tenantId   The tenant ID.
-     * @throws RoleManagementException Throws an exception if a user id is not valid.
+     * @throws RoleManagementException Throws an exception if a user ID is not valid.
      */
     private void checkUserValidity(List<String> userIdList, int tenantId) throws RoleManagementException {
 
         for (String userId : userIdList) {
-            if (!getRoleManagementDAO().checkUserExists(userId, tenantId)) {
+            if (!roleManagementDAO.checkUserExists(userId, tenantId)) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_USER_ID, userId);
             }
         }
@@ -289,14 +263,32 @@ public class RoleManagerImpl implements RoleManager {
      *
      * @param groupIdList The group ID list.
      * @param tenantId    The tenant ID.
-     * @throws RoleManagementException Throws an exception if a group id is not valid.
+     * @throws RoleManagementException Throws an exception if a group ID is not valid.
      */
     public void checkGroupValidity(List<String> groupIdList, int tenantId) throws RoleManagementException {
 
         for (String groupId : groupIdList) {
-            if (!getRoleManagementDAO().checkGroupExists(groupId, tenantId)) {
+            if (!roleManagementDAO.checkGroupExists(groupId, tenantId)) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_GROUP_ID, groupId);
             }
+        }
+    }
+
+    /**
+     * Check group and user lists validity.
+     * @param role The Role Object.
+     * @throws RoleManagementException Throws an exception if the user or group list contains invalid ID.
+     */
+    private void checkGroupUserListsValidity(Role role) throws RoleManagementException {
+
+        List<String> userIdList = role.getUsers().stream().map(BasicUser::getId).collect(Collectors.toList());
+        List<String> groupIdList = role.getGroups().stream().map(BasicGroup::getGroupId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(userIdList)) {
+            checkUserValidity(userIdList, Utils.getTenantId());
+        }
+        if (CollectionUtils.isNotEmpty(groupIdList)) {
+            checkGroupValidity(groupIdList, Utils.getTenantId());
         }
     }
 }
