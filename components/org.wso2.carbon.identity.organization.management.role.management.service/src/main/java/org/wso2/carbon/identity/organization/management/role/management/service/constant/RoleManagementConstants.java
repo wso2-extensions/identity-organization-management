@@ -191,7 +191,6 @@ public class RoleManagementConstants {
     /**
      * Enum for Filter Operations.
      */
-    //TODO: enum justification
     public enum FilterOperator {
 
         EQ("", "") {

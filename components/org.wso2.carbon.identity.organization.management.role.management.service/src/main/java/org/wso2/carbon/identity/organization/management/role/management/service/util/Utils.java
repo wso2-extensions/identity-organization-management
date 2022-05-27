@@ -174,7 +174,6 @@ public class Utils {
             }
         } else if (node instanceof OperationNode) {
             String operation = ((OperationNode) node).getOperation();
-            // TODO: scim operators check
             if (!StringUtils.equalsIgnoreCase(operation, AND_OPERATOR) &&
                     !StringUtils.equalsIgnoreCase(operation, OR_OPERATOR)) {
                 throw Utils.handleClientException(ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER);
