@@ -79,16 +79,6 @@ public class Utils {
     }
 
     /**
-     * Get the tenant domain.
-     *
-     * @return The tenant domain.
-     */
-    public static String getTenantDomain() {
-
-        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-    }
-
-    /**
      * Throw an RoleManagementClientException upon client side error in role management.
      *
      * @param error The error enum.
@@ -184,6 +174,7 @@ public class Utils {
             }
         } else if (node instanceof OperationNode) {
             String operation = ((OperationNode) node).getOperation();
+            // TODO: scim operators check
             if (!StringUtils.equalsIgnoreCase(operation, AND_OPERATOR) &&
                     !StringUtils.equalsIgnoreCase(operation, OR_OPERATOR)) {
                 throw Utils.handleClientException(ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER);
@@ -200,6 +191,7 @@ public class Utils {
      * @param attributeValue The attribute value.
      * @return Returns true if the filtering attribute is neither the id nor the name.
      */
+    //TODO: remove before after
     private static boolean isFilteringAttributeNotSupported(String attributeValue) {
 
         return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) && !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD) &&

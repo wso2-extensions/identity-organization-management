@@ -101,10 +101,12 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
 
     public static final String ADD_PERMISSION_IF_NOT_EXISTS = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
-            "UM_ACTION, UM_TENANT_ID) VALUES (:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";)";
+            "UM_ACTION, UM_TENANT_ID) VALUES ";
+
+    public static final String ADD_PERMISSION_IF_NOT_EXISTS_VALUES = "(:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "%1$d;, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION + "%1$d;, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "%1$d;)";
 
     public static final String GET_ROLE_FROM_ID = "SELECT * FROM UM_ORG_ROLE WHERE UM_ROLE_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +

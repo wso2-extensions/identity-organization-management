@@ -160,6 +160,7 @@ public class RoleManagementService {
 
         try {
             int limitValue = validateLimit(limit);
+            //TODO: scim one object encoded. not implemented, queries as well
             String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
             List<Role> roles = RoleManagementEndpointUtils.getRoleManager()
                     .getOrganizationRoles(limitValue + 1, after, before, sortOrder, filter, organizationId);
@@ -408,6 +409,7 @@ public class RoleManagementService {
                                                   String organizationId, List<Role> roles) {
 
         RolesListResponse response = new RolesListResponse();
+        //TODO: remove after before
         if (CollectionUtils.isNotEmpty(roles)) {
             boolean hasMoreItems = roles.size() > limit;
             boolean needsReverse = StringUtils.isNotBlank(before);
@@ -483,6 +485,7 @@ public class RoleManagementService {
             return defaultItemsPerPage;
         }
 
+        // TODO: limit 0 scim behavior.
         if (limit < 0 || limit == 0) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT);
         }

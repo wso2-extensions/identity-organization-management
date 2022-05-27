@@ -38,13 +38,13 @@ public class RoleManagementConstants {
 
     public static final String ROLE_ACTION = "ui.execute";
 
-    public static final String PATCH_OP_ADD = "ADD";
-    public static final String PATCH_OP_REMOVE = "REMOVE";
-    public static final String PATCH_OP_REPLACE = "REPLACE";
+    public static final String PATCH_OP_ADD = "add";
+    public static final String PATCH_OP_REMOVE = "remove";
+    public static final String PATCH_OP_REPLACE = "replace";
 
-    public static final String GROUPS = "GROUPS";
-    public static final String USERS = "USERS";
-    public static final String PERMISSIONS = "PERMISSIONS";
+    public static final String GROUPS = "groups";
+    public static final String USERS = "users";
+    public static final String PERMISSIONS = "permissions";
 
     public static final String DISPLAY_NAME = "displayName";
     public static final String AND_OPERATOR = "and";
@@ -191,6 +191,7 @@ public class RoleManagementConstants {
     /**
      * Enum for Filter Operations.
      */
+    //TODO: enum justification
     public enum FilterOperator {
 
         EQ("", "") {
