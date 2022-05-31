@@ -231,7 +231,8 @@ public class OrganizationManagementService {
                 LOG.warn("Org doesn't match with requested tenant");
             }
 
-            ServiceProvider rootApplication = getOrgApplicationManager().getOrgApplication(applicationId, tenantDomain);
+            ServiceProvider rootApplication = getOrgApplicationManager().getOrgApplication(applicationId,
+                    tenantDomain);
 
             if (rootApplication == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();

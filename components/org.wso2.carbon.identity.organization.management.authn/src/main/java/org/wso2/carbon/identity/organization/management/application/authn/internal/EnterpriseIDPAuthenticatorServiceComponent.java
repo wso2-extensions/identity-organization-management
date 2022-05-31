@@ -23,12 +23,13 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticator;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
  * This class contains the service component of the organization management enterprise idp login authenticator.
  */
 @Component(
-        name = "org.wso2.identity.organization.application.authenticator.component",
+        name = "identity.organization.application.authenticator.component",
         immediate = true
 )
 public class EnterpriseIDPAuthenticatorServiceComponent {
@@ -46,7 +47,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
                 log.debug("Enterprise IDP Authenticator bundle is activated");
             }
         } catch (Exception e) {
-            log.error(" Error while activating enterprise idp authenticator ", e);
+            log.info(" Error while activating enterprise idp authenticator ", e);
         }
     }
 
@@ -101,7 +102,31 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         EnterpriseIDPAuthenticatorDataHolder.getInstance().setOAuthAdminService(null);
     }
 
-    @Reference(name = "org.wso2.identity.organization.application.management.component",
+    @Reference(name = "identity.organization.management.component",
+            service = OrganizationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManager")
+    protected void setOrganizationManager(
+            OrganizationManager organizationManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Organization Manager is set in the Authenticator");
+        }
+        EnterpriseIDPAuthenticatorDataHolder.getInstance()
+                .setOrganizationManager(organizationManager);
+    }
+
+    protected void unsetOrganizationManager(
+            OrganizationManager organizationManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Organization Manager is unset in the Authenticator");
+        }
+        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrganizationManager(null);
+    }
+
+    @Reference(name = "identity.organization.application.management.component",
                service = OrgApplicationManager.class,
                cardinality = ReferenceCardinality.MANDATORY,
                policy = ReferencePolicy.DYNAMIC,

@@ -27,6 +27,8 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtServerException;
 import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 
+import java.util.Optional;
+
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.VIEW_SHARED_APP_ID;
@@ -36,7 +38,6 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USERNAME;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.handleServerException;
 
 /**
@@ -47,18 +48,17 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     private static final Log LOG = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
 
     @Override
-    public void addSharedApplication(int tenantId, String parentAppId, int sharedTenantId, String sharedAppId,
-                                     String username) throws OrgApplicationMgtServerException {
+    public void addSharedApplication(int ownerTenantId, String mainAppId, int sharedTenantId, String sharedAppId)
+            throws OrgApplicationMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_SHARED_APP, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, parentAppId);
-                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, tenantId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, mainAppId);
+                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, ownerTenantId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
                     namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USERNAME, username);
                 }, null, false);
                 return null;
             });
@@ -68,7 +68,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     }
 
     @Override
-    public String getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
+    public Optional<String> getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
             throws OrgApplicationMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
@@ -77,11 +77,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             sharedAppId = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_APP_ID,
                     (resultSet, rowNumber) -> resultSet.getString(VIEW_SHARED_APP_ID),
                     namedPreparedStatement -> {
-                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, parentTenantId);
-                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, parentAppId);
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, parentTenantId);
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID, parentAppId);
                     });
-            return sharedAppId;
+            return Optional.ofNullable(sharedAppId);
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID, e, parentAppId);
         }

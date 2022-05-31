@@ -22,8 +22,7 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
@@ -31,10 +30,11 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 
 /**
- *
+ * Service implementation to process applications across organizations. Class implements {@link OrgApplicationManager}.
  */
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
@@ -53,14 +53,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
     public String shareOrganizationApplication(Organization parentOrg, Organization sharedOrg,
-                                               ServiceProvider rootApplication) throws OrgApplicationMgtException {
+                                               ServiceProvider mainApplication) throws OrgApplicationMgtException {
 
         try {
-            ServiceURL commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build();
-            String callbackUrl = commonAuthServiceUrl.getAbsolutePublicURL();
-            //String allowedOrigin = commonAuthServiceUrl.getAbsolutePublicUrlWithoutPath();
 
             int parentOrgTenantId = getTenantId();
+            String tenantDomain = getTenantDomain();
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
 
             //Use tenant of the organization to whom the application getting shared.
@@ -71,43 +69,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     getAdminUserName();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
-            // Prepare consumer oauth application.
-            OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
-            String clientId = UUID.randomUUID().toString();
-            consumerApp.setOauthConsumerKey(clientId);
-            consumerApp.setOAuthVersion("OAuth-2.0");
-            consumerApp.setGrantTypes("authorization_code");
-            consumerApp.setCallbackUrl(callbackUrl);
+            Optional<String> mayBeSharedAppId = resolveOrganizationSpResourceId(sharedOrg.getId(),
+                    mainApplication.getApplicationName(), tenantDomain);
+
+            if (mayBeSharedAppId.isPresent()) {
+                return mayBeSharedAppId.get();
+            }
 
             // Create Oauth consumer app.
-            OAuthConsumerAppDTO createdOAuthApp =
-                    getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
+            OAuthConsumerAppDTO createdOAuthApp = createOAuthApplication();
 
-            // Obtain oauth consumer app configs.
-            InboundAuthenticationRequestConfig inboundAuthenticationRequestConfig =
-                    new InboundAuthenticationRequestConfig();
-            inboundAuthenticationRequestConfig.setInboundAuthType("oauth2");
-            inboundAuthenticationRequestConfig.setInboundAuthKey(createdOAuthApp.getOauthConsumerKey());
-
-            List<InboundAuthenticationRequestConfig> inbounds = new ArrayList<>();
-            inbounds.add(inboundAuthenticationRequestConfig);
-            InboundAuthenticationConfig inboundAuthConfig = new InboundAuthenticationConfig();
-            inboundAuthConfig.setInboundAuthenticationRequestConfigs(
-                    inbounds.toArray(new InboundAuthenticationRequestConfig[0]));
-
-            ServiceProvider delegatedApplication = new ServiceProvider();
-            delegatedApplication.setApplicationName("internal-" + rootApplication.getApplicationName());
-            delegatedApplication.setDescription("delegate access from:" + rootApplication.getApplicationName());
-            delegatedApplication.setTemplateId(null);
-            delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
+            ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
 
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                     sharedOrg.getId(), getAuthenticatedUsername());
 
             OrgApplicationMgtDataHolder.getInstance()
                     .getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
-                            rootApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId,
-                            sharedOrgAdmin);
+                            mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
 
             return sharedApplicationId;
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
@@ -119,19 +98,59 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public String resolveOrganizationSpResourceId(String orgName, String parentApplication,
-                                                            String parentTenant) throws OrgApplicationMgtException {
+    public Optional<String> resolveOrganizationSpResourceId(String sharedOrgName, String mainAppName,
+                                                            String ownerTenant) throws OrgApplicationMgtException {
 
         try {
-            int inboundSpTenantId = IdentityTenantUtil.getTenantId(parentTenant);
-            int outboundSpTenantId = IdentityTenantUtil.getTenantId(orgName);
-            String inboundSpResourceId = OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService().
-                    getServiceProvider(parentApplication, parentTenant).getApplicationResourceId();
-            return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO()
-                    .getSharedApplicationResourceId(inboundSpTenantId, outboundSpTenantId, inboundSpResourceId);
+            int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenant);
+            int sharedTenantId = IdentityTenantUtil.getTenantId(sharedOrgName);
+            ServiceProvider mainApplication =
+                    OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService().
+                            getServiceProvider(mainAppName, ownerTenant);
+
+            return mainApplication == null ? Optional.empty() : OrgApplicationMgtDataHolder.getInstance()
+                    .getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
+                            mainApplication.getApplicationResourceId());
+
         } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, parentApplication);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName);
         }
+    }
+
+    private OAuthConsumerAppDTO createOAuthApplication() throws URLBuilderException, IdentityOAuthAdminException {
+
+        ServiceURL commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build();
+        String callbackUrl = commonAuthServiceUrl.getAbsolutePublicURL();
+
+        OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
+        String clientId = UUID.randomUUID().toString();
+        consumerApp.setOauthConsumerKey(clientId);
+        consumerApp.setOAuthVersion("OAuth-2.0");
+        consumerApp.setGrantTypes("authorization_code");
+        consumerApp.setCallbackUrl(callbackUrl);
+
+        return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
+    }
+
+    private ServiceProvider prepareSharedApplication(ServiceProvider mainApplication,
+                                                     OAuthConsumerAppDTO oAuthConsumerApp)  {
+
+        // Obtain oauth consumer app configs.
+        InboundAuthenticationRequestConfig inboundAuthenticationRequestConfig =
+                new InboundAuthenticationRequestConfig();
+        inboundAuthenticationRequestConfig.setInboundAuthType("oauth2");
+        inboundAuthenticationRequestConfig.setInboundAuthKey(oAuthConsumerApp.getOauthConsumerKey());
+
+        InboundAuthenticationConfig inboundAuthConfig = new InboundAuthenticationConfig();
+        inboundAuthConfig.setInboundAuthenticationRequestConfigs(
+                new InboundAuthenticationRequestConfig[]{inboundAuthenticationRequestConfig});
+
+        ServiceProvider delegatedApplication = new ServiceProvider();
+        delegatedApplication.setApplicationName("internal-" + mainApplication.getApplicationName());
+        delegatedApplication.setDescription("delegate access from:" + mainApplication.getApplicationName());
+        delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
+
+        return delegatedApplication;
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {

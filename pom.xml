@@ -235,6 +235,11 @@
                 <artifactId>org.wso2.carbon.identity.cors.mgt.core</artifactId>
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.extension.identity.authenticator.utils</groupId>
+                <artifactId>org.wso2.carbon.extension.identity.helper</artifactId>
+                <version>${identity.extension.utils.version}</version>
+            </dependency>
 
             <!--Test Dependencies-->
             <dependency>
@@ -447,10 +452,13 @@
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
 
+        <identity.extension.utils.version>1.0.8</identity.extension.utils.version>
+        <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
+
         <identity.inbound.auth.oauth.version>6.7.116</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.import.version.range>[6.7.116, 6.8.0)</identity.inbound.auth.oauth.import.version.range>
-	
-	<identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
+
+        <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
@@ -465,6 +473,7 @@
         <commons-lang.osgi.version.range>[2.6.0, 3.0.0)</commons-lang.osgi.version.range>
 
         <identity.framework.package.import.version.range>[5.14.0, 6.0.0)</identity.framework.package.import.version.range>
+
         <carbon.identity.inbound.oauth.package.import.version.range>[6.0.0, 7.0.0)</carbon.identity.inbound.oauth.package.import.version.range>
         <identity.inbound.auth.oauth.version>6.7.116</identity.inbound.auth.oauth.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.18.203, 6.0.0)</carbon.identity.framework.imp.pkg.version.range>

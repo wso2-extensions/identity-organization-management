@@ -14,6 +14,13 @@ package org.wso2.carbon.identity.organization.management.application.authn.util;
  */
 public class EnterpriseIDPErrorConstants {
 
+    public static final String ENTERPRISE_LOGIN_FAILURE = "enterpriseLoginFailure";
+    public static final String ERROR_MESSAGE = "&authFailure=true&authFailureMsg=";
+
+    public static final String REQUEST_ORG_PAGE_URL = "authenticationendpoint/org_name.do";
+    public static final String REQUEST_ORG_PAGE_URL_CONFIG = "RequestOrganizationPage";
+
+
     /**
      * Relevant error messages and error codes.
      */

@@ -12,11 +12,14 @@ package org.wso2.carbon.identity.organization.management.application.authn;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.base.MultitenantConstants;
+import org.wso2.carbon.extension.identity.helper.IdentityHelperConstants;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -32,7 +35,10 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
 import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,17 +53,22 @@ import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthen
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_AUTHZ_URL;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.OAuth2.CALLBACK_URL;
+import static org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ENTERPRISE_LOGIN_FAILURE;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ERROR_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ENTERPRISE_IDP_LOGIN_FAILED;
 import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_PARAMETER_NOT_FOUND;
-
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL;
+import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
 
 /**
- * Enterprise IDP Login Authenticator.
+ * Authenticator implementation to redirect the authentication request to shared applications of the requested
+ * organization.
+ * <p/>
+ * Class extends the {@link OpenIDConnectAuthenticator}.
  */
 public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
-
-    private static final long serialVersionUID = -1855408304527154250L;
 
     private static final Log log = LogFactory.getLog(EnterpriseIDPAuthenticator.class);
 
@@ -75,7 +86,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     @Override
     protected void initiateAuthenticationRequest(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationContext context) throws AuthenticationFailedException {
+                                                 AuthenticationContext context) throws AuthenticationFailedException {
 
         resolvePropertiesForEnterpriseIDP(context);
         super.initiateAuthenticationRequest(request, response, context);
@@ -83,7 +94,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     @Override
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationContext context) throws AuthenticationFailedException {
+                                                 AuthenticationContext context) throws AuthenticationFailedException {
 
         resolvePropertiesForEnterpriseIDP(context);
         super.processAuthenticationResponse(request, response, context);
@@ -91,8 +102,8 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         // Add organization name to the user attributes.
         context.getSubject().getUserAttributes()
                 .put(ClaimMapping.build(EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE,
-                        EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE,
-                        null, false),
+                                EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE,
+                                null, false),
                         context.getAuthenticatorProperties()
                                 .get(EnterpriseIDPAuthenticatorConstants.ORGANIZATION_ATTRIBUTE));
     }
@@ -107,55 +118,29 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
 
         try {
-            String organizationName;
-            String inboundSp = context.getServiceProviderName();
-            String inboundSpTenant = context.getTenantDomain();
+            String application = context.getServiceProviderName();
+            String ownerTenant = context.getTenantDomain();
 
             Map<String, String> runtimeParams = getRuntimeParams(context);
-            if (!StringUtils.isNotBlank(runtimeParams.get(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER))) {
+            if (StringUtils.isBlank(runtimeParams.get(ORG_PARAMETER))) {
                 throw new AuthenticationFailedException(ORG_NOT_FOUND.getCode(),
                         ORG_NOT_FOUND.getMessage());
             }
-            organizationName = runtimeParams.get(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER);
+            String organizationName = runtimeParams.get(ORG_PARAMETER);
 
-            // Get the outbound service provider of the organization.
-            String sharedApplicationId;
-            ServiceProvider outboundServiceProvider;
-            ApplicationManagementService applicationManagementService =
-                    EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                            .getApplicationManagementService();
-            try {
-                sharedApplicationId = EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                        .getOrgApplicationManager().resolveOrganizationSpResourceId(organizationName, inboundSp,
-                                inboundSpTenant);
+            // Get the shared service provider for the user's organization.
+            ServiceProvider sharedApplication = getSharedApplication(organizationName, application, ownerTenant);
 
-                outboundServiceProvider = applicationManagementService.getApplicationByResourceId(sharedApplicationId,
-                        organizationName);
-            } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("Error on getting outbound service provider of the organization. "
-                            + "Organization: %s, Inbound service provider: %s", organizationName, inboundSp));
-                }
-                throw new AuthenticationFailedException(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
-                        ENTERPRISE_IDP_LOGIN_FAILED.getMessage(), e);
-            }
-
-            Optional<InboundAuthenticationRequestConfig> oidcConfigurations = getAuthenticationConfig(
-                    outboundServiceProvider);
-            if (!oidcConfigurations.isPresent()) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("Error in getting inbound authentication configurations of sp: %s of the "
-                            + "organization: %s", outboundServiceProvider, organizationName));
-                }
-                throw new AuthenticationFailedException(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
-                        ENTERPRISE_IDP_LOGIN_FAILED.getMessage());
-            }
+            InboundAuthenticationRequestConfig oidcConfigurations = getAuthenticationConfig(
+                    sharedApplication).orElseThrow(() -> handleAuthFailures(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
+                    ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
 
             // Update the authenticator configurations based on the user's organization.
-            String clientId = oidcConfigurations.get().getInboundAuthKey();
+            String clientId = oidcConfigurations.getInboundAuthKey();
             OAuthAdminServiceImpl oAuthAdminService = EnterpriseIDPAuthenticatorDataHolder.getInstance()
                     .getOAuthAdminService();
             OAuthConsumerAppDTO oauthApp = oAuthAdminService.getOAuthApplicationData(clientId);
+
             authenticatorProperties.put(CLIENT_ID, clientId);
             authenticatorProperties.put(CLIENT_SECRET, oauthApp.getOauthConsumerSecret());
 
@@ -163,6 +148,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(OAUTH2_AUTHZ_URL, getAuthorizationEndpoint(organizationName));
             authenticatorProperties.put(OAUTH2_TOKEN_URL, getTokenEndpoint(organizationName));
             authenticatorProperties.put(CALLBACK_URL, getCallbackUrl());
+
         } catch (IdentityOAuthAdminException | URLBuilderException e) {
             throw new AuthenticationFailedException(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
                     ENTERPRISE_IDP_LOGIN_FAILED.getMessage(), e);
@@ -171,26 +157,110 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     @Override
     public AuthenticatorFlowStatus process(HttpServletRequest request, HttpServletResponse response,
-                                           AuthenticationContext context) throws AuthenticationFailedException {
+                                           AuthenticationContext context) throws AuthenticationFailedException,
+            LogoutFailedException {
+
+        if (context.isLogoutRequest()) {
+            return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
+        }
+
+        Map<String, String> runtimeParams = getRuntimeParams(context);
+        if (request.getParameterMap().containsKey(ORG_PARAMETER)) {
+            String organizationName = request.getParameter(ORG_PARAMETER);
+            runtimeParams.put(ORG_PARAMETER, organizationName);
+        }
+
+        if (StringUtils.isBlank(runtimeParams.get(ORG_PARAMETER)) ||
+                !validateOrganization(runtimeParams.get(ORG_PARAMETER), context)) {
+            if (log.isDebugEnabled()) {
+                log.debug(ORG_PARAMETER_NOT_FOUND.getMessage());
+            }
+            redirectToOrgNameCapture(response, context);
+            return AuthenticatorFlowStatus.INCOMPLETE;
+        }
+        return super.process(request, response, context);
+
+    }
+
+    private boolean validateOrganization(String organizationName, AuthenticationContext context)
+            throws AuthenticationFailedException {
 
         try {
-            Map<String, String> runtimeParams = getRuntimeParams(context);
-            if (request.getParameterMap().containsKey(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER)) {
-                String organizationName = request.getParameter(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER);
-                runtimeParams.put(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER, organizationName);
+            boolean exist = EnterpriseIDPAuthenticatorDataHolder.getInstance().
+                    getOrganizationManager().isOrganizationExistById(organizationName);
+            if (!exist) {
+                context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Name");
             }
+            return exist;
+        } catch (OrganizationManagementException e) {
+            throw new AuthenticationFailedException("Error retrieving the organization: " + organizationName, e);
+        }
+    }
 
-            if (StringUtils.isBlank(runtimeParams.get(EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER))) {
-                if (log.isDebugEnabled()) {
-                    log.debug(ORG_PARAMETER_NOT_FOUND.getMessage());
-                }
-                throw new AuthenticationFailedException(ORG_PARAMETER_NOT_FOUND.getCode(),
-                        ORG_PARAMETER_NOT_FOUND.getMessage());
+    /**
+     * When the organization name is not found or invalid, this method construct the redirect URL to capture the
+     * organization name.
+     *
+     * @param response servlet response.
+     * @param context  authentication context.
+     * @throws AuthenticationFailedException
+     */
+    private void redirectToOrgNameCapture(HttpServletResponse response, AuthenticationContext context)
+            throws AuthenticationFailedException {
+
+        try {
+            StringBuilder queryStringBuilder = new StringBuilder();
+
+            queryStringBuilder.append("sessionDataKey=").append(context.getContextIdentifier()).append("&fidp=")
+                    .append(context.getExternalIdP().getIdPName());
+
+            if (context.getProperties().get(ENTERPRISE_LOGIN_FAILURE) != null) {
+                queryStringBuilder.append(ERROR_MESSAGE).append(URLEncoder
+                        .encode((String) context.getProperties().get(ENTERPRISE_LOGIN_FAILURE), "utf-8"));
             }
+            response.sendRedirect(FrameworkUtils.appendQueryParamsStringToUrl(getOrganizationRequestPageUrl(context),
+                    queryStringBuilder.toString()));
+        } catch (IOException | URLBuilderException e) {
+            throw new AuthenticationFailedException(
+                    "Error while redirecting to request organization page. ", e);
+        }
+    }
 
-            return super.process(request, response, context);
-        } catch (LogoutFailedException e) {
-            throw new AuthenticationFailedException(e.getMessage(), e);
+    /**
+     * Returns the shared application details based on the given organization name, main application and owner
+     * organization of the main application.
+     *
+     * @param organizationName  organization which owns the shared application.
+     * @param application       main application.
+     * @param ownerOrganization organization which owns the main application.
+     * @return shared application, instance of {@link ServiceProvider}.
+     * @throws AuthenticationFailedException if the application is not found, authentication failed exception will be
+     *                                       thrown.
+     */
+    private ServiceProvider getSharedApplication(String organizationName, String application,
+                                                 String ownerOrganization) throws AuthenticationFailedException {
+
+        ApplicationManagementService applicationManagementService =
+                EnterpriseIDPAuthenticatorDataHolder.getInstance()
+                        .getApplicationManagementService();
+        try {
+            String sharedApplicationId = EnterpriseIDPAuthenticatorDataHolder.getInstance()
+                    .getOrgApplicationManager().resolveOrganizationSpResourceId(organizationName, application,
+                            // Use proper error code/message.
+                            ownerOrganization).orElseThrow(() -> handleAuthFailures(
+                                    ENTERPRISE_IDP_LOGIN_FAILED.getCode(), ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
+            return Optional.ofNullable(applicationManagementService.getApplicationByResourceId(sharedApplicationId,
+                    // Use proper error code/message.
+                    organizationName)).orElseThrow(() -> handleAuthFailures(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
+                    ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
+
+        } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Error on getting outbound service provider of the organization. "
+                        + "Organization: %s, Inbound service provider: %s", organizationName, application));
+            }
+            throw new AuthenticationFailedException(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
+                    ENTERPRISE_IDP_LOGIN_FAILED.getMessage(), e);
         }
     }
 
@@ -260,5 +330,51 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     private String getCallbackUrl() throws URLBuilderException {
 
         return ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build().getAbsolutePublicURL();
+    }
+
+    /**
+     * Get the request organization page url from the application-authentication.xml file.
+     *
+     * @param context the AuthenticationContext
+     * @return loginPage
+     */
+    private String getOrganizationRequestPageUrl(AuthenticationContext context) throws URLBuilderException {
+
+        String requestOrgPageUrl = getConfiguration(context, REQUEST_ORG_PAGE_URL_CONFIG);
+        return StringUtils.isNotBlank(requestOrgPageUrl) ? requestOrgPageUrl :
+                ServiceURLBuilder.create().addPath(REQUEST_ORG_PAGE_URL).build().getAbsolutePublicURL();
+    }
+
+    /**
+     * Read configurations from application-authentication.xml for given authenticator.
+     *
+     * @param context    Authentication Context.
+     * @param configName Name of the config.
+     * @return Config value.
+     */
+    private String getConfiguration(AuthenticationContext context, String configName) {
+
+        String configValue = null;
+        Object propertiesFromLocal = context.getProperty(IdentityHelperConstants.GET_PROPERTY_FROM_REGISTRY);
+        String tenantDomain = context.getTenantDomain();
+        if ((propertiesFromLocal != null || MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) &&
+                super.getAuthenticatorConfig().getParameterMap().containsKey(configName)) {
+            configValue = super.getAuthenticatorConfig().getParameterMap().get(configName);
+        } else if ((context.getProperty(configName)) != null) {
+            configValue = String.valueOf(context.getProperty(configName));
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Config value for key " + configName + " for tenant " + tenantDomain + " : " +
+                    configValue);
+        }
+        return configValue;
+    }
+
+    private AuthenticationFailedException handleAuthFailures(String errorCode, String errorMessage) {
+
+        if (log.isDebugEnabled()) {
+            log.debug(errorMessage);
+        }
+        return new AuthenticationFailedException(errorCode, errorMessage);
     }
 }

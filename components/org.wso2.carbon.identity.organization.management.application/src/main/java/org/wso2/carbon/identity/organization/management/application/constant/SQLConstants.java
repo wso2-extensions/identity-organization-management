@@ -24,12 +24,11 @@ package org.wso2.carbon.identity.organization.management.application.constant;
 public class SQLConstants {
 
     public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (PARENT_APP_ID, PARENT_TENANT_ID, " +
-            "SHARED_APP_ID, SHARED_TENANT_ID, USERNAME) VALUES (:" +
+            "SHARED_APP_ID, SHARED_TENANT_ID) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USERNAME + ";);";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID + ";);";
 
     public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
             "PARENT_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID + "; AND " +

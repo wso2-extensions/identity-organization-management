@@ -12,6 +12,7 @@ package org.wso2.carbon.identity.organization.management.application.authn.inter
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
  * This class acts as a data holder to the enterprise idp login authenticator service.
@@ -23,6 +24,8 @@ public class EnterpriseIDPAuthenticatorDataHolder {
     private ApplicationManagementService applicationManagementService;
 
     private OAuthAdminServiceImpl oAuthAdminService;
+
+    private OrganizationManager organizationManager;
 
     private OrgApplicationManager orgApplicationManager;
 
@@ -53,6 +56,16 @@ public class EnterpriseIDPAuthenticatorDataHolder {
     public void setOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
 
         this.oAuthAdminService = oAuthAdminService;
+    }
+
+    public OrganizationManager getOrganizationManager() {
+
+        return organizationManager;
+    }
+
+    public void setOrganizationManager(OrganizationManager organizationManager) {
+
+        this.organizationManager = organizationManager;
     }
 
     public OrgApplicationManager getOrgApplicationManager() {

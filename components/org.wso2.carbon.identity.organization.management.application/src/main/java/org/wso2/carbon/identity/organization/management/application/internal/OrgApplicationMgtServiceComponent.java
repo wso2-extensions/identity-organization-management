@@ -38,7 +38,7 @@ import org.wso2.carbon.user.core.service.RealmService;
  * OSGi service component for organization application management bundle.
  */
 @Component(
-        name = "org.wso2.identity.organization.application.management.component",
+        name = "identity.organization.application.management.component",
         immediate = true
 )
 public class OrgApplicationMgtServiceComponent {
