@@ -54,17 +54,13 @@ public interface RoleManager {
      * Get roles of a particular organization.
      *
      * @param limit          The maximum number of records to be returned.
-     * @param after          The pointer to next page.
-     * @param before         The pointer to previous page.
-     * @param sortOrder      The sort order ascending or descending.
      * @param filter         The filter string.
      * @param organizationId The ID of the organization.
      * @return The list containing roles of the organization where organization ID has been passed.
      * @throws RoleManagementException This exception is thrown when an error happens when getting roles from
      *                                 organization ID.
      */
-    List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter,
-                                    String organizationId) throws RoleManagementException;
+    List<Role> getOrganizationRoles(int limit, String filter, String organizationId) throws RoleManagementException;
 
     /**
      * Patch a particular role inside an organization.

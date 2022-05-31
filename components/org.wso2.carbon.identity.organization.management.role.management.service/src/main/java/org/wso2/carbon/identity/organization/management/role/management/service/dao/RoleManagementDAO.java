@@ -58,7 +58,6 @@ public interface RoleManagementDAO {
      * Get all the {@link Role}s of an organization.
      *
      * @param organizationId  The ID of the organization.
-     * @param sortOrder       The sorting order.
      * @param tenantId        The tenant ID.
      * @param limit           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
@@ -66,7 +65,7 @@ public interface RoleManagementDAO {
      * @return A list of Roles.
      * @throws RoleManagementServerException The server exception is thrown when an error occurs during getting a role.
      */
-    List<Role> getOrganizationRoles(String organizationId, String sortOrder, int tenantId, int limit,
+    List<Role> getOrganizationRoles(String organizationId, int tenantId, int limit,
                                     List<ExpressionNode> expressionNodes, List<String> operators)
             throws RoleManagementServerException;
 
@@ -78,11 +77,11 @@ public interface RoleManagementDAO {
      * @param tenantId        The tenant ID.
      * @param patchOperations A list containing the patch patchOperations.
      * @return The updated role.
-     * @throws RoleManagementServerException The sever exception is thrown when an error occurs during patching
+     * @throws RoleManagementException The exception is thrown when an error occurs during patching
      *                                       the role.
      */
     Role patchRole(String organizationId, String roleId, int tenantId, List<PatchOperation> patchOperations)
-            throws RoleManagementServerException;
+            throws RoleManagementException;
 
     /**
      * Delete a {@link Role}.

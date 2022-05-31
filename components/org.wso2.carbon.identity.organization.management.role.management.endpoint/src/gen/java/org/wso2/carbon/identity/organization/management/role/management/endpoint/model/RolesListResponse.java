@@ -24,7 +24,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Link;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleObj;
 import javax.validation.constraints.*;
 
@@ -36,38 +35,10 @@ import javax.xml.bind.annotation.*;
 
 public class RolesListResponse  {
   
-    private List<Link> links = null;
-
     private List<RoleObj> roles = null;
 
 
     /**
-    **/
-    public RolesListResponse links(List<Link> links) {
-
-        this.links = links;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "[{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&after=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"next\"},{\"href\":\"/t/carbon.super/api/identity/organization-mgt/v1.0/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=\",\"rel\":\"previous\"}]", value = "")
-    @JsonProperty("links")
-    @Valid
-    public List<Link> getLinks() {
-        return links;
-    }
-    public void setLinks(List<Link> links) {
-        this.links = links;
-    }
-
-    public RolesListResponse addLinksItem(Link linksItem) {
-        if (this.links == null) {
-            this.links = new ArrayList<>();
-        }
-        this.links.add(linksItem);
-        return this;
-    }
-
-        /**
     **/
     public RolesListResponse roles(List<RoleObj> roles) {
 
@@ -105,13 +76,12 @@ public class RolesListResponse  {
             return false;
         }
         RolesListResponse rolesListResponse = (RolesListResponse) o;
-        return Objects.equals(this.links, rolesListResponse.links) &&
-            Objects.equals(this.roles, rolesListResponse.roles);
+        return Objects.equals(this.roles, rolesListResponse.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(links, roles);
+        return Objects.hash(roles);
     }
 
     @Override
@@ -120,7 +90,6 @@ public class RolesListResponse  {
         StringBuilder sb = new StringBuilder();
         sb.append("class RolesListResponse {\n");
         
-        sb.append("    links: ").append(toIndentedString(links)).append("\n");
         sb.append("    roles: ").append(toIndentedString(roles)).append("\n");
         sb.append("}");
         return sb.toString();

@@ -38,13 +38,10 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
@@ -97,8 +94,8 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     @Override
-    public List<Role> getOrganizationRoles(int limit, String after, String before, String sortOrder, String filter,
-                                           String organizationId) throws RoleManagementException {
+    public List<Role> getOrganizationRoles(int limit, String filter, String organizationId)
+            throws RoleManagementException {
 
         try {
             boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
@@ -107,8 +104,8 @@ public class RoleManagerImpl implements RoleManager {
             }
             List<ExpressionNode> expressionNodes = new ArrayList<>();
             List<String> operators = new ArrayList<>();
-            getExpressionNodes(filter, after, before, expressionNodes, operators);
-            return roleManagementDAO.getOrganizationRoles(organizationId, sortOrder, Utils.getTenantId(), limit,
+            getExpressionNodes(filter, expressionNodes, operators);
+            return roleManagementDAO.getOrganizationRoles(organizationId, Utils.getTenantId(), limit,
                     expressionNodes, operators);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -165,57 +162,25 @@ public class RoleManagerImpl implements RoleManager {
      * Getting the expression nodes for cursor-based pagination.
      *
      * @param filter          The filter.
-     * @param after           The next pointer to the page.
-     * @param before          The previous pointer to the page.
      * @param expressionNodes The array list to contain nodes.
      * @param operators       The array list to contain operators.
      * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
      */
-    private void getExpressionNodes(String filter, String after, String before, List<ExpressionNode> expressionNodes,
+    private void getExpressionNodes(String filter, List<ExpressionNode> expressionNodes,
                                     List<String> operators) throws RoleManagementClientException {
 
         if (StringUtils.isBlank(filter)) {
             filter = StringUtils.EMPTY;
         }
-        String paginatedFilter = getPaginatedFilter(filter, after, before);
         try {
-            if (StringUtils.isNotBlank(paginatedFilter)) {
-                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(paginatedFilter);
+            if (StringUtils.isNotBlank(filter)) {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filter);
                 Node rootNode = filterTreeBuilder.buildTree();
                 Utils.setExpressionNodeAndOperatorLists(rootNode, expressionNodes, operators, true);
             }
         } catch (IOException | IdentityException e) {
             throw Utils.handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
         }
-    }
-
-    /**
-     * Getting the paginated filter.
-     *
-     * @param paginatedFilter The paginated filter.
-     * @param after           The next pointer to page.
-     * @param before          The previous pointer to page.
-     * @return The paginated filter.
-     * @throws RoleManagementClientException Throw an exception if an erroneous value is passed.
-     */
-    private String getPaginatedFilter(String paginatedFilter, String after, String before) throws
-            RoleManagementClientException {
-
-        try {
-            //pagination is done with the uuid(role id) comparison
-            if (StringUtils.isNotBlank(before)) {
-                String decodedString = new String(Base64.getDecoder().decode(before), StandardCharsets.UTF_8);
-                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and before gt " + decodedString :
-                        "before gt " + decodedString;
-            } else if (StringUtils.isNotBlank(after)) {
-                String decodedString = new String(Base64.getDecoder().decode(after), StandardCharsets.UTF_8);
-                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and after lt " + decodedString :
-                        "after lt " + decodedString;
-            }
-        } catch (IllegalArgumentException e) {
-            throw Utils.handleClientException(ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION);
-        }
-        return paginatedFilter;
     }
 
     /**

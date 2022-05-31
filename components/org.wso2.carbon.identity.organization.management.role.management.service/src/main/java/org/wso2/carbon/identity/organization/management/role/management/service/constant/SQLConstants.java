@@ -145,7 +145,7 @@ public class SQLConstants {
 
     public static final String GET_ROLES_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_TENANT_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "; ORDER BY UM_ROLE_ID %s LIMIT :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "; ORDER BY UM_ROLE_ID ASC LIMIT :" +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
 
     public static final String DELETE_USERS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_USER WHERE ";

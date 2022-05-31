@@ -190,7 +190,6 @@ public class Utils {
      * @param attributeValue The attribute value.
      * @return Returns true if the filtering attribute is neither the id nor the name.
      */
-    //TODO: remove before after
     private static boolean isFilteringAttributeNotSupported(String attributeValue) {
 
         return !attributeValue.equalsIgnoreCase(ROLE_ID_FIELD) && !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD) &&

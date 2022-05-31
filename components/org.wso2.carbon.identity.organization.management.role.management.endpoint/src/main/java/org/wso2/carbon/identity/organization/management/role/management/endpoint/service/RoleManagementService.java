@@ -23,9 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.RoleManagementEndpointException;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
-import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Link;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponse;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseGroup;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.RoleGetResponseUser;
@@ -53,27 +50,19 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ASC_SORT_ORDER;
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.DESC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.GROUP_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ROLE_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.USER_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_GROUP_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PATCH_OP_REMOVE;
 
 /**
@@ -151,20 +140,15 @@ public class RoleManagementService {
      * @param organizationId The ID of the organization.
      * @param filter         Param for filtering the results.
      * @param limit          Param for limiting the results.
-     * @param before         The previous result page pointer.
-     * @param after          The next result page pointer.
      * @return The roles inside an organization.
      */
-    public Response getRolesOfOrganization(String organizationId, String filter, Integer limit, String after,
-                                           String before) {
+    public Response getRolesOfOrganization(String organizationId, String filter, Integer limit) {
 
         try {
             int limitValue = validateLimit(limit);
-            //TODO: scim one object encoded. not implemented, queries as well
-            String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
             List<Role> roles = RoleManagementEndpointUtils.getRoleManager()
-                    .getOrganizationRoles(limitValue + 1, after, before, sortOrder, filter, organizationId);
-            return Response.ok().entity(getRoleListResponse(limitValue, after, before, filter, organizationId, roles))
+                    .getOrganizationRoles(limitValue + 1, filter, organizationId);
+            return Response.ok().entity(getRoleListResponse(limitValue, organizationId, roles))
                     .build();
         } catch (RoleManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
@@ -398,61 +382,17 @@ public class RoleManagementService {
      * Generate a response object for get operation.
      *
      * @param limit          Param for limiting the results.
-     * @param after          The next result page pointer.
-     * @param before         The previous result page pointer.
-     * @param filter         Param for filtering the results.
      * @param organizationId The ID of the organization.
      * @param roles          List of roles.
      * @return The RoleListResponse.
      */
-    private RolesListResponse getRoleListResponse(int limit, String after, String before, String filter,
-                                                  String organizationId, List<Role> roles) {
+    private RolesListResponse getRoleListResponse(int limit, String organizationId, List<Role> roles) {
 
         RolesListResponse response = new RolesListResponse();
-        //TODO: remove after before
         if (CollectionUtils.isNotEmpty(roles)) {
-            boolean hasMoreItems = roles.size() > limit;
-            boolean needsReverse = StringUtils.isNotBlank(before);
-            boolean isFirstPage = (StringUtils.isBlank(before) && StringUtils.isBlank(after)) ||
-                    (StringUtils.isNotBlank(before) && !hasMoreItems);
-            boolean isLastPage = !hasMoreItems && (StringUtils.isNotBlank(after) || StringUtils.isBlank(before));
-
-            String url = "?limit=" + limit;
-            if (org.apache.commons.lang.StringUtils.isNotBlank(filter)) {
-                try {
-                    url += "&filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8.name());
-                } catch (UnsupportedEncodingException e) {
-                    LOG.error("Server encountered an error while building pagination URL for the response.", e);
-                    Error error = RoleManagementEndpointUtils.getError("", "", "");
-                    throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
-                }
-            }
-
-            if (hasMoreItems) {
+            if (roles.size() > limit) {
                 roles.remove(roles.size() - 1);
             }
-            if (needsReverse) {
-                Collections.reverse(roles);
-            }
-            if (!isFirstPage) {
-                String encodedString = Base64.getEncoder().encodeToString(roles.get(0).getId()
-                        .getBytes(StandardCharsets.UTF_8));
-                Link link = new Link();
-                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url, organizationId) +
-                        "&before=" + encodedString));
-                link.setRel("previous");
-                response.addLinksItem(link);
-            }
-            if (!isLastPage) {
-                String encodedString = Base64.getEncoder().encodeToString(roles.get(roles.size() - 1)
-                        .getId().getBytes(StandardCharsets.UTF_8));
-                Link link = new Link();
-                link.setHref(URI.create(RoleManagementEndpointUtils.buildURIForPagination(url, organizationId) +
-                        "&after=" + encodedString));
-                link.setRel("next");
-                response.addLinksItem(link);
-            }
-
             List<RoleObj> roleDTOs = new ArrayList<>();
             for (Role role : roles) {
                 RoleObj roleObj = new RoleObj();
@@ -485,9 +425,8 @@ public class RoleManagementService {
             return defaultItemsPerPage;
         }
 
-        // TODO: limit 0 scim behavior.
-        if (limit < 0 || limit == 0) {
-            throw Utils.handleClientException(ERROR_CODE_INVALID_PAGINATION_PARAMETER_NEGATIVE_LIMIT);
+        if (limit < 0) {
+            limit = 0;
         }
 
 

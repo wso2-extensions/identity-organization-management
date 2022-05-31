@@ -42,10 +42,9 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     }
 
     @Override
-    public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer limit,
-                                                        String after, String before) {
+    public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer limit) {
 
-        return roleManagementService.getRolesOfOrganization(organizationId, filter, limit, after, before);
+        return roleManagementService.getRolesOfOrganization(organizationId, filter, limit);
     }
 
     @Override
