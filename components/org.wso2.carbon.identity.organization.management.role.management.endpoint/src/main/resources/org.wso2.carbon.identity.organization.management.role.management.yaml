@@ -71,8 +71,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/filterQueryParam'
         - $ref: '#/components/parameters/limitQueryParam'
-        - $ref: '#/components/parameters/afterQueryParam'
-        - $ref: '#/components/parameters/beforeQueryParam'
         - name: organization-id
           in: path
           description: ID of the organization.
@@ -94,7 +92,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
       tags:
         - Organization Role Management
 
@@ -273,22 +270,6 @@ components:
         type: integer
         format: int32
         minimum: 0
-    beforeQueryParam:
-      in: query
-      name: before
-      required: false
-      description:
-        Points to the previous range of data that can be retrieved.
-      schema:
-        type: string
-    afterQueryParam:
-      in: query
-      name: after
-      required: false
-      description:
-        Points to the next range of data to be returned.
-      schema:
-        type: string
   schemas:
     #------------------------------------------------------------------------
     # Error response object.
@@ -321,38 +302,10 @@ components:
     RolesListResponse:
       type: object
       properties:
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/Link'
-          example:
-            [
-              {
-                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&after=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-                "rel": "next",
-              },  {
-              "href": "/t/carbon.super/api/identity/organization-mgt/v1.0/a7329a4e-c80e-4cfa-b48d-2a53ba57af5b/roles?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
-              "rel": "previous",
-            }
-            ]
         roles:
           type: array
           items:
             $ref: '#/components/schemas/RoleObj'
-    #------------------------------------------------------------------------
-    # The Link Object.
-    #------------------------------------------------------------------------
-    Link:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          description: Endpoint that will return the next or previous page of data.
-        rel:
-          type: string
-          description: Describes whether the provided link is to access the next or previous page of data.
-      readOnly: true
     #------------------------------------------------------------------------
     # The Roles List Response Object.
     #------------------------------------------------------------------------

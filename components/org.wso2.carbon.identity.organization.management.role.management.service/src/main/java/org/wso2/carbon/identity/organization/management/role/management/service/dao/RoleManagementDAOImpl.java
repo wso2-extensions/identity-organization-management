@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.FilterOperator;
+import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
 import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementServerException;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.BasicGroup;
@@ -51,7 +52,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.COMMA_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_GROUP_TO_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_INVALID_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
@@ -66,11 +66,11 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USERS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USER_VALIDITY;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVE_OP_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_GROUPS_FROM_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_INVALID_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_PERMISSIONS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_ROLE_FROM_ORGANIZATION;
@@ -229,7 +229,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public List<Role> getOrganizationRoles(String organizationId, String sortOrder, int tenantId, int limit,
+    public List<Role> getOrganizationRoles(String organizationId, int tenantId, int limit,
                                            List<ExpressionNode> expressionNodes, List<String> operators)
             throws RoleManagementServerException {
 
@@ -239,8 +239,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
                 filterQueryBuilder.getFilterQuery() + AND : "";
 
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery +
-                String.format(GET_ROLES_FROM_ORGANIZATION_ID_TAIL, sortOrder);
+        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         List<Role> roleList;
@@ -266,7 +265,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     @Override
     public Role patchRole(String organizationId, String roleId, int tenantId, List<PatchOperation> patchOperations)
-            throws RoleManagementServerException {
+            throws RoleManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
@@ -289,6 +288,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 return getRoleById(organizationId, roleId, tenantId);
             });
         } catch (TransactionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            if (cause instanceof RoleManagementClientException) {
+                throw new RoleManagementClientException(cause.getMessage(),
+                        ((RoleManagementException) cause).getDescription(),
+                        ((RoleManagementException) cause).getErrorCode());
+            }
             throw Utils.handleServerException(ERROR_CODE_PATCHING_ROLE, e, organizationId);
         }
     }
@@ -507,6 +512,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private void patchOperationReplace(String roleId, String organizationId, String path, List<String> values)
             throws RoleManagementException {
 
+        if (!(StringUtils.equalsIgnoreCase(path, DISPLAY_NAME) || StringUtils.equalsIgnoreCase(path, USERS) ||
+                StringUtils.equalsIgnoreCase(path, GROUPS) || StringUtils.equalsIgnoreCase(path, PERMISSIONS))) {
+            throw Utils.handleClientException(ERROR_CODE_INVALID_ATTRIBUTE_PATCHING, path,
+                    PATCH_OP_REPLACE.toLowerCase());
+        }
+
         if (CollectionUtils.isNotEmpty(values)) {
             if (StringUtils.equals(path, DISPLAY_NAME)) {
                 patchAddReplaceDisplayName(organizationId, roleId, values);
@@ -564,7 +575,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         // if path name is not users, groups or permissions throw an error.
         if (!(StringUtils.equalsIgnoreCase(patchPath, USERS) || StringUtils.equalsIgnoreCase(patchPath, GROUPS) ||
                 StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS))) {
-            throw Utils.handleClientException(ERROR_CODE_REMOVING_INVALID_ATTRIBUTE, path,
+            throw Utils.handleClientException(ERROR_CODE_INVALID_ATTRIBUTE_PATCHING, path,
                     PATCH_OP_REMOVE.toLowerCase());
         }
 
@@ -670,7 +681,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             } else if (StringUtils.equals(path, DISPLAY_NAME)) {
                 patchAddReplaceDisplayName(organizationId, roleId, values);
             } else {
-                throw Utils.handleClientException(ERROR_CODE_ADDING_INVALID_ATTRIBUTE, path,
+                throw Utils.handleClientException(ERROR_CODE_INVALID_ATTRIBUTE_PATCHING, path,
                         PATCH_OP_ADD.toLowerCase());
             }
         }
@@ -1071,9 +1082,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ACTION, ROLE_ACTION);
                     }));
         } catch (TransactionException e) {
-            throw new RoleManagementServerException(ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getCode(),
-                    ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getMessage(),
-                    ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING.getDescription(), e);
+            throw Utils.handleServerException(ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING, e);
         }
     }
 
@@ -1250,8 +1259,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 return null;
             });
         } catch (TransactionException e) {
-            throw new RoleManagementServerException(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE.getCode(),
-                    String.format(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE.getMessage(), displayName, roleId));
+            throw Utils.handleServerException(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE, e, displayName, roleId);
         }
     }
 
