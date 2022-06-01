@@ -69,7 +69,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVE_OP_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_PERMISSIONS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
@@ -276,10 +275,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         patchOperationAdd(roleId, organizationId, patchOp.getPath(), patchOp.getValues());
                     } else if (StringUtils.equalsIgnoreCase(op, PATCH_OP_REMOVE)) {
                         /* If values are passed they should be on the path param. Therefore, if values are passed
-                        with this, it should give errors. */
-                        if (patchOp.getValues() != null) {
-                            throw Utils.handleClientException(ERROR_CODE_REMOVE_OP_VALUES);
-                        }
+                        with this, they would not be considered. */
                         patchOperationRemove(roleId, patchOp.getPath());
                     } else if (StringUtils.equalsIgnoreCase(op, PATCH_OP_REPLACE)) {
                         patchOperationReplace(roleId, organizationId, patchOp.getPath(), patchOp.getValues());
@@ -293,6 +289,10 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 throw new RoleManagementClientException(cause.getMessage(),
                         ((RoleManagementException) cause).getDescription(),
                         ((RoleManagementException) cause).getErrorCode());
+            } else if (cause instanceof RoleManagementServerException) {
+                throw new RoleManagementServerException(cause.getMessage(),
+                        ((RoleManagementException) cause).getDescription(),
+                        ((RoleManagementException) cause).getErrorCode(), cause);
             }
             throw Utils.handleServerException(ERROR_CODE_PATCHING_ROLE, e, organizationId);
         }
@@ -354,7 +354,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, ERROR_CODE_ADDING_GROUP_TO_ROLE);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
-                    checkPermissionsExist(role.getPermissions(), tenantId, role.getId());
+                    List<String> nonExistingPermissions = checkPermissionsExist(role.getPermissions(), tenantId,
+                            role.getId());
+                    //add the non-existing permissions.
+                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantId);
+                    //then assign permissions to the role.
                     List<String> permissionList = getPermissionIdsFromString(role.getPermissions(),
                             Utils.getTenantId()).stream().map(i -> i.toString()).collect(Collectors.toList());
                     listRoleMapping(permissionList, roleId, ADD_ROLE_PERMISSION_MAPPING,
@@ -542,7 +546,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     removePermissionsFromRole(permissions.stream().map(BasicPermission::getId)
                             .map(i -> Integer.toString(i)).collect(Collectors.toList()), roleId);
                 }
-                checkPermissionsExist(values, Utils.getTenantId(), roleId);
+                //get non-existing permissions
+                List<String> nonExistingPermissions = checkPermissionsExist(values, Utils.getTenantId(), roleId);
+                //add the non-existing permissions.
+                addNonExistingPermissions(nonExistingPermissions, roleId, Utils.getTenantId());
+                //then assign permissions to the role.
                 List<String> permissionList = getPermissionIdsFromString(values,
                         Utils.getTenantId()).stream().map(i -> i.toString()).collect(Collectors.toList());
                 listRoleMapping(permissionList, roleId, ADD_ROLE_PERMISSION_MAPPING,

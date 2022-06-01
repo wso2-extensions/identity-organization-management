@@ -49,6 +49,8 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ROLE_NAME_NOT_NULL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
 
 /**
  * Implementation of Role Manager Interface.
@@ -118,6 +120,15 @@ public class RoleManagerImpl implements RoleManager {
 
         try {
             validateOrganizationAndRoleId(organizationId, roleId);
+            for (PatchOperation patchOperation : patchOperations) {
+                if (CollectionUtils.isNotEmpty(patchOperation.getValues())) {
+                    if (StringUtils.equalsIgnoreCase(patchOperation.getPath(), USERS)) {
+                        checkUserValidity(patchOperation.getValues(), Utils.getTenantId());
+                    } else if (StringUtils.equalsIgnoreCase(patchOperation.getPath(), GROUPS)) {
+                        checkGroupValidity(patchOperation.getValues(), Utils.getTenantId());
+                    }
+                }
+            }
             return roleManagementDAO.patchRole(organizationId, roleId, Utils.getTenantId(), patchOperations);
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -230,7 +241,7 @@ public class RoleManagerImpl implements RoleManager {
      * @param tenantId    The tenant ID.
      * @throws RoleManagementException Throws an exception if a group ID is not valid.
      */
-    public void checkGroupValidity(List<String> groupIdList, int tenantId) throws RoleManagementException {
+    private void checkGroupValidity(List<String> groupIdList, int tenantId) throws RoleManagementException {
 
         for (String groupId : groupIdList) {
             if (!roleManagementDAO.checkGroupExists(groupId, tenantId)) {
@@ -241,6 +252,7 @@ public class RoleManagerImpl implements RoleManager {
 
     /**
      * Check group and user lists validity.
+     *
      * @param role The Role Object.
      * @throws RoleManagementException Throws an exception if the user or group list contains invalid ID.
      */

@@ -36,11 +36,9 @@ import java.net.URI;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_PATH;
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_ROLES_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.V1_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
@@ -109,29 +107,6 @@ public class RoleManagementEndpointUtils {
         error.setMessage(errorMessage);
         error.setDescription(errorDescription);
         return error;
-    }
-
-    /**
-     * Building the URI for pagination.
-     *
-     * @param paginationUrl The pagination URL.
-     * @return The URI.
-     */
-    public static URI buildURIForPagination(String paginationUrl, String organizationId) {
-
-        String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR +
-                String.format(ORGANIZATION_ROLES_PATH, organizationId) + paginationUrl;
-        try {
-            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint))
-                    .build().getAbsolutePublicURL());
-        } catch (URLBuilderException e) {
-            LOG.error("Server encountered an error while building paginated URL for the response.", e);
-            Error error = RoleManagementEndpointUtils.getError(
-                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
-                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
-                    ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
-            throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
-        }
     }
 
     /**
