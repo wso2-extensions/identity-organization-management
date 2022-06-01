@@ -81,7 +81,7 @@ public class RoleManagementConstants {
                 "Invalid attribute %s for operation %s."),
         ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES("ORM-60204", "The display name cannot have multiple values.",
                 "The display name should have single value."),
-        ERROR_CODE_INVALID_FILTER_FORMAT("ORM-60205", "Unable to retrieve roles.", "Invalid" +
+        ERROR_CODE_INVALID_FILTER_FORMAT("ORM-60205", "Invalid filter format.", "Invalid" +
                 " format used for filtering."),
         ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE("ORM-60206", "Unsupported filter attribute.",
                 "The filter attribute '%s' is not supported."),
