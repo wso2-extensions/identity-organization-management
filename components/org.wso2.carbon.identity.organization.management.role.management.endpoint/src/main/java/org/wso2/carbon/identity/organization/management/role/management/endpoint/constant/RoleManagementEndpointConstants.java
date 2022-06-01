@@ -29,5 +29,4 @@ public class RoleManagementEndpointConstants {
     public static final String ROLE_PATH = "roles";
     public static final String GROUP_PATH = "groups";
     public static final String USER_PATH = "users";
-    public static final String ORGANIZATION_ROLES_PATH = "organizations/%s/roles";
 }
