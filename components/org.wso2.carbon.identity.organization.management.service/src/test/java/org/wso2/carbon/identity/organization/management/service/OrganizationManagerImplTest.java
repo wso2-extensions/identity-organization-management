@@ -390,15 +390,6 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testDeleteOrganizationWithInvalidOrganizationId() throws Exception {
-
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(false);
-        organizationManager.deleteOrganization(ORG_ID);
-    }
-
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testDeleteOrganizationWithChildOrganizations() throws Exception {
 
         mockCarbonContext();

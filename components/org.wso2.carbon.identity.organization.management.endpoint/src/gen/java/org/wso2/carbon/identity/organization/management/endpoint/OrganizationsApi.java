@@ -133,7 +133,6 @@ public class OrganizationsApi  {
         })
     }, tags={ "Organization", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 204, message = "Ok", response = Void.class),
         @ApiResponse(code = 200, message = "Successful response", response = OrganizationResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
@@ -158,7 +157,6 @@ public class OrganizationsApi  {
         })
     }, tags={ "Organization", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 204, message = "Ok", response = Void.class),
         @ApiResponse(code = 200, message = "Successful response", response = OrganizationResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
