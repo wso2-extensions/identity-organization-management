@@ -82,7 +82,7 @@ public class RoleManagementService {
     public Response createRole(String organizationId, RolePostRequest rolePostRequest) {
 
         try {
-            Role role = RoleManagementEndpointUtils.getRoleManager().addRole(organizationId,
+            Role role = RoleManagementEndpointUtils.getRoleManager().createRole(organizationId,
                     generateRoleFromPostRequest(rolePostRequest));
             URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, role.getId(), ROLE_PATH,
                     ERROR_CODE_ERROR_BUILDING_ROLE_URI);

@@ -40,7 +40,7 @@ public interface RoleManagementDAO {
      * @throws RoleManagementServerException The server exception is thrown when an error occurs
      *                                       during adding a role.
      */
-    void addRole(String organizationId, int tenantId, Role role) throws RoleManagementServerException;
+    void createRole(String organizationId, int tenantId, Role role) throws RoleManagementServerException;
 
     /**
      * Get a {@link Role} from the database.

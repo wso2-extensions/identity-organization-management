@@ -60,15 +60,15 @@ public class RoleManagerImpl implements RoleManager {
     private static final RoleManagementDAO roleManagementDAO = new RoleManagementDAOImpl();
 
     @Override
-    public Role addRole(String organizationId, Role role) throws RoleManagementException {
+    public Role createRole(String organizationId, Role role) throws RoleManagementException {
 
         try {
+            if (StringUtils.isBlank(role.getDisplayName())) {
+                throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
+            }
             boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
             if (!checkOrganizationExists) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
-            }
-            if (StringUtils.isBlank(role.getDisplayName())) {
-                throw Utils.handleClientException(ERROR_CODE_ROLE_NAME_NOT_NULL);
             }
             boolean checkRoleNameExists = roleManagementDAO.checkRoleExists(organizationId, null,
                     StringUtils.strip(role.getDisplayName()));
@@ -77,7 +77,7 @@ public class RoleManagerImpl implements RoleManager {
                         organizationId);
             }
             checkGroupUserListsValidity(role);
-            roleManagementDAO.addRole(organizationId, Utils.getTenantId(), role);
+            roleManagementDAO.createRole(organizationId, Utils.getTenantId(), role);
             return new Role(role.getId(), role.getDisplayName());
         } catch (OrganizationManagementException e) {
             throw new RoleManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -180,9 +180,6 @@ public class RoleManagerImpl implements RoleManager {
     private void getExpressionNodes(String filter, List<ExpressionNode> expressionNodes,
                                     List<String> operators) throws RoleManagementClientException {
 
-        if (StringUtils.isBlank(filter)) {
-            filter = StringUtils.EMPTY;
-        }
         try {
             if (StringUtils.isNotBlank(filter)) {
                 FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filter);

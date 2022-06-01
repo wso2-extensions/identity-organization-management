@@ -62,7 +62,7 @@ public class RoleManagementServiceComponent {
 
     @Reference(
             name = "realm.service",
-            service = org.wso2.carbon.user.core.service.RealmService.class,
+            service = RealmService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetRealmService")
@@ -84,7 +84,7 @@ public class RoleManagementServiceComponent {
 
     @Reference(
             name = "organization.service",
-            service = org.wso2.carbon.identity.organization.management.service.OrganizationManager.class,
+            service = OrganizationManager.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetOrganizationManager"

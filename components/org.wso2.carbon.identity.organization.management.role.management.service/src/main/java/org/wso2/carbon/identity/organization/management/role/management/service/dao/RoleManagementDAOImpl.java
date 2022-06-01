@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
@@ -149,7 +149,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     @Override
-    public void addRole(String organizationId, int tenantId, Role role) throws RoleManagementServerException {
+    public void createRole(String organizationId, int tenantId, Role role) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
         try {
@@ -207,7 +207,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                     }
             );
-            if (Optional.ofNullable(role).isPresent()) {
+            if (Objects.nonNull(role)) {
                 List<BasicGroup> basicGroupList = getGroupsFromRoleId(roleId);
                 List<BasicUser> usersList = getUsersFromRoleId(roleId);
                 List<String> permissionsList = getPermissionsFromRoleId(roleId);
@@ -241,9 +241,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        List<Role> roleList;
         try {
-            roleList = namedJdbcTemplate.executeQuery(
+            return namedJdbcTemplate.executeQuery(
                     sqlStm,
                     (resultSet, rowNumber) -> new Role(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
@@ -256,7 +255,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, limit);
                     }
             );
-            return roleList;
         } catch (DataAccessException e) {
             throw Utils.handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
         }
@@ -937,14 +935,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private List<BasicUser> getUsersFromRoleId(String roleId) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        List<BasicUser> userList;
         try {
-            userList = namedJdbcTemplate.executeQuery(GET_USERS_FROM_ROLE_ID,
+            return namedJdbcTemplate.executeQuery(GET_USERS_FROM_ROLE_ID,
                     (resultSet, rowNumber) -> new BasicUser(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
-                    });
-            return userList;
+                    namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
         } catch (DataAccessException e) {
             throw Utils.handleServerException(ERROR_CODE_GETTING_USERS_USING_ROLE_ID, e, roleId);
         }
@@ -961,19 +956,16 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private List<BasicGroup> getGroupsFromRoleId(String roleId) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        List<BasicGroup> basicGroupList;
         try {
-            basicGroupList = namedJdbcTemplate.executeQuery(GET_GROUPS_FROM_ROLE_ID,
+            return namedJdbcTemplate.executeQuery(GET_GROUPS_FROM_ROLE_ID,
                     (resultSet, rowNumber) ->
                             new BasicGroup(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID),
                                     resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME)),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
-                    });
+                    namedPreparedStatement ->
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
         } catch (DataAccessException e) {
             throw Utils.handleServerException(ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID, e, roleId);
         }
-        return basicGroupList;
     }
 
     /**
@@ -987,9 +979,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private List<String> getPermissionsFromRoleId(String roleId) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        List<String> permissions;
         try {
-            permissions = namedJdbcTemplate.executeQuery(
+            return namedJdbcTemplate.executeQuery(
                     GET_PERMISSIONS_FROM_ROLE_ID,
                     (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
                     namedPreparedStatement -> {
@@ -998,7 +989,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         } catch (DataAccessException e) {
             throw Utils.handleServerException(ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID, e, roleId);
         }
-        return permissions;
     }
 
     /**
@@ -1012,9 +1002,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private List<BasicPermission> getPermissionsWithIdFromRoleId(String roleId) throws RoleManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewNamedJdbcTemplate();
-        List<BasicPermission> permissions;
         try {
-            permissions = namedJdbcTemplate.executeQuery(
+            return namedJdbcTemplate.executeQuery(
                     GET_PERMISSIONS_WITH_ID_FROM_ROLE_ID,
                     (resultSet, rowNumber) -> new BasicPermission(resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID)),
@@ -1024,7 +1013,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         } catch (DataAccessException e) {
             throw Utils.handleServerException(ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID, e, roleId);
         }
-        return permissions;
     }
 
     /**

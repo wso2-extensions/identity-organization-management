@@ -30,14 +30,14 @@ import java.util.List;
 public interface RoleManager {
 
     /**
-     * Add a role.
+     * Create a role.
      *
      * @param organizationId The ID of the organization where we add the role.
      * @param role           Role that is going to be added.
      * @return Basic role info for the response object.
      * @throws RoleManagementException This exception is thrown when an error occurs when adding a role.
      */
-    Role addRole(String organizationId, Role role) throws RoleManagementException;
+    Role createRole(String organizationId, Role role) throws RoleManagementException;
 
     /**
      * Get a role from role ID.
