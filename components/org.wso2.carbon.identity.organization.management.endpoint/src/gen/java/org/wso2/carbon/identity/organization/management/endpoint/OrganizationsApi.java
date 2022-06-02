@@ -33,10 +33,8 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
-import org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApiService;
 
 import java.util.List;
-
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;

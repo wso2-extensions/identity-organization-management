@@ -24,10 +24,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
@@ -61,7 +59,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
@@ -78,7 +75,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
@@ -214,57 +210,23 @@ public class OrganizationManagementService {
     }
 
     /**
+     * Share an application to child organizations.
      *
-     * @param organizationId
-     * @param applicationId
-     * @param sharedOrg
-     * @return
+     * @param organizationId unique identifier of the organization owning the application.
+     * @param applicationId application identifier.
+     * @param sharedOrg optional list of identifiers of child organizations to share the application.
+     *
+     * @return the status of the operation.
      */
     public Response shareOrganizationApplication(String organizationId, String applicationId, List<String> sharedOrg) {
 
         try {
-            String tenantDomain = getTenantDomain();
-            Organization organization = getOrganizationManager().getOrganization(organizationId, Boolean.TRUE);
-
-            if (!Objects.equals(tenantDomain, organization.getId())) {
-                //TODO: Fix
-                LOG.warn("Org doesn't match with requested tenant");
-            }
-
-            ServiceProvider rootApplication = getOrgApplicationManager().getOrgApplication(applicationId,
-                    tenantDomain);
-
-            if (rootApplication == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-
-            List<ChildOrganizationDO> filteredChildOrgs = sharedOrg == null || sharedOrg.isEmpty() ?
-                    organization.getChildOrganizations() :
-                    organization.getChildOrganizations().stream().filter(o -> sharedOrg.contains(o.getId()))
-                            .collect(Collectors.toList());
-
-            List<String> created = new ArrayList<>();
-
-            for (ChildOrganizationDO child : filteredChildOrgs) {
-                Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.TRUE);
-
-                if (!"TENANT".equalsIgnoreCase(childOrg.getType())) {
-                    continue;
-                }
-
-                String sharedApplicationId = getOrgApplicationManager().shareOrganizationApplication(organization,
-                        childOrg, rootApplication);
-
-                created.add(sharedApplicationId);
-            }
-            return Response.ok(created).build();
-
+            getOrgApplicationManager().shareOrganizationApplication(organizationId, applicationId, sharedOrg);
+            return Response.ok().build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
             return handleServerErrorResponse(e, LOG);
-        } catch (OrgApplicationMgtException e) {
-            return Response.serverError().build();
         }
     }
 

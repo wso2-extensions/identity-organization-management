@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+  ~ Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.organization.management.authn</artifactId>
-    <name>WSO2 - Organization Management Enterprise IDP Authenticator</name>
+    <name>WSO2 - Organization Management Application Authenticator</name>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -119,7 +119,6 @@
                             org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.organization.management.application;
-                            org.wso2.carbon.identity.organization.management.application.exception;
                             org.wso2.carbon.identity.organization.management.service;
                             org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,13 +24,10 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtServerException;
-import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.Optional;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.VIEW_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
@@ -38,7 +35,10 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID;
-import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.handleServerException;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LINK_APPLICATIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
  * This class implements the {@link OrgApplicationMgtDAO} interface.
@@ -49,9 +49,9 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
     @Override
     public void addSharedApplication(int ownerTenantId, String mainAppId, int sharedTenantId, String sharedAppId)
-            throws OrgApplicationMgtServerException {
+            throws OrganizationManagementException {
 
-        NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_SHARED_APP, namedPreparedStatement -> {
@@ -63,15 +63,15 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e);
+            throw handleServerException(ERROR_CODE_ERROR_LINK_APPLICATIONS, e, mainAppId, sharedAppId);
         }
     }
 
     @Override
     public Optional<String> getSharedApplicationResourceId(int parentTenantId, int sharedTenantId, String parentAppId)
-            throws OrgApplicationMgtServerException {
+            throws OrganizationManagementException {
 
-        NamedJdbcTemplate namedJdbcTemplate = OrgApplicationManagerUtil.getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         String sharedAppId;
         try {
             sharedAppId = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_APP_ID,
@@ -83,7 +83,8 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     });
             return Optional.ofNullable(sharedAppId);
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID, e, parentAppId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, parentAppId,
+                    Integer.toString(parentTenantId));
         }
     }
 }

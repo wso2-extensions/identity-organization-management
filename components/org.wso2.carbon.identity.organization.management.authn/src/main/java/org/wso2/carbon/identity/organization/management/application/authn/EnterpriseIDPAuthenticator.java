@@ -1,14 +1,24 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com). All Rights Reserved.
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
- * This software is the property of WSO2 Inc. and its suppliers, if any.
- * Dissemination of any information or reproduction of any material contained
- * herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
- * You may not alter or remove any copyright or other notice from copies of this content.
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package org.wso2.carbon.identity.organization.management.application.authn;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,8 +43,8 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
+import org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants;
 import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.io.IOException;
@@ -53,14 +63,14 @@ import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthen
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_AUTHZ_URL;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.OAuth2.CALLBACK_URL;
-import static org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ENTERPRISE_LOGIN_FAILURE;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ERROR_MESSAGE;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ENTERPRISE_IDP_LOGIN_FAILED;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_NOT_FOUND;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.ErrorMessages.ORG_PARAMETER_NOT_FOUND;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL;
-import static org.wso2.carbon.identity.organization.management.application.authn.util.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.ENTERPRISE_LOGIN_FAILURE;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.ERROR_MESSAGE;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.ErrorMessages.ENTERPRISE_IDP_LOGIN_FAILED;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.ErrorMessages.ORG_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.ErrorMessages.ORG_PARAMETER_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPErrorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
 
 /**
  * Authenticator implementation to redirect the authentication request to shared applications of the requested
@@ -68,6 +78,7 @@ import static org.wso2.carbon.identity.organization.management.application.authn
  * <p/>
  * Class extends the {@link OpenIDConnectAuthenticator}.
  */
+@SuppressFBWarnings
 public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     private static final Log log = LogFactory.getLog(EnterpriseIDPAuthenticator.class);
@@ -211,8 +222,8 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         try {
             StringBuilder queryStringBuilder = new StringBuilder();
 
-            queryStringBuilder.append("sessionDataKey=").append(context.getContextIdentifier()).append("&fidp=")
-                    .append(context.getExternalIdP().getIdPName());
+            queryStringBuilder.append("sessionDataKey=").append(context.getContextIdentifier()).append("&idp=")
+                    .append(context.getExternalIdP().getIdPName()).append("&authenticator=").append(getName());
 
             if (context.getProperties().get(ENTERPRISE_LOGIN_FAILURE) != null) {
                 queryStringBuilder.append(ERROR_MESSAGE).append(URLEncoder
@@ -245,16 +256,16 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
                         .getApplicationManagementService();
         try {
             String sharedApplicationId = EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                    .getOrgApplicationManager().resolveOrganizationSpResourceId(organizationName, application,
+                    .getOrgApplicationManager().resolveSharedAppResourceId(organizationName, application,
                             // Use proper error code/message.
                             ownerOrganization).orElseThrow(() -> handleAuthFailures(
-                                    ENTERPRISE_IDP_LOGIN_FAILED.getCode(), ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
+                            ENTERPRISE_IDP_LOGIN_FAILED.getCode(), ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
             return Optional.ofNullable(applicationManagementService.getApplicationByResourceId(sharedApplicationId,
                     // Use proper error code/message.
                     organizationName)).orElseThrow(() -> handleAuthFailures(ENTERPRISE_IDP_LOGIN_FAILED.getCode(),
                     ENTERPRISE_IDP_LOGIN_FAILED.getMessage()));
 
-        } catch (IdentityApplicationManagementException | OrgApplicationMgtException e) {
+        } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Error on getting outbound service provider of the organization. "
                         + "Organization: %s, Inbound service provider: %s", organizationName, application));
@@ -364,8 +375,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             configValue = String.valueOf(context.getProperty(configName));
         }
         if (log.isDebugEnabled()) {
-            log.debug("Config value for key " + configName + " for tenant " + tenantDomain + " : " +
-                    configValue);
+            log.debug("Config value for key " + configName + " for tenant " + tenantDomain + " : " + configValue);
         }
         return configValue;
     }

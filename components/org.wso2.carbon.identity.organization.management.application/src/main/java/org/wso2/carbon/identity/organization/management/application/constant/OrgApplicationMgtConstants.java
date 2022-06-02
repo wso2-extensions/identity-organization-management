@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -23,48 +23,10 @@ package org.wso2.carbon.identity.organization.management.application.constant;
  */
 public class OrgApplicationMgtConstants {
 
-    private static final String ORG_APPLICATION_MGT_ERROR_CODE_PREFIX = "OAM-";
-
     public static final String VIEW_SHARED_APP_ID = "SHARED_APP_ID";
+    public static final String TENANT = "TENANT";
+    public static final String OAUTH_VERSION_2 = "OAuth-2.0";
+    public static final String AUTHORIZATION_CODE_GRANT = "authorization_code";
+    public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
 
-    /**
-     * Enum for error messages related to organization application management.
-     */
-    public enum ErrorMessages {
-        ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65001", "Unable to resolve shared application",
-                "Server encountered an error while resolving the application with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_ORG_APPLICATION("65002", "Unable to retrieve the application",
-                "Server encountered an error while retrieving the application with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ID("65003", "Unable to retrieve shared application ID.",
-                "Server encountered an error while retrieving the shared application ID of " +
-                        "parent application with ID: %s"),
-        ERROR_CODE_ERROR_SHARING_APPLICATION("65004", "Unable to share the application.",
-                "Server encountered an error while sharing the application."),;
-
-        private final String code;
-        private final String message;
-        private final String description;
-
-        ErrorMessages(String code, String message, String description) {
-
-            this.code = code;
-            this.message = message;
-            this.description = description;
-        }
-
-        public String getCode() {
-
-            return ORG_APPLICATION_MGT_ERROR_CODE_PREFIX + code;
-        }
-
-        public String getMessage() {
-
-            return message;
-        }
-
-        public String getDescription() {
-
-            return description;
-        }
-    }
 }

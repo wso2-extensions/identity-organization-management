@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,34 +18,13 @@
 
 package org.wso2.carbon.identity.organization.management.application.util;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtServerException;
 
 /**
  * This class provides utility functions for the Organization Application Management.
  */
 public class OrgApplicationManagerUtil {
-
-    /**
-     * Throw an OrgApplicationMgtServerException upon server side error in organization application management.
-     *
-     * @param error The error enum.
-     * @param e     The error.
-     * @param data  The error message data.
-     * @return OrgApplicationMgtServerException
-     */
-    public static OrgApplicationMgtServerException handleServerException(
-            OrgApplicationMgtConstants.ErrorMessages error, Throwable e, String... data) {
-
-        String description = error.getDescription();
-        if (ArrayUtils.isNotEmpty(data)) {
-            description = String.format(description, data);
-        }
-        return new OrgApplicationMgtServerException(error.getMessage(), description, error.getCode(), e);
-    }
 
     /**
      * Get a new Jdbc Template.

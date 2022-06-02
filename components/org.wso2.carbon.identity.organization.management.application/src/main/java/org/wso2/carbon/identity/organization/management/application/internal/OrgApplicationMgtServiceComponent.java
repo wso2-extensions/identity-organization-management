@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -109,14 +110,29 @@ public class OrgApplicationMgtServiceComponent {
             service = OAuthAdminServiceImpl.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unSetOAuthAdminService")
+            unbind = "unsetOAuthAdminService")
     protected void setOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
 
-        OrgApplicationMgtDataHolder.getInstance().setoAuthAdminService(oAuthAdminService);
+        OrgApplicationMgtDataHolder.getInstance().setOAuthAdminService(oAuthAdminService);
     }
 
-    protected void unSetOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
+    protected void unsetOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
 
-        OrgApplicationMgtDataHolder.getInstance().setoAuthAdminService(null);
+        OrgApplicationMgtDataHolder.getInstance().setOAuthAdminService(null);
+    }
+
+    @Reference(name = "identity.organization.management.component",
+            service = OrganizationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManager")
+    protected void setOrganizationManager(OrganizationManager organizationManager) {
+
+        OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
+    }
+
+    protected void unsetOrganizationManager(OrganizationManager organizationManager) {
+
+        OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(null);
     }
 }

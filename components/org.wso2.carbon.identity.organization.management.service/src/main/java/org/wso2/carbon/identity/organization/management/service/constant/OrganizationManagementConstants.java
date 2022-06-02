@@ -187,6 +187,7 @@ public class OrganizationManagementConstants {
                 "Organization type should be defined."),
         ERROR_CODE_INVALID_ORGANIZATION_TYPE("60034", "Invalid organization type.", "The organization " +
                 "type should be 'TENANT' or 'STRUCTURAL'."),
+        ERROR_CODE_INVALID_APPLICATION("60035", "Invalid application", "The requested application %s is invalid"),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -260,7 +261,16 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while activating the tenant of the tenant type organization with " +
                         "ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_TYPE("65029", "Unable to retrieve the organization type.",
-                "Server encountered an error while retrieving the type of the organization with ID: %s."),;
+                "Server encountered an error while retrieving the type of the organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65030", "Unable to retrieve the application.",
+                "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
+        ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65031", "Unable to resolve the shared application",
+                "Server encountered an error while resolving the shared application for application: %s in tenant: %s"),
+        ERROR_CODE_ERROR_SHARING_APPLICATION("65032", "Unable to share the application",
+                "Server encountered an error when sharing application: %s to organization: %s"),
+        ERROR_CODE_ERROR_LINK_APPLICATIONS("65033", "Unable to link the shared application.",
+                "Server encountered an error when linking the application: %s to shared application: %s"),
+        ;
 
         private final String code;
         private final String message;

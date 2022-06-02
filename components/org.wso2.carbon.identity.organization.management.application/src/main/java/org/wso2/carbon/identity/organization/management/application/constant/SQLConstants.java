@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -43,7 +43,6 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID = "PARENT_TENANT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID = "SHARED_APP_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID = "SHARED_TENANT_ID";
-        public static final String DB_SCHEMA_COLUMN_NAME_USERNAME = "USERNAME";
     }
 }
 

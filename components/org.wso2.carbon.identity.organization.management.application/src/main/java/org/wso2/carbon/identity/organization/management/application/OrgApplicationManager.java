@@ -19,9 +19,9 @@
 package org.wso2.carbon.identity.organization.management.application;
 
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.organization.management.application.exception.OrgApplicationMgtException;
-import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -29,11 +29,36 @@ import java.util.Optional;
  */
 public interface OrgApplicationManager {
 
-    ServiceProvider getOrgApplication(String applicationId, String tenantDomain) throws OrgApplicationMgtException;
+    /**
+     * Retrieve the application ({@link ServiceProvider}) for the given identifier and the tenant domain.
+     *
+     * @param applicationId application identifier.
+     * @param tenantDomain  tenant domain.
+     * @return instance of {@link ServiceProvider}.
+     * @throws OrganizationManagementException on errors when retrieving the application
+     */
+    ServiceProvider getOrgApplication(String applicationId, String tenantDomain) throws OrganizationManagementException;
 
-    String shareOrganizationApplication(Organization parent, Organization childOrg, ServiceProvider serviceProvider)
-            throws OrgApplicationMgtException;
+    /**
+     * Share the application to all the child organizations or to a list of child organizations based on the user input.
+     *
+     * @param ownerOrgId identifier of the organization owning the application.
+     * @param mainAppId  identifier of the main application.
+     * @param sharedOrgs optional list of identifiers of child organization to share the application.
+     * @throws OrganizationManagementException on errors when sharing the application.
+     */
+    void shareOrganizationApplication(String ownerOrgId, String mainAppId, List<String> sharedOrgs)
+            throws OrganizationManagementException;
 
-    Optional<String> resolveOrganizationSpResourceId(String orgName, String parentApplication, String parentTenant)
-            throws OrgApplicationMgtException;
+    /**
+     * Resolve the shared application id based on the organization link and the identifier of the main application.
+     *
+     * @param orgName     name of the organization owning the shared application.
+     * @param mainAppName name of the main application.
+     * @param ownerTenant tenant owning the application.
+     * @return Optional of shared application id.
+     * @throws OrganizationManagementException on errors when resolving the shared application id.
+     */
+    Optional<String> resolveSharedAppResourceId(String orgName, String mainAppName, String ownerTenant)
+            throws OrganizationManagementException;
 }
