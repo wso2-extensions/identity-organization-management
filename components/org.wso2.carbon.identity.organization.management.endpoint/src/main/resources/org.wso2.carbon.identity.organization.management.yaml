@@ -252,12 +252,8 @@ paths:
                 type: string
         required: true
       responses:
-        200:
+        '200':
           description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationSharedDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -594,15 +590,6 @@ components:
           description: The value to be used within the operations.
           example: 'XYZ Builders'
 
-    #-----------------------------------------------------
-    # Application shared object
-    #-----------------------------------------------------
-    ApplicationSharedDTO:
-      type: object
-      properties:
-        status:
-          type: string
-          example: 'Success'
   #--------------------------------------------------------
   # Descriptions of Organization Management API responses.
   #--------------------------------------------------------

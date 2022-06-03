@@ -25,7 +25,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.wso2.carbon.identity.organization.management.endpoint.model.ApplicationSharedDTO;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPOSTRequest;
@@ -207,14 +206,14 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/applications/{application-id}/share")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Share application from the parent tenant to given organization ", notes = "This API creates an internal application to delegate access from ", response = ApplicationSharedDTO.class, authorizations = {
+    @ApiOperation(value = "Share application from the parent tenant to given organization ", notes = "This API creates an internal application to delegate access from ", authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
 
         })
     }, tags={ "Organization Application Management" })
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "Ok", response = ApplicationSharedDTO.class),
+        @ApiResponse(code = 200, message = "Ok", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
