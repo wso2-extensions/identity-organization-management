@@ -80,7 +80,7 @@ public class OrganizationManagementConstants {
     public static final String LT = "lt";
     public static final String AND = "and";
 
-    private static Map<String, String> attributeColumnMap = new HashMap<>();
+    private static final Map<String, String> attributeColumnMap = new HashMap<>();
 
     static {
 

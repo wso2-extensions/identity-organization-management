@@ -42,4 +42,6 @@ public class EnterpriseIDPAuthenticatorConstants {
 
     public static final String REQUEST_ORG_PAGE_URL = "authenticationendpoint/org_name.do";
     public static final String REQUEST_ORG_PAGE_URL_CONFIG = "RequestOrganizationPage";
+    public static final String INBOUND_AUTH_TYPE_OAUTH = "oauth2";
+
 }
