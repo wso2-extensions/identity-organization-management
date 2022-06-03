@@ -225,7 +225,7 @@ paths:
   /organizations/{organization-id}/applications/{application-id}/share:
     post:
       summary: |
-        Share application from the parent tenant to given organization
+        Share application from the parent organization to given organization
       description: |
         This API creates an internal application to delegate access from
       operationId: shareOrgApplication
