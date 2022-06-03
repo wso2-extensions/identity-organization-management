@@ -120,6 +120,7 @@
                             org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.organization.management.application;
                             org.wso2.carbon.identity.organization.management.service;
+                            org.wso2.carbon.identity.organization.management.service.constant;
                             org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>

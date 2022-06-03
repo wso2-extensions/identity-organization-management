@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
+import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -117,9 +118,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             //loaded, tenant domain will be derived from the user who created the application.
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
-            RealmService realmService = OrgApplicationMgtDataHolder.getInstance().getRealmService();
-            String sharedOrgAdmin = realmService.getTenantUserRealm(sharedOrgTenantId).getRealmConfiguration().
-                    getAdminUserName();
+            String sharedOrgAdmin =
+                    getRealmService().getTenantUserRealm(sharedOrgTenantId).getRealmConfiguration().getAdminUserName();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
             Optional<String> mayBeSharedAppId = resolveSharedAppResourceId(sharedOrg.getId(),
@@ -137,9 +137,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                     sharedOrg.getId(), getAuthenticatedUsername());
 
-            OrgApplicationMgtDataHolder.getInstance()
-                    .getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
-                            mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
+            getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
+                    mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
 
             return sharedApplicationId;
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
@@ -158,12 +157,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenant);
             int sharedTenantId = IdentityTenantUtil.getTenantId(sharedOrgName);
-            ServiceProvider mainApplication =
-                    OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService().
-                            getServiceProvider(mainAppName, ownerTenant);
+            ServiceProvider mainApplication = getApplicationManagementService().getServiceProvider(mainAppName,
+                    ownerTenant);
 
-            return mainApplication == null ? Optional.empty() : OrgApplicationMgtDataHolder.getInstance()
-                    .getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
+            return mainApplication == null ? Optional.empty() :
+                    getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
                             mainApplication.getApplicationResourceId());
 
         } catch (IdentityApplicationManagementException e) {
@@ -221,5 +219,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private ApplicationManagementService getApplicationManagementService() {
 
         return OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private OrgApplicationMgtDAO getOrgApplicationMgtDAO() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO();
+    }
+
+    private RealmService getRealmService() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getRealmService();
     }
 }

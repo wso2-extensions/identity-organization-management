@@ -36,4 +36,10 @@ public class EnterpriseIDPAuthenticatorConstants {
     public static final String ORGANIZATION_ATTRIBUTE = "Organization";
     public static final String ORGANIZATION_USER_ATTRIBUTE = "org";
     public static final String ORG_PARAMETER = "org";
+
+    public static final String ENTERPRISE_LOGIN_FAILURE = "enterpriseLoginFailure";
+    public static final String ERROR_MESSAGE = "&authFailure=true&authFailureMsg=";
+
+    public static final String REQUEST_ORG_PAGE_URL = "authenticationendpoint/org_name.do";
+    public static final String REQUEST_ORG_PAGE_URL_CONFIG = "RequestOrganizationPage";
 }
