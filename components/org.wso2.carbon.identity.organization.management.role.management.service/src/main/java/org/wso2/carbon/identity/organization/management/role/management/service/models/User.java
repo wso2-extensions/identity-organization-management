@@ -16,21 +16,44 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.role.management.service.exception;
+package org.wso2.carbon.identity.organization.management.role.management.service.models;
 
 /**
- * This class is to handle the client side errors in Role Management.
+ * This class represents a basic model of a User.
  */
-public class RoleManagementClientException extends RoleManagementException {
+public class User {
 
-    public RoleManagementClientException(String message, String description, String errorCode) {
+    private String id;
+    private String userName;
 
-        super(message, description, errorCode);
+    public User(String id, String userName) {
+
+        this.id = id;
+        this.userName = userName;
     }
 
-    public RoleManagementClientException(String message, String description, String errorCode,
-                                         Throwable cause) {
+    public User(String id) {
 
-        super(message, description, errorCode, cause);
+        this.id = id;
+    }
+
+    public String getId() {
+
+        return id;
+    }
+
+    public void setId(String id) {
+
+        this.id = id;
+    }
+
+    public String getUserName() {
+
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+
+        this.userName = userName;
     }
 }

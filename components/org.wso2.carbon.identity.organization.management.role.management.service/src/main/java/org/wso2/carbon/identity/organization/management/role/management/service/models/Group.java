@@ -23,14 +23,14 @@ import java.util.List;
 /**
  * This class represents a basic model of a group.
  */
-public class BasicGroup {
+public class Group {
 
     private String groupId;
     private String groupName;
     private List<Role> roleList;
-    private List<BasicUser> userList;
+    private List<User> userList;
 
-    public BasicGroup(String groupId, String groupName, List<Role> roleList, List<BasicUser> userList) {
+    public Group(String groupId, String groupName, List<Role> roleList, List<User> userList) {
 
         this.groupId = groupId;
         this.groupName = groupName;
@@ -38,13 +38,13 @@ public class BasicGroup {
         this.userList = userList;
     }
 
-    public BasicGroup(String groupId, String groupName) {
+    public Group(String groupId, String groupName) {
 
         this.groupId = groupId;
         this.groupName = groupName;
     }
 
-    public BasicGroup(String groupId) {
+    public Group(String groupId) {
 
         this.groupId = groupId;
     }
@@ -79,12 +79,12 @@ public class BasicGroup {
         this.roleList = roleList;
     }
 
-    public List<BasicUser> getUserList() {
+    public List<User> getUserList() {
 
         return userList;
     }
 
-    public void setUserList(List<BasicUser> userList) {
+    public void setUserList(List<User> userList) {
 
         this.userList = userList;
     }

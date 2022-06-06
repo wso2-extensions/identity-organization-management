@@ -27,15 +27,15 @@ public class Role {
 
     private String id;
     private String name;
-    private List<BasicGroup> basicGroups;
-    private List<BasicUser> users;
+    private List<Group> groups;
+    private List<User> users;
     private List<String> permissions;
 
-    public Role(String id, String name, List<BasicGroup> basicGroups, List<BasicUser> users, List<String> permissions) {
+    public Role(String id, String name, List<Group> groups, List<User> users, List<String> permissions) {
 
         this.id = id;
         this.name = name;
-        this.basicGroups = basicGroups;
+        this.groups = groups;
         this.users = users;
         this.permissions = permissions;
     }
@@ -69,22 +69,22 @@ public class Role {
         this.name = name;
     }
 
-    public List<BasicGroup> getGroups() {
+    public List<Group> getGroups() {
 
-        return basicGroups;
+        return groups;
     }
 
-    public void setGroups(List<BasicGroup> basicGroups) {
+    public void setGroups(List<Group> groups) {
 
-        this.basicGroups = basicGroups;
+        this.groups = groups;
     }
 
-    public List<BasicUser> getUsers() {
+    public List<User> getUsers() {
 
         return users;
     }
 
-    public void setUsers(List<BasicUser> users) {
+    public void setUsers(List<User> users) {
 
         this.users = users;
     }

@@ -19,10 +19,10 @@
 package org.wso2.carbon.identity.organization.management.role.management.service.dao;
 
 import org.wso2.carbon.identity.core.model.ExpressionNode;
-import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
-import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementServerException;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.List;
 
@@ -37,10 +37,10 @@ public interface RoleManagementDAO {
      * @param organizationId The organization ID of the organization where the role has been created.
      * @param tenantId       The tenant ID of the corresponding organization.
      * @param role           The role to be added.
-     * @throws RoleManagementServerException The server exception is thrown when an error occurs
-     *                                       during adding a role.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs
+     *                                               during adding a role.
      */
-    void createRole(String organizationId, int tenantId, Role role) throws RoleManagementServerException;
+    void createRole(String organizationId, int tenantId, Role role) throws OrganizationManagementServerException;
 
     /**
      * Get a {@link Role} from the database.
@@ -49,10 +49,10 @@ public interface RoleManagementDAO {
      * @param roleId         ID of the role.
      * @param tenantId       The tenant ID.
      * @return The corresponding role.
-     * @throws RoleManagementServerException The server exception is thrown when an error occurs
-     *                                       during getting a role.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs
+     *                                               during getting a role.
      */
-    Role getRoleById(String organizationId, String roleId, int tenantId) throws RoleManagementServerException;
+    Role getRoleById(String organizationId, String roleId, int tenantId) throws OrganizationManagementServerException;
 
     /**
      * Get all the {@link Role}s of an organization.
@@ -63,11 +63,12 @@ public interface RoleManagementDAO {
      * @param expressionNodes The list of filters.
      * @param operators       The list containing the and, or operators.
      * @return A list of Roles.
-     * @throws RoleManagementServerException The server exception is thrown when an error occurs during getting a role.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
+     *                                               getting a role.
      */
     List<Role> getOrganizationRoles(String organizationId, int tenantId, int limit,
                                     List<ExpressionNode> expressionNodes, List<String> operators)
-            throws RoleManagementServerException;
+            throws OrganizationManagementServerException;
 
     /**
      * Patch a {@link Role} inside an organization.
@@ -77,20 +78,21 @@ public interface RoleManagementDAO {
      * @param tenantId        The tenant ID.
      * @param patchOperations A list containing the patch patchOperations.
      * @return The updated role.
-     * @throws RoleManagementException The exception is thrown when an error occurs during patching
-     *                                       the role.
+     * @throws OrganizationManagementException The exception is thrown when an error occurs during patching
+     *                                         the role.
      */
     Role patchRole(String organizationId, String roleId, int tenantId, List<PatchOperation> patchOperations)
-            throws RoleManagementException;
+            throws OrganizationManagementException;
 
     /**
      * Delete a {@link Role}.
      *
      * @param organizationId The ID of the organization.
      * @param roleId         The ID of role.
-     * @throws RoleManagementServerException The server exception is thrown when an error occurs during deleting a role.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
+     *                                               deleting a role.
      */
-    void deleteRole(String organizationId, String roleId) throws RoleManagementServerException;
+    void deleteRole(String organizationId, String roleId) throws OrganizationManagementServerException;
 
     /**
      * Replacing a {@link Role} completely using PUT request.
@@ -100,10 +102,11 @@ public interface RoleManagementDAO {
      * @param role           The values for the role to be updated.
      * @param tenantId       The tenant ID.
      * @return The updated role.
-     * @throws RoleManagementServerException The server exception is thrown when an error occurs during pathing
-     *                                       the role.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during pathing
+     *                                               the role.
      */
-    Role putRole(String organizationId, String roleId, Role role, int tenantId) throws RoleManagementServerException;
+    Role putRole(String organizationId, String roleId, Role role, int tenantId)
+            throws OrganizationManagementServerException;
 
     /**
      * Check whether a role exists inside an organization.
@@ -112,10 +115,11 @@ public interface RoleManagementDAO {
      * @param roleId         The ID of the role.
      * @param roleName       The displayName of the role.
      * @return Whether there exists a role or not.
-     * @throws RoleManagementException The exception is thrown when an error occurs during checking
-     *                                 whether the role exists.
+     * @throws OrganizationManagementException The exception is thrown when an error occurs during checking
+     *                                         whether the role exists.
      */
-    boolean checkRoleExists(String organizationId, String roleId, String roleName) throws RoleManagementException;
+    boolean checkRoleExists(String organizationId, String roleId, String roleName)
+            throws OrganizationManagementException;
 
     /**
      * Check whether a user exists inside a tenant.
@@ -123,10 +127,20 @@ public interface RoleManagementDAO {
      * @param userId   The ID of the user.
      * @param tenantId The ID of the tenant.
      * @return If there is a user then returns true, else false.
-     * @throws RoleManagementServerException The exception is thrown when an error occurs during checking the
-     *                                       user existence.
+     * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking the
+     *                                               user existence.
      */
-    boolean checkUserExists(String userId, int tenantId) throws RoleManagementServerException;
+    boolean checkUserExists(String userId, int tenantId) throws OrganizationManagementServerException;
 
-    boolean checkGroupExists(String groupId, int tenantId) throws RoleManagementServerException;
+
+    /**
+     * Check whether a group exists inside a tenant.
+     *
+     * @param groupId  The ID of the group.
+     * @param tenantId The ID of the tenant.
+     * @return If there is group then returns true, else false.
+     * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking
+     *                                               the group existence.
+     */
+    boolean checkGroupExists(String groupId, int tenantId) throws OrganizationManagementServerException;
 }

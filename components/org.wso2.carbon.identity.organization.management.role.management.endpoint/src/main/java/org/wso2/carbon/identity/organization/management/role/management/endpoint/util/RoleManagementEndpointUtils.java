@@ -26,10 +26,9 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.RoleManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
-import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages;
-import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementClientException;
-import org.wso2.carbon.identity.organization.management.role.management.service.exception.RoleManagementException;
-import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.net.URI;
 
@@ -38,10 +37,11 @@ import javax.ws.rs.core.Response;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.V1_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getContext;
 
 /**
  * The utility class for role management endpoints.
@@ -66,7 +66,7 @@ public class RoleManagementEndpointUtils {
      * @param log The Log instance.
      * @return The response for the error.
      */
-    public static Response handleClientErrorResponse(RoleManagementException e, Log log) {
+    public static Response handleClientErrorResponse(OrganizationManagementException e, Log log) {
 
         if (isNotFoundError(e)) {
             throw buildException(Response.Status.NOT_FOUND, log, e);
@@ -87,7 +87,7 @@ public class RoleManagementEndpointUtils {
      * @param log The Log instance.
      * @return The response for the error.
      */
-    public static Response handleServerErrorResponse(RoleManagementException e, Log log) {
+    public static Response handleServerErrorResponse(OrganizationManagementException e, Log log) {
 
         throw buildException(Response.Status.INTERNAL_SERVER_ERROR, log, e);
     }
@@ -114,23 +114,22 @@ public class RoleManagementEndpointUtils {
      *
      * @param organizationId The organization ID.
      * @param id             The id of the resource.
-     * @param path           The path for the resource.
+     * @param resourcePath   The path for the resource.
      * @param errorMessage   The error message specific to the resources.
      * @return The URI.
      */
-    public static URI getUri(String organizationId, String id, String path, ErrorMessages errorMessage) {
+    public static URI getUri(String organizationId, String id, String resourcePath, ErrorMessages errorMessage) {
 
         String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
-                PATH_SEPARATOR + organizationId + PATH_SEPARATOR + path + PATH_SEPARATOR + id;
+                PATH_SEPARATOR + organizationId + PATH_SEPARATOR + resourcePath + PATH_SEPARATOR + id;
         try {
-            return URI.create(ServiceURLBuilder.create().addPath(Utils.getContext(endpoint))
+            return URI.create(ServiceURLBuilder.create().addPath(getContext(endpoint))
                     .build().getAbsolutePublicURL());
         } catch (URLBuilderException e) {
-            Error error = getError(errorMessage.getCode(),
-                    errorMessage.getMessage(),
+            Error error = getError(errorMessage.getCode(), errorMessage.getMessage(),
                     String.format(errorMessage.getDescription(), id));
             LOG.error(String.format("Server encountered an error while building URL for %s ",
-                    path.substring(0, path.length() - 1)) + id);
+                    resourcePath.substring(0, resourcePath.length() - 1)) + id);
             throw new RoleManagementEndpointException(Response.Status.INTERNAL_SERVER_ERROR, error);
         }
     }
@@ -141,9 +140,9 @@ public class RoleManagementEndpointUtils {
      * @param e The role management exception.
      * @return If the exception is thrown due to conflict error it returns true, else false.
      */
-    private static boolean isConflictError(RoleManagementException e) {
+    private static boolean isConflictError(OrganizationManagementException e) {
 
-        return ERROR_CODE_DISPLAY_NAME_MULTIPLE_VALUES.getCode().equals(e.getErrorCode());
+        return ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES.getCode().equals(e.getErrorCode());
     }
 
     /**
@@ -152,7 +151,7 @@ public class RoleManagementEndpointUtils {
      * @param e The role management exception.
      * @return If the exception is thrown due to forbidden error it returns true, else false.
      */
-    private static boolean isForbiddenError(RoleManagementException e) {
+    private static boolean isForbiddenError(OrganizationManagementException e) {
 
         return ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE.getCode().equals(e.getErrorCode());
     }
@@ -163,7 +162,7 @@ public class RoleManagementEndpointUtils {
      * @param e The role management exception.
      * @return If the exception is thrown due to not-found error it returns true, else false.
      */
-    private static boolean isNotFoundError(RoleManagementException e) {
+    private static boolean isNotFoundError(OrganizationManagementException e) {
 
         return ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode()) || ERROR_CODE_INVALID_ROLE.getCode()
                 .equals(e.getErrorCode());
@@ -178,8 +177,8 @@ public class RoleManagementEndpointUtils {
      * @return A RoleManagementEndpointException.
      */
     private static RoleManagementEndpointException buildException(Response.Status status, Log log,
-                                                                  RoleManagementException e) {
-        if (e instanceof RoleManagementClientException) {
+                                                                  OrganizationManagementException e) {
+        if (e instanceof OrganizationManagementClientException) {
             logDebug(log, e);
         } else {
             logError(log, e);
@@ -194,7 +193,7 @@ public class RoleManagementEndpointUtils {
      * @param log Log instance.
      * @param e   The role management exception.
      */
-    private static void logDebug(Log log, RoleManagementException e) {
+    private static void logDebug(Log log, OrganizationManagementException e) {
 
         if (log.isDebugEnabled()) {
             String errorMessageFormat = "errorCode: %s | message: %s";
@@ -209,7 +208,7 @@ public class RoleManagementEndpointUtils {
      * @param log Log instance.
      * @param e   The role management exception.
      */
-    private static void logError(Log log, RoleManagementException e) {
+    private static void logError(Log log, OrganizationManagementException e) {
 
         String errorMessageFormat = "errorCode: %s | message: %s";
         String errorMessage = String.format(errorMessageFormat, e.getErrorCode(), e.getDescription());

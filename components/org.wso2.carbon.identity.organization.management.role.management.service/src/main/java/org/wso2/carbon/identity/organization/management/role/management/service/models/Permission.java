@@ -19,41 +19,36 @@
 package org.wso2.carbon.identity.organization.management.role.management.service.models;
 
 /**
- * This class represents a basic model of a User.
+ * This class represents a basic model of a permission.
  */
-public class BasicUser {
+public class Permission {
 
-    private String id;
-    private String userName;
+    private int id;
+    private String resourceId;
 
-    public BasicUser(String id, String userName) {
-
-        this.id = id;
-        this.userName = userName;
-    }
-
-    public BasicUser(String id) {
+    public Permission(int id, String resourceId) {
 
         this.id = id;
+        this.resourceId = resourceId;
     }
 
-    public String getId() {
+    public int getId() {
 
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
 
         this.id = id;
     }
 
-    public String getUserName() {
+    public String getResourceId() {
 
-        return userName;
+        return resourceId;
     }
 
-    public void setUserName(String userName) {
+    public void setResourceId(String resourceId) {
 
-        this.userName = userName;
+        this.resourceId = resourceId;
     }
 }
