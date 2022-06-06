@@ -191,8 +191,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     public Role getRoleById(String organizationId, String roleId, int tenantId)
             throws OrganizationManagementServerException {
 
-        //TODO: the 3rd step should be implemented.
-        //3. When getting the permissions, the unwanted, bogus permissions should be culled.
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             Role role = namedJdbcTemplate.withTransaction(template -> template.fetchSingleRecord(GET_ROLE_FROM_ID,
