@@ -37,10 +37,6 @@ public class EnterpriseIDPAuthenticatorDataHolder {
 
     private OrgApplicationManager orgApplicationManager;
 
-    private EnterpriseIDPAuthenticatorDataHolder() {
-
-    }
-
     public static EnterpriseIDPAuthenticatorDataHolder getInstance() {
 
         return instance;
