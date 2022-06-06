@@ -45,8 +45,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
-    private static final Log LOG = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
-
     @Override
     public void addSharedApplication(int ownerTenantId, String mainAppId, int sharedTenantId, String sharedAppId)
             throws OrganizationManagementException {
