@@ -223,9 +223,9 @@ public class OrganizationsApi  {
     public Response shareOrgApplication(
             @ApiParam(value = "ID of the parent organization where the application is created." ,required=true)
             @PathParam("organization-id") String organizationId,
-            @ApiParam(value = "ID of the application which will be shared to child orgs.",required=true)
+            @ApiParam(value = "ID of the application which will be shared to child organizations.",required=true)
             @PathParam("application-id") String applicationId,
-            @ApiParam(value = "This represents user role mappings." ,required=true) @Valid List<String> childOrgs) {
+            @ApiParam(value = "Array of IDs of child organizations, if not provided application will be shared to all child organizations.") @Valid List<String> childOrgs) {
 
         return delegate.shareOrgApplication(organizationId, applicationId, childOrgs);
     }

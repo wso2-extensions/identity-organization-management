@@ -67,20 +67,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
-    public ServiceProvider getOrgApplication(String applicationId, String tenantDomain)
-            throws OrganizationManagementException {
-
-        try {
-            ServiceProvider application = getApplicationManagementService().getApplicationByResourceId(applicationId,
-                    tenantDomain);
-            return Optional.ofNullable(application)
-                    .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, applicationId));
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, applicationId);
-        }
-    }
-
-    @Override
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
@@ -89,14 +75,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
-        //Filter the child organization in case user send a list of organizations to share the original application.
+        // Filter the child organization in case user send a list of organizations to share the original application.
         List<ChildOrganizationDO> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
                 organization.getChildOrganizations() :
                 organization.getChildOrganizations().stream().filter(o -> sharedOrgs.contains(o.getId()))
                         .collect(Collectors.toList());
 
         for (ChildOrganizationDO child : filteredChildOrgs) {
-            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.TRUE);
+            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE);
 
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 shareApplication(ownerTenantDomain, childOrg, rootApplication);
@@ -105,7 +91,50 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     }
 
-    private String shareApplication(String ownerTenantDomain, Organization sharedOrg, ServiceProvider mainApplication)
+    @Override
+    public Optional<String> resolveSharedAppResourceId(String sharedOrgName, String mainAppName,
+                                                       String ownerTenant) throws OrganizationManagementException {
+
+        //TODO: Update this after finalizing the unique value to identify the org which will be used at the login.
+        int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenant);
+        int sharedTenantId = IdentityTenantUtil.getTenantId(sharedOrgName);
+
+        ServiceProvider mainApplication;
+        try {
+            mainApplication = getApplicationManagementService().getServiceProvider(mainAppName,
+                    ownerTenant);
+
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerTenant);
+        }
+        return mainApplication == null ? Optional.empty() :
+                getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
+                        mainApplication.getApplicationResourceId());
+    }
+
+    /**
+     * Retrieve the application ({@link ServiceProvider}) for the given identifier and the tenant domain.
+     *
+     * @param applicationId application identifier.
+     * @param tenantDomain  tenant domain.
+     * @return instance of {@link ServiceProvider}.
+     * @throws OrganizationManagementException on errors when retrieving the application
+     */
+    private ServiceProvider getOrgApplication(String applicationId, String tenantDomain)
+            throws OrganizationManagementException {
+
+        ServiceProvider application;
+        try {
+            application = getApplicationManagementService().getApplicationByResourceId(applicationId,
+                    tenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, applicationId);
+        }
+        return Optional.ofNullable(application)
+                .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, applicationId));
+    }
+
+    private void shareApplication(String ownerTenantDomain, Organization sharedOrg, ServiceProvider mainApplication)
             throws OrganizationManagementException {
 
         try {
@@ -114,8 +143,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             int parentOrgTenantId = getTenantId();
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
 
-            //Use tenant of the organization to whom the application getting shared. When the consumer application is
-            //loaded, tenant domain will be derived from the user who created the application.
+            // Use tenant of the organization to whom the application getting shared. When the consumer application is
+            // loaded, tenant domain will be derived from the user who created the application.
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
             String sharedOrgAdmin =
@@ -126,7 +155,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     mainApplication.getApplicationName(), ownerTenantDomain);
 
             if (mayBeSharedAppId.isPresent()) {
-                return mayBeSharedAppId.get();
+                return;
             }
 
             // Create Oauth consumer app.
@@ -140,32 +169,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
                     mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
 
-            return sharedApplicationId;
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
                 | UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
-                    mainApplication.getApplicationName(), sharedOrg.getName());
+                    mainApplication.getApplicationResourceId(), sharedOrg.getId());
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
-        }
-    }
-
-    @Override
-    public Optional<String> resolveSharedAppResourceId(String sharedOrgName, String mainAppName,
-                                                       String ownerTenant) throws OrganizationManagementException {
-
-        try {
-            int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenant);
-            int sharedTenantId = IdentityTenantUtil.getTenantId(sharedOrgName);
-            ServiceProvider mainApplication = getApplicationManagementService().getServiceProvider(mainAppName,
-                    ownerTenant);
-
-            return mainApplication == null ? Optional.empty() :
-                    getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
-                            mainApplication.getApplicationResourceId());
-
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerTenant);
         }
     }
 

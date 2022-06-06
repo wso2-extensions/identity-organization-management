@@ -31,8 +31,6 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_RESOURCE_PATH = "v1.0/organizations/%s";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
-    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
-
     public static final String VIEW_ID_COLUMN = "UM_ID";
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
@@ -44,7 +42,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
     public static final String VIEW_TENANT_ID_COLUMN = "UM_TENANT_ID";
-
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -52,7 +49,6 @@ public class OrganizationManagementConstants {
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
     public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
-
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
     public static final String ORGANIZATION_ID_FIELD = "id";
@@ -60,16 +56,13 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
     public static final String ORGANIZATION_STATUS_FIELD = "status";
-
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
-
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "view";
-
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -79,8 +72,9 @@ public class OrganizationManagementConstants {
     public static final String GT = "gt";
     public static final String LT = "lt";
     public static final String AND = "and";
-
+    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     static {
 
@@ -93,8 +87,6 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
-
-    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for organization types.
@@ -187,11 +179,11 @@ public class OrganizationManagementConstants {
                 "Organization type should be defined."),
         ERROR_CODE_INVALID_ORGANIZATION_TYPE("60034", "Invalid organization type.", "The organization " +
                 "type should be 'TENANT' or 'STRUCTURAL'."),
-        ERROR_CODE_INVALID_APPLICATION("60035", "Invalid application", "The requested application %s is invalid"),
+        ERROR_CODE_INVALID_APPLICATION("60035", "Invalid application", "The requested application %s is invalid."),
         ERROR_CODE_ORG_PARAMETER_NOT_FOUND("60036", "Organization parameter could not be found.", "The organization " +
-                "parameter for shared application authentication is not found"),
+                "parameter for shared application authentication is not found."),
         ERROR_CODE_APPLICATION_NOT_SHARED("60037", "Application not shared with organization.", "The " +
-                "application %s is not shared with organization with ID %s"),
+                "application %s is not shared with organization with ID %s."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -268,16 +260,16 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while retrieving the type of the organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65030", "Unable to retrieve the application.",
                 "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
-        ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65031", "Unable to resolve the shared application",
-                "Server encountered an error while resolving the shared application for application: %s in tenant: %s"),
+        ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65031", "Unable to resolve the shared application", "Server " +
+                "encountered an error while resolving the shared application for application: %s in tenant: %s."),
         ERROR_CODE_ERROR_SHARING_APPLICATION("65032", "Unable to share the application",
-                "Server encountered an error when sharing application: %s to organization: %s"),
+                "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65033", "Unable to link the shared application.",
-                "Server encountered an error when linking the application: %s to shared application: %s"),
+                "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65034", "Unable to resolve the enterpriseIDP shared app." +
-                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s"),
+                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
         ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65035", "Unable to redirect to request organization.",
-                "Server encountered an error when redirecting enterpriseIDP login to request organization"),
+                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
         ;
 
         private final String code;

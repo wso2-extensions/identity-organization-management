@@ -47,7 +47,7 @@ public class OrgApplicationMgtServiceComponent {
     private static final Log log = LogFactory.getLog(OrgApplicationMgtServiceComponent.class);
 
     /**
-     * Register Organization and User Role Manager service in the OSGI context.
+     * Register the Organization Application Mgt service in the OSGI context.
      *
      * @param componentContext OSGi service component context.
      */
@@ -61,10 +61,10 @@ public class OrgApplicationMgtServiceComponent {
             bundleContext.registerService(OrgApplicationManager.class.getName(),
                     new OrgApplicationManagerImpl(), null);
             if (log.isDebugEnabled()) {
-                log.debug("Organization and User Role Management component activated successfully.");
+                log.debug("Organization Application Management component activated successfully.");
             }
         } catch (Throwable e) {
-            log.error("Error while activating Organization and User Role Management module.", e);
+            log.error("Error while activating Organization Application Management module.", e);
         }
     }
 
@@ -104,7 +104,6 @@ public class OrgApplicationMgtServiceComponent {
 
         OrgApplicationMgtDataHolder.getInstance().setApplicationManagementService(null);
     }
-
 
     @Reference(name = "org.wso2.carbon.identity.oauth",
             service = OAuthAdminServiceImpl.class,

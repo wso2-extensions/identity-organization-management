@@ -128,7 +128,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         // Add organization name to the user attributes.
         context.getSubject().getUserAttributes().put(ClaimMapping.build(ORGANIZATION_USER_ATTRIBUTE,
-                ORGANIZATION_USER_ATTRIBUTE, null, false),
+                        ORGANIZATION_USER_ATTRIBUTE, null, false),
                 context.getAuthenticatorProperties().get(ORGANIZATION_ATTRIBUTE));
     }
 
@@ -147,11 +147,10 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             String ownerTenant = context.getTenantDomain();
 
             Map<String, String> runtimeParams = getRuntimeParams(context);
-            if (StringUtils.isBlank(runtimeParams.get(ORG_PARAMETER))) {
+            String organizationName = runtimeParams.get(ORG_PARAMETER);
+            if (StringUtils.isBlank(organizationName)) {
                 throw handleAuthFailures(ERROR_CODE_ORG_PARAMETER_NOT_FOUND);
             }
-
-            String organizationName = runtimeParams.get(ORG_PARAMETER);
 
             // Get the shared service provider based on the requested organization.
             ServiceProvider sharedApplication = getSharedApplication(organizationName, application, ownerTenant);
@@ -198,7 +197,6 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             return AuthenticatorFlowStatus.INCOMPLETE;
         }
         return super.process(request, response, context);
-
     }
 
     private boolean validateOrganization(String organizationName, AuthenticationContext context)
@@ -264,7 +262,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         try {
             String sharedApplicationId = getOrgApplicationManager().resolveSharedAppResourceId(organizationName,
                     application, ownerOrganization).orElseThrow(() -> handleAuthFailures(
-                            ERROR_CODE_APPLICATION_NOT_SHARED));
+                    ERROR_CODE_APPLICATION_NOT_SHARED));
             return Optional.ofNullable(getApplicationManagementService().getApplicationByResourceId(sharedApplicationId,
                     organizationName)).orElseThrow(() -> handleAuthFailures(ERROR_CODE_INVALID_APPLICATION));
 

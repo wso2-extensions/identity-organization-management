@@ -39,6 +39,7 @@ public class OrgApplicationMgtDataHolder {
     private OrganizationManager organizationManager;
 
     private OrgApplicationMgtDataHolder() {
+
     }
 
     public static OrgApplicationMgtDataHolder getInstance() {

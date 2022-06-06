@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.application;
 
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -28,16 +27,6 @@ import java.util.Optional;
  * Interface for Organization Application Management.
  */
 public interface OrgApplicationManager {
-
-    /**
-     * Retrieve the application ({@link ServiceProvider}) for the given identifier and the tenant domain.
-     *
-     * @param applicationId application identifier.
-     * @param tenantDomain  tenant domain.
-     * @return instance of {@link ServiceProvider}.
-     * @throws OrganizationManagementException on errors when retrieving the application
-     */
-    ServiceProvider getOrgApplication(String applicationId, String tenantDomain) throws OrganizationManagementException;
 
     /**
      * Share the application to all the child organizations or to a list of child organizations based on the user input.

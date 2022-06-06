@@ -238,19 +238,19 @@ paths:
             type: string
         - name: application-id
           in: path
-          description: ID of the application which will be shared to child orgs.
+          description: ID of the application which will be shared to child organizations.
           required: true
           schema:
             type: string
       requestBody:
-        description: This represents user role mappings.
+        description: Array of IDs of child organizations, if not provided application will be shared to all child organizations.
         content:
           application/json:
             schema:
               type: array
               items:
                 type: string
-        required: true
+        required: false
       responses:
         '200':
           description: Ok

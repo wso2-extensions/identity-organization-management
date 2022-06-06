@@ -58,10 +58,6 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.cors.mgt.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
         </dependency>
         <dependency>

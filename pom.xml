@@ -201,11 +201,6 @@
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
-                <artifactId>org.wso2.carbon.identity.cors.mgt.core</artifactId>
-                <version>${carbon.identity.framework.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth</artifactId>
                 <version>${identity.inbound.auth.oauth.version}</version>
@@ -229,11 +224,6 @@
                 <groupId>org.wso2.carbon</groupId>
                 <artifactId>org.wso2.carbon.user.api</artifactId>
                 <version>${carbon.kernel.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
-                <artifactId>org.wso2.carbon.identity.cors.mgt.core</artifactId>
-                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.extension.identity.authenticator.utils</groupId>

@@ -30,21 +30,21 @@ public interface OrgApplicationMgtDAO {
     /**
      * Creates new entry for shared applications across organizations.
      *
-     * @param ownerTenantId  tenant owns the application.
-     * @param mainAppId      main application.
-     * @param sharedTenantId tenant to whom the application is shared.
-     * @param sharedAppId    shared application id.
+     * @param ownerTenantId  The tenant ID corresponding to the tenant where the main application resides.
+     * @param mainAppId      Unique identifier of the main application.
+     * @param sharedTenantId The tenant ID to whom the application is shared.
+     * @param sharedAppId    Unique identifier of the shared application.
      * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
      */
     void addSharedApplication(int ownerTenantId, String mainAppId, int sharedTenantId, String sharedAppId)
             throws OrganizationManagementException;
 
     /**
-     * Returns the Unique identifier of the shared application.
+     * Returns the unique identifier of the shared application.
      *
-     * @param ownerTenantId  tenant owns the application.
-     * @param sharedTenantId tenant to whom the application is shared.
-     * @param mainAppId      main application identifier.
+     * @param ownerTenantId  The tenant ID corresponding to the tenant where the main application resides.
+     * @param sharedTenantId The tenant ID to whom the application is shared.
+     * @param mainAppId      Main application identifier.
      * @return Unique identifier of the shared application.
      * @throws OrganizationManagementException the server exception is thrown in a failure to retrieve the entry.
      */
