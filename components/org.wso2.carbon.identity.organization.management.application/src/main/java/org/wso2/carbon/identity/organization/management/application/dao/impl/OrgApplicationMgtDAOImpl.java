@@ -79,6 +79,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     });
             return Optional.ofNullable(sharedAppId);
         } catch (DataAccessException e) {
+            //TODO: Update the vars after finalizing the table structure for sp_shared_app table.
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, parentAppId,
                     Integer.toString(parentTenantId));
         }

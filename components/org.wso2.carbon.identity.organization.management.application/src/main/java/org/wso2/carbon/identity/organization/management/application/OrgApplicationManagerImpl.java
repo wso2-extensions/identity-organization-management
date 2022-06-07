@@ -71,7 +71,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, Boolean.TRUE);
-
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
@@ -83,12 +82,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         for (ChildOrganizationDO child : filteredChildOrgs) {
             Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE);
-
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 shareApplication(ownerTenantDomain, childOrg, rootApplication);
             }
         }
-
     }
 
     @Override
@@ -103,7 +100,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             mainApplication = getApplicationManagementService().getServiceProvider(mainAppName,
                     ownerTenant);
-
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerTenant);
         }
@@ -138,7 +134,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         try {
-
             //TODO: finalize whether to use org id or tenant id.
             int parentOrgTenantId = getTenantId();
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
@@ -153,22 +148,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             Optional<String> mayBeSharedAppId = resolveSharedAppResourceId(sharedOrg.getId(),
                     mainApplication.getApplicationName(), ownerTenantDomain);
-
             if (mayBeSharedAppId.isPresent()) {
                 return;
             }
-
             // Create Oauth consumer app.
             OAuthConsumerAppDTO createdOAuthApp = createOAuthApplication();
-
             ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
-
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                     sharedOrg.getId(), getAuthenticatedUsername());
-
             getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
                     mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
-
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
                 | UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
@@ -189,7 +178,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setOAuthVersion(OAUTH_VERSION_2);
         consumerApp.setGrantTypes(AUTHORIZATION_CODE_GRANT);
         consumerApp.setCallbackUrl(callbackUrl);
-
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
@@ -201,17 +189,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 new InboundAuthenticationRequestConfig();
         inboundAuthenticationRequestConfig.setInboundAuthType(AUTH_TYPE_OAUTH_2);
         inboundAuthenticationRequestConfig.setInboundAuthKey(oAuthConsumerApp.getOauthConsumerKey());
-
         InboundAuthenticationConfig inboundAuthConfig = new InboundAuthenticationConfig();
         inboundAuthConfig.setInboundAuthenticationRequestConfigs(
                 new InboundAuthenticationRequestConfig[]{inboundAuthenticationRequestConfig});
-
         //TODO: Finalize the application name and description.
         ServiceProvider delegatedApplication = new ServiceProvider();
         delegatedApplication.setApplicationName("internal-" + mainApplication.getApplicationName());
         delegatedApplication.setDescription("delegate access from:" + mainApplication.getApplicationName());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
-
         return delegatedApplication;
     }
 

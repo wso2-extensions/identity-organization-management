@@ -148,8 +148,6 @@
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
 
-                            <!--org.wso2.carbon.base; version="(4.7.0, 5.0.0)",-->
-
                             org.wso2.carbon.extension.identity.helper; version="${identity.extension.utils.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework;
                             org.wso2.carbon.identity.application.authentication.framework.context;

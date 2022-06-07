@@ -127,9 +127,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         super.processAuthenticationResponse(request, response, context);
 
         // Add organization name to the user attributes.
-        context.getSubject().getUserAttributes().put(ClaimMapping.build(ORGANIZATION_USER_ATTRIBUTE,
-                        ORGANIZATION_USER_ATTRIBUTE, null, false),
-                context.getAuthenticatorProperties().get(ORGANIZATION_ATTRIBUTE));
+        context.getSubject().getUserAttributes()
+                .put(ClaimMapping.build(ORGANIZATION_USER_ATTRIBUTE, ORGANIZATION_USER_ATTRIBUTE, null, false),
+                        context.getAuthenticatorProperties().get(ORGANIZATION_ATTRIBUTE));
     }
 
     /**
@@ -226,7 +226,6 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         try {
             StringBuilder queryStringBuilder = new StringBuilder();
-
             queryStringBuilder.append(SESSION_DATA_KEY).append("=").append(urlEncode(context.getContextIdentifier()))
                     .append("&").append("idp").append("=").append(context.getExternalIdP().getName()).append("&")
                     .append("authenticator").append("=").append(getName());
@@ -239,7 +238,6 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             String url = FrameworkUtils.appendQueryParamsStringToUrl(getOrganizationRequestPageUrl(context),
                     queryStringBuilder.toString());
             response.sendRedirect(url);
-
         } catch (IOException | URLBuilderException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT, e);
         }
@@ -340,7 +338,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
      * Get the request organization page url from the application-authentication.xml file.
      *
      * @param context the AuthenticationContext
-     * @return loginPage
+     * @return The url path to request organization name.
      */
     private String getOrganizationRequestPageUrl(AuthenticationContext context) throws URLBuilderException {
 

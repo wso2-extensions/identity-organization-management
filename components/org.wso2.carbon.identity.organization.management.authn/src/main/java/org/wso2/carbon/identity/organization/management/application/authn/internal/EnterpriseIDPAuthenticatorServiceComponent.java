@@ -56,7 +56,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
                 log.debug("Enterprise IDP Authenticator bundle is activated");
             }
         } catch (Exception e) {
-            log.info(" Error while activating enterprise idp authenticator ", e);
+            log.error(" Error while activating enterprise idp authenticator ", e);
         }
     }
 
@@ -69,10 +69,10 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
     }
 
     @Reference(name = "identity.application.management.component",
-               service = ApplicationManagementService.class,
-               cardinality = ReferenceCardinality.MANDATORY,
-               policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetApplicationManagementService")
+            service = ApplicationManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetApplicationManagementService")
     protected void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         if (log.isDebugEnabled()) {
@@ -91,10 +91,10 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
     }
 
     @Reference(name = "identity.oauth.component",
-               service = OAuthAdminServiceImpl.class,
-               cardinality = ReferenceCardinality.MANDATORY,
-               policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetOAuthAdminService")
+            service = OAuthAdminServiceImpl.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOAuthAdminService")
     protected void setOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
 
         if (log.isDebugEnabled()) {
@@ -116,8 +116,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetOrganizationManager")
-    protected void setOrganizationManager(
-            OrganizationManager organizationManager) {
+    protected void setOrganizationManager(OrganizationManager organizationManager) {
 
         if (log.isDebugEnabled()) {
             log.debug("Organization Manager is set in the Authenticator");
@@ -126,8 +125,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
                 .setOrganizationManager(organizationManager);
     }
 
-    protected void unsetOrganizationManager(
-            OrganizationManager organizationManager) {
+    protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
         if (log.isDebugEnabled()) {
             log.debug("Organization Manager is unset in the Authenticator");
@@ -136,22 +134,19 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
     }
 
     @Reference(name = "identity.organization.application.management.component",
-               service = OrgApplicationManager.class,
-               cardinality = ReferenceCardinality.MANDATORY,
-               policy = ReferencePolicy.DYNAMIC,
-               unbind = "unsetOrgApplicationManager")
-    protected void setOrgApplicationManager(
-            OrgApplicationManager orgApplicationManager) {
+            service = OrgApplicationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrgApplicationManager")
+    protected void setOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
 
         if (log.isDebugEnabled()) {
             log.debug("Organization Application Manager is set in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                .setOrgApplicationManager(orgApplicationManager);
+        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrgApplicationManager(orgApplicationManager);
     }
 
-    protected void unsetOrgApplicationManager(
-            OrgApplicationManager orgApplicationManager) {
+    protected void unsetOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
 
         if (log.isDebugEnabled()) {
             log.debug("Organization Application Manager is unset in the Authenticator");
