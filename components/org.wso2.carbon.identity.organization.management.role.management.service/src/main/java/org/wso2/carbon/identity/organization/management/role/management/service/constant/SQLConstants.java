@@ -154,17 +154,26 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_USER_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "%1$d;)";
 
+    public static final String DELETE_USERS_FROM_ROLE_USING_ROLE_ID = "DELETE FROM UM_ORG_ROLE_USER WHERE " +
+            "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+
     public static final String DELETE_GROUPS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_GROUP WHERE ";
 
     public static final String DELETE_GROUPS_FROM_ROLE_MAPPING = "(UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_GROUP_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;)";
 
+    public static final String DELETE_GROUPS_FROM_ROLE_USING_ROLE_ID = "DELETE FROM UM_ORG_ROLE_GROUP WHERE " +
+            "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+
     public static final String DELETE_PERMISSIONS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_PERMISSION WHERE ";
 
     public static final String DELETE_PERMISSIONS_FROM_ROLE_MAPPING = "(UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_PERMISSION_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d;)";
+
+    public static final String DELETE_PERMISSIONS_FROM_ROLE_USING_ROLE_ID = "DELETE FROM UM_ORG_ROLE_PERMISSION " +
+            "WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String DELETE_ROLE_FROM_ORGANIZATION = "DELETE FROM UM_ORG_ROLE WHERE UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_ID=:" +

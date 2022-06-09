@@ -54,7 +54,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NOT_NULL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -69,127 +69,103 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            validateRoleName(organizationId, role.getDisplayName());
-            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-            List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
-            }
-            if (CollectionUtils.isNotEmpty(groupIdList)) {
-                validateGroups(groupIdList, getTenantId());
-            }
-            roleManagementDAO.createRole(organizationId, getTenantId(), role);
-            return new Role(role.getId(), role.getDisplayName());
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        validateOrganizationId(organizationId);
+        validateRoleName(organizationId, role.getDisplayName());
+        List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(userIdList)) {
+            validateUsers(userIdList, getTenantId());
         }
+        List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(groupIdList)) {
+            validateGroups(groupIdList, getTenantId());
+        }
+        roleManagementDAO.createRole(organizationId, getTenantId(), role);
+        return new Role(role.getId(), role.getDisplayName());
     }
 
     @Override
     public Role getRoleById(String organizationId, String roleId) throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            validateRoleId(organizationId, roleId);
-            return roleManagementDAO.getRoleById(organizationId, roleId, getTenantId());
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
-        }
+        validateOrganizationId(organizationId);
+        validateRoleId(organizationId, roleId);
+        return roleManagementDAO.getRoleById(organizationId, roleId, getTenantId());
     }
 
     @Override
     public List<Role> getOrganizationRoles(int limit, String filter, String organizationId)
             throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            List<ExpressionNode> expressionNodes = new ArrayList<>();
-            List<String> operators = new ArrayList<>();
-            getExpressionNodes(filter, expressionNodes, operators);
-            return roleManagementDAO.getOrganizationRoles(organizationId, getTenantId(), limit,
-                    expressionNodes, operators);
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
-        }
+        validateOrganizationId(organizationId);
+        List<ExpressionNode> expressionNodes = new ArrayList<>();
+        List<String> operators = new ArrayList<>();
+        getExpressionNodes(filter, expressionNodes, operators);
+        return roleManagementDAO.getOrganizationRoles(organizationId, getTenantId(), limit,
+                expressionNodes, operators);
     }
 
     @Override
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            validateRoleId(organizationId, roleId);
-            for (PatchOperation patchOperation : patchOperations) {
-                String patchPath = patchOperation.getPath();
-                String patchOp = patchOperation.getOp();
-                if (StringUtils.contains(patchPath, "[")) {
-                    patchPath = StringUtils.strip(patchPath.split("\\[")[0]);
-                }
-                if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) &&
-                        StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
-                    throw handleClientException(ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE, DISPLAY_NAME,
-                            PATCH_OP_REMOVE.toLowerCase());
-                }
-                if (!(StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) ||
-                        StringUtils.equalsIgnoreCase(patchPath, USERS) ||
-                        StringUtils.equalsIgnoreCase(patchPath, GROUPS) ||
-                        StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS))) {
-                    throw handleClientException(ERROR_CODE_INVALID_ATTRIBUTE_PATCHING, patchPath,
-                            patchOperation.getOp());
-                }
-                if (CollectionUtils.isNotEmpty(patchOperation.getValues())) {
-                    if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
-                        validateUsers(patchOperation.getValues(), getTenantId());
-                    } else if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
-                        validateGroups(patchOperation.getValues(), getTenantId());
-                    } else if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME)) {
-                        validatePatchOpDisplayName(patchOperation.getValues(), organizationId);
-                    }
+        validateOrganizationId(organizationId);
+        validateRoleId(organizationId, roleId);
+        for (PatchOperation patchOperation : patchOperations) {
+            String patchPath = patchOperation.getPath();
+            String patchOp = patchOperation.getOp();
+            if (StringUtils.contains(patchPath, "[")) {
+                patchPath = StringUtils.strip(patchPath.split("\\[")[0]);
+            }
+            if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) &&
+                    StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
+                throw handleClientException(ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE, DISPLAY_NAME,
+                        PATCH_OP_REMOVE.toLowerCase());
+            }
+            if (!(StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) ||
+                    StringUtils.equalsIgnoreCase(patchPath, USERS) ||
+                    StringUtils.equalsIgnoreCase(patchPath, GROUPS) ||
+                    StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS))) {
+                throw handleClientException(ERROR_CODE_INVALID_ATTRIBUTE_PATCHING, patchPath,
+                        patchOperation.getOp());
+            }
+            if (CollectionUtils.isNotEmpty(patchOperation.getValues())) {
+                if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
+                    validateUsers(patchOperation.getValues(), getTenantId());
+                } else if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
+                    validateGroups(patchOperation.getValues(), getTenantId());
+                } else if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME)) {
+                    validatePatchOpDisplayName(patchOperation.getValues(), organizationId);
                 }
             }
-            return roleManagementDAO.patchRole(organizationId, roleId, getTenantId(), patchOperations);
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
         }
+        return roleManagementDAO.patchRole(organizationId, roleId, getTenantId(), patchOperations);
     }
 
     @Override
     public Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            validateRoleId(organizationId, roleId);
-            if (StringUtils.isBlank(role.getDisplayName())) {
-                throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NOT_NULL);
-            }
-            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-            List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId)
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
-            }
-            if (CollectionUtils.isNotEmpty(groupIdList)) {
-                validateGroups(groupIdList, getTenantId());
-            }
-            return roleManagementDAO.putRole(organizationId, roleId, role, getTenantId());
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
+        validateOrganizationId(organizationId);
+        validateRoleId(organizationId, roleId);
+        if (StringUtils.isBlank(role.getDisplayName())) {
+            throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
         }
+        List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(userIdList)) {
+            validateUsers(userIdList, getTenantId());
+        }
+        List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(groupIdList)) {
+            validateGroups(groupIdList, getTenantId());
+        }
+        return roleManagementDAO.putRole(organizationId, roleId, role, getTenantId());
     }
 
     @Override
     public void deleteRole(String organizationId, String roleId) throws OrganizationManagementException {
 
-        try {
-            validateOrganizationId(organizationId);
-            validateRoleId(organizationId, roleId);
-            roleManagementDAO.deleteRole(organizationId, roleId);
-        } catch (OrganizationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
-        }
+        validateOrganizationId(organizationId);
+        validateRoleId(organizationId, roleId);
+        roleManagementDAO.deleteRole(organizationId, roleId);
     }
 
     /**
@@ -264,11 +240,11 @@ public class RoleManagerImpl implements RoleManager {
     private void validateRoleName(String organizationId, String roleName) throws OrganizationManagementException {
 
         if (StringUtils.isBlank(roleName)) {
-            throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NOT_NULL);
+            throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
         }
         boolean checkRoleNameExists = roleManagementDAO.checkRoleExists(organizationId, null,
                 StringUtils.strip(roleName));
-        if (!checkRoleNameExists) {
+        if (checkRoleNameExists) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS, roleName, organizationId);
         }
     }

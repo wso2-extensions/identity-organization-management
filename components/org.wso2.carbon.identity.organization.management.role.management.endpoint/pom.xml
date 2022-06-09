@@ -16,7 +16,6 @@
     <url>http://www.wso2.com</url>
     <packaging>war</packaging>
 
-
     <dependencies>
         <dependency>
             <groupId>org.apache.cxf</groupId>

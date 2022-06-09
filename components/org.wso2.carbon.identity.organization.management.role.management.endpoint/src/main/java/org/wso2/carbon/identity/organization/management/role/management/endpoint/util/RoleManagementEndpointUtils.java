@@ -40,6 +40,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.e
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getContext;
 
@@ -120,7 +121,7 @@ public class RoleManagementEndpointUtils {
      */
     public static URI getUri(String organizationId, String id, String resourcePath, ErrorMessages errorMessage) {
 
-        String endpoint = PATH_SEPARATOR + V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
+        String endpoint = V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH +
                 PATH_SEPARATOR + organizationId + PATH_SEPARATOR + resourcePath + PATH_SEPARATOR + id;
         try {
             return URI.create(ServiceURLBuilder.create().addPath(getContext(endpoint))
@@ -142,7 +143,8 @@ public class RoleManagementEndpointUtils {
      */
     private static boolean isConflictError(OrganizationManagementException e) {
 
-        return ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES.getCode().equals(e.getErrorCode());
+        return ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES.getCode().equals(e.getErrorCode())
+                || ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS.getCode().equals(e.getErrorCode());
     }
 
     /**

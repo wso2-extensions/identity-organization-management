@@ -63,6 +63,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_USER_URI;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_VALUE_NULL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
@@ -177,12 +178,11 @@ public class RoleManagementService {
             for (RolePatchOperation rolePatchOperation : patchOperationList) {
                 List<String> values = rolePatchOperation.getValue();
                 String patchOp = rolePatchOperation.getOp().toString();
-                if (CollectionUtils.isEmpty(values) && StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
+                if (StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
                     PatchOperation patchOperation = new PatchOperation(StringUtils.strip(rolePatchOperation.getOp()
                             .toString()), StringUtils.strip(rolePatchOperation.getPath()));
                     patchOperations.add(patchOperation);
                 } else if (CollectionUtils.isNotEmpty(values) && (StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_ADD) ||
-                        StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE) ||
                         StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REPLACE))) {
                     PatchOperation patchOperation = new PatchOperation(StringUtils.strip(rolePatchOperation.getOp()
                             .toString()), StringUtils.strip(rolePatchOperation.getPath()), values);
@@ -214,7 +214,11 @@ public class RoleManagementService {
      * @return Put role response.
      */
     public Response putRole(String organizationId, String roleId, RolePutRequest rolePutRequest) {
+
         try {
+            if (StringUtils.isBlank(rolePutRequest.getDisplayName())) {
+                throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
+            }
             String displayName = rolePutRequest.getDisplayName();
             List<RolePutRequestUser> users = rolePutRequest.getUsers();
             List<RolePutRequestGroup> groups = rolePutRequest.getGroups();
@@ -222,8 +226,8 @@ public class RoleManagementService {
 
             Role role = RoleManagementEndpointUtils.getRoleManager().putRole(organizationId, roleId,
                     new Role(roleId, displayName,
-                            groups.stream().map(g -> new Group(g.getValue())).collect(Collectors.toList()),
-                            users.stream().map(u -> new User(u.getValue())).collect(Collectors.toList()),
+                            groups.stream().map(group -> new Group(group.getValue())).collect(Collectors.toList()),
+                            users.stream().map(user -> new User(user.getValue())).collect(Collectors.toList()),
                             permissions));
             URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,
                     ERROR_CODE_ERROR_BUILDING_ROLE_URI);

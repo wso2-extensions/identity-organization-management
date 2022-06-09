@@ -67,7 +67,7 @@ paths:
       summary:
         Get roles inside an organization.
       description:
-        This API returns roles in an organization based on the provided filter, sort and pagination parameters
+        This API returns roles in an organization based on the provided filter and limit.
       parameters:
         - $ref: '#/components/parameters/filterQueryParam'
         - $ref: '#/components/parameters/limitQueryParam'
