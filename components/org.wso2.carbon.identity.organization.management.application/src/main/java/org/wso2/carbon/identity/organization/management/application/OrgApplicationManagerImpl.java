@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
@@ -47,9 +48,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTHORIZATION_CODE_GRANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.OAUTH_VERSION_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
@@ -175,8 +174,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
         String clientId = UUID.randomUUID().toString();
         consumerApp.setOauthConsumerKey(clientId);
-        consumerApp.setOAuthVersion(OAUTH_VERSION_2);
-        consumerApp.setGrantTypes(AUTHORIZATION_CODE_GRANT);
+        consumerApp.setOAuthVersion(OAuthConstants.OAuthVersions.VERSION_2);
+        consumerApp.setGrantTypes(OAuthConstants.GrantTypes.AUTHORIZATION_CODE);
         consumerApp.setCallbackUrl(callbackUrl);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }

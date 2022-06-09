@@ -149,26 +149,26 @@
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
 
                             org.wso2.carbon.extension.identity.helper; version="${identity.extension.utils.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework;
-                            org.wso2.carbon.identity.application.authentication.framework.context;
-                            org.wso2.carbon.identity.application.authentication.framework.exception;
-                            org.wso2.carbon.identity.application.authentication.framework.util;
-                            org.wso2.carbon.identity.application.authentication.framework.inbound;
-                            org.wso2.carbon.identity.application.authentication.framework.model;
-                            org.wso2.carbon.identity.application.authentication.framework.config.model;
-                            org.wso2.carbon.identity.base;
-                            org.wso2.carbon.identity.core;
-                            org.wso2.carbon.identity.core.util;
-                            org.wso2.carbon.identity.application.mgt;
-                            org.wso2.carbon.identity.application.common;
-                            org.wso2.carbon.identity.application.common.model;
+                            org.wso2.carbon.identity.application.authentication.framework; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.context; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.inbound; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.base; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.mgt; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.util; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.oauth;
+                            org.wso2.carbon.identity.oauth; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc; version="${identity.outbound.auth.oidc.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.application;
-                            org.wso2.carbon.identity.organization.management.service;
-                            org.wso2.carbon.identity.organization.management.service.constant;
+                            org.wso2.carbon.identity.organization.management.application; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.constant; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>

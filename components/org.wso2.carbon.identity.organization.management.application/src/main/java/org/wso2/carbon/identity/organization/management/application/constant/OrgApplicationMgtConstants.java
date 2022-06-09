@@ -23,10 +23,6 @@ package org.wso2.carbon.identity.organization.management.application.constant;
  */
 public class OrgApplicationMgtConstants {
 
-    public static final String VIEW_SHARED_APP_ID = "SHARED_APP_ID";
     public static final String TENANT = "TENANT";
-    public static final String OAUTH_VERSION_2 = "OAuth-2.0";
-    public static final String AUTHORIZATION_CODE_GRANT = "authorization_code";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
-
 }

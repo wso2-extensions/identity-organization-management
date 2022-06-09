@@ -26,7 +26,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 
 import java.util.Optional;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.VIEW_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID;
@@ -71,7 +70,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         String sharedAppId;
         try {
             sharedAppId = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_APP_ID,
-                    (resultSet, rowNumber) -> resultSet.getString(VIEW_SHARED_APP_ID),
+                    (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID, parentTenantId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID, sharedTenantId);
