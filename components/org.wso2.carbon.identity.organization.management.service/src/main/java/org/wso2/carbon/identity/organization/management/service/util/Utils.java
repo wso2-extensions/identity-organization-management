@@ -98,6 +98,26 @@ public class Utils {
     }
 
     /**
+     * Get the tenant domain.
+     *
+     * @return the tenant domain.
+     */
+    public static String getTenantDomain() {
+
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+    }
+
+    /**
+     * Get the username of the authenticated user.
+     *
+     * @return the username of the authenticated user.
+     */
+    public static String getAuthenticatedUsername() {
+
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+    }
+
+    /**
      * Get the user ID.
      *
      * @return the user ID.

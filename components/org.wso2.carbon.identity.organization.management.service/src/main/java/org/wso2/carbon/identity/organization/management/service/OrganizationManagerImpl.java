@@ -125,6 +125,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -468,7 +469,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     private boolean isUserAuthorizedToCreateChildOrganizationInRoot() throws OrganizationManagementServerException {
 
-        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String username = getAuthenticatedUsername();
         try {
             UserRealm tenantUserRealm = getRealmService().getTenantUserRealm(getTenantId());
             AuthorizationManager authorizationManager = tenantUserRealm.getAuthorizationManager();
