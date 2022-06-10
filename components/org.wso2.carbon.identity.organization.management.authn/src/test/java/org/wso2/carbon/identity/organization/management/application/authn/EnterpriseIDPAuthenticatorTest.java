@@ -41,7 +41,7 @@ import static org.wso2.carbon.identity.organization.management.application.authn
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
 
-/***
+/**
  * Unit test class for EnterpriseIDPAuthenticatorTest class.
  */
 @PrepareForTest({EnterpriseIDPAuthenticator.class, EnterpriseIDPAuthenticatorDataHolder.class,

@@ -94,7 +94,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
  * <p/>
  * Class extends the {@link OpenIDConnectAuthenticator}.
  */
-@SuppressFBWarnings
 public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     private static final Log log = LogFactory.getLog(EnterpriseIDPAuthenticator.class);
@@ -221,6 +220,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
      * @param context  authentication context.
      * @throws AuthenticationFailedException on errors when setting the redirect URL to capture the organization name.
      */
+    @SuppressFBWarnings(value = "UNVALIDATED_REDIRECT", justification = "Redirect params are not based on user inputs.")
     private void redirectToOrgNameCapture(HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
 
