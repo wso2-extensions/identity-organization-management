@@ -326,7 +326,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_BUILDING_GROUP_URI("65051", "Unable to build create group URI.",
                 "Server encountered an error while building URL for group with groupId %s."),
         ERROR_CODE_ERROR_BUILDING_USER_URI("65052", "Unable to build create user URI.",
-                "Server encountered an error while building URL for user with userId %s.");
+                "Server encountered an error while building URL for user with userId %s."),
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65053", "Unable to retrieve the application.",
                 "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
         ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65054", "Unable to resolve the shared application", "Server " +
