@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
@@ -71,13 +70,17 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(userIdList)) {
-            validateUsers(userIdList, getTenantId());
+        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userIdList)) {
+                validateUsers(userIdList, getTenantId());
+            }
         }
-        List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(groupIdList)) {
-            validateGroups(groupIdList, getTenantId());
+        if (CollectionUtils.isNotEmpty(role.getGroups())) {
+            List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(groupIdList)) {
+                validateGroups(groupIdList, getTenantId());
+            }
         }
         roleManagementDAO.createRole(organizationId, getTenantId(), role);
         return new Role(role.getId(), role.getDisplayName());
@@ -148,14 +151,18 @@ public class RoleManagerImpl implements RoleManager {
         if (StringUtils.isBlank(role.getDisplayName())) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
         }
-        List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(userIdList)) {
-            validateUsers(userIdList, getTenantId());
+        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userIdList)) {
+                validateUsers(userIdList, getTenantId());
+            }
         }
-        List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(groupIdList)) {
-            validateGroups(groupIdList, getTenantId());
+        if (CollectionUtils.isNotEmpty(role.getGroups())) {
+            List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId)
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(groupIdList)) {
+                validateGroups(groupIdList, getTenantId());
+            }
         }
         return roleManagementDAO.putRole(organizationId, roleId, role, getTenantId());
     }
