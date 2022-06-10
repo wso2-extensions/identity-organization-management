@@ -74,4 +74,10 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
 
         return organizationManagementService.addOrganization(organizationPOSTRequest);
     }
+
+    @Override
+    public Response shareOrgApplication(String organizationId, String applicationId, List<String> sharedOrg) {
+
+        return organizationManagementService.shareOrganizationApplication(organizationId, applicationId, sharedOrg);
+    }
 }

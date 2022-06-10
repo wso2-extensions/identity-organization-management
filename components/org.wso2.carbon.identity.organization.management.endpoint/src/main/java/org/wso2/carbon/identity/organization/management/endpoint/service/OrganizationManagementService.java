@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
@@ -201,6 +202,27 @@ public class OrganizationManagementService {
             String organizationId = organization.getId();
             return Response.created(getResourceLocation(organizationId)).entity
                     (getOrganizationResponse(organization)).build();
+        } catch (OrganizationManagementClientException e) {
+            return handleClientErrorResponse(e, LOG);
+        } catch (OrganizationManagementException e) {
+            return handleServerErrorResponse(e, LOG);
+        }
+    }
+
+    /**
+     * Share an application to child organizations.
+     *
+     * @param organizationId unique identifier of the organization owning the application.
+     * @param applicationId application identifier.
+     * @param sharedOrg optional list of identifiers of child organizations to share the application.
+     *
+     * @return the status of the operation.
+     */
+    public Response shareOrganizationApplication(String organizationId, String applicationId, List<String> sharedOrg) {
+
+        try {
+            getOrgApplicationManager().shareOrganizationApplication(organizationId, applicationId, sharedOrg);
+            return Response.ok().build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -471,5 +493,11 @@ public class OrganizationManagementService {
 
         return (OrganizationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getOSGiService
                 (OrganizationManager.class, null);
+    }
+
+    private OrgApplicationManager getOrgApplicationManager() {
+
+        return (OrgApplicationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getOSGiService
+                (OrgApplicationManager.class, null);
     }
 }
