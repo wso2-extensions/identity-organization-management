@@ -32,6 +32,7 @@ public class Organization {
     private String description;
     private String status;
     private String type;
+    private int tenantId;
     private ParentOrganizationDO parent = new ParentOrganizationDO();
     private Instant lastModified;
     private Instant created;
@@ -136,5 +137,15 @@ public class Organization {
     public void setType(String type) {
 
         this.type = type;
+    }
+
+    public int getTenantId() {
+
+        return tenantId;
+    }
+
+    public void setTenantId(int tenantId) {
+
+        this.tenantId = tenantId;
     }
 }
