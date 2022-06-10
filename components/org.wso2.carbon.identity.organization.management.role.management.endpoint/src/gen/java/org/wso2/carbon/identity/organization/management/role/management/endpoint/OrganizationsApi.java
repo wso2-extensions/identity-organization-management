@@ -80,7 +80,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get roles inside an organization.", notes = "This API returns roles in an organization based on the provided filter, sort and pagination parameters", response = RolesListResponse.class, authorizations = {
+    @ApiOperation(value = "Get roles inside an organization.", notes = "This API returns roles in an organization based on the provided filter and limit.", response = RolesListResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             

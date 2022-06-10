@@ -209,7 +209,8 @@ public class RoleManagerImpl implements RoleManager {
 
         boolean checkOrganizationExists = getOrganizationManager().isOrganizationExistById(organizationId);
         if (!checkOrganizationExists) {
-            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId,
+                    Integer.toString(getTenantId()));
         }
     }
 

@@ -171,7 +171,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
                     String query = buildQueryForInsertAndRemoveValues(role.getUsers().size(), ADD_ROLE_USER_MAPPING,
-                            ADD_ROLE_USER_MAPPING, COMMA_SEPARATOR);
+                            ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
                             role.getId(), query, USERS);
                 }
@@ -519,8 +519,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             assignRoleAttributes(values, roleId, query, USERS);
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             removeAttributesFromRoleUsingRoleId(roleId, GROUPS);
-            String query = buildQueryForInsertAndRemoveValues(values.size(), ADD_ROLE_GROUP_MAPPING_INSERT_VALUES,
-                    DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, COMMA_SEPARATOR);
+            String query = buildQueryForInsertAndRemoveValues(values.size(), ADD_ROLE_GROUP_MAPPING,
+                    ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
             assignRoleAttributes(values, roleId, query, GROUPS);
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             removeAttributesFromRoleUsingRoleId(roleId, PERMISSIONS);
@@ -942,7 +942,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 template.executeInsert(query,
                         namedPreparedStatement -> {
                             for (int i = 0; i < numberOfGroups; i++) {
-                                namedPreparedStatement.setString(finalColumnName, valueList.get(i));
+                                namedPreparedStatement.setString(finalColumnName + i , valueList.get(i));
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i,
                                         roleId);
                             }
