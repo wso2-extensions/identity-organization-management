@@ -31,8 +31,6 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_RESOURCE_PATH = "v1.0/organizations/%s";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
     public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
-    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
-
     public static final String VIEW_ID_COLUMN = "UM_ID";
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
@@ -44,7 +42,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
     public static final String VIEW_TENANT_ID_COLUMN = "UM_TENANT_ID";
-
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -52,7 +49,6 @@ public class OrganizationManagementConstants {
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
     public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
-
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
     public static final String ORGANIZATION_ID_FIELD = "id";
@@ -60,16 +56,13 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
     public static final String ORGANIZATION_STATUS_FIELD = "status";
-
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
-
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "view";
-
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -79,8 +72,9 @@ public class OrganizationManagementConstants {
     public static final String GT = "gt";
     public static final String LT = "lt";
     public static final String AND = "and";
-
-    private static Map<String, String> attributeColumnMap = new HashMap<>();
+    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
+    private static final Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     static {
 
@@ -93,8 +87,6 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
-
-    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for organization types.
@@ -187,25 +179,32 @@ public class OrganizationManagementConstants {
                 "Organization type should be defined."),
         ERROR_CODE_INVALID_ORGANIZATION_TYPE("60034", "Invalid organization type.", "The organization " +
                 "type should be 'TENANT' or 'STRUCTURAL'."),
-        ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE("60035", "Unable to remove a required attribute.",
+        ERROR_CODE_INVALID_APPLICATION("60035", "Invalid application", "The requested application %s is invalid."),
+        ERROR_CODE_ORG_PARAMETER_NOT_FOUND("60036", "Organization parameter could not be found.", "The organization " +
+                "parameter for shared application authentication is not found."),
+        ERROR_CODE_APPLICATION_NOT_SHARED("60037", "Application not shared with organization.", "The " +
+                "application %s is not shared with organization with ID %s."),
+        ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE("60038", "Unable to remove a required attribute.",
                 "Cannot remove the required attribute %s with operation %s."),
-        ERROR_CODE_INVALID_ATTRIBUTE_PATCHING("60036", "Invalid attribute.",
+        ERROR_CODE_INVALID_ATTRIBUTE_PATCHING("60039", "Invalid attribute.",
                 "Invalid attribute %s for operation %s."),
-        ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES("60037", "The display name cannot have multiple values.",
+        ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES("60040", "The display name cannot have multiple values.",
                 "The display name should have single value."),
-        ERROR_CODE_ROLE_DISPLAY_NAME_NULL("60038", "Role name cannot be null",
+        ERROR_CODE_ROLE_DISPLAY_NAME_NULL("60041", "Role name cannot be null",
                 "Role name cannot be null."),
-        ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS("60039", "Role name already exists.",
+        ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS("60042", "Role name already exists.",
                 "Role name %s exists in organization %s"),
-        ERROR_CODE_INVALID_ROLE("60040", "Invalid role.", "Role with ID: %s doesn't exist."),
-        ERROR_CODE_REMOVE_OP_VALUES("60041", "Remove patch operation values are passed with the path.",
+        ERROR_CODE_INVALID_ROLE("60043", "Invalid role.", "Role with ID: %s doesn't exist."),
+        ERROR_CODE_REMOVE_OP_VALUES("60044", "Remove patch operation values are passed with the path.",
                 "Remove patch operation values are passed along with the path."),
-        ERROR_CODE_INVALID_USER_ID("60042", "Invalid user.", "User with ID: %s doesn't exist."),
-        ERROR_CODE_INVALID_GROUP_ID("60043", "Invalid group.", "Invalid group %s."),
-        ERROR_CODE_PATCH_VALUE_NULL("60044", "Values cannot be null",
+        ERROR_CODE_INVALID_USER_ID("60045", "Invalid user.", "User with ID: %s doesn't exist."),
+        ERROR_CODE_INVALID_GROUP_ID("60046", "Invalid group.", "Invalid group %s."),
+        ERROR_CODE_PATCH_VALUE_NULL("60047", "Values cannot be null",
                 "The patch values cannot be null for ADD and REPLACE operations."),
-        ERROR_CODE_INVALID_ATTRIBUTE("60045", "Invalid attribute to assign for a role",
+        ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
+        
+      
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
@@ -328,6 +327,19 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while building URL for group with groupId %s."),
         ERROR_CODE_ERROR_BUILDING_USER_URI("65052", "Unable to build create user URI.",
                 "Server encountered an error while building URL for user with userId %s.");
+        ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65053", "Unable to retrieve the application.",
+                "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
+        ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65054", "Unable to resolve the shared application", "Server " +
+                "encountered an error while resolving the shared application for application: %s in tenant: %s."),
+        ERROR_CODE_ERROR_SHARING_APPLICATION("65055", "Unable to share the application",
+                "Server encountered an error when sharing application: %s to organization: %s."),
+        ERROR_CODE_ERROR_LINK_APPLICATIONS("65056", "Unable to link the shared application.",
+                "Server encountered an error when linking the application: %s to shared application: %s."),
+        ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65057", "Unable to resolve the enterpriseIDP shared app." +
+                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65058", "Unable to redirect to request organization.",
+                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
+        ;
 
         private final String code;
         private final String message;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+  ~ Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
-    <name>WSO2 - Organization Management Service</name>
+    <artifactId>org.wso2.carbon.identity.organization.management.application</artifactId>
+    <name>WSO2 - Organization Application Management</name>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -64,11 +64,7 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.multitenancy</groupId>
-            <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
+            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
         </dependency>
 
         <!--Test Dependencies-->
@@ -110,61 +106,50 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
-                        <Bundle-Description>Organization Management Service Bundle</Bundle-Description>
-                        <Private-Package>org.wso2.carbon.identity.organization.management.service.internal
+                        <Private-Package>
+                            org.wso2.carbon.identity.organization.management.application.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.management.service.internal,
-                            org.wso2.carbon.identity.organization.management.service.*;
-                            version="${identity.organization.management.exp.pkg.version}",
+                            !org.wso2.carbon.identity.organization.management.application.internal,
+                            org.wso2.carbon.identity.organization.management.application.*; version="${project.version}"
                         </Export-Package>
                         <Import-Package>
                             javax.sql,
-                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
-                            org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
-                            org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
-                            org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
-                            org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
+                            org.apache.commons.logging; version="${org.apache.commons.logging.imp.pkg.version.range}",
+                            org.apache.commons.collections; version="${org.apache.commons.collections.imp.pkg.version.range}",
+                            org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
+                            org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.context; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.inbound; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.mgt; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.base; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.cache; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.persistence; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth; version="${identity.inbound.auth.oauth.import.version.range}",
+                            org.wso2.carbon.identity.oauth.common; version="${identity.inbound.auth.oauth.import.version.range}",
+                            org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
-                            org.wso2.carbon.identity.base;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.cache;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.model;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.persistence;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.cache;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.dao.impl;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.model;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.stratos.common.constants;version="${carbon.commons.imp.pkg.version.range}",
-                            org.wso2.carbon.stratos.common.exception;version="${carbon.commons.imp.pkg.version.range}",
-                            org.wso2.carbon.tenant.mgt.services;version="${carbon.multitenancy.package.import.version.range}",
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}"
+                            org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.constant; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.model; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.util; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
-                    <systemPropertyVariables>
-                        <jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
-                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
@@ -197,27 +182,9 @@
                             <goal>report-integration</goal>
                         </goals>
                     </execution>
-                    <execution>
-                        <id>default-check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <rule implementation="org.jacoco.maven.RuleConfiguration">
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>COMPLEXITY</counter>
-                                            <value>COVEREDRATIO</value>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
 </project>
