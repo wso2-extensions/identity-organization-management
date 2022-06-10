@@ -70,7 +70,7 @@ public class RoleManagerImpl implements RoleManager {
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
         validateOrganizationId(organizationId);
-        validateRoleName(organizationId, role.getDisplayName());
+        validateRoleNameNotExist(organizationId, role.getDisplayName());
         List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(userIdList)) {
             validateUsers(userIdList, getTenantId());
@@ -238,7 +238,8 @@ public class RoleManagerImpl implements RoleManager {
      * @throws OrganizationManagementException This exception is thrown if an error occurs while validating
      *                                         the role name.
      */
-    private void validateRoleName(String organizationId, String roleName) throws OrganizationManagementException {
+    private void validateRoleNameNotExist(String organizationId, String roleName)
+            throws OrganizationManagementException {
 
         if (StringUtils.isBlank(roleName)) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
@@ -288,6 +289,6 @@ public class RoleManagerImpl implements RoleManager {
         if (values.size() > 1) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES);
         }
-        validateRoleName(organizationId, values.get(0));
+        validateRoleNameNotExist(organizationId, values.get(0));
     }
 }
