@@ -35,7 +35,7 @@ public class RolePutResponse  {
   
     private String displayName;
     private RolePutResponseMeta meta;
-    private String id;
+    private String value;
 
     /**
     **/
@@ -75,20 +75,20 @@ public class RolePutResponse  {
 
     /**
     **/
-    public RolePutResponse id(String id) {
+    public RolePutResponse value(String value) {
 
-        this.id = id;
+        this.value = value;
         return this;
     }
     
     @ApiModelProperty(example = "4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
-    @JsonProperty("id")
+    @JsonProperty("value")
     @Valid
-    public String getId() {
-        return id;
+    public String getValue() {
+        return value;
     }
-    public void setId(String id) {
-        this.id = id;
+    public void setValue(String value) {
+        this.value = value;
     }
 
 
@@ -105,12 +105,12 @@ public class RolePutResponse  {
         RolePutResponse rolePutResponse = (RolePutResponse) o;
         return Objects.equals(this.displayName, rolePutResponse.displayName) &&
             Objects.equals(this.meta, rolePutResponse.meta) &&
-            Objects.equals(this.id, rolePutResponse.id);
+            Objects.equals(this.value, rolePutResponse.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(displayName, meta, id);
+        return Objects.hash(displayName, meta, value);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class RolePutResponse  {
         
         sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
         sb.append("    meta: ").append(toIndentedString(meta)).append("\n");
-        sb.append("    id: ").append(toIndentedString(id)).append("\n");
+        sb.append("    value: ").append(toIndentedString(value)).append("\n");
         sb.append("}");
         return sb.toString();
     }

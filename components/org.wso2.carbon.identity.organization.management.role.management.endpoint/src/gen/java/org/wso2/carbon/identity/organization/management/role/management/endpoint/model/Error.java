@@ -46,7 +46,7 @@ public class Error  {
         return this;
     }
     
-    @ApiModelProperty(example = "ORM-00000", required = true, value = "An error code.")
+    @ApiModelProperty(example = "ORG-00000", required = true, value = "An error code.")
     @JsonProperty("code")
     @Valid
     @NotNull(message = "Property code cannot be null.")

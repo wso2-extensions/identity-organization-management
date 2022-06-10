@@ -116,7 +116,7 @@ public interface RoleManagementDAO {
      * @param roleName       The displayName of the role.
      * @return Whether there exists a role or not.
      * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking
-     *                                         whether the role exists.
+     *                                               whether the role exists.
      */
     boolean checkRoleExists(String organizationId, String roleId, String roleName)
             throws OrganizationManagementServerException;
@@ -131,7 +131,6 @@ public interface RoleManagementDAO {
      *                                               user existence.
      */
     boolean checkUserExists(String userId, int tenantId) throws OrganizationManagementServerException;
-
 
     /**
      * Check whether a group exists inside a tenant.

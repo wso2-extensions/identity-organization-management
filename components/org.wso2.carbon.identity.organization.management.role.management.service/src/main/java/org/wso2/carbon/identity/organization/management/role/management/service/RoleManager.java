@@ -30,9 +30,9 @@ import java.util.List;
 public interface RoleManager {
 
     /**
-     * Create a role.
+     * Create a role in the organization.
      *
-     * @param organizationId The ID of the organization where we add the role.
+     * @param organizationId The ID of the organization where the role should be created.
      * @param role           Role that is going to be added.
      * @return Basic role info for the response object.
      * @throws OrganizationManagementException This exception is thrown when an error occurs when adding a role.
@@ -46,7 +46,7 @@ public interface RoleManager {
      * @param roleId         The ID of the role we want.
      * @return A role.
      * @throws OrganizationManagementException This exception is thrown when an error happens when getting a role
-     *                                 from role ID.
+     *                                         from role ID.
      */
     Role getRoleById(String organizationId, String roleId) throws OrganizationManagementException;
 
@@ -58,7 +58,7 @@ public interface RoleManager {
      * @param organizationId The ID of the organization.
      * @return The list containing roles of the organization where organization ID has been passed.
      * @throws OrganizationManagementException This exception is thrown when an error happens when getting roles from
-     *                                 organization ID.
+     *                                         organization ID.
      */
     List<Role> getOrganizationRoles(int limit, String filter, String organizationId)
             throws OrganizationManagementException;

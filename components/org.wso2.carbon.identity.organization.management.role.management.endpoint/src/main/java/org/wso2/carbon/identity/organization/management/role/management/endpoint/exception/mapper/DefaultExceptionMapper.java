@@ -31,7 +31,6 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_REQUEST_BODY;
 
-
 /**
  * Handles exception when an incorrect JSON request is received.
  * Sends a default error response.

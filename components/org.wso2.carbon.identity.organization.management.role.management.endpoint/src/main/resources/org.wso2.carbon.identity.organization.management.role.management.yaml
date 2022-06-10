@@ -69,14 +69,14 @@ paths:
       description:
         This API returns roles in an organization based on the provided filter and limit.
       parameters:
-        - $ref: '#/components/parameters/filterQueryParam'
-        - $ref: '#/components/parameters/limitQueryParam'
         - name: organization-id
           in: path
           description: ID of the organization.
           required: true
           schema:
             type: string
+        - $ref: '#/components/parameters/filterQueryParam'
+        - $ref: '#/components/parameters/limitQueryParam'
       responses:
         '200':
           description: Successful response.
@@ -98,7 +98,7 @@ paths:
   /organizations/{organization-id}/roles/{role-id}:
     get:
       summary:
-        Get Role by ID
+        Get role by ID
       description:
         This API returns the role details of a particular role using its unique id.
       parameters:
@@ -121,8 +121,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleGetResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -195,8 +193,6 @@ paths:
       responses:
         '204':
           description: Role is deleted.
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -209,7 +205,7 @@ paths:
         - Organization Role Management
     patch:
       summary: Update Role - PATCH
-      description: This API updates the role details and returns the updated role details inside a PATCH operation.
+      description: This API updates the role details and returns the updated role details.
       tags:
         - Organization Role Management
       parameters:
@@ -234,7 +230,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Role is Updated.
+          description: Role is updated.
           content:
             application/json:
               schema:
@@ -282,7 +278,7 @@ components:
       properties:
         code:
           type: string
-          example: ORM-00000
+          example: ORG-00000
           description: An error code.
         message:
           type: string
@@ -502,7 +498,7 @@ components:
             location:
               type: string
               example: 'https://localhost:9443/t/carbon.super/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
-        id:
+        value:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0fe3de0'
     #------------------------------------------------------------------------

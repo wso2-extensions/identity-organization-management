@@ -205,7 +205,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                     }
-            ));
+                                                                                                ));
             if (Objects.nonNull(role)) {
                 List<Group> groupList = getGroupsFromRoleId(roleId);
                 List<User> usersList = getUsersFromRoleId(roleId);
@@ -653,8 +653,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      *                                               attribute is mapped to the role.
      */
     private boolean checkRoleAttributeMapping(String attributeId, String roleId, String query, String attributeColumn,
-                                              boolean isPermission)
-            throws OrganizationManagementServerException {
+                                              boolean isPermission) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -942,7 +941,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 template.executeInsert(query,
                         namedPreparedStatement -> {
                             for (int i = 0; i < numberOfGroups; i++) {
-                                namedPreparedStatement.setString(finalColumnName + i , valueList.get(i));
+                                namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i,
                                         roleId);
                             }
@@ -1163,7 +1162,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             throw handleServerException(ERROR_CODE_REPLACING_DISPLAY_NAME_OF_ROLE, e, displayName, roleId);
         }
     }
-
 
     /**
      * Remove users, groups or permissions from a role based on the role ID.

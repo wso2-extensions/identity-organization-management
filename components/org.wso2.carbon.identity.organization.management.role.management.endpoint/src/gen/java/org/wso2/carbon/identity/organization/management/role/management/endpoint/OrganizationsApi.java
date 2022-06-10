@@ -111,7 +111,6 @@ public class OrganizationsApi  {
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Role is deleted.", response = Void.class),
-        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
@@ -127,7 +126,7 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get Role by ID", notes = "This API returns the role details of a particular role using its unique id.", response = RoleGetResponse.class, authorizations = {
+    @ApiOperation(value = "Get role by ID", notes = "This API returns the role details of a particular role using its unique id.", response = RoleGetResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
@@ -135,7 +134,6 @@ public class OrganizationsApi  {
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Valid role is found.", response = RoleGetResponse.class),
-        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
@@ -151,14 +149,14 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/roles/{role-id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Update Role - PATCH", notes = "This API updates the role details and returns the updated role details inside a PATCH operation.", response = RolePatchResponse.class, authorizations = {
+    @ApiOperation(value = "Update Role - PATCH", notes = "This API updates the role details and returns the updated role details.", response = RolePatchResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Organization Role Management", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Role is Updated.", response = RolePatchResponse.class),
+        @ApiResponse(code = 200, message = "Role is updated.", response = RolePatchResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
         @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),

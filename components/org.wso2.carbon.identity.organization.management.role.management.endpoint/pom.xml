@@ -12,7 +12,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.organization.management.role.management.endpoint</artifactId>
-    <name>WSO2 - Organization Management Role Management Endpoint</name>
+    <name>WSO2 - Organization Role Management Endpoint</name>
     <url>http://www.wso2.com</url>
     <packaging>war</packaging>
 

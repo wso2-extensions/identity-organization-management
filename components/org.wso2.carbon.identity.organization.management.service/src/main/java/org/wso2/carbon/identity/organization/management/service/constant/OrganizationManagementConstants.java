@@ -203,8 +203,7 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
-        
-      
+
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),

@@ -251,11 +251,17 @@ public class RoleManagementService {
         Role role = new Role();
         role.setId(generateUniqueID());
         role.setDisplayName(StringUtils.strip(rolePostRequest.getDisplayName()));
-        role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
-                .map(User::new).collect(Collectors.toList()));
-        role.setGroups(rolePostRequest.getGroups().stream().map(RolePostRequestGroup::getValue)
-                .map(Group::new).collect(Collectors.toList()));
-        role.setPermissions(rolePostRequest.getPermissions());
+        if (CollectionUtils.isNotEmpty(rolePostRequest.getUsers())) {
+            role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
+                    .map(User::new).collect(Collectors.toList()));
+        }
+        if (CollectionUtils.isNotEmpty(rolePostRequest.getGroups())) {
+            role.setGroups(rolePostRequest.getGroups().stream().map(RolePostRequestGroup::getValue)
+                    .map(Group::new).collect(Collectors.toList()));
+        }
+        if (CollectionUtils.isNotEmpty(rolePostRequest.getPermissions())) {
+            role.setPermissions(rolePostRequest.getPermissions());
+        }
 
         return role;
     }
@@ -386,7 +392,7 @@ public class RoleManagementService {
         RolePutResponse responseObject = new RolePutResponse();
         responseObject.setDisplayName(role.getDisplayName());
         responseObject.setMeta(roleObjMeta);
-        responseObject.setId(role.getId());
+        responseObject.setValue(role.getId());
 
         return responseObject;
     }
