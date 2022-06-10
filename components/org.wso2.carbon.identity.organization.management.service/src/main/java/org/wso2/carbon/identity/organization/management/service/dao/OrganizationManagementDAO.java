@@ -36,150 +36,123 @@ public interface OrganizationManagementDAO {
      * Create new {@link Organization} in the database.
      *
      * @param tenantId     The tenant ID corresponding to the tenant where the organization should be created.
-     * @param tenantDomain The tenant domain name corresponding to the tenant where the organization should be created.
      * @param organization The organization to be created.
      * @throws OrganizationManagementServerException The server exception thrown when creating an organization.
      */
-    void addOrganization(int tenantId, String tenantDomain, Organization organization) throws
-            OrganizationManagementServerException;
+    void addOrganization(int tenantId, Organization organization) throws OrganizationManagementServerException;
 
     /**
-     * Check if the {@link Organization} exists by name in a given tenant.
+     * Check if the {@link Organization} exists by name.
      *
      * @param organizationName The organization name.
-     * @param tenantDomain     The tenant name corresponding to the tenant where the organization existence should be
-     *                         checked.
      * @return true if the organization exists.
      * @throws OrganizationManagementServerException The server exception thrown when checking for the organization
      *                                               existence.
      */
-    boolean isOrganizationExistByName(String organizationName, String tenantDomain) throws
-            OrganizationManagementServerException;
+    boolean isOrganizationExistByName(String organizationName) throws OrganizationManagementServerException;
 
     /**
-     * Check if the {@link Organization} exists by organization Id in a given tenant.
+     * Check if the {@link Organization} exists by organization ID.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization existence should be
-     *                       checked.
      * @return true if the organization exists.
      * @throws OrganizationManagementServerException The server exception thrown when checking for the organization
      *                                               existence.
      */
-    boolean isOrganizationExistById(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    boolean isOrganizationExistById(String organizationId) throws OrganizationManagementServerException;
 
     /**
-     * Retrieve organization ID if the given organization name exists for the tenant.
+     * Retrieve organization ID if the given organization name exists.
      *
-     * @param tenantId         The tenant ID corresponding to the tenant where the organization should be retrieved.
      * @param organizationName The organization name.
-     * @param tenantDomain     The tenant name corresponding to the tenant where the organization should be retrieved.
      * @return the organization ID.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
      */
-    String getOrganizationIdByName(int tenantId, String organizationName, String tenantDomain)
-            throws OrganizationManagementServerException;
+    String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
 
     /**
-     * Retrieve {@link Organization} by ID in the given tenant.
+     * Retrieve {@link Organization} by ID.
      *
-     * @param tenantId       The tenant ID corresponding to the tenant where the organization should be retrieved.
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization should be retrieved.
      * @return the organization object.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization.
      */
-    Organization getOrganization(int tenantId, String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    Organization getOrganization(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve the IDs of the organizations residing in the given tenant.
      *
      * @param tenantId        The tenant ID corresponding to the tenant where the organizations should be retrieved.
      * @param limit           The maximum number of records to be returned.
-     * @param tenantDomain    The tenant name corresponding to the tenant where the organizations should be retrieved.
      * @param sortOrder       The sort order, ascending or descending.
      * @param expressionNodes The list of filters.
      * @return the list of organization IDs.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organizations.
      */
-    List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String tenantDomain, String sortOrder,
+    List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String sortOrder,
                                              List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException;
 
     /**
      * Delete {@link Organization} by ID.
      *
-     * @param tenantId       The tenant ID corresponding to the tenant where the organization should be deleted.
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization should be deleted.
      * @throws OrganizationManagementServerException The server exception thrown when deleting the organization.
      */
-    void deleteOrganization(int tenantId, String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    void deleteOrganization(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Check if an organization has child organizations.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant.
      * @return true if the organization has child organizations.
      * @throws OrganizationManagementServerException The server exception thrown when checking if an organization has
      *                                               child organizations.
      */
-    boolean hasChildOrganizations(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    boolean hasChildOrganizations(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Add, remove or replace organization fields and attributes.
      *
      * @param organizationId      The organization ID.
-     * @param tenantDomain        The tenant name corresponding to the tenant.
      * @param lastModifiedInstant The last modified time.
-     * @param patchOperations          The list of patch operations.
+     * @param patchOperations     The list of patch operations.
      * @throws OrganizationManagementServerException The server exception thrown when patching an organization.
      */
-    void patchOrganization(String organizationId, String tenantDomain, Instant lastModifiedInstant,
+    void patchOrganization(String organizationId, Instant lastModifiedInstant,
                            List<PatchOperation> patchOperations) throws OrganizationManagementServerException;
 
     /**
      * Update {@link Organization} by ID.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization should be updated.
      * @param organization   The organization object.
      * @throws OrganizationManagementServerException The server exception thrown when updating an organization.
      */
-    void updateOrganization(String organizationId, String tenantDomain, Organization organization) throws
+    void updateOrganization(String organizationId, Organization organization) throws
             OrganizationManagementServerException;
 
     /**
      * Check if the organization has the given attribute.
      *
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization resides.
      * @param organizationId The organization ID.
      * @param attributeKey   The attribute key of the organization.
      * @return true if the organization attribute exists.
      * @throws OrganizationManagementServerException The server exception thrown when checking if an organization
      *                                               attribute exists.
      */
-    boolean isAttributeExistByKey(String tenantDomain, String organizationId, String attributeKey)
+    boolean isAttributeExistByKey(String organizationId, String attributeKey)
             throws OrganizationManagementServerException;
 
     /**
      * Retrieve the list of child organization IDs of a given organization.
      *
-     * @param tenantId       The tenant ID corresponding to the tenant where the organization resides.
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name corresponding to the tenant where the organization resides.
-     * @param organization   The organization object.
      * @return the ID list of the child organizations.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the child
      *                                               organizations.
      */
-    List<String> getChildOrganizationIds(int tenantId, String organizationId, String tenantDomain, Organization
-            organization) throws OrganizationManagementServerException;
+    List<String> getChildOrganizationIds(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Check if the organization has any child organizations with the status as 'ACTIVE'.
@@ -195,33 +168,28 @@ public interface OrganizationManagementDAO {
      * Check if the parent organization of an organization is having the status as 'DISABLED'.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name.
      * @return true if the parent organization status is 'DISABLED'.
      * @throws OrganizationManagementServerException The server exception thrown when checking if the parent
      *                                               organization status is 'DISABLED'.
      */
-    boolean isParentOrganizationDisabled(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    boolean isParentOrganizationDisabled(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve the status of the organization.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name.
      * @return the status of the organization.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the status of the
      *                                               organization.
      */
-    String getOrganizationStatus(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException;
+    String getOrganizationStatus(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve the type of the organization.
      *
      * @param organizationId The organization ID.
-     * @param tenantDomain   The tenant name.
      * @return the organization type.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization type.
      */
-    String getOrganizationType(String organizationId, String tenantDomain) throws OrganizationManagementServerException;
+    String getOrganizationType(String organizationId) throws OrganizationManagementServerException;
 }

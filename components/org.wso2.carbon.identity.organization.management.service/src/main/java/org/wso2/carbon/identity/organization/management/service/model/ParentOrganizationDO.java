@@ -25,6 +25,7 @@ public class ParentOrganizationDO {
 
     private String id;
     private String ref;
+    private int tenantId;
 
     public String getId() {
 
@@ -44,5 +45,15 @@ public class ParentOrganizationDO {
     public void setRef(String ref) {
 
         this.ref = ref;
+    }
+
+    public int getTenantId() {
+
+        return tenantId;
+    }
+
+    public void setTenantId(int tenantId) {
+
+        this.tenantId = tenantId;
     }
 }

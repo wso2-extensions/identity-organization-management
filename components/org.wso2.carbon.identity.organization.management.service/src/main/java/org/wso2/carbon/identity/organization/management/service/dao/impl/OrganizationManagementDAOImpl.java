@@ -144,7 +144,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone(UTC));
 
     @Override
-    public void addOrganization(int tenantId, String tenantDomain, Organization organization) throws
+    public void addOrganization(int tenantId, Organization organization) throws
             OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -191,23 +191,21 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public boolean isOrganizationExistByName(String organizationName, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public boolean isOrganizationExistByName(String organizationName) throws OrganizationManagementServerException {
 
-        return isOrganizationExist(organizationName, tenantDomain, CHECK_ORGANIZATION_EXIST_BY_NAME,
+        return isOrganizationExist(organizationName, CHECK_ORGANIZATION_EXIST_BY_NAME,
                 DB_SCHEMA_COLUMN_NAME_NAME, ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME);
     }
 
     @Override
-    public boolean isOrganizationExistById(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public boolean isOrganizationExistById(String organizationId) throws OrganizationManagementServerException {
 
-        return isOrganizationExist(organizationId, tenantDomain, CHECK_ORGANIZATION_EXIST_BY_ID,
+        return isOrganizationExist(organizationId, CHECK_ORGANIZATION_EXIST_BY_ID,
                 DB_SCHEMA_COLUMN_NAME_ID, ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID);
     }
 
-    private boolean isOrganizationExist(String organization, String tenantDomain,
-                                        String checkOrganizationExistQuery, String dbSchemaColumnNameId,
+    private boolean isOrganizationExist(String organization, String checkOrganizationExistQuery,
+                                        String dbSchemaColumnNameId,
                                         OrganizationManagementConstants.ErrorMessages errorMessage)
             throws OrganizationManagementServerException {
 
@@ -215,34 +213,28 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         try {
             int orgCount = namedJdbcTemplate.fetchSingleRecord(checkOrganizationExistQuery,
                     (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement ->
-                            namedPreparedStatement.setString(dbSchemaColumnNameId, organization)
-            );
+                            namedPreparedStatement.setString(dbSchemaColumnNameId, organization));
             return orgCount > 0;
         } catch (DataAccessException e) {
-            throw handleServerException(errorMessage, e, organization, tenantDomain);
+            throw handleServerException(errorMessage, e, organization);
         }
     }
 
     @Override
-    public String getOrganizationIdByName(int tenantId, String organizationName, String tenantDomain)
-            throws OrganizationManagementServerException {
+    public String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
-                    (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement -> {
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_NAME, organizationName);
-                    });
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_NAME, organizationName));
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e, organizationName,
-                    tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e, organizationName);
         }
     }
 
     @Override
-    public Organization getOrganization(int tenantId, String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public Organization getOrganization(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         List<OrganizationRowDataCollector> organizationRowDataCollectors;
@@ -267,18 +259,16 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                                 return collector;
                             },
                             namedPreparedStatement ->
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId)
-                    );
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId));
             return (organizationRowDataCollectors == null || organizationRowDataCollectors.size() == 0) ?
                     null : buildOrganizationFromRawData(organizationRowDataCollectors);
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID, e, organizationId,
-                    tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID, e, organizationId);
         }
     }
 
     @Override
-    public List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String tenantDomain, String sortOrder,
+    public List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String sortOrder,
                                                     List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
 
@@ -323,46 +313,40 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                         namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, limit);
                     });
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e);
         }
         return organizations;
     }
 
     @Override
-    public void deleteOrganization(int tenantId, String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public void deleteOrganization(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             // Delete organization from UM_ORG table and cascade the deletion to the other table.
-            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_BY_ID, namedPreparedStatement -> {
-                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-            });
+            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_BY_ID, namedPreparedStatement ->
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId));
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION, e, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION, e, organizationId);
         }
     }
 
     @Override
-    public boolean hasChildOrganizations(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public boolean hasChildOrganizations(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             List<Integer> childOrganizationIds = namedJdbcTemplate.executeQuery(CHECK_CHILD_ORGANIZATIONS_EXIST,
-                    (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
-                    });
+                    (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId));
             return childOrganizationIds.get(0) > 0;
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId,
-                    tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId);
         }
     }
 
     @Override
-    public void patchOrganization(String organizationId, String tenantDomain, Instant lastModifiedInstant,
+    public void patchOrganization(String organizationId, Instant lastModifiedInstant,
                                   List<PatchOperation> patchOperations) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -370,21 +354,21 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             namedJdbcTemplate.withTransaction(template -> {
                 for (PatchOperation patchOperation : patchOperations) {
                     if (patchOperation.getPath().startsWith(PATCH_PATH_ORG_ATTRIBUTES)) {
-                        patchOrganizationAttribute(organizationId, patchOperation, tenantDomain);
+                        patchOrganizationAttribute(organizationId, patchOperation);
                     } else {
-                        patchOrganizationField(organizationId, patchOperation, tenantDomain);
+                        patchOrganizationField(organizationId, patchOperation);
                     }
                 }
-                updateLastModifiedTime(organizationId, tenantDomain, lastModifiedInstant);
+                updateLastModifiedTime(organizationId, lastModifiedInstant);
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId);
         }
     }
 
     @Override
-    public void updateOrganization(String organizationId, String tenantDomain, Organization organization) throws
+    public void updateOrganization(String organizationId, Organization organization) throws
             OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -398,19 +382,19 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_STATUS, organization.getStatus());
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
                 });
-                deleteOrganizationAttributes(organizationId, tenantDomain);
+                deleteOrganizationAttributes(organizationId);
                 if (CollectionUtils.isNotEmpty(organization.getAttributes())) {
                     insertOrganizationAttributes(organization);
                 }
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION, e, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION, e, organizationId);
         }
     }
 
     @Override
-    public boolean isAttributeExistByKey(String tenantDomain, String organizationId, String attributeKey)
+    public boolean isAttributeExistByKey(String organizationId, String attributeKey)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -422,27 +406,23 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     });
             return attrCount > 0;
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_ATTRIBUTE_KEY_EXIST, e,
-                    attributeKey, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_ATTRIBUTE_KEY_EXIST, e, attributeKey,
+                    organizationId);
         }
     }
 
     @Override
-    public List<String> getChildOrganizationIds(int tenantId, String organizationId, String tenantDomain,
-                                                Organization organization)
-            throws OrganizationManagementServerException {
+    public List<String> getChildOrganizationIds(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         List<String> childOrganizationIds;
         try {
             childOrganizationIds = namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
                     (resultSet, rowNumber) -> resultSet.getString(1),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
-                    });
+                    namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId));
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS, e, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId);
         }
         return childOrganizationIds;
     }
@@ -465,15 +445,13 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public boolean isParentOrganizationDisabled(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public boolean isParentOrganizationDisabled(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             String status = namedJdbcTemplate.fetchSingleRecord(GET_PARENT_ORGANIZATION_STATUS,
-                    (resultSet, rowNumber) -> resultSet.getString(VIEW_STATUS_COLUMN), namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                    });
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_STATUS_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId));
             return StringUtils.equals(status, DISABLED.toString());
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_PARENT_ORGANIZATION_STATUS, e, organizationId);
@@ -481,23 +459,21 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public String getOrganizationStatus(String organizationId, String tenantDomain) throws
+    public String getOrganizationStatus(String organizationId) throws
             OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_STATUS,
-                    (resultSet, rowNumber) -> resultSet.getString(VIEW_STATUS_COLUMN), namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
-                    });
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_STATUS_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS, e, organizationId);
         }
     }
 
     @Override
-    public String getOrganizationType(String organizationId, String tenantDomain) throws
-            OrganizationManagementServerException {
+    public String getOrganizationType(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
@@ -510,8 +486,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
-    private void deleteOrganizationAttributes(String organizationId, String tenantDomain)
-            throws OrganizationManagementServerException {
+    private void deleteOrganizationAttributes(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
@@ -522,8 +497,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION_ATTRIBUTES, e, organizationId,
-                    tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION_ATTRIBUTES, e, organizationId);
         }
     }
 
@@ -547,7 +521,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         return query;
     }
 
-    private void patchOrganizationField(String organizationId, PatchOperation patchOperation, String tenantDomain)
+    private void patchOrganizationField(String organizationId, PatchOperation patchOperation)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -561,25 +535,25 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId);
         }
     }
 
-    private void patchOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+    private void patchOrganizationAttribute(String organizationId, PatchOperation patchOperation)
             throws OrganizationManagementServerException {
 
         String attributeKey = patchOperation.getPath().replace(PATCH_PATH_ORG_ATTRIBUTES, "").trim();
         patchOperation.setPath(attributeKey);
         if (patchOperation.getOp().equals(PATCH_OP_ADD)) {
-            insertOrganizationAttribute(organizationId, patchOperation, tenantDomain);
+            insertOrganizationAttribute(organizationId, patchOperation);
         } else if (patchOperation.getOp().equals(PATCH_OP_REPLACE)) {
-            updateOrganizationAttribute(organizationId, patchOperation, tenantDomain);
+            updateOrganizationAttribute(organizationId, patchOperation);
         } else {
-            deleteOrganizationAttribute(organizationId, patchOperation, tenantDomain);
+            deleteOrganizationAttribute(organizationId, patchOperation);
         }
     }
 
-    private void insertOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+    private void insertOrganizationAttribute(String organizationId, PatchOperation patchOperation)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -593,11 +567,11 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_ADD_ATTRIBUTE, e, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_ADD_ATTRIBUTE, e);
         }
     }
 
-    private void updateOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+    private void updateOrganizationAttribute(String organizationId, PatchOperation patchOperation)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -611,12 +585,11 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_UPDATE_ATTRIBUTE, e, organizationId,
-                    tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_UPDATE_ATTRIBUTE, e, organizationId);
         }
     }
 
-    private void deleteOrganizationAttribute(String organizationId, PatchOperation patchOperation, String tenantDomain)
+    private void deleteOrganizationAttribute(String organizationId, PatchOperation patchOperation)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -627,11 +600,11 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION_DELETE_ATTRIBUTE, e,
-                    patchOperation.getPath(), organizationId, tenantDomain);
+                    patchOperation.getPath(), organizationId);
         }
     }
 
-    private void updateLastModifiedTime(String organizationId, String tenantDomain, Instant lastModifiedInstant) throws
+    private void updateLastModifiedTime(String organizationId, Instant lastModifiedInstant) throws
             OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -645,7 +618,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 return null;
             });
         } catch (TransactionException e) {
-            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId, tenantDomain);
+            throw handleServerException(ERROR_CODE_ERROR_PATCHING_ORGANIZATION, e, organizationId);
         }
     }
 
@@ -663,6 +636,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 organization.setCreated(collector.getCreated());
                 organization.setLastModified(collector.getLastModified());
                 organization.setStatus(collector.getStatus());
+                organization.setTenantId(collector.getTenantId());
             }
             List<OrganizationAttribute> attributes = organization.getAttributes();
             List<String> attributeKeys = new ArrayList<>();
