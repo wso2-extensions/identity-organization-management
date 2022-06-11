@@ -20,46 +20,50 @@ package org.wso2.carbon.identity.organization.management.service;
 
 import org.apache.commons.lang.StringUtils;
 import org.mockito.Mock;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.core.ServiceURL;
-import org.wso2.carbon.identity.core.ServiceURLBuilder;
-import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
+import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.internal.OrganizationManagementDataHolder;
-import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.util.TestUtils;
 import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.wso2.carbon.base.MultitenantConstants.SUPER_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationStatus;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationTypes.STRUCTURAL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationTypes.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
@@ -68,25 +72,32 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
-@PrepareForTest({PrivilegedCarbonContext.class, ServiceURLBuilder.class, ServiceURL.class,
-        OrganizationManagementDataHolder.class,  OrganizationManagementAuthorizationManager.class})
+@PrepareForTest({PrivilegedCarbonContext.class, OrganizationManagementDataHolder.class,
+        OrganizationManagementAuthorizationManager.class, Utils.class})
 public class OrganizationManagerImplTest extends PowerMockTestCase {
 
-    private static final String ORG_NAME = "ABC Builders";
-    private static final String ORG_DESCRIPTION = "This is a construction company.";
     private static final String ROOT = "ROOT";
-    private static final String PARENT_ID = "parent_id_123";
-    private static final String INVALID_PARENT_ID = "invalid_parent_id";
-    private static final String ORG_ID = "org_id_123";
+    private static final String ORG1_NAME = "ABC Builders";
+    private static final String ORG2_NAME = "XYZ Builders";
+    private static final String ORG_DESCRIPTION = "This is a construction company.";
+    private static final String NEW_ORG_NAME = "New Org";
+    private static final String NEW_ORG_DESCRIPTION = "new sample description.";
     private static final String ORG_ATTRIBUTE_KEY = "country";
     private static final String ORG_ATTRIBUTE_VALUE = "Sri Lanka";
-    private static final String NEW_ORG_DESCRIPTION = "new sample description.";
+    private static final String ROOT_ORG_ID = "root_org_id";
+    private static final String ORG1_ID = "org_id_1";
+    private static final String ORG2_ID = "org_id_2";
+    private static final String INVALID_PARENT_ID = "invalid_parent_id";
+    private static final String INVALID_ORG_ID = "invalid_org_id";
+    private static final int TENANT_ID = -1234;
+    private static final String ERROR_MESSAGE = "message";
+    private static final String ERROR_DESCRIPTION = "description";
+    private static final String ERROR_CODE = "code";
 
     private OrganizationManagerImpl organizationManager;
     private OrganizationManagementDataHolder organizationManagementDataHolder;
 
-    @Mock
-    private OrganizationManagementDAO organizationManagementDAO;
+    private final OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
 
     @Mock
     private RealmService realmService;
@@ -98,60 +109,85 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private AuthorizationManager authorizationManager;
 
     @BeforeMethod
-    public void setUp() {
+    public void setUp() throws Exception {
 
         organizationManager = new OrganizationManagerImpl();
-
-        organizationManagementDataHolder = spy(new OrganizationManagementDataHolder());
-        mockStatic(OrganizationManagementDataHolder.class);
-        organizationManagementDataHolder.setOrganizationManagementDAO(organizationManagementDAO);
+        organizationManagementDataHolder = PowerMockito.spy(new OrganizationManagementDataHolder());
+        PowerMockito.mockStatic(OrganizationManagementDataHolder.class);
         when(OrganizationManagementDataHolder.getInstance()).thenReturn(organizationManagementDataHolder);
+
+        TestUtils.initiateH2Base();
+        DataSource dataSource = TestUtils.mockDataSource();
+
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(dataSource.getConnection()).thenReturn(spyConnection);
+            Organization rootOrganization = getOrganization(ROOT_ORG_ID, ROOT, "this is the root organization.",
+                    null, TENANT.toString());
+            Organization organization1 = getOrganization(ORG1_ID, ORG1_NAME, ORG_DESCRIPTION, ROOT_ORG_ID,
+                    STRUCTURAL.toString());
+            Organization organization2 = getOrganization(ORG2_ID, ORG2_NAME, ORG_DESCRIPTION, ORG1_ID,
+                    STRUCTURAL.toString());
+            organizationManagementDAO.addOrganization(TENANT_ID, rootOrganization);
+            organizationManagementDAO.addOrganization(TENANT_ID, organization1);
+            organizationManagementDAO.addOrganization(TENANT_ID, organization2);
+        }
     }
 
     @AfterMethod
-    public void tearDown() {
+    public void tearDown() throws Exception {
 
+        TestUtils.closeH2Base();
     }
 
     @Test
     public void testAddOrganization() throws Exception {
 
-        Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
+        Organization sampleOrganization = getOrganization(UUID.randomUUID().toString(), NEW_ORG_NAME, ORG_DESCRIPTION,
+                ROOT_ORG_ID, STRUCTURAL.toString());
         mockCarbonContext();
-
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationStatus(anyString(),
-                anyString())).thenReturn(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
-
         mockAuthorizationManager();
         when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
         OrganizationManagementAuthorizationManager authorizationManager =
-                mock(OrganizationManagementAuthorizationManager.class);
-        mockStatic(OrganizationManagementAuthorizationManager.class);
+                PowerMockito.mock(OrganizationManagementAuthorizationManager.class);
+        PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
                 anyString(), anyInt())).thenReturn(true);
 
-        mockBuildURI();
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
 
-        Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
-        Assert.assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
-        Assert.assertEquals(addedOrganization.getName(), sampleOrganization.getName());
+            Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
+            assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
+            assertEquals(addedOrganization.getName(), sampleOrganization.getName());
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationWithInvalidParentId() throws Exception {
 
-        Organization sampleOrganization = getOrganization(ORG_NAME, INVALID_PARENT_ID);
+        Organization sampleOrganization = getOrganization(UUID.randomUUID().toString(),
+                NEW_ORG_NAME, ORG_DESCRIPTION, INVALID_PARENT_ID, STRUCTURAL.toString());
         mockCarbonContext();
-
-        organizationManager.addOrganization(sampleOrganization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn
+                    (new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.addOrganization(sampleOrganization);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationWithReservedName() throws Exception {
 
-        Organization organization = getOrganization(ROOT, PARENT_ID);
+        Organization organization = getOrganization(UUID.randomUUID().toString(), ROOT, ORG_DESCRIPTION, ORG1_NAME,
+                TENANT.toString());
+        when(Utils.handleClientException(anyObject(), anyString())).
+                thenReturn(new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.addOrganization(organization);
     }
 
@@ -162,10 +198,10 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
                 {null, null},
                 {StringUtils.EMPTY, StringUtils.EMPTY},
-                {null, PARENT_ID},
-                {StringUtils.EMPTY, PARENT_ID},
-                {ORG_NAME, null},
-                {ORG_NAME, StringUtils.EMPTY}
+                {null, ORG1_ID},
+                {StringUtils.EMPTY, ORG1_ID},
+                {ORG1_NAME, null},
+                {ORG1_NAME, StringUtils.EMPTY}
         };
     }
 
@@ -173,8 +209,11 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             dataProvider = "dataForAddOrganizationRequiredFieldsMissing")
     public void testAddOrganizationRequiredFieldsMissing(String orgName, String parentId) throws Exception {
 
-        Organization organization = getOrganization(orgName, parentId);
-        organizationManager.addOrganization(organization);
+        Organization sampleOrganization = getOrganization(UUID.randomUUID().toString(),
+                orgName, ORG_DESCRIPTION, parentId, TENANT.toString());
+        when(Utils.handleClientException(anyObject(), anyString()))
+                .thenReturn(new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+        organizationManager.addOrganization(sampleOrganization);
     }
 
     @DataProvider(name = "dataForAddOrganizationInvalidOrganizationAttributes")
@@ -196,19 +235,27 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             dataProvider = "dataForAddOrganizationInvalidOrganizationAttributes")
     public void testAddOrganizationInvalidAttributes(String attributeKey, String attributeValue) throws Exception {
 
-        Organization organization = getOrganization(ORG_NAME, ROOT);
+        mockCarbonContext();
+        Organization organization = getOrganization(UUID.randomUUID().toString(), NEW_ORG_NAME, ORG_DESCRIPTION,
+                ROOT_ORG_ID, STRUCTURAL.toString());
         List<OrganizationAttribute> organizationAttributeList = new ArrayList<>();
         OrganizationAttribute organizationAttribute = new OrganizationAttribute(attributeKey, attributeValue);
         organizationAttributeList.add(organizationAttribute);
         organization.setAttributes(organizationAttributeList);
-        mockCarbonContext();
-        organizationManager.addOrganization(organization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject())).thenReturn(new OrganizationManagementClientException
+                    (ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.addOrganization(organization);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationDuplicateAttributeKeys() throws Exception {
 
-        Organization organization = getOrganization(ORG_NAME, ROOT);
+        Organization organization = getOrganization(UUID.randomUUID().toString(), NEW_ORG_NAME, ORG_DESCRIPTION,
+                ROOT_ORG_ID, STRUCTURAL.toString());
         mockCarbonContext();
         List<OrganizationAttribute> organizationAttributeList = new ArrayList<>();
         OrganizationAttribute organizationAttribute1 = new OrganizationAttribute(ORG_ATTRIBUTE_KEY,
@@ -218,142 +265,106 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         organizationAttributeList.add(organizationAttribute1);
         organizationAttributeList.add(organizationAttribute2);
         organization.setAttributes(organizationAttributeList);
-        organizationManager.addOrganization(organization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject())).thenReturn(new OrganizationManagementClientException
+                    (ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.addOrganization(organization);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationOrganizationNameTaken() throws Exception {
 
-        Organization organization = getOrganization(ORG_NAME, ROOT);
+        Organization organization = getOrganization(UUID.randomUUID().toString(), ORG1_NAME, ORG_DESCRIPTION,
+                ROOT_ORG_ID, STRUCTURAL.toString());
         mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyString(),
-                anyString())).thenReturn(true);
-
-        organizationManager.addOrganization(organization);
-    }
-
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testAddRootOrganizationUserNotAuthorized() throws Exception {
-
-        Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
-        mockCarbonContext();
-
-        mockAuthorizationManager();
-        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(false);
-
-        organizationManager.addOrganization(sampleOrganization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.addOrganization(organization);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationUserNotAuthorized() throws Exception {
 
-        Organization sampleOrganization = getOrganization(ORG_NAME, ROOT);
+        Organization organization = getOrganization(UUID.randomUUID().toString(), NEW_ORG_NAME, ORG_DESCRIPTION,
+                ROOT_ORG_ID, STRUCTURAL.toString());
         mockCarbonContext();
-
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizationIdByName(anyInt(),
-                anyString(), anyString())).thenReturn(PARENT_ID);
-
         mockAuthorizationManager();
-        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
+        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(false);
         OrganizationManagementAuthorizationManager authorizationManager =
-                mock(OrganizationManagementAuthorizationManager.class);
-        mockStatic(OrganizationManagementAuthorizationManager.class);
+                PowerMockito.mock(OrganizationManagementAuthorizationManager.class);
+        PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
                 anyString(), anyInt())).thenReturn(false);
 
-        organizationManager.addOrganization(sampleOrganization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.addOrganization(organization);
+        }
     }
 
     @Test
     public void testGetOrganization() throws Exception {
 
-        Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
-        mockCarbonContext();
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
 
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
-                anyString())).thenReturn(sampleOrganization);
-
-        mockBuildURI();
-
-        Organization organization = organizationManager.getOrganization(ORG_ID, false);
-        Assert.assertEquals(organization.getName(), ORG_NAME);
-        Assert.assertEquals(organization.getParent().getId(), PARENT_ID);
+            Organization organization = organizationManager.getOrganization(ORG1_ID, false);
+            assertEquals(organization.getName(), ORG1_NAME);
+            assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testGetOrganizationWithEmptyOrganizationId() throws Exception {
 
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganization(StringUtils.EMPTY, false);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testGetOrganizationNotExisting() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
-                anyString())).thenReturn(null);
-        organizationManager.getOrganization(ORG_ID, false);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.getOrganization(INVALID_ORG_ID, false);
+        }
     }
 
     @Test
     public void testGetOrganizationWithChildren() throws Exception {
 
-        Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
-        mockCarbonContext();
-
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
-                anyString())).thenReturn(sampleOrganization);
-        List<String> childOrganizationIds = new ArrayList<>();
-        childOrganizationIds.add("child_org_id_1");
-        childOrganizationIds.add("child_org_id_2");
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getChildOrganizationIds(anyInt(),
-                anyString(), anyString(), anyObject())).thenReturn(childOrganizationIds);
-
-        mockBuildURI();
-
-        Organization organization = organizationManager.getOrganization(ORG_ID, true);
-        Assert.assertEquals(organization.getName(), ORG_NAME);
-        Assert.assertEquals(organization.getParent().getId(), PARENT_ID);
-        Assert.assertEquals(organization.getChildOrganizations().size(), childOrganizationIds.size());
-    }
-
-    @DataProvider(name = "dataForGetOrganizations")
-    public Object[][] dataForGetOrganizations() {
-
-        return new Object[][]{
-
-                {null, null, null},
-                {null, null, "name co rs"},
-                {"MjAyMS0xMi0yMiAwNDoyMjowOS4xNjkzMjg=", null, null},
-                {null, "MjAyMS0xMi0yMiAwNDoyMjowOS4xNjkzMjg=", null},
-                {"MjAyMS0xMi0yMiAwNDoyMjowOS4xNjkzMjg=", null, "name co rs"},
-                {null, "MjAyMS0xMi0yMiAwNDoyMjowOS4xNjkzMjg=", "name co rs"},
-                {"MjAyMS0xMi0yMiAwNDoyMjowOS4xNjkzMjg=", null, "name co il and name co rs"},
-        };
-    }
-
-    @Test(dataProvider = "dataForGetOrganizations")
-    public void testGetOrganizations(String after, String before, String filter) throws Exception {
-
-        mockCarbonContext();
-        List<BasicOrganization> organizations = new ArrayList<>();
-        organizations.add(getBasicOrganization("ABC Builders", "40c55d3a-c525-4630-8114-432168cf478d",
-                "2021-12-21T05:18:31.015696Z"));
-        organizations.add(getBasicOrganization("XYZ Motors", "35c55d3a-j525-4030-9114-802268cf472h",
-                "2021-12-25T02:12:17.018892Z"));
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganizations(anyInt(), anyInt(),
-                anyString(), anyString(), anyObject())).thenReturn(organizations);
-        List<BasicOrganization> organizationList =
-                organizationManager.getOrganizations(10, after, before, "ASC", filter);
-
-        Assert.assertEquals(organizationList.size(), 2);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            Organization organization = organizationManager.getOrganization(ORG1_ID, true);
+            assertEquals(organization.getName(), ORG1_NAME);
+            assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
+            assertEquals(organization.getChildOrganizations().size(), 1);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testGetOrganizationsWithUnsupportedFilterAttribute() throws Exception {
 
         mockCarbonContext();
+        when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganizations(10, null, null, "ASC",
                 "invalid_attribute co xyz");
     }
@@ -362,6 +373,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testGetOrganizationsWithUnsupportedComplexQueryInFilter() throws Exception {
 
         mockCarbonContext();
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganizations(10, null, null, "ASC",
                 "name co xyz or name co abc");
     }
@@ -370,52 +383,59 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     public void testGetOrganizationsWithInvalidPaginationAttribute() throws Exception {
 
         mockCarbonContext();
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganizations(10, "MjAyNjkzMjg=", null, "ASC", "name co xyz");
     }
 
-    @Test
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testDeleteOrganization() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            organizationManager.deleteOrganization(ORG2_ID);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            assertNull(organizationManager.getOrganization(ORG2_ID, false));
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testDeleteOrganizationWithEmptyOrganizationId() throws Exception {
 
-        mockCarbonContext();
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.deleteOrganization(StringUtils.EMPTY);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testDeleteOrganizationWithChildOrganizations() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().hasChildOrganizations(anyString(),
-                anyString())).thenReturn(true);
-        organizationManager.deleteOrganization(ORG_ID);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.deleteOrganization(ORG1_ID);
+        }
     }
 
     @Test
     public void testPatchOrganization() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
-                anyString())).thenReturn(sampleOrganization);
-        mockBuildURI();
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_ADD, PATCH_PATH_ORG_DESCRIPTION,
                 NEW_ORG_DESCRIPTION);
         patchOperations.add(patchOperation);
-        Organization patchedOrganization = organizationManager.patchOrganization(ORG_ID, patchOperations);
-        Assert.assertNotNull(patchedOrganization);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            Organization patchedOrganization = organizationManager.patchOrganization(ORG1_ID, patchOperations);
+            assertNotNull(patchedOrganization);
+            assertEquals(patchedOrganization.getDescription(), NEW_ORG_DESCRIPTION);
+            assertEquals(patchedOrganization.getName(), ORG1_NAME);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -425,127 +445,192 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_ADD, PATCH_PATH_ORG_DESCRIPTION,
                 NEW_ORG_DESCRIPTION);
         patchOperations.add(patchOperation);
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.patchOrganization(StringUtils.EMPTY, patchOperations);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testPatchOrganizationWithInvalidOrganizationId() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_ADD, PATCH_PATH_ORG_DESCRIPTION,
                 NEW_ORG_DESCRIPTION);
         patchOperations.add(patchOperation);
-        organizationManager.patchOrganization(ORG_ID, patchOperations);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(INVALID_ORG_ID, patchOperations);
+        }
     }
 
-    @DataProvider(name = "invalidDataForPatchOrganization")
-    public Object[][] invalidDataForPatchOrganization() {
+    @DataProvider(name = "invalidDataSet1ForPatchOrganization")
+    public Object[][] invalidData1ForPatchOrganization() {
 
         return new Object[][]{
 
                 {"invalid patch operation", PATCH_PATH_ORG_DESCRIPTION, "new value"},
                 {StringUtils.EMPTY, PATCH_PATH_ORG_DESCRIPTION, "new value"},
                 {null, PATCH_PATH_ORG_DESCRIPTION, "new value"},
-                {PATCH_OP_ADD, StringUtils.EMPTY, "new value"},
-                {PATCH_OP_ADD, null, "new value"},
                 {null, null, null},
                 {StringUtils.EMPTY, StringUtils.EMPTY, StringUtils.EMPTY},
                 {PATCH_OP_ADD, "invalid patch path", "new value"},
-                {PATCH_OP_REMOVE, PATCH_PATH_ORG_NAME, null},
+        };
+    }
+
+    @Test(dataProvider = "invalidDataSet1ForPatchOrganization",
+            expectedExceptions = OrganizationManagementClientException.class)
+    public void testPatchOrganizationWithInvalidPatchRequest1(String op, String path, String value) throws Exception {
+
+        List<PatchOperation> patchOperations = new ArrayList<>();
+        PatchOperation patchOperation = new PatchOperation(op, path, value);
+        patchOperations.add(patchOperation);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
+    }
+
+    @DataProvider(name = "invalidDataSet2ForPatchOrganization")
+    public Object[][] invalidData2ForPatchOrganization() {
+
+        return new Object[][]{
+
+                {PATCH_OP_ADD, StringUtils.EMPTY, "new value"},
+                {PATCH_OP_ADD, null, "new value"},
                 {PATCH_OP_ADD, PATCH_PATH_ORG_DESCRIPTION, null},
                 {PATCH_OP_ADD, PATCH_PATH_ORG_ATTRIBUTES, "new value"}
         };
     }
 
-    @Test(dataProvider = "invalidDataForPatchOrganization",
+    @Test(dataProvider = "invalidDataSet2ForPatchOrganization",
             expectedExceptions = OrganizationManagementClientException.class)
-    public void testPatchOrganizationWithInvalidPatchRequest(String op, String path, String value) throws Exception {
+    public void testPatchOrganizationWithInvalidPatchRequest2(String op, String path, String value) throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(op, path, value);
         patchOperations.add(patchOperation);
-        organizationManager.patchOrganization(ORG_ID, patchOperations);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
+    }
+
+    @DataProvider(name = "invalidDataSet3ForPatchOrganization")
+    public Object[][] invalidData3ForPatchOrganization() {
+
+        return new Object[][]{
+
+                {PATCH_OP_REMOVE, PATCH_PATH_ORG_NAME, null},
+        };
+    }
+
+    @Test(dataProvider = "invalidDataSet3ForPatchOrganization",
+            expectedExceptions = OrganizationManagementClientException.class)
+    public void testPatchOrganizationWithInvalidPatchRequest3(String op, String path, String value) throws Exception {
+
+        List<PatchOperation> patchOperations = new ArrayList<>();
+        PatchOperation patchOperation = new PatchOperation(op, path, value);
+        patchOperations.add(patchOperation);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testPatchOrganizationNameUnavailable() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistByName(anyString(),
-                anyString())).thenReturn(true);
         List<PatchOperation> patchOperations = new ArrayList<>();
-        PatchOperation patchOperation = new PatchOperation(PATCH_OP_REPLACE, PATCH_PATH_ORG_NAME,
-                "new value");
+        PatchOperation patchOperation = new PatchOperation(PATCH_OP_REPLACE, PATCH_PATH_ORG_NAME, ORG2_NAME);
         patchOperations.add(patchOperation);
-        organizationManager.patchOrganization(ORG_ID, patchOperations);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testPatchOrganizationRemoveNonExistingAttribute() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isAttributeExistByKey(anyString(),
-                anyString(), anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_REMOVE, PATCH_PATH_ORG_ATTRIBUTES + "country",
                 null);
         patchOperations.add(patchOperation);
-        organizationManager.patchOrganization(ORG_ID, patchOperations);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testPatchOrganizationReplaceNonExistingAttribute() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isAttributeExistByKey(anyString(),
-                anyString(), anyString())).thenReturn(false);
         List<PatchOperation> patchOperations = new ArrayList<>();
         PatchOperation patchOperation = new PatchOperation(PATCH_OP_REPLACE, PATCH_PATH_ORG_ATTRIBUTES + "country",
                 "India");
         patchOperations.add(patchOperation);
-        organizationManager.patchOrganization(ORG_ID, patchOperations);
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.patchOrganization(ORG1_ID, patchOperations);
+        }
     }
 
     @Test
     public void testUpdateOrganization() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(true);
-        Organization sampleOrganization = getOrganization(ORG_NAME, PARENT_ID);
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().getOrganization(anyInt(), anyString(),
-                anyString())).thenReturn(sampleOrganization);
-        mockBuildURI();
-        organizationManager.updateOrganization(ORG_ID, ORG_NAME, getOrganization(ORG_NAME, PARENT_ID));
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            Organization sampleOrganization = getOrganization(ORG1_ID, ORG1_NAME, NEW_ORG_DESCRIPTION, ROOT_ORG_ID,
+                    STRUCTURAL.toString());
+            Organization updatedOrganization = organizationManager.updateOrganization(ORG1_ID, ORG1_NAME,
+                    sampleOrganization);
+            assertEquals(NEW_ORG_DESCRIPTION, updatedOrganization.getDescription());
+            assertEquals(ROOT_ORG_ID, updatedOrganization.getParent().getId());
+        }
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testUpdateOrganizationWithEmptyOrganizationId() throws Exception {
 
-        mockCarbonContext();
-        organizationManager.updateOrganization(StringUtils.EMPTY, ORG_NAME, getOrganization(ORG_NAME, PARENT_ID));
+        when(Utils.handleClientException(anyObject())).thenReturn(
+                new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+        organizationManager.updateOrganization(StringUtils.EMPTY, ORG1_NAME,
+                getOrganization(ORG1_ID, ORG1_NAME, NEW_ORG_DESCRIPTION, ROOT_ORG_ID, STRUCTURAL.toString()));
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testUpdateOrganizationWithInvalidOrganizationId() throws Exception {
 
-        mockCarbonContext();
-        when(organizationManagementDataHolder.getOrganizationManagementDAO().isOrganizationExistById(anyString(),
-                anyString())).thenReturn(false);
-        organizationManager.updateOrganization(ORG_ID, ORG_NAME
-                , getOrganization(ORG_NAME, PARENT_ID));
+        try (Connection connection = TestUtils.getConnection()) {
+            Connection spyConnection = TestUtils.spyConnection(connection);
+            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
+                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
+            organizationManager.updateOrganization(INVALID_ORG_ID, ORG1_NAME, getOrganization(INVALID_ORG_ID, ORG1_NAME,
+                    NEW_ORG_DESCRIPTION, ROOT_ORG_ID, STRUCTURAL.toString()));
+        }
     }
 
     private void mockCarbonContext() {
@@ -554,50 +639,33 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         System.setProperty(CarbonBaseConstants.CARBON_HOME, carbonHome);
         System.setProperty(CarbonBaseConstants.CARBON_CONFIG_DIR_PATH, Paths.get(carbonHome, "conf").toString());
 
-        mockStatic(PrivilegedCarbonContext.class);
-        PrivilegedCarbonContext privilegedCarbonContext = mock(PrivilegedCarbonContext.class);
+        PowerMockito.mockStatic(PrivilegedCarbonContext.class);
+        PrivilegedCarbonContext privilegedCarbonContext = PowerMockito.mock(PrivilegedCarbonContext.class);
         when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
         when(privilegedCarbonContext.getTenantDomain()).thenReturn(SUPER_TENANT_DOMAIN_NAME);
         when(privilegedCarbonContext.getTenantId()).thenReturn(SUPER_TENANT_ID);
         when(privilegedCarbonContext.getUsername()).thenReturn("admin");
     }
 
-    private void mockBuildURI() throws URLBuilderException {
-
-        ServiceURLBuilder serviceURLBuilder = mock(ServiceURLBuilder.class);
-        mockStatic(ServiceURLBuilder.class);
-        when(ServiceURLBuilder.create()).thenReturn(serviceURLBuilder);
-        ServiceURL serviceURL = mock(ServiceURL.class);
-        mockStatic(ServiceURL.class);
-        when(ServiceURLBuilder.create().addPath(anyString())).thenReturn(serviceURLBuilder);
-        when(ServiceURLBuilder.create().addPath(anyString()).build()).thenReturn(serviceURL);
-    }
-
     private void mockAuthorizationManager() throws UserStoreException {
 
         organizationManagementDataHolder.setRealmService(realmService);
-        when(organizationManagementDataHolder.getRealmService().getTenantUserRealm(anyInt())).thenReturn(userRealm);
+        when(organizationManagementDataHolder.getRealmService().getTenantUserRealm(anyInt()))
+                .thenReturn(userRealm);
         when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
     }
 
-    private Organization getOrganization(String name, String parent) {
+    private Organization getOrganization(String id, String name, String description, String parent, String type) {
 
         Organization organization = new Organization();
-        organization.setId(UUID.randomUUID().toString());
-        organization.setName(name);
-        organization.setDescription(ORG_DESCRIPTION);
-        organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
-        organization.getParent().setId(parent);
-        organization.setType(STRUCTURAL.toString());
-        return organization;
-    }
-
-    private BasicOrganization getBasicOrganization(String name, String id, String created) {
-
-        BasicOrganization organization = new BasicOrganization();
-        organization.setName(name);
         organization.setId(id);
-        organization.setCreated(created);
+        organization.setName(name);
+        organization.setDescription(description);
+        organization.setStatus(OrganizationStatus.ACTIVE.toString());
+        organization.getParent().setId(parent);
+        organization.setType(type);
+        organization.setCreated(Instant.now());
+        organization.setLastModified(Instant.now());
         return organization;
     }
 }

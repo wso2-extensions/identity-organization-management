@@ -101,8 +101,8 @@ public interface OrganizationManager {
     /**
      * Patch organization and its attributes.
      *
-     * @param organizationId The organization ID.
-     * @param patchOperations     The list of patch operations.
+     * @param organizationId  The organization ID.
+     * @param patchOperations The list of patch operations.
      * @return the patched organization.
      * @throws OrganizationManagementException The exception thrown when patching an organization.
      */

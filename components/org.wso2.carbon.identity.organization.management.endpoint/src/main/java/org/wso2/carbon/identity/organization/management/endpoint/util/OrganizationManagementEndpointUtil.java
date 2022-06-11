@@ -39,7 +39,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getContext;
 
 /**
@@ -98,8 +97,7 @@ public class OrganizationManagementEndpointUtil {
 
     private static boolean isForbiddenError(OrganizationManagementClientException e) {
 
-        return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode()) ||
-                ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION.getCode().equals(e.getErrorCode());
+        return ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION.getCode().equals(e.getErrorCode());
     }
 
     private static OrganizationManagementEndpointException buildException(Response.Status status, Log log,
@@ -181,7 +179,7 @@ public class OrganizationManagementEndpointUtil {
         try {
             return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
         } catch (URLBuilderException e) {
-            LOG.error("Server encountered an error while building paginated URL for the response." , e);
+            LOG.error("Server encountered an error while building paginated URL for the response.", e);
             Error error = getError(ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getCode(),
                     ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getMessage(),
                     ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL.getDescription());
