@@ -341,8 +341,6 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
                 "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
-        ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65059", "Unable to redirect to request organization.",
-                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
         ;
 
         private final String code;
