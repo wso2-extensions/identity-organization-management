@@ -154,7 +154,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(true);
+                anyString())).thenReturn(true);
 
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
@@ -302,7 +302,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(false);
+                anyString())).thenReturn(false);
 
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);

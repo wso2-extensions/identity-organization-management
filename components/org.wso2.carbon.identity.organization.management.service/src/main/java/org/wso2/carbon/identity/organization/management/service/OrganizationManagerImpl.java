@@ -484,7 +484,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         try {
             return OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
-                    CREATE_ORGANIZATION_PERMISSION, parentId, getTenantId());
+                    CREATE_ORGANIZATION_PERMISSION, parentId);
         } catch (OrganizationManagementAuthzServiceServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION, e, parentId);
         }

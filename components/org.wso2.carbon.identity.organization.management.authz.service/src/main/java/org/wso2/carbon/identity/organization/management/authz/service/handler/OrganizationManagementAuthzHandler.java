@@ -125,7 +125,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         }
 
         boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized
-                (getUserId(user), permissionString, orgId, tenantId);
+                (getUserId(user), permissionString, orgId);
         if (isUserAuthorized) {
             authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
         }
@@ -181,7 +181,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 }
                 for (String permissionString : permissions) {
                     boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance()
-                            .isUserAuthorized(getUserId(user), permissionString, orgId, tenantId);
+                            .isUserAuthorized(getUserId(user), permissionString, orgId);
                     if (isUserAuthorized) {
                         authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
                         break;
