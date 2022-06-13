@@ -143,7 +143,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         String tenantDomain = getTenantDomain();
         int tenantId = getTenantId();
         validateAddOrganizationRequest(tenantDomain, organization);
-        setParentOrganization(organization, tenantDomain);
+        setParentOrganization(organization, tenantDomain); // method name differ with its implementation
         setCreatedAndLastModifiedTime(organization);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
             createTenant(organization.getId());
@@ -380,6 +380,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private void validateAddOrganizationParentStatus(String tenantDomain, String parentId)
             throws OrganizationManagementException {
 
+        // Get organization status method not need tenantDomain.
         String parentStatus = getOrganizationManagementDAO().getOrganizationStatus(parentId, tenantDomain);
         if (!StringUtils.equals(ACTIVE.toString(), parentStatus)) {
             throw handleClientException(ERROR_CODE_CREATE_REQUEST_PARENT_ORGANIZATION_IS_DISABLED, parentId);
@@ -481,6 +482,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             parentId = rootOrganizationId;
         }
 
+        // Can we remove the authorized boolean
         if (!authorized) {
             validateAddOrganizationParentStatus(tenantDomain, parentId);
             /*

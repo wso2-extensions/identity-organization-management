@@ -49,6 +49,7 @@ public class OrganizationManagementAuthorizationManager {
     public boolean isUserAuthorized(String userId, String resourceId, String orgId, int tenantId)
             throws OrganizationManagementAuthzServiceServerException {
 
+        // Tenant id is not needed. org id is enough
         OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
         return organizationMgtAuthzDAO.isUserAuthorized(userId, resourceId, orgId, tenantId);
     }

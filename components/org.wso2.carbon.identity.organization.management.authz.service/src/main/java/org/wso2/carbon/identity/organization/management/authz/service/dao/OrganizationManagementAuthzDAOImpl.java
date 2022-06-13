@@ -25,7 +25,6 @@ import org.wso2.carbon.identity.organization.management.authz.service.exception.
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_PERMISSIONS_FOR_USER;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
@@ -41,7 +40,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             throws OrganizationManagementAuthzServiceServerException {
 
         List<String> permissions = getAllowedPermissions(resourceId);
-        for (String userPermission : getUserAssignedPermissions(tenantId, userId, orgId)) {
+        for (String userPermission : getUserAssignedPermissions(userId, orgId)) {
             if (permissions.contains(userPermission)) {
                 return true;
             }
@@ -49,7 +48,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         return false;
     }
 
-    private List<String> getUserAssignedPermissions(int tenantId, String userId, String orgId)
+    private List<String> getUserAssignedPermissions(String userId, String orgId)
             throws OrganizationManagementAuthzServiceServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -60,7 +59,6 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_TENANT_ID, tenantId);
                     }
             );
         } catch (DataAccessException e) {
