@@ -130,7 +130,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(true);
+                anyString())).thenReturn(true);
 
         mockBuildURI();
 
@@ -260,7 +260,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(false);
+                anyString())).thenReturn(false);
 
         organizationManager.addOrganization(sampleOrganization);
     }

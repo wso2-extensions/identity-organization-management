@@ -103,6 +103,12 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ROOT_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_VIEW_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_DELETE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_UPDATE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ORGANIZATION_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.DELETE_ORGANIZATION_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.UPDATE_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_CREATED_TIME_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_DESCRIPTION_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
@@ -143,7 +149,18 @@ public class OrganizationManagerImpl implements OrganizationManager {
         String tenantDomain = getTenantDomain();
         int tenantId = getTenantId();
         validateAddOrganizationRequest(tenantDomain, organization);
-        setParentOrganization(organization, tenantDomain); // method name differ with its implementation
+        String parentId = organization.getParent().getId().trim();
+
+        if (StringUtils.equals(ROOT, parentId)){
+            if (!isUserAuthorizedToCreateChildOrganizationInRoot(tenantDomain)) {
+                throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
+            }
+        } else {
+            validateAuthorization(CREATE_ORGANIZATION_PERMISSION, parentId,
+                    ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION);
+        }
+
+        setParentOrganization(organization, tenantDomain);
         setCreatedAndLastModifiedTime(organization);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
             createTenant(organization.getId());
@@ -180,6 +197,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
         int tenantId = getTenantId();
         String tenantDomain = getTenantDomain();
+        validateAuthorization(VIEW_ORGANIZATION_PERMISSION, organizationId,
+                ERROR_CODE_USER_NOT_AUTHORIZED_TO_VIEW_ORGANIZATION);
         Organization organization = getOrganizationManagementDAO().getOrganization(tenantId, organizationId.trim(),
                 tenantDomain);
 
@@ -229,6 +248,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         validateOrganizationDelete(organizationId, tenantDomain);
         String type = getOrganizationManagementDAO().getOrganizationType(organizationId, tenantDomain);
 
+        validateAuthorization(DELETE_ORGANIZATION_PERMISSION, organizationId,
+                ERROR_CODE_USER_NOT_AUTHORIZED_TO_DELETE_ORGANIZATION);
         getOrganizationManagementDAO().deleteOrganization(getTenantId(), organizationId, tenantDomain);
         if (StringUtils.equals(TENANT.toString(), type)) {
             try {
@@ -253,6 +274,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
         validateOrganizationPatchOperations(patchOperations, organizationId, tenantDomain);
 
+        validateAuthorization(UPDATE_ORGANIZATION_PERMISSION, organizationId,
+                ERROR_CODE_USER_NOT_AUTHORIZED_TO_UPDATE_ORGANIZATION);
         getOrganizationManagementDAO().patchOrganization(organizationId, tenantDomain, Instant.now(), patchOperations);
         patchTenantStatus(patchOperations, organizationId, tenantDomain);
 
@@ -279,6 +302,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         validateUpdateOrganizationRequest(currentOrganizationName, organization);
         updateLastModifiedTime(organization);
+        validateAuthorization(UPDATE_ORGANIZATION_PERMISSION, organizationId,
+                ERROR_CODE_USER_NOT_AUTHORIZED_TO_UPDATE_ORGANIZATION);
         getOrganizationManagementDAO().updateOrganization(organizationId, getTenantDomain(), organization);
 
         Organization updatedOrganization = getOrganizationManagementDAO().getOrganization(getTenantId(), organizationId,
@@ -291,6 +316,23 @@ public class OrganizationManagerImpl implements OrganizationManager {
             updateTenantStatus(organization.getStatus(), organizationId);
         }
         return updatedOrganization;
+    }
+
+    private void validateAuthorization(String permission, String organizationId,
+                                       OrganizationManagementConstants.ErrorMessages error)
+            throws OrganizationManagementException {
+
+        boolean authorized = false;
+        try {
+            authorized = OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
+                    permission, organizationId);
+        } catch (OrganizationManagementAuthzServiceServerException e) {
+            // todo
+        }
+
+        if (!authorized){
+            throw handleClientException(error, organizationId);
+        }
     }
 
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {
@@ -466,7 +508,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         ParentOrganizationDO parentOrganization = organization.getParent();
         String parentId = parentOrganization.getId().trim();
-        boolean authorized = false;
+
         /*
         For parentId an alias as 'ROOT' is supported. This indicates that the organization should be created as an
         immediate child of the ROOT organization of this tenant. If a ROOT organization is not already available for
@@ -477,27 +519,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
             if (StringUtils.isBlank(rootOrganizationId)) {
                 addRootOrganization(tenantDomain);
                 rootOrganizationId = getOrganizationIdByName(ROOT);
-                authorized = true;
             }
             parentId = rootOrganizationId;
         }
 
-        // Can we remove the authorized boolean
-        if (!authorized) {
-            validateAddOrganizationParentStatus(tenantDomain, parentId);
-            /*
-            Having '/permission/admin/' assigned to the user would be sufficient to create an organization as an
-            immediate child organization of the ROOT organization.
-             */
-            if (StringUtils.equals(getOrganizationIdByName(ROOT), parentId)) {
-                if (!isUserAuthorizedToCreateChildOrganizationInRoot(tenantDomain) &&
-                        !isUserAuthorizedToCreateOrganization(parentId)) {
-                    throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
-                }
-            } else if (!isUserAuthorizedToCreateOrganization(parentId)) {
-                throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
-            }
-        }
+        validateAddOrganizationParentStatus(tenantDomain, parentId);
+
         parentOrganization.setId(parentId);
         parentOrganization.setRef(buildURIForBody(parentId));
     }
@@ -534,7 +561,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         try {
             return OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
-                    CREATE_ORGANIZATION_PERMISSION, parentId, getTenantId());
+                    CREATE_ORGANIZATION_PERMISSION, parentId);
         } catch (OrganizationManagementAuthzServiceServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION, e, parentId);
         }

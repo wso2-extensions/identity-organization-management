@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.internal;
 
+import org.wso2.carbon.identity.organization.management.authz.service.dao.OrganizationManagementAuthzDAO;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -27,6 +28,7 @@ public class OrganizationManagementAuthzServiceHolder {
 
     private static OrganizationManagementAuthzServiceHolder instance = new OrganizationManagementAuthzServiceHolder();
     private RealmService realmService = null;
+    private OrganizationManagementAuthzDAO authzDAO;
 
     public static OrganizationManagementAuthzServiceHolder getInstance() {
 
@@ -41,5 +43,13 @@ public class OrganizationManagementAuthzServiceHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    public OrganizationManagementAuthzDAO getAuthzDAO() {
+        return authzDAO;
+    }
+
+    public void setAuthzDAO(OrganizationManagementAuthzDAO authzDAO) {
+        this.authzDAO = authzDAO;
     }
 }

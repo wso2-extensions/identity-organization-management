@@ -36,7 +36,7 @@ import static org.wso2.carbon.identity.organization.management.authz.service.uti
 public class OrganizationManagementAuthzDAOImpl implements OrganizationManagementAuthzDAO {
 
     @Override
-    public boolean isUserAuthorized(String userId, String resourceId, String orgId, int tenantId)
+    public boolean isUserAuthorized(String userId, String resourceId, String orgId)
             throws OrganizationManagementAuthzServiceServerException {
 
         List<String> permissions = getAllowedPermissions(resourceId);

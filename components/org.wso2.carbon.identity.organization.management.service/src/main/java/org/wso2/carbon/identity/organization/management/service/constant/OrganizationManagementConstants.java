@@ -63,6 +63,11 @@ public class OrganizationManagementConstants {
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "view";
+    public static final String UPDATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "update";
+    public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "delete";
+
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -203,6 +208,12 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
+        ERROR_CODE_USER_NOT_AUTHORIZED_TO_VIEW_ORGANIZATION("60049", "Unable to view the organization.",
+                "Unauthorized request to view an organization with ID: %s."), // 403
+        ERROR_CODE_USER_NOT_AUTHORIZED_TO_DELETE_ORGANIZATION("60050", "Unable to delete the organization.",
+                "Unauthorized request to delete an organization with ID: %s."), // 403
+        ERROR_CODE_USER_NOT_AUTHORIZED_TO_UPDATE_ORGANIZATION("60051", "Unable to update the organization.",
+                "Unauthorized request to update an organization with ID: %s."), // 403
         
       
         // Server errors.

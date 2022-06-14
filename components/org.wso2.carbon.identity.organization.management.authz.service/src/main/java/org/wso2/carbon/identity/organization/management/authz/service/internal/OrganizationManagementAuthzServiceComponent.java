@@ -20,15 +20,14 @@ package org.wso2.carbon.identity.organization.management.authz.service.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.authz.service.handler.AuthorizationHandler;
-import org.wso2.carbon.identity.organization.management.authz.service.handler.OrganizationManagementAuthzHandler;
+import org.wso2.carbon.identity.organization.management.authz.service.dao.OrganizationManagementAuthzDAO;
+import org.wso2.carbon.identity.organization.management.authz.service.dao.OrganizationManagementAuthzDAOImpl;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -44,9 +43,9 @@ public class OrganizationManagementAuthzServiceComponent {
     @Activate
     protected void activate(ComponentContext componentContext) {
 
-        BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(AuthorizationHandler.class.getName(), new OrganizationManagementAuthzHandler(),
-                null);
+        OrganizationManagementAuthzDAO authzDAO = new OrganizationManagementAuthzDAOImpl();
+        OrganizationManagementAuthzServiceHolder.getInstance().setAuthzDAO(authzDAO);
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Organization management authorization service component activated successfully.");
         }

@@ -19,15 +19,7 @@
 package org.wso2.carbon.identity.organization.management.authz.service.util;
 
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
-import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
-import org.wso2.carbon.user.api.UserRealm;
-import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.core.UserStoreManager;
-import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,25 +31,6 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
  * This class provides utility functions for the organization management authorization.
  */
 public class OrganizationManagementAuthzUtil {
-
-    /**
-     * Get the userstore manager by user.
-     *
-     * @param user The user object.
-     * @return The userstore manager.
-     * @throws UserStoreException Error while getting the userstore manager.
-     */
-    public static UserStoreManager getUserStoreManager(User user) throws UserStoreException {
-
-        RealmService realmService = OrganizationManagementAuthzServiceHolder.getInstance().getRealmService();
-        UserRealm tenantUserRealm = realmService.getTenantUserRealm(IdentityTenantUtil.getTenantId(user
-                .getTenantDomain()));
-        String userStoreDomain = user.getUserStoreDomain();
-        if (IdentityUtil.getPrimaryDomainName().equals(userStoreDomain) || userStoreDomain == null) {
-            return (UserStoreManager) tenantUserRealm.getUserStoreManager();
-        }
-        return ((UserStoreManager) tenantUserRealm.getUserStoreManager()).getSecondaryUserStoreManager(userStoreDomain);
-    }
 
     /**
      * Get a new Jdbc template.
