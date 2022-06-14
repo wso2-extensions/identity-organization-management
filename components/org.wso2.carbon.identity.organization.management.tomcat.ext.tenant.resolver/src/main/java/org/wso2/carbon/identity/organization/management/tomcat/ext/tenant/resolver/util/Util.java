@@ -86,7 +86,7 @@ public class Util {
         if (domainInRequestPath.indexOf('/') != -1) {
             domainInRequestPath = domainInRequestPath.substring(0, domainInRequestPath.indexOf('/'));
             // todo: check if it is ok to directly have the root org id or need to fetch it from db.
-            if (StringUtils.equals("90178f7e-05f0-4448-b1b2-3d1aca1fdcf3", domainInRequestPath)) {
+            if (StringUtils.equals("root4a8d-113f-4211-a0d5-efe36b082211", domainInRequestPath)) {
                 // super tenant domain will be returned.
                 return domain;
             }
