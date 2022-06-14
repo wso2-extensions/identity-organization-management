@@ -722,6 +722,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         tenant.setActive(true);
         tenant.setDomain(domain);
         tenant.setAdminName(orgCreatorID);
+        tenant.setAdminUserId(orgCreatorID);
         tenant.setEmail("dummyadmin@email.com");
         // set the password as domain for now to avoid findbugs detecting it as a hardcoded value.
         tenant.setAdminPassword(domain);
