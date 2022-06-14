@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.6-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -45,6 +45,8 @@
         <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
         <module>components/org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</module>
@@ -76,6 +78,7 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-web</artifactId>
                 <version>${spring-web.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>javax.ws.rs</groupId>
@@ -173,6 +176,12 @@
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.role.management.service</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -188,6 +197,11 @@
                 <groupId>org.wso2.carbon.identity.auth.rest</groupId>
                 <artifactId>org.wso2.carbon.identity.authz.service</artifactId>
                 <version>${carbon.identity.auth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
+                <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
+                <version>${carbon.identity.inbound.provisioning.scim2.version}</version>
             </dependency>
 
             <dependency>
@@ -297,14 +311,20 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!--Plugin for generating the swagger server stubs-->
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${openapi.tools.version}</version>
+                </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.plugin.version}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <encoding>UTF-8</encoding>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <source>${compiler-source.version}</source>
+                        <target>${compiler-target.version}</target>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -361,7 +381,7 @@
                                 <suppressionsLocation>
                                     https://raw.githubusercontent.com/wso2/code-quality-tools/v1.3/checkstyle/suppressions.xml
                                 </suppressionsLocation>
-                                <encoding>UTF-8</encoding>
+                                <encoding>${project.build.sourceEncoding}</encoding>
                                 <consoleOutput>true</consoleOutput>
                                 <failsOnError>true</failsOnError>
                                 <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -381,6 +401,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
                     <preparationGoals>clean install</preparationGoals>
+                    <tagNameFormat>${project.version}</tagNameFormat>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
@@ -396,7 +417,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
+                    <source>${compiler-source.version}</source>
                 </configuration>
                 <executions>
                     <execution>
@@ -468,6 +489,11 @@
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
+        <carbon.identity.scim2.package.import.version.range>[1.5.122, 2.0.0)
+        </carbon.identity.scim2.package.import.version.range>
+        <charon3.core.import.version.range>[3.4.22, 3.5.0)</charon3.core.import.version.range>
+        <carbon.identity.inbound.provisioning.scim2.version>1.5.122
+        </carbon.identity.inbound.provisioning.scim2.version>
 
         <identity.extension.utils.version>1.0.8</identity.extension.utils.version>
         <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
@@ -477,6 +503,7 @@
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
+        <carbon.user.core.imp.pkg.version.range>[4.7.0, 4.8.0)</carbon.user.core.imp.pkg.version.range>
         <carbon.registry.imp.pkg.version.range>[1.0.1,2.0.0)</carbon.registry.imp.pkg.version.range>
 
         <carbon.database.utils.version>2.0.13</carbon.database.utils.version>
@@ -497,11 +524,17 @@
         <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
         <h2database.version>1.4.199</h2database.version>
 
+        <openapi.tools.version>4.1.2</openapi.tools.version>
+
         <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>
         <maven.checkstyleplugin.version>3.1.0</maven.checkstyleplugin.version>
         <maven.findbugsplugin.version>3.0.4</maven.findbugsplugin.version>
         <spotbugs-maven-plugin.version>4.1.3</spotbugs-maven-plugin.version>
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <findbugs.annotations.version>3.0.1</findbugs.annotations.version>
+
+        <compiler-source.version>1.8</compiler-source.version>
+        <compiler-target.version>1.8</compiler-target.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>
