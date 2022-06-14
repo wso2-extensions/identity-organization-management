@@ -47,6 +47,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
+        <module>components/org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</module>
     </modules>
 
     <dependencyManagement>
@@ -140,6 +141,21 @@
                 <artifactId>org.wso2.carbon.user.core</artifactId>
                 <version>${carbon.kernel.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon</groupId>
+                <artifactId>org.wso2.carbon.registry.core</artifactId>
+                <version>${carbon.kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon</groupId>
+                <artifactId>org.wso2.carbon.tomcat</artifactId>
+                <version>${carbon.kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon</groupId>
+                <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
+                <version>${carbon.kernel.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
@@ -229,6 +245,13 @@
                 <groupId>org.wso2.carbon.extension.identity.authenticator.utils</groupId>
                 <artifactId>org.wso2.carbon.extension.identity.helper</artifactId>
                 <version>${identity.extension.utils.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${findbugs.annotations.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <!--Test Dependencies-->
@@ -402,7 +425,7 @@
     <properties>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.7.0-m5</carbon.kernel.version>
+        <carbon.kernel.version>4.7.0-beta3</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
 
         <carbon.commons.imp.pkg.version.range>[4.7.0, 5.0.0)</carbon.commons.imp.pkg.version.range>
@@ -425,6 +448,10 @@
         <javax.ws.rs-api.version>2.1.1</javax.ws.rs-api.version>
 
         <javax.servlet.imp.pkg.version.range>[2.6.0, 3.0.0)</javax.servlet.imp.pkg.version.range>
+
+        <catalina.imp.pkg.version.range>[9.0.0,10.0.0)</catalina.imp.pkg.version.range>
+
+        <org.slf4j.imp.pkg.version.range>[1.7.0,2.0.0)</org.slf4j.imp.pkg.version.range>
 
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
@@ -450,6 +477,7 @@
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
+        <carbon.registry.imp.pkg.version.range>[1.0.1,2.0.0)</carbon.registry.imp.pkg.version.range>
 
         <carbon.database.utils.version>2.0.13</carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,3.0.0)</org.wso2.carbon.database.utils.version.range>
@@ -474,5 +502,6 @@
         <maven.findbugsplugin.version>3.0.4</maven.findbugsplugin.version>
         <spotbugs-maven-plugin.version>4.1.3</spotbugs-maven-plugin.version>
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
+        <findbugs.annotations.version>3.0.1</findbugs.annotations.version>
     </properties>
 </project>
