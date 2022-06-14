@@ -128,6 +128,9 @@ public class SQLConstants {
             "; AND UM_ORG_ROLE.UM_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
             "; AND UM_ORG_PERMISSION.UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
 
+    public static final String GET_TENANT_UUID_FROM_ORGANIZATION_UUID = "SELECT UM_TENANT_UUID FROM UM_TENANT WHERE " +
+            "UM_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
+
     /**
      * SQL Placeholders.
      */
@@ -139,12 +142,12 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_TYPE = "TYPE";
         public static final String DB_SCHEMA_COLUMN_NAME_CREATED_TIME = "CREATED_TIME";
         public static final String DB_SCHEMA_COLUMN_NAME_LAST_MODIFIED = "LAST_MODIFIED";
-        public static final String DB_SCHEMA_COLUMN_NAME_TENANT_ID = "TENANT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_PARENT_ID = "PARENT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_STATUS = "STATUS";
         public static final String DB_SCHEMA_COLUMN_NAME_KEY = "KEY";
         public static final String DB_SCHEMA_COLUMN_NAME_VALUE = "VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_ID = "USER_ID";
         public static final String DB_SCHEMA_LIMIT = "LIMIT";
+        public static final String DB_SCHEMA_COLUMN_NAME_UM_ORG_ID = "UM_ORG_ID";
     }
 }
