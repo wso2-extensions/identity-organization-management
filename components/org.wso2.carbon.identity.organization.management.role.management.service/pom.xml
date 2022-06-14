@@ -6,7 +6,7 @@
     <parent>
         <artifactId>identity-organization-management</artifactId>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.5-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -23,10 +23,6 @@
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -49,10 +45,6 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
             <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
@@ -96,7 +88,6 @@
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.identity.organization.management.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.service.cache;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.dao.impl;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
