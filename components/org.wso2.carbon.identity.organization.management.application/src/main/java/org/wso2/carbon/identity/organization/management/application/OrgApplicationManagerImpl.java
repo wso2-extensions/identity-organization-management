@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
@@ -49,6 +50,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
@@ -193,10 +195,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 new InboundAuthenticationRequestConfig[]{inboundAuthenticationRequestConfig});
         //TODO: Finalize the application name and description.
         ServiceProvider delegatedApplication = new ServiceProvider();
-        delegatedApplication.setApplicationName("internal-" + mainApplication.getApplicationName());
-        delegatedApplication.setDescription("delegate access from:" + mainApplication.getApplicationName());
+        delegatedApplication.setApplicationName(mainApplication.getApplicationName() + "-shared-" + UUID.randomUUID());
+        delegatedApplication.setDescription("Delegated access from:" + mainApplication.getApplicationName());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
+        appendSharedAppProperty(delegatedApplication);
+
         return delegatedApplication;
+    }
+
+    private void appendSharedAppProperty(ServiceProvider serviceProvider) {
+
+        ServiceProviderProperty sharedAppProperty = new ServiceProviderProperty();
+        sharedAppProperty.setName(IS_SHARED_APP);
+        sharedAppProperty.setValue(Boolean.TRUE.toString());
+
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{sharedAppProperty};
+        serviceProvider.setSpProperties(spProperties);
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
