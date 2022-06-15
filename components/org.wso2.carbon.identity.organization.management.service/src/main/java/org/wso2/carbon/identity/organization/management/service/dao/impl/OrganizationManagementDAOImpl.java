@@ -47,6 +47,7 @@ import java.util.TimeZone;
 import static java.time.ZoneOffset.UTC;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ATTRIBUTE_COLUMN_MAP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.BASIC_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CO;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EQ;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
@@ -65,6 +66,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_TYPE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_PARENT_ORGANIZATION_STATUS;
@@ -108,6 +110,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_TENANT_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_TYPE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_PARENT_ORGANIZATION_STATUS;
@@ -483,6 +486,38 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                             organizationId));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_TYPE, e, organizationId);
+        }
+    }
+
+    @Override
+    public List<String> getOrganizationPermissions(String organizationId, String userId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        List<String> resourceIds;
+        try {
+            resourceIds = namedJdbcTemplate.executeQuery(GET_ORGANIZATION_PERMISSIONS,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
+                    });
+
+            List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
+            permissions.remove(VIEW_ORGANIZATION_PERMISSION);
+            List<String> allowedPermissions = new ArrayList<>();
+
+            for (String resourceId : resourceIds) {
+                if (permissions.contains(resourceId)) {
+                    return BASIC_ORGANIZATION_PERMISSIONS;
+                } else if (BASIC_ORGANIZATION_PERMISSIONS.contains(resourceId)) {
+                    allowedPermissions.add(resourceId);
+                }
+            }
+            return allowedPermissions;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS,
+                    e, organizationId, userId);
         }
     }
 

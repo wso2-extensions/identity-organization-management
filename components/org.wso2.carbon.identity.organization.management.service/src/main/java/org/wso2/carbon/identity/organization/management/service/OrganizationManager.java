@@ -71,10 +71,12 @@ public interface OrganizationManager {
      *
      * @param organizationId The organization ID.
      * @param showChildren   Whether the child organizations should be retrieved.
+     * @param includePermissions   Whether the permissions attached for organizations should be retrieved.
      * @return the organization object.
      * @throws OrganizationManagementException The exception thrown when retrieving an organization.
      */
-    Organization getOrganization(String organizationId, boolean showChildren) throws OrganizationManagementException;
+    Organization getOrganization(String organizationId, boolean showChildren, boolean includePermissions)
+            throws OrganizationManagementException;
 
     /**
      * List or search organizations.

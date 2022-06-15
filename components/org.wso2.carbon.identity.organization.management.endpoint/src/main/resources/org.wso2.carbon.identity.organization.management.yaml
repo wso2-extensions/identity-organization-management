@@ -99,6 +99,7 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/showChildrenQueryParam'
+        - $ref: '#/components/parameters/includePermissionsQueryParam'
       responses:
         '200':
           description: Successful response
@@ -309,6 +310,15 @@ components:
       required: false
       description:
         Returns the organization details along with the child organization IDs belonging to this organization.
+      schema:
+        type: boolean
+        default: false
+    includePermissionsQueryParam:
+      in: query
+      name: includePermissions
+      required: false
+      description:
+        Returns the organization details along with permissions assigned for the requested user for this organization.
       schema:
         type: boolean
         default: false
@@ -529,6 +539,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Attribute'
+        permissions:
+          type: array
+          items:
+            type: string
     #-----------------------------------------------------
     # Organization Parent Object
     #-----------------------------------------------------

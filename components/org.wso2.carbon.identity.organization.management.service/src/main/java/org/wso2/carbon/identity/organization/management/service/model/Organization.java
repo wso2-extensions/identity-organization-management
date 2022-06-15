@@ -38,6 +38,7 @@ public class Organization {
     private Instant created;
     private List<OrganizationAttribute> attributes = new ArrayList<>();
     private List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
+    private List<String> permissions = new ArrayList<>();
 
     public String getId() {
 
@@ -147,5 +148,13 @@ public class Organization {
     public void setTenantId(int tenantId) {
 
         this.tenantId = tenantId;
+    }
+
+    public List<String> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(List<String> permissions) {
+        this.permissions = permissions;
     }
 }

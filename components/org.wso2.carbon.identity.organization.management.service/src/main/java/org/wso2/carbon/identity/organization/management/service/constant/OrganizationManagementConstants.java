@@ -18,8 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.service.constant;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,6 +71,14 @@ public class OrganizationManagementConstants {
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "view";
+    public static final String UPDATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "update";
+    public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "delete";
+
+    public static final List<String> BASIC_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
+            .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
+                    DELETE_ORGANIZATION_PERMISSION));
 
     public static final String EQ = "eq";
     public static final String CO = "co";
@@ -341,6 +351,9 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
                 "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions",
+                "Server encountered an error while retrieving the organizations permissions of organization " +
+                        "with ID: %s for user with ID: %s."),
         ;
 
         private final String code;

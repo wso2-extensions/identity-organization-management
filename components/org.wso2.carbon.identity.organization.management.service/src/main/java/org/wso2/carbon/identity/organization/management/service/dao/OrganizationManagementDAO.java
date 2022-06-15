@@ -192,4 +192,14 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization type.
      */
     String getOrganizationType(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Get list of permissions assigned to user for the organization.
+     * @param organizationId
+     * @param userId
+     * @return list of resource ids of permissions
+     * @throws OrganizationManagementServerException
+     */
+    List<String> getOrganizationPermissions(String organizationId, String userId)
+            throws OrganizationManagementServerException;
 }
