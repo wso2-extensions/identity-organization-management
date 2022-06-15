@@ -55,6 +55,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
@@ -68,14 +69,16 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
+        role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        if (CollectionUtils.isNotEmpty(role.getUsers())) {
-            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
-            }
-        }
+        // todo: skip user existence check atm, this user can be from any org.
+//        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+//            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+//            if (CollectionUtils.isNotEmpty(userIdList)) {
+//                validateUsers(userIdList, getTenantId());
+//            }
+//        }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
             List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(groupIdList)) {

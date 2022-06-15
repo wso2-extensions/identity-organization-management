@@ -231,10 +231,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
         Organization organization = organizationManagementDAO.getOrganization(organizationId);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
             String tenantID = organizationManagementDAO.getAssociatedTenantUUIDForOrganization(organizationId);
-            try {
-                getTenantMgtService().deactivateTenant(tenantID);
-            } catch (TenantMgtException e) {
-                throw handleServerException(ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT, e, organizationId);
+            if (StringUtils.isNotBlank(tenantID)) {
+                try {
+                    getTenantMgtService().deactivateTenant(tenantID);
+                } catch (TenantMgtException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT, e, organizationId);
+                }
             }
         }
         organizationManagementDAO.deleteOrganization(organizationId);

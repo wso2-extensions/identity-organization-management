@@ -67,7 +67,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
@@ -249,7 +248,6 @@ public class RoleManagementService {
     private Role generateRoleFromPostRequest(RolePostRequest rolePostRequest) {
 
         Role role = new Role();
-        role.setId(generateUniqueID());
         role.setDisplayName(StringUtils.strip(rolePostRequest.getDisplayName()));
         if (CollectionUtils.isNotEmpty(rolePostRequest.getUsers())) {
             role.setUsers(rolePostRequest.getUsers().stream().map(RolePostRequestUser::getValue)
