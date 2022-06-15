@@ -92,16 +92,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgName)
+    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgId)
             throws OrganizationManagementException {
 
         int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenantDomain);
 
+        //TODO: Implement method in org manager to return the organization based on tenant id??
         String ownerOrgId = ownerTenantId == MultitenantConstants.SUPER_TENANT_ID ?
                 getOrganizationManager().getOrganizationIdByName(OrganizationManagementConstants.ROOT) :
                 getOrganizationManager().getOrganization(ownerTenantDomain, Boolean.FALSE).getId();
-
-        String sharedOrgId = getOrganizationManager().getOrganizationIdByName(sharedOrgName);
 
         ServiceProvider mainApplication;
         try {

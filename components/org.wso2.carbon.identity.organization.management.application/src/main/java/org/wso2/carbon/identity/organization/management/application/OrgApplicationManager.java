@@ -44,10 +44,10 @@ public interface OrgApplicationManager {
      *
      * @param mainAppName       Name of the main application.
      * @param ownerTenantDomain Tenant domain of the organization owning the application.
-     * @param sharedOrgName       Name of the organization owning the shared application.
+     * @param sharedOrgId       Identifier of the organization owning the shared application.
      * @return shared application {@link ServiceProvider}.
      * @throws OrganizationManagementException on errors when resolving the shared application id.
      */
-    ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgName)
+    ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgId)
             throws OrganizationManagementException;
 }
