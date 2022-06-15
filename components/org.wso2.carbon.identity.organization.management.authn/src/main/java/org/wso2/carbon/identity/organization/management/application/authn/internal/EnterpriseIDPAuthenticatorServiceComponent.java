@@ -28,7 +28,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticator;
@@ -66,28 +65,6 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Enterprise IDP Authenticator bundle is deactivated");
         }
-    }
-
-    @Reference(name = "identity.application.management.component",
-            service = ApplicationManagementService.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetApplicationManagementService")
-    protected void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Application Management Service is set in the OpenID Connect Authenticator");
-        }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance()
-                .setApplicationManagementService(applicationManagementService);
-    }
-
-    protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Application Management Service is unset in the OpenID Connect Authenticator");
-        }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setApplicationManagementService(null);
     }
 
     @Reference(name = "identity.oauth.component",

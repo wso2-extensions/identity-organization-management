@@ -14,7 +14,6 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
@@ -22,11 +21,11 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,6 +39,8 @@ import static org.wso2.carbon.identity.organization.management.application.authn
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_NAME;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 
 /**
  * Unit test class for EnterpriseIDPAuthenticatorTest class.
@@ -68,8 +69,6 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
     @Mock
     private OrgApplicationManager mockOrgApplicationManager;
     @Mock
-    private ApplicationManagementService mockApplicationManagementService;
-    @Mock
     private ServiceProvider mockServiceProvider;
     @Mock
     private InboundAuthenticationConfig mockInboundAuthenticationConfig;
@@ -93,7 +92,6 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         mockStatic(EnterpriseIDPAuthenticatorDataHolder.class);
         enterpriseIDPAuthenticatorDataHolder.setOrganizationManager(mockOrganizationManager);
         enterpriseIDPAuthenticatorDataHolder.setOrgApplicationManager(mockOrgApplicationManager);
-        enterpriseIDPAuthenticatorDataHolder.setApplicationManagementService(mockApplicationManagementService);
         enterpriseIDPAuthenticatorDataHolder.setOAuthAdminService(mockOAuthAdminServiceImpl);
         when(EnterpriseIDPAuthenticatorDataHolder.getInstance()).thenReturn(enterpriseIDPAuthenticatorDataHolder);
     }
@@ -209,10 +207,8 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().isOrganizationExistById(anyString()))
                 .thenReturn(true);
-        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedAppResourceId(anyString(),
-                anyString(), anyString())).thenReturn(Optional.of(sharedAppId));
-        when(enterpriseIDPAuthenticatorDataHolder.getApplicationManagementService()
-                .getApplicationByResourceId(anyString(), anyString())).thenReturn(mockServiceProvider);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
+                anyString(), anyString())).thenReturn(mockServiceProvider);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
 
         InboundAuthenticationRequestConfig inbound = new InboundAuthenticationRequestConfig();
@@ -227,9 +223,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(mockOAuthConsumerAppDTO.getOauthConsumerSecret()).thenReturn(secretKey);
 
         when(mockAuthenticationContext.getAuthenticatorProperties()).thenReturn(authenticatorProperties);
+        when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
+        when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
 
         mockServiceURLBuilder();
-
         AuthenticatorFlowStatus status = enterpriseIDPAuthenticator.process(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
 
@@ -250,8 +247,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
-        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedAppResourceId(anyString(),
-                anyString(), anyString())).thenReturn(Optional.empty());
+        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
+                anyString(), anyString())).thenThrow(
+                new OrganizationManagementServerException(ERROR_CODE_APPLICATION_NOT_SHARED.getCode(),
+                        ERROR_CODE_APPLICATION_NOT_SHARED.getMessage()));
         enterpriseIDPAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
     }
@@ -263,11 +262,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
-        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedAppResourceId(anyString(),
-                anyString(), anyString())).thenReturn(Optional.of(sharedAppId));
-
-        when(enterpriseIDPAuthenticatorDataHolder.getApplicationManagementService()
-                .getApplicationByResourceId(anyString(), anyString())).thenReturn(null);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
+                anyString(), anyString())).thenThrow(
+                new OrganizationManagementServerException(ERROR_CODE_INVALID_APPLICATION.getCode(),
+                        ERROR_CODE_INVALID_APPLICATION.getMessage()));
 
         enterpriseIDPAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
@@ -280,15 +278,11 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
-        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedAppResourceId(anyString(),
-                anyString(), anyString())).thenReturn(Optional.of(sharedAppId));
-
-        when(enterpriseIDPAuthenticatorDataHolder.getApplicationManagementService()
-                .getApplicationByResourceId(anyString(), anyString())).thenReturn(mockServiceProvider);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
+                anyString(), anyString())).thenReturn(mockServiceProvider);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
 
         enterpriseIDPAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
     }
-
 }

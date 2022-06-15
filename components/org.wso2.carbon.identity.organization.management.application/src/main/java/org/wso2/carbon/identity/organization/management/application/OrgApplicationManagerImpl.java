@@ -38,11 +38,13 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,13 +54,13 @@ import java.util.stream.Collectors;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -84,29 +86,44 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         for (ChildOrganizationDO child : filteredChildOrgs) {
             Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
-                shareApplication(ownerTenantDomain, childOrg, rootApplication);
+                shareApplication(organization.getId(), childOrg, rootApplication);
             }
         }
     }
 
     @Override
-    public Optional<String> resolveSharedAppResourceId(String sharedOrgName, String mainAppName,
-                                                       String ownerTenant) throws OrganizationManagementException {
+    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgName)
+            throws OrganizationManagementException {
 
-        //TODO: Update this after finalizing the unique value to identify the org which will be used at the login.
-        int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenant);
-        int sharedTenantId = IdentityTenantUtil.getTenantId(sharedOrgName);
+        int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenantDomain);
+
+        String ownerOrgId = ownerTenantId == MultitenantConstants.SUPER_TENANT_ID ?
+                getOrganizationManager().getOrganizationIdByName(OrganizationManagementConstants.ROOT) :
+                getOrganizationManager().getOrganization(ownerTenantDomain, Boolean.FALSE).getId();
+
+        String sharedOrgId = getOrganizationManager().getOrganizationIdByName(sharedOrgName);
 
         ServiceProvider mainApplication;
         try {
-            mainApplication = getApplicationManagementService().getServiceProvider(mainAppName,
-                    ownerTenant);
+            mainApplication = Optional.ofNullable(getApplicationManagementService().getServiceProvider(mainAppName,
+                            ownerTenantDomain))
+                    .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, mainAppName));
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerTenant);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
+                    ownerTenantDomain);
         }
-        return mainApplication == null ? Optional.empty() :
-                getOrgApplicationMgtDAO().getSharedApplicationResourceId(ownerTenantId, sharedTenantId,
-                        mainApplication.getApplicationResourceId());
+
+        Organization sharedOrganization = getOrganizationManager().getOrganization(sharedOrgId, Boolean.FALSE);
+        String sharedAppId =
+                resolveSharedApp(mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId).orElseThrow(
+                        () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED));
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(sharedOrganization.getTenantId());
+        try {
+            return getApplicationManagementService().getApplicationByResourceId(sharedAppId, tenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
+                    ownerTenantDomain);
+        }
     }
 
     /**
@@ -131,34 +148,31 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, applicationId));
     }
 
-    private void shareApplication(String ownerTenantDomain, Organization sharedOrg, ServiceProvider mainApplication)
+    private void shareApplication(String ownerOrgId, Organization sharedOrg, ServiceProvider mainApplication)
             throws OrganizationManagementException {
 
         try {
-            //TODO: finalize whether to use org id or tenant id.
-            int parentOrgTenantId = getTenantId();
-            int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
-
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
             // loaded, tenant domain will be derived from the user who created the application.
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
             String sharedOrgAdmin =
-                    getRealmService().getTenantUserRealm(sharedOrgTenantId).getRealmConfiguration().getAdminUserName();
+                    getRealmService().getTenantUserRealm(sharedOrg.getTenantId()).getRealmConfiguration()
+                            .getAdminUserName();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
-            Optional<String> mayBeSharedAppId = resolveSharedAppResourceId(sharedOrg.getId(),
-                    mainApplication.getApplicationName(), ownerTenantDomain);
+            Optional<String> mayBeSharedAppId = resolveSharedApp(
+                    mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrg.getId());
             if (mayBeSharedAppId.isPresent()) {
                 return;
             }
-            // Create Oauth consumer app.
+            // Create Oauth consumer app to redirect login to shared application.
             OAuthConsumerAppDTO createdOAuthApp = createOAuthApplication();
             ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                     sharedOrg.getId(), getAuthenticatedUsername());
-            getOrgApplicationMgtDAO().addSharedApplication(parentOrgTenantId,
-                    mainApplication.getApplicationResourceId(), sharedOrgTenantId, sharedApplicationId);
+            getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
+                    sharedApplicationId, sharedOrg.getId());
         } catch (IdentityOAuthAdminException | URLBuilderException | IdentityApplicationManagementException
                 | UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
@@ -166,6 +180,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
+    }
+
+    private Optional<String> resolveSharedApp(String mainAppId, String ownerOrgId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId,
+                sharedOrgId);
     }
 
     private OAuthConsumerAppDTO createOAuthApplication() throws URLBuilderException, IdentityOAuthAdminException {
@@ -193,6 +214,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         InboundAuthenticationConfig inboundAuthConfig = new InboundAuthenticationConfig();
         inboundAuthConfig.setInboundAuthenticationRequestConfigs(
                 new InboundAuthenticationRequestConfig[]{inboundAuthenticationRequestConfig});
+
         //TODO: Finalize the application name and description.
         ServiceProvider delegatedApplication = new ServiceProvider();
         delegatedApplication.setApplicationName(mainApplication.getApplicationName() + "-shared-" + UUID.randomUUID());

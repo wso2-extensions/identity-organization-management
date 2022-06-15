@@ -30,24 +30,24 @@ public interface OrgApplicationMgtDAO {
     /**
      * Creates new entry for shared applications across organizations.
      *
-     * @param ownerTenantId  The tenant ID corresponding to the tenant where the main application resides.
-     * @param mainAppId      Unique identifier of the main application.
-     * @param sharedTenantId The tenant ID to whom the application is shared.
-     * @param sharedAppId    Unique identifier of the shared application.
+     * @param mainAppId   Unique identifier of the main application.
+     * @param ownerOrgId  The unique ID corresponding to the organization where the main application resides.
+     * @param sharedAppId Unique identifier of the shared application.
+     * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
      * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
      */
-    void addSharedApplication(int ownerTenantId, String mainAppId, int sharedTenantId, String sharedAppId)
+    void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId)
             throws OrganizationManagementException;
 
     /**
      * Returns the unique identifier of the shared application.
      *
-     * @param ownerTenantId  The tenant ID corresponding to the tenant where the main application resides.
-     * @param sharedTenantId The tenant ID to whom the application is shared.
-     * @param mainAppId      Main application identifier.
+     * @param mainAppId   Main application identifier.
+     * @param ownerOrgId  The unique ID corresponding to the organization where the main application resides.
+     * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
      * @return Unique identifier of the shared application.
      * @throws OrganizationManagementException the server exception is thrown in a failure to retrieve the entry.
      */
-    Optional<String> getSharedApplicationResourceId(int ownerTenantId, int sharedTenantId, String mainAppId)
+    Optional<String> getSharedApplicationResourceId(String mainAppId, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException;
 }

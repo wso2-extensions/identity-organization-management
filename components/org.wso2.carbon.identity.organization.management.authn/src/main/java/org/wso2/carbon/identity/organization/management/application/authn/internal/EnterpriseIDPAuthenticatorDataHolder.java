@@ -17,7 +17,6 @@
  */
 package org.wso2.carbon.identity.organization.management.application.authn.internal;
 
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -29,8 +28,6 @@ public class EnterpriseIDPAuthenticatorDataHolder {
 
     private static final EnterpriseIDPAuthenticatorDataHolder instance = new EnterpriseIDPAuthenticatorDataHolder();
 
-    private ApplicationManagementService applicationManagementService;
-
     private OAuthAdminServiceImpl oAuthAdminService;
 
     private OrganizationManager organizationManager;
@@ -40,16 +37,6 @@ public class EnterpriseIDPAuthenticatorDataHolder {
     public static EnterpriseIDPAuthenticatorDataHolder getInstance() {
 
         return instance;
-    }
-
-    public ApplicationManagementService getApplicationManagementService() {
-
-        return applicationManagementService;
-    }
-
-    public void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        this.applicationManagementService = applicationManagementService;
     }
 
     public OAuthAdminServiceImpl getOAuthAdminService() {
