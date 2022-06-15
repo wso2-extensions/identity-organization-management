@@ -86,6 +86,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
 
 /**
@@ -151,10 +152,11 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
                 throw handleAuthFailures(ERROR_CODE_ORG_PARAMETER_NOT_FOUND);
             }
 
-            Organization sharedOrganization = getSharedOrganization(organizationName);
             // Get the shared service provider based on the requested organization.
+            String ownerOrgId = getAppOwnerOrgIdByTenantDomain(ownerTenantDomain);
+            Organization sharedOrganization = getSharedOrganization(organizationName);
             ServiceProvider sharedApplication =
-                    getSharedApplication(application, ownerTenantDomain, sharedOrganization.getId());
+                    getSharedApplication(application, ownerOrgId, sharedOrganization.getId());
 
             InboundAuthenticationRequestConfig oidcConfigurations =
                     getAuthenticationConfig(sharedApplication).orElseThrow(
@@ -174,6 +176,20 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         } catch (IdentityOAuthAdminException | URLBuilderException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN, e);
+        }
+    }
+
+    private String getAppOwnerOrgIdByTenantDomain(String tenantDomain) throws AuthenticationFailedException {
+
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            String organizationId = getOrganizationManager().getOrganizationIdByTenantId(tenantId);
+            if (StringUtils.isBlank(organizationId)) {
+                throw handleAuthFailures(ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT);
+            }
+            return organizationId;
+        } catch (OrganizationManagementException e) {
+            throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION, e);
         }
     }
 
@@ -260,18 +276,18 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
      * Returns the shared application details based on the given organization name, main application and owner
      * organization of the main application.
      *
-     * @param application       Main application.
-     * @param ownerTenantDomain Tenant domain of the organization which owns the main application.
-     * @param sharedOrgId       Identifier of the organization which owns the shared application.
+     * @param application Main application.
+     * @param ownerOrgId  Identifier of the organization which owns the main application.
+     * @param sharedOrgId Identifier of the organization which owns the shared application.
      * @return shared application, instance of {@link ServiceProvider}.
      * @throws AuthenticationFailedException if the application is not found, authentication failed exception will be
      *                                       thrown.
      */
-    private ServiceProvider getSharedApplication(String application, String ownerTenantDomain, String sharedOrgId)
+    private ServiceProvider getSharedApplication(String application, String ownerOrgId, String sharedOrgId)
             throws AuthenticationFailedException {
 
         try {
-            return getOrgApplicationManager().resolveSharedApplication(application, ownerTenantDomain, sharedOrgId);
+            return getOrgApplicationManager().resolveSharedApplication(application, ownerOrgId, sharedOrgId);
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e);
         }

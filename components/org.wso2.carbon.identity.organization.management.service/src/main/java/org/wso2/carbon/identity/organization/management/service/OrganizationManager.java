@@ -67,6 +67,15 @@ public interface OrganizationManager {
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
 
     /**
+     * Retrieve organization ID if a TENANT type organization exists for the given tenant id.
+     *
+     * @param tenantId The tenant identifier of the TENANT type organizations.
+     * @return the organization ID.
+     * @throws OrganizationManagementException The exception thrown when retrieving the ID an organization.
+     */
+    String getOrganizationIdByTenantId(int tenantId) throws OrganizationManagementException;
+
+    /**
      * Retrieve {@link Organization} by ID.
      *
      * @param organizationId The organization ID.

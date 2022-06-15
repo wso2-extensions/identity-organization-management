@@ -173,6 +173,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
+    public String getOrganizationIdByTenantId(int tenantId) throws OrganizationManagementException {
+
+        return organizationManagementDAO.getOrganizationIdByTenantId(tenantId);
+    }
+
+    @Override
     public Organization getOrganization(String organizationId, boolean showChildren) throws
             OrganizationManagementException {
 

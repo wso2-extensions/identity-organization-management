@@ -71,6 +71,15 @@ public interface OrganizationManagementDAO {
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
 
     /**
+     * Retrieve organization ID if an organization exists for a given tenant id exists.
+     *
+     * @param tenantId Tenant identifier of the TENANT type organization.
+     * @return the organization ID.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
+     */
+    String getOrganizationIdByTenantId(int tenantId) throws OrganizationManagementServerException;
+
+    /**
      * Retrieve {@link Organization} by ID.
      *
      * @param organizationId The organization ID.

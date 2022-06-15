@@ -38,13 +38,11 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.List;
 import java.util.Optional;
@@ -92,24 +90,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerTenantDomain, String sharedOrgId)
+    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException {
 
-        int ownerTenantId = IdentityTenantUtil.getTenantId(ownerTenantDomain);
-
-        //TODO: Implement method in org manager to return the organization based on tenant id??
-        String ownerOrgId = ownerTenantId == MultitenantConstants.SUPER_TENANT_ID ?
-                getOrganizationManager().getOrganizationIdByName(OrganizationManagementConstants.ROOT) :
-                getOrganizationManager().getOrganization(ownerTenantDomain, Boolean.FALSE).getId();
+        Organization ownerOrg = getOrganizationManager().getOrganization(ownerOrgId, Boolean.FALSE);
+        String ownerTenantDomain = IdentityTenantUtil.getTenantDomain(ownerOrg.getTenantId());
 
         ServiceProvider mainApplication;
         try {
-            mainApplication = Optional.ofNullable(getApplicationManagementService().getServiceProvider(mainAppName,
-                            ownerTenantDomain))
+            mainApplication = Optional.ofNullable(
+                            getApplicationManagementService().getServiceProvider(mainAppName, ownerTenantDomain))
                     .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, mainAppName));
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
-                    ownerTenantDomain);
+                    ownerOrgId);
         }
 
         Organization sharedOrganization = getOrganizationManager().getOrganization(sharedOrgId, Boolean.FALSE);
@@ -121,7 +115,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return getApplicationManagementService().getApplicationByResourceId(sharedAppId, tenantDomain);
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
-                    ownerTenantDomain);
+                    ownerOrgId);
         }
     }
 

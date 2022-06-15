@@ -209,6 +209,8 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
+        ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT("60049", "Organization cannot be found for the given tenant.",
+                "Organization cannot be found for the given tenant id: %s."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -334,13 +336,15 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65054", "Unable to retrieve the application.",
                 "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
         ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65055", "Unable to resolve the shared application", "Server " +
-                "encountered an error while resolving the shared application for application: %s in tenant: %s."),
+                "encountered an error while resolving the shared application for application: %s in organization: %s."),
         ERROR_CODE_ERROR_SHARING_APPLICATION("65056", "Unable to share the application",
                 "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65057", "Unable to link the shared application.",
                 "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
                 "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_TENANT_ID("65059", "Unable to retrieve the organization.",
+                "Server encountered an error while retrieving organization by tenant id: %s."),
         ;
 
         private final String code;
