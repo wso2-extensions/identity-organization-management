@@ -46,8 +46,9 @@ import java.util.TimeZone;
 
 import static java.time.ZoneOffset.UTC;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ALL_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ATTRIBUTE_COLUMN_MAP;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.BASIC_ORGANIZATION_PERMISSIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.BASE_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CO;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EQ;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
@@ -493,28 +494,44 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     public List<String> getOrganizationPermissions(String organizationId, String userId)
             throws OrganizationManagementServerException {
 
+        String permissionPlaceholder = "PERMISSION_";
+        List<String> permissionPlaceholders = new ArrayList<>();
+
+        List<String> allowedPermissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
+        allowedPermissions.addAll(ALL_ORGANIZATION_PERMISSIONS);
+
+        // Constructing the placeholders required to hold the permission strings in the named prepared statement.
+        for (int i = 1; i <= allowedPermissions.size(); i++) {
+            permissionPlaceholders.add(":" + permissionPlaceholder + i + ";");
+        }
+        String placeholder = String.join(", ", permissionPlaceholders);
+        String sqlStmt = GET_ORGANIZATION_PERMISSIONS.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
+
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         List<String> resourceIds;
         try {
-            resourceIds = namedJdbcTemplate.executeQuery(GET_ORGANIZATION_PERMISSIONS,
+            resourceIds = namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, userId);
+                        int index = 1;
+                        for (String allowedPermission : allowedPermissions) {
+                            namedPreparedStatement.setString(permissionPlaceholder + index, allowedPermission);
+                            index++;
+                        }
                     });
 
-            List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
-            permissions.remove(VIEW_ORGANIZATION_PERMISSION);
-            List<String> allowedPermissions = new ArrayList<>();
+            List<String> assignedPermissions = new ArrayList<>();
 
             for (String resourceId : resourceIds) {
-                if (permissions.contains(resourceId)) {
-                    return BASIC_ORGANIZATION_PERMISSIONS;
-                } else if (BASIC_ORGANIZATION_PERMISSIONS.contains(resourceId)) {
-                    allowedPermissions.add(resourceId);
+                if (ALL_ORGANIZATION_PERMISSIONS.contains(resourceId)) {
+                    assignedPermissions.add(resourceId);
+                } else {
+                    return ALL_ORGANIZATION_PERMISSIONS;
                 }
             }
-            return allowedPermissions;
+            return assignedPermissions;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS,
                     e, organizationId, userId);
