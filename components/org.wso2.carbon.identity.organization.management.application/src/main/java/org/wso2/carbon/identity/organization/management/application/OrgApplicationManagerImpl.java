@@ -98,7 +98,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         shareApplication(organization.getId(), childOrg, rootApplication);
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to organization: %s",
-                                rootApplication.getApplicationID(), childOrg.getId()));
+                                rootApplication.getApplicationID(), childOrg.getId()), e);
                     }
                 }, executorService);
             }
