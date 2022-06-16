@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.management.application;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -47,6 +49,9 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
@@ -67,6 +72,10 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
+    private static final Log LOG = LogFactory.getLog(OrgApplicationManagerImpl.class);
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+
     @Override
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
@@ -84,7 +93,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         for (ChildOrganizationDO child : filteredChildOrgs) {
             Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
-                shareApplication(organization.getId(), childOrg, rootApplication);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        shareApplication(organization.getId(), childOrg, rootApplication);
+                    } catch (OrganizationManagementException e) {
+                        LOG.error(String.format("Error in sharing application: %s to organization: %s",
+                                rootApplication.getApplicationID(), childOrg.getId()));
+                    }
+                }, executorService);
             }
         }
     }
