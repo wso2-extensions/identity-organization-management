@@ -32,7 +32,7 @@ public interface OrganizationsApiService {
 
       public Response organizationsOrganizationIdDelete(String organizationId);
 
-      public Response organizationsOrganizationIdGet(String organizationId, Boolean showChildren);
+      public Response organizationsOrganizationIdGet(String organizationId, Boolean showChildren, Boolean includePermissions);
 
       public Response organizationsOrganizationIdPatch(String organizationId, List<OrganizationPatchRequestItem> organizationPatchRequestItem);
 

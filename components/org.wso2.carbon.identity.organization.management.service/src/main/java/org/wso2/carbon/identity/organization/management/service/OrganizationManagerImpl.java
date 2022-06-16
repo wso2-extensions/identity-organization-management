@@ -173,7 +173,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public Organization getOrganization(String organizationId, boolean showChildren) throws
+    public Organization getOrganization(String organizationId, boolean showChildren, boolean includePermissions) throws
             OrganizationManagementException {
 
         if (StringUtils.isBlank(organizationId)) {
@@ -205,6 +205,13 @@ public class OrganizationManagerImpl implements OrganizationManager {
             organization.setChildOrganizations(null);
         }
 
+        if (includePermissions) {
+            List<String> permissions = organizationManagementDAO.getOrganizationPermissions(organizationId,
+                    getUserId());
+            if (CollectionUtils.isNotEmpty(permissions)) {
+                organization.setPermissions(permissions);
+            }
+        }
         return organization;
     }
 
@@ -484,7 +491,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         try {
             return OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
-                    CREATE_ORGANIZATION_PERMISSION, parentId, getTenantId());
+                    CREATE_ORGANIZATION_PERMISSION, parentId);
         } catch (OrganizationManagementAuthzServiceServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION, e, parentId);
         }
