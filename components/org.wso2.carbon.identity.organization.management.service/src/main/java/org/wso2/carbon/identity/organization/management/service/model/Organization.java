@@ -151,10 +151,12 @@ public class Organization {
     }
 
     public List<String> getPermissions() {
+
         return permissions;
     }
 
     public void setPermissions(List<String> permissions) {
+
         this.permissions = permissions;
     }
 }

@@ -318,7 +318,7 @@ components:
       name: includePermissions
       required: false
       description:
-        Returns the organization details along with permissions assigned for the requested user for this organization.
+        Returns the organization details along with permissions assigned for the requested user in this organization.
       schema:
         type: boolean
         default: false

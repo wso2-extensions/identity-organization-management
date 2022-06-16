@@ -116,7 +116,7 @@ public class OrganizationsApi  {
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdGet(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Returns the organization details along with the child organization IDs belonging to this organization.", defaultValue="false") @DefaultValue("false")  @QueryParam("showChildren") Boolean showChildren,     @Valid@ApiParam(value = "Returns the organization details along with permissions assigned for the requested user for this organization.", defaultValue="false") @DefaultValue("false")  @QueryParam("includePermissions") Boolean includePermissions) {
+    public Response organizationsOrganizationIdGet(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Returns the organization details along with the child organization IDs belonging to this organization.", defaultValue="false") @DefaultValue("false")  @QueryParam("showChildren") Boolean showChildren,     @Valid@ApiParam(value = "Returns the organization details along with permissions assigned for the requested user in this organization.", defaultValue="false") @DefaultValue("false")  @QueryParam("includePermissions") Boolean includePermissions) {
 
         return delegate.organizationsOrganizationIdGet(organizationId,  showChildren,  includePermissions );
     }

@@ -195,8 +195,9 @@ public interface OrganizationManagementDAO {
 
     /**
      * Get list of permissions assigned to user for the organization.
-     * @param organizationId
-     * @param userId
+     *
+     * @param organizationId The organization ID.
+     * @param userId         Unique identifier of the user.
      * @return list of resource ids of permissions
      * @throws OrganizationManagementServerException
      */

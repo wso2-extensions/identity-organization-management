@@ -351,7 +351,7 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
                 "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions",
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
         ;

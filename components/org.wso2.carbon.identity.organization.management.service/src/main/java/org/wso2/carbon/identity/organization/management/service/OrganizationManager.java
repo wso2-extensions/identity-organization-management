@@ -69,9 +69,9 @@ public interface OrganizationManager {
     /**
      * Retrieve {@link Organization} by ID.
      *
-     * @param organizationId The organization ID.
-     * @param showChildren   Whether the child organizations should be retrieved.
-     * @param includePermissions   Whether the permissions attached for organizations should be retrieved.
+     * @param organizationId     The organization ID.
+     * @param showChildren       Whether the child organizations should be retrieved.
+     * @param includePermissions Whether the permissions attached for organization should be retrieved.
      * @return the organization object.
      * @throws OrganizationManagementException The exception thrown when retrieving an organization.
      */
