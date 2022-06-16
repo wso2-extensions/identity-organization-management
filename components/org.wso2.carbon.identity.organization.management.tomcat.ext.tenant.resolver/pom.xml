@@ -116,7 +116,6 @@
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
-                            org.slf4j;version="${org.slf4j.imp.pkg.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",,
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",,
@@ -124,12 +123,9 @@
                             org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.registry.api;version="${carbon.registry.imp.pkg.version.range}",
-                            org.wso2.carbon.registry.core.ghostregistry;version="${carbon.registry.imp.pkg.version.range}",
                             org.wso2.carbon.registry.core.service;version="${carbon.registry.imp.pkg.version.range}",
                             org.wso2.carbon.tomcat.ext.utils;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.tomcat.ext.valves;version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}"
                         </Import-Package>
                     </instructions>

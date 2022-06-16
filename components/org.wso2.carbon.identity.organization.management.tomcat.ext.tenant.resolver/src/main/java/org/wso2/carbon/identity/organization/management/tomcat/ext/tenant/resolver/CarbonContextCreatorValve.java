@@ -26,6 +26,7 @@ import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
 
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomainFromURLMapping;
+import static org.wso2.carbon.tomcat.ext.constants.Constants.TENANT_DOMAIN_FROM_REQUEST_PATH;
 
 /**
  * This valve handles creation of the CarbonContext when an organization specific request comes in.
@@ -35,7 +36,6 @@ import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant
 public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves.CarbonContextCreatorValve {
 
     private static final String ORGANIZATION_PATH_PARAM = "/o/";
-    private static final String TENANT_DOMAIN_FROM_REQUEST_PATH = "tenantDomainFromRequestPath";
 
     @Override
     public void initCarbonContext(Request request) throws Exception {
