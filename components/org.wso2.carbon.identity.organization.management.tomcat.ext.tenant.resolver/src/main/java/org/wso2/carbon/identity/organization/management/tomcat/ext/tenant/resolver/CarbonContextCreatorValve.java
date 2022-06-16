@@ -46,14 +46,12 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
             String requestedHostName = request.getHost().getName();
             String defaultHost = URLMappingHolder.getInstance().getDefaultHost();
-            // checking for URLMapping request and set tenant domain and app name accordingly.
-            if (!StringUtils.equalsIgnoreCase(requestedHostName, defaultHost)) {
-                tenantDomain = getTenantDomainFromURLMapping(request);
-                appName = super.getAppNameForURLMapping(request);
-            } else {
-                // this will get executed with the default host requests.
+            if (StringUtils.equalsIgnoreCase(requestedHostName, defaultHost)) {
                 tenantDomain = getTenantDomain(request);
                 appName = super.getAppNameFromRequest(request);
+            } else {
+                tenantDomain = getTenantDomainFromURLMapping(request);
+                appName = super.getAppNameForURLMapping(request);
             }
             request.setAttribute(TENANT_DOMAIN_FROM_REQUEST_PATH, tenantDomain);
             super.setValuesToCarbonContext(carbonContext, tenantDomain, appName);
