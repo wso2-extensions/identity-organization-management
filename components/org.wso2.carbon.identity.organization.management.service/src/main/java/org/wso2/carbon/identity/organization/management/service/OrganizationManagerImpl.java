@@ -145,7 +145,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         setParentOrganization(organization);
         setCreatedAndLastModifiedTime(organization);
         organizationManagementDAO.addOrganization(organization);
-        String orgCreatorID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+        String orgCreatorID = getUserId();
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
             createTenant(organization.getId(), orgCreatorID);
         }
