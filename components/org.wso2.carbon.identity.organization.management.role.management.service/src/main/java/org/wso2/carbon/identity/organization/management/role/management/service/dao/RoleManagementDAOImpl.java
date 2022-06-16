@@ -150,8 +150,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     @Override
-    public void createRole(String organizationId, int tenantId, Role role)
-            throws OrganizationManagementServerException {
+    public void createRole(String organizationId, Role role) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -161,7 +160,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, role.getId());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getDisplayName());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
-                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                         }, role, false);
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
                     String query = buildQueryForInsertAndRemoveValues(role.getGroups().size(), ADD_ROLE_GROUP_MAPPING,
@@ -176,11 +174,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             role.getId(), query, USERS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
-                    List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantId,
+                    int tenantID = getTenantId();
+                    List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantID,
                             role.getId());
-                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantId);
+                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantID);
                     List<String> permissionList = getPermissionIds(role.getPermissions(),
-                            getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
+                            tenantID).stream().map(Object::toString).collect(Collectors.toList());
                     String query = buildQueryForInsertAndRemoveValues(permissionList.size(),
                             ADD_ROLE_PERMISSION_MAPPING, ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
                     assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS);
@@ -193,8 +192,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public Role getRoleById(String organizationId, String roleId, int tenantId)
-            throws OrganizationManagementServerException {
+    public Role getRoleById(String organizationId, String roleId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -203,9 +201,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
-                    }
-                                                                                                ));
+                    }));
             if (Objects.nonNull(role)) {
                 List<Group> groupList = getGroupsFromRoleId(roleId);
                 List<User> usersList = getUsersFromRoleId(roleId);
@@ -227,9 +223,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public List<Role> getOrganizationRoles(String organizationId, int tenantId, int limit,
-                                           List<ExpressionNode> expressionNodes, List<String> operators)
-            throws OrganizationManagementServerException {
+    public List<Role> getOrganizationRoles(String organizationId, int limit, List<ExpressionNode> expressionNodes,
+                                           List<String> operators) throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
@@ -247,7 +242,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
                         for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
                             namedPreparedStatement.setString(entry.getKey(), entry.getValue());
                         }
@@ -259,7 +253,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public Role patchRole(String organizationId, String roleId, int tenantId, List<PatchOperation> patchOperations)
+    public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -276,7 +270,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
                     }
                 }
-                return getRoleById(organizationId, roleId, tenantId);
+                return getRoleById(organizationId, roleId);
             });
         } catch (TransactionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
@@ -309,8 +303,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public Role putRole(String organizationId, String roleId, Role role, int tenantId)
-            throws OrganizationManagementServerException {
+    public Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -348,15 +341,16 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             roleId, query, GROUPS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
-                    List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantId,
+                    int tenantID = getTenantId();
+                    List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantID,
                             role.getId());
-                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantId);
-                    List<String> permissionList = getPermissionIds(role.getPermissions(),
-                            getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
+                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantID);
+                    List<String> permissionList =
+                            getPermissionIds(role.getPermissions(), tenantID).stream().map(Object::toString)
+                                    .collect(Collectors.toList());
                     String query = buildQueryForInsertAndRemoveValues(permissionList.size(),
                             ADD_ROLE_PERMISSION_MAPPING, ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
-                    assignRoleAttributes(permissionList, roleId, query,
-                            PERMISSIONS);
+                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
                 }
                 return null;
             });

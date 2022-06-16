@@ -82,7 +82,7 @@ public class RoleManagerImpl implements RoleManager {
                 validateGroups(groupIdList, getTenantId());
             }
         }
-        roleManagementDAO.createRole(organizationId, getTenantId(), role);
+        roleManagementDAO.createRole(organizationId, role);
         return new Role(role.getId(), role.getDisplayName());
     }
 
@@ -91,7 +91,7 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        return roleManagementDAO.getRoleById(organizationId, roleId, getTenantId());
+        return roleManagementDAO.getRoleById(organizationId, roleId);
     }
 
     @Override
@@ -102,8 +102,7 @@ public class RoleManagerImpl implements RoleManager {
         List<ExpressionNode> expressionNodes = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         getExpressionNodes(filter, expressionNodes, operators);
-        return roleManagementDAO.getOrganizationRoles(organizationId, getTenantId(), limit,
-                expressionNodes, operators);
+        return roleManagementDAO.getOrganizationRoles(organizationId, limit, expressionNodes, operators);
     }
 
     @Override
@@ -140,7 +139,7 @@ public class RoleManagerImpl implements RoleManager {
                 }
             }
         }
-        return roleManagementDAO.patchRole(organizationId, roleId, getTenantId(), patchOperations);
+        return roleManagementDAO.patchRole(organizationId, roleId, patchOperations);
     }
 
     @Override
@@ -164,7 +163,7 @@ public class RoleManagerImpl implements RoleManager {
                 validateGroups(groupIdList, getTenantId());
             }
         }
-        return roleManagementDAO.putRole(organizationId, roleId, role, getTenantId());
+        return roleManagementDAO.putRole(organizationId, roleId, role);
     }
 
     @Override
