@@ -128,9 +128,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
                     STRUCTURAL.toString());
             Organization organization2 = getOrganization(ORG2_ID, ORG2_NAME, ORG_DESCRIPTION, ORG1_ID,
                     STRUCTURAL.toString());
-            organizationManagementDAO.addOrganization(TENANT_ID, rootOrganization);
-            organizationManagementDAO.addOrganization(TENANT_ID, organization1);
-            organizationManagementDAO.addOrganization(TENANT_ID, organization2);
+            organizationManagementDAO.addOrganization(rootOrganization);
+            organizationManagementDAO.addOrganization(organization1);
+            organizationManagementDAO.addOrganization(organization2);
         }
     }
 

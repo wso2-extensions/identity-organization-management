@@ -45,7 +45,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
-    public static final String VIEW_TENANT_ID_COLUMN = "UM_TENANT_ID";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -343,7 +342,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_BUILDING_USER_URI("65053", "Unable to build create user URI.",
                 "Server encountered an error while building URL for user with userId %s."),
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65054", "Unable to retrieve the application.",
-                "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
+                "Server encountered an error while retrieving the application with ID: %s."),
         ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65055", "Unable to resolve the shared application", "Server " +
                 "encountered an error while resolving the shared application for application: %s in tenant: %s."),
         ERROR_CODE_ERROR_SHARING_APPLICATION("65056", "Unable to share the application",

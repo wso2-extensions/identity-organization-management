@@ -108,7 +108,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             attributes.add(new OrganizationAttribute(ATTRIBUTE_KEY, ATTRIBUTE_VALUE));
             organization.setAttributes(attributes);
 
-            organizationManagementDAO.addOrganization(TENANT_ID, organization);
+            organizationManagementDAO.addOrganization(organization);
             Assert.assertNotNull(organizationManagementDAO.getOrganization(orgId));
         }
     }
