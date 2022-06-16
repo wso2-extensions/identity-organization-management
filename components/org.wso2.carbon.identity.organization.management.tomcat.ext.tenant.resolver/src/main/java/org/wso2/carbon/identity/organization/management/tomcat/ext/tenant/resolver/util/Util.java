@@ -53,8 +53,7 @@ public class Util {
         if (StringUtils.isBlank(requestURI)) {
             return domain;
         }
-        domain = getTenantDomainFromOrgDomain(requestURI, domain);
-        return domain;
+        return getTenantDomainFromOrgDomain(requestURI, domain);
     }
 
     /**
@@ -71,12 +70,11 @@ public class Util {
         String requestURI = request.getRequestURI();
         String domain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         String serverName = request.getHost().getName();
-        String appContext = URLMappingHolder.getInstance().getApplicationFromUrlMapping(serverName); //
+        String appContext = URLMappingHolder.getInstance().getApplicationFromUrlMapping(serverName);
         if (appContext != null) {
             requestURI = appContext;
         }
-        domain = getTenantDomainFromOrgDomain(requestURI, domain);
-        return domain;
+        return getTenantDomainFromOrgDomain(requestURI, domain);
     }
 
     private static String getTenantDomainFromOrgDomain(String requestURI, String domain) throws
