@@ -133,11 +133,11 @@ public class OrganizationManagementService {
      * @param showChildren   If true, includes child organization IDs belonging to this organization in the response.
      * @return Requested organization details.
      */
-    public Response getOrganization(String organizationId, Boolean showChildren) {
+    public Response getOrganization(String organizationId, Boolean showChildren, Boolean includePermissions) {
 
         try {
             Organization organization = getOrganizationManager().getOrganization(organizationId,
-                    Boolean.TRUE.equals(showChildren));
+                    Boolean.TRUE.equals(showChildren), Boolean.TRUE.equals(includePermissions));
             return Response.ok().entity(getOrganizationResponseWithChildren(organization)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
@@ -298,6 +298,7 @@ public class OrganizationManagementService {
         organizationResponse.setDescription(organization.getDescription());
         organizationResponse.setCreated(organization.getCreated().toString());
         organizationResponse.setLastModified(organization.getLastModified().toString());
+        organizationResponse.setPermissions(organization.getPermissions());
 
         GetOrganizationResponse.StatusEnum status;
         try {
@@ -456,7 +457,7 @@ public class OrganizationManagementService {
     private Organization getUpdatedOrganization(String organizationId, OrganizationPUTRequest organizationPUTRequest)
             throws OrganizationManagementException {
 
-        Organization oldOrganization = getOrganizationManager().getOrganization(organizationId, false);
+        Organization oldOrganization = getOrganizationManager().getOrganization(organizationId, false, false);
         String currentOrganizationName = oldOrganization.getName();
         Organization organization = createOrganizationClone(oldOrganization);
 
