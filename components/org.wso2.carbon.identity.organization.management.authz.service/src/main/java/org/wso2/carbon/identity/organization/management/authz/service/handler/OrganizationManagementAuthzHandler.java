@@ -29,13 +29,16 @@ import org.wso2.carbon.identity.authz.service.AuthorizationResult;
 import org.wso2.carbon.identity.authz.service.AuthorizationStatus;
 import org.wso2.carbon.identity.authz.service.exception.AuthzServiceServerException;
 import org.wso2.carbon.identity.authz.service.handler.AuthorizationHandler;
+import org.wso2.carbon.identity.authz.service.internal.AuthorizationServiceHolder;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationContext;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
+import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +75,12 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         User user = authorizationContext.getUser();
         String userDomain = user.getTenantDomain();
         int tenantId = IdentityTenantUtil.getTenantId(userDomain);
+        // Resolve user's UUID.
+        String userUUID = resolveUserUUID(user, tenantId);
+        String tenantDomainFromURL = authorizationContext.getTenantDomainFromURLMapping();
+        // Resolve associated org UUID. // todo: if the org id comes to this request no need to resolve.
+        String tenantOrgUUIDOfURLDomain = resolveAssociatedOrgUUIDForDomainInURL(tenantDomainFromURL);
+
         String permissionString = authorizationContext.getPermissionString();
         String[] allowedScopes = authorizationContext.getParameter(OAUTH2_ALLOWED_SCOPES) == null ? null :
                 (String[]) authorizationContext.getParameter(OAUTH2_ALLOWED_SCOPES);
@@ -83,10 +92,10 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
             try {
                 // If the scopes are configured for the API, it gets the first priority.
                 if (isScopeValidationRequired(validateScope, authorizationContext)) {
-                    validateScopes(tenantId, organizationId, allowedScopes, user, authorizationContext,
+                    validateScopes(organizationId, allowedScopes, user, authorizationContext,
                             authorizationResult);
                 } else if (StringUtils.isNotBlank(permissionString)) {
-                    validatePermissions(tenantId, organizationId, permissionString, user, authorizationResult);
+                    validatePermissions(organizationId, permissionString, user, authorizationResult);
                 }
             } catch (OrganizationManagementAuthzServiceServerException e) {
                 String errorMessage = "Error occurred while evaluating authorization of user for organization " +
@@ -115,7 +124,41 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         return 50;
     }
 
-    private void validatePermissions(int tenantId, String orgId, String permissionString, User user,
+    private String resolveAssociatedOrgUUIDForDomainInURL(String tenantDomainFromURL)
+            throws AuthzServiceServerException {
+
+        String associatedOrgId = StringUtils.EMPTY;
+        try {
+            int tenantIdForURLDomain = IdentityTenantUtil.getTenantId(tenantDomainFromURL);
+            RealmService realmService = AuthorizationServiceHolder.getInstance().getRealmService();
+            Tenant tenant = realmService.getTenantManager().getTenant(tenantIdForURLDomain);
+            if (tenant != null) {
+                associatedOrgId = tenant.getAssociatedOrganizationUUID();
+            }
+            return associatedOrgId;
+        } catch (UserStoreException e) {
+            String errorMessage = "Error occurred while trying to authorize, " + e.getMessage();
+            LOG.error(errorMessage);
+            throw new AuthzServiceServerException(errorMessage, e);
+        }
+    }
+
+    private String resolveUserUUID(User user, int tenantId) throws AuthzServiceServerException {
+
+        RealmService realmService = AuthorizationServiceHolder.getInstance().getRealmService();
+        try {
+            AbstractUserStoreManager userStoreManager =
+                    (AbstractUserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager();
+            org.wso2.carbon.user.core.common.User coreUser = userStoreManager.getUser(null, user.getUserName());
+            return coreUser != null ? coreUser.getUserID() : StringUtils.EMPTY;
+        } catch (UserStoreException e) {
+            String errorMessage = "Error occurred while trying to authorize, " + e.getMessage();
+            LOG.error(errorMessage);
+            throw new AuthzServiceServerException(errorMessage, e);
+        }
+    }
+
+    private void validatePermissions(String orgId, String permissionString, User user,
                                      AuthorizationResult authorizationResult)
             throws OrganizationManagementAuthzServiceServerException {
 
@@ -156,7 +199,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         return validateScope && CollectionUtils.isNotEmpty(authorizationContext.getRequiredScopes());
     }
 
-    private void validateScopes(int tenantId, String orgId, String[] tokenScopes, User user,
+    private void validateScopes(String orgId, String[] tokenScopes, User user,
                                 AuthorizationContext authorizationContext, AuthorizationResult authorizationResult)
             throws OrganizationManagementAuthzServiceServerException {
 

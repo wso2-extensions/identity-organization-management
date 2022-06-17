@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.constant;
 
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
 
@@ -27,6 +26,7 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
  */
 public class SQLConstants {
 
+    public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
     public static final String GET_PERMISSIONS_FOR_USER = "SELECT UM_RESOURCE_ID FROM UM_ORG_ROLE_USER INNER JOIN " +
             "UM_ORG_ROLE ON UM_ORG_ROLE_USER.UM_ROLE_ID = UM_ORG_ROLE.UM_ROLE_ID INNER JOIN " +
             "UM_ORG_ROLE_PERMISSION ON UM_ORG_ROLE_USER.UM_ROLE_ID = UM_ORG_ROLE_PERMISSION.UM_ROLE_ID INNER JOIN " +
@@ -34,6 +34,14 @@ public class SQLConstants {
             "UM_ORG_ROLE_USER.UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; AND UM_ORG_ROLE.UM_ORG_ID = :" +
             DB_SCHEMA_COLUMN_ORGANIZATION_ID + ";";
 
+    public static final String IS_USER_AUTHORIZED = "SELECT COUNT(UM_RESOURCE_ID) FROM UM_ORG_PERMISSION WHERE " +
+            "UM_ORG_PERMISSION.UM_ID IN ( " +
+            "SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ORG_ROLE_PERMISSION.UM_ROLE_ID IN ( " +
+            "SELECT UM_ORG_ROLE_USER.UM_ROLE_ID FROM UM_ORG_ROLE_USER LEFT JOIN UM_ORG_ROLE ON " +
+            "UM_ORG_ROLE_USER.UM_ROLE_ID = UM_ORG_ROLE.UM_ROLE_ID " +
+            "WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; AND " +
+            "UM_ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + ";) " +
+            ") AND UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
     /**
      * SQL placeholders.
      */
@@ -41,6 +49,6 @@ public class SQLConstants {
 
         public static final String DB_SCHEMA_COLUMN_USER_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_ORGANIZATION_ID = "NAME";
-        public static final String DB_SCHEMA_COLUMN_NAME_TENANT_ID = "TENANT_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_COUNT = "COUNT(1)";
     }
 }
