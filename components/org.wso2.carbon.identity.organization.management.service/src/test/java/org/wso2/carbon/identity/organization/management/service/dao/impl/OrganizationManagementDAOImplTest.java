@@ -60,7 +60,6 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
 
     private OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone(UTC));
-    private static final int TENANT_ID = -1234;
     private static final String ATTRIBUTE_KEY = "country";
     private static final String ATTRIBUTE_VALUE = "Sri Lanka";
     private static final String ORG_NAME = "XYZ builders";
@@ -108,7 +107,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             attributes.add(new OrganizationAttribute(ATTRIBUTE_KEY, ATTRIBUTE_VALUE));
             organization.setAttributes(attributes);
 
-            organizationManagementDAO.addOrganization(TENANT_ID, organization);
+            organizationManagementDAO.addOrganization(organization);
             Assert.assertNotNull(organizationManagementDAO.getOrganization(orgId));
         }
     }
@@ -278,17 +277,15 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
 
         try (Connection connection = getConnection()) {
             String sql = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, UM_CREATED_TIME, " +
-                    "UM_LAST_MODIFIED, UM_TENANT_ID, UM_PARENT_ID, UM_ORG_TYPE) VALUES ( ?, ?, " +
-                    "?, ?, ?, ?, ?, ?)";
+                    "UM_LAST_MODIFIED, UM_PARENT_ID, UM_ORG_TYPE) VALUES ( ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, id);
             statement.setString(2, name);
             statement.setString(3, description);
             statement.setTimestamp(4, Timestamp.from(Instant.now()), CALENDAR);
             statement.setTimestamp(5, Timestamp.from(Instant.now()), CALENDAR);
-            statement.setInt(6, TENANT_ID);
-            statement.setString(7, parentId);
-            statement.setString(8, STRUCTURAL.toString());
+            statement.setString(6, parentId);
+            statement.setString(7, STRUCTURAL.toString());
             statement.execute();
         }
     }

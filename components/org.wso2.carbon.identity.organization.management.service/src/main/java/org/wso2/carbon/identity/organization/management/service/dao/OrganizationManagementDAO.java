@@ -35,11 +35,10 @@ public interface OrganizationManagementDAO {
     /**
      * Create new {@link Organization} in the database.
      *
-     * @param tenantId     The tenant ID corresponding to the tenant where the organization should be created.
      * @param organization The organization to be created.
      * @throws OrganizationManagementServerException The server exception thrown when creating an organization.
      */
-    void addOrganization(int tenantId, Organization organization) throws OrganizationManagementServerException;
+    void addOrganization(Organization organization) throws OrganizationManagementServerException;
 
     /**
      * Check if the {@link Organization} exists by name.

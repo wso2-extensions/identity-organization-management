@@ -32,7 +32,6 @@ public class Organization {
     private String description;
     private String status;
     private String type;
-    private int tenantId;
     private ParentOrganizationDO parent = new ParentOrganizationDO();
     private Instant lastModified;
     private Instant created;
@@ -139,17 +138,6 @@ public class Organization {
 
         this.type = type;
     }
-
-    public int getTenantId() {
-
-        return tenantId;
-    }
-
-    public void setTenantId(int tenantId) {
-
-        this.tenantId = tenantId;
-    }
-
     public List<String> getPermissions() {
 
         return permissions;
