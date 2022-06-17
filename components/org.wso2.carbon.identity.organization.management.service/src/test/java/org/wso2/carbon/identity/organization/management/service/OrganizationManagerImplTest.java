@@ -128,9 +128,9 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
                     STRUCTURAL.toString());
             Organization organization2 = getOrganization(ORG2_ID, ORG2_NAME, ORG_DESCRIPTION, ORG1_ID,
                     STRUCTURAL.toString());
-            organizationManagementDAO.addOrganization(TENANT_ID, rootOrganization);
-            organizationManagementDAO.addOrganization(TENANT_ID, organization1);
-            organizationManagementDAO.addOrganization(TENANT_ID, organization2);
+            organizationManagementDAO.addOrganization(rootOrganization);
+            organizationManagementDAO.addOrganization(organization1);
+            organizationManagementDAO.addOrganization(organization2);
         }
     }
 
@@ -154,7 +154,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(true);
+                anyString())).thenReturn(true);
 
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
@@ -302,7 +302,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         PowerMockito.mockStatic(OrganizationManagementAuthorizationManager.class);
         when(OrganizationManagementAuthorizationManager.getInstance()).thenReturn(authorizationManager);
         when(OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(anyString(), anyString(),
-                anyString(), anyInt())).thenReturn(false);
+                anyString())).thenReturn(false);
 
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
@@ -320,7 +320,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
 
-            Organization organization = organizationManager.getOrganization(ORG1_ID, false);
+            Organization organization = organizationManager.getOrganization(ORG1_ID, false, false);
             assertEquals(organization.getName(), ORG1_NAME);
             assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
         }
@@ -331,7 +331,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
 
         when(Utils.handleClientException(anyObject())).thenReturn(
                 new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-        organizationManager.getOrganization(StringUtils.EMPTY, false);
+        organizationManager.getOrganization(StringUtils.EMPTY, false, false);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -342,7 +342,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
             when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                     new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-            organizationManager.getOrganization(INVALID_ORG_ID, false);
+            organizationManager.getOrganization(INVALID_ORG_ID, false, false);
         }
     }
 
@@ -352,7 +352,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
-            Organization organization = organizationManager.getOrganization(ORG1_ID, true);
+            Organization organization = organizationManager.getOrganization(ORG1_ID, true, false);
             assertEquals(organization.getName(), ORG1_NAME);
             assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
             assertEquals(organization.getChildOrganizations().size(), 1);
@@ -397,7 +397,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             organizationManager.deleteOrganization(ORG2_ID);
             when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                     new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-            assertNull(organizationManager.getOrganization(ORG2_ID, false));
+            assertNull(organizationManager.getOrganization(ORG2_ID, false, false));
         }
     }
 

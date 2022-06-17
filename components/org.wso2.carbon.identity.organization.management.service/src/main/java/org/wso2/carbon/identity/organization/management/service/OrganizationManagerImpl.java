@@ -146,11 +146,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         setParentOrganization(organization);
         setCreatedAndLastModifiedTime(organization);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
-            tenantId = createTenant(organization.getId());
-        } else {
-            tenantId = organization.getParent().getTenantId();
+            createTenant(organization.getId());
         }
-        organizationManagementDAO.addOrganization(tenantId, organization);
+        organizationManagementDAO.addOrganization(organization);
         return organization;
     }
 
@@ -173,13 +171,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public String getOrganizationIdByTenantId(int tenantId) throws OrganizationManagementException {
-
-        return organizationManagementDAO.getOrganizationIdByTenantId(tenantId);
-    }
-
-    @Override
-    public Organization getOrganization(String organizationId, boolean showChildren) throws
+    public Organization getOrganization(String organizationId, boolean showChildren, boolean includePermissions) throws
             OrganizationManagementException {
 
         if (StringUtils.isBlank(organizationId)) {
@@ -211,6 +203,13 @@ public class OrganizationManagerImpl implements OrganizationManager {
             organization.setChildOrganizations(null);
         }
 
+        if (includePermissions) {
+            List<String> permissions = organizationManagementDAO.getOrganizationPermissions(organizationId,
+                    getUserId());
+            if (CollectionUtils.isNotEmpty(permissions)) {
+                organization.setPermissions(permissions);
+            }
+        }
         return organization;
     }
 
@@ -233,11 +232,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         organizationManagementDAO.deleteOrganization(organizationId);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
-            try {
-                getTenantMgtService().deactivateTenant(organization.getTenantId());
-            } catch (TenantMgtException e) {
-                throw handleServerException(ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT, e, organizationId);
-            }
+           /*
+            TODO : deactivate the tenant. The respective tenant retrieval will be resolved in next PR
+            https://github.com/wso2-extensions/identity-organization-management/pull/42
+            */
         }
     }
 
@@ -436,7 +434,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         ParentOrganizationDO parentOrganization = organization.getParent();
         String parentId = parentOrganization.getId().trim();
-        int tenantId;
         /*
         For parentId an alias as 'ROOT' is supported. This indicates that the organization should be created as an
         immediate child of the ROOT organization.
@@ -447,14 +444,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 throw handleServerException(ERROR_CODE_ERROR_MISSING_ROOT, null);
             }
             parentId = rootOrganizationId;
-            // There will be only one ROOT which is the super tenant.
-            tenantId = MultitenantConstants.SUPER_TENANT_ID;
         } else {
             Organization parent = organizationManagementDAO.getOrganization(parentId);
             if (parent == null) {
                 throw Utils.handleClientException(ERROR_CODE_INVALID_PARENT_ORGANIZATION, parentId);
             }
-            tenantId = parent.getTenantId();
         }
         validateAddOrganizationParentStatus(parentId);
         /*
@@ -470,7 +464,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
         parentOrganization.setId(parentId);
         parentOrganization.setRef(buildURIForBody(parentId));
-        parentOrganization.setTenantId(tenantId);
     }
 
     private boolean isUserAuthorizedToCreateChildOrganizationInRoot() throws OrganizationManagementServerException {
@@ -490,7 +483,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         try {
             return OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized(getUserId(),
-                    CREATE_ORGANIZATION_PERMISSION, parentId, getTenantId());
+                    CREATE_ORGANIZATION_PERMISSION, parentId);
         } catch (OrganizationManagementAuthzServiceServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION, e, parentId);
         }

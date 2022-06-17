@@ -35,11 +35,10 @@ public interface OrganizationManagementDAO {
     /**
      * Create new {@link Organization} in the database.
      *
-     * @param tenantId     The tenant ID corresponding to the tenant where the organization should be created.
      * @param organization The organization to be created.
      * @throws OrganizationManagementServerException The server exception thrown when creating an organization.
      */
-    void addOrganization(int tenantId, Organization organization) throws OrganizationManagementServerException;
+    void addOrganization(Organization organization) throws OrganizationManagementServerException;
 
     /**
      * Check if the {@link Organization} exists by name.
@@ -69,15 +68,6 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
      */
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
-
-    /**
-     * Retrieve organization ID if an organization exists for a given tenant id exists.
-     *
-     * @param tenantId Tenant identifier of the TENANT type organization.
-     * @return the organization ID.
-     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
-     */
-    String getOrganizationIdByTenantId(int tenantId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve {@link Organization} by ID.
@@ -201,4 +191,15 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization type.
      */
     String getOrganizationType(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Get list of permissions assigned to user for the organization.
+     *
+     * @param organizationId The organization ID.
+     * @param userId         Unique identifier of the user.
+     * @return list of resource ids of permissions
+     * @throws OrganizationManagementServerException
+     */
+    List<String> getOrganizationPermissions(String organizationId, String userId)
+            throws OrganizationManagementServerException;
 }

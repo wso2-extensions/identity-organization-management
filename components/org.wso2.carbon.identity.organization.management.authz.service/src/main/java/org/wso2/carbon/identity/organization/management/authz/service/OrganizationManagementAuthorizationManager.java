@@ -41,15 +41,14 @@ public class OrganizationManagementAuthorizationManager {
      * @param userId     Unique identifier of the user.
      * @param resourceId Required permission.
      * @param orgId      Organization id.
-     * @param tenantId   Tenant id.
      * @return Whether the user is authorized or not.
      * @throws OrganizationManagementAuthzServiceServerException The server exception thrown when evaluating user's
      *                                                           authorization.
      */
-    public boolean isUserAuthorized(String userId, String resourceId, String orgId, int tenantId)
+    public boolean isUserAuthorized(String userId, String resourceId, String orgId)
             throws OrganizationManagementAuthzServiceServerException {
 
         OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
-        return organizationMgtAuthzDAO.isUserAuthorized(userId, resourceId, orgId, tenantId);
+        return organizationMgtAuthzDAO.isUserAuthorized(userId, resourceId, orgId);
     }
 }

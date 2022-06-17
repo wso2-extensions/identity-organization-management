@@ -25,6 +25,6 @@ import org.wso2.carbon.identity.organization.management.authz.service.exception.
  */
 public interface OrganizationManagementAuthzDAO {
 
-    boolean isUserAuthorized(String userId, String resourceId, String orgId, int tenantId)
+    boolean isUserAuthorized(String userId, String resourceId, String orgId)
             throws OrganizationManagementAuthzServiceServerException;
 }

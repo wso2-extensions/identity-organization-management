@@ -32,12 +32,12 @@ public class Organization {
     private String description;
     private String status;
     private String type;
-    private int tenantId;
     private ParentOrganizationDO parent = new ParentOrganizationDO();
     private Instant lastModified;
     private Instant created;
     private List<OrganizationAttribute> attributes = new ArrayList<>();
     private List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
+    private List<String> permissions = new ArrayList<>();
 
     public String getId() {
 
@@ -138,14 +138,13 @@ public class Organization {
 
         this.type = type;
     }
+    public List<String> getPermissions() {
 
-    public int getTenantId() {
-
-        return tenantId;
+        return permissions;
     }
 
-    public void setTenantId(int tenantId) {
+    public void setPermissions(List<String> permissions) {
 
-        this.tenantId = tenantId;
+        this.permissions = permissions;
     }
 }

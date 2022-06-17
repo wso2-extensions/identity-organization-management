@@ -115,6 +115,8 @@ public enum TypeEnum {
 
     private List<Attribute> attributes = null;
 
+    private List<String> permissions = null;
+
 
     /**
     **/
@@ -324,6 +326,32 @@ public enum TypeEnum {
         return this;
     }
 
+        /**
+    **/
+    public GetOrganizationResponse permissions(List<String> permissions) {
+
+        this.permissions = permissions;
+        return this;
+    }
+    
+    @ApiModelProperty(value = "")
+    @JsonProperty("permissions")
+    @Valid
+    public List<String> getPermissions() {
+        return permissions;
+    }
+    public void setPermissions(List<String> permissions) {
+        this.permissions = permissions;
+    }
+
+    public GetOrganizationResponse addPermissionsItem(String permissionsItem) {
+        if (this.permissions == null) {
+            this.permissions = new ArrayList<>();
+        }
+        this.permissions.add(permissionsItem);
+        return this;
+    }
+
     
 
     @Override
@@ -345,12 +373,13 @@ public enum TypeEnum {
             Objects.equals(this.type, getOrganizationResponse.type) &&
             Objects.equals(this.parent, getOrganizationResponse.parent) &&
             Objects.equals(this.children, getOrganizationResponse.children) &&
-            Objects.equals(this.attributes, getOrganizationResponse.attributes);
+            Objects.equals(this.attributes, getOrganizationResponse.attributes) &&
+            Objects.equals(this.permissions, getOrganizationResponse.permissions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, status, created, lastModified, type, parent, children, attributes);
+        return Objects.hash(id, name, description, status, created, lastModified, type, parent, children, attributes, permissions);
     }
 
     @Override
@@ -369,6 +398,7 @@ public enum TypeEnum {
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
         sb.append("    children: ").append(toIndentedString(children)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
+        sb.append("    permissions: ").append(toIndentedString(permissions)).append("\n");
         sb.append("}");
         return sb.toString();
     }

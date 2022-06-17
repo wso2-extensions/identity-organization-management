@@ -18,8 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.service.constant;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,7 +45,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
-    public static final String VIEW_TENANT_ID_COLUMN = "UM_TENANT_ID";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -65,10 +66,19 @@ public class OrganizationManagementConstants {
     public static final String PAGINATION_BEFORE = "before";
 
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
+    public static final String BASE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "create";
     public static final String VIEW_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "view";
+    public static final String UPDATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "update";
+    public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "delete";
+
+    public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
+            .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
+                    DELETE_ORGANIZATION_PERMISSION));
 
     public static final String EQ = "eq";
     public static final String CO = "co";
@@ -209,8 +219,6 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
-        ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT("60049", "Organization cannot be found for the given tenant.",
-                "Organization cannot be found for the given tenant id: %s."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -334,7 +342,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_BUILDING_USER_URI("65053", "Unable to build create user URI.",
                 "Server encountered an error while building URL for user with userId %s."),
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65054", "Unable to retrieve the application.",
-                "Server encountered an error while retrieving the application with ID: %s in tenant: %s."),
+                "Server encountered an error while retrieving the application with ID: %s."),
         ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65055", "Unable to resolve the shared application", "Server " +
                 "encountered an error while resolving the shared application for application: %s in organization: %s."),
         ERROR_CODE_ERROR_SHARING_APPLICATION("65056", "Unable to share the application",
@@ -343,8 +351,9 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when linking the application: %s to shared application: %s."),
         ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
                 "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_TENANT_ID("65059", "Unable to retrieve the organization.",
-                "Server encountered an error while retrieving organization by tenant id: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
+                "Server encountered an error while retrieving the organizations permissions of organization " +
+                        "with ID: %s for user with ID: %s."),
         ;
 
         private final String code;

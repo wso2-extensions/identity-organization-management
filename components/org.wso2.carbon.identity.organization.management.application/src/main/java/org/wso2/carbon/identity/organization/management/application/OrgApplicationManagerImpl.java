@@ -80,7 +80,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
-        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, Boolean.TRUE);
+        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, Boolean.TRUE, Boolean.FALSE);
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
@@ -91,7 +91,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         .collect(Collectors.toList());
 
         for (ChildOrganizationDO child : filteredChildOrgs) {
-            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE);
+            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE,
+                    Boolean.FALSE);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
