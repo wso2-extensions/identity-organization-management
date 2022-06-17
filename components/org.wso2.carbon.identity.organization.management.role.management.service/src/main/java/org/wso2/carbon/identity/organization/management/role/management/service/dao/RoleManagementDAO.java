@@ -35,30 +35,27 @@ public interface RoleManagementDAO {
      * Creates a new {@link Role} in the database.
      *
      * @param organizationId The organization ID of the organization where the role has been created.
-     * @param tenantId       The tenant ID of the corresponding organization.
      * @param role           The role to be added.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs
      *                                               during adding a role.
      */
-    void createRole(String organizationId, int tenantId, Role role) throws OrganizationManagementServerException;
+    void createRole(String organizationId, Role role) throws OrganizationManagementServerException;
 
     /**
      * Get a {@link Role} from the database.
      *
      * @param organizationId ID of the organization where role exists.
      * @param roleId         ID of the role.
-     * @param tenantId       The tenant ID.
      * @return The corresponding role.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs
      *                                               during getting a role.
      */
-    Role getRoleById(String organizationId, String roleId, int tenantId) throws OrganizationManagementServerException;
+    Role getRoleById(String organizationId, String roleId) throws OrganizationManagementServerException;
 
     /**
      * Get all the {@link Role}s of an organization.
      *
      * @param organizationId  The ID of the organization.
-     * @param tenantId        The tenant ID.
      * @param limit           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
      * @param operators       The list containing the and, or operators.
@@ -66,8 +63,8 @@ public interface RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               getting a role.
      */
-    List<Role> getOrganizationRoles(String organizationId, int tenantId, int limit,
-                                    List<ExpressionNode> expressionNodes, List<String> operators)
+    List<Role> getOrganizationRoles(String organizationId, int limit, List<ExpressionNode> expressionNodes,
+                                    List<String> operators)
             throws OrganizationManagementServerException;
 
     /**
@@ -75,13 +72,12 @@ public interface RoleManagementDAO {
      *
      * @param organizationId  The ID of the organization.
      * @param roleId          The ID of role.
-     * @param tenantId        The tenant ID.
      * @param patchOperations A list containing the patch patchOperations.
      * @return The updated role.
      * @throws OrganizationManagementException The exception is thrown when an error occurs during patching
      *                                         the role.
      */
-    Role patchRole(String organizationId, String roleId, int tenantId, List<PatchOperation> patchOperations)
+    Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException;
 
     /**
@@ -100,13 +96,11 @@ public interface RoleManagementDAO {
      * @param organizationId The ID of the organization.
      * @param roleId         The ID of Role to be updated.
      * @param role           The values for the role to be updated.
-     * @param tenantId       The tenant ID.
      * @return The updated role.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during pathing
      *                                               the role.
      */
-    Role putRole(String organizationId, String roleId, Role role, int tenantId)
-            throws OrganizationManagementServerException;
+    Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementServerException;
 
     /**
      * Check whether a role exists inside an organization.

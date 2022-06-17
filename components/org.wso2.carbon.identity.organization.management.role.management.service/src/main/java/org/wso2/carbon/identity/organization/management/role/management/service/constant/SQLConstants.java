@@ -26,11 +26,10 @@ public class SQLConstants {
     public static final String AND = " AND ";
     public static final String OR = " OR ";
 
-    public static final String ADD_ROLE_UM_ORG_ROLE = "INSERT INTO UM_ORG_ROLE (UM_ROLE_ID, UM_ROLE_NAME, UM_ORG_ID, " +
-            "UM_TENANT_ID) VALUES (:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID +
+    public static final String ADD_ROLE_UM_ORG_ROLE = "INSERT INTO UM_ORG_ROLE (UM_ROLE_ID, UM_ROLE_NAME, UM_ORG_ID) " +
+            "VALUES (:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID +
             ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME +
-            ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID +
-            ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";)";
+            ";,:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";)";
 
     public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, UM_ROLE_ID) " +
             "VALUES ";
@@ -110,8 +109,7 @@ public class SQLConstants {
 
     public static final String GET_ROLE_FROM_ID = "SELECT * FROM UM_ORG_ROLE WHERE UM_ROLE_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_TENANT_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
     public static final String GET_USERS_FROM_ROLE_ID = "SELECT * FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
@@ -144,8 +142,7 @@ public class SQLConstants {
             "UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
     public static final String GET_ROLES_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_TENANT_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "; ORDER BY UM_ROLE_ID ASC LIMIT :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; ORDER BY UM_ROLE_ID ASC LIMIT :" +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
 
     public static final String DELETE_USERS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_USER WHERE ";
