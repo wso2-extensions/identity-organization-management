@@ -11,7 +11,7 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://localhost:9443/t/{tenant-domain}/api/identity/organization-mgt/v1.0'
+  - url: 'https://localhost:9443/t/{tenant-domain}/api/server/v1'
     variables:
       tenant-domain:
         default: carbon.super
