@@ -90,7 +90,8 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         organizationCreatorRole.setDisplayName(Constants.ORG_CREATOR_ROLE);
         User orgCreator = new User(adminUUID);
         organizationCreatorRole.setUsers(Collections.singletonList(orgCreator));
-        organizationCreatorRole.setPermissions(Collections.singletonList(Constants.ORG_CREATOR_ROLE_PERMISSION));
+        organizationCreatorRole.setPermissions(
+                Collections.singletonList(Constants.ORG_CREATOR_ROLE_ASSIGNED_PERMISSION));
         return organizationCreatorRole;
     }
 }
