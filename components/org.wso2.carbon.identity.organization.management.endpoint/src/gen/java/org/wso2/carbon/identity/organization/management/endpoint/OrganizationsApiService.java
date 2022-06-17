@@ -18,11 +18,20 @@
 
 package org.wso2.carbon.identity.organization.management.endpoint;
 
+import org.wso2.carbon.identity.organization.management.endpoint.*;
+import org.wso2.carbon.identity.organization.management.endpoint.model.*;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import java.io.InputStream;
+import java.util.List;
+import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
+import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
+import java.util.List;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPOSTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPUTRequest;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
-
-import java.util.List;
+import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import javax.ws.rs.core.Response;
 
 
