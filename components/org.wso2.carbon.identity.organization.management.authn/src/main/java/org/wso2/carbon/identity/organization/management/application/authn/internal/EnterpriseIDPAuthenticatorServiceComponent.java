@@ -83,7 +83,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
     protected void unsetOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Application Management Service is unset in the OpenID Connect Authenticator");
+            log.debug("OAuth Management Service is unset in the OpenID Connect Authenticator");
         }
         EnterpriseIDPAuthenticatorDataHolder.getInstance().setOAuthAdminService(null);
     }

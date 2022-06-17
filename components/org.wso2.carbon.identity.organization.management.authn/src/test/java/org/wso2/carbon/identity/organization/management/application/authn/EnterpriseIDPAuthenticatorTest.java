@@ -257,8 +257,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
                 .getOrganizationIdByName(anyString())).thenReturn(orgId);
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
-                .getOrganization(anyString(), anyBoolean())).thenReturn(mockOrganization);
-        when(mockOrganization.getTenantId()).thenReturn(1);
+                .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
                 anyString(), anyString())).thenThrow(
@@ -278,8 +277,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
                 .getOrganizationIdByName(anyString())).thenReturn(orgId);
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
-                .getOrganization(anyString(), anyBoolean())).thenReturn(mockOrganization);
-        when(mockOrganization.getTenantId()).thenReturn(1);
+                .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
                 anyString(), anyString())).thenThrow(
@@ -300,8 +298,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
                 .getOrganizationIdByName(anyString())).thenReturn(orgId);
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
-                .getOrganization(anyString(), anyBoolean())).thenReturn(mockOrganization);
-        when(mockOrganization.getTenantId()).thenReturn(1);
+                .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
                 anyString(), anyString())).thenReturn(mockServiceProvider);

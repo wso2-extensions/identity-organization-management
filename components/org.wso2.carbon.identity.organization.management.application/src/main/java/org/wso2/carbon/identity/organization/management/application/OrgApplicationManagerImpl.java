@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -62,6 +63,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -110,8 +112,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public ServiceProvider resolveSharedApplication(String mainAppName, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException {
 
-        Organization ownerOrg = getOrganizationManager().getOrganization(ownerOrgId, Boolean.FALSE);
-        String ownerTenantDomain = IdentityTenantUtil.getTenantDomain(ownerOrg.getTenantId());
+        Organization ownerOrg = getOrganizationManager().getOrganization(ownerOrgId, Boolean.FALSE, Boolean.FALSE);
+        //TODO: fix resolving tenant based on the organization.
+        String ownerTenantDomain = ROOT.equals(ownerOrg.getName()) ? MultitenantConstants.SUPER_TENANT_DOMAIN_NAME :
+                ownerOrgId;
 
         ServiceProvider mainApplication;
         try {
@@ -123,11 +127,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     ownerOrgId);
         }
 
-        Organization sharedOrganization = getOrganizationManager().getOrganization(sharedOrgId, Boolean.FALSE);
+        Organization sharedOrganization =
+                getOrganizationManager().getOrganization(sharedOrgId, Boolean.FALSE, Boolean.FALSE);
         String sharedAppId =
                 resolveSharedApp(mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId).orElseThrow(
                         () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED));
-        String tenantDomain = IdentityTenantUtil.getTenantDomain(sharedOrganization.getTenantId());
+        //TODO: fix resolving tenant based on the organization.
+        String tenantDomain = sharedOrganization.getId();
         try {
             return getApplicationManagementService().getApplicationByResourceId(sharedAppId, tenantDomain);
         } catch (IdentityApplicationManagementException e) {
@@ -166,8 +172,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             // loaded, tenant domain will be derived from the user who created the application.
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
+            int tenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
             String sharedOrgAdmin =
-                    getRealmService().getTenantUserRealm(sharedOrg.getTenantId()).getRealmConfiguration()
+                    getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration()
                             .getAdminUserName();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 

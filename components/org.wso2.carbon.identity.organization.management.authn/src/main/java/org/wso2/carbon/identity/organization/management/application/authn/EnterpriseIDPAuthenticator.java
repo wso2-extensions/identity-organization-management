@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
@@ -86,7 +85,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
 
 /**
@@ -166,7 +164,8 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             String clientId = oidcConfigurations.getInboundAuthKey();
             OAuthConsumerAppDTO oauthApp = getOAuthAdminService().getOAuthApplicationData(clientId);
 
-            String sharedOrgTenantDomain = IdentityTenantUtil.getTenantDomain(sharedOrganization.getTenantId());
+            //TODO: Fix resolving the tenant domain based on the organization.
+            String sharedOrgTenantDomain = sharedOrganization.getId();
             authenticatorProperties.put(CLIENT_ID, clientId);
             authenticatorProperties.put(CLIENT_SECRET, oauthApp.getOauthConsumerSecret());
             authenticatorProperties.put(ORGANIZATION_ATTRIBUTE, organizationName);
@@ -181,13 +180,13 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     private String getAppOwnerOrgIdByTenantDomain(String tenantDomain) throws AuthenticationFailedException {
 
+        //TODO: Fix organization retrieval based on tenant domain.
         try {
-            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            String organizationId = getOrganizationManager().getOrganizationIdByTenantId(tenantId);
-            if (StringUtils.isBlank(organizationId)) {
-                throw handleAuthFailures(ERROR_CODE_ORG_NOT_FOUND_FOR_TENANT);
+            if (IdentityHelperConstants.SUPER_TENANT_DOMAIN.equalsIgnoreCase(tenantDomain)) {
+                return getOrganizationManager().getOrganizationIdByName(OrganizationManagementConstants.ROOT);
+            } else {
+                return tenantDomain;
             }
-            return organizationId;
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION, e);
         }
@@ -197,7 +196,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         try {
             String organizationId = getOrganizationManager().getOrganizationIdByName(organizationName);
-            return getOrganizationManager().getOrganization(organizationId, Boolean.FALSE);
+            return getOrganizationManager().getOrganization(organizationId, Boolean.FALSE, Boolean.FALSE);
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION, e);
         }
