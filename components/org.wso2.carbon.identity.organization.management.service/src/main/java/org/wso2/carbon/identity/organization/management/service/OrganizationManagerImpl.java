@@ -723,6 +723,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
         Tenant tenant = new Tenant();
         tenant.setActive(true);
         tenant.setDomain(domain);
+        /*
+        Set the creator's UUID as the tenant admin name because tenant data model doesn't store the admin uuid,
+        and it is required when creating the org-user association.
+         */
         tenant.setAdminName(orgCreatorID);
         tenant.setAdminUserId(orgCreatorID);
         tenant.setEmail("dummyadmin@email.com");
