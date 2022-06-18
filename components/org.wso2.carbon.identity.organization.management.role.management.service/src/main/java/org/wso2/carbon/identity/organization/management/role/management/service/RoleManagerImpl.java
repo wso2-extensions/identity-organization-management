@@ -72,7 +72,9 @@ public class RoleManagerImpl implements RoleManager {
         role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        // todo: skip user existence check atm, this user can be from any org.
+        // skip user existence check atm, this user can be from any org. Fix this through
+        // https://github.com/wso2-extensions/identity-organization-management/issues/50
+
 //        if (CollectionUtils.isNotEmpty(role.getUsers())) {
 //            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
 //            if (CollectionUtils.isNotEmpty(userIdList)) {

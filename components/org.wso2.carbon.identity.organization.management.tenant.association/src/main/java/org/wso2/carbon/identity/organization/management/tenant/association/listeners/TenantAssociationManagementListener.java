@@ -47,7 +47,7 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
 
         if (!isEnable()) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Organization management related TenantAssociationManagementListener is not enabled");
+                LOG.debug("Organization management related TenantAssociationManagementListener is not enabled.");
             }
             return;
         }
@@ -69,11 +69,12 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             String tenantUuid = tenant.getTenantUniqueID();
             if (StringUtils.isBlank(tenantUuid)) {
                 LOG.error("Tenant UUID was not found for tenant: " + tenantId + ". Therefore, tenant association " +
-                        "will not set");
+                        "will not be set.");
                 return;
             }
             if (StringUtils.isBlank(adminUUID)) {
-                LOG.error("User UUID is empty. Therefore, tenant association will not set with tenant: " + tenantUuid);
+                LOG.error(
+                        "User UUID is empty. Therefore, tenant association will not be set with tenant: " + tenantUuid);
                 return;
             }
             Role organizationCreatorRole = buildOrgCreatorRole(adminUUID);
