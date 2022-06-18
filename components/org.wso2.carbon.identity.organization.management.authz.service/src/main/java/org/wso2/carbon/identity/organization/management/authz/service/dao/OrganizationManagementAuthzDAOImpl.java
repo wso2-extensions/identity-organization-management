@@ -27,7 +27,7 @@ import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
@@ -55,7 +55,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(sqlStmt,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT) > 0,
+                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);

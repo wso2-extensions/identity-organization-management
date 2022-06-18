@@ -49,6 +49,6 @@ public class SQLConstants {
 
         public static final String DB_SCHEMA_COLUMN_USER_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_ORGANIZATION_ID = "NAME";
-        public static final String DB_SCHEMA_COLUMN_NAME_COUNT = "COUNT(1)";
+        public static final String DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID = "COUNT(UM_RESOURCE_ID)";
     }
 }
