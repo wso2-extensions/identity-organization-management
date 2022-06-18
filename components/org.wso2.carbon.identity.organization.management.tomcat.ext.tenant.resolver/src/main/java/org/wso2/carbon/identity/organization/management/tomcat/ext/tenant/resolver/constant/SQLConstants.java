@@ -23,8 +23,8 @@ package org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resol
  */
 public class SQLConstants {
 
-    public static final String GET_ORGANIZATION_TENANT_DOMAIN = "SELECT UM_DOMAIN_NAME FROM UM_TENANT WHERE UM_ID IN " +
-            "(SELECT UM_TENANT_ID FROM UM_ORG WHERE UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_ORG_ID + ";)";
+    public static final String GET_ORGANIZATION_TENANT_DOMAIN = "SELECT UM_DOMAIN_NAME FROM UM_TENANT WHERE " +
+            "UM_ORG_UUID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_ORG_ID + ";";
 
     /**
      * SQL placeholders.
