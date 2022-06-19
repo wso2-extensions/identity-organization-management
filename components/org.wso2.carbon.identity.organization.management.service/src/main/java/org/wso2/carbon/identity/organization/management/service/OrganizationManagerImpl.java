@@ -293,6 +293,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
         return updatedOrganization;
     }
 
+    @Override
+    public String resolveTenantDomain(String organizationDomain) throws OrganizationManagementException {
+
+        return organizationManagementDAO.resolveTenantDomain(organizationDomain);
+    }
+
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {
 
         if (StringUtils.equals(ACTIVE.toString(), status)) {
