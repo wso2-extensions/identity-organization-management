@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.endpoint.constant;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Constants of Role Management Endpoint module.
  */
@@ -29,4 +32,7 @@ public class RoleManagementEndpointConstants {
     public static final String ROLE_PATH = "roles";
     public static final String GROUP_PATH = "groups";
     public static final String USER_PATH = "users";
+
+    public static final List<String> SCHEMES = Collections
+            .singletonList("urn:ietf:params:scim:api:messages:2.0:ListResponse");
 }

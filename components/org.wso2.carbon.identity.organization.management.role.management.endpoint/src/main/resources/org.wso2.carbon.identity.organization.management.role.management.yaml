@@ -76,7 +76,8 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/filterQueryParam'
-        - $ref: '#/components/parameters/limitQueryParam'
+        - $ref: '#/components/parameters/countQueryParam'
+        - $ref: '#/components/parameters/cursorQueryParam'
       responses:
         '200':
           description: Successful response.
@@ -256,9 +257,9 @@ components:
         Condition to filter the retrieval of records.
       schema:
         type: string
-    limitQueryParam:
+    countQueryParam:
       in: query
-      name: limit
+      name: count
       required: false
       description:
         Maximum number of records to be returned. (Should be greater than 0)
@@ -266,6 +267,14 @@ components:
         type: integer
         format: int32
         minimum: 0
+    cursorQueryParam:
+      in: query
+      name: cursor
+      required: false
+      description:
+        The cursor to retrieve the records.
+      schema:
+        type: string
   schemas:
     #------------------------------------------------------------------------
     # Error response object.
@@ -298,7 +307,30 @@ components:
     RolesListResponse:
       type: object
       properties:
-        roles:
+        nextCursor:
+          type: string
+          example: eyJjdXJzb3JWYWx1ZSI6Im9yZyB2aWV3IHJvbGUgZm9yIG9yZyAyIn0=
+          description: A cursor to obtain the next page of results in a subsequent request.
+        totalResults:
+          type: integer
+          format: int32
+          example: 100
+          description: Total results to be fetched.
+        previousCursor:
+          type: string
+          example: eyJjdXJzb3JWYWx1ZSI6ImxtbiBvcmcgdmlldyByb2xlIGZvciBvcmcgMyJ9
+          description: A cursor to obtain the previous page of results in a subsequent request.
+        itemsPerPage:
+          type: integer
+          format: int32
+          example: 10
+          description: Number of roles per page.
+        schemas:
+          type: array
+          items:
+            type: string
+            example: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+        Resources:
           type: array
           items:
             $ref: '#/components/schemas/RoleObj'

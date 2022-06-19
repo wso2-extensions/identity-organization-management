@@ -93,9 +93,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response organizationsOrganizationIdRolesGet(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit) {
+    public Response organizationsOrganizationIdRolesGet(@ApiParam(value = "ID of the organization.",required=true) @PathParam("organization-id") String organizationId,     @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("count") Integer count,     @Valid@ApiParam(value = "The cursor to retrieve the records.")  @QueryParam("cursor") String cursor) {
 
-        return delegate.organizationsOrganizationIdRolesGet(organizationId,  filter,  limit );
+        return delegate.organizationsOrganizationIdRolesGet(organizationId,  filter,  count,  cursor );
     }
 
     @Valid

@@ -222,6 +222,8 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
+        ERROR_CODE_ROLE_LIST_INVALID_CURSOR("60049", "Cursor decode failed",
+                "Malformed cursor %s cannot be processed."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
