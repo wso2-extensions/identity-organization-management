@@ -138,6 +138,7 @@ public class Organization {
 
         this.type = type;
     }
+
     public List<String> getPermissions() {
 
         return permissions;

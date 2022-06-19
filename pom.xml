@@ -48,6 +48,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
+        <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
         <module>features/org.wso2.carbon.identity.organization.management.server.feature</module>
     </modules>
 
@@ -175,6 +176,12 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.authz.valve</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.tenant.association</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -469,7 +476,7 @@
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
         <carbon.multitenancy.version>4.10.1</carbon.multitenancy.version>
-        <carbon.multitenancy.package.import.version.range>[4.9.0,5.0.0)
+        <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
