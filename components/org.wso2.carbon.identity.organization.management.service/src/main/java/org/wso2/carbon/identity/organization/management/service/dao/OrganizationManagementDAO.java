@@ -198,8 +198,19 @@ public interface OrganizationManagementDAO {
      * @param organizationId The organization ID.
      * @param userId         Unique identifier of the user.
      * @return list of resource ids of permissions
-     * @throws OrganizationManagementServerException
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving user's permissions
+     *                                               for an organization.
      */
     List<String> getOrganizationPermissions(String organizationId, String userId)
             throws OrganizationManagementServerException;
+
+    /**
+     * Derive the tenant domain of an organization based on the given organization domain.
+     *
+     * @param organizationDomain The organization domain available in the request.
+     * @return tenant domain.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the tenant domain of
+     *                                               an organization.
+     */
+    String resolveTenantDomain(String organizationDomain) throws OrganizationManagementServerException;
 }

@@ -26,8 +26,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.registry.core.service.RegistryService;
-import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
  * Service component class for organization management tomcat valve.
@@ -47,58 +46,24 @@ public class OrganizationManagementTomcatServiceComponent {
         }
     }
 
-    /**
-     * Set realm service implementation.
-     *
-     * @param realmService RealmService
-     */
-    @Reference(
-            name = "user.realmservice.default",
-            service = RealmService.class,
+    @Reference(name = "identity.organization.management.service..component",
+            service = OrganizationManager.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetRealmService"
-    )
-    protected void setRealmService(RealmService realmService) {
+            unbind = "unsetOrganizationManager")
+    protected void setOrganizationManager(OrganizationManager organizationManager) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Setting the Realm Service.");
+            LOG.debug("Setting the Organization Manager.");
         }
-        OrganizationManagementTomcatDataHolder.getInstance().setRealmService(realmService);
+        OrganizationManagementTomcatDataHolder.getInstance().setOrganizationManager(organizationManager);
     }
 
-    /**
-     * Unset realm service implementation.
-     *
-     * @param realmService RealmService
-     */
-    protected void unsetRealmService(RealmService realmService) {
+    protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Unsetting the Realm Service.");
+            LOG.debug("Unsetting the Organization Manager.");
         }
-        OrganizationManagementTomcatDataHolder.getInstance().setRealmService(null);
-    }
-
-    @Reference(
-            name = "registry.service.provider",
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetRegistryService"
-    )
-    protected void setRegistryService(RegistryService registryService) {
-
-        OrganizationManagementTomcatDataHolder.getInstance().setRegistryService(registryService);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(registryService + "is being set.");
-        }
-    }
-
-    protected void unsetRegistryService(RegistryService registryService) {
-
-        OrganizationManagementTomcatDataHolder.getInstance().setRegistryService(null);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(registryService + "is being unset.");
-        }
+        OrganizationManagementTomcatDataHolder.getInstance().setOrganizationManager(null);
     }
 }

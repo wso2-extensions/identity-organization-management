@@ -486,8 +486,6 @@
 
         <catalina.imp.pkg.version.range>[9.0.0,10.0.0)</catalina.imp.pkg.version.range>
 
-        <org.slf4j.imp.pkg.version.range>[1.7.0,2.0.0)</org.slf4j.imp.pkg.version.range>
-
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
 

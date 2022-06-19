@@ -123,4 +123,15 @@ public interface OrganizationManager {
     Organization updateOrganization(String organizationId, String currentOrganizationName, Organization organization)
             throws OrganizationManagementException;
 
+    /**
+     * Derive the tenant domain of an organization based on the given organization domain.
+     *
+     * @param organizationDomain The organization domain available in the request. This domain will be the same unique
+     *                           identifier generated for an organization.
+     * @return tenant domain.
+     * @throws OrganizationManagementException The exception thrown when retrieving the tenant domain of an
+     *                                         organization.
+     */
+    String resolveTenantDomain(String organizationDomain) throws OrganizationManagementException;
+
 }

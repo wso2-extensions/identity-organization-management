@@ -128,6 +128,9 @@ public class SQLConstants {
             "; AND UM_ORG_ROLE.UM_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
             "; AND UM_ORG_PERMISSION.UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
 
+    public static final String GET_ORGANIZATION_TENANT_DOMAIN = "SELECT UM_DOMAIN_NAME FROM UM_TENANT WHERE " +
+            "UM_ORG_UUID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
+
     /**
      * SQL Placeholders.
      */

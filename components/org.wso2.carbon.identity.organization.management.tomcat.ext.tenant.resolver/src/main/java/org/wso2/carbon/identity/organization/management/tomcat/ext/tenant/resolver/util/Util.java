@@ -22,9 +22,10 @@ import org.apache.catalina.connector.Request;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.dao.OrganizationManagementTenantResolverDAO;
-import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.dao.OrganizationManagementTenantResolverDAOImpl;
-import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.exception.OrganizationManagementTenantResolverServerException;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
@@ -42,11 +43,10 @@ public class Util {
      *
      * @param request The HTTP servlet request.
      * @return tenant domain.
-     * @throws OrganizationManagementTenantResolverServerException The server exception thrown when retrieving the
-     *                                                             tenant domain of an organization.
+     * @throws OrganizationManagementException The  exception thrown when retrieving the tenant domain of an
+     *                                         organization.
      */
-    public static String getTenantDomain(HttpServletRequest request)
-            throws OrganizationManagementTenantResolverServerException {
+    public static String getTenantDomain(HttpServletRequest request) throws OrganizationManagementException {
 
         String requestURI = request.getRequestURI();
         String domain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
@@ -61,11 +61,10 @@ public class Util {
      *
      * @param request The HTTP servlet request.
      * @return tenant domain.
-     * @throws OrganizationManagementTenantResolverServerException The server exception thrown when retrieving the
-     *                                                             tenant domain of an organization.
+     * @throws OrganizationManagementException The exception thrown when retrieving the tenant domain of an
+     *                                         organization.
      */
-    public static String getTenantDomainFromURLMapping(Request request)
-            throws OrganizationManagementTenantResolverServerException {
+    public static String getTenantDomainFromURLMapping(Request request) throws OrganizationManagementException {
 
         String requestURI = request.getRequestURI();
         String domain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
@@ -78,19 +77,19 @@ public class Util {
     }
 
     private static String getTenantDomainFromOrgDomain(String requestURI, String domain) throws
-            OrganizationManagementTenantResolverServerException {
+            OrganizationManagementException {
 
         String domainInRequestPath = requestURI.substring(requestURI.indexOf(ORGANIZATION_PATH_PARAM) + 3);
         if (domainInRequestPath.indexOf('/') != -1) {
             domainInRequestPath = domainInRequestPath.substring(0, domainInRequestPath.indexOf('/'));
-            // todo: check if it is ok to directly have the root org id or need to fetch it from db.
-            if (StringUtils.equals("root4a8d-113f-4211-a0d5-efe36b082211", domainInRequestPath)) {
+            OrganizationManager organizationManager = OrganizationManagementTomcatDataHolder.getInstance()
+                    .getOrganizationManager();
+            String rootOrgID = organizationManager.getOrganizationIdByName(OrganizationManagementConstants.ROOT);
+            if (StringUtils.equals(rootOrgID, domainInRequestPath)) {
                 // super tenant domain will be returned.
                 return domain;
             }
-            OrganizationManagementTenantResolverDAO tenantResolverDAO =
-                    new OrganizationManagementTenantResolverDAOImpl();
-            domain = tenantResolverDAO.resolveTenantDomain(domainInRequestPath);
+            domain = organizationManager.resolveTenantDomain(domainInRequestPath);
         }
         return domain;
     }

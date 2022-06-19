@@ -18,8 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal;
 
-import org.wso2.carbon.registry.core.service.RegistryService;
-import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
  * Organization management data holder.
@@ -27,31 +26,20 @@ import org.wso2.carbon.user.core.service.RealmService;
 public class OrganizationManagementTomcatDataHolder {
 
     private static final OrganizationManagementTomcatDataHolder instance = new OrganizationManagementTomcatDataHolder();
-    private RealmService realmService;
-    private RegistryService registryService;
+    private OrganizationManager organizationManager;
 
     public static OrganizationManagementTomcatDataHolder getInstance() {
 
         return instance;
     }
 
-    public RealmService getRealmService() {
+    public OrganizationManager getOrganizationManager() {
 
-        return realmService;
+        return organizationManager;
     }
 
-    public void setRealmService(RealmService realmService) {
+    public void setOrganizationManager(OrganizationManager organizationManager) {
 
-        this.realmService = realmService;
-    }
-
-    public RegistryService getRegistryService() {
-
-        return registryService;
-    }
-
-    public void setRegistryService(RegistryService registryService) {
-
-        this.registryService = registryService;
+        this.organizationManager = organizationManager;
     }
 }

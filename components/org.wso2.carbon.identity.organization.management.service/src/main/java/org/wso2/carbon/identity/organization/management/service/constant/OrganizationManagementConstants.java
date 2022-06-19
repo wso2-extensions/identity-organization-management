@@ -354,7 +354,8 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
-        ;
+        ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN("65060", "Unable to resolve the " +
+                "tenant domain.", "Server encountered an error while resolving the tenant domain of the organization.");
 
         private final String code;
         private final String message;

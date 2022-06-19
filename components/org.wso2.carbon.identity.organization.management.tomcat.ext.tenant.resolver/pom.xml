@@ -84,6 +84,10 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
             <scope>provided</scope>
@@ -118,15 +122,11 @@
                             org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",,
-                            org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",,
                             org.wso2.carbon.identity.core.persistence;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.dao;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.registry.core.service;version="${carbon.registry.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}"
                             org.wso2.carbon.tomcat.ext.utils;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.tomcat.ext.valves;version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>
