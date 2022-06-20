@@ -68,7 +68,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
 
         User user = authorizationContext.getUser();
         String tenantDomainFromURL = authorizationContext.getTenantDomainFromURLMapping();
-        // Resolve associated org UUID. // todo: if the org id comes to this request no need to resolve.
+        // Resolve associated org UUID.
         String tenantOrgUUIDOfURLDomain = resolveAssociatedOrgUUIDForDomainInURL(tenantDomainFromURL);
 
         String permissionString = authorizationContext.getPermissionString();
