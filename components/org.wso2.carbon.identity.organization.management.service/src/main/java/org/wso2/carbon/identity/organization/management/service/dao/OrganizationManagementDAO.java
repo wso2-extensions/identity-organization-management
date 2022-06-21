@@ -79,17 +79,20 @@ public interface OrganizationManagementDAO {
     Organization getOrganization(String organizationId) throws OrganizationManagementServerException;
 
     /**
-     * Retrieve the IDs of the organizations residing in the given tenant.
+     * Retrieve the IDs of the organizations under a given organization ID.
      *
-     * @param tenantId        The tenant ID corresponding to the tenant where the organizations should be retrieved.
-     * @param limit           The maximum number of records to be returned.
-     * @param sortOrder       The sort order, ascending or descending.
-     * @param expressionNodes The list of filters.
+     * @param recursive               Determines whether records should be retrieved in a recursive manner.
+     * @param limit                   The maximum number of records to be returned.
+     * @param organizationId          The organization ID.
+     * @param sortOrder               The sort order, ascending or descending.
+     * @param expressionNodes         The list of filters excluding filtering by parentId.
+     * @param parentIdExpressionNodes The list of filters related to parentId.
      * @return the list of organization IDs.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organizations.
      */
-    List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String sortOrder,
-                                             List<ExpressionNode> expressionNodes)
+    List<BasicOrganization> getOrganizations(boolean recursive, Integer limit, String organizationId, String sortOrder,
+                                             List<ExpressionNode> expressionNodes,
+                                             List<ExpressionNode> parentIdExpressionNodes)
             throws OrganizationManagementServerException;
 
     /**
@@ -222,4 +225,38 @@ public interface OrganizationManagementDAO {
      *                                               an organization.
      */
     String resolveTenantDomain(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Check whether an organization is a child organization of the given parent.
+     *
+     * @param organizationId The organization ID.
+     * @param parentId       The parent organization ID.
+     * @return whether an organization is a child organization of the given parent.
+     * @throws OrganizationManagementServerException The server exception thrown when checking if an organization is
+     *                                               a child organization of the given parent.
+     */
+    boolean isChildOfParent(String organizationId, String parentId) throws
+            OrganizationManagementServerException;
+
+    /**
+     * Check whether an organization is an immediate child organization of the given parent.
+     *
+     * @param organizationId The organization ID.
+     * @param parentId       The parent organization ID.
+     * @return whether an organization is an immediate child organization of the given parent.
+     * @throws OrganizationManagementServerException The server exception thrown when checking if an organization is
+     *                                               an immediate child organization of the given parent.
+     */
+    boolean isImmediateChildOfParent(String organizationId, String parentId) throws
+            OrganizationManagementServerException;
+
+    /**
+     * Derive the ID of an organization based on the given tenant domain.
+     *
+     * @param tenantDomain The tenant domain.
+     * @return organization ID.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the tenant domain of
+     *                                               an organization.
+     */
+    String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException;
 }

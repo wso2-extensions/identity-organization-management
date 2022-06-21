@@ -366,7 +366,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                 new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganizations(10, null, null, "ASC",
-                "invalid_attribute co xyz");
+                "invalid_attribute co xyz", false);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -376,7 +376,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         when(Utils.handleClientException(anyObject())).thenReturn(
                 new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
         organizationManager.getOrganizations(10, null, null, "ASC",
-                "name co xyz or name co abc");
+                "name co xyz or name co abc", false);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
@@ -385,7 +385,8 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         mockCarbonContext();
         when(Utils.handleClientException(anyObject())).thenReturn(
                 new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-        organizationManager.getOrganizations(10, "MjAyNjkzMjg=", null, "ASC", "name co xyz");
+        organizationManager.getOrganizations(10, "MjAyNjkzMjg=", null, "ASC", "name co xyz",
+                false);
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)

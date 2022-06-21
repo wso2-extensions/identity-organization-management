@@ -38,9 +38,9 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     private OrganizationManagementService organizationManagementService;
 
     @Override
-    public Response organizationsGet(String filter, Integer limit, String after, String before) {
+    public Response organizationsGet(String filter, Integer limit, String after, String before, Boolean recursive) {
 
-        return organizationManagementService.getOrganizations(filter, limit, after, before);
+        return organizationManagementService.getOrganizations(filter, limit, after, before, recursive);
     }
 
     @Override

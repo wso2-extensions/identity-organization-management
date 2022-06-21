@@ -84,7 +84,7 @@ public class BasicOrganizationResponse  {
         return this;
     }
     
-    @ApiModelProperty(example = "t/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b", required = true, value = "")
+    @ApiModelProperty(example = "o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b", required = true, value = "")
     @JsonProperty("ref")
     @Valid
     @NotNull(message = "Property ref cannot be null.")

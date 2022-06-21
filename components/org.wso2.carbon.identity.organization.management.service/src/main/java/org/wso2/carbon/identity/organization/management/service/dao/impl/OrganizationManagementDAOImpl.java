@@ -54,6 +54,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ACTIVE_CHILD_ORGANIZATIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_IF_CHILD_OF_PARENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_ATTRIBUTE_KEY_EXIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME;
@@ -63,6 +65,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_PATCHING_ORGANIZATION_ADD_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_PATCHING_ORGANIZATION_DELETE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_PATCHING_ORGANIZATION_UPDATE_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
@@ -74,12 +77,14 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_PARENT_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_TENANT_UUID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.FILTER_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.LE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.LT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationStatus.ACTIVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationStatus.DISABLED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FILTER_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
@@ -100,8 +105,10 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_STATUS_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_TENANT_UUID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_TYPE_COLUMN;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_CHILD_OF_PARENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_CHILD_ORGANIZATIONS_EXIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_CHILD_ORGANIZATIONS_STATUS;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_IMMEDIATE_CHILD_OF_PARENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_ORGANIZATION_ATTRIBUTE_KEY_EXIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_ORGANIZATION_EXIST_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.CHECK_ORGANIZATION_EXIST_BY_NAME;
@@ -116,14 +123,18 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_TYPE;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_PARENT_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_TENANT_DOMAIN_FROM_ORGANIZATION_UUID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_TENANT_UUID_FROM_ORGANIZATION_UUID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_OTHER_ORGANIZATION_HIERARCHY;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PATCH_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PATCH_ORGANIZATION_CONCLUDE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SET_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_CREATED_TIME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_DESCRIPTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID;
@@ -132,6 +143,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_STATUS;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE;
@@ -170,8 +182,10 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_TYPE, organization.getType());
                 }, organization, false);
                 if (CollectionUtils.isNotEmpty(organization.getAttributes())) {
-                    insertOrganizationAttributes(organization);
+                    addOrganizationAttributes(organization);
                 }
+                addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY, organization);
+                addOrganizationHierarchy(INSERT_OTHER_ORGANIZATION_HIERARCHY, organization);
                 return null;
             });
         } catch (TransactionException e) {
@@ -179,7 +193,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
-    private void insertOrganizationAttributes(Organization organization) throws TransactionException {
+    private void addOrganizationAttributes(Organization organization) throws TransactionException {
 
         String organizationId = organization.getId();
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -192,6 +206,18 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     namedPreparedStatement.addBatch();
                 }
             }), organizationId);
+            return null;
+        });
+    }
+
+    private void addOrganizationHierarchy(String query, Organization organization) throws TransactionException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        namedJdbcTemplate.withTransaction(template -> {
+            template.executeInsert(query, namedPreparedStatement -> {
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organization.getId());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organization.getParent().getId());
+            }, null, false);
             return null;
         });
     }
@@ -273,15 +299,28 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public List<BasicOrganization> getOrganizations(int tenantId, Integer limit, String sortOrder,
-                                                    List<ExpressionNode> expressionNodes)
+    public List<BasicOrganization> getOrganizations(boolean recursive, Integer limit, String organizationId,
+                                                    String sortOrder, List<ExpressionNode> expressionNodes,
+                                                    List<ExpressionNode> parentIdExpressionNodes)
             throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         appendFilterQuery(expressionNodes, filterQueryBuilder);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-        String sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                String.format(GET_ORGANIZATIONS_TAIL, sortOrder);
+
+        FilterQueryBuilder parentIdFilterQueryBuilder = new FilterQueryBuilder();
+        appendFilterQueryForParentId(parentIdFilterQueryBuilder, parentIdExpressionNodes);
+        Map<String, String> parentIdFilterAttributeValueMap = parentIdFilterQueryBuilder.getFilterAttributeValue();
+        String parentIdFilterQuery = parentIdFilterQueryBuilder.getFilterQuery();
+
+        String sqlStmt;
+        if (StringUtils.isBlank(parentIdFilterQuery)) {
+            sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
+                    String.format(GET_ORGANIZATIONS_TAIL, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
+        } else {
+            sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
+                    String.format(GET_ORGANIZATIONS_TAIL, parentIdFilterQuery, recursive ? "> 0" : "= 1", sortOrder);
+        }
 
         String permissionPlaceholder = "PERMISSION_";
         List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
@@ -306,6 +345,12 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                     },
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_ID, getUserId());
+                        if (parentIdFilterAttributeValueMap.isEmpty()) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                        }
+                        for (Map.Entry<String, String> entry : parentIdFilterAttributeValueMap.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
                         for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
                             namedPreparedStatement.setString(entry.getKey(), entry.getValue());
                         }
@@ -388,7 +433,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 });
                 deleteOrganizationAttributes(organizationId);
                 if (CollectionUtils.isNotEmpty(organization.getAttributes())) {
-                    insertOrganizationAttributes(organization);
+                    addOrganizationAttributes(organization);
                 }
                 return null;
             });
@@ -800,67 +845,255 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
+    private void appendFilterQueryForParentId(FilterQueryBuilder filterQueryBuilder,
+                                              List<ExpressionNode> expressionNodes) {
+
+        int count = 1;
+        StringBuilder filter = new StringBuilder();
+        for (ExpressionNode expressionNode : expressionNodes) {
+            String operation = expressionNode.getOperation();
+            String value = expressionNode.getValue();
+            if (StringUtils.isNotBlank(value) && StringUtils.isNotBlank(operation)) {
+                switch (operation) {
+                    case EQ: {
+                        equalFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case SW: {
+                        startWithFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case EW: {
+                        endWithFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case CO: {
+                        containsFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case GE: {
+                        greaterThanOrEqualFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case LE: {
+                        lessThanOrEqualFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case GT: {
+                        greaterThanFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    case LT: {
+                        lessThanFilterBuilderForParentId(count, value, filter, filterQueryBuilder);
+                        count++;
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+        }
+        if (StringUtils.isBlank(filter.toString())) {
+            filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
+        } else {
+            filterQueryBuilder.setFilterQuery(filter.toString());
+        }
+    }
+
+    @Override
+    public boolean isChildOfParent(String organizationId, String parentId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+
+        try {
+            int attrCount = namedJdbcTemplate.fetchSingleRecord(CHECK_CHILD_OF_PARENT,
+                    (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, parentId);
+                    });
+            return attrCount > 0;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_IF_CHILD_OF_PARENT, e, organizationId, parentId);
+        }
+    }
+
+    @Override
+    public boolean isImmediateChildOfParent(String organizationId, String parentId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+
+        try {
+            int attrCount = namedJdbcTemplate.fetchSingleRecord(CHECK_IMMEDIATE_CHILD_OF_PARENT,
+                    (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, parentId);
+                    });
+            return attrCount > 0;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT, e, organizationId,
+                    parentId);
+        }
+    }
+
+    @Override
+    public String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
+                    namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_TENANT_DOMAIN,
+                            tenantDomain));
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e,
+                    tenantDomain);
+        }
+    }
+
     private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                     FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " = :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
     }
 
     private void startWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                         FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value + "%");
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value + "%");
     }
 
     private void endWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                       FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue("%" + value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value);
     }
 
     private void containsFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                        FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " like :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue("%" + value + "%");
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }
 
     private void greaterThanOrEqualFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                                  FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " >= :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" >= :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
     }
 
     private void lessThanOrEqualFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                               FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " <= :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" <= :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
     }
 
     private void greaterThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                           FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " > :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" > :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
     }
 
     private void lessThanFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                        FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = " < :FILTER_ID_" + count + "; AND ";
+        String filterString = String.format(" < :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
-        filterQueryBuilder.setFilterAttributeValue(value);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void equalFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                               FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" = :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void startWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                   FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value + "%");
+    }
+
+    private void endWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                 FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value);
+    }
+
+    private void containsFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                  FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
+    }
+
+    private void greaterThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                            FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" >= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void lessThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                         FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" <= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void lessThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                  FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" < :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void greaterThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
+                                                     FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" > :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        appendFilterForParentId(filterString, filter);
+        filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void appendFilterForParentId(String filterString, StringBuilder filter) {
+
+        if (StringUtils.isBlank(filter.toString())) {
+            filter.append(OrganizationManagementConstants.VIEW_ID_COLUMN).append(filterString);
+        } else {
+            filter.append(" AND ").append(OrganizationManagementConstants.VIEW_ID_COLUMN).append(filterString);
+        }
     }
 }
