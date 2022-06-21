@@ -20,9 +20,9 @@ package org.wso2.carbon.identity.organization.management.role.management.endpoin
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
+import org.wso2.carbon.identity.organization.management.role.management.endpoint.RoleManagementServiceHolder;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.exception.RoleManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.role.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
@@ -56,8 +56,7 @@ public class RoleManagementEndpointUtils {
      */
     public static RoleManager getRoleManager() {
 
-        return (RoleManager) PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                .getOSGiService(RoleManager.class, null);
+        return RoleManagementServiceHolder.getInstance().getRoleManager();
     }
 
     /**
