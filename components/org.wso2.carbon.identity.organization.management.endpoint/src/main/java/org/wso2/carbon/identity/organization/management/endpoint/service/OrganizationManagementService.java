@@ -23,9 +23,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.endpoint.OrganizationManagementServiceHolder;
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
@@ -492,13 +492,11 @@ public class OrganizationManagementService {
 
     private OrganizationManager getOrganizationManager() {
 
-        return (OrganizationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getOSGiService
-                (OrganizationManager.class, null);
+        return OrganizationManagementServiceHolder.getInstance().getOrganizationManager();
     }
 
     private OrgApplicationManager getOrgApplicationManager() {
 
-        return (OrgApplicationManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getOSGiService
-                (OrgApplicationManager.class, null);
+        return OrganizationManagementServiceHolder.getInstance().getOrgApplicationManager();
     }
 }

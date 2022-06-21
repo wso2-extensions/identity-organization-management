@@ -141,14 +141,14 @@ public class OrganizationManagerImpl implements OrganizationManager {
     @Override
     public Organization addOrganization(Organization organization) throws OrganizationManagementException {
 
-        int tenantId;
         validateAddOrganizationRequest(organization);
         setParentOrganization(organization);
         setCreatedAndLastModifiedTime(organization);
-        if (StringUtils.equals(TENANT.toString(), organization.getType())) {
-            createTenant(organization.getId());
-        }
         organizationManagementDAO.addOrganization(organization);
+        String orgCreatorID = getUserId();
+        if (StringUtils.equals(TENANT.toString(), organization.getType())) {
+            createTenant(organization.getId(), orgCreatorID);
+        }
         return organization;
     }
 
@@ -229,14 +229,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
         validateOrganizationDelete(organizationId);
         Organization organization = organizationManagementDAO.getOrganization(organizationId);
-
-        organizationManagementDAO.deleteOrganization(organizationId);
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
-           /*
-            TODO : deactivate the tenant. The respective tenant retrieval will be resolved in next PR
-            https://github.com/wso2-extensions/identity-organization-management/pull/42
-            */
+            String tenantID = organizationManagementDAO.getAssociatedTenantUUIDForOrganization(organizationId);
+            if (StringUtils.isNotBlank(tenantID)) {
+                try {
+                    getTenantMgtService().deactivateTenant(tenantID);
+                } catch (TenantMgtException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT, e, organizationId);
+                }
+            }
         }
+        organizationManagementDAO.deleteOrganization(organizationId);
     }
 
     @Override
@@ -694,15 +697,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 !attributeValue.equalsIgnoreCase(PAGINATION_BEFORE);
     }
 
-    private int createTenant(String domain) throws OrganizationManagementException {
+    private void createTenant(String domain, String orgCreatorID) throws OrganizationManagementException {
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(MultitenantConstants
                     .SUPER_TENANT_DOMAIN_NAME);
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(MultitenantConstants.SUPER_TENANT_ID);
-            getTenantMgtService().addTenant(createTenantInfoBean(domain));
+            getTenantMgtService().addTenant(createTenantInfoBean(domain, orgCreatorID));
         } catch (TenantMgtException e) {
+            // Rollback created organization.
+            deleteOrganization(domain);
             if (e instanceof TenantManagementClientException) {
                 throw handleClientException(ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION);
             } else {
@@ -711,18 +716,23 @@ public class OrganizationManagerImpl implements OrganizationManager {
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
-        return IdentityTenantUtil.getTenantId(domain);
     }
 
-    private Tenant createTenantInfoBean(String domain) {
+    private Tenant createTenantInfoBean(String domain, String orgCreatorID) {
 
         Tenant tenant = new Tenant();
         tenant.setActive(true);
         tenant.setDomain(domain);
-        tenant.setAdminName("dummyadmin");
+        /*
+        Set the creator's UUID as the tenant admin name because tenant data model doesn't store the admin uuid,
+        and it is required when creating the org-user association.
+         */
+        tenant.setAdminName(orgCreatorID);
+        tenant.setAdminUserId(orgCreatorID);
         tenant.setEmail("dummyadmin@email.com");
         // set the password as domain for now to avoid findbugs detecting it as a hardcoded value.
         tenant.setAdminPassword(domain);
+        tenant.setAssociatedOrganizationUUID(domain);
         tenant.setProvisioningMethod(StringUtils.EMPTY);
         return tenant;
     }

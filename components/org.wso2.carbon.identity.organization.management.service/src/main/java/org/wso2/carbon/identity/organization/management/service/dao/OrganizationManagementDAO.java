@@ -202,4 +202,13 @@ public interface OrganizationManagementDAO {
      */
     List<String> getOrganizationPermissions(String organizationId, String userId)
             throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve the tenant UUID if the organization is a tenant type organization.
+     *
+     * @param organizationId Organization ID.
+     * @return Associated tenant UUID.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the associated tenant.
+     */
+    String getAssociatedTenantUUIDForOrganization(String organizationId) throws OrganizationManagementServerException;
 }

@@ -55,6 +55,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
@@ -68,21 +69,25 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
+        role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        if (CollectionUtils.isNotEmpty(role.getUsers())) {
-            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
-            }
-        }
+        // skip user existence check atm, this user can be from any org. Fix this through
+        // https://github.com/wso2-extensions/identity-organization-management/issues/50
+
+//        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+//            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+//            if (CollectionUtils.isNotEmpty(userIdList)) {
+//                validateUsers(userIdList, getTenantId());
+//            }
+//        }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
             List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(groupIdList)) {
                 validateGroups(groupIdList, getTenantId());
             }
         }
-        roleManagementDAO.createRole(organizationId, getTenantId(), role);
+        roleManagementDAO.createRole(organizationId, role);
         return new Role(role.getId(), role.getDisplayName());
     }
 
@@ -91,7 +96,7 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        return roleManagementDAO.getRoleById(organizationId, roleId, getTenantId());
+        return roleManagementDAO.getRoleById(organizationId, roleId);
     }
 
     @Override
@@ -102,8 +107,7 @@ public class RoleManagerImpl implements RoleManager {
         List<ExpressionNode> expressionNodes = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         getExpressionNodes(filter, expressionNodes, operators);
-        return roleManagementDAO.getOrganizationRoles(organizationId, getTenantId(), limit,
-                expressionNodes, operators);
+        return roleManagementDAO.getOrganizationRoles(organizationId, limit, expressionNodes, operators);
     }
 
     @Override
@@ -140,7 +144,7 @@ public class RoleManagerImpl implements RoleManager {
                 }
             }
         }
-        return roleManagementDAO.patchRole(organizationId, roleId, getTenantId(), patchOperations);
+        return roleManagementDAO.patchRole(organizationId, roleId, patchOperations);
     }
 
     @Override
@@ -164,7 +168,7 @@ public class RoleManagerImpl implements RoleManager {
                 validateGroups(groupIdList, getTenantId());
             }
         }
-        return roleManagementDAO.putRole(organizationId, roleId, role, getTenantId());
+        return roleManagementDAO.putRole(organizationId, roleId, role);
     }
 
     @Override

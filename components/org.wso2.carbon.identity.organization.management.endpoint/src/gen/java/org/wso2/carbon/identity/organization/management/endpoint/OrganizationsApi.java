@@ -179,7 +179,7 @@ public class OrganizationsApi  {
         @Authorization(value = "OAuth2", scopes = {
             
         })
-    }, tags={ "Organization" })
+    }, tags={ "Organization", })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Successful response", response = OrganizationResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
@@ -197,13 +197,13 @@ public class OrganizationsApi  {
     @Path("/{organization-id}/applications/{application-id}/share")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Share application from the parent tenant to given organization ", notes = "This API creates an internal application to delegate access from ", authorizations = {
+    @ApiOperation(value = "Share application from the parent organization to given organization ", notes = "This API creates an internal application to delegate access from ", response = Void.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
-
+            
         })
     }, tags={ "Organization Application Management" })
-    @ApiResponses(value = {
+    @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Ok", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
@@ -211,14 +211,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
     })
-    public Response shareOrgApplication(
-            @ApiParam(value = "ID of the parent organization where the application is created." ,required=true)
-            @PathParam("organization-id") String organizationId,
-            @ApiParam(value = "ID of the application which will be shared to child organizations.",required=true)
-            @PathParam("application-id") String applicationId,
-            @ApiParam(value = "Array of IDs of child organizations, if not provided application will be shared to all child organizations.") @Valid List<String> childOrgs) {
+    public Response shareOrgApplication(@ApiParam(value = "ID of the parent organization where the application is created.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the application which will be shared to child organizations.",required=true) @PathParam("application-id") String applicationId, @ApiParam(value = "Array of IDs of child organizations, if not provided application will be shared to all child organizations." ) @Valid List<String> requestBody) {
 
-        return delegate.shareOrgApplication(organizationId, applicationId, childOrgs);
+        return delegate.shareOrgApplication(organizationId,  applicationId,  requestBody );
     }
 
 }

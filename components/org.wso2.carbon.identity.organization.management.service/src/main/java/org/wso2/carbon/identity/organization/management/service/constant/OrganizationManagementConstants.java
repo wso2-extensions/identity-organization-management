@@ -45,6 +45,7 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_KEY_COLUMN = "UM_ATTRIBUTE_KEY";
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
+    public static final String VIEW_TENANT_UUID_COLUMN = "UM_TENANT_UUID";
 
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
@@ -354,7 +355,9 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
-        ;
+        ERROR_CODE_ERROR_RETRIEVING_TENANT_UUID("65060",
+                "Unable to retrieve the associated tenant UUID for the organization.",
+                "Server encountered an error while retrieving the associated tenant UUID for the organization ID: %s.");
 
         private final String code;
         private final String message;

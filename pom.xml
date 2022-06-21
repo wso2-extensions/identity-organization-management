@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.0.9-SNAPSHOT</version>
+    <version>1.0.15-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -44,11 +44,11 @@
         <module>components/org.wso2.carbon.identity.organization.management.authz.valve</module>
         <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.user.role.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
+        <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
         <module>features/org.wso2.carbon.identity.organization.management.server.feature</module>
     </modules>
 
@@ -181,7 +181,7 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
-                <artifactId>org.wso2.carbon.identity.organization.management.user.role.service</artifactId>
+                <artifactId>org.wso2.carbon.identity.organization.management.tenant.association</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -442,7 +442,7 @@
     <properties>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.7.0-m5</carbon.kernel.version>
+        <carbon.kernel.version>4.7.0-beta5</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
 
@@ -476,7 +476,7 @@
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
         <carbon.multitenancy.version>4.10.1</carbon.multitenancy.version>
-        <carbon.multitenancy.package.import.version.range>[4.9.0,5.0.0)
+        <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
