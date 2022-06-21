@@ -84,12 +84,11 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private static final String NEW_ORG_DESCRIPTION = "new sample description.";
     private static final String ORG_ATTRIBUTE_KEY = "country";
     private static final String ORG_ATTRIBUTE_VALUE = "Sri Lanka";
-    private static final String ROOT_ORG_ID = "root_org_id";
+    private static final String ROOT_ORG_ID = "root4a8d-113f-4211-a0d5-efe36b082211";
     private static final String ORG1_ID = "org_id_1";
     private static final String ORG2_ID = "org_id_2";
     private static final String INVALID_PARENT_ID = "invalid_parent_id";
     private static final String INVALID_ORG_ID = "invalid_org_id";
-    private static final int TENANT_ID = -1234;
     private static final String ERROR_MESSAGE = "message";
     private static final String ERROR_DESCRIPTION = "description";
     private static final String ERROR_CODE = "code";
@@ -122,13 +121,10 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(dataSource.getConnection()).thenReturn(spyConnection);
-            Organization rootOrganization = getOrganization(ROOT_ORG_ID, ROOT, "this is the root organization.",
-                    null, TENANT.toString());
             Organization organization1 = getOrganization(ORG1_ID, ORG1_NAME, ORG_DESCRIPTION, ROOT_ORG_ID,
                     STRUCTURAL.toString());
             Organization organization2 = getOrganization(ORG2_ID, ORG2_NAME, ORG_DESCRIPTION, ORG1_ID,
                     STRUCTURAL.toString());
-            organizationManagementDAO.addOrganization(rootOrganization);
             organizationManagementDAO.addOrganization(organization1);
             organizationManagementDAO.addOrganization(organization2);
         }
