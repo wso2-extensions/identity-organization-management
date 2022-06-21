@@ -294,9 +294,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public String resolveTenantDomain(String organizationDomain) throws OrganizationManagementException {
+    public String resolveTenantDomain(String organizationId) throws OrganizationManagementException {
 
-        return organizationManagementDAO.resolveTenantDomain(organizationDomain);
+        return organizationManagementDAO.resolveTenantDomain(organizationId);
     }
 
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {

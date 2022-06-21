@@ -358,7 +358,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_TENANT_UUID("65060",
                 "Unable to retrieve the associated tenant UUID for the organization.",
                 "Server encountered an error while retrieving the associated tenant UUID for the organization ID: %s."),
-        ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN("65060", "Unable to retrieve the " +
+        ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN("65061", "Unable to retrieve the " +
                 "associated tenant domain for the organization.", "Server encountered an error while retrieving the " +
                 "associated tenant domain for the organization with ID: %s.");
 

@@ -214,12 +214,12 @@ public interface OrganizationManagementDAO {
     String getAssociatedTenantUUIDForOrganization(String organizationId) throws OrganizationManagementServerException;
 
     /**
-     * Derive the tenant domain of an organization based on the given organization domain.
+     * Derive the tenant domain of an organization based on the given organization id.
      *
-     * @param organizationDomain The organization domain.
+     * @param organizationId The organization ID.
      * @return associated tenant domain.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the tenant domain of
      *                                               an organization.
      */
-    String resolveTenantDomain(String organizationDomain) throws OrganizationManagementServerException;
+    String resolveTenantDomain(String organizationId) throws OrganizationManagementServerException;
 }

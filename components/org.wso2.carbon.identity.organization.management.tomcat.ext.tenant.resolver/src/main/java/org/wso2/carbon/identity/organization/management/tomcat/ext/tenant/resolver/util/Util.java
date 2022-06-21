@@ -51,7 +51,7 @@ public class Util {
         if (StringUtils.isBlank(requestURI)) {
             return domain;
         }
-        return getTenantDomainFromOrgDomain(requestURI, domain);
+        return getTenantDomainFromOrganizationSpecificURI(requestURI, domain);
     }
 
     /**
@@ -71,10 +71,10 @@ public class Util {
         if (appContext != null) {
             requestURI = appContext;
         }
-        return getTenantDomainFromOrgDomain(requestURI, domain);
+        return getTenantDomainFromOrganizationSpecificURI(requestURI, domain);
     }
 
-    private static String getTenantDomainFromOrgDomain(String requestURI, String domain) throws
+    private static String getTenantDomainFromOrganizationSpecificURI(String requestURI, String domain) throws
             OrganizationManagementException {
 
         String domainInRequestPath = requestURI.substring(requestURI.indexOf(ORGANIZATION_PATH_PARAM) + 3);

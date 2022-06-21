@@ -131,7 +131,7 @@ public class SQLConstants {
     public static final String GET_TENANT_UUID_FROM_ORGANIZATION_UUID = "SELECT UM_TENANT_UUID FROM UM_TENANT WHERE " +
             "UM_ORG_UUID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
-    public static final String GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN = "SELECT UM_DOMAIN_NAME FROM UM_TENANT " +
+    public static final String GET_TENANT_DOMAIN_FROM_ORGANIZATION_UUID = "SELECT UM_DOMAIN_NAME FROM UM_TENANT " +
             "WHERE UM_ORG_UUID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     /**
