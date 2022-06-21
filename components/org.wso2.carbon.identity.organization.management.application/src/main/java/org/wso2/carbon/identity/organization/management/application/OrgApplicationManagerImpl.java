@@ -56,7 +56,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_SHARED_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
@@ -237,18 +237,18 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         delegatedApplication.setApplicationName(mainApplication.getApplicationName() + "-shared-" + UUID.randomUUID());
         delegatedApplication.setDescription("Delegated access from:" + mainApplication.getApplicationName());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
-        appendSharedAppProperty(delegatedApplication);
+        appendFragmentAppProperty(delegatedApplication);
 
         return delegatedApplication;
     }
 
-    private void appendSharedAppProperty(ServiceProvider serviceProvider) {
+    private void appendFragmentAppProperty(ServiceProvider serviceProvider) {
 
-        ServiceProviderProperty sharedAppProperty = new ServiceProviderProperty();
-        sharedAppProperty.setName(IS_SHARED_APP);
-        sharedAppProperty.setValue(Boolean.TRUE.toString());
+        ServiceProviderProperty fragmentAppProperty = new ServiceProviderProperty();
+        fragmentAppProperty.setName(IS_FRAGMENT_APP);
+        fragmentAppProperty.setValue(Boolean.TRUE.toString());
 
-        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{sharedAppProperty};
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{fragmentAppProperty};
         serviceProvider.setSpProperties(spProperties);
     }
 

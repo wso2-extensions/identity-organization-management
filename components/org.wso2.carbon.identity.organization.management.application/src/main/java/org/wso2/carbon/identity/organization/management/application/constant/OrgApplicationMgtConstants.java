@@ -25,5 +25,5 @@ public class OrgApplicationMgtConstants {
 
     public static final String TENANT = "TENANT";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
-    public static final String IS_SHARED_APP = "isSharedApp";
+    public static final String IS_FRAGMENT_APP = "isFragmentApp";
 }
