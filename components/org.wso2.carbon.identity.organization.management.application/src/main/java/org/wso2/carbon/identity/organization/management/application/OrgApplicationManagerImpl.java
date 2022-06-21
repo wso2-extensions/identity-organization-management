@@ -123,8 +123,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                             getApplicationManagementService().getServiceProvider(mainAppName, ownerTenantDomain))
                     .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, mainAppName));
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
-                    ownerOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
         }
 
         Organization sharedOrganization =
@@ -137,8 +136,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             return getApplicationManagementService().getApplicationByResourceId(sharedAppId, tenantDomain);
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName,
-                    ownerOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
         }
     }
 
@@ -174,8 +172,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrg.getId(), true);
             int tenantId = IdentityTenantUtil.getTenantId(sharedOrg.getId());
             String sharedOrgAdmin =
-                    getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration()
-                            .getAdminUserName();
+                    getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
             Optional<String> mayBeSharedAppId = resolveSharedApp(
@@ -183,7 +180,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (mayBeSharedAppId.isPresent()) {
                 return;
             }
-            // Create Oauth consumer app to redirect login to shared application.
+            // Create Oauth consumer app to redirect login to shared (fragment) application.
             OAuthConsumerAppDTO createdOAuthApp = createOAuthApplication();
             ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
             String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
@@ -202,8 +199,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private Optional<String> resolveSharedApp(String mainAppId, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException {
 
-        return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId,
-                sharedOrgId);
+        return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
     }
 
     private OAuthConsumerAppDTO createOAuthApplication() throws URLBuilderException, IdentityOAuthAdminException {
