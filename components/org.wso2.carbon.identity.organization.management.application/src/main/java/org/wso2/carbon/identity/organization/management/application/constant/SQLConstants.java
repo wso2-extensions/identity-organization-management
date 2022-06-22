@@ -23,26 +23,27 @@ package org.wso2.carbon.identity.organization.management.application.constant;
  */
 public class SQLConstants {
 
-    public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (PARENT_APP_ID, PARENT_TENANT_ID, " +
-            "SHARED_APP_ID, SHARED_TENANT_ID) VALUES (:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID + ";, :" +
+    public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (MAIN_APP_ID, OWNER_ORG_ID, " +
+            "SHARED_APP_ID, SHARED_ORG_ID) VALUES (:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID + ";);";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";);";
 
     public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
-            "PARENT_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID + "; AND " +
-            "SHARED_TENANT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID + "; AND " +
-            "PARENT_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID + ";";
+            "OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND " +
+            "MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND " +
+            "SHARED_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
 
     /**
      * SQL Placeholders.
      */
     public static final class SQLPlaceholders {
-        public static final String DB_SCHEMA_COLUMN_NAME_PARENT_APP_ID = "PARENT_APP_ID";
-        public static final String DB_SCHEMA_COLUMN_NAME_PARENT_TENANT_ID = "PARENT_TENANT_ID";
+
+        public static final String DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID = "MAIN_APP_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID = "OWNER_ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID = "SHARED_APP_ID";
-        public static final String DB_SCHEMA_COLUMN_NAME_SHARED_TENANT_ID = "SHARED_TENANT_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID = "SHARED_ORG_ID";
     }
 }
 

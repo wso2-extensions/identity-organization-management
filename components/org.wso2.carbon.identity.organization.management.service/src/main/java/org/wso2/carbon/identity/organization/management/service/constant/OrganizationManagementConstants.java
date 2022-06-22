@@ -345,7 +345,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_APPLICATION("65054", "Unable to retrieve the application.",
                 "Server encountered an error while retrieving the application with ID: %s."),
         ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION("65055", "Unable to resolve the shared application", "Server " +
-                "encountered an error while resolving the shared application for application: %s in tenant: %s."),
+                "encountered an error while resolving the shared application for application: %s in organization: %s."),
         ERROR_CODE_ERROR_SHARING_APPLICATION("65056", "Unable to share the application",
                 "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65057", "Unable to link the shared application.",
