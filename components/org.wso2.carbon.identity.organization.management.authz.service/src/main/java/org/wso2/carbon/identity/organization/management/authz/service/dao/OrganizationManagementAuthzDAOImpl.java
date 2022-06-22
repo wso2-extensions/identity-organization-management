@@ -22,9 +22,12 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_PERMISSIONS_FOR_USER;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
@@ -39,31 +42,31 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     public boolean isUserAuthorized(String userId, String resourceId, String orgId)
             throws OrganizationManagementAuthzServiceServerException {
 
+        String permissionPlaceholder = "PERMISSION_";
         List<String> permissions = getAllowedPermissions(resourceId);
-        for (String userPermission : getUserAssignedPermissions(userId, orgId)) {
-            if (permissions.contains(userPermission)) {
-                return true;
-            }
+        List<String> permissionPlaceholders = new ArrayList<>();
+        // Constructing the placeholders required to hold the permission strings in the named prepared statement.
+        for (int i = 1; i <= permissions.size(); i++) {
+            permissionPlaceholders.add(":" + permissionPlaceholder + i + ";");
         }
-        return false;
-    }
-
-    private List<String> getUserAssignedPermissions(String userId, String orgId)
-            throws OrganizationManagementAuthzServiceServerException {
+        String placeholder = String.join(", ", permissionPlaceholders);
+        String sqlStmt = IS_USER_AUTHORIZED.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        List<String> permissions;
         try {
-            permissions = namedJdbcTemplate.executeQuery(GET_PERMISSIONS_FOR_USER,
-                    (resultSet, rowNumber) -> resultSet.getString(1),
+            return namedJdbcTemplate.fetchSingleRecord(sqlStmt,
+                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
-                    }
-            );
+                        int index = 1;
+                        for (String permission : permissions) {
+                            namedPreparedStatement.setString(permissionPlaceholder + index, permission);
+                            index++;
+                        }
+                    });
         } catch (DataAccessException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);
         }
-        return permissions;
     }
 }

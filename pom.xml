@@ -181,12 +181,6 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
-                <artifactId>org.wso2.carbon.identity.organization.management.authz.valve</artifactId>
-                <version>${project.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.tenant.association</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>

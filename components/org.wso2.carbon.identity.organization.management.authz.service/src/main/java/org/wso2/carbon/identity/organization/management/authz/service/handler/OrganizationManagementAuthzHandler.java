@@ -34,22 +34,20 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationContext;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
+import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
+import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_VALIDATE_SCOPE;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.ORGANIZATION_RESOURCE;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.REGEX_FOR_URLS_WITH_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.RESOURCE_PERMISSION_NONE;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCOPE_PERMISSION_MAP;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.URI_SPLITTER;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getUserStoreManager;
 
 /**
@@ -68,25 +66,25 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         }
         AuthorizationResult authorizationResult = new AuthorizationResult(AuthorizationStatus.DENY);
 
-        String requestUri = ((OrganizationManagementAuthorizationContext) authorizationContext).getRequestUri();
         User user = authorizationContext.getUser();
-        String userDomain = user.getTenantDomain();
-        int tenantId = IdentityTenantUtil.getTenantId(userDomain);
+        String tenantDomainFromURL = authorizationContext.getTenantDomainFromURLMapping();
+        // Resolve associated org UUID.
+        String tenantOrgUUIDOfURLDomain = resolveAssociatedOrgUUIDForDomainInURL(tenantDomainFromURL);
+
         String permissionString = authorizationContext.getPermissionString();
         String[] allowedScopes = authorizationContext.getParameter(OAUTH2_ALLOWED_SCOPES) == null ? null :
                 (String[]) authorizationContext.getParameter(OAUTH2_ALLOWED_SCOPES);
         boolean validateScope = authorizationContext.getParameter(OAUTH2_VALIDATE_SCOPE) == null ? false :
                 (Boolean) authorizationContext.getParameter(OAUTH2_VALIDATE_SCOPE);
 
-        String organizationId = extractOrganizationId(requestUri);
-        if (StringUtils.isNotBlank(organizationId)) {
+        if (StringUtils.isNotBlank(tenantOrgUUIDOfURLDomain)) {
             try {
                 // If the scopes are configured for the API, it gets the first priority.
                 if (isScopeValidationRequired(validateScope, authorizationContext)) {
-                    validateScopes(tenantId, organizationId, allowedScopes, user, authorizationContext,
+                    validateScopes(tenantOrgUUIDOfURLDomain, allowedScopes, user, authorizationContext,
                             authorizationResult);
                 } else if (StringUtils.isNotBlank(permissionString)) {
-                    validatePermissions(tenantId, organizationId, permissionString, user, authorizationResult);
+                    validatePermissions(tenantOrgUUIDOfURLDomain, permissionString, user, authorizationResult);
                 }
             } catch (OrganizationManagementAuthzServiceServerException e) {
                 String errorMessage = "Error occurred while evaluating authorization of user for organization " +
@@ -112,10 +110,30 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
     @Override
     public int getPriority() {
 
+        // OrganizationManagementAuthzHandler should be prioritized before default AuthorizationHandler(priority 100).
         return 50;
     }
 
-    private void validatePermissions(int tenantId, String orgId, String permissionString, User user,
+    private String resolveAssociatedOrgUUIDForDomainInURL(String tenantDomainFromURL)
+            throws AuthzServiceServerException {
+
+        String associatedOrgId = StringUtils.EMPTY;
+        try {
+            int tenantIdForURLDomain = IdentityTenantUtil.getTenantId(tenantDomainFromURL);
+            RealmService realmService = OrganizationManagementAuthzServiceHolder.getInstance().getRealmService();
+            Tenant tenant = realmService.getTenantManager().getTenant(tenantIdForURLDomain);
+            if (tenant != null) {
+                associatedOrgId = tenant.getAssociatedOrganizationUUID();
+            }
+            return associatedOrgId;
+        } catch (UserStoreException e) {
+            String errorMessage = "Error occurred while trying to authorize, " + e.getMessage();
+            LOG.error(errorMessage);
+            throw new AuthzServiceServerException(errorMessage, e);
+        }
+    }
+
+    private void validatePermissions(String orgId, String permissionString, User user,
                                      AuthorizationResult authorizationResult)
             throws OrganizationManagementAuthzServiceServerException {
 
@@ -141,22 +159,12 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         }
     }
 
-    private String extractOrganizationId(String requestPath) {
-
-        if (Pattern.matches(REGEX_FOR_URLS_WITH_ORG_ID, requestPath)) {
-            String[] requestUriParts = requestPath.split(URI_SPLITTER);
-            return Arrays.asList(requestUriParts).get((Arrays.asList(requestUriParts).indexOf(ORGANIZATION_RESOURCE))
-                    + 1);
-        }
-        return null;
-    }
-
     private boolean isScopeValidationRequired(boolean validateScope, AuthorizationContext authorizationContext) {
 
         return validateScope && CollectionUtils.isNotEmpty(authorizationContext.getRequiredScopes());
     }
 
-    private void validateScopes(int tenantId, String orgId, String[] tokenScopes, User user,
+    private void validateScopes(String orgId, String[] tokenScopes, User user,
                                 AuthorizationContext authorizationContext, AuthorizationResult authorizationResult)
             throws OrganizationManagementAuthzServiceServerException {
 
