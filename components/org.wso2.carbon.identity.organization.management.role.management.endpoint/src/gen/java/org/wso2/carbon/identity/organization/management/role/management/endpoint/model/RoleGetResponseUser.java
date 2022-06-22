@@ -44,7 +44,7 @@ public class RoleGetResponseUser  {
         return this;
     }
     
-    @ApiModelProperty(example = "https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45", value = "")
+    @ApiModelProperty(example = "https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45", value = "")
     @JsonProperty("$ref")
     @Valid
     public String get$Ref() {

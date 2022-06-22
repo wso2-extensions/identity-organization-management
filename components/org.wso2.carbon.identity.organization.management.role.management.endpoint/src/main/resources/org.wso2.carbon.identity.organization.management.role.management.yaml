@@ -10,12 +10,12 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://{server-url}/t/{tenant-domain}/api/server/v1'
+  - url: 'https://{server-url}/o/{organization-domain}/api/server/v1'
     variables:
       server-url:
         default: 'localhost:9443'
-      tenant-domain:
-        default: carbon.super
+      organization-domain:
+        default: root4a8d-113f-4211-a0d5-efe36b082211
 security:
   - OAuth2: [ ]
   - BasicAuth: [ ]
@@ -319,7 +319,7 @@ components:
           properties:
             location:
               type: string
-              example: 'https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+              example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
     #------------------------------------------------------------------------
     # The Role Request Object.
     #------------------------------------------------------------------------
@@ -376,7 +376,7 @@ components:
           properties:
             location:
               type: string
-              example: 'https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+              example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
         id:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0efe3de0'
@@ -394,7 +394,7 @@ components:
           properties:
             location:
               type: string
-              example: 'https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
+              example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0efe3de0'
         id:
           type: string
           example: "4645709c-ea8c-4495-8590-e1fa0efe3de0"
@@ -419,7 +419,7 @@ components:
       properties:
         $ref:
           type: string
-          example:  'https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45'
+          example:  'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/users/3a12bae9-4386-44be-befd-caf349297f45'
         display:
           type: string
           example: "kim"
@@ -434,7 +434,7 @@ components:
       properties:
         $ref:
           type: string
-          example: 'https://localhost:9443/t/carbon.super/api/identity/organization-mgt/v1.0/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469'
+          example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/groups/7bac6a86-1f21-4937-9fb1-5be4a93ef469'
         display:
           type: string
           example:  'PRIMARY/manager'
@@ -497,7 +497,7 @@ components:
           properties:
             location:
               type: string
-              example: 'https://localhost:9443/t/carbon.super/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
+              example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
         value:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0fe3de0'
@@ -546,7 +546,7 @@ components:
           properties:
             location:
               type: string
-              example: 'https://localhost:9443/t/carbon.super/api/identity/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
+              example: 'https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0'
         id:
           type: string
           example: '4645709c-ea8c-4495-8590-e1fa0fe3de0'
