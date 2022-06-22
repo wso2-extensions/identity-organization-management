@@ -25,22 +25,15 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.organization.management.authz.valve</artifactId>
-    <name>WSO2 - Organization Management Authorization Valve</name>
+    <artifactId>org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</artifactId>
+    <name>WSO2 - Organization Management Tomcat Valve</name>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>org.wso2.carbon.identity.auth.rest</groupId>
-            <artifactId>org.wso2.carbon.identity.auth.service</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.authz.service</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.ops4j.pax.logging</groupId>
@@ -54,6 +47,23 @@
             <groupId>org.eclipse.osgi</groupId>
             <artifactId>org.eclipse.osgi</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -66,35 +76,31 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
+                        <Bundle-Description>Organization Management Tenant Resolver Bundle</Bundle-Description>
+                        <Private-Package>org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal
+                        </Private-Package>
+                        <Export-Package>
+                            !org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal,
+                            org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.*;
+                            version="${identity.organization.management.exp.pkg.version}",
+                        </Export-Package>
                         <Import-Package>
-                            javax.servlet;version="${javax.servlet.imp.pkg.version.range}",
-                            org.apache.catalina;version="${tomcat.version}",
-                            org.apache.catalina.connector;version="${tomcat.version}",
-                            org.apache.catalina.valves;version="${tomcat.version}",
-                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
+                            javax.servlet.http;version="${javax.servlet.imp.pkg.version.range}",
+                            javax.sql,
+                            org.apache.catalina;version="${catalina.imp.pkg.version.range}",
+                            org.apache.catalina.connector;version="${catalina.imp.pkg.version.range}",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.application.common.model;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.auth.service;version="${carbon.identity.auth.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.auth.service.handler;version="${carbon.identity.auth.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.auth.service.module;version="${carbon.identity.auth.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.authz.service;version="${carbon.identity.auth.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.authz.service.exception;version="${carbon.identity.auth.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.handler;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.organization.management.authz.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}"
+                            org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.tomcat.ext.utils;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.tomcat.ext.valves;version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
-                        <Export-Package>
-                            !org.wso2.carbon.identity.organization.management.authz.valve.internal,
-                            org.wso2.carbon.identity.organization.management.authz.valve.*;
-                            version="${project.version}"
-                        </Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>

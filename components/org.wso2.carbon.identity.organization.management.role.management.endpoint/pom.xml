@@ -4,7 +4,7 @@
     <parent>
         <artifactId>identity-organization-management</artifactId>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
-        <version>1.0.15-SNAPSHOT</version>
+        <version>1.0.17-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -12,7 +12,7 @@
     <artifactId>org.wso2.carbon.identity.organization.management.role.management.endpoint</artifactId>
     <name>WSO2 - Organization Role Management Endpoint</name>
     <url>http://www.wso2.com</url>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -84,20 +84,6 @@
                 <configuration>
                     <source>${compiler-source.version}</source>
                     <target>${compiler-target.version}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.2</version>
-                <configuration>
-                    <webResources>
-                        <resource>
-                            <!-- this is relative to the pom.xml directory -->
-                            <directory>src/main/webapp/</directory>
-                        </resource>
-                    </webResources>
-                    <warName>api#identity#organization-mgt#v1.0</warName>
-                    <webXml>src/main/webapp/WEB-INF/web.xml</webXml>
                 </configuration>
             </plugin>
             <plugin>
