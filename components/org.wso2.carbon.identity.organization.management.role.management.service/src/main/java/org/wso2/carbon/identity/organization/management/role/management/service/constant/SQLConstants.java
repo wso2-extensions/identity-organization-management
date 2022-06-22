@@ -197,7 +197,6 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_UM_USER_ID = "UM_USER_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ACTION = "UM_ACTION";
 
-        public static final String DB_SCHEMA_COLUMN_NAME_COUNT = "COUNT(1)";
         public static final String DB_SCHEMA_LIMIT = "LIMIT";
     }
 }
