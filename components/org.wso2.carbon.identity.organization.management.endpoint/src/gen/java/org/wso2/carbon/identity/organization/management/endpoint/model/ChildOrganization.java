@@ -63,7 +63,7 @@ public class ChildOrganization  {
         return this;
     }
     
-    @ApiModelProperty(example = "t/carbon.super/api/identity/organization-mgt/v1.0/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14", required = true, value = "")
+    @ApiModelProperty(example = "o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14", required = true, value = "")
     @JsonProperty("ref")
     @Valid
     @NotNull(message = "Property ref cannot be null.")

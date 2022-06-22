@@ -91,7 +91,10 @@ public class OrganizationManagementConstants {
     public static final String LT = "lt";
     public static final String AND = "and";
 
-    private static Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final String FILTER_PLACEHOLDER_PREFIX = "FILTER_ID_";
+    public static final String PARENT_ID_FILTER_PLACEHOLDER_PREFIX = "FILTER_PARENT_ID_";
+
+    private static final Map<String, String> attributeColumnMap = new HashMap<>();
 
     static {
 
@@ -100,7 +103,6 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(ORGANIZATION_DESCRIPTION_FIELD, VIEW_DESCRIPTION_COLUMN);
         attributeColumnMap.put(ORGANIZATION_CREATED_TIME_FIELD, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(ORGANIZATION_LAST_MODIFIED_FIELD, VIEW_LAST_MODIFIED_COLUMN);
-        attributeColumnMap.put(PARENT_ID_FIELD, VIEW_PARENT_ID_COLUMN);
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
@@ -360,7 +362,16 @@ public class OrganizationManagementConstants {
                 "Server encountered an error while retrieving the associated tenant UUID for the organization ID: %s."),
         ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN("65061", "Unable to retrieve the " +
                 "associated tenant domain for the organization.", "Server encountered an error while retrieving the " +
-                "associated tenant domain for the organization with ID: %s.");
+                "associated tenant domain for the organization with ID: %s."),
+        ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN("65062", "Unable to retrieve the " +
+                "organization domain for the tenant.", "Server encountered an error while retrieving the " +
+                "organization domain for the tenant: %s."),
+        ERROR_CODE_ERROR_CHECKING_IF_CHILD_OF_PARENT("65063", "Error while checking if an organization" +
+                " is a child of another organization.", "Server encountered an error while checking if organization " +
+                "with ID: %s is a child organization of organization with ID: %s."),
+        ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT("65064", "Error while checking if an organization " +
+                "is an immediate child of another organization.", "Server encountered an error while " +
+                "checking if organization with ID: %s is an immediate child organization of organization with ID: %s.");
 
         private final String code;
         private final String message;

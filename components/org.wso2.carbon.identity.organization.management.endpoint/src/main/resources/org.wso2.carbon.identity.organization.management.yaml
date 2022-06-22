@@ -11,10 +11,10 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://localhost:9443/t/{tenant-domain}/api/server/v1'
+  - url: 'https://localhost:9443/o/{organization-domain}/api/server/v1'
     variables:
-      tenant-domain:
-        default: carbon.super
+      organization-domain:
+        default: root4a8d-113f-4211-a0d5-efe36b082211
 security:
   - OAuth2: []
   - BasicAuth: []
@@ -65,6 +65,7 @@ paths:
         - $ref: '#/components/parameters/limitQueryParam'
         - $ref: '#/components/parameters/afterQueryParam'
         - $ref: '#/components/parameters/beforeQueryParam'
+        - $ref: '#/components/parameters/recursiveQueryParam'
       responses:
         '200':
           description: Successful response
@@ -304,6 +305,15 @@ components:
         Points to the next range of data to be returned.
       schema:
         type: string
+    recursiveQueryParam:
+      in: query
+      name: recursive
+      required: false
+      description:
+        Determines whether a recursive search should happen.
+      schema:
+        type: boolean
+        default: false
     showChildrenQueryParam:
       in: query
       name: showChildren
@@ -415,10 +425,10 @@ components:
           example:
             [
               {
-                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "href": "/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
                 "rel": "next",
               },  {
-                "href": "/t/carbon.super/api/identity/organization-mgt/v1.0?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "href": "/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
                 "rel": "previous",
               }
             ]
@@ -452,7 +462,7 @@ components:
           example: 'ABC Builders'
         ref:
           type: string
-          example: 't/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b'
+          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     OrganizationResponse:
       type: object
       required:
@@ -557,7 +567,7 @@ components:
           example: 'b4526d91-a8bf-43d2-8b14-c548cf73065b'
         ref:
           type: string
-          example: 't/carbon.super/api/identity/organization-mgt/v1.0/b4526d91-a8bf-43d2-8b14-c548cf73065b'
+          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     #-----------------------------------------------------
     # Organization Child Object
     #-----------------------------------------------------
@@ -572,7 +582,7 @@ components:
           example: 'd8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
         ref:
           type: string
-          example: 't/carbon.super/api/identity/organization-mgt/v1.0/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
+          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
 
     #-----------------------------------------------------
     # Organization Patch Operation Object

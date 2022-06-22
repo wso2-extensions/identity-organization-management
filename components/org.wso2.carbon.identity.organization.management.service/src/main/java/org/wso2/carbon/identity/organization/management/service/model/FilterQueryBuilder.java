@@ -35,9 +35,9 @@ public class FilterQueryBuilder {
         return stringParameters;
     }
 
-    public void setFilterAttributeValue(String value) {
+    public void setFilterAttributeValue(String placeholder, String value) {
 
-        stringParameters.put("FILTER_ID_" + count, value);
+        stringParameters.put(placeholder + count, value);
         count++;
     }
 

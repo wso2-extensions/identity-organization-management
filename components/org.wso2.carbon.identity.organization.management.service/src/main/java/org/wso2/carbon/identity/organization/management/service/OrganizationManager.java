@@ -86,11 +86,12 @@ public interface OrganizationManager {
      * @param before    The pointer to previous page.
      * @param sortOrder The sort order, ascending or descending.
      * @param filter    The filter string.
+     * @param recursive Determines whether records should be retrieved in a recursive manner.
      * @return the list of organization IDs.
      * @throws OrganizationManagementException The exception thrown when listing organizations.
      */
     List<BasicOrganization> getOrganizations(Integer limit, String after, String before, String sortOrder,
-                                             String filter) throws OrganizationManagementException;
+                                             String filter, boolean recursive) throws OrganizationManagementException;
 
     /**
      * Delete the organization identified by the provided ID.

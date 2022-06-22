@@ -64,15 +64,14 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     private static final String ATTRIBUTE_VALUE = "Sri Lanka";
     private static final String ORG_NAME = "XYZ builders";
     private static final String INVALID_DATA = "invalid data";
-    private String rootOrgId;
+    private static final String ROOT_ORG_ID = "root4a8d-113f-4211-a0d5-efe36b082211";
     private String orgId;
 
     @BeforeClass
     public void setUp() throws Exception {
 
         initiateH2Base();
-        storeRootOrganization();
-        storeChildOrganization(rootOrgId);
+        storeChildOrganization(ROOT_ORG_ID);
     }
 
     @AfterClass
@@ -100,7 +99,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organization.setType(STRUCTURAL.toString());
 
             ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
-            parentOrganizationDO.setId(rootOrgId);
+            parentOrganizationDO.setId(ROOT_ORG_ID);
             organization.setParent(parentOrganizationDO);
 
             List<OrganizationAttribute> attributes = new ArrayList<>();
@@ -186,7 +185,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             when(dataSource.getConnection()).thenReturn(spy);
             Organization organization = organizationManagementDAO.getOrganization(orgId);
             Assert.assertEquals(organization.getName(), ORG_NAME);
-            Assert.assertEquals(organization.getParent().getId(), rootOrgId);
+            Assert.assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
         }
     }
 
@@ -195,7 +194,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
 
         return new Object[][]{
 
-                {rootOrgId},
+                {ROOT_ORG_ID},
                 {orgId},
         };
     }
@@ -210,7 +209,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             boolean hasChildOrganizations = organizationManagementDAO.hasChildOrganizations(id);
             if (StringUtils.equals(id, orgId)) {
                 Assert.assertFalse(hasChildOrganizations);
-            } else if (StringUtils.equals(id, rootOrgId)) {
+            } else if (StringUtils.equals(id, ROOT_ORG_ID)) {
                 Assert.assertTrue(hasChildOrganizations);
             }
         }
@@ -248,7 +247,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
 
         String id = generateUniqueID();
         storeOrganization(id, "Dummy organization",
-                "This is a sample organization to test the delete functionality.", rootOrgId);
+                "This is a sample organization to test the delete functionality.", ROOT_ORG_ID);
 
         DataSource dataSource = mockDataSource();
         try (Connection connection = getConnection()) {
@@ -257,12 +256,6 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             organizationManagementDAO.deleteOrganization(id);
             Assert.assertNull(organizationManagementDAO.getOrganization(id));
         }
-    }
-
-    private void storeRootOrganization() throws Exception {
-
-        rootOrgId = generateUniqueID();
-        storeOrganization(rootOrgId, "ROOT", "This is the ROOT organization.", null);
     }
 
     private void storeChildOrganization(String parentId) throws Exception {

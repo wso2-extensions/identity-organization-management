@@ -126,6 +126,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -215,10 +216,29 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     @Override
     public List<BasicOrganization> getOrganizations(Integer limit, String after, String before, String sortOrder,
-                                                    String filter) throws OrganizationManagementException {
+                                                    String filter, boolean recursive)
+            throws OrganizationManagementException {
 
-        return organizationManagementDAO.getOrganizations(getTenantId(), limit, sortOrder,
-                getExpressionNodes(filter, after, before));
+        List<ExpressionNode> expressionNodes = getExpressionNodes(filter, after, before);
+
+        String tenantDomain = getTenantDomain();
+        String orgId;
+        if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
+            orgId = organizationManagementDAO.getOrganizationIdByName(ROOT);
+        } else {
+            orgId = organizationManagementDAO.resolveOrganizationId(tenantDomain);
+        }
+
+        List<ExpressionNode> filteringByParentIdExpressionNodes = new ArrayList<>();
+        for (ExpressionNode expressionNode : expressionNodes) {
+            if (StringUtils.equals(expressionNode.getAttributeValue(), PARENT_ID_FIELD)) {
+                filteringByParentIdExpressionNodes.add(expressionNode);
+            }
+        }
+        expressionNodes.removeAll(filteringByParentIdExpressionNodes);
+
+        return organizationManagementDAO.getOrganizations(recursive, limit, orgId, sortOrder, expressionNodes,
+                filteringByParentIdExpressionNodes);
     }
 
     @Override

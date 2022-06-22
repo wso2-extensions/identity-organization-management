@@ -68,9 +68,9 @@ public class OrganizationsApi  {
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class),
         @ApiResponse(code = 501, message = "Not Implemented.", response = Error.class)
     })
-    public Response organizationsGet(    @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid@ApiParam(value = "Points to the next range of data to be returned.")  @QueryParam("after") String after,     @Valid@ApiParam(value = "Points to the previous range of data that can be retrieved.")  @QueryParam("before") String before) {
+    public Response organizationsGet(    @Valid@ApiParam(value = "Condition to filter the retrieval of records.")  @QueryParam("filter") String filter,     @Valid @Min(0)@ApiParam(value = "Maximum number of records to be returned. (Should be greater than 0)")  @QueryParam("limit") Integer limit,     @Valid@ApiParam(value = "Points to the next range of data to be returned.")  @QueryParam("after") String after,     @Valid@ApiParam(value = "Points to the previous range of data that can be retrieved.")  @QueryParam("before") String before,     @Valid@ApiParam(value = "Determines whether a recursive search should happen.", defaultValue="false") @DefaultValue("false")  @QueryParam("recursive") Boolean recursive) {
 
-        return delegate.organizationsGet(filter,  limit,  after,  before );
+        return delegate.organizationsGet(filter,  limit,  after,  before,  recursive );
     }
 
     @Valid
