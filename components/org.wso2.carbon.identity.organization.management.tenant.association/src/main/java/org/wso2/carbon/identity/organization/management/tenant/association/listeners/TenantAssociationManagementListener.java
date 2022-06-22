@@ -32,6 +32,7 @@ import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 /**
@@ -91,8 +92,11 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         organizationCreatorRole.setDisplayName(Constants.ORG_CREATOR_ROLE);
         User orgCreator = new User(adminUUID);
         organizationCreatorRole.setUsers(Collections.singletonList(orgCreator));
-        organizationCreatorRole.setPermissions(
-                Collections.singletonList(Constants.ORG_CREATOR_ROLE_ASSIGNED_PERMISSION));
+        // Set permissions for org-creator role.
+        ArrayList<String> orgCreatorRolePermissions = new ArrayList<>();
+        orgCreatorRolePermissions.add(Constants.ORG_MGT_PERMISSION);
+        orgCreatorRolePermissions.add(Constants.ORG_ROLE_MGT_PERMISSION);
+        organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
     }
 }
