@@ -98,7 +98,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME;
@@ -375,7 +374,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             int roleCount = namedJdbcTemplate.fetchSingleRecord(stm,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(roleParameter, roleAttribute);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
@@ -392,7 +391,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             int value = namedJdbcTemplate.fetchSingleRecord(CHECK_USER_EXISTS,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
@@ -409,7 +408,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             int value = namedJdbcTemplate.fetchSingleRecord(CHECK_GROUP_EXISTS,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, groupId);
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
@@ -439,7 +438,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             namedJdbcTemplate.withTransaction(template -> {
                 for (String permission : permissions) {
                     int value = namedJdbcTemplate.fetchSingleRecord(CHECK_PERMISSION_EXISTS,
-                            (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                            (resultSet, rowNumber) -> resultSet.getInt(1),
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, permission);
                                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
@@ -652,7 +651,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             int value = namedJdbcTemplate.fetchSingleRecord(query,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT),
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(attributeColumn, attributeId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
