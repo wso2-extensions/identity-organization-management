@@ -232,11 +232,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
         List<ExpressionNode> filteringByParentIdExpressionNodes = new ArrayList<>();
         for (ExpressionNode expressionNode : expressionNodes) {
             if (StringUtils.equals(expressionNode.getAttributeValue(), PARENT_ID_FIELD)) {
-                String parentId = expressionNode.getValue();
-                boolean check = organizationManagementDAO.isChildOfParent(parentId, orgId);
-                if (!check) {
-                    return new ArrayList<>();
-                }
                 filteringByParentIdExpressionNodes.add(expressionNode);
             }
         }
