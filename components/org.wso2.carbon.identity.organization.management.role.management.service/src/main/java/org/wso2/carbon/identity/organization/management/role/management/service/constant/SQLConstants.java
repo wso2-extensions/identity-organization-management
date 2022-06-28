@@ -111,7 +111,7 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String GET_MEMBER_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE " +
-            "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
+            "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String GET_PERMISSIONS_FROM_ROLE_ID = "SELECT UM_RESOURCE_ID FROM UM_ORG_PERMISSION WHERE " +
             "UM_ID IN (SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" +
