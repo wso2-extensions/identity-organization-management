@@ -95,10 +95,6 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "; AND UM_TENANT_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
 
-    public static final String CHECK_GROUP_EXISTS = "SELECT COUNT(1) FROM UM_ORG_GROUP WHERE UM_GROUP_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "; AND UM_TENANT_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
-
     public static final String ADD_PERMISSION_IF_NOT_EXISTS = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
             "UM_ACTION, UM_TENANT_ID) VALUES ";
 
@@ -114,9 +110,8 @@ public class SQLConstants {
     public static final String GET_USERS_FROM_ROLE_ID = "SELECT * FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
-    public static final String GET_GROUPS_FROM_ROLE_ID = "SELECT UM_GROUP_ID, UM_GROUP_NAME FROM UM_ORG_GROUP " +
-            "WHERE UM_GROUP_ID IN (SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE UM_ROLE_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
+    public static final String GET_MEMBER_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE " +
+            "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String GET_PERMISSIONS_FROM_ROLE_ID = "SELECT UM_RESOURCE_ID FROM UM_ORG_PERMISSION WHERE " +
             "UM_ID IN (SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" +

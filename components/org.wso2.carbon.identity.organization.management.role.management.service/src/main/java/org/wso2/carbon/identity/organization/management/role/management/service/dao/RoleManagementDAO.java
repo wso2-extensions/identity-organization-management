@@ -135,5 +135,4 @@ public interface RoleManagementDAO {
      * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking
      *                                               the group existence.
      */
-    boolean checkGroupExists(String groupId, int tenantId) throws OrganizationManagementServerException;
 }

@@ -34,6 +34,10 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +48,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_GROUP_ID;
@@ -58,6 +63,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
  * Implementation of Role Manager Interface.
@@ -288,8 +294,12 @@ public class RoleManagerImpl implements RoleManager {
     private void validateGroups(List<String> groupIdList, int tenantId) throws OrganizationManagementException {
 
         for (String groupId : groupIdList) {
-            if (!roleManagementDAO.checkGroupExists(groupId, tenantId)) {
-                throw handleClientException(ERROR_CODE_INVALID_GROUP_ID, groupId);
+            try {
+                if (!getUserStoreManager(tenantId).isGroupExist(groupId)) {
+                    throw handleClientException(ERROR_CODE_INVALID_GROUP_ID, groupId);
+                }
+            } catch (UserStoreException e) {
+                throw handleServerException(ERROR_CODE_GETTING_GROUP_VALIDITY, e, groupId);
             }
         }
     }
@@ -301,5 +311,19 @@ public class RoleManagerImpl implements RoleManager {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES);
         }
         validateRoleNameNotExist(organizationId, values.get(0));
+    }
+
+    /**
+     * Get the userstore manager by tenant id.
+     *
+     * @return The userstore manager.
+     * @throws UserStoreException Error while getting the userstore manager.
+     */
+    private AbstractUserStoreManager getUserStoreManager(int tenantId) throws UserStoreException {
+
+        RealmService realmService = RoleManagementDataHolder.getInstance().getRealmService();
+        UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+
+        return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 }

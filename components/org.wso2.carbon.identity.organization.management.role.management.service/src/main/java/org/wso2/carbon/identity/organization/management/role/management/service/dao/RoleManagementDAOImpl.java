@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
@@ -28,6 +29,7 @@ import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.FilterOperator;
+import org.wso2.carbon.identity.organization.management.role.management.service.internal.RoleManagementDataHolder;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.FilterQueryBuilder;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Group;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
@@ -39,6 +41,10 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,7 +71,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.AND;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_ROLE_MAPPING_EXISTS;
@@ -83,9 +88,9 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_USING_ROLE_ID;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_GROUPS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_GROUP_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_IDS_FROM_ROLE_ID_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_MEMBER_GROUP_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSIONS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSIONS_WITH_ID_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSION_ID_FROM_STRING;
@@ -100,7 +105,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID;
@@ -118,7 +122,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION;
@@ -202,7 +205,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
                     }));
             if (Objects.nonNull(role)) {
-                List<Group> groupList = getGroupsFromRoleId(roleId);
+                List<String> groupIdList = getMemberGroupsIdsFromRoleId(roleId);
+                List<Group> groupList = getGroupsWithId(groupIdList);
                 List<User> usersList = getUsersFromRoleId(roleId);
                 List<String> permissionsList = getPermissionsFromRoleId(roleId);
                 if (CollectionUtils.isNotEmpty(groupList)) {
@@ -216,9 +220,29 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
             }
             return role;
-        } catch (TransactionException e) {
+        } catch (TransactionException | UserStoreException e) {
             throw handleServerException(ERROR_CODE_GETTING_ROLE_FROM_ID, e, roleId);
         }
+    }
+
+    private List<Group> getGroupsWithId(List<String> groupIdList) throws UserStoreException {
+
+        AbstractUserStoreManager userStoreManager =
+                getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+        List<Group> groups = new ArrayList<>();
+        for (String groupId: groupIdList) {
+            String groupName = userStoreManager.getGroupNameByGroupId(groupId);
+            groups.add(new Group(groupId, groupName));
+        }
+        return groups;
+    }
+
+    private AbstractUserStoreManager getUserStoreManager(int tenantId) throws UserStoreException {
+
+        RealmService realmService = RoleManagementDataHolder.getInstance().getRealmService();
+        UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+
+        return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 
     @Override
@@ -309,7 +333,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             namedJdbcTemplate.withTransaction(template -> {
                 List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId)
                         .collect(Collectors.toList());
-                List<String> groups = getGroupsFromRoleId(roleId).stream().map(Group::getGroupId)
+                List<String> groups =
+                        getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
                         .collect(Collectors.toList());
                 List<String> permissions = getPermissionsWithIdFromRoleId(roleId).stream()
                         .map(Permission::getId).map(Object::toString).collect(Collectors.toList());
@@ -399,23 +424,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return value > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_GETTING_USER_VALIDITY, e, userId);
-        }
-    }
-
-    @Override
-    public boolean checkGroupExists(String groupId, int tenantId) throws OrganizationManagementServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            int value = namedJdbcTemplate.fetchSingleRecord(CHECK_GROUP_EXISTS,
-                    (resultSet, rowNumber) -> resultSet.getInt(1),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, groupId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
-                    });
-            return value > 0;
-        } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_GETTING_GROUP_VALIDITY, e, groupId);
         }
     }
 
@@ -834,14 +842,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               retrieving groups assigned to a particular role.
      */
-    private List<Group> getGroupsFromRoleId(String roleId) throws OrganizationManagementServerException {
+    private List<String> getMemberGroupsIdsFromRoleId(String roleId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.executeQuery(GET_GROUPS_FROM_ROLE_ID,
+            return namedJdbcTemplate.executeQuery(GET_MEMBER_GROUP_IDS_FROM_ROLE_ID,
                     (resultSet, rowNumber) ->
-                            new Group(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID),
-                                    resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME)),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID),
                     namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
         } catch (DataAccessException e) {
