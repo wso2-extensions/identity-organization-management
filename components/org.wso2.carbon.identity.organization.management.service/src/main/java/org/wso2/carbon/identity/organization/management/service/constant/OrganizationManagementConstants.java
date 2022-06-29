@@ -30,9 +30,11 @@ import java.util.Map;
 public class OrganizationManagementConstants {
 
     public static final String ROOT = "ROOT";
-    public static final String ORGANIZATION_RESOURCE_PATH = "v1.0/organizations/%s";
+    public static final String PATH_SEPARATOR = "/";
+    public static final String V1_API_PATH_COMPONENT = "v1";
+    public static final String ORGANIZATION_PATH = "organizations";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
-    public static final String ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT = "/api/identity/organization-mgt/";
+    public static final String SERVER_API_PATH_COMPONENT = "/api/server/";
     private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
 
     public static final String VIEW_ID_COLUMN = "UM_ID";

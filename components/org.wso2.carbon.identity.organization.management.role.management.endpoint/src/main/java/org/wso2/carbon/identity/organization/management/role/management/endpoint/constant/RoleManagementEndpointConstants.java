@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.management.role.management.endpoin
 public class RoleManagementEndpointConstants {
 
     public static final String PATH_SEPARATOR = "/";
-    public static final String V1_API_PATH_COMPONENT = "v1.0";
+    public static final String V1_API_PATH_COMPONENT = "v1";
     public static final String ORGANIZATION_PATH = "organizations";
     public static final String ROLE_PATH = "roles";
     public static final String GROUP_PATH = "groups";

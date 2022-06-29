@@ -33,9 +33,11 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_RESOURCE_PATH;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_PATH;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SERVER_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.TENANT_CONTEXT_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.V1_API_PATH_COMPONENT;
 
 /**
  * This class provides utility functions for the Organization Management.
@@ -128,14 +130,15 @@ public class Utils {
     }
 
     /**
-     * Build URI prepending the user API context with the proxy context path to the endpoint.
+     * Build URI prepending the server API context with the proxy context path to the endpoint.
      *
      * @param organizationId The organization ID.
      * @return Relative URI.
      */
     public static String buildURIForBody(String organizationId) throws OrganizationManagementServerException {
 
-        String context = getContext(String.format(ORGANIZATION_RESOURCE_PATH, organizationId));
+        String context = getContext(V1_API_PATH_COMPONENT + PATH_SEPARATOR + ORGANIZATION_PATH
+                + PATH_SEPARATOR + organizationId);
 
         try {
             return ServiceURLBuilder.create().addPath(context).build().getRelativePublicURL();
@@ -156,10 +159,10 @@ public class Utils {
 
         String context;
         if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-            context = ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
+            context = SERVER_API_PATH_COMPONENT + endpoint;
         } else {
             context = String.format(TENANT_CONTEXT_PATH_COMPONENT, getTenantDomainFromContext()) +
-                    ORGANIZATION_MANAGEMENT_API_PATH_COMPONENT + endpoint;
+                    SERVER_API_PATH_COMPONENT + endpoint;
         }
         return context;
     }
