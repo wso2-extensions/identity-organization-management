@@ -59,7 +59,6 @@ import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.GROUP_PATH;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.ROLE_PATH;
-import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.SCHEMES;
 import static org.wso2.carbon.identity.organization.management.role.management.endpoint.constant.RoleManagementEndpointConstants.USER_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_GROUP_URI;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_ROLE_URI;
@@ -155,7 +154,7 @@ public class RoleManagementService {
             int limitValue = validateCount(count);
             RolesResponse rolesResponse = RoleManagementEndpointUtils.getRoleManager()
                     .getOrganizationRoles(limitValue, filter, organizationId, cursor);
-            return Response.ok().entity(getRoleListResponse(organizationId, rolesResponse, cursor)).build();
+            return Response.ok().entity(getRoleListResponse(organizationId, rolesResponse)).build();
         } catch (OrganizationManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -404,20 +403,15 @@ public class RoleManagementService {
      *
      * @param organizationId The ID of the organization.
      * @param rolesResponse  Roles response including list of roles.
-     * @param cursor         The cursor retrieved from the request.
      * @return The RoleListResponse.
      */
-    private RolesListResponse getRoleListResponse(String organizationId, RolesResponse rolesResponse, String cursor) {
+    private RolesListResponse getRoleListResponse(String organizationId, RolesResponse rolesResponse) {
 
         RolesListResponse response = new RolesListResponse();
-        if (cursor != null) {
-            response.setNextCursor(rolesResponse.getNextCursor());
-            response.setPreviousCursor(rolesResponse.getPreviousCursor());
-            response.setItemsPerPage(rolesResponse.getItemsPerPage());
-        }
-
+        response.setNextCursor(rolesResponse.getNextCursor());
+        response.setPreviousCursor(rolesResponse.getPreviousCursor());
+        response.setItemsPerPage(rolesResponse.getItemsPerPage());
         response.setTotalResults(rolesResponse.getTotalResults());
-        response.setSchemas(SCHEMES);
 
         if (CollectionUtils.isNotEmpty(rolesResponse.getRoles())) {
             List<RoleObj> roleDTOs = new ArrayList<>();

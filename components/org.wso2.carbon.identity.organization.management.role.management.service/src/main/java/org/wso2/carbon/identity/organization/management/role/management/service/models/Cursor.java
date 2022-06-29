@@ -18,16 +18,18 @@
 package org.wso2.carbon.identity.organization.management.role.management.service.models;
 
 /**
- * This class representation can be used to create a cursor type object which carries cursor value
+ * This class representation can be used to create a cursor type object which carries cursor value and direction
  * to be used in cursor-based pagination.
  */
 public class Cursor {
 
     private String cursorValue;
+    private String direction;
 
-    public Cursor(String cursorValue) {
+    public Cursor(String cursorValue, String direction) {
 
         this.cursorValue = cursorValue;
+        this.direction = direction;
     }
 
     public String getCursorValue() {
@@ -38,5 +40,15 @@ public class Cursor {
     public void setCursorValue(String cursorValue) {
 
         this.cursorValue = cursorValue;
+    }
+
+    public String getDirection() {
+
+        return direction;
+    }
+
+    public void setDirection(String direction) {
+
+        this.direction = direction;
     }
 }

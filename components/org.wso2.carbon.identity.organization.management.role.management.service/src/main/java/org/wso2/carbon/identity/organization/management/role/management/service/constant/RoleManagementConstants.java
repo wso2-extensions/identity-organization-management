@@ -39,7 +39,9 @@ public class RoleManagementConstants {
     public static final String ROLE_NAME_FIELD = "name";
 
     public static final String COMMA_SEPARATOR = ",";
-    public static final String EMPTY_STRING = "";
+
+    public static final String CURSOR_FORWARD_DIRECTION = "FORWARD";
+    public static final String CURSOR_BACKWARD_DIRECTION = "BACKWARD";
 
     /**
      * Enum for Filter Operations.

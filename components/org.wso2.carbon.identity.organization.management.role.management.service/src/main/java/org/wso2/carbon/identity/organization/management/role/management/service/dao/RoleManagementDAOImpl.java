@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.COMMA_SEPARATOR;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_BACKWARD_DIRECTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
@@ -78,7 +79,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_NAME_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_ROLE_MAPPING_EXISTS;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.COMPARE_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_USING_ROLE_ID;
@@ -100,8 +100,10 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
@@ -116,9 +118,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_DESC;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_GREATER_THAN;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_LESS_THAN;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_LIMIT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.TENANT_ID_APPENDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UM_ACTION_APPENDER;
@@ -253,7 +252,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     @Override
     public List<Role> getOrganizationRoles(String organizationId, int count, List<ExpressionNode> expressionNodes,
-                                           List<String> operators, String cursor, String order)
+                                           List<String> operators, String cursor, String direction)
             throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
@@ -262,7 +261,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
                 filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
 
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
+        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
+                GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
+
+        if (CURSOR_BACKWARD_DIRECTION.equals(direction)) {
+            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
+                    GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+        }
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -432,6 +437,33 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return value > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_GETTING_USER_VALIDITY, e, userId);
+        }
+    }
+
+    @Override
+    public int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes,
+                                         List<String> operators) throws OrganizationManagementServerException {
+
+        FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
+        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
+
+        String sqlStm = GET_ROLES_COUNT_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(sqlStm,
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
         }
     }
 

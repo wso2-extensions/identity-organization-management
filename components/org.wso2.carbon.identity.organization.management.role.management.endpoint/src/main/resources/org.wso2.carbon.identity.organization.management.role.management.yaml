@@ -325,11 +325,6 @@ components:
           format: int32
           example: 10
           description: Number of roles per page.
-        schemas:
-          type: array
-          items:
-            type: string
-            example: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
         Resources:
           type: array
           items:

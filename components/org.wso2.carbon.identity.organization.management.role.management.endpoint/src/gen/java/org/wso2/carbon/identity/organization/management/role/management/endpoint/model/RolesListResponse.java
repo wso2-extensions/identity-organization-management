@@ -39,8 +39,6 @@ public class RolesListResponse  {
     private Integer totalResults;
     private String previousCursor;
     private Integer itemsPerPage;
-    private List<String> schemas = null;
-
     private List<RoleObj> resources = null;
 
 
@@ -122,32 +120,6 @@ public class RolesListResponse  {
 
     /**
     **/
-    public RolesListResponse schemas(List<String> schemas) {
-
-        this.schemas = schemas;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("schemas")
-    @Valid
-    public List<String> getSchemas() {
-        return schemas;
-    }
-    public void setSchemas(List<String> schemas) {
-        this.schemas = schemas;
-    }
-
-    public RolesListResponse addSchemasItem(String schemasItem) {
-        if (this.schemas == null) {
-            this.schemas = new ArrayList<>();
-        }
-        this.schemas.add(schemasItem);
-        return this;
-    }
-
-        /**
-    **/
     public RolesListResponse resources(List<RoleObj> resources) {
 
         this.resources = resources;
@@ -188,13 +160,12 @@ public class RolesListResponse  {
             Objects.equals(this.totalResults, rolesListResponse.totalResults) &&
             Objects.equals(this.previousCursor, rolesListResponse.previousCursor) &&
             Objects.equals(this.itemsPerPage, rolesListResponse.itemsPerPage) &&
-            Objects.equals(this.schemas, rolesListResponse.schemas) &&
             Objects.equals(this.resources, rolesListResponse.resources);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nextCursor, totalResults, previousCursor, itemsPerPage, schemas, resources);
+        return Objects.hash(nextCursor, totalResults, previousCursor, itemsPerPage, resources);
     }
 
     @Override
@@ -207,7 +178,6 @@ public class RolesListResponse  {
         sb.append("    totalResults: ").append(toIndentedString(totalResults)).append("\n");
         sb.append("    previousCursor: ").append(toIndentedString(previousCursor)).append("\n");
         sb.append("    itemsPerPage: ").append(toIndentedString(itemsPerPage)).append("\n");
-        sb.append("    schemas: ").append(toIndentedString(schemas)).append("\n");
         sb.append("    resources: ").append(toIndentedString(resources)).append("\n");
         sb.append("}");
         return sb.toString();

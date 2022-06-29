@@ -60,14 +60,14 @@ public interface RoleManagementDAO {
      * @param expressionNodes The list of filters.
      * @param operators       The list containing the and, or operators.
      * @param cursor          The cursor to fetch the next page of results.
-     * @param order           The order to list the list of roles based on next and previous cursors.
+     * @param direction       The direction the list of roles should be retrieved with respect to the cursor.
      * @return A list of Roles.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               getting a role.
      */
     List<Role> getOrganizationRoles(String organizationId, int count,
                                     List<ExpressionNode> expressionNodes, List<String> operators, String cursor,
-                                    String order) throws OrganizationManagementServerException;
+                                    String direction) throws OrganizationManagementServerException;
 
     /**
      * Patch a {@link Role} inside an organization.

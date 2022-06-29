@@ -50,14 +50,13 @@ import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_BACKWARD_DIRECTION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_FORWARD_DIRECTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.EMPTY_STRING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_ASC;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_DESC;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_GROUP_ID;
@@ -120,11 +119,41 @@ public class RoleManagerImpl implements RoleManager {
     public RolesResponse getOrganizationRoles(int count, String filter, String organizationId, String cursor)
             throws OrganizationManagementException {
 
+        String direction = CURSOR_FORWARD_DIRECTION;
+        String cursorValue = StringUtils.EMPTY;
+        String nextCursor = null;
+        String previousCursor = null;
         validateOrganizationId(organizationId);
         List<ExpressionNode> expressionNodes = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         getExpressionNodes(filter, expressionNodes, operators);
-        return roleManagementDAO.getOrganizationRoles(organizationId, limit, expressionNodes, operators);
+
+        if (StringUtils.isNotBlank(cursor)) {
+            Cursor cursorObj = decodeCursor(cursor);
+            cursorValue = cursorObj.getCursorValue();
+            direction = cursorObj.getDirection();
+        }
+
+        List<Role> roles = roleManagementDAO.getOrganizationRoles(organizationId, count + 1, expressionNodes,
+                operators, cursorValue, direction);
+        if (CURSOR_FORWARD_DIRECTION.equals(direction)) {
+            if (StringUtils.isNotBlank(cursorValue)) {
+                previousCursor = encodeCursor(cursorValue, CURSOR_BACKWARD_DIRECTION);
+            }
+            if (roles.size() == count + 1) {
+                nextCursor = encodeCursor(roles.get(count - 1).getDisplayName(), direction);
+                roles.remove(count);
+            }
+        } else {
+            nextCursor = encodeCursor(cursorValue, CURSOR_FORWARD_DIRECTION);
+            if (roles.size() == count + 1) {
+                previousCursor = encodeCursor(roles.get(0).getDisplayName(), direction);
+                roles.remove(0);
+            }
+        }
+
+        int totalResults = roleManagementDAO.getTotalOrganizationRoles(organizationId, expressionNodes, operators);
+        return new RolesResponse(nextCursor, totalResults, previousCursor, count, roles);
     }
 
     @Override
@@ -338,10 +367,11 @@ public class RoleManagerImpl implements RoleManager {
         return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 
-    private String encodeCursor(String cursorValue) {
+    private String encodeCursor(String cursorValue, String direction) {
 
-        Cursor cursorObject = new Cursor(cursorValue);
-        return Base64.getEncoder().encodeToString(gson.toJson(cursorObject).getBytes(StandardCharsets.UTF_8));
+        Cursor cursorObject = new Cursor(cursorValue, direction);
+        return Base64.getEncoder().withoutPadding().encodeToString(gson.toJson(cursorObject)
+                .getBytes(StandardCharsets.UTF_8));
     }
 
     private Cursor decodeCursor(String cursorString) throws OrganizationManagementException {
