@@ -18,13 +18,21 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.dao;
 
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
+import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_GROUP_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
@@ -53,8 +61,9 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         String sqlStmt = IS_USER_AUTHORIZED.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        boolean isAuthorized;
         try {
-            return namedJdbcTemplate.fetchSingleRecord(sqlStmt,
+            isAuthorized = namedJdbcTemplate.fetchSingleRecord(sqlStmt,
                     (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
@@ -65,8 +74,51 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
                             index++;
                         }
                     });
+
+            if (isAuthorized) {
+                return true;
+            }
         } catch (DataAccessException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);
         }
+
+        try {
+            AbstractUserStoreManager userStoreManager =
+                    getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+            List<Group> groupListOfUser = userStoreManager.getGroupListOfUser(userId, null, null);
+
+            String groupSqlStmt = IS_GROUP_AUTHORIZED.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
+
+            for (Group group: groupListOfUser) {
+                NamedJdbcTemplate groupNamedJdbcTemplate = getNewTemplate();
+                    isAuthorized = groupNamedJdbcTemplate.fetchSingleRecord(groupSqlStmt,
+                            (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
+                            namedPreparedStatement -> {
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, group.getGroupID());
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
+                                int index = 1;
+                                for (String permission : permissions) {
+                                    namedPreparedStatement.setString(permissionPlaceholder + index, permission);
+                                    index++;
+                                }
+                            });
+
+                    if (isAuthorized) {
+                        return true;
+                    }
+            }
+        } catch (UserStoreException | DataAccessException e) {
+            throw new OrganizationManagementAuthzServiceServerException(e);
+        }
+
+        return false;
+    }
+
+    private AbstractUserStoreManager getUserStoreManager(int tenantId) throws UserStoreException {
+
+        RealmService realmService = OrganizationManagementAuthzServiceHolder.getInstance().getRealmService();
+        UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+
+        return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 }
