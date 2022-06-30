@@ -22,7 +22,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -42,7 +41,6 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
@@ -116,14 +114,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
         if (StringUtils.isBlank(ownerTenantDomain)) {
-            String rootOrgID = getOrganizationManager().getOrganizationIdByName(OrganizationManagementConstants.ROOT);
-            if (StringUtils.equals(rootOrgID, ownerOrgId)) {
-                // super tenant domain will be returned.
-                ownerTenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
-            } else {
-                throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
-                        ownerOrgId);
-            }
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
+                    ownerOrgId);
         }
 
         ServiceProvider mainApplication;

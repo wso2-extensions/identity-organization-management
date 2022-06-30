@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resol
 import org.apache.catalina.connector.Request;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
@@ -82,11 +81,6 @@ public class Util {
             domainInRequestPath = domainInRequestPath.substring(0, domainInRequestPath.indexOf('/'));
             OrganizationManager organizationManager = OrganizationManagementTomcatDataHolder.getInstance()
                     .getOrganizationManager();
-            String rootOrgID = organizationManager.getOrganizationIdByName(OrganizationManagementConstants.ROOT);
-            if (StringUtils.equals(rootOrgID, domainInRequestPath)) {
-                // super tenant domain will be returned.
-                return domain;
-            }
             domain = organizationManager.resolveTenantDomain(domainInRequestPath);
         }
         return domain;
