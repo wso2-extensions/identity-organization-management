@@ -14,7 +14,7 @@ servers:
   - url: 'https://localhost:9443/o/{organization-domain}/api/server/v1'
     variables:
       organization-domain:
-        default: root4a8d-113f-4211-a0d5-efe36b082211
+        default: 10084a8d-113f-4211-a0d5-efe36b082211
 security:
   - OAuth2: []
   - BasicAuth: []
@@ -425,10 +425,10 @@ components:
           example:
             [
               {
-                "href": "/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "href": "/o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&next=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
                 "rel": "next",
               },  {
-                "href": "/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
+                "href": "/o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations?limit=10&filter=name+co+der&before=MjAyMS0xMi0yMSAwNToxODozMS4wMDQzNDg=",
                 "rel": "previous",
               }
             ]
@@ -462,7 +462,7 @@ components:
           example: 'ABC Builders'
         ref:
           type: string
-          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
+          example: 'o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     OrganizationResponse:
       type: object
       required:
@@ -567,7 +567,7 @@ components:
           example: 'b4526d91-a8bf-43d2-8b14-c548cf73065b'
         ref:
           type: string
-          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
+          example: 'o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
     #-----------------------------------------------------
     # Organization Child Object
     #-----------------------------------------------------
@@ -582,7 +582,7 @@ components:
           example: 'd8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
         ref:
           type: string
-          example: 'o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
+          example: 'o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
 
     #-----------------------------------------------------
     # Organization Patch Operation Object

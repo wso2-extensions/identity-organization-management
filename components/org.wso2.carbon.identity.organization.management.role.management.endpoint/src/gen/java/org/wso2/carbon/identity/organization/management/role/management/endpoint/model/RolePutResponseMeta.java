@@ -42,7 +42,7 @@ public class RolePutResponseMeta  {
         return this;
     }
     
-    @ApiModelProperty(example = "https://localhost:9443/o/root4a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
+    @ApiModelProperty(example = "https://localhost:9443/o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/48e31bc5-1669-4de1-bb22-c71e443aeb8b/roles/4645709c-ea8c-4495-8590-e1fa0fe3de0", value = "")
     @JsonProperty("location")
     @Valid
     public String getLocation() {
