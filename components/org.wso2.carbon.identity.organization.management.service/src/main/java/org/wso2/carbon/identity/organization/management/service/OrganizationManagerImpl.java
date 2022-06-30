@@ -30,6 +30,7 @@ import org.wso2.carbon.identity.core.model.OperationNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -316,6 +317,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
     @Override
     public String resolveTenantDomain(String organizationId) throws OrganizationManagementException {
 
+        String rootOrgID = getOrganizationIdByName(OrganizationManagementConstants.ROOT);
+        if (StringUtils.equals(rootOrgID, organizationId)) {
+            // super tenant domain will be returned.
+            return MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
+        }
         return organizationManagementDAO.resolveTenantDomain(organizationId);
     }
 
