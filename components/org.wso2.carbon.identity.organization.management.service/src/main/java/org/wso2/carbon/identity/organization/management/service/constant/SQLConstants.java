@@ -23,6 +23,9 @@ package org.wso2.carbon.identity.organization.management.service.constant;
  */
 public class SQLConstants {
 
+    // Database types
+    public static final String ORACLE = "Oracle";
+
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
 
     public static final String INSERT_ORGANIZATION = "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, " +
@@ -53,6 +56,12 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, 0), (:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
             ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, 1)";
 
+    public static final String INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY_ORACLE = "INSERT INTO UM_ORG_HIERARCHY " +
+            "(UM_PARENT_ID, UM_ID, DEPTH) WITH OH AS (SELECT :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, 0 FROM dual UNION ALL SELECT :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
+            ";, 1 FROM dual ) SELECT * FROM OH";
+
     public static final String INSERT_OTHER_ORGANIZATION_HIERARCHY = "INSERT INTO UM_ORG_HIERARCHY (UM_PARENT_ID, " +
             "UM_ID, DEPTH) SELECT UM_PARENT_ID, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, DEPTH + 1 FROM " +
             "UM_ORG_HIERARCHY WHERE UM_ORG_HIERARCHY.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
@@ -76,6 +85,13 @@ public class SQLConstants {
             PERMISSION_LIST_PLACEHOLDER + ") AND UM_ORG.UM_ID IN (SELECT O.UM_ID FROM UM_ORG O JOIN " +
             "UM_ORG_HIERARCHY OH ON O.UM_ID = OH.UM_ID WHERE OH.UM_PARENT_ID = (SELECT UM_ID FROM UM_ORG WHERE %s) " +
             "AND OH.DEPTH %s) ORDER BY UM_ORG.UM_CREATED_TIME %s LIMIT :" + SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
+
+    public static final String GET_ORGANIZATIONS_TAIL_ORACLE = "UM_ORG_ROLE_USER.UM_USER_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_ID + "; AND UM_ORG_PERMISSION.UM_RESOURCE_ID IN (" +
+            PERMISSION_LIST_PLACEHOLDER + ") AND UM_ORG.UM_ID IN (SELECT O.UM_ID FROM UM_ORG O JOIN " +
+            "UM_ORG_HIERARCHY OH ON O.UM_ID = OH.UM_ID WHERE OH.UM_PARENT_ID = (SELECT UM_ID FROM UM_ORG WHERE %s) " +
+            "AND OH.DEPTH %s) ORDER BY UM_ORG.UM_CREATED_TIME %s FETCH FIRST :" + SQLPlaceholders.DB_SCHEMA_LIMIT +
+            "; ROWS ONLY";
 
     public static final String SET_ID = "UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
