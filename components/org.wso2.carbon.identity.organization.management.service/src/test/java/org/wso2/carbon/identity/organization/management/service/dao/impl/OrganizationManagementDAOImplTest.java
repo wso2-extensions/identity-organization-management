@@ -64,7 +64,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     private static final String ATTRIBUTE_VALUE = "Sri Lanka";
     private static final String ORG_NAME = "XYZ builders";
     private static final String INVALID_DATA = "invalid data";
-    private static final String ROOT_ORG_ID = "root4a8d-113f-4211-a0d5-efe36b082211";
+    private static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private String orgId;
 
     @BeforeClass

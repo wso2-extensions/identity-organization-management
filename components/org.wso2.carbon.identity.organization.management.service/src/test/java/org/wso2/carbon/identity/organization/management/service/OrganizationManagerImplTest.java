@@ -84,7 +84,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     private static final String NEW_ORG_DESCRIPTION = "new sample description.";
     private static final String ORG_ATTRIBUTE_KEY = "country";
     private static final String ORG_ATTRIBUTE_VALUE = "Sri Lanka";
-    private static final String ROOT_ORG_ID = "root4a8d-113f-4211-a0d5-efe36b082211";
+    private static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private static final String ORG1_ID = "org_id_1";
     private static final String ORG2_ID = "org_id_2";
     private static final String INVALID_PARENT_ID = "invalid_parent_id";
