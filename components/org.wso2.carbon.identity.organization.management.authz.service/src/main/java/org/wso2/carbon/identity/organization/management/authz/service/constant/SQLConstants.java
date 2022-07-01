@@ -42,12 +42,22 @@ public class SQLConstants {
             "WHERE UM_USER_ID = :" + DB_SCHEMA_COLUMN_USER_ID + "; AND " +
             "UM_ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + ";) " +
             ") AND UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
+
+    public static final String IS_GROUP_AUTHORIZED = "SELECT COUNT(UM_RESOURCE_ID) FROM UM_ORG_PERMISSION WHERE " +
+            "UM_ORG_PERMISSION.UM_ID IN ( " +
+            "SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ORG_ROLE_PERMISSION.UM_ROLE_ID IN ( " +
+            "SELECT UM_ORG_ROLE_GROUP.UM_ROLE_ID FROM UM_ORG_ROLE_GROUP LEFT JOIN UM_ORG_ROLE ON " +
+            "UM_ORG_ROLE_GROUP.UM_ROLE_ID = UM_ORG_ROLE.UM_ROLE_ID " +
+            "WHERE UM_GROUP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_GROUP_ID + "; AND " +
+            "UM_ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + ";) " +
+            ") AND UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
     /**
      * SQL placeholders.
      */
     public static final class SQLPlaceholders {
 
         public static final String DB_SCHEMA_COLUMN_USER_ID = "ID";
+        public static final String DB_SCHEMA_COLUMN_GROUP_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_ORGANIZATION_ID = "NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID = "COUNT(UM_RESOURCE_ID)";
     }
