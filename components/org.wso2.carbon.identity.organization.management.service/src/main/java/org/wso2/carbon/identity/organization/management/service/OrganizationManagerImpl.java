@@ -250,6 +250,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
         validateOrganizationDelete(organizationId);
         Organization organization = organizationManagementDAO.getOrganization(organizationId);
+        if (organization == null) {
+            return;
+        }
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
             String tenantID = organizationManagementDAO.getAssociatedTenantUUIDForOrganization(organizationId);
             if (StringUtils.isNotBlank(tenantID)) {
