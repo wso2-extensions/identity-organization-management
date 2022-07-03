@@ -51,6 +51,12 @@ public class SQLConstants {
             "WHERE UM_GROUP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_GROUP_ID + "; AND " +
             "UM_ORG_ID = :" + DB_SCHEMA_COLUMN_ORGANIZATION_ID + ";) " +
             ") AND UM_RESOURCE_ID IN (" + PERMISSION_LIST_PLACEHOLDER + ")";
+
+    public static final String GET_ORGANIZATION_ID_BY_NAME = "SELECT UM_ID FROM UM_ORG WHERE UM_ORG_NAME = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_NAME + ";";
+
+    public static final String VIEW_ID_COLUMN = "UM_ID";
+
     /**
      * SQL placeholders.
      */
@@ -59,6 +65,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_USER_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_GROUP_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_ORGANIZATION_ID = "NAME";
+        public static final String DB_SCHEMA_COLUMN_ORGANIZATION_NAME = "NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID = "COUNT(UM_RESOURCE_ID)";
     }
 }

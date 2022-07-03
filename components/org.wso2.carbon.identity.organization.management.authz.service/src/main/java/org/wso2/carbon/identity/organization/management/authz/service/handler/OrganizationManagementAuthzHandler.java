@@ -39,6 +39,7 @@ import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,6 +120,9 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
 
         String associatedOrgId = StringUtils.EMPTY;
         try {
+            if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomainFromURL)) {
+                return OrganizationManagementAuthorizationManager.getInstance().getRootOrganizationId();
+            }
             int tenantIdForURLDomain = IdentityTenantUtil.getTenantId(tenantDomainFromURL);
             RealmService realmService = OrganizationManagementAuthzServiceHolder.getInstance().getRealmService();
             Tenant tenant = realmService.getTenantManager().getTenant(tenantIdForURLDomain);
@@ -126,7 +130,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 associatedOrgId = tenant.getAssociatedOrganizationUUID();
             }
             return associatedOrgId;
-        } catch (UserStoreException e) {
+        } catch (UserStoreException | OrganizationManagementAuthzServiceServerException e) {
             String errorMessage = "Error occurred while trying to authorize, " + e.getMessage();
             LOG.error(errorMessage);
             throw new AuthzServiceServerException(errorMessage, e);
