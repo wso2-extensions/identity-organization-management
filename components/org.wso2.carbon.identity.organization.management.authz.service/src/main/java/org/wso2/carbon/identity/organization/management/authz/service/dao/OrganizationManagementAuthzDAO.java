@@ -27,4 +27,12 @@ public interface OrganizationManagementAuthzDAO {
 
     boolean isUserAuthorized(String userId, String resourceId, String orgId)
             throws OrganizationManagementAuthzServiceServerException;
+
+    /**
+     * Resolve root organization id.
+     *
+     * @return Root organization id.
+     * @throws OrganizationManagementAuthzServiceServerException if error occurred when retrieving root org id.
+     */
+    String getRootOrganizationId() throws OrganizationManagementAuthzServiceServerException;
 }

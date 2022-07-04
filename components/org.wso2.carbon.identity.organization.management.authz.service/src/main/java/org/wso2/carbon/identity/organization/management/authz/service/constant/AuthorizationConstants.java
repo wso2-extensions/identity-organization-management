@@ -38,6 +38,7 @@ public class AuthorizationConstants {
     public static final String HTTP_DELETE = "DELETE";
     public static final String HTTP_PATCH = "PATCH";
     public static final String HTTP_PUT = "PUT";
+    public static final String ROOT = "ROOT";
 
     private static Map<String, String> scopePermissionMap = new HashMap<>();
 

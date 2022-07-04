@@ -32,12 +32,16 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_GROUP_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.VIEW_ID_COLUMN;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getNewTemplate;
 
@@ -112,6 +116,19 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         }
 
         return false;
+    }
+
+    @Override
+    public String getRootOrganizationId() throws OrganizationManagementAuthzServiceServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_NAME, ROOT));
+        } catch (DataAccessException e) {
+            throw new OrganizationManagementAuthzServiceServerException(e);
+        }
     }
 
     private AbstractUserStoreManager getUserStoreManager(int tenantId) throws UserStoreException {
