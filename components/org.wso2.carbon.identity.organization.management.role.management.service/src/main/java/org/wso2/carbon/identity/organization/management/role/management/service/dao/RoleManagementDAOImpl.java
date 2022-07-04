@@ -256,11 +256,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
-        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        String filterQuery = listOrganizationRolesFilterQuery(filterQueryBuilder, expressionNodes, operators);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-        String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
-                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
-
         String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
                 GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
 
@@ -445,11 +442,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                          List<String> operators) throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
-        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        String filterQuery = listOrganizationRolesFilterQuery(filterQueryBuilder, expressionNodes, operators);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-        String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
-                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
-
         String sqlStm = GET_ROLES_COUNT_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -1245,5 +1239,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         } catch (TransactionException e) {
             throw handleServerException(errorMessage, e);
         }
+    }
+
+    private String listOrganizationRolesFilterQuery(FilterQueryBuilder filterQueryBuilder,
+                                                    List<ExpressionNode> expressionNodes, List<String> operators) {
+
+        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        return StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
+
     }
 }

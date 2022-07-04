@@ -433,9 +433,8 @@ public class RoleManagementService {
     /**
      * @param count The param for desired maximum number of query results per page.
      * @return The count.
-     * @throws OrganizationManagementClientException This exception is thrown if the count is not valid.
      */
-    private int validateCount(Integer count) throws OrganizationManagementClientException {
+    private int validateCount(Integer count) {
 
         if (count == null) {
             int defaultItemsPerPage = IdentityUtil.getDefaultItemsPerPage();

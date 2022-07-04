@@ -35,31 +35,12 @@ import javax.xml.bind.annotation.*;
 
 public class RolesListResponse  {
   
-    private String nextCursor;
     private Integer totalResults;
+    private String nextCursor;
     private String previousCursor;
     private Integer itemsPerPage;
     private List<RoleObj> resources = null;
 
-
-    /**
-    * A cursor to obtain the next page of results in a subsequent request.
-    **/
-    public RolesListResponse nextCursor(String nextCursor) {
-
-        this.nextCursor = nextCursor;
-        return this;
-    }
-    
-    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6Im9yZyB2aWV3IHJvbGUgZm9yIG9yZyAyIn0=", value = "A cursor to obtain the next page of results in a subsequent request.")
-    @JsonProperty("nextCursor")
-    @Valid
-    public String getNextCursor() {
-        return nextCursor;
-    }
-    public void setNextCursor(String nextCursor) {
-        this.nextCursor = nextCursor;
-    }
 
     /**
     * Total results to be fetched.
@@ -81,6 +62,25 @@ public class RolesListResponse  {
     }
 
     /**
+    * A cursor to obtain the next page of results in a subsequent request.
+    **/
+    public RolesListResponse nextCursor(String nextCursor) {
+
+        this.nextCursor = nextCursor;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6ImQgcm9sZSIsImRpcmVjdGlvbiI6IkZPUldBUkQifQ", value = "A cursor to obtain the next page of results in a subsequent request.")
+    @JsonProperty("nextCursor")
+    @Valid
+    public String getNextCursor() {
+        return nextCursor;
+    }
+    public void setNextCursor(String nextCursor) {
+        this.nextCursor = nextCursor;
+    }
+
+    /**
     * A cursor to obtain the previous page of results in a subsequent request.
     **/
     public RolesListResponse previousCursor(String previousCursor) {
@@ -89,7 +89,7 @@ public class RolesListResponse  {
         return this;
     }
     
-    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6ImxtbiBvcmcgdmlldyByb2xlIGZvciBvcmcgMyJ9", value = "A cursor to obtain the previous page of results in a subsequent request.")
+    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6ImIgcm9sZSIsImRpcmVjdGlvbiI6IkJBQ0tXQVJEIn0", value = "A cursor to obtain the previous page of results in a subsequent request.")
     @JsonProperty("previousCursor")
     @Valid
     public String getPreviousCursor() {
@@ -156,8 +156,8 @@ public class RolesListResponse  {
             return false;
         }
         RolesListResponse rolesListResponse = (RolesListResponse) o;
-        return Objects.equals(this.nextCursor, rolesListResponse.nextCursor) &&
-            Objects.equals(this.totalResults, rolesListResponse.totalResults) &&
+        return Objects.equals(this.totalResults, rolesListResponse.totalResults) &&
+            Objects.equals(this.nextCursor, rolesListResponse.nextCursor) &&
             Objects.equals(this.previousCursor, rolesListResponse.previousCursor) &&
             Objects.equals(this.itemsPerPage, rolesListResponse.itemsPerPage) &&
             Objects.equals(this.resources, rolesListResponse.resources);
@@ -165,7 +165,7 @@ public class RolesListResponse  {
 
     @Override
     public int hashCode() {
-        return Objects.hash(nextCursor, totalResults, previousCursor, itemsPerPage, resources);
+        return Objects.hash(totalResults, nextCursor, previousCursor, itemsPerPage, resources);
     }
 
     @Override
@@ -174,8 +174,8 @@ public class RolesListResponse  {
         StringBuilder sb = new StringBuilder();
         sb.append("class RolesListResponse {\n");
         
-        sb.append("    nextCursor: ").append(toIndentedString(nextCursor)).append("\n");
         sb.append("    totalResults: ").append(toIndentedString(totalResults)).append("\n");
+        sb.append("    nextCursor: ").append(toIndentedString(nextCursor)).append("\n");
         sb.append("    previousCursor: ").append(toIndentedString(previousCursor)).append("\n");
         sb.append("    itemsPerPage: ").append(toIndentedString(itemsPerPage)).append("\n");
         sb.append("    resources: ").append(toIndentedString(resources)).append("\n");

@@ -59,7 +59,7 @@ public interface RoleManagementDAO {
      * @param count           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
      * @param operators       The list containing the and, or operators.
-     * @param cursor          The cursor to fetch the next page of results.
+     * @param cursor          The cursor to fetch records from.
      * @param direction       The direction the list of roles should be retrieved with respect to the cursor.
      * @return A list of Roles.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during

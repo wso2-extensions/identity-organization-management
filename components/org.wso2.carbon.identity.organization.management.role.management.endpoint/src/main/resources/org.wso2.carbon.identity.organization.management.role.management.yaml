@@ -307,18 +307,18 @@ components:
     RolesListResponse:
       type: object
       properties:
-        nextCursor:
-          type: string
-          example: eyJjdXJzb3JWYWx1ZSI6Im9yZyB2aWV3IHJvbGUgZm9yIG9yZyAyIn0=
-          description: A cursor to obtain the next page of results in a subsequent request.
         totalResults:
           type: integer
           format: int32
           example: 100
           description: Total results to be fetched.
+        nextCursor:
+          type: string
+          example: eyJjdXJzb3JWYWx1ZSI6ImQgcm9sZSIsImRpcmVjdGlvbiI6IkZPUldBUkQifQ
+          description: A cursor to obtain the next page of results in a subsequent request.
         previousCursor:
           type: string
-          example: eyJjdXJzb3JWYWx1ZSI6ImxtbiBvcmcgdmlldyByb2xlIGZvciBvcmcgMyJ9
+          example: eyJjdXJzb3JWYWx1ZSI6ImIgcm9sZSIsImRpcmVjdGlvbiI6IkJBQ0tXQVJEIn0
           description: A cursor to obtain the previous page of results in a subsequent request.
         itemsPerPage:
           type: integer

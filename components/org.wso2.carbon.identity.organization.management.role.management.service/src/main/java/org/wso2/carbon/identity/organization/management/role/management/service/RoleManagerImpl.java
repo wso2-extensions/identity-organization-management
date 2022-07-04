@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -80,7 +79,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class RoleManagerImpl implements RoleManager {
 
     private static final RoleManagementDAO roleManagementDAO = new RoleManagementDAOImpl();
-    private static final Gson gson = new Gson();
 
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
@@ -134,6 +132,7 @@ public class RoleManagerImpl implements RoleManager {
             direction = cursorObj.getDirection();
         }
 
+        // Count + 1 number of records fetched in order to check the necessity of next page or previous page.
         List<Role> roles = roleManagementDAO.getOrganizationRoles(organizationId, count + 1, expressionNodes,
                 operators, cursorValue, direction);
         if (CURSOR_FORWARD_DIRECTION.equals(direction)) {
@@ -370,7 +369,7 @@ public class RoleManagerImpl implements RoleManager {
     private String encodeCursor(String cursorValue, String direction) {
 
         Cursor cursorObject = new Cursor(cursorValue, direction);
-        return Base64.getEncoder().withoutPadding().encodeToString(gson.toJson(cursorObject)
+        return Base64.getEncoder().withoutPadding().encodeToString(Utils.getGson().toJson(cursorObject)
                 .getBytes(StandardCharsets.UTF_8));
     }
 
@@ -378,7 +377,7 @@ public class RoleManagerImpl implements RoleManager {
 
         String decodeString = new String(Base64.getDecoder().decode(cursorString), StandardCharsets.UTF_8);
         try {
-            return gson.fromJson(decodeString, Cursor.class);
+            return Utils.getGson().fromJson(decodeString, Cursor.class);
         } catch (JsonSyntaxException e) {
             throw handleClientException(ERROR_CODE_ROLE_LIST_INVALID_CURSOR, cursorString);
         }

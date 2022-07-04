@@ -121,11 +121,11 @@ public class SQLConstants {
             "UM_ORG_PERMISSION WHERE UM_ID IN (SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
-    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD = "SELECT UM_ROLE_ID, UM_ROLE_NAME FROM " +
-            "UM_ORG_ROLE WHERE ";
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD = "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME " +
+            "FROM UM_ORG_ROLE WHERE ";
 
-    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD = "SELECT R.UM_ROLE_ID, R.UM_ROLE_NAME FROM " +
-            "(SELECT UM_ROLE_ID, UM_ROLE_NAME FROM UM_ORG_ROLE WHERE ";
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD = "SELECT DISTINCT R.UM_ROLE_ID, " +
+            "R.UM_ROLE_NAME FROM (SELECT UM_ROLE_ID, UM_ROLE_NAME FROM UM_ORG_ROLE WHERE ";
 
     public static final String GET_ROLES_COUNT_FROM_ORGANIZATION_ID = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE ";
 
@@ -207,9 +207,5 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ACTION = "UM_ACTION";
 
         public static final String DB_SCHEMA_LIMIT = "LIMIT";
-        public static final String DB_SCHEMA_ASC = "ASC";
-        public static final String DB_SCHEMA_DESC = "DESC";
-        public static final String DB_SCHEMA_GREATER_THAN = ">";
-        public static final String DB_SCHEMA_LESS_THAN = "<";
     }
 }

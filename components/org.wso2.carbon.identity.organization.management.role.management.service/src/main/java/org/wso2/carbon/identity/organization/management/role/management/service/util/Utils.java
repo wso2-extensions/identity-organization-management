@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service.util;
 
+import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.Node;
@@ -37,6 +38,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  * Utility class containing utility functions for role management.
  */
 public class Utils {
+
+    private static final Gson gson = new Gson();
 
     /**
      * Setting the expression nodes list and operators list for filtering.
@@ -84,5 +87,9 @@ public class Utils {
     private static boolean isFilteringAttributeNotSupported(String attributeValue) {
 
         return !attributeValue.equalsIgnoreCase(ROLE_NAME_FIELD);
+    }
+
+    public static Gson getGson() {
+        return gson;
     }
 }

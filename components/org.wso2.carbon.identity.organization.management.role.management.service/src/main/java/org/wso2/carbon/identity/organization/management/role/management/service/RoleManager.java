@@ -57,7 +57,7 @@ public interface RoleManager {
      * @param limit          The maximum number of records to be returned.
      * @param filter         The filter string.
      * @param organizationId The ID of the organization.
-     * @param cursor         Param for cursor to fetch the next page of results.
+     * @param cursor         The encoded string that is used to get the next page or previous page of results.
      * @return The list containing roles of the organization where organization ID has been passed.
      * @throws OrganizationManagementException This exception is thrown when an error happens when getting roles from
      *                                         organization ID.
