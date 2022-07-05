@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.management.application;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -60,7 +59,6 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
@@ -109,33 +107,33 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public ServiceProvider resolveSharedApplication(String mainAppName, String ownerOrgId, String sharedOrgId)
+    public ServiceProvider resolveSharedApplication(String mainAppName, String sharedOrgId)
             throws OrganizationManagementException {
 
-        String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
-        if (StringUtils.isBlank(ownerTenantDomain)) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
-                    ownerOrgId);
-        }
+        String sharedAppId = resolveSharedApp(mainAppName, sharedOrgId).orElseThrow(
+                        () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED, mainAppName, sharedOrgId));
 
-        ServiceProvider mainApplication;
-        try {
-            mainApplication = Optional.ofNullable(
-                            getApplicationManagementService().getServiceProvider(mainAppName, ownerTenantDomain))
-                    .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, mainAppName));
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
-        }
-
-        String sharedAppId =
-                resolveSharedApp(mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId).orElseThrow(
-                        () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED,
-                                mainApplication.getApplicationResourceId(), ownerOrgId));
         String sharedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
         try {
             return getApplicationManagementService().getApplicationByResourceId(sharedAppId, sharedOrgTenantDomain);
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, sharedOrgId);
+        }
+    }
+
+    @Override
+    public boolean isSpAppOwnedByTenant(String mainAppName, String tenantDomain) {
+
+        try {
+            ServiceProvider mainApplication = getApplicationManagementService()
+                    .getServiceProvider(mainAppName, tenantDomain);
+            if (mainApplication != null) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IdentityApplicationManagementException e) {
+            return false;
         }
     }
 
@@ -176,7 +174,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
 
             Optional<String> mayBeSharedAppId = resolveSharedApp(
-                    mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
+                    mainApplication.getApplicationResourceId(), sharedOrgId);
             if (mayBeSharedAppId.isPresent()) {
                 return;
             }
@@ -196,10 +194,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private Optional<String> resolveSharedApp(String mainAppId, String ownerOrgId, String sharedOrgId)
+    private Optional<String> resolveSharedApp(String mainAppName, String sharedOrgId)
             throws OrganizationManagementException {
 
-        return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
+        return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppName, sharedOrgId);
     }
 
     private OAuthConsumerAppDTO createOAuthApplication() throws URLBuilderException, IdentityOAuthAdminException {

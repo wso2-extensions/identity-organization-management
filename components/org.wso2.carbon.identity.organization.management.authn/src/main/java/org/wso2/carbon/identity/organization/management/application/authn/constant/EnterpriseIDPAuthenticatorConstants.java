@@ -29,13 +29,16 @@ public class EnterpriseIDPAuthenticatorConstants {
     public static final String AUTHENTICATOR_NAME = "EnterpriseIDPAuthenticator";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "EnterpriseIDP";
 
-    public static final String AUTHORIZATION_ENDPOINT_TENANTED_PATH = "t/{tenant}/oauth2/authorize";
-    public static final String TOKEN_ENDPOINT_TENANTED_PATH = "t/{tenant}/oauth2/token";
+    public static final String AUTHORIZATION_ENDPOINT_TENANTED_PATH = "o/{orgId}/oauth2/authorize";
+    public static final String TOKEN_ENDPOINT_TENANTED_PATH = "o/{orgId}/oauth2/token";
     public static final String TENANT_PLACEHOLDER = "{tenant}";
+    public static final String ORGANIZATION_ID_PLACEHOLDER = "{orgId}";
 
     public static final String ORGANIZATION_ATTRIBUTE = "Organization";
     public static final String ORGANIZATION_USER_ATTRIBUTE = "org";
     public static final String ORG_PARAMETER = "org";
+    public static final String ORG_ID_PARAMETER = "orgId";
+    public static final String ORG_NAME_PARAMETER = "orgName";
 
     public static final String ENTERPRISE_LOGIN_FAILURE = "enterpriseLoginFailure";
     public static final String ERROR_MESSAGE = "&authFailure=true&authFailureMsg=";

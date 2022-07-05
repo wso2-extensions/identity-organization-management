@@ -42,12 +42,11 @@ public interface OrgApplicationMgtDAO {
     /**
      * Returns the unique identifier of the shared application.
      *
-     * @param mainAppId   Main application identifier.
-     * @param ownerOrgId  The unique ID corresponding to the organization where the main application resides.
+     * @param mainAppName   Main application name.
      * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
      * @return Unique identifier of the shared application.
      * @throws OrganizationManagementException the server exception is thrown in a failure to retrieve the entry.
      */
-    Optional<String> getSharedApplicationResourceId(String mainAppId, String ownerOrgId, String sharedOrgId)
+    Optional<String> getSharedApplicationResourceId(String mainAppName, String sharedOrgId)
             throws OrganizationManagementException;
 }
