@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
@@ -52,6 +53,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
@@ -177,8 +179,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(OAUTH2_AUTHZ_URL, getAuthorizationEndpoint(sharedOrgTenantDomain));
             authenticatorProperties.put(OAUTH2_TOKEN_URL, getTokenEndpoint(sharedOrgTenantDomain));
             authenticatorProperties.put(CALLBACK_URL, createCallbackUrl());
+            authenticatorProperties.put(FrameworkConstants.QUERY_PARAMS, getRequestedScopes(context));
 
-        } catch (IdentityOAuthAdminException | URLBuilderException e) {
+        } catch (IdentityOAuthAdminException | URLBuilderException | UnsupportedEncodingException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN, e);
         }
     }
@@ -392,6 +395,21 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     private String urlEncode(String value) throws UnsupportedEncodingException {
 
         return URLEncoder.encode(value, FrameworkUtils.UTF_8);
+    }
+
+    private String getRequestedScopes(AuthenticationContext context) throws UnsupportedEncodingException {
+
+        String queryString = context.getQueryParams();
+        if (StringUtils.isNotBlank(queryString)) {
+            String[] params = queryString.split("&");
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length >= 2 && OAuthConstants.OAuth20Params.SCOPE.equals(keyValue[0])) {
+                    return URLDecoder.decode(param, FrameworkUtils.UTF_8);
+                }
+            }
+        }
+        return null;
     }
 
     /**
