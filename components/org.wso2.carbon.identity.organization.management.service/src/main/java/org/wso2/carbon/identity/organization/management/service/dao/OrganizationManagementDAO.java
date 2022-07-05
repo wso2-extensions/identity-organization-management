@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.service.model.PatchOpera
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This interface performs CRUD operations for {@link Organization}
@@ -67,7 +68,16 @@ public interface OrganizationManagementDAO {
      * @return the organization ID.
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
      */
-    String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
+    Optional<String> getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve organization Name if the given organization id exists.
+     *
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization Name.
+     */
+    Optional<String> getOrganizationNameById(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve {@link Organization} by ID.

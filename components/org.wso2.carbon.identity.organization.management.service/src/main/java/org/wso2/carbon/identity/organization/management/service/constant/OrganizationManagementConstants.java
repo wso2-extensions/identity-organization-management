@@ -231,6 +231,8 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
                 "Role %s cannot be updated or deleted."),
 
+        ERROR_CODE_INVALID_ORGANIZATION_NAME("60015", "Invalid organization.",
+                "Organization with Name: %s doesn't exist."), // 404
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
@@ -387,7 +389,9 @@ public class OrganizationManagementConstants {
                 "Error while resolving user: %s from resident organization, to access organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES("65067", "Error while retrieving organization roles of " +
                 "the user.", "Server encountered an error while retrieving the organizations roles of organization " +
-                "with ID: %s for user with ID: %s.");
+                "with ID: %s for user with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65068", "Unable to retrieve the organization.",
+                "Server encountered an error while retrieving organization with ID: %s.");
 
         private final String code;
         private final String message;

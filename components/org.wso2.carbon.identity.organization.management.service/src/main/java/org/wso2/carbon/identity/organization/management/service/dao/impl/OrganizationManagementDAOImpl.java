@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import static java.time.ZoneOffset.UTC;
@@ -71,6 +72,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_TYPE;
@@ -122,6 +124,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_TYPE;
@@ -255,15 +258,34 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException {
+    public Optional<String> getOrganizationIdByName(String organizationName)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        String organizationId;
         try {
-            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
+            organizationId =  namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
                     (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_NAME, organizationName));
+            return Optional.ofNullable(organizationId);
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e, organizationName);
+        }
+    }
+
+    @Override
+    public Optional<String> getOrganizationNameById(String organizationId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        String organizationName;
+        try {
+            organizationName = namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_NAME_BY_ID,
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_NAME_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId));
+            return Optional.ofNullable(organizationName);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID, e, organizationId);
         }
     }
 

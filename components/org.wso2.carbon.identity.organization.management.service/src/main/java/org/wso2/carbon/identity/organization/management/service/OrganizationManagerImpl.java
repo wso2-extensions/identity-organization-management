@@ -74,6 +74,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ACTIVATING_ORGANIZATION_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_TENANT_TYPE_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DEACTIVATING_ORGANIZATION_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_TO_ROOT_AUTHORIZATION;
@@ -170,7 +172,15 @@ public class OrganizationManagerImpl implements OrganizationManager {
     @Override
     public String getOrganizationIdByName(String organizationName) throws OrganizationManagementException {
 
-        return organizationManagementDAO.getOrganizationIdByName(organizationName);
+        return organizationManagementDAO.getOrganizationIdByName(organizationName).orElseThrow(
+                () -> handleClientException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME, organizationName));
+    }
+
+    @Override
+    public String getOrganizationNameById(String organizationId) throws OrganizationManagementException {
+
+        return organizationManagementDAO.getOrganizationNameById(organizationId).orElseThrow(
+                () -> handleClientException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID, organizationId));
     }
 
     @Override
@@ -225,8 +235,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         String tenantDomain = getTenantDomain();
         String orgId;
+        // #todo dao layers return optional and throw exceptions if tenant domain is invalid
         if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
-            orgId = organizationManagementDAO.getOrganizationIdByName(ROOT);
+            orgId = organizationManagementDAO.getOrganizationIdByName(ROOT).get();
         } else {
             orgId = organizationManagementDAO.resolveOrganizationId(tenantDomain);
         }

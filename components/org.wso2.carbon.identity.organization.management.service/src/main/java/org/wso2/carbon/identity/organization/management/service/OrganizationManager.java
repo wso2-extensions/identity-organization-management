@@ -68,6 +68,15 @@ public interface OrganizationManager {
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
 
     /**
+     * Retrieve organization Name if the given organization id.
+     *
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementException The exception thrown when retrieving the Name an organization.
+     */
+    String getOrganizationNameById(String organizationId) throws OrganizationManagementException;
+
+    /**
      * Retrieve {@link Organization} by ID.
      *
      * @param organizationId     The organization ID.

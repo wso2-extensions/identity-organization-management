@@ -44,6 +44,9 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_ID_BY_NAME = "SELECT UM_ID FROM UM_ORG WHERE UM_ORG_NAME = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";";
 
+    public static final String GET_ORGANIZATION_NAME_BY_ID = "SELECT UM_ORG_NAME FROM UM_ORG WHERE UM_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
+
     public static final String INSERT_ATTRIBUTE = "INSERT INTO UM_ORG_ATTRIBUTE (UM_ORG_ID, UM_ATTRIBUTE_KEY, " +
             "UM_ATTRIBUTE_VALUE) VALUES (:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";, :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE + ";)";
