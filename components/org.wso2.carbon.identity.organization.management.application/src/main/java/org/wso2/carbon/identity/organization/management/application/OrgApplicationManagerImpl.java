@@ -122,16 +122,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public boolean isSpAppOwnedByTenant(String mainAppName, String tenantDomain) {
+    public boolean isSaasAppOwnedByTenant(String mainAppName, String tenantDomain) {
 
         try {
             ServiceProvider mainApplication = getApplicationManagementService()
                     .getServiceProvider(mainAppName, tenantDomain);
-            if (mainApplication != null) {
-                return true;
-            } else {
-                return false;
-            }
+            return mainApplication != null;
         } catch (IdentityApplicationManagementException e) {
             return false;
         }

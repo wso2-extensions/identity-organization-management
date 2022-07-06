@@ -197,7 +197,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         EnterpriseIDPAuthenticator enterpriseIDPAuthenticator = spy(new EnterpriseIDPAuthenticator());
         when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(orgId);
         doReturn(orgId).when(enterpriseIDPAuthenticator, "getTenantDomain", anyString());
-        doReturn(true).when(enterpriseIDPAuthenticator, "isSpAppOwnedByTenant", anyString(), anyString());
+        doReturn(true).when(enterpriseIDPAuthenticator, "isSaasAppOwnedByTenant", anyString(), anyString());
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
         when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);

@@ -151,4 +151,13 @@ public interface OrganizationManager {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+    /**
+     * Retrieve list of organizations by provided common name
+     *
+     * @param organizationName The common name of the organizations
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementException
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementException;
+
 }

@@ -80,6 +80,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_AUTHORIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_EVALUATING_ADD_ORGANIZATION_TO_ROOT_AUTHORIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_MISSING_ROOT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
@@ -344,6 +345,18 @@ public class OrganizationManagerImpl implements OrganizationManager {
     public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
 
         return organizationManagementDAO.getAncestorOrganizationIds(organizationId);
+    }
+
+    @Override
+    public List<Organization> getOrganizationsByName(String organizationName)
+            throws OrganizationManagementException {
+
+        List<Organization> organizations = organizationManagementDAO.getOrganizationsByName(organizationName);
+        if (CollectionUtils.isNotEmpty(organizations)) {
+            return organizations;
+        } else {
+            throw handleClientException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME, organizationName);
+        }
     }
 
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {

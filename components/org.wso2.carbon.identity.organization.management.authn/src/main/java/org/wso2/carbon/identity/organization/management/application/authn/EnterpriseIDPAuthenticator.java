@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.authn;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,18 +48,22 @@ import org.wso2.carbon.identity.organization.management.application.authn.intern
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -84,13 +89,14 @@ import static org.wso2.carbon.identity.organization.management.application.authn
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_SELECT_PAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.TOKEN_ENDPOINT_TENANTED_PATH;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_NAME;
@@ -230,67 +236,80 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             super.processLogoutResponse(request, response, context);
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
         }
-
         Map<String, String> runtimeParams = getRuntimeParams(context);
-        if (request.getParameterMap().containsKey(ORG_PARAMETER)) {
-            // In the current approach org query param is set blank and sent.
-            if (StringUtils.isNotBlank(request.getParameter(ORG_PARAMETER))) {
-                String org = request.getParameter(ORG_PARAMETER);
 
-                try {
-                    resolveOrgNameAndId(org, context);
-                    redirectToSubOrganization(request, response, runtimeParams.get(ORG_ID_PARAMETER));
-                } catch (AuthenticationFailedException e) {
-                    redirectToOrgNameCapture(response, context);
+        // When org query param is set in request.
+        if (StringUtils.isNotBlank(request.getParameter(ORG_PARAMETER))) {
+            String org = request.getParameter(ORG_PARAMETER);
+            try {
+                String orgName = getOrganizationNameById(org);
+                runtimeParams.put(ORG_ID_PARAMETER, org);
+                runtimeParams.put(ORG_NAME_PARAMETER, orgName);
+            } catch (AuthenticationFailedException e) {
+                // Check whether the org query param is related to organization name.
+                if (!resolveOrganizationByName(org, context, response)) {
+                    return AuthenticatorFlowStatus.INCOMPLETE;
                 }
-
-                return AuthenticatorFlowStatus.INCOMPLETE;
             }
+
+            // After successfully resolving organization by Id or Name, the request is redirecting to the sub org
+            redirectToSubOrganization(context, response, runtimeParams.get(ORG_ID_PARAMETER));
+            return AuthenticatorFlowStatus.INCOMPLETE;
         }
 
+        // If block to skip callback responses to the authenticator from enterprise IDPs of sub orgs.
         if (StringUtils.isBlank(runtimeParams.get(ORG_ID_PARAMETER))) {
-
-            // #todo remove this workaround after find a way to capture orgId value "o/<org-id>"
+            // #todo remove this workaround after find a way to capture orgId value from "o/<org-id>"
             String orgId = IdentityTenantUtil.getTenantDomainFromContext();
             if (orgId == null || SUPER_TENANT_DOMAIN_NAME.equals(orgId)) {
                 orgId = getOrgIdByTenantDomain(SUPER_TENANT_DOMAIN_NAME);
             }
-
             String tenantDomain = getTenantDomain(orgId);
             // Check the request came for SAAS app owned org. If so redirect to org name capture.
-            if (isSpAppOwnedByTenant(context.getServiceProviderName(), tenantDomain)) {
-
+            if (isSaasAppOwnedByTenant(context.getServiceProviderName(), tenantDomain)) {
                 redirectToOrgNameCapture(response, context);
                 return AuthenticatorFlowStatus.INCOMPLETE;
-            } else {
-                resolveOrgNameAndId(orgId, context);
             }
-
+            String orgName = getOrganizationNameById(orgId);
+            runtimeParams.put(ORG_ID_PARAMETER, orgId);
+            runtimeParams.put(ORG_NAME_PARAMETER, orgName);
         }
         return super.process(request, response, context);
     }
 
-    private void resolveOrgNameAndId(String org, AuthenticationContext context)
+    private String getOrganizationNameById(String organizationId) throws AuthenticationFailedException {
+
+        try {
+            return getOrganizationManager().getOrganizationNameById(organizationId);
+        } catch (OrganizationManagementException e) {
+            throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID, organizationId, e);
+        }
+    }
+
+    private boolean resolveOrganizationByName(String org, AuthenticationContext context, HttpServletResponse response)
             throws AuthenticationFailedException {
 
         Map<String, String> runtimeParams = getRuntimeParams(context);
         try {
-            // First priority for org id.
-            String orgName = getOrganizationManager().getOrganizationNameById(org);
-            runtimeParams.put(ORG_ID_PARAMETER, org);
-            runtimeParams.put(ORG_NAME_PARAMETER, orgName);
-        } catch (OrganizationManagementException e) {
-            try {
-                // Also, org name can be provided. ex - From org name capture login page.
-                String orgId = getOrganizationManager().getOrganizationIdByName(org);
-                runtimeParams.put(ORG_NAME_PARAMETER, org);
-                runtimeParams.put(ORG_ID_PARAMETER, orgId);
-
-            } catch (OrganizationManagementException ex) {
-                context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Id");
-                throw handleAuthFailures(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID, e);
+            // Also, org name can be provided. ex - From org name capture login page.
+            List<Organization> organizations = getOrganizationManager().getOrganizationsByName(org);
+            if (CollectionUtils.isNotEmpty(organizations)) {
+                if (organizations.size() == 1) {
+                    runtimeParams.put(ORG_NAME_PARAMETER, org);
+                    runtimeParams.put(ORG_ID_PARAMETER, organizations.get(0).getId());
+                    return true;
+                }
+                List<String> orgDetails = organizations.stream()
+                        .map(organization -> new StringBuilder().append(organization.getId()).append(":")
+                                .append(organization.getName()).append(":").
+                                append(organization.getDescription()).toString()).collect(Collectors.toList());
+                redirectToSelectOrganization(response, context, String.join(",", orgDetails));
             }
+        } catch (OrganizationManagementException ex) {
+            context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Id");
+            redirectToOrgNameCapture(response, context);
         }
+        return false;
     }
 
     /**
@@ -325,16 +344,38 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     }
 
     @SuppressFBWarnings(value = "UNVALIDATED_REDIRECT", justification = "Redirect params are not based on user inputs.")
-    private void redirectToSubOrganization(HttpServletRequest request, HttpServletResponse response,
-                                           String organizationId) throws AuthenticationFailedException {
+    private void redirectToSelectOrganization(HttpServletResponse response, AuthenticationContext context,
+                                              String orgDetails)
+            throws AuthenticationFailedException {
 
         try {
             StringBuilder queryStringBuilder = new StringBuilder();
-            queryStringBuilder.append("org=&")
-                    .append("client_id").append("=").append(request.getParameter("client_id"))
-                    .append("redirect_uri").append("=").append(request.getParameter("redirect_uri"))
-                    .append("response_type").append("=").append(request.getParameter("response_type"))
-                    .append("scope").append("=").append(request.getParameter("scope"));
+            queryStringBuilder.append(SESSION_DATA_KEY).append("=").append(urlEncode(context.getContextIdentifier()))
+                    .append("&").append("idp").append("=").append(context.getExternalIdP().getName())
+                    .append("&").append("authenticator").append("=").append(getName())
+                    .append("&").append("orgList").append("=").append(urlEncode(orgDetails));
+
+            String url = FrameworkUtils.appendQueryParamsStringToUrl(ServiceURLBuilder.create()
+                            .addPath(REQUEST_ORG_SELECT_PAGE_URL).build().getAbsolutePublicURL(),
+                    queryStringBuilder.toString());
+            response.sendRedirect(url);
+        } catch (IOException | URLBuilderException e) {
+            throw handleAuthFailures(ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT, e);
+        }
+    }
+
+    @SuppressFBWarnings(value = "UNVALIDATED_REDIRECT", justification = "Redirect params are not based on user inputs.")
+    private void redirectToSubOrganization(AuthenticationContext context, HttpServletResponse response,
+                                           String organizationId) throws AuthenticationFailedException {
+
+        try {
+            Map<String, String> queryMap = getQueryMap(context.getQueryParams());
+            StringBuilder queryStringBuilder = new StringBuilder();
+            queryStringBuilder.append("org").append("=")
+                    .append("&").append("client_id").append("=").append(queryMap.get("client_id"))
+                    .append("&").append("redirect_uri").append("=").append(queryMap.get("redirect_uri"))
+                    .append("&").append("response_type").append("=").append(queryMap.get("response_type"))
+                    .append("&").append("scope").append("=").append(queryMap.get("scope"));
 
             String url = FrameworkUtils.appendQueryParamsStringToUrl(getAuthorizationEndpoint(organizationId),
                     queryStringBuilder.toString());
@@ -342,6 +383,19 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         } catch (IOException | URLBuilderException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT, e);
         }
+    }
+
+    private Map<String, String> getQueryMap(String query) throws UnsupportedEncodingException {
+
+        String[] params = query.split("&");
+        Map<String, String> map = new HashMap<>();
+        for (String param : params) {
+            String[] keyValPairs = param.split("=");
+            if (keyValPairs.length == 2) {
+                map.put(keyValPairs[0], URLDecoder.decode(keyValPairs[1], "UTF-8"));
+            }
+        }
+        return map;
     }
 
     /**
@@ -364,9 +418,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         }
     }
 
-    private boolean isSpAppOwnedByTenant(String mainAppName, String tenantDomain) {
+    private boolean isSaasAppOwnedByTenant(String mainAppName, String tenantDomain) {
 
-        return getOrgApplicationManager().isSpAppOwnedByTenant(mainAppName, tenantDomain);
+        return getOrgApplicationManager().isSaasAppOwnedByTenant(mainAppName, tenantDomain);
     }
 
     /**

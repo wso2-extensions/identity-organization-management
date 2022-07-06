@@ -57,5 +57,5 @@ public interface OrgApplicationManager {
      * @param tenantDomain Tenant.
      * @return true if SAAS app owned by the given tenant.
      */
-    boolean isSpAppOwnedByTenant(String mainAppName, String tenantDomain);
+    boolean isSaasAppOwnedByTenant(String mainAppName, String tenantDomain);
 }
