@@ -33,7 +33,7 @@ public class OrganizationManagementConstants {
     public static final String PATH_SEPARATOR = "/";
     public static final String V1_API_PATH_COMPONENT = "v1";
     public static final String ORGANIZATION_PATH = "organizations";
-    public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
+    public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
     public static final String SERVER_API_PATH_COMPONENT = "/api/server/";
     private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
 
