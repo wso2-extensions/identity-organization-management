@@ -494,7 +494,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.21.2-SNAPSTHOT</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
         <carbon.identity.scim2.package.import.version.range>[1.5.122, 2.0.0)
@@ -507,7 +507,7 @@
         <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
         <identity.inbound.auth.oauth.version>6.7.116</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.import.version.range>[6.7.116, 6.8.0)</identity.inbound.auth.oauth.import.version.range>
-        <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
+        <identity.outbound.auth.oidc.version>5.7.4-SNAPSHOT</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>

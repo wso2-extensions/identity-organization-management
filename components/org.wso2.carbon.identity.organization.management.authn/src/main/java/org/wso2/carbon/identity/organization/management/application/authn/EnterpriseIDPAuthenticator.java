@@ -31,7 +31,6 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.L
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
-import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -57,6 +56,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +64,8 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static java.util.Objects.isNull;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_USER_PROPERTIES;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.SESSION_DATA_KEY;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.CLIENT_ID;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.CLIENT_SECRET;
@@ -78,7 +80,6 @@ import static org.wso2.carbon.identity.organization.management.application.authn
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ERROR_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
@@ -132,11 +133,14 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         resolvePropertiesForEnterpriseIDP(context);
         super.processAuthenticationResponse(request, response, context);
+    }
 
-        // Add organization name to the user attributes.
-        context.getSubject().getUserAttributes()
-                .put(ClaimMapping.build(ORGANIZATION_USER_ATTRIBUTE, ORGANIZATION_USER_ATTRIBUTE, null, false),
-                        context.getAuthenticatorProperties().get(ORGANIZATION_ATTRIBUTE));
+    @Override
+    protected void processAuthenticatedUserScopes(AuthenticationContext context, String scopes) {
+
+        if (StringUtils.isNotBlank(scopes)) {
+            createOrGetOrganizationUserProperties(context).put(OAuthConstants.OAuth20Params.SCOPE, scopes);
+        }
     }
 
     /**
@@ -181,6 +185,8 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(CALLBACK_URL, createCallbackUrl());
             authenticatorProperties.put(FrameworkConstants.QUERY_PARAMS, getRequestedScopes(context));
 
+            createOrGetOrganizationUserProperties(context).put("organization", sharedOrgId);
+
         } catch (IdentityOAuthAdminException | URLBuilderException | UnsupportedEncodingException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN, e);
         }
@@ -220,6 +226,13 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN);
         }
+    }
+
+    private HashMap<String, String> createOrGetOrganizationUserProperties(AuthenticationContext context) {
+        if (isNull(context.getProperty(ORGANIZATION_USER_PROPERTIES))) {
+            context.setProperty(ORGANIZATION_USER_PROPERTIES, new HashMap<String, String>());
+        }
+        return (HashMap<String, String>) context.getProperty(ORGANIZATION_USER_PROPERTIES);
     }
 
     @Override
