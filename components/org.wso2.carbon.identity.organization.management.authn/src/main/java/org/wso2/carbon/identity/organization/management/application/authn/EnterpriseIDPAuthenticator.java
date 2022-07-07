@@ -75,22 +75,32 @@ import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthen
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.OAuth2.CALLBACK_URL;
 import static org.wso2.carbon.identity.core.util.IdentityTenantUtil.getTenantId;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AMPERSAND_SIGN;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_NAME;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHORIZATION_ENDPOINT_TENANTED_PATH;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.CLIENT_ID_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ENTERPRISE_LOGIN_FAILURE;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.EQUAL_SIGN;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ERROR_MESSAGE;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.IDP_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_ID_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_ID_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_LIST_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_NAME_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REDIRECT_URI_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_SELECT_PAGE_URL;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.RESPONSE_TYPE_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.SCOPE_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.TOKEN_ENDPOINT_TENANTED_PATH;
+import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.UTF_8;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
@@ -350,10 +360,11 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         try {
             StringBuilder queryStringBuilder = new StringBuilder();
-            queryStringBuilder.append(SESSION_DATA_KEY).append("=").append(urlEncode(context.getContextIdentifier()))
-                    .append("&").append("idp").append("=").append(context.getExternalIdP().getName())
-                    .append("&").append("authenticator").append("=").append(getName())
-                    .append("&").append("orgList").append("=").append(urlEncode(orgDetails));
+            queryStringBuilder.append(SESSION_DATA_KEY).append(EQUAL_SIGN)
+                    .append(urlEncode(context.getContextIdentifier()));
+            buildQueryParam(queryStringBuilder, IDP_PARAMETER, context.getExternalIdP().getName());
+            buildQueryParam(queryStringBuilder, AUTHENTICATOR_PARAMETER, getName());
+            buildQueryParam(queryStringBuilder, ORG_LIST_PARAMETER, urlEncode(orgDetails));
 
             String url = FrameworkUtils.appendQueryParamsStringToUrl(ServiceURLBuilder.create()
                             .addPath(REQUEST_ORG_SELECT_PAGE_URL).build().getAbsolutePublicURL(),
@@ -371,11 +382,11 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         try {
             Map<String, String> queryMap = getQueryMap(context.getQueryParams());
             StringBuilder queryStringBuilder = new StringBuilder();
-            queryStringBuilder.append("org").append("=")
-                    .append("&").append("client_id").append("=").append(queryMap.get("client_id"))
-                    .append("&").append("redirect_uri").append("=").append(queryMap.get("redirect_uri"))
-                    .append("&").append("response_type").append("=").append(queryMap.get("response_type"))
-                    .append("&").append("scope").append("=").append(queryMap.get("scope"));
+            queryStringBuilder.append(ORG_PARAMETER).append(EQUAL_SIGN);
+            buildQueryParam(queryStringBuilder, CLIENT_ID_PARAMETER, queryMap.get(CLIENT_ID_PARAMETER));
+            buildQueryParam(queryStringBuilder, REDIRECT_URI_PARAMETER, queryMap.get(REDIRECT_URI_PARAMETER));
+            buildQueryParam(queryStringBuilder, RESPONSE_TYPE_PARAMETER, queryMap.get(RESPONSE_TYPE_PARAMETER));
+            buildQueryParam(queryStringBuilder, SCOPE_PARAMETER, queryMap.get(SCOPE_PARAMETER));
 
             String url = FrameworkUtils.appendQueryParamsStringToUrl(getAuthorizationEndpoint(organizationId),
                     queryStringBuilder.toString());
@@ -385,14 +396,18 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         }
     }
 
+    private void buildQueryParam(StringBuilder builder, String query, String param) {
+        builder.append(AMPERSAND_SIGN).append(query).append(EQUAL_SIGN).append(param);
+    }
+
     private Map<String, String> getQueryMap(String query) throws UnsupportedEncodingException {
 
-        String[] params = query.split("&");
+        String[] params = query.split(AMPERSAND_SIGN);
         Map<String, String> map = new HashMap<>();
         for (String param : params) {
-            String[] keyValPairs = param.split("=");
+            String[] keyValPairs = param.split(EQUAL_SIGN);
             if (keyValPairs.length == 2) {
-                map.put(keyValPairs[0], URLDecoder.decode(keyValPairs[1], "UTF-8"));
+                map.put(keyValPairs[0], URLDecoder.decode(keyValPairs[1], UTF_8));
             }
         }
         return map;

@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
@@ -47,14 +46,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_NAME;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_ID_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_NAME_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
  * Unit test class for EnterpriseIDPAuthenticatorTest class.
@@ -65,12 +59,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
 
     private static final String contextIdentifier = "4952b467-86b2-31df-b63c-0bf25cec4f86s";
     private static final String orgId = "ef35863f-58f0-4a18-aef1-a8d9dd20cfbe";
-    private static final String orgName = "greater";
     private static final String clientId = "3_TCRZ93rTQtPL8k02_trEYTfVca";
     private static final String secretKey = "uW4q6dYgSaHJIv11Llqi1nvOQBUa";
 
     private static Map<String, String> authenticatorParamProperties;
-    private static Map<String, String[]> requestQueryParamProperties;
     private static Map<String, String> authenticatorProperties;
 
     @Mock
@@ -106,7 +98,6 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         enterpriseIDPAuthenticator = new EnterpriseIDPAuthenticator();
         authenticatorParamProperties = new HashMap<>();
         authenticatorProperties = new HashMap<>();
-        requestQueryParamProperties = new HashMap<>();
 
         enterpriseIDPAuthenticatorDataHolder = spy(new EnterpriseIDPAuthenticatorDataHolder());
         mockStatic(EnterpriseIDPAuthenticatorDataHolder.class);
@@ -192,34 +183,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testRequestToSaasAppOwnedOrgWithoutOrgParameter() throws Exception {
-
-        EnterpriseIDPAuthenticator enterpriseIDPAuthenticator = spy(new EnterpriseIDPAuthenticator());
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(orgId);
-        doReturn(orgId).when(enterpriseIDPAuthenticator, "getTenantDomain", anyString());
-        doReturn(true).when(enterpriseIDPAuthenticator, "isSaasAppOwnedByTenant", anyString(), anyString());
-        when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
-        when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
-        when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
-        mockServiceURLBuilder();
-
-        AuthenticatorFlowStatus status = enterpriseIDPAuthenticator.process(mockServletRequest, mockServletResponse,
-                mockAuthenticationContext);
-        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-    }
-
-    @Test
-    public void testRedirectToOrgNameCaptureWhenInValidOrgParameter() throws Exception {
-
-        requestQueryParamProperties.put(ORG_PARAMETER, new String[]{orgId});
-        when(mockServletRequest.getParameterMap()).thenReturn(requestQueryParamProperties);
-        when(mockServletRequest.getParameter(ORG_PARAMETER)).thenReturn(orgId);
-
-        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().getOrganizationNameById(anyString()))
-                .thenThrow(handleClientException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID));
-
-        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().getOrganizationIdByName(anyString()))
-                .thenThrow(handleClientException(ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_NAME));
+    public void testProcessWithoutOrgParameter() throws Exception {
 
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
@@ -232,49 +196,36 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testRedirectToSubOrgWhenRequestToSaasAppOwnedOrgWithValidOrgParameter() throws Exception {
+    public void testProcessInvalidOrg() throws Exception {
 
-        requestQueryParamProperties.put(ORG_PARAMETER, new String[]{orgId});
-        when(mockServletRequest.getParameterMap()).thenReturn(requestQueryParamProperties);
-        when(mockServletRequest.getParameter(ORG_PARAMETER)).thenReturn(orgId);
-
-        // Temporary set empty org id, and it will be reset by validation logic inside the authenticator.
-        authenticatorParamProperties.put(ORG_ID_PARAMETER, "");
-        when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
-                .thenReturn(authenticatorParamProperties);
-        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().getOrganizationNameById(anyString()))
-                .thenReturn(orgName);
-
-        when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
-        when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
-        when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
-        mockServiceURLBuilder();
-        when(mockAuthenticationContext.getQueryParams()).thenReturn("client_id=UwVYFgQmveBuG1a1Itdnk1eaROUa&scope=" +
-                "SYSTEM&response_type=code&redirect_uri=http://localhost:8080/pickup-manager/oauth2client&org=" +
-                "993d1fdc-a9ae-40f2-8994-4340690e6bfb");
-
-        AuthenticatorFlowStatus status = enterpriseIDPAuthenticator.process(mockServletRequest, mockServletResponse,
-                mockAuthenticationContext);
-        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
-    }
-
-    @Test
-    public void testRequestSendForSaasAppSharedSubOrg() throws Exception {
-
-        when(IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(orgId);
-        authenticatorParamProperties.put(ORG_ID_PARAMETER, "");
+        authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
-        EnterpriseIDPAuthenticator enterpriseIDPAuthenticator = spy(new EnterpriseIDPAuthenticator());
-        doReturn(orgId).when(enterpriseIDPAuthenticator, "getTenantDomain", anyString());
-        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().getOrganizationNameById(anyString()))
-                .thenReturn(orgName);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().isOrganizationExistById(anyString()))
+                .thenReturn(false);
 
-        when(mockAuthenticationContext.getServiceProviderName()).thenReturn("B2B SASS APP");
+        when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
+        when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
+        when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
+        mockServiceURLBuilder();
 
+        AuthenticatorFlowStatus status = enterpriseIDPAuthenticator.process(mockServletRequest, mockServletResponse,
+                mockAuthenticationContext);
+        Assert.assertEquals(status, AuthenticatorFlowStatus.INCOMPLETE);
+    }
+
+    @Test
+    public void testProcess() throws Exception {
+
+        authenticatorParamProperties.put(ORG_PARAMETER, orgId);
+        when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
+                .thenReturn(authenticatorParamProperties);
+
+        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().isOrganizationExistById(anyString()))
+                .thenReturn(true);
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenReturn(mockServiceProvider);
+                anyString(), anyString())).thenReturn(mockServiceProvider);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
 
         InboundAuthenticationRequestConfig inbound = new InboundAuthenticationRequestConfig();
@@ -309,8 +260,7 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
     @Test(expectedExceptions = {AuthenticationFailedException.class})
     public void testInitiateAuthenticationRequestNoSharedApp() throws Exception {
 
-        authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
-        authenticatorParamProperties.put(ORG_NAME_PARAMETER, orgName);
+        authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
@@ -319,10 +269,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
                 .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenReturn(mockServiceProvider);
+                anyString(), anyString())).thenReturn(mockServiceProvider);
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenThrow(
+                anyString(), anyString())).thenThrow(
                 new OrganizationManagementServerException(ERROR_CODE_APPLICATION_NOT_SHARED.getCode(),
                         ERROR_CODE_APPLICATION_NOT_SHARED.getMessage()));
         enterpriseIDPAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
@@ -341,10 +291,10 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
         when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
                 .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenReturn(mockServiceProvider);
+                anyString(), anyString())).thenReturn(mockServiceProvider);
 
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenThrow(
+                anyString(), anyString())).thenThrow(
                 new OrganizationManagementServerException(ERROR_CODE_INVALID_APPLICATION.getCode(),
                         ERROR_CODE_INVALID_APPLICATION.getMessage()));
 
@@ -355,12 +305,19 @@ public class EnterpriseIDPAuthenticatorTest extends PowerMockTestCase {
     @Test(expectedExceptions = {AuthenticationFailedException.class})
     public void testInitiateAuthenticationRequestInvalidSharedApp() throws Exception {
 
-        authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
+        authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         when(enterpriseIDPAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
+        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
+                .getOrganizationIdByName(anyString())).thenReturn(orgId);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager()
+                .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
+        when(enterpriseIDPAuthenticatorDataHolder.getOrganizationManager().resolveTenantDomain(anyString())).thenReturn(
+                orgId);
+
         when(enterpriseIDPAuthenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString())).thenReturn(mockServiceProvider);
+                anyString(), anyString())).thenReturn(mockServiceProvider);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
 
         enterpriseIDPAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,

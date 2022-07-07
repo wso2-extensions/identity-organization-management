@@ -37,6 +37,13 @@ public class EnterpriseIDPAuthenticatorConstants {
     public static final String ORGANIZATION_ATTRIBUTE = "Organization";
     public static final String ORGANIZATION_USER_ATTRIBUTE = "org";
     public static final String ORG_PARAMETER = "org";
+    public static final String IDP_PARAMETER = "idp";
+    public static final String AUTHENTICATOR_PARAMETER = "authenticator";
+    public static final String ORG_LIST_PARAMETER = "orgList";
+    public static final String CLIENT_ID_PARAMETER = "client_id";
+    public static final String REDIRECT_URI_PARAMETER = "redirect_uri";
+    public static final String RESPONSE_TYPE_PARAMETER = "response_type";
+    public static final String SCOPE_PARAMETER = "scope";
     public static final String ORG_ID_PARAMETER = "orgId";
     public static final String ORG_NAME_PARAMETER = "orgName";
 
@@ -47,5 +54,9 @@ public class EnterpriseIDPAuthenticatorConstants {
     public static final String REQUEST_ORG_SELECT_PAGE_URL = "authenticationendpoint/select_org.do";
     public static final String REQUEST_ORG_PAGE_URL_CONFIG = "RequestOrganizationPage";
     public static final String INBOUND_AUTH_TYPE_OAUTH = "oauth2";
+
+    public static final String UTF_8 = "UTF-8";
+    public static final String EQUAL_SIGN = "=";
+    public static final String AMPERSAND_SIGN = "&";
 
 }

@@ -236,7 +236,6 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         String tenantDomain = getTenantDomain();
         String orgId;
-        // #todo dao layers return optional and throw exceptions if tenant domain is invalid
         if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
             orgId = organizationManagementDAO.getOrganizationIdByName(ROOT).get();
         } else {
