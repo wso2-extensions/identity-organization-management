@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.dao;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
@@ -27,6 +28,7 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.common.Group;
+import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
@@ -89,6 +91,15 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         try {
             AbstractUserStoreManager userStoreManager =
                     getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+            /*
+            Currently, userstore groups in the same organization can be assigned to a role.
+            A user can be belonged only to the groups in the userstore where user resides.
+            So group authorization is not required if the user is not inside the same org.
+             */
+            User user = userStoreManager.getUser(userId, null);
+            if (user == null || StringUtils.isEmpty(user.getUsername())) {
+                return false;
+            }
             List<Group> groupListOfUser = userStoreManager.getGroupListOfUser(userId, null, null);
 
             String groupSqlStmt = IS_GROUP_AUTHORIZED.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
