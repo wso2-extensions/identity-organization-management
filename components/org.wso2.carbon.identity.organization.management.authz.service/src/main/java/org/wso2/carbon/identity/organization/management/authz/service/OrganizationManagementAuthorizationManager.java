@@ -51,4 +51,16 @@ public class OrganizationManagementAuthorizationManager {
         OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
         return organizationMgtAuthzDAO.isUserAuthorized(userId, resourceId, orgId);
     }
+
+    /**
+     * Resolve root organization id.
+     *
+     * @return Root organization id.
+     * @throws OrganizationManagementAuthzServiceServerException if error occurred when retrieving root org id.
+     */
+    public String getRootOrganizationId() throws OrganizationManagementAuthzServiceServerException {
+
+        OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
+        return organizationMgtAuthzDAO.getRootOrganizationId();
+    }
 }
