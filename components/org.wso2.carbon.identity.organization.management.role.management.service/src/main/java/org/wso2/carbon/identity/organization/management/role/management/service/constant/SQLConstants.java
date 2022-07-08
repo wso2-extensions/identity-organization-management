@@ -121,8 +121,13 @@ public class SQLConstants {
             "UM_ORG_PERMISSION WHERE UM_ID IN (SELECT UM_PERMISSION_ID FROM UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
-    public static final String GET_ROLES_FROM_ORGANIZATION_ID = "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME FROM " +
-            "UM_ORG_ROLE WHERE ";
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD = "SELECT DISTINCT UM_ROLE_ID, UM_ROLE_NAME " +
+            "FROM UM_ORG_ROLE WHERE ";
+
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD = "SELECT DISTINCT R.UM_ROLE_ID, " +
+            "R.UM_ROLE_NAME FROM (SELECT UM_ROLE_ID, UM_ROLE_NAME FROM UM_ORG_ROLE WHERE ";
+
+    public static final String GET_ROLES_COUNT_FROM_ORGANIZATION_ID = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE ";
 
     public static final String GET_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE ";
 
@@ -136,9 +141,18 @@ public class SQLConstants {
     public static final String GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL = "UM_ID IN (SELECT UM_PERMISSION_ID FROM " +
             "UM_ORG_ROLE_PERMISSION WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";)";
 
-    public static final String GET_ROLES_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; ORDER BY UM_ROLE_ID ASC LIMIT :" +
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME > :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME ASC LIMIT :"  +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
+
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC LIMIT :"  +
+            SQLPlaceholders.DB_SCHEMA_LIMIT + "; ) AS R ORDER BY R.UM_ROLE_NAME ASC";
+
+    public static final String GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
     public static final String DELETE_USERS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_USER WHERE ";
 

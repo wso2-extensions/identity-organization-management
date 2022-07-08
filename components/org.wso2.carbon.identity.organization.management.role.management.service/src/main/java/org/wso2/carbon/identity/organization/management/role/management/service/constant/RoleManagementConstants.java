@@ -41,6 +41,14 @@ public class RoleManagementConstants {
     public static final String COMMA_SEPARATOR = ",";
 
     /**
+     * Enum for cursor based pagination direction.
+     */
+    public enum CursorDirection {
+        FORWARD,
+        BACKWARD
+    }
+
+    /**
      * Enum for Filter Operations.
      */
     public enum FilterOperator {

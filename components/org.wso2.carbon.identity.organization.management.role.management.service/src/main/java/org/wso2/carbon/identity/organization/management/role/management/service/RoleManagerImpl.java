@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.role.management.service;
 
+import com.google.gson.JsonSyntaxException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -27,9 +28,11 @@ import org.wso2.carbon.identity.core.model.Node;
 import org.wso2.carbon.identity.organization.management.role.management.service.dao.RoleManagementDAO;
 import org.wso2.carbon.identity.organization.management.role.management.service.dao.RoleManagementDAOImpl;
 import org.wso2.carbon.identity.organization.management.role.management.service.internal.RoleManagementDataHolder;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.Cursor;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Group;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.RolesResponse;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -40,10 +43,14 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.BACKWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
@@ -59,6 +66,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
@@ -106,14 +114,45 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     @Override
-    public List<Role> getOrganizationRoles(int limit, String filter, String organizationId)
+    public RolesResponse getOrganizationRoles(int count, String filter, String organizationId, String cursor)
             throws OrganizationManagementException {
 
+        String direction = FORWARD.toString();
+        String cursorValue = StringUtils.EMPTY;
+        String nextCursor = null;
+        String previousCursor = null;
         validateOrganizationId(organizationId);
         List<ExpressionNode> expressionNodes = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         getExpressionNodes(filter, expressionNodes, operators);
-        return roleManagementDAO.getOrganizationRoles(organizationId, limit, expressionNodes, operators);
+
+        if (StringUtils.isNotBlank(cursor)) {
+            Cursor cursorObj = decodeCursor(cursor);
+            cursorValue = cursorObj.getCursorValue();
+            direction = cursorObj.getDirection();
+        }
+
+        // Count + 1 number of records fetched in order to check the necessity of next page or previous page.
+        List<Role> roles = roleManagementDAO.getOrganizationRoles(organizationId, count + 1, expressionNodes,
+                operators, cursorValue, direction);
+        if (StringUtils.equals(FORWARD.toString(), direction)) {
+            if (StringUtils.isNotBlank(cursorValue)) {
+                previousCursor = encodeCursor(cursorValue, BACKWARD.toString());
+            }
+            if (roles.size() == count + 1) {
+                nextCursor = encodeCursor(roles.get(count - 1).getDisplayName(), direction);
+                roles.remove(count);
+            }
+        } else {
+            nextCursor = encodeCursor(cursorValue, FORWARD.toString());
+            if (roles.size() == count + 1) {
+                previousCursor = encodeCursor(roles.get(0).getDisplayName(), direction);
+                roles.remove(0);
+            }
+        }
+
+        int totalResults = roleManagementDAO.getTotalOrganizationRoles(organizationId, expressionNodes, operators);
+        return new RolesResponse(nextCursor, totalResults, previousCursor, count, roles);
     }
 
     @Override
@@ -325,5 +364,22 @@ public class RoleManagerImpl implements RoleManager {
         UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
 
         return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+    }
+
+    private String encodeCursor(String cursorValue, String direction) {
+
+        Cursor cursorObject = new Cursor(cursorValue, direction);
+        return Base64.getEncoder().withoutPadding().encodeToString(Utils.getGson().toJson(cursorObject)
+                .getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Cursor decodeCursor(String cursorString) throws OrganizationManagementException {
+
+        String decodeString = new String(Base64.getDecoder().decode(cursorString), StandardCharsets.UTF_8);
+        try {
+            return Utils.getGson().fromJson(decodeString, Cursor.class);
+        } catch (JsonSyntaxException e) {
+            throw handleClientException(ERROR_CODE_ROLE_LIST_INVALID_CURSOR, cursorString);
+        }
     }
 }

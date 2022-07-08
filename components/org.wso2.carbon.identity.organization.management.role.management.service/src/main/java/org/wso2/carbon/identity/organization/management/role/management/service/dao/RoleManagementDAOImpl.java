@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.COMMA_SEPARATOR;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.BACKWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
@@ -97,8 +98,12 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSION_ID_FROM_STRING_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSION_STRINGS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_PERMISSION_STRINGS_FROM_ROLE_ID_TAIL;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
@@ -246,16 +251,20 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
-    public List<Role> getOrganizationRoles(String organizationId, int limit, List<ExpressionNode> expressionNodes,
-                                           List<String> operators) throws OrganizationManagementServerException {
+    public List<Role> getOrganizationRoles(String organizationId, int count, List<ExpressionNode> expressionNodes,
+                                           List<String> operators, String cursor, String direction)
+            throws OrganizationManagementServerException {
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
-        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        String filterQuery = listOrganizationRolesFilterQuery(filterQueryBuilder, expressionNodes, operators);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-        String filterQuery = StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
-                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
+        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
+                GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
 
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_FROM_ORGANIZATION_ID_TAIL;
+        if (StringUtils.equals(BACKWARD.toString(), direction)) {
+            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
+                    GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+        }
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -268,7 +277,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
                             namedPreparedStatement.setString(entry.getKey(), entry.getValue());
                         }
-                        namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, limit);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, cursor);
+                        namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, count);
                     });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
@@ -424,6 +434,30 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return value > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_GETTING_USER_VALIDITY, e, userId);
+        }
+    }
+
+    @Override
+    public int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes,
+                                         List<String> operators) throws OrganizationManagementServerException {
+
+        FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
+        String filterQuery = listOrganizationRolesFilterQuery(filterQueryBuilder, expressionNodes, operators);
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String sqlStm = GET_ROLES_COUNT_FROM_ORGANIZATION_ID + filterQuery + GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(sqlStm,
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
         }
     }
 
@@ -1205,5 +1239,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         } catch (TransactionException e) {
             throw handleServerException(errorMessage, e);
         }
+    }
+
+    private String listOrganizationRolesFilterQuery(FilterQueryBuilder filterQueryBuilder,
+                                                    List<ExpressionNode> expressionNodes, List<String> operators) {
+
+        appendFilterQuery(expressionNodes, operators, DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, filterQueryBuilder);
+        return StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
+                filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
+
     }
 }
