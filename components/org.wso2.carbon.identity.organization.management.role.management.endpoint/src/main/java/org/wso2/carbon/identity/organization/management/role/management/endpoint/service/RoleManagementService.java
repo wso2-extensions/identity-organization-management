@@ -413,7 +413,7 @@ public class RoleManagementService {
         response.setItemsPerPage(rolesResponse.getItemsPerPage());
         response.setTotalResults(rolesResponse.getTotalResults());
 
-        if (CollectionUtils.isNotEmpty(rolesResponse.getRoles())) {
+        if (rolesResponse.getRoles() != null) {
             List<RoleObj> roleDTOs = new ArrayList<>();
             for (Role role : rolesResponse.getRoles()) {
                 RoleObj roleObj = new RoleObj();

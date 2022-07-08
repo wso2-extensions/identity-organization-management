@@ -49,8 +49,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_BACKWARD_DIRECTION;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_FORWARD_DIRECTION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.BACKWARD;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
@@ -117,7 +117,7 @@ public class RoleManagerImpl implements RoleManager {
     public RolesResponse getOrganizationRoles(int count, String filter, String organizationId, String cursor)
             throws OrganizationManagementException {
 
-        String direction = CURSOR_FORWARD_DIRECTION;
+        String direction = FORWARD.toString();
         String cursorValue = StringUtils.EMPTY;
         String nextCursor = null;
         String previousCursor = null;
@@ -135,16 +135,16 @@ public class RoleManagerImpl implements RoleManager {
         // Count + 1 number of records fetched in order to check the necessity of next page or previous page.
         List<Role> roles = roleManagementDAO.getOrganizationRoles(organizationId, count + 1, expressionNodes,
                 operators, cursorValue, direction);
-        if (CURSOR_FORWARD_DIRECTION.equals(direction)) {
+        if (StringUtils.equals(FORWARD.toString(), direction)) {
             if (StringUtils.isNotBlank(cursorValue)) {
-                previousCursor = encodeCursor(cursorValue, CURSOR_BACKWARD_DIRECTION);
+                previousCursor = encodeCursor(cursorValue, BACKWARD.toString());
             }
             if (roles.size() == count + 1) {
                 nextCursor = encodeCursor(roles.get(count - 1).getDisplayName(), direction);
                 roles.remove(count);
             }
         } else {
-            nextCursor = encodeCursor(cursorValue, CURSOR_FORWARD_DIRECTION);
+            nextCursor = encodeCursor(cursorValue, FORWARD.toString());
             if (roles.size() == count + 1) {
                 previousCursor = encodeCursor(roles.get(0).getDisplayName(), direction);
                 roles.remove(0);

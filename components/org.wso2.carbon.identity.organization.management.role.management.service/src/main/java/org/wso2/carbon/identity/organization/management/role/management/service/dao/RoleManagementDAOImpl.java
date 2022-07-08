@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.COMMA_SEPARATOR;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CURSOR_BACKWARD_DIRECTION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.BACKWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
@@ -261,7 +261,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
                 GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
 
-        if (CURSOR_BACKWARD_DIRECTION.equals(direction)) {
+        if (StringUtils.equals(BACKWARD.toString(), direction)) {
             sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
                     GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
         }

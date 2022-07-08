@@ -49,7 +49,7 @@ public class Utils {
      * @param operators               The operators list.
      * @param checkFilteringAttribute If checking the filtering attribute is necessary its true, else false.
      * @throws OrganizationManagementClientException Throws an exception if the operators passed by client
-     *                                       are not valid operators.
+     *                                               are not valid operators.
      */
     public static void setExpressionNodeAndOperatorLists(Node node, List<ExpressionNode> expression,
                                                          List<String> operators, boolean checkFilteringAttribute)
@@ -90,6 +90,7 @@ public class Utils {
     }
 
     public static Gson getGson() {
+
         return gson;
     }
 }

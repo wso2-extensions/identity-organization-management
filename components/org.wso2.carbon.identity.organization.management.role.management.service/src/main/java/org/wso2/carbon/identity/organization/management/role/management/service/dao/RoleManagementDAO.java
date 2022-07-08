@@ -65,9 +65,9 @@ public interface RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               getting a role.
      */
-    List<Role> getOrganizationRoles(String organizationId, int count,
-                                    List<ExpressionNode> expressionNodes, List<String> operators, String cursor,
-                                    String direction) throws OrganizationManagementServerException;
+    List<Role> getOrganizationRoles(String organizationId, int count, List<ExpressionNode> expressionNodes,
+                                    List<String> operators, String cursor, String direction)
+            throws OrganizationManagementServerException;
 
     /**
      * Patch a {@link Role} inside an organization.
@@ -138,6 +138,6 @@ public interface RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               getting a role.
      */
-    int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes,
-                                  List<String> operators) throws OrganizationManagementServerException;
+    int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes, List<String> operators)
+            throws OrganizationManagementServerException;
 }
