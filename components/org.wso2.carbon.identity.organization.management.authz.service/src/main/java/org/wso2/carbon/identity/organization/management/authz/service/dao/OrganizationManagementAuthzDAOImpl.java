@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.dao;
 
-import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
