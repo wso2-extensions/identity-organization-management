@@ -28,7 +28,6 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.common.Group;
-import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
@@ -96,8 +95,8 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             A user can be belonged only to the groups in the userstore where user resides.
             So group authorization is not required if the user is not inside the same org.
              */
-            User user = userStoreManager.getUser(userId, null);
-            if (user == null || StringUtils.isEmpty(user.getUsername())) {
+            boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
+            if (!isUserExists) {
                 return false;
             }
             List<Group> groupListOfUser = userStoreManager.getGroupListOfUser(userId, null, null);
