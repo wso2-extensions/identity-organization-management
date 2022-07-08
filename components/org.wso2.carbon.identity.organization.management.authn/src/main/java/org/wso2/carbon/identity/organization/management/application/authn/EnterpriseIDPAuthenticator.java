@@ -109,7 +109,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
@@ -219,15 +218,6 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         }
     }
 
-    private String getSharedOrganizationId(String organizationName) throws AuthenticationFailedException {
-
-        try {
-            return getOrganizationManager().getOrganizationIdByName(organizationName);
-        } catch (OrganizationManagementException e) {
-            throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION_NAME, organizationName, e);
-        }
-    }
-
     private String getTenantDomain(String organizationID) throws AuthenticationFailedException {
 
         try {
@@ -248,35 +238,25 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         }
         Map<String, String> runtimeParams = getRuntimeParams(context);
 
-        // When org query param is set in request.
-        if (StringUtils.isNotBlank(request.getParameter(ORG_PARAMETER))) {
-            String org = request.getParameter(ORG_PARAMETER);
-            try {
-                String orgName = getOrganizationNameById(org);
-                runtimeParams.put(ORG_ID_PARAMETER, org);
-                runtimeParams.put(ORG_NAME_PARAMETER, orgName);
-            } catch (AuthenticationFailedException e) {
-                // Check whether the org query param is related to organization name.
-                if (!resolveOrganizationByName(org, context, response)) {
-                    return AuthenticatorFlowStatus.INCOMPLETE;
-                }
-            }
-
-            // After successfully resolving organization by Id or Name, the request is redirecting to the sub org
-            redirectToSubOrganization(context, response, runtimeParams.get(ORG_ID_PARAMETER));
-            return AuthenticatorFlowStatus.INCOMPLETE;
-        }
-
-        // If block to skip callback responses to the authenticator from enterprise IDPs of sub orgs.
         if (StringUtils.isBlank(runtimeParams.get(ORG_ID_PARAMETER))) {
-            // #todo remove this workaround after find a way to capture orgId value from "o/<org-id>"
+            // String orgId = org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId();
+
             String orgId = IdentityTenantUtil.getTenantDomainFromContext();
+            // todo Remove the if block after above todo.
             if (orgId == null || SUPER_TENANT_DOMAIN_NAME.equals(orgId)) {
                 orgId = getOrgIdByTenantDomain(SUPER_TENANT_DOMAIN_NAME);
             }
+
             String tenantDomain = getTenantDomain(orgId);
-            // Check the request came for SAAS app owned org. If so redirect to org name capture.
             if (isSaasAppOwnedByTenant(context.getServiceProviderName(), tenantDomain)) {
+                if (StringUtils.isNotBlank(request.getParameter(ORG_PARAMETER))) {
+                    String org = request.getParameter(ORG_PARAMETER);
+                    if (!resolveOrganizationByName(org, context, response)) {
+                        return AuthenticatorFlowStatus.INCOMPLETE;
+                    }
+                    redirectToSubOrganization(context, response, runtimeParams.get(ORG_ID_PARAMETER));
+                    return AuthenticatorFlowStatus.INCOMPLETE;
+                }
                 redirectToOrgNameCapture(response, context);
                 return AuthenticatorFlowStatus.INCOMPLETE;
             }
@@ -310,13 +290,12 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
                     return true;
                 }
                 List<String> orgDetails = organizations.stream()
-                        .map(organization -> new StringBuilder().append(organization.getId()).append(":")
-                                .append(organization.getName()).append(":").
-                                append(organization.getDescription()).toString()).collect(Collectors.toList());
+                        .map(organization -> organization.getId() + ":" + organization.getName() + ":" +
+                                organization.getDescription()).collect(Collectors.toList());
                 redirectToSelectOrganization(response, context, String.join(",", orgDetails));
             }
         } catch (OrganizationManagementException ex) {
-            context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Id");
+            context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Name");
             redirectToOrgNameCapture(response, context);
         }
         return false;
@@ -382,7 +361,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         try {
             Map<String, String> queryMap = getQueryMap(context.getQueryParams());
             StringBuilder queryStringBuilder = new StringBuilder();
-            queryStringBuilder.append(ORG_PARAMETER).append(EQUAL_SIGN);
+            queryStringBuilder.append(IDP_PARAMETER).append(EQUAL_SIGN).append(context.getExternalIdP().getName());
             buildQueryParam(queryStringBuilder, CLIENT_ID_PARAMETER, queryMap.get(CLIENT_ID_PARAMETER));
             buildQueryParam(queryStringBuilder, REDIRECT_URI_PARAMETER, queryMap.get(REDIRECT_URI_PARAMETER));
             buildQueryParam(queryStringBuilder, RESPONSE_TYPE_PARAMETER, queryMap.get(RESPONSE_TYPE_PARAMETER));
@@ -397,6 +376,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     }
 
     private void buildQueryParam(StringBuilder builder, String query, String param) {
+
         builder.append(AMPERSAND_SIGN).append(query).append(EQUAL_SIGN).append(param);
     }
 
