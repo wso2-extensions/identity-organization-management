@@ -89,6 +89,15 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         try {
             AbstractUserStoreManager userStoreManager =
                     getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+            /*
+            Currently, userstore groups in the same organization can be assigned to a role.
+            A user can be belonged only to the groups in the userstore where user resides.
+            So group authorization is not required if the user is not inside the same org.
+             */
+            boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
+            if (!isUserExists) {
+                return false;
+            }
             List<Group> groupListOfUser = userStoreManager.getGroupListOfUser(userId, null, null);
 
             String groupSqlStmt = IS_GROUP_AUTHORIZED.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
