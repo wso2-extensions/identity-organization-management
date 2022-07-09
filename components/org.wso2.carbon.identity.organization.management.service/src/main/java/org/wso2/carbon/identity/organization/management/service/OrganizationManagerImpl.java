@@ -87,7 +87,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_ID_UNDEFINED;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_RESERVED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PARENT_ORGANIZATION_IS_DISABLED;
@@ -368,7 +367,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private void validateAddOrganizationRequest(Organization organization) throws OrganizationManagementException {
 
         validateAddOrganizationRequiredFields(organization);
-        validateAddOrganizationNameField(organization.getName());
+        validateOrganizationNameField(organization.getName());
         validateOrganizationAttributes(organization.getAttributes());
         validateAddOrganizationType(organization);
     }
@@ -442,7 +441,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             if (StringUtils.isBlank(attributeKey)) {
                 throw handleClientException(ERROR_CODE_ATTRIBUTE_KEY_MISSING);
             }
-            if (attributeValue == null) {
+            if (StringUtils.isBlank(attributeValue)) {
                 throw handleClientException(ERROR_CODE_ATTRIBUTE_VALUE_MISSING);
             }
             attribute.setKey(attributeKey.trim());
@@ -457,14 +456,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
     }
 
-    private void validateAddOrganizationNameField(String organizationName) throws OrganizationManagementException {
+    private void validateOrganizationNameField(String organizationName) throws OrganizationManagementException {
 
-        if (StringUtils.equals(ROOT, organizationName)) {
+        if (StringUtils.equalsIgnoreCase(ROOT, organizationName)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_RESERVED, ROOT);
-        }
-
-        if (isOrganizationExistByName(organizationName)) {
-            throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, organizationName);
         }
     }
 
@@ -534,10 +529,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         validateOrganizationStatusUpdate(organization.getStatus(), organization.getId());
 
         String newOrganizationName = organization.getName().trim();
-        // Check if the organization name already exists for the given tenant.
-        if (!StringUtils.equals(currentOrganizationName, newOrganizationName) &&
-                isOrganizationExistByName(newOrganizationName)) {
-            throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, newOrganizationName);
+        // Check if the organization name is reserved.
+        if (!StringUtils.equals(currentOrganizationName, newOrganizationName)) {
+            validateOrganizationNameField(newOrganizationName);
         }
         organization.setName(newOrganizationName);
 
@@ -588,10 +582,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 throw handleClientException(ERROR_CODE_PATCH_REQUEST_MANDATORY_FIELD_INVALID_OPERATION, op, path);
             }
 
-            // Check if the new organization name already exists.
-            if (path.equals(PATCH_PATH_ORG_NAME) && isOrganizationExistByName(value) &&
-                    !StringUtils.equals(getOrganizationIdByName(value), organizationId)) {
-                throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, value);
+            // Check whether the new organization name is reserved.
+            if (path.equals(PATCH_PATH_ORG_NAME)) {
+                validateOrganizationNameField(value);
             }
 
             if (StringUtils.equals(PATCH_PATH_ORG_STATUS, path)) {

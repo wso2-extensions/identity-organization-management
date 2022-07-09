@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
 
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.RolesResponse;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -56,11 +57,12 @@ public interface RoleManager {
      * @param limit          The maximum number of records to be returned.
      * @param filter         The filter string.
      * @param organizationId The ID of the organization.
+     * @param cursor         The encoded string that is used to get the next page or previous page of results.
      * @return The list containing roles of the organization where organization ID has been passed.
      * @throws OrganizationManagementException This exception is thrown when an error happens when getting roles from
      *                                         organization ID.
      */
-    List<Role> getOrganizationRoles(int limit, String filter, String organizationId)
+    RolesResponse getOrganizationRoles(int limit, String filter, String organizationId, String cursor)
             throws OrganizationManagementException;
 
     /**

@@ -56,15 +56,17 @@ public interface RoleManagementDAO {
      * Get all the {@link Role}s of an organization.
      *
      * @param organizationId  The ID of the organization.
-     * @param limit           Specifies the desired number of query results per page.
+     * @param count           Specifies the desired number of query results per page.
      * @param expressionNodes The list of filters.
      * @param operators       The list containing the and, or operators.
+     * @param cursor          The cursor to fetch records from.
+     * @param direction       The direction the list of roles should be retrieved with respect to the cursor.
      * @return A list of Roles.
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
      *                                               getting a role.
      */
-    List<Role> getOrganizationRoles(String organizationId, int limit, List<ExpressionNode> expressionNodes,
-                                    List<String> operators)
+    List<Role> getOrganizationRoles(String organizationId, int count, List<ExpressionNode> expressionNodes,
+                                    List<String> operators, String cursor, String direction)
             throws OrganizationManagementServerException;
 
     /**
@@ -127,12 +129,15 @@ public interface RoleManagementDAO {
     boolean checkUserExists(String userId, int tenantId) throws OrganizationManagementServerException;
 
     /**
-     * Check whether a group exists inside a tenant.
+     * Get the count of {@link Role}s of an organization with respect to the filter criteria.
      *
-     * @param groupId  The ID of the group.
-     * @param tenantId The ID of the tenant.
-     * @return If there is group then returns true, else false.
-     * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking
-     *                                               the group existence.
+     * @param organizationId  The ID of the organization.
+     * @param expressionNodes The list of filters.
+     * @param operators       The list containing the and, or operators.
+     * @return The total number of Roles.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
+     *                                               getting a role.
      */
+    int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes, List<String> operators)
+            throws OrganizationManagementServerException;
 }

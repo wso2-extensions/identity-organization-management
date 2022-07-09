@@ -101,7 +101,8 @@ public class OrganizationManagementService {
             String sortOrder = StringUtils.isNotBlank(before) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
             List<BasicOrganization> organizations = getOrganizationManager().getOrganizations(limit + 1, after,
                     before, sortOrder, filter, Boolean.TRUE.equals(recursive));
-            return Response.ok().entity(getOrganizationsResponse(limit, after, before, filter, organizations)).build();
+            return Response.ok().entity(getOrganizationsResponse(limit, after, before, filter, organizations,
+                    Boolean.TRUE.equals(recursive))).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -394,7 +395,7 @@ public class OrganizationManagementService {
     }
 
     private OrganizationsResponse getOrganizationsResponse(Integer limit, String after, String before, String filter,
-                                                           List<BasicOrganization> organizations)
+                                                           List<BasicOrganization> organizations, boolean recursive)
             throws OrganizationManagementServerException {
 
         OrganizationsResponse organizationsResponse = new OrganizationsResponse();
@@ -406,7 +407,7 @@ public class OrganizationManagementService {
                     (StringUtils.isNotBlank(before) && !hasMoreItems);
             boolean isLastPage = !hasMoreItems && (StringUtils.isNotBlank(after) || StringUtils.isBlank(before));
 
-            String url = "?limit=" + limit;
+            String url = "?limit=" + limit + "&recursive=" + recursive;
             if (StringUtils.isNotBlank(filter)) {
                 try {
                     url += "&filter=" + URLEncoder.encode(filter, StandardCharsets.UTF_8.name());

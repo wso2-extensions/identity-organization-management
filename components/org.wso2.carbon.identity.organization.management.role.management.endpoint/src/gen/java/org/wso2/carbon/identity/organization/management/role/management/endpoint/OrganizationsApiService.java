@@ -40,7 +40,8 @@ public interface OrganizationsApiService {
 
       public Response createRole(String organizationId, RolePostRequest rolePostRequest);
 
-      public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer limit);
+      public Response organizationsOrganizationIdRolesGet(String organizationId, String filter, Integer count,
+                                                          String cursor);
 
       public Response organizationsOrganizationIdRolesRoleIdDelete(String roleId, String organizationId);
 

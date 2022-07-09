@@ -45,6 +45,7 @@ import org.wso2.carbon.identity.organization.management.role.management.endpoint
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Group;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.PatchOperation;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
+import org.wso2.carbon.identity.organization.management.role.management.service.models.RolesResponse;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -143,16 +144,17 @@ public class RoleManagementService {
      *
      * @param organizationId The ID of the organization.
      * @param filter         Param for filtering the results.
-     * @param limit          Param for limiting the results.
+     * @param count          Param for desired maximum number of query results per page.
+     * @param cursor         Param for cursor to fetch the next page of results.
      * @return The roles inside an organization.
      */
-    public Response getRolesOfOrganization(String organizationId, String filter, Integer limit) {
+    public Response getRolesOfOrganization(String organizationId, String filter, Integer count, String cursor) {
 
         try {
-            int limitValue = validateLimit(limit);
-            List<Role> roles = RoleManagementEndpointUtils.getRoleManager()
-                    .getOrganizationRoles(limitValue, filter, organizationId);
-            return Response.ok().entity(getRoleListResponse(organizationId, roles)).build();
+            int limitValue = validateCount(count);
+            RolesResponse rolesResponse = RoleManagementEndpointUtils.getRoleManager()
+                    .getOrganizationRoles(limitValue, filter, organizationId, cursor);
+            return Response.ok().entity(getRoleListResponse(organizationId, rolesResponse)).build();
         } catch (OrganizationManagementClientException e) {
             return RoleManagementEndpointUtils.handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -343,6 +345,7 @@ public class RoleManagementService {
      * @return The RoleGetResponseUser list.
      */
     private List<RoleGetResponseUser> getUsersForResponseObject(List<User> roleUsers, String organizationId) {
+
         List<RoleGetResponseUser> users = new ArrayList<>();
         for (User basicUser : roleUsers) {
             RoleGetResponseUser user = new RoleGetResponseUser();
@@ -399,15 +402,20 @@ public class RoleManagementService {
      * Generate a response object for get operation.
      *
      * @param organizationId The ID of the organization.
-     * @param roles          List of roles.
+     * @param rolesResponse  Roles response including list of roles.
      * @return The RoleListResponse.
      */
-    private RolesListResponse getRoleListResponse(String organizationId, List<Role> roles) {
+    private RolesListResponse getRoleListResponse(String organizationId, RolesResponse rolesResponse) {
 
         RolesListResponse response = new RolesListResponse();
-        if (CollectionUtils.isNotEmpty(roles)) {
+        response.setNextCursor(rolesResponse.getNextCursor());
+        response.setPreviousCursor(rolesResponse.getPreviousCursor());
+        response.setItemsPerPage(rolesResponse.getItemsPerPage());
+        response.setTotalResults(rolesResponse.getTotalResults());
+
+        if (rolesResponse.getRoles() != null) {
             List<RoleObj> roleDTOs = new ArrayList<>();
-            for (Role role : roles) {
+            for (Role role : rolesResponse.getRoles()) {
                 RoleObj roleObj = new RoleObj();
                 RoleObjMeta roleObjMeta = new RoleObjMeta();
                 roleObjMeta.setLocation(RoleManagementEndpointUtils.getUri(organizationId, role.getId(), ROLE_PATH,
@@ -417,39 +425,38 @@ public class RoleManagementService {
                 roleObj.setMeta(roleObjMeta);
                 roleDTOs.add(roleObj);
             }
-            response.setRoles(roleDTOs);
+            response.setResources(roleDTOs);
         }
         return response;
     }
 
     /**
-     * @param limit The param for limiting results.
-     * @return The limit.
-     * @throws OrganizationManagementClientException This exception is thrown if the limit is not valid.
+     * @param count The param for desired maximum number of query results per page.
+     * @return The count.
      */
-    private int validateLimit(Integer limit) throws OrganizationManagementClientException {
+    private int validateCount(Integer count) {
 
-        if (limit == null) {
+        if (count == null) {
             int defaultItemsPerPage = IdentityUtil.getDefaultItemsPerPage();
             if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("Given limit is null. Therefore the default limit is set to %s.",
+                LOG.debug(String.format("Given count is null. Therefore the default count is set to %s.",
                         defaultItemsPerPage));
             }
             return defaultItemsPerPage;
         }
 
-        if (limit < 0) {
-            limit = 0;
+        if (count < 0) {
+            count = 0;
         }
 
         int maximumItemsPerPage = IdentityUtil.getMaximumItemPerPage();
-        if (limit > maximumItemsPerPage) {
+        if (count > maximumItemsPerPage) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("Given limit exceeds the maximum limit. Therefore the limit is set to %s.",
+                LOG.debug(String.format("Given count exceeds the maximum count. Therefore the count is set to %s.",
                         maximumItemsPerPage));
             }
             return maximumItemsPerPage;
         }
-        return limit;
+        return count;
     }
 }
