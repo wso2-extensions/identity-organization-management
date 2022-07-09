@@ -86,7 +86,6 @@
                         </Export-Package>
                         <Import-Package>
                             javax.servlet.http;version="${javax.servlet.imp.pkg.version.range}",
-                            javax.sql,
                             org.apache.catalina;version="${catalina.imp.pkg.version.range}",
                             org.apache.catalina.connector;version="${catalina.imp.pkg.version.range}",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
