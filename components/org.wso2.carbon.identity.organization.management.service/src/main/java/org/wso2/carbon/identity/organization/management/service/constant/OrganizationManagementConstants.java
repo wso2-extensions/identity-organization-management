@@ -144,8 +144,6 @@ public class OrganizationManagementConstants {
                 "Attribute keys cannot be duplicated."),
         ERROR_CODE_INVALID_PARENT_ORGANIZATION("60005", "Invalid parent organization.",
                 "Defined parent organization: %s doesn't exist."),
-        ERROR_CODE_ORGANIZATION_NAME_CONFLICT("60006", "Organization name unavailable.",
-                "Provided organization name: %s already exists."), // 409
         ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS("60007", "Unable to delete the organization.",
                 "Organization with ID: %s has one or more child organizations."),
         ERROR_CODE_PATCH_OPERATION_UNDEFINED("60008", "Unable to patch the organization.",

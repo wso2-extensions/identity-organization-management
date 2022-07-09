@@ -34,7 +34,6 @@ import javax.ws.rs.core.Response;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_PAGINATED_RESPONSE_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
@@ -61,10 +60,6 @@ public class OrganizationManagementEndpointUtil {
             throw buildException(Response.Status.NOT_FOUND, log, e);
         }
 
-        if (isConflictError(e)) {
-            throw buildException(Response.Status.CONFLICT, log, e);
-        }
-
         if (isForbiddenError(e)) {
             throw buildException(Response.Status.FORBIDDEN, log, e);
         }
@@ -88,11 +83,6 @@ public class OrganizationManagementEndpointUtil {
 
         return ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode());
 
-    }
-
-    private static boolean isConflictError(OrganizationManagementClientException e) {
-
-        return ERROR_CODE_ORGANIZATION_NAME_CONFLICT.getCode().equals(e.getErrorCode());
     }
 
     private static boolean isForbiddenError(OrganizationManagementClientException e) {
