@@ -224,6 +224,8 @@ public class OrganizationManagementConstants {
                 "Invalid attribute to assign for a role."),
         ERROR_CODE_ROLE_LIST_INVALID_CURSOR("60049", "Cursor decoding failed.",
                 "Malformed cursor %s cannot be processed."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60050", "Role can't be modified.",
+                "Role %s cannot be updated/deleted."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
