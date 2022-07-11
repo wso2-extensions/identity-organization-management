@@ -226,6 +226,9 @@ public class OrganizationManagementConstants {
                 "Malformed cursor %s cannot be processed."),
         ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE("60050", "ROOT organization can't be disabled or deleted.",
                 "Organization %s can't be disabled or deleted."),
+        ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
+                "Organization %s can't be renamed."),
+
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
