@@ -20,6 +20,10 @@ package org.wso2.carbon.identity.organization.management.authz.service.internal;
 
 import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Class to hold organization management related authorization service data.
  */
@@ -27,6 +31,7 @@ public class OrganizationManagementAuthzServiceHolder {
 
     private static OrganizationManagementAuthzServiceHolder instance = new OrganizationManagementAuthzServiceHolder();
     private RealmService realmService = null;
+    private Map<String, List<String>> scopePermissionMapping = new HashMap<>();
 
     public static OrganizationManagementAuthzServiceHolder getInstance() {
 
@@ -41,5 +46,15 @@ public class OrganizationManagementAuthzServiceHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    public void setScopePermissionMapping(Map<String, List<String>> scopePermissionMapping) {
+
+        this.scopePermissionMapping = scopePermissionMapping;
+    }
+
+    public Map<String, List<String>> getScopePermissionMapping() {
+
+        return scopePermissionMapping;
     }
 }

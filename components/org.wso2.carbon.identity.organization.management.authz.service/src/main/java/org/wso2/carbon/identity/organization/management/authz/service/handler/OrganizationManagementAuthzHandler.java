@@ -48,7 +48,6 @@ import java.util.Map;
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_VALIDATE_SCOPE;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.RESOURCE_PERMISSION_NONE;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCOPE_PERMISSION_MAP;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getUserStoreManager;
 
 /**
@@ -182,21 +181,32 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 }
             }
             if (granted) {
-                List<String> permissions = new ArrayList<>();
-                for (Map.Entry<String, String> entry : SCOPE_PERMISSION_MAP.entrySet()) {
+                Map<String, List<String>> scopePermissionMapping = OrganizationManagementAuthzServiceHolder
+                        .getInstance().getScopePermissionMapping();
+                boolean isUserAuthorized = false;
+                for (Map.Entry<String, List<String>> entry : scopePermissionMapping.entrySet()) {
                     String scope = entry.getKey();
-                    for (String tokenScope : tokenScopes) {
-                        if (StringUtils.equals(tokenScope, scope)) {
-                            permissions.add(entry.getValue());
+                    if (authorizationContext.getRequiredScopes().contains(scope)) {
+                        for (String tokenScope : tokenScopes) {
+                            List<String> permissions = new ArrayList<>();
+                            if (StringUtils.equals(tokenScope, scope)) {
+                                permissions.addAll(entry.getValue());
+                            }
+                            for (String permissionString : permissions) {
+                                isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance()
+                                        .isUserAuthorized(getUserId(user), permissionString, orgId);
+                                if (isUserAuthorized) {
+                                    authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
+                                    break;
+                                }
+                            }
+                            if (isUserAuthorized) {
+                                break;
+                            }
                         }
-                    }
-                }
-                for (String permissionString : permissions) {
-                    boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance()
-                            .isUserAuthorized(getUserId(user), permissionString, orgId);
-                    if (isUserAuthorized) {
-                        authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
-                        break;
+                        if (isUserAuthorized) {
+                            break;
+                        }
                     }
                 }
             }

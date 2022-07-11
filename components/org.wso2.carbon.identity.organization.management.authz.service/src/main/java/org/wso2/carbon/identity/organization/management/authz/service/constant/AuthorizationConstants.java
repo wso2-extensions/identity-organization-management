@@ -18,19 +18,13 @@
 
 package org.wso2.carbon.identity.organization.management.authz.service.constant;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Constants related to organization management authorization service.
  */
 public class AuthorizationConstants {
 
     public static final String PERMISSION_SPLITTER = "/";
-    public static final String URI_SPLITTER = "/";
     public static final String RESOURCE_PERMISSION_NONE = "none";
-    public static final String ORGANIZATION_RESOURCE = "organizations";
     public static final String REGEX_FOR_URLS_WITH_ORG_ID =
             "^(.)*(/api/identity/organization-mgt/v1.0/organizations/)[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}(.)*$";
 
@@ -40,18 +34,4 @@ public class AuthorizationConstants {
     public static final String HTTP_PUT = "PUT";
     public static final String ROOT = "ROOT";
 
-    private static Map<String, String> scopePermissionMap = new HashMap<>();
-
-    static {
-
-        // todo: read from file.
-        scopePermissionMap.put("internal_organization_view",
-                "/permission/admin/manage/identity/organizationmgt/view");
-        scopePermissionMap.put("internal_organization_update",
-                "/permission/admin/manage/identity/organizationmgt/update");
-        scopePermissionMap.put("internal_organization_delete",
-                "/permission/admin/manage/identity/organizationmgt/delete");
-    }
-
-    public static final Map<String, String> SCOPE_PERMISSION_MAP = Collections.unmodifiableMap(scopePermissionMap);
 }
