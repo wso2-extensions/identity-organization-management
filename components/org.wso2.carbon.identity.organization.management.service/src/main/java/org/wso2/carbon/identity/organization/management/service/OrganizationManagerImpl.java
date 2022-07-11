@@ -99,6 +99,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_REPLACE_NON_EXISTING_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REQUIRED_FIELDS_MISSING;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -352,6 +353,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     private void validateOrganizationDelete(String organizationId) throws OrganizationManagementException {
 
+        if (StringUtils.equals(getOrganizationIdByName(ROOT), organizationId)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE, organizationId);
+        }
         if (organizationManagementDAO.hasChildOrganizations(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS, organizationId);
         }
@@ -636,6 +640,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
             throw handleClientException(ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS, value);
         }
         if (StringUtils.equals(DISABLED.toString(), value) &&
+                StringUtils.equals(getOrganizationIdByName(ROOT), organizationId)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE, organizationId);
+        } else if (StringUtils.equals(DISABLED.toString(), value) &&
                 organizationManagementDAO.hasActiveChildOrganizations(organizationId)) {
             throw handleClientException(ERROR_CODE_ACTIVE_CHILD_ORGANIZATIONS_EXIST, organizationId);
         } else if (StringUtils.equals(ACTIVE.toString(), value) &&
