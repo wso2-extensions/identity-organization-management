@@ -108,6 +108,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
@@ -127,6 +128,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING;
@@ -287,6 +289,24 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
+    public List<Role> getUserOrganizationRoles(String userId, String organizationId)
+            throws OrganizationManagementServerException {
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_ROLES,
+                    (resultSet, rowNumber) -> new Role(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
+                    userId);
+        }
+    }
+
+    @Override
     public List<String> getUserOrganizationPermissions(String userId, String organizationId)
             throws OrganizationManagementServerException {
 
@@ -299,7 +319,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
                     });
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
+                    userId);
         }
     }
 
