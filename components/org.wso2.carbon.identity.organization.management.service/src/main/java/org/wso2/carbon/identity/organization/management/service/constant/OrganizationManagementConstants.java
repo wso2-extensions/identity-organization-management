@@ -228,6 +228,8 @@ public class OrganizationManagementConstants {
                 "Organization %s can't be disabled or deleted."),
         ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
                 "Organization %s can't be renamed."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
+                "Role %s cannot be updated or deleted."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
