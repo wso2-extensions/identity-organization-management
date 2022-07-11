@@ -121,7 +121,7 @@ public class RoleManagerImpl implements RoleManager {
             throws OrganizationManagementException {
 
         String direction = FORWARD.toString();
-        String cursorValue = StringUtils.EMPTY;
+        String cursorValue = " ";
         String nextCursor = null;
         String previousCursor = null;
         validateOrganizationId(organizationId);

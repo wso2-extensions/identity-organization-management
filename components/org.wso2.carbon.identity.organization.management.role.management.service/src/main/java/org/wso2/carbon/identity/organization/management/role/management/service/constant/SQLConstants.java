@@ -34,12 +34,12 @@ public class SQLConstants {
     public static final String ADD_ROLE_GROUP_MAPPING = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, UM_ROLE_ID) " +
             "VALUES ";
 
+    public static final String ADD_ROLE_GROUP_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, " +
+            "UM_ROLE_ID) WITH orgRoleGroups AS (";
+
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
-
-    public static final String ADD_ROLE_GROUP_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, " +
-            "UM_ROLE_ID) WITH orgRoleGroups AS (";
 
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE = "SELECT :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;, :" +
@@ -49,12 +49,12 @@ public class SQLConstants {
 
     public static final String ADD_ROLE_USER_MAPPING = "INSERT INTO UM_ORG_ROLE_USER (UM_USER_ID, UM_ROLE_ID) VALUES ";
 
+    public static final String ADD_ROLE_USER_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_USER (UM_USER_ID, UM_ROLE_ID) " +
+            "WITH orgRoleUsers AS (";
+
     public static final String ADD_ROLE_USER_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
-
-    public static final String ADD_ROLE_USER_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_USER (UM_USER_ID, UM_ROLE_ID) " +
-            "WITH orgRoleUsers AS (";
 
     public static final String ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE = "SELECT :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "%1$d;, :" +
@@ -65,12 +65,12 @@ public class SQLConstants {
     public static final String ADD_ROLE_PERMISSION_MAPPING = "INSERT INTO UM_ORG_ROLE_PERMISSION " +
             "(UM_PERMISSION_ID, UM_ROLE_ID) VALUES ";
 
+    public static final String ADD_ROLE_PERMISSION_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_PERMISSION " +
+            "(UM_PERMISSION_ID, UM_ROLE_ID) WITH orgRolePermissions AS (";
+
     public static final String ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
-
-    public static final String ADD_ROLE_PERMISSION_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_PERMISSION " +
-            "(UM_PERMISSION_ID, UM_ROLE_ID) WITH orgRolePermissions AS (";
 
     public static final String ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES_ORACLE = "SELECT :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d;, :" +
@@ -125,13 +125,13 @@ public class SQLConstants {
     public static final String ADD_PERMISSION_IF_NOT_EXISTS = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
             "UM_ACTION, UM_TENANT_ID) VALUES ";
 
+    public static final String ADD_PERMISSION_IF_NOT_EXISTS_ORACLE = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
+            "UM_ACTION, UM_TENANT_ID) WITH orgPermissions AS (";
+
     public static final String ADD_PERMISSION_IF_NOT_EXISTS_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "%1$d;, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION + "%1$d;, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "%1$d;)";
-
-    public static final String ADD_PERMISSION_IF_NOT_EXISTS_ORACLE = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
-            "UM_ACTION, UM_TENANT_ID) WITH orgPermissions AS (";
 
     public static final String ADD_PERMISSION_IF_NOT_EXISTS_VALUES_ORACLE = "SELECT :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + "%1$d;, :" +
@@ -183,22 +183,32 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME ASC LIMIT :"  +
             SQLPlaceholders.DB_SCHEMA_LIMIT + ";";
 
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME > :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME ASC FETCH FIRST :"  +
+            SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY";
+
     public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC LIMIT :"  +
             SQLPlaceholders.DB_SCHEMA_LIMIT + "; ) AS R ORDER BY R.UM_ROLE_NAME ASC";
+
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_ORACLE = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC FETCH FIRST :"  +
+            SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY) R ORDER BY R.UM_ROLE_NAME ASC";
 
     public static final String GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
     public static final String DELETE_USERS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_USER WHERE ";
 
+    public static final String DELETE_USERS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_USER WHERE (UM_ROLE_ID, " +
+            "UM_USER_ID) IN (";
+
     public static final String DELETE_USERS_FROM_ROLE_MAPPING = "(UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_USER_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "%1$d;)";
-
-    public static final String DELETE_USERS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_USER WHERE (UM_ROLE_ID, " +
-            "UM_USER_ID) IN (";
 
     public static final String DELETE_USERS_FROM_ROLE_MAPPING_ORACLE = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;, :" +
@@ -209,12 +219,12 @@ public class SQLConstants {
 
     public static final String DELETE_GROUPS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_GROUP WHERE ";
 
+    public static final String DELETE_GROUPS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_GROUP WHERE (UM_ROLE_ID, " +
+            "UM_GROUP_ID) IN (";
+
     public static final String DELETE_GROUPS_FROM_ROLE_MAPPING = "(UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_GROUP_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;)";
-
-    public static final String DELETE_GROUPS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_GROUP WHERE (UM_ROLE_ID, " +
-            "UM_GROUP_ID) IN (";
 
     public static final String DELETE_GROUPS_FROM_ROLE_MAPPING_ORACLE = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;, :" +
@@ -225,12 +235,12 @@ public class SQLConstants {
 
     public static final String DELETE_PERMISSIONS_FROM_ROLE = "DELETE FROM UM_ORG_ROLE_PERMISSION WHERE ";
 
+    public static final String DELETE_PERMISSIONS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_PERMISSION WHERE " +
+            "(UM_ROLE_ID, UM_PERMISSION_ID) IN (";
+
     public static final String DELETE_PERMISSIONS_FROM_ROLE_MAPPING = "(UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; AND UM_PERMISSION_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + "%1$d;)";
-
-    public static final String DELETE_PERMISSIONS_FROM_ROLE_ORACLE = "DELETE FROM UM_ORG_ROLE_PERMISSION WHERE " +
-            "(UM_ROLE_ID, UM_PERMISSION_ID) IN (";
 
     public static final String DELETE_PERMISSIONS_FROM_ROLE_MAPPING_ORACLE = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;, :" +

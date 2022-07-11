@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.management.service.constant;
 public class SQLConstants {
 
     // Database types
-    public static final String ORACLE = "Oracle";
+    public static final String ORACLE = "oracle";
 
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
 

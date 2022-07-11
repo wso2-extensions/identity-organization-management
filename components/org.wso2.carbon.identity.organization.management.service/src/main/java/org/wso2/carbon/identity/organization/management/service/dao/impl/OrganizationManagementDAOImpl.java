@@ -135,7 +135,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY_ORACLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_OTHER_ORGANIZATION_HIERARCHY;
-import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.ORACLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PATCH_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PATCH_ORGANIZATION_CONCLUDE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
@@ -158,6 +157,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION_LAST_MODIFIED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
  * Organization management dao implementation.
@@ -173,7 +173,6 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            String driverName = namedJdbcTemplate.getDriverName();
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_ORGANIZATION, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organization.getId());
@@ -190,7 +189,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 if (CollectionUtils.isNotEmpty(organization.getAttributes())) {
                     addOrganizationAttributes(organization);
                 }
-                if (driverName.contains(ORACLE)) {
+                if (isOracleDB()) {
                     addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY_ORACLE, organization);
                 } else {
                     addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY, organization);
@@ -198,7 +197,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 addOrganizationHierarchy(INSERT_OTHER_ORGANIZATION_HIERARCHY, organization);
                 return null;
             });
-        } catch (TransactionException | DataAccessException e) {
+        } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_ERROR_ADDING_ORGANIZATION, e);
         }
     }
@@ -323,41 +322,31 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         Map<String, String> parentIdFilterAttributeValueMap = parentIdFilterQueryBuilder.getFilterAttributeValue();
         String parentIdFilterQuery = parentIdFilterQueryBuilder.getFilterQuery();
 
+        String sqlStmt;
+        String getOrgSqlStmtTail = isOracleDB() ? GET_ORGANIZATIONS_TAIL_ORACLE : GET_ORGANIZATIONS_TAIL;
+
+        if (StringUtils.isBlank(parentIdFilterQuery)) {
+            sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
+                    String.format(getOrgSqlStmtTail, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
+        } else {
+            sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
+                    String.format(getOrgSqlStmtTail, parentIdFilterQuery, recursive ? "> 0" : "= 1",
+                            sortOrder);
+        }
+
+        String permissionPlaceholder = "PERMISSION_";
+        List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
+        List<String> permissionPlaceholders = new ArrayList<>();
+        // Constructing the placeholders required to hold the permission strings in the named prepared statement.
+        for (int i = 1; i <= permissions.size(); i++) {
+            permissionPlaceholders.add(":" + permissionPlaceholder + i + ";");
+        }
+        String placeholder = String.join(", ", permissionPlaceholders);
+        sqlStmt = sqlStmt.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
+
         List<BasicOrganization> organizations;
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            String driverName = namedJdbcTemplate.getDriverName();
-            String sqlStmt;
-            if (driverName.contains(ORACLE)) {
-                if (StringUtils.isBlank(parentIdFilterQuery)) {
-                    sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                            String.format(GET_ORGANIZATIONS_TAIL_ORACLE, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
-                } else {
-                    sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                            String.format(GET_ORGANIZATIONS_TAIL_ORACLE, parentIdFilterQuery, recursive ? "> 0" : "= 1",
-                                    sortOrder);
-                }
-            } else {
-                if (StringUtils.isBlank(parentIdFilterQuery)) {
-                    sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                            String.format(GET_ORGANIZATIONS_TAIL, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
-                } else {
-                    sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                            String.format(GET_ORGANIZATIONS_TAIL, parentIdFilterQuery, recursive ? "> 0" : "= 1",
-                                    sortOrder);
-                }
-            }
-
-            String permissionPlaceholder = "PERMISSION_";
-            List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
-            List<String> permissionPlaceholders = new ArrayList<>();
-            // Constructing the placeholders required to hold the permission strings in the named prepared statement.
-            for (int i = 1; i <= permissions.size(); i++) {
-                permissionPlaceholders.add(":" + permissionPlaceholder + i + ";");
-            }
-            String placeholder = String.join(", ", permissionPlaceholders);
-            sqlStmt = sqlStmt.replace(PERMISSION_LIST_PLACEHOLDER, placeholder);
-
             organizations = namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> {
                         BasicOrganization organization = new BasicOrganization();

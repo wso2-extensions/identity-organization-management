@@ -384,7 +384,9 @@ public class OrganizationManagementConstants {
                 "Error while retrieving ancestors of organization with ID: %s."),
         ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG("65066",
                 "Error while resolving user from resident organization.",
-                "Error while resolving user: %s from resident organization, to access organization with ID: %s.");
+                "Error while resolving user: %s from resident organization, to access organization with ID: %s."),
+        ERROR_CODE_ERROR_CHECKING_DB_METADATA("65067", "Error while checking the database metadata.",
+                "Server encountered an error while checking database type.");
 
         private final String code;
         private final String message;
