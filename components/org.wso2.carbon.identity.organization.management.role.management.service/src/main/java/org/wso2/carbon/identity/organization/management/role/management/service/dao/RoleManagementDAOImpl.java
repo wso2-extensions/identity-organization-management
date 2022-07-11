@@ -107,6 +107,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
@@ -235,7 +236,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         AbstractUserStoreManager userStoreManager =
                 getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
         List<Group> groups = new ArrayList<>();
-        for (String groupId: groupIdList) {
+        for (String groupId : groupIdList) {
             String groupName = userStoreManager.getGroupNameByGroupId(groupId);
             groups.add(new Group(groupId, groupName));
         }
@@ -279,6 +280,23 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         }
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, cursor);
                         namedPreparedStatement.setInt(DB_SCHEMA_LIMIT, count);
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
+        }
+    }
+
+    @Override
+    public List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_PERMISSIONS,
+                    (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
                     });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_GETTING_ROLES_FROM_ORGANIZATION, e, organizationId);
@@ -345,7 +363,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         .collect(Collectors.toList());
                 List<String> groups =
                         getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
-                        .collect(Collectors.toList());
+                                .collect(Collectors.toList());
                 List<String> permissions = getPermissionsWithIdFromRoleId(roleId).stream()
                         .map(Permission::getId).map(Object::toString).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(users)) {

@@ -70,6 +70,16 @@ public interface RoleManagementDAO {
             throws OrganizationManagementServerException;
 
     /**
+     *
+     * @param userId
+     * @param organizationId
+     * @return
+     * @throws OrganizationManagementServerException
+     */
+    List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementServerException;
+
+    /**
      * Patch a {@link Role} inside an organization.
      *
      * @param organizationId  The ID of the organization.

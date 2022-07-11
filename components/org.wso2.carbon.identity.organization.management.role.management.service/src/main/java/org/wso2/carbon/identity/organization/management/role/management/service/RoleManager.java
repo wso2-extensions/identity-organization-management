@@ -66,6 +66,18 @@ public interface RoleManager {
             throws OrganizationManagementException;
 
     /**
+     * Get organization permissions of a particular user.
+     *
+     * @param userId         Unique identifier of the user.
+     * @param organizationId The ID of the organization.
+     * @return The list of organization roles of the user.
+     * @throws OrganizationManagementException This exception is thrown when an error happens when getting roles from
+     *                                         organization ID.
+     */
+    List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementException;
+
+    /**
      * Patch a particular role inside an organization.
      *
      * @param organizationId  The ID of the organization.

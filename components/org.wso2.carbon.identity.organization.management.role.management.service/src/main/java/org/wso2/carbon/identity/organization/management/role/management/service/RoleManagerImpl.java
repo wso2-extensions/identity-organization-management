@@ -156,6 +156,13 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     @Override
+    public List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementException {
+
+        return roleManagementDAO.getUserOrganizationPermissions(userId, organizationId);
+    }
+
+    @Override
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
