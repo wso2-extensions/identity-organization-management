@@ -100,6 +100,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REQUIRED_FIELDS_MISSING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_RENAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -533,6 +534,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         validateOrganizationStatusUpdate(organization.getStatus(), organization.getId());
 
         String newOrganizationName = organization.getName().trim();
+        if (StringUtils.equals(ROOT, currentOrganizationName)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_RENAME, organization.getId());
+        }
         // Check if the organization name is reserved.
         if (!StringUtils.equals(currentOrganizationName, newOrganizationName)) {
             validateOrganizationNameField(newOrganizationName);
@@ -588,6 +592,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
             // Check whether the new organization name is reserved.
             if (path.equals(PATCH_PATH_ORG_NAME)) {
+                if (StringUtils.equals(getOrganizationIdByName(ROOT), organizationId)) {
+                    throw handleClientException(ERROR_CODE_ROOT_ORG_RENAME, organizationId);
+                }
                 validateOrganizationNameField(value);
             }
 
