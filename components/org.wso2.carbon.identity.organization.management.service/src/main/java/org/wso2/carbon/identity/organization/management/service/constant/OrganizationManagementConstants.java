@@ -224,8 +224,12 @@ public class OrganizationManagementConstants {
                 "Invalid attribute to assign for a role."),
         ERROR_CODE_ROLE_LIST_INVALID_CURSOR("60049", "Cursor decoding failed.",
                 "Malformed cursor %s cannot be processed."),
-        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60050", "Role can't be modified.",
-                "Role %s cannot be updated/deleted."),
+        ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE("60050", "ROOT organization can't be disabled or deleted.",
+                "Organization %s can't be disabled or deleted."),
+        ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
+                "Organization %s can't be renamed."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
+                "Role %s cannot be updated or deleted."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",

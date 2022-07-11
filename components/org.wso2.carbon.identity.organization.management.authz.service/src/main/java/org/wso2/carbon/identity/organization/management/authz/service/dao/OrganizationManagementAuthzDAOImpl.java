@@ -37,7 +37,6 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_GROUP_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
@@ -68,7 +67,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         boolean isAuthorized;
         try {
             isAuthorized = namedJdbcTemplate.fetchSingleRecord(sqlStmt,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
+                    (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
@@ -105,7 +104,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             for (Group group: groupListOfUser) {
                 NamedJdbcTemplate groupNamedJdbcTemplate = getNewTemplate();
                     isAuthorized = groupNamedJdbcTemplate.fetchSingleRecord(groupSqlStmt,
-                            (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
+                            (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, group.getGroupID());
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
