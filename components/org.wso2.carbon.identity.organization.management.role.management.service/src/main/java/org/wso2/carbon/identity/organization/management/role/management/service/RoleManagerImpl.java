@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -337,6 +338,8 @@ public class RoleManagerImpl implements RoleManager {
                 if (!getUserStoreManager(tenantId).isGroupExist(groupId)) {
                     throw handleClientException(ERROR_CODE_INVALID_GROUP_ID, groupId);
                 }
+            } catch (UserStoreClientException e) {
+                throw handleClientException(ERROR_CODE_INVALID_GROUP_ID, groupId);
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_GETTING_GROUP_VALIDITY, e, groupId);
             }
