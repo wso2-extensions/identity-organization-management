@@ -25,7 +25,6 @@ import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
-import org.wso2.carbon.identity.organization.management.endpoint.model.ChildOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
 import javax.validation.constraints.*;
 
@@ -111,8 +110,6 @@ public enum TypeEnum {
 
     private TypeEnum type;
     private ParentOrganization parent;
-    private List<ChildOrganization> children = null;
-
     private List<Attribute> attributes = null;
 
     private List<String> permissions = null;
@@ -276,32 +273,6 @@ public enum TypeEnum {
 
     /**
     **/
-    public GetOrganizationResponse children(List<ChildOrganization> children) {
-
-        this.children = children;
-        return this;
-    }
-    
-    @ApiModelProperty(value = "")
-    @JsonProperty("children")
-    @Valid
-    public List<ChildOrganization> getChildren() {
-        return children;
-    }
-    public void setChildren(List<ChildOrganization> children) {
-        this.children = children;
-    }
-
-    public GetOrganizationResponse addChildrenItem(ChildOrganization childrenItem) {
-        if (this.children == null) {
-            this.children = new ArrayList<>();
-        }
-        this.children.add(childrenItem);
-        return this;
-    }
-
-        /**
-    **/
     public GetOrganizationResponse attributes(List<Attribute> attributes) {
 
         this.attributes = attributes;
@@ -372,14 +343,13 @@ public enum TypeEnum {
             Objects.equals(this.lastModified, getOrganizationResponse.lastModified) &&
             Objects.equals(this.type, getOrganizationResponse.type) &&
             Objects.equals(this.parent, getOrganizationResponse.parent) &&
-            Objects.equals(this.children, getOrganizationResponse.children) &&
             Objects.equals(this.attributes, getOrganizationResponse.attributes) &&
             Objects.equals(this.permissions, getOrganizationResponse.permissions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, status, created, lastModified, type, parent, children, attributes, permissions);
+        return Objects.hash(id, name, description, status, created, lastModified, type, parent, attributes, permissions);
     }
 
     @Override
@@ -396,7 +366,6 @@ public enum TypeEnum {
         sb.append("    lastModified: ").append(toIndentedString(lastModified)).append("\n");
         sb.append("    type: ").append(toIndentedString(type)).append("\n");
         sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
-        sb.append("    children: ").append(toIndentedString(children)).append("\n");
         sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
         sb.append("    permissions: ").append(toIndentedString(permissions)).append("\n");
         sb.append("}");

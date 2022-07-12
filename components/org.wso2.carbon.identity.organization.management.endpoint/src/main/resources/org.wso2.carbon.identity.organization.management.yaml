@@ -99,7 +99,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/showChildrenQueryParam'
         - $ref: '#/components/parameters/includePermissionsQueryParam'
       responses:
         '200':
@@ -541,10 +540,6 @@ components:
             - STRUCTURAL
         parent:
           $ref: '#/components/schemas/ParentOrganization'
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChildOrganization'
         attributes:
           type: array
           items:
@@ -568,21 +563,6 @@ components:
         ref:
           type: string
           example: 'o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/b4526d91-a8bf-43d2-8b14-c548cf73065b'
-    #-----------------------------------------------------
-    # Organization Child Object
-    #-----------------------------------------------------
-    ChildOrganization:
-      type: object
-      required:
-        - id
-        - ref
-      properties:
-        id:
-          type: string
-          example: 'd8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
-        ref:
-          type: string
-          example: 'o/10084a8d-113f-4211-a0d5-efe36b082211/api/server/v1/organizations/d8f9780e-3a9a-4ae0-8d94-1a2d1aa3ec14'
 
     #-----------------------------------------------------
     # Organization Patch Operation Object
