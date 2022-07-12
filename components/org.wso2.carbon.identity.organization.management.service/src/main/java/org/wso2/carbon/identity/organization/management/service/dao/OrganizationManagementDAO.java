@@ -259,4 +259,12 @@ public interface OrganizationManagementDAO {
      *                                               an organization.
      */
     String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException;
+
+    /**
+     * Get ancestor organization ids (including itself) of a given organization.
+     *
+     * @param organizationId Organization id.
+     * @return List of ancestor organization ids including itself.
+     */
+    List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
 }

@@ -157,6 +157,10 @@ public class SQLConstants {
     public static final String GET_TENANT_DOMAIN_FROM_ORGANIZATION_UUID = "SELECT UM_DOMAIN_NAME FROM UM_TENANT " +
             "WHERE UM_ORG_UUID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
+    public static final String GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF =
+            "SELECT UM_PARENT_ID FROM UM_ORG_HIERARCHY WHERE UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
+                    "; ORDER BY DEPTH ASC;";
+
     /**
      * SQL Placeholders.
      */
