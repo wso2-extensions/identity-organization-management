@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.service.model.PatchOpera
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This interface performs CRUD operations for {@link Organization}
@@ -259,4 +260,13 @@ public interface OrganizationManagementDAO {
      *                                               an organization.
      */
     String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException;
+
+    /**
+     * Get ancestor organization ids (including itself) of a given organization.
+     *
+     * @param organizationId Organization id.
+     * @return List of ancestor organization ids including itself.
+     */
+    Optional<List<String>> getAncestorOrganizationIds(String organizationId)
+            throws OrganizationManagementServerException;
 }

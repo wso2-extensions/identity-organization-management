@@ -61,6 +61,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -325,6 +326,13 @@ public class OrganizationManagerImpl implements OrganizationManager {
             return MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         }
         return organizationManagementDAO.resolveTenantDomain(organizationId);
+    }
+
+    @Override
+    public Optional<List<String>> getAncestorOrganizationIds(String organizationId)
+            throws OrganizationManagementServerException {
+
+        return organizationManagementDAO.getAncestorOrganizationIds(organizationId);
     }
 
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {
