@@ -267,6 +267,5 @@ public interface OrganizationManagementDAO {
      * @param organizationId Organization id.
      * @return List of ancestor organization ids including itself.
      */
-    Optional<List<String>> getAncestorOrganizationIds(String organizationId)
-            throws OrganizationManagementServerException;
+    List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
 }

@@ -964,8 +964,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public Optional<List<String>> getAncestorOrganizationIds(String organizationId)
-            throws OrganizationManagementServerException {
+    public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         List<String> ancestorOrganizationIds;
@@ -978,7 +977,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS, e, organizationId);
         }
-        return Optional.of(ancestorOrganizationIds);
+        return ancestorOrganizationIds;
     }
 
     private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,

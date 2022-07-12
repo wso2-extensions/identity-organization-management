@@ -329,8 +329,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public Optional<List<String>> getAncestorOrganizationIds(String organizationId)
-            throws OrganizationManagementServerException {
+    public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
 
         return organizationManagementDAO.getAncestorOrganizationIds(organizationId);
     }
