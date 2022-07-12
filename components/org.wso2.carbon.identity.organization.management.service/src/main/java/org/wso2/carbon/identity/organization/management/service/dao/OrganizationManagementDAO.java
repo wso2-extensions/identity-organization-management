@@ -26,7 +26,6 @@ import org.wso2.carbon.identity.organization.management.service.model.PatchOpera
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * This interface performs CRUD operations for {@link Organization}

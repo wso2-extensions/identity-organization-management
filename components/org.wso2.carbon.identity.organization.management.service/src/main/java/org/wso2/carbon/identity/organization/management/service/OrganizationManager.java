@@ -25,7 +25,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Organization manager service interface.
