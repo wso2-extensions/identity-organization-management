@@ -29,7 +29,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.OrganizationMan
 import org.wso2.carbon.identity.organization.management.endpoint.exceptions.OrganizationManagementEndpointException;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Attribute;
 import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
-import org.wso2.carbon.identity.organization.management.endpoint.model.ChildOrganization;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Error;
 import org.wso2.carbon.identity.organization.management.endpoint.model.GetOrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.Link;
@@ -45,7 +44,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
-import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
@@ -132,15 +130,14 @@ public class OrganizationManagementService {
      * Fetch an organization.
      *
      * @param organizationId Unique identifier for the requested organization to be fetched.
-     * @param showChildren   If true, includes child organization IDs belonging to this organization in the response.
      * @return Requested organization details.
      */
-    public Response getOrganization(String organizationId, Boolean showChildren, Boolean includePermissions) {
+    public Response getOrganization(String organizationId, Boolean includePermissions) {
 
         try {
             Organization organization = getOrganizationManager().getOrganization(organizationId,
-                    Boolean.TRUE.equals(showChildren), Boolean.TRUE.equals(includePermissions));
-            return Response.ok().entity(getOrganizationResponseWithChildren(organization)).build();
+                    false, Boolean.TRUE.equals(includePermissions));
+            return Response.ok().entity(getOrganizationResponseWithPermission(organization)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -292,7 +289,7 @@ public class OrganizationManagementService {
         return organizationResponse;
     }
 
-    private GetOrganizationResponse getOrganizationResponseWithChildren(Organization organization) {
+    private GetOrganizationResponse getOrganizationResponseWithPermission(Organization organization) {
 
         GetOrganizationResponse organizationResponse = new GetOrganizationResponse();
         organizationResponse.setId(organization.getId());
@@ -322,8 +319,6 @@ public class OrganizationManagementService {
             organizationResponse.setParent(getParentOrganization(parentOrganizationDO));
         }
 
-        setOrganizationChildren(organization, organizationResponse);
-
         List<Attribute> attributeList = getOrganizationAttributes(organization);
         if (!attributeList.isEmpty()) {
             organizationResponse.setAttributes(attributeList);
@@ -349,22 +344,6 @@ public class OrganizationManagementService {
         parentOrganization.setId(parentOrganizationDO.getId());
         parentOrganization.setRef(parentOrganizationDO.getRef());
         return parentOrganization;
-    }
-
-    private void setOrganizationChildren(Organization organization, GetOrganizationResponse organizationResponse) {
-
-        if (CollectionUtils.isNotEmpty(organization.getChildOrganizations())) {
-            List<ChildOrganization> childOrganizations = new ArrayList<>();
-            for (ChildOrganizationDO childOrganizationDO : organization.getChildOrganizations()) {
-                ChildOrganization childOrganization = new ChildOrganization();
-                childOrganization.setId(childOrganizationDO.getId());
-                childOrganization.setRef(childOrganizationDO.getRef());
-                childOrganizations.add(childOrganization);
-            }
-            if (!childOrganizations.isEmpty()) {
-                organizationResponse.setChildren(childOrganizations);
-            }
-        }
     }
 
     private int validateLimit(Integer limit) throws OrganizationManagementClientException {
