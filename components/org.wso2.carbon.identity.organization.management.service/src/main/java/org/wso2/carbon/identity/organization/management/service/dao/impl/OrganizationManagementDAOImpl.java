@@ -966,9 +966,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        List<String> ancestorOrganizationIds;
         try {
-            ancestorOrganizationIds = namedJdbcTemplate.executeQuery(GET_ANCESTORS_OF_GIVEN_ORG,
+            return namedJdbcTemplate.executeQuery(GET_ANCESTORS_OF_GIVEN_ORG,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
@@ -976,7 +975,6 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS, e, organizationId);
         }
-        return ancestorOrganizationIds;
     }
 
     private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
