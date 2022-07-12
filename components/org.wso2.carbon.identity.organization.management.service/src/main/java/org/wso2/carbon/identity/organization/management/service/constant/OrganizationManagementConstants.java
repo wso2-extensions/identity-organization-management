@@ -374,8 +374,8 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT("65064", "Error while checking if an organization " +
                 "is an immediate child of another organization.", "Server encountered an error while " +
                 "checking if organization with ID: %s is an immediate child organization of organization with ID: %s."),
-        ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS("65065", "Error while retrieving ancestors of an organization",
-                "Error while retrieving ancestors of organization: %s");
+        ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS("65065", "Error while retrieving ancestors of an organization.",
+                "Error while retrieving ancestors of organization with ID: %s.");
 
         private final String code;
         private final String message;
