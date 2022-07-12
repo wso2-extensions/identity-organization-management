@@ -361,7 +361,6 @@ components:
       type: object
       required:
         - name
-        - type
       properties:
         name:
           type: string
@@ -375,10 +374,12 @@ components:
           enum:
             - TENANT
             - STRUCTURAL
+          default: "TENANT"
         parentId:
           type: string
           example: "b4526d91-a8bf-43d2-8b14-c548cf73065b"
           description: "If the parentId is not present, the ROOT will be taken as the parent organization."
+          default: "10084a8d-113f-4211-a0d5-efe36b082211"
         attributes:
           type: array
           items:
