@@ -29,6 +29,17 @@ public interface OrganizationManagementAuthzDAO {
             throws OrganizationManagementAuthzServiceServerException;
 
     /**
+     * Check whether user has any permission/association for the given organization.
+     *
+     * @param userId User id.
+     * @param orgId  Organization id.
+     * @return True if user has at least single permission against organization.
+     * @throws OrganizationManagementAuthzServiceServerException Error occurred while retrieving user
+     *                                                           association to org.
+     */
+    boolean hasUserOrgAssociation(String userId, String orgId) throws OrganizationManagementAuthzServiceServerException;
+
+    /**
      * Resolve root organization id.
      *
      * @return Root organization id.
