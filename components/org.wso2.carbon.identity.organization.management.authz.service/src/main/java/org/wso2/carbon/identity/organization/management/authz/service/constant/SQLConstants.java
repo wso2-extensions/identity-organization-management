@@ -27,7 +27,7 @@ import static org.wso2.carbon.identity.organization.management.authz.service.con
 public class SQLConstants {
 
     public static final String PERMISSION_LIST_PLACEHOLDER = "_PERMISSION_LIST_";
-    public static final String CHECK_USER_HAS_PERMISSION_TO_ORG_BY_DIRECT_ROLES =
+    public static final String CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_USER_ROLE_ASSIGNMENT =
             "SELECT COUNT(1) FROM UM_ORG_ROLE_PERMISSION WHERE UM_ORG_ROLE_PERMISSION.UM_ROLE_ID IN ( " +
             "SELECT UM_ORG_ROLE_USER.UM_ROLE_ID FROM UM_ORG_ROLE_USER LEFT JOIN UM_ORG_ROLE ON " +
             "UM_ORG_ROLE_USER.UM_ROLE_ID = UM_ORG_ROLE.UM_ROLE_ID " +

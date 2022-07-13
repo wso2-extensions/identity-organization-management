@@ -381,7 +381,10 @@ public class OrganizationManagementConstants {
                 "is an immediate child of another organization.", "Server encountered an error while " +
                 "checking if organization with ID: %s is an immediate child organization of organization with ID: %s."),
         ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS("65065", "Error while retrieving ancestors of an organization.",
-                "Error while retrieving ancestors of organization with ID: %s.");
+                "Error while retrieving ancestors of organization with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG("65066",
+                "Error while resolving user from resident organization.",
+                "Error while resolving user: %s from resident organization, to access organization with ID: %s.");
 
         private final String code;
         private final String message;

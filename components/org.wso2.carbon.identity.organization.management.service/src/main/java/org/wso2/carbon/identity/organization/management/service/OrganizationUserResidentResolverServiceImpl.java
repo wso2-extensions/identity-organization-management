@@ -37,6 +37,8 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG;
+
 /**
  * Service implementation to resolve user's resident organization.
  */
@@ -45,8 +47,7 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
     private final OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
 
     @Override
-    public Optional<User> resolveUserFromResidentOrgByUsernameAndAccessedOrg(String userName,
-                                                                             String accessedOrganizationId)
+    public Optional<User> resolveUserFromResidentOrganization(String userName, String accessedOrganizationId)
             throws OrganizationManagementException {
 
         User resolvedUser = null;
@@ -72,7 +73,9 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
                 }
             }
         } catch (UserStoreException | OrganizationManagementAuthzServiceServerException e) {
-            throw new OrganizationManagementException(e.getMessage(), "", e);
+            throw new OrganizationManagementException(
+                    ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG.getMessage(),
+                    ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG.getCode(), e);
         }
         return Optional.ofNullable(resolvedUser);
     }
