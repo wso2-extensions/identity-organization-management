@@ -21,8 +21,10 @@ package org.wso2.carbon.identity.organization.management.oauth2.grant;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
@@ -32,14 +34,29 @@ import org.wso2.carbon.identity.oauth2.model.RequestParameter;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.AbstractAuthorizationGrantHandler;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.carbon.identity.organization.management.oauth2.grant.util.Constants;
+import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
+import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
+import org.wso2.carbon.identity.organization.management.oauth2.grant.exception.OrganizationSwitchGrantException;
+import org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
+
+import static org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants.ORG_SWITCH_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantUtil.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION;
 
 /**
  * Implements the AuthorizationGrantHandler for the OrganizationSwitch grant type.
  */
 public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  {
+
+    public OrganizationManager organizationManager = new OrganizationManagerImpl();
 
     private static final Log LOG = LogFactory.getLog(OrganizationSwitchGrant.class);
 
@@ -51,8 +68,7 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
 
         super.validateGrant(tokReqMsgCtx);
 
-        String token = extractParameter(Constants.Params.TOKEN_PARAM, tokReqMsgCtx);
-        String organization = extractParameter(Constants.Params.ORG_PARAM, tokReqMsgCtx);
+        String token = extractParameter(OrganizationSwitchGrantConstants.Params.TOKEN_PARAM, tokReqMsgCtx);
 
         OAuth2TokenValidationResponseDTO validationResponseDTO = validateToken(token);
 
@@ -69,10 +85,15 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         }
 
         User authorizedUser = User.getUserFromUserName(validationResponseDTO.getAuthorizedUser());
+        String userId = getUserIdFromAuthorizedUser(authorizedUser);
 
-        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
+        String switchTenantDomain = IdentityTenantUtil.getTenantDomainFromContext();
+        if (switchTenantDomain == null) {
+            switchTenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
+        }
 
-        boolean isValidCollaborator = validateCollaboratorAssociation(authorizedUser);
+        String switchOrgId = getOrganizationIdByTenantDomain(switchTenantDomain);
+        boolean isValidCollaborator = validateCollaboratorAssociation(userId, switchOrgId);
 
         if (!isValidCollaborator) {
             if (LOG.isDebugEnabled()) {
@@ -90,7 +111,7 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         User currentUser = new User();
         currentUser.setUserName(authorizedUser.getUserName());
         currentUser.setUserStoreDomain(authorizedUser.getUserStoreDomain());
-        currentUser.setTenantDomain(convertOrgToTenant(currentOrganizationId));
+        currentUser.setTenantDomain(authorizedUser.getTenantDomain());
 
         tokReqMsgCtx.setAuthorizedUser(
                 OAuth2Util.getUserFromUserName(currentUser.toFullQualifiedUsername()));
@@ -110,16 +131,15 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         return true;
     }
 
-    private boolean validateCollaboratorAssociation(User authorizedUser) {
+    private boolean validateCollaboratorAssociation(String userId, String orgId)
+            throws OrganizationSwitchGrantException {
 
-        //TODO implement
-        return true;
-    }
-
-    private String convertOrgToTenant(String currentOrganizationId) {
-
-        //TODO implement
-        return currentOrganizationId;
+        try {
+            return OrganizationManagementAuthorizationManager.getInstance()
+                    .isUserAuthorized(userId, ORG_SWITCH_PERMISSION, orgId);
+        } catch (OrganizationManagementAuthzServiceServerException e) {
+           throw handleServerException(ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION, e);
+        }
     }
 
     private String extractParameter(String param, OAuthTokenReqMessageContext tokReqMsgCtx) {
@@ -154,11 +174,8 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         token.setTokenType("bearer");
         requestDTO.setAccessToken(token);
 
-        //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
         OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
                 TokenValidationContextParam();
-        contextParam.setKey("dummy");
-        contextParam.setValue("dummy");
 
         OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = {contextParam};
         requestDTO.setContext(contextParams);
@@ -170,4 +187,21 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         return clientApplicationDTO.getAccessTokenValidationResponse();
     }
 
+    private String getUserIdFromAuthorizedUser(User authorizedUser) throws OrganizationSwitchGrantException {
+
+        try {
+            return new AuthenticatedUser(authorizedUser).getUserId();
+        } catch (UserIdNotFoundException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER, e);
+        }
+    }
+
+    private String getOrganizationIdByTenantDomain(String tenantDomain) throws OrganizationSwitchGrantException {
+
+        try {
+            return organizationManager.resolveOrganizationId(tenantDomain);
+        } catch (OrganizationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e);
+        }
+    }
 }

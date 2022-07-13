@@ -16,19 +16,15 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.oauth2.grant.util;
+package org.wso2.carbon.identity.organization.management.oauth2.grant.exception;
 
 /**
- Organization switch grant constants.
+ * This exception class is to represent client side errors in the requests.
  */
-public class Constants {
+public class OrganizationSwitchGrantClientException extends OrganizationSwitchGrantException {
 
-    /**
-     * Constants related to request parameters.
-     */
-    public static class Params {
-
-        public static final String TOKEN_PARAM = "token";
-        public static final String ORG_PARAM = "organization";
+    public OrganizationSwitchGrantClientException(String message, String description, String errorCode) {
+        super(message, description, errorCode);
     }
+
 }

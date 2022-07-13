@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.management.oauth2.grant;
 
 import org.apache.oltu.oauth2.common.validators.AbstractValidator;
-import org.wso2.carbon.identity.organization.management.oauth2.grant.util.Constants;
+import org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,7 +32,6 @@ public class OrganizationSwitchGrantValidator extends AbstractValidator<HttpServ
 
     public OrganizationSwitchGrantValidator() {
 
-        requiredParams.add(Constants.Params.TOKEN_PARAM);
-        requiredParams.add(Constants.Params.ORG_PARAM);
+        requiredParams.add(OrganizationSwitchGrantConstants.Params.TOKEN_PARAM);
     }
 }

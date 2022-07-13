@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import static java.time.ZoneOffset.UTC;
@@ -948,14 +949,15 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException {
+    public Optional<String> resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN,
+            String organizationId =  namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_TENANT_DOMAIN,
                             tenantDomain));
+            return Optional.ofNullable(organizationId);
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e,
                     tenantDomain);
