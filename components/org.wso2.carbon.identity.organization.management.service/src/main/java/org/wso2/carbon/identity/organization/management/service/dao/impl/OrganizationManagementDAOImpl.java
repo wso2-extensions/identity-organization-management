@@ -77,6 +77,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_PARENT_ORGANIZATION_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_TENANT_UUID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.FILTER_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.GT;
@@ -115,6 +116,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_ATTRIBUTES_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_BY_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
@@ -957,6 +959,21 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e,
                     tenantDomain);
+        }
+    }
+
+    @Override
+    public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS, e, organizationId);
         }
     }
 

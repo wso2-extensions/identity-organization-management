@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -53,6 +54,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
@@ -66,6 +68,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_IS_UNMODIFIABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
@@ -175,6 +178,9 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
+        if (!isRoleModifiable(organizationId, roleId)) {
+            throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
+        }
         for (PatchOperation patchOperation : patchOperations) {
             String patchPath = patchOperation.getPath();
             String patchOp = patchOperation.getOp();
@@ -211,6 +217,9 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
+        if (!isRoleModifiable(organizationId, roleId)) {
+            throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
+        }
         if (StringUtils.isBlank(role.getDisplayName())) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_NULL);
         }
@@ -235,6 +244,9 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
+        if (!isRoleModifiable(organizationId, roleId)) {
+            throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
+        }
         roleManagementDAO.deleteRole(organizationId, roleId);
     }
 
@@ -335,6 +347,24 @@ public class RoleManagerImpl implements RoleManager {
                 throw handleClientException(ERROR_CODE_INVALID_USER_ID, userId);
             }
         }
+    }
+
+    /**
+     * Check whether the role is allowed for modification.
+     *
+     * @param organizationId Organization Id.
+     * @param roleId         Role Id.
+     * @return Whether role can be modified.
+     * @throws OrganizationManagementServerException Error while retrieving role.
+     */
+    private boolean isRoleModifiable(String organizationId, String roleId) throws OrganizationManagementException {
+
+        Role role = roleManagementDAO.getRoleById(organizationId, roleId);
+        if (role == null) {
+            throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
+        }
+        // The org-creator role assigned during org creation, is not allowed for update / delete.
+        return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
     }
 
     /**

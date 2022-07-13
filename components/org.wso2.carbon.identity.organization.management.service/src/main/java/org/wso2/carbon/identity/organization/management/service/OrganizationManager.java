@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.service;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
@@ -134,4 +135,11 @@ public interface OrganizationManager {
      */
     String resolveTenantDomain(String organizationId) throws OrganizationManagementException;
 
+    /**
+     * Get ancestor organization ids (including itself) of a given organization.
+     *
+     * @param organizationId Organization id.
+     * @return List of ancestor organization ids including itself.
+     */
+    List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
 }

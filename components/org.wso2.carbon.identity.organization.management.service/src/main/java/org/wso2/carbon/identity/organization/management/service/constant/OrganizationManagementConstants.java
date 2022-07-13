@@ -224,6 +224,12 @@ public class OrganizationManagementConstants {
                 "Invalid attribute to assign for a role."),
         ERROR_CODE_ROLE_LIST_INVALID_CURSOR("60049", "Cursor decoding failed.",
                 "Malformed cursor %s cannot be processed."),
+        ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE("60050", "ROOT organization can't be disabled or deleted.",
+                "Organization %s can't be disabled or deleted."),
+        ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
+                "Organization %s can't be renamed."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
+                "Role %s cannot be updated or deleted."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -373,7 +379,9 @@ public class OrganizationManagementConstants {
                 "with ID: %s is a child organization of organization with ID: %s."),
         ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT("65064", "Error while checking if an organization " +
                 "is an immediate child of another organization.", "Server encountered an error while " +
-                "checking if organization with ID: %s is an immediate child organization of organization with ID: %s.");
+                "checking if organization with ID: %s is an immediate child organization of organization with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS("65065", "Error while retrieving ancestors of an organization.",
+                "Error while retrieving ancestors of organization with ID: %s.");
 
         private final String code;
         private final String message;
