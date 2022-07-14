@@ -499,7 +499,7 @@
         </carbon.identity.package.import.version.range>
         <carbon.identity.scim2.package.import.version.range>[1.5.122, 2.0.0)
         </carbon.identity.scim2.package.import.version.range>
-        <charon3.core.import.version.range>[3.4.22, 3.5.0)</charon3.core.import.version.range>
+        <charon3.core.import.version.range>[3.4.22, 4.1.0)</charon3.core.import.version.range>
         <carbon.identity.inbound.provisioning.scim2.version>1.5.122
         </carbon.identity.inbound.provisioning.scim2.version>
 
