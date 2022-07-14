@@ -33,7 +33,6 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.model.RequestParameter;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.AbstractAuthorizationGrantHandler;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 import org.wso2.carbon.identity.organization.management.oauth2.grant.exception.OrganizationSwitchGrantException;
@@ -59,9 +58,6 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
     public OrganizationManager organizationManager = new OrganizationManagerImpl();
 
     private static final Log LOG = LogFactory.getLog(OrganizationSwitchGrant.class);
-
-
-    public static final String MOBILE_GRANT_PARAM = "mobileNumber";
 
     @Override
     public boolean validateGrant(OAuthTokenReqMessageContext tokReqMsgCtx)  throws IdentityOAuth2Exception {
@@ -100,31 +96,23 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
                 LOG.debug("Authorized user: " + authorizedUser.toFullQualifiedUsername() + " does not have " +
                         "permission for the current organization");
             }
-//            ResponseHeader responseHeader = new ResponseHeader();
-//            responseHeader.setKey("error-description");
-//            responseHeader.setValue("Associated user is invalid.");
-//            tokReqMsgCtx.addProperty("RESPONSE_HEADERS", new ResponseHeader[]{responseHeader});
 
             return false;
         }
 
-        User currentUser = new User();
-        currentUser.setUserName(authorizedUser.getUserName());
-        currentUser.setUserStoreDomain(authorizedUser.getUserStoreDomain());
-        currentUser.setTenantDomain(authorizedUser.getTenantDomain());
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(authorizedUser.getUserName());
+        authenticatedUser.setUserStoreDomain(authorizedUser.getUserStoreDomain());
+        authenticatedUser.setTenantDomain(switchTenantDomain);
+        authenticatedUser.setUserId(userId);
 
-        tokReqMsgCtx.setAuthorizedUser(
-                OAuth2Util.getUserFromUserName(currentUser.toFullQualifiedUsername()));
+        tokReqMsgCtx.setAuthorizedUser(authenticatedUser);
 
-        //This is commented to support account switching capability.
-        //https://github.com/wso2/product-is/issues/7385
-        //String[] allowedScopes =  getAllowedScopes(validationResponseDTO.getScope(),
-        //tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
         String[] allowedScopes = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope();
         tokReqMsgCtx.setScope(allowedScopes);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Issuing an access token for user: " + currentUser + " with scopes: " +
+            LOG.debug("Issuing an access token for user: " + authenticatedUser + " with scopes: " +
                     Arrays.toString(tokReqMsgCtx.getScope()));
         }
 
@@ -180,7 +168,6 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = {contextParam};
         requestDTO.setContext(contextParams);
 
-        //TODO check if we can validate a token from different tenant
         OAuth2ClientApplicationDTO clientApplicationDTO = oAuth2TokenValidationService
                 .findOAuthConsumerIfTokenIsValid
                         (requestDTO);

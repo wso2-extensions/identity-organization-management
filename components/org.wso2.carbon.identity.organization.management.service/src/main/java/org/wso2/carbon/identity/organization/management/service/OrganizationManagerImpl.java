@@ -61,7 +61,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -331,12 +330,8 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
             return OrganizationManagementConstants.ROOT_ORG_ID;
         } else {
-            Optional<String> optional = organizationManagementDAO.resolveOrganizationId(tenantDomain);
-            if (optional.isPresent()) {
-                return optional.get();
-            } else {
-                throw handleClientException(ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT, tenantDomain);
-            }
+            return organizationManagementDAO.resolveOrganizationId(tenantDomain).orElseThrow(
+                    () -> handleClientException(ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT, tenantDomain));
         }
     }
 
