@@ -48,26 +48,31 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
     private final OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
 
     @Override
-    public Optional<User> resolveUserFromResidentOrganization(String userName, String accessedOrganizationId)
+    public Optional<User> resolveUserFromResidentOrganization(String userName, String userId,
+                                                              String accessedOrganizationId)
             throws OrganizationManagementException {
 
         User resolvedUser = null;
         try {
-            List<String> ancestorOrganizationIds =
-                    organizationManagementDAO.getAncestorOrganizationIds(accessedOrganizationId);
-            if (ancestorOrganizationIds != null) {
-                for (String organizationId : ancestorOrganizationIds) {
-                    String associatedTenantDomainForOrg = resolveTenantDomainForOrg(organizationId);
-                    if (associatedTenantDomainForOrg != null) {
-                        AbstractUserStoreManager userStoreManager = getUserStoreManager(associatedTenantDomainForOrg);
-                        boolean isExistingUser = userStoreManager.isExistingUser(userName);
-                        if (isExistingUser) {
-                            User user = userStoreManager.getUser(null, userName);
-                            // Check whether user has any association against the org that the user is trying to access.
-                            boolean userHasAccessPermissions = OrganizationManagementAuthorizationManager.getInstance()
-                                    .hasUserOrgAssociation(user.getUserID(), accessedOrganizationId);
-                            if (userHasAccessPermissions) {
-                                resolvedUser = user;
+            if (userName != null || userId != null) {
+                List<String> ancestorOrganizationIds =
+                        organizationManagementDAO.getAncestorOrganizationIds(accessedOrganizationId);
+                if (ancestorOrganizationIds != null) {
+                    for (String organizationId : ancestorOrganizationIds) {
+                        String associatedTenantDomainForOrg = resolveTenantDomainForOrg(organizationId);
+                        if (associatedTenantDomainForOrg != null) {
+                            AbstractUserStoreManager userStoreManager =
+                                    getUserStoreManager(associatedTenantDomainForOrg);
+                            if ((userName != null &&  userStoreManager.isExistingUser(userName)) ||
+                                    (userId != null &&  userStoreManager.isExistingUserWithID(userId))) {
+                                User user = userStoreManager.getUser(userId, userName);
+                                // Check whether user has any association against the org the user is trying to access.
+                                boolean userHasAccessPermissions =
+                                        OrganizationManagementAuthorizationManager.getInstance()
+                                                .hasUserOrgAssociation(user.getUserID(), accessedOrganizationId);
+                                if (userHasAccessPermissions) {
+                                    resolvedUser = user;
+                                }
                             }
                         }
                     }
