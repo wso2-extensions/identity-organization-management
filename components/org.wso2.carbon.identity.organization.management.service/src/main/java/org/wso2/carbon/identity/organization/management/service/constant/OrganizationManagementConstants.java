@@ -235,7 +235,9 @@ public class OrganizationManagementConstants {
                 "Organization with name %s not found"),
         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
                 "Organization for the tenant domain %s not found."),
-
+        ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
+                "Both userId and UserName cannot be null.",
+                "Either userId or UserName is required to resolve user from resident organization."),
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
