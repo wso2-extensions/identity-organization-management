@@ -73,7 +73,7 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
                         } else if (userId != null && userStoreManager.isExistingUserWithID(userId)) {
                             user = userStoreManager.getUser(userId, null);
                         } else {
-                            return Optional.ofNullable(resolvedUser);
+                            return Optional.empty();
                         }
                         // Check whether user has any association against the org the user is trying to access.
                         boolean userHasAccessPermissions =
@@ -81,6 +81,7 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
                                         .hasUserOrgAssociation(user.getUserID(), accessedOrganizationId);
                         if (userHasAccessPermissions) {
                             resolvedUser = user;
+                            break;
                         }
                     }
                 }
