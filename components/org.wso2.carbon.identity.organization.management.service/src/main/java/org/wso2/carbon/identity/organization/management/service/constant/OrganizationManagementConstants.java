@@ -397,7 +397,10 @@ public class OrganizationManagementConstants {
                 "Server encountered while retrieving the authenticated user from user store."),
         ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION("65069", "Error while validating user association " +
                 "for organization.", "Server encountered when authorizing user against the associated " +
-                "organization.");
+                "organization."),
+        ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65070", "Error while validating user " +
+                "association with root organization.", "Server encountered when authorizing user against the root " +
+                                                             "organization.");
 
         private final String code;
         private final String message;

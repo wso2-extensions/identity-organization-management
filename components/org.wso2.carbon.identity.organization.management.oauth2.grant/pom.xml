@@ -22,14 +22,14 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.0.47-SNAPSHOT</version>
+        <version>1.0.49-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.organization.management.oauth2.grant</artifactId>
     <name>WSO2 - Organization Management Organization Switch Grant</name>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -62,16 +62,46 @@
         </dependency>
     </dependencies>
 
-
     <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${project.artifactId}</Bundle-Name>
+                        <Bundle-Description>Organization Switch Grant Bundle</Bundle-Description>
+                        <Private-Package>org.wso2.carbon.identity.organization.management.oauth2.grant.internal
+                        </Private-Package>
+                        <Export-Package>
+                            !org.wso2.carbon.identity.organization.management.oauth2.grant.internal,
+                            org.wso2.carbon.identity.organization.management.oauth2.grant.*; version="${project.version}"
+                        </Export-Package>
+                        <Import-Package>
+                            org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
+                            org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
+                            org.apache.oltu.oauth2.common.validators; version="${oltu.oauth2.client.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth2; version="${identity.inbound.auth.oauth.version}",
+                            org.wso2.carbon.identity.oauth2.dto; version="${identity.inbound.auth.oauth.version}",
+                            org.wso2.carbon.identity.oauth2.model; version="${identity.inbound.auth.oauth.version}",
+                            org.wso2.carbon.identity.oauth2.token; version="${identity.inbound.auth.oauth.version}",
+                            org.wso2.carbon.identity.oauth2.token.handlers.grant; version="${identity.inbound.auth.oauth.version}",
+                            org.wso2.carbon.identity.organization.management.authz.service; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.authz.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.constant; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.util; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
+                        </Import-Package>
+                    </instructions>
                 </configuration>
             </plugin>
         </plugins>

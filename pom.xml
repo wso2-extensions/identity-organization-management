@@ -532,6 +532,7 @@
         </org.apache.commons.collections.imp.pkg.version.range>
 
         <oltu.oauth2.client.version>1.0.0</oltu.oauth2.client.version>
+        <oltu.oauth2.client.version.range>[1.0.0,1.0.3)</oltu.oauth2.client.version.range>
 
         <org.powermock.version>1.7.4</org.powermock.version>
         <jacoco.version>0.8.2</jacoco.version>
