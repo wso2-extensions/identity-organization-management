@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_SWITCHER_ROLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SWITCH_ORGANIZATION_PERMISSION;
 
 /**
  * This class contains the implementation of the tenant management listener.  This listener will be used to add tenant
@@ -82,6 +84,8 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             }
             Role organizationCreatorRole = buildOrgCreatorRole(adminUUID);
             TenantAssociationDataHolder.getRoleManager().createRole(organizationID, organizationCreatorRole);
+            Role organizationSwitcherRole = buildOrgSwitcherRole();
+            TenantAssociationDataHolder.getRoleManager().createRole(organizationID, organizationSwitcherRole);
         } catch (UserStoreException | OrganizationManagementException e) {
             String error = "Error occurred while adding user-tenant association for the tenant id: " + tenantId;
             LOG.error(error, e);
@@ -100,5 +104,16 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         orgCreatorRolePermissions.add(Constants.ORG_ROLE_MGT_PERMISSION);
         organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
+    }
+
+    private Role buildOrgSwitcherRole() {
+
+        Role organizationSwitcherRole = new Role();
+        organizationSwitcherRole.setDisplayName(ORG_SWITCHER_ROLE);
+        // Set permissions for org-switcher role.
+        ArrayList<String> orgSwitcherRolePermissions = new ArrayList<>();
+        orgSwitcherRolePermissions.add(SWITCH_ORGANIZATION_PERMISSION);
+        organizationSwitcherRole.setPermissions(orgSwitcherRolePermissions);
+        return organizationSwitcherRole;
     }
 }

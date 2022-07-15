@@ -36,8 +36,9 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -47,16 +48,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.BACKWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_SWITCHER_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ALL_ORGANIZATION_PERMISSIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.BASE_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
@@ -65,12 +71,16 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_USER_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_IS_UNMODIFIABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ROLE_PATCH;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -105,6 +115,7 @@ public class RoleManagerImpl implements RoleManager {
             }
         }
         roleManagementDAO.createRole(organizationId, role);
+        switchRoleAssignmentInAncestorOrganizations(organizationId, role);
         return new Role(role.getId(), role.getDisplayName());
     }
 
@@ -178,14 +189,18 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        if (isGivenRole(organizationId, roleId, ORG_CREATOR_ROLE)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
+        boolean organizationSwitcherRole = isGivenRole(organizationId, roleId, ORG_SWITCHER_ROLE);
         for (PatchOperation patchOperation : patchOperations) {
             String patchPath = patchOperation.getPath();
             String patchOp = patchOperation.getOp();
             if (StringUtils.contains(patchPath, "[")) {
                 patchPath = StringUtils.strip(patchPath.split("\\[")[0]);
+            }
+            if (organizationSwitcherRole) {
+                validatePatchForOrganizationSwitchRole(patchPath, patchOp, roleId);
             }
             if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) &&
                     StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
@@ -212,12 +227,27 @@ public class RoleManagerImpl implements RoleManager {
         return roleManagementDAO.patchRole(organizationId, roleId, patchOperations);
     }
 
+    private void validatePatchForOrganizationSwitchRole(String patchPath, String patchOp, String roleId)
+            throws OrganizationManagementClientException {
+
+        if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) ||
+                StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS)) {
+            throw handleClientException(ERROR_CODE_UNSUPPORTED_ROLE_PATCH, roleId);
+        }
+        // As of now, only adding users are supported.
+        if (StringUtils.equalsIgnoreCase(patchPath, USERS) && (StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE) ||
+                StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REPLACE))) {
+            throw handleClientException(ERROR_CODE_UNSUPPORTED_ROLE_PATCH, roleId);
+        }
+    }
+
     @Override
     public Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementException {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        if (isGivenRole(organizationId, roleId, ORG_CREATOR_ROLE) ||
+                isGivenRole(organizationId, roleId, ORG_SWITCHER_ROLE)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
         if (StringUtils.isBlank(role.getDisplayName())) {
@@ -244,18 +274,28 @@ public class RoleManagerImpl implements RoleManager {
 
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        // The org-creator role and org-switcher role assigned during organization creation is not allowed for deletion.
+        if (isGivenRole(organizationId, roleId, ORG_SWITCHER_ROLE) ||
+                isGivenRole(organizationId, roleId, ORG_CREATOR_ROLE)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
         roleManagementDAO.deleteRole(organizationId, roleId);
     }
 
     /**
-     * Get an instance of OrganizationManager
+     * Get an instance of OrganizationManager.
      */
     private OrganizationManager getOrganizationManager() {
 
         return RoleManagementDataHolder.getInstance().getOrganizationManager();
+    }
+
+    /**
+     * Get an instance of OrganizationUserResidentResolverService.
+     */
+    private OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
+
+        return RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService();
     }
 
     /**
@@ -350,21 +390,22 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     /**
-     * Check whether the role is allowed for modification.
+     * Check whether it is the given role.
      *
-     * @param organizationId Organization Id.
-     * @param roleId         Role Id.
-     * @return Whether role can be modified.
-     * @throws OrganizationManagementServerException Error while retrieving role.
+     * @param organizationId The organization ID.
+     * @param roleId         The role ID.
+     * @param roleName       The role name.
+     * @return whether it is the given role.
+     * @throws OrganizationManagementException Error while retrieving role.
      */
-    private boolean isRoleModifiable(String organizationId, String roleId) throws OrganizationManagementException {
+    private boolean isGivenRole(String organizationId, String roleId, String roleName)
+            throws OrganizationManagementException {
 
         Role role = roleManagementDAO.getRoleById(organizationId, roleId);
         if (role == null) {
             throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
         }
-        // The org-creator role assigned during org creation, is not allowed for update / delete.
-        return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
+        return roleName.equalsIgnoreCase(role.getDisplayName());
     }
 
     /**
@@ -424,6 +465,43 @@ public class RoleManagerImpl implements RoleManager {
             return Utils.getGson().fromJson(decodeString, Cursor.class);
         } catch (JsonSyntaxException e) {
             throw handleClientException(ERROR_CODE_ROLE_LIST_INVALID_CURSOR, cursorString);
+        }
+    }
+
+    private void switchRoleAssignmentInAncestorOrganizations(String organizationId, Role role)
+            throws OrganizationManagementException {
+
+        List<String> organizationSwitcherAllowedPermissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
+        organizationSwitcherAllowedPermissions.addAll(ALL_ORGANIZATION_PERMISSIONS);
+
+        boolean switchRoleRequired = false;
+        for (String rolePermission : role.getPermissions()) {
+            if (organizationSwitcherAllowedPermissions.contains(rolePermission)) {
+                switchRoleRequired = true;
+                break;
+            }
+        }
+
+        if (switchRoleRequired) {
+            // TODO: support groups.
+            List<User> users = role.getUsers();
+            if (users != null) {
+                List<String> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+                for (String userId : userIds) {
+                    String residentOrgId = getOrganizationUserResidentResolverService()
+                            .resolveResidentOrganization(userId, organizationId)
+                            .orElseThrow(() -> handleClientException(ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND));
+                    List<String> ancestorOrgIds = getOrganizationManager()
+                            .getAncestorOrganizationIdsUpToGivenAncestorOrganization(organizationId, residentOrgId);
+                    for (String ancestorOrgId : ancestorOrgIds) {
+                        String roleId = roleManagementDAO.getRoleIdByName(ancestorOrgId, ORG_SWITCHER_ROLE);
+                        if (StringUtils.isNotBlank(roleId)) {
+                            patchRole(ancestorOrgId, roleId, Collections.singletonList(new PatchOperation
+                                    (PATCH_OP_ADD, USERS, Collections.singletonList(userId))));
+                        }
+                    }
+                }
+            }
         }
     }
 }

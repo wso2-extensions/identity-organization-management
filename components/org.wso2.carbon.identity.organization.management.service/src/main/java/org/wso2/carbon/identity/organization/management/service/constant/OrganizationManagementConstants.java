@@ -79,10 +79,11 @@ public class OrganizationManagementConstants {
             "update";
     public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "delete";
-
+    public static final String SWITCH_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "switch";
     public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
             .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
-                    DELETE_ORGANIZATION_PERMISSION));
+                    DELETE_ORGANIZATION_PERMISSION, SWITCH_ORGANIZATION_PERMISSION));
 
     public static final String EQ = "eq";
     public static final String CO = "co";
@@ -229,12 +230,16 @@ public class OrganizationManagementConstants {
                 "Organization %s can't be disabled or deleted."),
         ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
                 "Organization %s can't be renamed."),
-        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
-                "Role %s cannot be updated or deleted."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "The role can't be modified.",
+                "The role with ID: %s is not allowed to be updated or deleted."),
         ERROR_CODE_INVALID_ORGANIZATION_NAME("60053", "Organization not found",
                 "Organization with name %s not found"),
         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
                 "Organization for the tenant domain %s not found."),
+        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60055", "Unable to patch the role.",
+                "Unsupported patch path/ operation for role with ID: %s."),
+        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60056", "Invalid organization user.",
+                "Resident organization for user with ID: %s is not found."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -400,7 +405,12 @@ public class OrganizationManagementConstants {
                 "organization."),
         ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65070", "Error while validating user " +
                 "association with root organization.", "Server encountered when authorizing user against the root " +
-                                                             "organization.");
+                                                             "organization."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65071", "Unable to retrieve the role name.",
+                "Server encountered an error while retrieving role ID from role name: %s in organization " +
+                        "with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65072", "Unable to resolve user's resident organization.",
+                "Error while resolving resident organization of user with ID: %s."),;
 
         private final String code;
         private final String message;

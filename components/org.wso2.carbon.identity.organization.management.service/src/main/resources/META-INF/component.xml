@@ -35,5 +35,9 @@
             <DisplayName>Delete</DisplayName>
             <ResourceId>/permission/admin/manage/identity/organizationmgt/delete</ResourceId>
         </ManagementPermission>
+        <ManagementPermission>
+            <DisplayName>Switch</DisplayName>
+            <ResourceId>/permission/admin/manage/identity/organizationmgt/switch</ResourceId>
+        </ManagementPermission>
     </ManagementPermissions>
 </component>

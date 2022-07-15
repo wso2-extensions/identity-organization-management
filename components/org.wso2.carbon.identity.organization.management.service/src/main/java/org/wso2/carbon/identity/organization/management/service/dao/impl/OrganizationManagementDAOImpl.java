@@ -95,6 +95,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SWITCH_ORGANIZATION_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ATTR_KEY_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_ATTR_VALUE_COLUMN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.VIEW_CREATED_TIME_COLUMN;
@@ -118,6 +119,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_ATTRIBUTES_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ANCESTORS_OF_ORG_INCLUDING_ITSELF_UP_TO_GIVEN_ANCESTOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
@@ -326,7 +328,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
 
         String permissionPlaceholder = "PERMISSION_";
-        List<String> permissions = getAllowedPermissions(VIEW_ORGANIZATION_PERMISSION);
+        List<String> permissions = getListOrganizationsAllowedPermissions();
         List<String> permissionPlaceholders = new ArrayList<>();
         // Constructing the placeholders required to hold the permission strings in the named prepared statement.
         for (int i = 1; i <= permissions.size(); i++) {
@@ -979,6 +981,23 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         }
     }
 
+    @Override
+    public List<String> getAncestorOrganizationIdsUpToGivenOrganization(String organizationId, String ancestorOrgId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_ANCESTORS_OF_ORG_INCLUDING_ITSELF_UP_TO_GIVEN_ANCESTOR,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, ancestorOrgId);
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS, e, organizationId);
+        }
+    }
+
     private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                     FilterQueryBuilder filterQueryBuilder) {
 
@@ -1114,5 +1133,13 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         } else {
             filter.append(" AND ").append(OrganizationManagementConstants.VIEW_ID_COLUMN).append(filterString);
         }
+    }
+
+    private List<String> getListOrganizationsAllowedPermissions() {
+
+        List<String> permissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
+        permissions.add(VIEW_ORGANIZATION_PERMISSION);
+        permissions.add(SWITCH_ORGANIZATION_PERMISSION);
+        return permissions;
     }
 }

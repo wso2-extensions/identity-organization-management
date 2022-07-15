@@ -268,4 +268,14 @@ public interface OrganizationManagementDAO {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Get ancestor organization ids of an organization (including itself) up to the given ancestor organization.
+     *
+     * @param organizationId The organization ID.
+     * @param ancestorOrgId  The ancestor organization ID.
+     * @return List of ancestor organization ids including itself.
+     */
+    List<String> getAncestorOrganizationIdsUpToGivenOrganization(String organizationId, String ancestorOrgId)
+            throws OrganizationManagementServerException;
 }

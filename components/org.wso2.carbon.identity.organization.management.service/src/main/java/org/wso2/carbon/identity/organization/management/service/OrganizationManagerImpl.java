@@ -341,6 +341,15 @@ public class OrganizationManagerImpl implements OrganizationManager {
         return organizationManagementDAO.getAncestorOrganizationIds(organizationId);
     }
 
+    @Override
+    public List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String childOrgId,
+                                                                                String ancestorOrganizationId)
+            throws OrganizationManagementException {
+
+        return organizationManagementDAO.getAncestorOrganizationIdsUpToGivenOrganization(childOrgId,
+                ancestorOrganizationId);
+    }
+
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {
 
         if (StringUtils.equals(ACTIVE.toString(), status)) {

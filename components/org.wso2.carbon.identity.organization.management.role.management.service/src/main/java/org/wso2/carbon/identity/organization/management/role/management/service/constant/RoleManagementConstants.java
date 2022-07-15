@@ -41,6 +41,7 @@ public class RoleManagementConstants {
     public static final String COMMA_SEPARATOR = ",";
 
     public static final String ORG_CREATOR_ROLE = "org-creator";
+    public static final String ORG_SWITCHER_ROLE = "org-switcher";
 
     /**
      * Enum for cursor based pagination direction.

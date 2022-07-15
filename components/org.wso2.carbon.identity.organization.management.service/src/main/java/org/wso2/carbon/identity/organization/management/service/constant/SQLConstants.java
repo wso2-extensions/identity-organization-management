@@ -161,6 +161,11 @@ public class SQLConstants {
             "SELECT UM_PARENT_ID FROM UM_ORG_HIERARCHY WHERE UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
                     "; ORDER BY DEPTH ASC;";
 
+    public static final String GET_ANCESTORS_OF_ORG_INCLUDING_ITSELF_UP_TO_GIVEN_ANCESTOR =
+            "SELECT UM_PARENT_ID FROM UM_ORG_HIERARCHY WHERE UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID +
+                    "; AND UM_PARENT_ID NOT IN (SELECT UM_PARENT_ID FROM UM_ORG_HIERARCHY WHERE UM_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + "; AND DEPTH > 0) ORDER BY DEPTH ASC;";
+
     /**
      * SQL Placeholders.
      */

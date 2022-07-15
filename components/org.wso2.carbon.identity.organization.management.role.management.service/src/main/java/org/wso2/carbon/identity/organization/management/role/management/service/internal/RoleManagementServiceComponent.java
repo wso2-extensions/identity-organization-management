@@ -30,6 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManagerImpl;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -101,5 +102,31 @@ public class RoleManagementServiceComponent {
             LOG.debug("Unset organization management service.");
         }
         RoleManagementDataHolder.getInstance().setOrganizationManager(null);
+    }
+
+    @Reference(
+            name = "organization.user.resident.resolver.service",
+            service = OrganizationUserResidentResolverService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationUserResidentResolverService"
+    )
+    protected void setOrganizationUserResidentResolverService(OrganizationUserResidentResolverService
+                                                                          organizationUserResidentResolverService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting the organization user resolver service.");
+        }
+        RoleManagementDataHolder.getInstance().setOrganizationUserResidentResolverService
+                (organizationUserResidentResolverService);
+    }
+
+    protected void unsetOrganizationUserResidentResolverService(OrganizationUserResidentResolverService
+                                                                        organizationUserResidentResolverService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unset organization user resolver service.");
+        }
+        RoleManagementDataHolder.getInstance().setOrganizationUserResidentResolverService(null);
     }
 }

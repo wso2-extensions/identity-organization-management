@@ -37,6 +37,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -83,6 +84,32 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
                     accessedOrganizationId);
         }
         return Optional.ofNullable(resolvedUser);
+    }
+
+    @Override
+    public Optional<String> resolveResidentOrganization(String userId, String accessedOrganizationId)
+            throws OrganizationManagementException {
+
+        String residentOrgId = null;
+        try {
+            List<String> ancestorOrganizationIds =
+                    organizationManagementDAO.getAncestorOrganizationIds(accessedOrganizationId);
+            if (ancestorOrganizationIds != null) {
+                for (String organizationId : ancestorOrganizationIds) {
+                    String associatedTenantDomainForOrg = resolveTenantDomainForOrg(organizationId);
+                    if (associatedTenantDomainForOrg != null) {
+                        AbstractUserStoreManager userStoreManager = getUserStoreManager(associatedTenantDomainForOrg);
+                        if (userStoreManager.isExistingUserWithID(userId)) {
+                            residentOrgId = organizationId;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (UserStoreException e) {
+            throw handleServerException(ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG, e, userId);
+        }
+        return Optional.ofNullable(residentOrgId);
     }
 
     private String resolveTenantDomainForOrg(String organizationId) throws OrganizationManagementServerException {
