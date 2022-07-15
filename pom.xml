@@ -50,6 +50,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
         <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
         <module>components/org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</module>
+        <module>components/org.wso2.carbon.identity.organization.management.oauth2.grant</module>
         <module>features/org.wso2.carbon.identity.organization.management.server.feature</module>
     </modules>
 
@@ -248,6 +249,11 @@
                 <groupId>org.wso2.carbon.identity.outbound.auth.oidc</groupId>
                 <artifactId>org.wso2.carbon.identity.application.authenticator.oidc</artifactId>
                 <version>${identity.outbound.auth.oidc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.oltu.oauth2</groupId>
+                <artifactId>org.apache.oltu.oauth2.client</artifactId>
+                <version>${oltu.oauth2.client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon</groupId>
@@ -524,6 +530,9 @@
         <org.apache.commons.logging.imp.pkg.version.range>[1.2,2)</org.apache.commons.logging.imp.pkg.version.range>
         <org.apache.commons.collections.imp.pkg.version.range>[3.2.0,4.0.0)
         </org.apache.commons.collections.imp.pkg.version.range>
+
+        <oltu.oauth2.client.version>1.0.0</oltu.oauth2.client.version>
+        <oltu.oauth2.client.version.range>[1.0.0,1.0.3)</oltu.oauth2.client.version.range>
 
         <org.powermock.version>1.7.4</org.powermock.version>
         <jacoco.version>0.8.2</jacoco.version>
