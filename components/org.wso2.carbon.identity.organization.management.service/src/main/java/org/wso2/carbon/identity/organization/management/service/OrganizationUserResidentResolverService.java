@@ -32,10 +32,11 @@ public interface OrganizationUserResidentResolverService {
      * Resolve the user from resident organization.
      *
      * @param userName               Username.
+     * @param userId                 User ID.
      * @param accessedOrganizationId Organization that user is trying to access.
      * @return User object based on user resident.
      * @throws OrganizationManagementException Error occurred while resolving resident org of the user.
      */
-    Optional<User> resolveUserFromResidentOrganization(String userName, String accessedOrganizationId)
+    Optional<User> resolveUserFromResidentOrganization(String userName, String userId, String accessedOrganizationId)
             throws OrganizationManagementException;
 }

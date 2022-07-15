@@ -30,6 +30,7 @@ import java.util.Map;
 public class OrganizationManagementConstants {
 
     public static final String ROOT = "ROOT";
+    public static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String PATH_SEPARATOR = "/";
     public static final String V1_API_PATH_COMPONENT = "v1";
     public static final String ORGANIZATION_PATH = "organizations";
@@ -230,7 +231,13 @@ public class OrganizationManagementConstants {
                 "Organization %s can't be renamed."),
         ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
                 "Role %s cannot be updated or deleted."),
-
+        ERROR_CODE_INVALID_ORGANIZATION_NAME("60053", "Organization not found",
+                "Organization with name %s not found"),
+        ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
+                "Organization for the tenant domain %s not found."),
+        ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
+                "Both userId and UserName cannot be null.",
+                "Either userId or UserName is required to resolve user from resident organization."),
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
@@ -386,7 +393,18 @@ public class OrganizationManagementConstants {
                 "Error while resolving user from resident organization.",
                 "Error while resolving user: %s from resident organization, to access organization with ID: %s."),
         ERROR_CODE_ERROR_CHECKING_DB_METADATA("65067", "Error while checking the database metadata.",
-                "Server encountered an error while checking database type.");
+                "Server encountered an error while checking database type."),
+        ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES("65067", "Error while retrieving organization roles of " +
+                "the user.", "Server encountered an error while retrieving the organizations roles of organization " +
+                "with ID: %s for user with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER("65068", "Error while retrieving authenticated user.",
+                "Server encountered while retrieving the authenticated user from user store."),
+        ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION("65069", "Error while validating user association " +
+                "for organization.", "Server encountered when authorizing user against the associated " +
+                "organization."),
+        ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65070", "Error while validating user " +
+                "association with root organization.", "Server encountered when authorizing user against the root " +
+                                                             "organization.");
 
         private final String code;
         private final String message;

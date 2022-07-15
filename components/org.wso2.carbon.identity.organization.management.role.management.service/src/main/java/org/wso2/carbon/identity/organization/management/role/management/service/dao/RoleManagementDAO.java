@@ -70,6 +70,28 @@ public interface RoleManagementDAO {
             throws OrganizationManagementServerException;
 
     /**
+     * Returns the list of organization {@link Role}s of the user.
+     *
+     * @param userId         unique identifier of the user.
+     * @param organizationId unique identifier of the organization.
+     * @return list of organization roles of the user in a given organization.
+     * @throws OrganizationManagementServerException on error when fetching the user organization roles.
+     */
+    List<Role> getUserOrganizationRoles(String userId, String organizationId)
+            throws OrganizationManagementServerException;
+
+    /**
+     * Returns the list of user permission based on the organization roles.
+     *
+     * @param userId         unique identifier of the user.
+     * @param organizationId unique identifier of the organization.
+     * @return list of user permissions based on the organization roles of the user.
+     * @throws OrganizationManagementServerException on error when fetching the user permissions.
+     */
+    List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementServerException;
+
+    /**
      * Patch a {@link Role} inside an organization.
      *
      * @param organizationId  The ID of the organization.

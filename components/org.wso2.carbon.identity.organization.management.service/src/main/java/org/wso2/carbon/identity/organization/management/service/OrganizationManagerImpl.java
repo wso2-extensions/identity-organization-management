@@ -88,6 +88,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_ID_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_RESERVED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PARENT_ORGANIZATION_IS_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_OPERATION_UNDEFINED;
@@ -223,13 +224,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         List<ExpressionNode> expressionNodes = getExpressionNodes(filter, after, before);
 
-        String tenantDomain = getTenantDomain();
-        String orgId;
-        if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
-            orgId = organizationManagementDAO.getOrganizationIdByName(ROOT);
-        } else {
-            orgId = organizationManagementDAO.resolveOrganizationId(tenantDomain);
-        }
+        String orgId = resolveOrganizationId(getTenantDomain());
 
         List<ExpressionNode> filteringByParentIdExpressionNodes = new ArrayList<>();
         for (ExpressionNode expressionNode : expressionNodes) {
@@ -327,6 +322,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
             return MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         }
         return organizationManagementDAO.resolveTenantDomain(organizationId);
+    }
+
+    @Override
+    public String resolveOrganizationId(String tenantDomain) throws OrganizationManagementException {
+
+        if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
+            return OrganizationManagementConstants.ROOT_ORG_ID;
+        } else {
+            return organizationManagementDAO.resolveOrganizationId(tenantDomain).orElseThrow(
+                    () -> handleClientException(ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT, tenantDomain));
+        }
     }
 
     @Override

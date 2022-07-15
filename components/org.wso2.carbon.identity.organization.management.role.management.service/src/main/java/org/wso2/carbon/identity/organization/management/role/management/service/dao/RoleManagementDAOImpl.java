@@ -128,6 +128,11 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS_FROM_GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES_FROM_GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GROUP_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
@@ -147,6 +152,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_PERMISSION_IDS_USING_PERMISSION_STRING;
@@ -254,7 +261,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         AbstractUserStoreManager userStoreManager =
                 getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
         List<Group> groups = new ArrayList<>();
-        for (String groupId: groupIdList) {
+        for (String groupId : groupIdList) {
             String groupName = userStoreManager.getGroupNameByGroupId(groupId);
             groups.add(new Group(groupId, groupName));
         }
@@ -316,6 +323,110 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     @Override
+    public List<Role> getUserOrganizationRoles(String userId, String organizationId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        List<Role> roles = new ArrayList<>();
+        try {
+            List<Role> directAssignedRoles = namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_ROLES,
+                    (resultSet, rowNumber) -> new Role(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
+                    });
+            roles.addAll(directAssignedRoles);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES, e, organizationId,
+                    userId);
+        }
+
+        // Get the roles assigned to user via groups.
+        try {
+            AbstractUserStoreManager userStoreManager =
+                    getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+
+            boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
+            if (!isUserExists) {
+                return roles;
+            }
+
+            List<org.wso2.carbon.user.core.common.Group> groupListOfUser =
+                    userStoreManager.getGroupListOfUser(userId, null, null);
+            if (groupListOfUser != null && !groupListOfUser.isEmpty()) {
+                String groupIds = groupListOfUser.stream().map(
+                        org.wso2.carbon.user.core.common.Group::getGroupID).collect(Collectors.joining(","));
+                List<Role> groupAssignedRoles = namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_ROLES_FROM_GROUPS,
+                        (resultSet, rowNumber) -> new Role(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID),
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME)),
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setString(GROUP_LIST_PLACEHOLDER, groupIds);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        });
+                roles.addAll(groupAssignedRoles);
+            }
+
+        } catch (UserStoreException | DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES, e, organizationId,
+                    userId);
+        }
+        return roles;
+    }
+
+    @Override
+    public List<String> getUserOrganizationPermissions(String userId, String organizationId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        List<String> permissions = new ArrayList<>();
+        try {
+            List<String> directRolePermissions = namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_PERMISSIONS,
+                    (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
+                    });
+            permissions.addAll(directRolePermissions);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
+                    userId);
+        }
+
+        // Get the roles assigned to user via groups.
+        try {
+            AbstractUserStoreManager userStoreManager =
+                    getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+
+            boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
+            if (!isUserExists) {
+                return permissions;
+            }
+
+            List<org.wso2.carbon.user.core.common.Group> groupListOfUser =
+                    userStoreManager.getGroupListOfUser(userId, null, null);
+            if (groupListOfUser != null && !groupListOfUser.isEmpty()) {
+                String groupIds = groupListOfUser.stream().map(
+                        org.wso2.carbon.user.core.common.Group::getGroupID).collect(Collectors.joining(","));
+                List<String> groupAssignedRoles =
+                        namedJdbcTemplate.executeQuery(GET_USER_ORGANIZATION_PERMISSIONS_FROM_GROUPS,
+                                (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
+                                namedPreparedStatement -> {
+                                    namedPreparedStatement.setString(GROUP_LIST_PLACEHOLDER, groupIds);
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
+                                });
+                permissions.addAll(groupAssignedRoles);
+            }
+
+        } catch (UserStoreException | DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
+                    userId);
+        }
+
+        return permissions;
+    }
+
+    @Override
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
@@ -374,7 +485,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId).collect(Collectors.toList());
                 List<String> groups =
                         getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
-                        .collect(Collectors.toList());
+                                .collect(Collectors.toList());
                 List<String> permissions = getPermissionsWithIdFromRoleId(roleId).stream()
                         .map(Permission::getId).map(Object::toString).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(users)) {

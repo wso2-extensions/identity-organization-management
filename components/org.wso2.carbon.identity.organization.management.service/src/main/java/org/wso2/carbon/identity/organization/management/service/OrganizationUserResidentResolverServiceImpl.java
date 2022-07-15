@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
@@ -48,27 +50,38 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
     private final OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
 
     @Override
-    public Optional<User> resolveUserFromResidentOrganization(String userName, String accessedOrganizationId)
+    public Optional<User> resolveUserFromResidentOrganization(String userName, String userId,
+                                                              String accessedOrganizationId)
             throws OrganizationManagementException {
 
         User resolvedUser = null;
         try {
+            if (userName == null && userId == null) {
+                throw handleClientException(ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG);
+            }
             List<String> ancestorOrganizationIds =
                     organizationManagementDAO.getAncestorOrganizationIds(accessedOrganizationId);
             if (ancestorOrganizationIds != null) {
                 for (String organizationId : ancestorOrganizationIds) {
                     String associatedTenantDomainForOrg = resolveTenantDomainForOrg(organizationId);
                     if (associatedTenantDomainForOrg != null) {
-                        AbstractUserStoreManager userStoreManager = getUserStoreManager(associatedTenantDomainForOrg);
-                        boolean isExistingUser = userStoreManager.isExistingUser(userName);
-                        if (isExistingUser) {
-                            User user = userStoreManager.getUser(null, userName);
-                            // Check whether user has any association against the org that the user is trying to access.
-                            boolean userHasAccessPermissions = OrganizationManagementAuthorizationManager.getInstance()
-                                    .hasUserOrgAssociation(user.getUserID(), accessedOrganizationId);
-                            if (userHasAccessPermissions) {
-                                resolvedUser = user;
-                            }
+                        AbstractUserStoreManager userStoreManager =
+                                getUserStoreManager(associatedTenantDomainForOrg);
+                        User user;
+                        if (userName != null && userStoreManager.isExistingUser(userName)) {
+                            user = userStoreManager.getUser(null, userName);
+                        } else if (userId != null && userStoreManager.isExistingUserWithID(userId)) {
+                            user = userStoreManager.getUser(userId, null);
+                        } else {
+                            return Optional.empty();
+                        }
+                        // Check whether user has any association against the org the user is trying to access.
+                        boolean userHasAccessPermissions =
+                                OrganizationManagementAuthorizationManager.getInstance()
+                                        .hasUserOrgAssociation(user.getUserID(), accessedOrganizationId);
+                        if (userHasAccessPermissions) {
+                            resolvedUser = user;
+                            break;
                         }
                     }
                 }

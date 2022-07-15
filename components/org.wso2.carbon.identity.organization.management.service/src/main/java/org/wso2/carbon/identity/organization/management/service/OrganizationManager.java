@@ -136,6 +136,15 @@ public interface OrganizationManager {
     String resolveTenantDomain(String organizationId) throws OrganizationManagementException;
 
     /**
+     * Derive the organization id of the given tenant.
+     *
+     * @param tenantDomain The tenant domain.
+     * @return organization id.
+     * @throws OrganizationManagementException The exception thrown when retrieving the organization id of a tenant.
+     */
+    String resolveOrganizationId(String tenantDomain) throws OrganizationManagementException;
+
+    /**
      * Get ancestor organization ids (including itself) of a given organization.
      *
      * @param organizationId Organization id.
