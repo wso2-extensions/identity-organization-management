@@ -33,5 +33,6 @@ public class OrganizationSwitchGrantValidator extends AbstractValidator<HttpServ
     public OrganizationSwitchGrantValidator() {
 
         requiredParams.add(OrganizationSwitchGrantConstants.Params.TOKEN_PARAM);
+        requiredParams.add(OrganizationSwitchGrantConstants.Params.ORG_PARAM);
     }
 }
