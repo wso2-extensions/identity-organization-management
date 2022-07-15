@@ -990,7 +990,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void startWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                         FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value + "%");
     }
@@ -998,7 +998,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void endWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                       FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value);
     }
@@ -1006,7 +1006,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void containsFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                        FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }
