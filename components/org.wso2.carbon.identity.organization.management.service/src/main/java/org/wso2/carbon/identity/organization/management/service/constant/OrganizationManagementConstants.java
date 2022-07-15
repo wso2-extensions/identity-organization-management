@@ -30,6 +30,7 @@ import java.util.Map;
 public class OrganizationManagementConstants {
 
     public static final String ROOT = "ROOT";
+    public static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String PATH_SEPARATOR = "/";
     public static final String V1_API_PATH_COMPONENT = "v1";
     public static final String ORGANIZATION_PATH = "organizations";

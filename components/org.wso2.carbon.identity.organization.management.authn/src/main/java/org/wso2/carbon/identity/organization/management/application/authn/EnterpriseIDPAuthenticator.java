@@ -105,12 +105,11 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT_ORG_ID;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 /**
@@ -203,11 +202,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     private String getOrgIdByTenantDomain(String tenantDomain) throws AuthenticationFailedException {
 
         if (SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
-            try {
-                return getOrganizationManager().getOrganizationIdByName(ROOT);
-            } catch (OrganizationManagementException e) {
-                throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e);
-            }
+            return ROOT_ORG_ID;
         }
         int tenantId = getTenantId(tenantDomain);
         try {
@@ -239,10 +234,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
         Map<String, String> runtimeParams = getRuntimeParams(context);
 
         if (StringUtils.isBlank(runtimeParams.get(ORG_ID_PARAMETER))) {
-            // String orgId = org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId();
+            // todo use resolveOrganizationId(tenant domain) of organization management service
 
             String orgId = IdentityTenantUtil.getTenantDomainFromContext();
-            // todo Remove the if block after above todo.
             if (orgId == null || SUPER_TENANT_DOMAIN_NAME.equals(orgId)) {
                 orgId = getOrgIdByTenantDomain(SUPER_TENANT_DOMAIN_NAME);
             }

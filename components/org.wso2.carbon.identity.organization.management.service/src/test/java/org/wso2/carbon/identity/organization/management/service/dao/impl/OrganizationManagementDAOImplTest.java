@@ -41,7 +41,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Optional;
 import java.util.TimeZone;
 
 import javax.sql.DataSource;
@@ -161,19 +160,6 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
             } else if (StringUtils.equals(id, INVALID_DATA)) {
                 Assert.assertFalse(organizationExistByName);
             }
-        }
-    }
-
-    @Test
-    public void testGetOrganizationIdByName() throws Exception {
-
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            Optional<String> optional = organizationManagementDAO.getOrganizationIdByName(ORG_NAME);
-            Assert.assertTrue(optional.isPresent());
-            Assert.assertEquals(optional.get(), orgId);
         }
     }
 

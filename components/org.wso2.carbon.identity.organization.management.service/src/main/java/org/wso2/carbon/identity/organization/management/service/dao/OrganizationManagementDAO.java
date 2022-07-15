@@ -62,15 +62,6 @@ public interface OrganizationManagementDAO {
     boolean isOrganizationExistById(String organizationId) throws OrganizationManagementServerException;
 
     /**
-     * Retrieve organization ID if the given organization name exists.
-     *
-     * @param organizationName The organization name.
-     * @return the organization ID.
-     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
-     */
-    Optional<String> getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
-
-    /**
      * Retrieve organization Name if the given organization id exists.
      *
      * @param organizationId The organization id.

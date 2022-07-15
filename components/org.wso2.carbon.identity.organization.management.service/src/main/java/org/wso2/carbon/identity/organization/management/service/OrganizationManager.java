@@ -59,15 +59,6 @@ public interface OrganizationManager {
     boolean isOrganizationExistById(String organizationId) throws OrganizationManagementException;
 
     /**
-     * Retrieve organization ID if the given organization name.
-     *
-     * @param organizationName The organization name.
-     * @return the organization ID.
-     * @throws OrganizationManagementException The exception thrown when retrieving the ID an organization.
-     */
-    String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
-
-    /**
      * Retrieve organization Name if the given organization id.
      *
      * @param organizationId The organization id.
