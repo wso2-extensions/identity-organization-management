@@ -26,7 +26,6 @@ import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.model.User;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
@@ -47,14 +46,13 @@ import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
 
 import static org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants.ORG_SWITCH_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants.ORG_SWITCH_PERMISSION_FOR_ROOT;
 import static org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantUtil.handleServerException;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION;
@@ -76,6 +74,7 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         super.validateGrant(tokReqMsgCtx);
 
         String token = extractParameter(OrganizationSwitchGrantConstants.Params.TOKEN_PARAM, tokReqMsgCtx);
+        String organizationId = extractParameter(OrganizationSwitchGrantConstants.Params.ORG_PARAM, tokReqMsgCtx);
 
         OAuth2TokenValidationResponseDTO validationResponseDTO = validateToken(token);
 
@@ -94,17 +93,11 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         User authorizedUser = User.getUserFromUserName(validationResponseDTO.getAuthorizedUser());
         String userId = getUserIdFromAuthorizedUser(authorizedUser);
 
-        String switchTenantDomain = IdentityTenantUtil.getTenantDomainFromContext();
-        if (switchTenantDomain == null) {
-            switchTenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
-        }
-
-        String switchOrgId = getOrganizationIdByTenantDomain(switchTenantDomain);
         boolean isValidCollaborator;
-        if (StringUtils.equals(ROOT_ORG_ID, switchOrgId)) {
+        if (StringUtils.equals(ROOT_ORG_ID, organizationId)) {
             isValidCollaborator = validateCollaboratorAssociationForRoot(authorizedUser.getUserName());
         } else {
-            isValidCollaborator = validateCollaboratorAssociation(userId, switchOrgId);
+            isValidCollaborator = validateCollaboratorAssociation(userId, organizationId);
         }
 
         if (!isValidCollaborator) {
@@ -119,7 +112,7 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(authorizedUser.getUserName());
         authenticatedUser.setUserStoreDomain(authorizedUser.getUserStoreDomain());
-        authenticatedUser.setTenantDomain(switchTenantDomain);
+        authenticatedUser.setTenantDomain(getTenantDomainFromOrganizationId(organizationId));
         authenticatedUser.setUserId(userId);
 
         tokReqMsgCtx.setAuthorizedUser(authenticatedUser);
@@ -200,12 +193,12 @@ public class OrganizationSwitchGrant extends AbstractAuthorizationGrantHandler  
         }
     }
 
-    private String getOrganizationIdByTenantDomain(String tenantDomain) throws OrganizationSwitchGrantException {
+    private String getTenantDomainFromOrganizationId(String organizationId) throws OrganizationSwitchGrantException {
 
         try {
-            return organizationManager.resolveOrganizationId(tenantDomain);
+            return organizationManager.resolveTenantDomain(organizationId);
         } catch (OrganizationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, e);
         }
     }
 
