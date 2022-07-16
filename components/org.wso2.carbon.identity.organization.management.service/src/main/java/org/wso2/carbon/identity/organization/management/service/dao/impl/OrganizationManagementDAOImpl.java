@@ -46,6 +46,7 @@ import java.util.Optional;
 import java.util.TimeZone;
 
 import static java.time.ZoneOffset.UTC;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getAllowedPermissions;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ALL_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ATTRIBUTE_COLUMN_MAP;
@@ -72,6 +73,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_BY_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_STATUS;
@@ -261,6 +263,19 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
             return orgCount > 0;
         } catch (DataAccessException e) {
             throw handleServerException(errorMessage, e, organization);
+        }
+    }
+
+    @Override
+    public String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
+                    (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_NAME, organizationName));
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e, organizationName);
         }
     }
 
@@ -968,7 +983,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
-            String organizationId =  namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN,
+            String organizationId = namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_UUID_FROM_TENANT_DOMAIN,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_TENANT_DOMAIN,
                             tenantDomain));

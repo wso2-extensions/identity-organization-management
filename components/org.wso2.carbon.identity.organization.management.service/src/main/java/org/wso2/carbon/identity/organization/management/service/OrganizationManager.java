@@ -59,11 +59,20 @@ public interface OrganizationManager {
     boolean isOrganizationExistById(String organizationId) throws OrganizationManagementException;
 
     /**
-     * Retrieve organization Name if the given organization id.
+     * Retrieve organization ID if the given organization name.
+     *
+     * @param organizationName The organization name.
+     * @return the organization ID.
+     * @throws OrganizationManagementException The exception thrown when retrieving the ID an organization.
+     */
+    String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
+
+    /**
+     * Retrieve the organization name for the given organization id.
      *
      * @param organizationId The organization id.
      * @return the organization Name.
-     * @throws OrganizationManagementException The exception thrown when retrieving the Name an organization.
+     * @throws OrganizationManagementException The exception thrown when retrieving the name of an organization.
      */
     String getOrganizationNameById(String organizationId) throws OrganizationManagementException;
 
@@ -151,12 +160,14 @@ public interface OrganizationManager {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
     /**
-     * Retrieve list of organizations by provided common name
+     * Retrieve list of organizations by the organization name.
      *
-     * @param organizationName The common name of the organizations
+     * @param organizationName The name of the organizations.
      * @return List of {@link Organization}
-     * @throws OrganizationManagementException
+     * @throws OrganizationManagementException The server exception thrown when retrieving the list of
+     *                                         organizations by name.
      */
     List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementException;
 
