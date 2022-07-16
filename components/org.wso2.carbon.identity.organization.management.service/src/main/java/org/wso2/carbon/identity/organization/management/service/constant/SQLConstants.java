@@ -44,8 +44,8 @@ public class SQLConstants {
     public static final String CHECK_ORGANIZATION_EXIST_BY_ID = "SELECT COUNT(1) FROM UM_ORG WHERE UM_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
-    public static final String GET_ORGANIZATION_ID_BY_NAME = "SELECT UM_ID FROM UM_ORG WHERE UM_ORG_NAME = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";";
+    public static final String GET_ORGANIZATION_NAME_BY_ID = "SELECT UM_ORG_NAME FROM UM_ORG WHERE UM_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
     public static final String INSERT_ATTRIBUTE = "INSERT INTO UM_ORG_ATTRIBUTE (UM_ORG_ID, UM_ATTRIBUTE_KEY, " +
             "UM_ATTRIBUTE_VALUE) VALUES (:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";, :" +
@@ -71,6 +71,9 @@ public class SQLConstants {
             "UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS, UM_PARENT_ID, UM_ORG_TYPE, " +
             "UM_ATTRIBUTE_KEY, UM_ATTRIBUTE_VALUE FROM UM_ORG LEFT OUTER JOIN UM_ORG_ATTRIBUTE ON UM_ORG.UM_ID = " +
             "UM_ORG_ATTRIBUTE.UM_ORG_ID WHERE UM_ORG.UM_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
+
+    public static final String GET_ORGANIZATIONS_BY_NAME = "SELECT UM_ORG.UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION FROM" +
+            " UM_ORG WHERE UM_ORG.UM_ORG_NAME = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_NAME + ";";
 
     public static final String GET_ORGANIZATIONS = "SELECT DISTINCT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
             "UM_ORG.UM_CREATED_TIME FROM UM_ORG " +

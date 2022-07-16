@@ -59,13 +59,13 @@ public interface OrganizationManager {
     boolean isOrganizationExistById(String organizationId) throws OrganizationManagementException;
 
     /**
-     * Retrieve organization ID if the given organization name.
+     * Retrieve organization Name if the given organization id.
      *
-     * @param organizationName The organization name.
-     * @return the organization ID.
-     * @throws OrganizationManagementException The exception thrown when retrieving the ID an organization.
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementException The exception thrown when retrieving the Name an organization.
      */
-    String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
+    String getOrganizationNameById(String organizationId) throws OrganizationManagementException;
 
     /**
      * Retrieve {@link Organization} by ID.
@@ -151,4 +151,13 @@ public interface OrganizationManager {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+    /**
+     * Retrieve list of organizations by provided common name
+     *
+     * @param organizationName The common name of the organizations
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementException
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementException;
+
 }

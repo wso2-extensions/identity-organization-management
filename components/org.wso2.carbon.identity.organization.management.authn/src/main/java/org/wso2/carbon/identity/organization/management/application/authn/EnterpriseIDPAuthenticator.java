@@ -45,6 +45,7 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -85,13 +86,18 @@ import static org.wso2.carbon.identity.organization.management.application.authn
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_EXIST_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT_ORG_ID;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 /**
@@ -185,19 +191,12 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     private String getOrgIdByTenantDomain(String tenantDomain) throws AuthenticationFailedException {
 
-        if (SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
-            try {
-                return getOrganizationManager().getOrganizationIdByName(ROOT);
-            } catch (OrganizationManagementException e) {
-                throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_ID_BY_NAME, e);
-            }
-        }
-        int tenantId = getTenantId(tenantDomain);
         try {
-            Tenant tenant = getRealmService().getTenantManager().getTenant(tenantId);
-            return tenant.getAssociatedOrganizationUUID();
-        } catch (UserStoreException e) {
-            throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION, e);
+            return getOrganizationManager().resolveOrganizationId(tenantDomain);
+        } catch (OrganizationManagementClientException e) {
+            throw handleAuthFailures(ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT, e);
+        } catch (OrganizationManagementException e) {
+            throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN, e);
         }
     }
 
@@ -241,6 +240,17 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             return AuthenticatorFlowStatus.INCOMPLETE;
         }
         return super.process(request, response, context);
+    }
+
+    private String getOrganizationNameById(String organizationId) throws AuthenticationFailedException {
+
+        try {
+            return getOrganizationManager().getOrganizationNameById(organizationId);
+        } catch (OrganizationManagementClientException e) {
+            throw handleAuthFailures(ERROR_CODE_INVALID_ORGANIZATION_ID);
+        } catch (OrganizationManagementException e) {
+            throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID, e);
+        }
     }
 
     private boolean validateOrganization(String organizationName, AuthenticationContext context)

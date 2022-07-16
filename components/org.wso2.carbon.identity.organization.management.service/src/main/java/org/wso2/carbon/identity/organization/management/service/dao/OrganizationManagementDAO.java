@@ -62,13 +62,13 @@ public interface OrganizationManagementDAO {
     boolean isOrganizationExistById(String organizationId) throws OrganizationManagementServerException;
 
     /**
-     * Retrieve organization ID if the given organization name exists.
+     * Retrieve organization Name if the given organization id exists.
      *
-     * @param organizationName The organization name.
-     * @return the organization ID.
-     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization Name.
      */
-    String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
+    Optional<String> getOrganizationNameById(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve {@link Organization} by ID.
@@ -268,4 +268,13 @@ public interface OrganizationManagementDAO {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve list of organizations by provided common name
+     *
+     * @param organizationName The common name of the organizations
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementServerException
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementServerException;
 }
