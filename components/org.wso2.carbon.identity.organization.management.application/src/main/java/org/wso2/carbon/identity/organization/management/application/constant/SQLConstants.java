@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.constant;
 
 /**
- * This class contains database queries related to application management CRUD operations for enterprise login.
+ * This class contains database queries related to application management CRUD operations for organization login.
  */
 public class SQLConstants {
 
@@ -29,11 +29,14 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";);";
-
     public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
             "OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND " +
             "MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND " +
             "SHARED_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
+
+    private SQLConstants() {
+
+    }
 
     /**
      * SQL Placeholders.
@@ -44,6 +47,10 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID = "OWNER_ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID = "SHARED_APP_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID = "SHARED_ORG_ID";
+
+        private SQLPlaceholders() {
+
+        }
     }
 }
 
