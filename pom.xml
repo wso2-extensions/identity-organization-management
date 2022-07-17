@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.0.50-SNAPSHOT</version>
+    <version>1.0.55-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -189,6 +189,12 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.oauth2.grant</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -503,7 +509,7 @@
         <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
-        <carbon.identity.scim2.package.import.version.range>[1.5.122, 2.0.0)
+        <carbon.identity.scim2.package.import.version.range>[1.5.122, 3.1.0)
         </carbon.identity.scim2.package.import.version.range>
         <charon3.core.import.version.range>[3.4.22, 4.1.0)</charon3.core.import.version.range>
         <carbon.identity.inbound.provisioning.scim2.version>1.5.122

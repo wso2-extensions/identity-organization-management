@@ -236,9 +236,12 @@ public class OrganizationManagementConstants {
                 "Organization with name %s not found"),
         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
                 "Organization for the tenant domain %s not found."),
-        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60055", "Unable to patch the role.",
+        ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
+                "Both userId and UserName cannot be null.",
+                "Either userId or UserName is required to resolve user from resident organization."),
+        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60056", "Unable to patch the role.",
                 "Unsupported patch path/ operation for role with ID: %s."),
-        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60056", "Invalid organization user.",
+        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60057", "Invalid organization user.",
                 "Resident organization for user with ID: %s is not found."),
 
         // Server errors.
@@ -395,22 +398,24 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG("65066",
                 "Error while resolving user from resident organization.",
                 "Error while resolving user: %s from resident organization, to access organization with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES("65067", "Error while retrieving organization roles of " +
+        ERROR_CODE_ERROR_CHECKING_DB_METADATA("65067", "Error while checking the database metadata.",
+                "Server encountered an error while checking database type."),
+        ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES("65068", "Error while retrieving organization roles of " +
                 "the user.", "Server encountered an error while retrieving the organizations roles of organization " +
                 "with ID: %s for user with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER("65068", "Error while retrieving authenticated user.",
+        ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER("65069", "Error while retrieving authenticated user.",
                 "Server encountered while retrieving the authenticated user from user store."),
-        ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION("65069", "Error while validating user association " +
+        ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION("65070", "Error while validating user association " +
                 "for organization.", "Server encountered when authorizing user against the associated " +
                 "organization."),
-        ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65070", "Error while validating user " +
+        ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65071", "Error while validating user " +
                 "association with root organization.", "Server encountered when authorizing user against the root " +
                                                              "organization."),
-        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65071", "Unable to retrieve the role name.",
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65072", "Unable to retrieve the role name.",
                 "Server encountered an error while retrieving role ID from role name: %s in organization " +
                         "with ID: %s."),
-        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65072", "Unable to resolve user's resident organization.",
-                "Error while resolving resident organization of user with ID: %s."),;
+        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65073", "Unable to resolve user's resident organization.",
+                "Error while resolving resident organization of user with ID: %s.");
 
         private final String code;
         private final String message;

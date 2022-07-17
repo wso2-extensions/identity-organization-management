@@ -22,6 +22,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
@@ -32,11 +33,13 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_DB_METADATA;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SERVER_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.ORACLE;
 
 /**
  * This class provides utility functions for the Organization Management.
@@ -86,6 +89,22 @@ public class Utils {
     public static NamedJdbcTemplate getNewTemplate() {
 
         return new NamedJdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
+    }
+
+    /**
+     * Check whether the string, "oracle", contains in the driver name or db product name.
+     *
+     * @return true if the database type matches the driver type, false otherwise.
+     * @throws OrganizationManagementServerException If error occurred while checking the DB metadata.
+     */
+    public static boolean isOracleDB() throws OrganizationManagementServerException {
+        try {
+            NamedJdbcTemplate jdbcTemplate = getNewTemplate();
+            return jdbcTemplate.getDriverName().toLowerCase().contains(ORACLE) ||
+                    jdbcTemplate.getDatabaseProductName().toLowerCase().contains(ORACLE);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_DB_METADATA, e);
+        }
     }
 
     /**

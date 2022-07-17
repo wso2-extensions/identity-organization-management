@@ -123,6 +123,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_PERMISSIONS;
@@ -134,6 +135,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_TENANT_UUID_FROM_ORGANIZATION_UUID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY_ORACLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.INSERT_OTHER_ORGANIZATION_HIERARCHY;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.PATCH_ORGANIZATION;
@@ -158,6 +160,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION_LAST_MODIFIED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
  * Organization management dao implementation.
@@ -189,7 +192,11 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
                 if (CollectionUtils.isNotEmpty(organization.getAttributes())) {
                     addOrganizationAttributes(organization);
                 }
-                addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY, organization);
+                if (isOracleDB()) {
+                    addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY_ORACLE, organization);
+                } else {
+                    addOrganizationHierarchy(INSERT_IMMEDIATE_ORGANIZATION_HIERARCHY, organization);
+                }
                 addOrganizationHierarchy(INSERT_OTHER_ORGANIZATION_HIERARCHY, organization);
                 return null;
             });
@@ -319,12 +326,15 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         String parentIdFilterQuery = parentIdFilterQueryBuilder.getFilterQuery();
 
         String sqlStmt;
+        String getOrgSqlStmtTail = isOracleDB() ? GET_ORGANIZATIONS_TAIL_ORACLE : GET_ORGANIZATIONS_TAIL;
+
         if (StringUtils.isBlank(parentIdFilterQuery)) {
             sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                    String.format(GET_ORGANIZATIONS_TAIL, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
+                    String.format(getOrgSqlStmtTail, SET_ID, recursive ? "> 0" : "= 1", sortOrder);
         } else {
             sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
-                    String.format(GET_ORGANIZATIONS_TAIL, parentIdFilterQuery, recursive ? "> 0" : "= 1", sortOrder);
+                    String.format(getOrgSqlStmtTail, parentIdFilterQuery, recursive ? "> 0" : "= 1",
+                            sortOrder);
         }
 
         String permissionPlaceholder = "PERMISSION_";
@@ -1009,7 +1019,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void startWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                         FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value + "%");
     }
@@ -1017,7 +1027,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void endWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                       FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value);
     }
@@ -1025,7 +1035,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void containsFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
                                        FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }

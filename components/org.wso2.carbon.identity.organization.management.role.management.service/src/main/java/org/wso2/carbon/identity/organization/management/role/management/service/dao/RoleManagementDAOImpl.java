@@ -61,16 +61,29 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.OR_OPERATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ROLE_ACTION;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.UNION_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_PERMISSION_IF_NOT_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_PERMISSION_IF_NOT_EXISTS_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_PERMISSION_IF_NOT_EXISTS_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_PERMISSION_IF_NOT_EXISTS_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_PERMISSION_IF_NOT_EXISTS_VALUES_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_UM_ORG_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.AND;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_EXISTS;
@@ -81,13 +94,19 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_PERMISSIONS_FROM_ROLE_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_ROLE_FROM_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_MAPPING_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_GROUP_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_IDS_FROM_ROLE_ID_TAIL;
@@ -102,8 +121,10 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_ID_FROM_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
@@ -159,6 +180,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
  * Implementation of RoleManagementDAO Interface.
@@ -178,14 +200,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
                         }, role, false);
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
-                    String query = buildQueryForInsertAndRemoveValues(role.getGroups().size(), ADD_ROLE_GROUP_MAPPING,
-                            ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
                             role.getId(), query, GROUPS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
-                    String query = buildQueryForInsertAndRemoveValues(role.getUsers().size(), ADD_ROLE_USER_MAPPING,
-                            ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
                             role.getId(), query, USERS);
                 }
@@ -196,8 +216,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantID);
                     List<String> permissionList = getPermissionIds(role.getPermissions(),
                             tenantID).stream().map(Object::toString).collect(Collectors.toList());
-                    String query = buildQueryForInsertAndRemoveValues(permissionList.size(),
-                            ADD_ROLE_PERMISSION_MAPPING, ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRolePermissionMappingQuery(permissionList.size());
                     assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS);
                 }
                 return null;
@@ -284,12 +303,23 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         String filterQuery = listOrganizationRolesFilterQuery(filterQueryBuilder, expressionNodes, operators);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
-        String sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
-                GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
+        String sqlStm;
+        if (isOracleDB()) {
+            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
+                    GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE;
 
-        if (StringUtils.equals(BACKWARD.toString(), direction)) {
-            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
-                    GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+            if (StringUtils.equals(BACKWARD.toString(), direction)) {
+                sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
+                        GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_ORACLE;
+            }
+        } else {
+            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
+                    GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
+
+            if (StringUtils.equals(BACKWARD.toString(), direction)) {
+                sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
+                        GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+            }
         }
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -471,8 +501,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
-                List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId)
-                        .collect(Collectors.toList());
+                List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId).collect(Collectors.toList());
                 List<String> groups =
                         getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
                                 .collect(Collectors.toList());
@@ -492,15 +521,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getDisplayName());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, role.getId());
                         });
+
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
-                    String query = buildQueryForInsertAndRemoveValues(role.getUsers().size(), ADD_ROLE_USER_MAPPING,
-                            ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
                             roleId, query, USERS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
-                    String query = buildQueryForInsertAndRemoveValues(role.getGroups().size(), ADD_ROLE_GROUP_MAPPING,
-                            ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
                             roleId, query, GROUPS);
                 }
@@ -512,8 +540,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     List<String> permissionList =
                             getPermissionIds(role.getPermissions(), tenantID).stream().map(Object::toString)
                                     .collect(Collectors.toList());
-                    String query = buildQueryForInsertAndRemoveValues(permissionList.size(),
-                            ADD_ROLE_PERMISSION_MAPPING, ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                    String query = getAddRolePermissionMappingQuery(permissionList.size());
                     assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
                 }
                 return null;
@@ -640,14 +667,21 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private void addNonExistingPermissions(List<String> permissionList, String roleId, int tenantId)
             throws OrganizationManagementServerException {
 
+        String sqlStm;
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         int numberOfPermissions = permissionList.size();
         try {
+            if (isOracleDB()) {
+                sqlStm = buildQueryForInsertAndRemoveValues(numberOfPermissions, ADD_PERMISSION_IF_NOT_EXISTS_ORACLE,
+                        ADD_PERMISSION_IF_NOT_EXISTS_VALUES_ORACLE, UNION_SEPARATOR,
+                        ADD_PERMISSION_IF_NOT_EXISTS_TAIL_ORACLE);
+            } else {
+                sqlStm = buildQueryForInsertAndRemoveValues(numberOfPermissions, ADD_PERMISSION_IF_NOT_EXISTS,
+                        ADD_PERMISSION_IF_NOT_EXISTS_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
+            }
             if (CollectionUtils.isNotEmpty(permissionList)) {
                 namedJdbcTemplate.withTransaction(template -> {
-                    template.executeInsert(buildQueryForInsertAndRemoveValues(numberOfPermissions,
-                            ADD_PERMISSION_IF_NOT_EXISTS,
-                            ADD_PERMISSION_IF_NOT_EXISTS_VALUES, COMMA_SEPARATOR), (namedPreparedStatement -> {
+                    template.executeInsert(sqlStm, (namedPreparedStatement -> {
                         for (int i = 0; i < numberOfPermissions; i++) {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID + i,
                                     permissionList.get(i));
@@ -679,13 +713,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             replaceDisplayName(values.get(0), roleId);
         } else if (StringUtils.equalsIgnoreCase(path, USERS)) {
             removeAttributesFromRoleUsingRoleId(roleId, USERS);
-            String query = buildQueryForInsertAndRemoveValues(values.size(), ADD_ROLE_USER_MAPPING,
-                    ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+            String query = getAddRoleUserMappingQuery(values.size());
             assignRoleAttributes(values, roleId, query, USERS);
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             removeAttributesFromRoleUsingRoleId(roleId, GROUPS);
-            String query = buildQueryForInsertAndRemoveValues(values.size(), ADD_ROLE_GROUP_MAPPING,
-                    ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+            String query = getAddRoleGroupMappingQuery(values.size());
             assignRoleAttributes(values, roleId, query, GROUPS);
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             removeAttributesFromRoleUsingRoleId(roleId, PERMISSIONS);
@@ -693,8 +725,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             addNonExistingPermissions(nonExistingPermissions, roleId, getTenantId());
             List<String> permissionList = getPermissionIds(values,
                     getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
-            String query = buildQueryForInsertAndRemoveValues(values.size(), ADD_ROLE_PERMISSION_MAPPING,
-                    ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+            String query = getAddRolePermissionMappingQuery(values.size());
             assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
         }
     }
@@ -752,27 +783,28 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             List<String> newUserList = findNonAssignedAttributeValues(roleId, CHECK_USER_ROLE_MAPPING_EXISTS,
                     DB_SCHEMA_COLUMN_NAME_UM_USER_ID, false, values);
             if (CollectionUtils.isNotEmpty(newUserList)) {
-                String query = buildQueryForInsertAndRemoveValues(newUserList.size(), ADD_ROLE_USER_MAPPING,
-                        ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                String query = getAddRoleUserMappingQuery(newUserList.size());
                 assignRoleAttributes(newUserList, roleId, query, USERS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             List<String> newGroupList = findNonAssignedAttributeValues(roleId, CHECK_GROUP_ROLE_MAPPING_EXISTS,
                     DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, false, values);
             if (CollectionUtils.isNotEmpty(newGroupList)) {
-                String query = buildQueryForInsertAndRemoveValues(newGroupList.size(), ADD_ROLE_GROUP_MAPPING,
-                        ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                String query = getAddRoleGroupMappingQuery(newGroupList.size());
                 assignRoleAttributes(newGroupList, roleId, query, GROUPS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
+            int tenantID = getTenantId();
+            List<String> nonExistingPermissions = getNonExistingPermissions(values, tenantID, roleId);
+            addNonExistingPermissions(nonExistingPermissions, roleId, tenantID);
+
             List<String> newPermissionList = findNonAssignedAttributeValues(roleId,
                     CHECK_PERMISSION_ROLE_MAPPING_EXISTS, DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, true,
                     values);
             if (CollectionUtils.isNotEmpty(newPermissionList)) {
-                List<String> permissionList = getPermissionIds(newPermissionList, getTenantId()).stream()
+                List<String> permissionList = getPermissionIds(newPermissionList, tenantID).stream()
                         .map(Object::toString).collect(Collectors.toList());
-                String query = buildQueryForInsertAndRemoveValues(permissionList.size(), ADD_ROLE_PERMISSION_MAPPING,
-                        ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR);
+                String query = getAddRolePermissionMappingQuery(permissionList.size());
                 assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
             }
         } else if (StringUtils.equals(path, DISPLAY_NAME)) {
@@ -1163,17 +1195,22 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         int numberOfGroups = groupList.size();
         try {
             if (numberOfGroups > 0) {
+                String sqlStm;
+                if (isOracleDB()) {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfGroups, DELETE_GROUPS_FROM_ROLE_ORACLE,
+                            DELETE_GROUPS_FROM_ROLE_MAPPING_ORACLE, COMMA_SEPARATOR, ")");
+                } else {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfGroups, DELETE_GROUPS_FROM_ROLE,
+                            DELETE_GROUPS_FROM_ROLE_MAPPING, OR, StringUtils.EMPTY);
+                }
                 namedJdbcTemplate.withTransaction(template -> {
-                    template.executeUpdate(buildQueryForInsertAndRemoveValues(numberOfGroups, DELETE_GROUPS_FROM_ROLE,
-                                    DELETE_GROUPS_FROM_ROLE_MAPPING, OR),
-                            namedPreparedStatement -> {
-                                for (int i = 0; i < numberOfGroups; i++) {
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i,
-                                            roleId);
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + i,
-                                            groupList.get(i));
-                                }
-                            });
+                    template.executeUpdate(sqlStm, namedPreparedStatement -> {
+                        for (int i = 0; i < numberOfGroups; i++) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + i,
+                                    groupList.get(i));
+                        }
+                    });
                     return null;
                 });
             }
@@ -1197,16 +1234,23 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         int numberOfPermissions = permissionList.size();
         try {
             if (numberOfPermissions > 0) {
+                String sqlStm;
+                if (isOracleDB()) {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfPermissions,
+                            DELETE_PERMISSIONS_FROM_ROLE_ORACLE, DELETE_PERMISSIONS_FROM_ROLE_MAPPING_ORACLE,
+                            COMMA_SEPARATOR, ")");
+                } else {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfPermissions,
+                            DELETE_PERMISSIONS_FROM_ROLE, DELETE_PERMISSIONS_FROM_ROLE_MAPPING, OR, StringUtils.EMPTY);
+                }
                 namedJdbcTemplate.withTransaction(template -> {
-                    template.executeUpdate(buildQueryForInsertAndRemoveValues(numberOfPermissions,
-                                    DELETE_PERMISSIONS_FROM_ROLE, DELETE_PERMISSIONS_FROM_ROLE_MAPPING, OR),
-                            namedPreparedStatement -> {
-                                for (int i = 0; i < numberOfPermissions; i++) {
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + i,
-                                            Integer.parseInt(permissionList.get(i)));
-                                }
-                            });
+                    template.executeUpdate(sqlStm, namedPreparedStatement -> {
+                        for (int i = 0; i < numberOfPermissions; i++) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID + i,
+                                    Integer.parseInt(permissionList.get(i)));
+                        }
+                    });
                     return null;
                 });
             }
@@ -1230,16 +1274,22 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         int numberOfUsers = usersList.size();
         try {
             if (numberOfUsers > 0) {
+                String sqlStm;
+                if (isOracleDB()) {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfUsers, DELETE_USERS_FROM_ROLE_ORACLE,
+                            DELETE_USERS_FROM_ROLE_MAPPING_ORACLE, COMMA_SEPARATOR, ")");
+                } else {
+                    sqlStm = buildQueryForInsertAndRemoveValues(numberOfUsers, DELETE_USERS_FROM_ROLE,
+                            DELETE_USERS_FROM_ROLE_MAPPING, OR, StringUtils.EMPTY);
+                }
                 namedJdbcTemplate.withTransaction(template -> {
-                    template.executeUpdate(buildQueryForInsertAndRemoveValues(numberOfUsers, DELETE_USERS_FROM_ROLE,
-                                    DELETE_USERS_FROM_ROLE_MAPPING, OR),
-                            namedPreparedStatement -> {
-                                for (int i = 0; i < numberOfUsers; i++) {
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID + i,
-                                            usersList.get(i));
-                                }
-                            });
+                    template.executeUpdate(sqlStm, namedPreparedStatement -> {
+                        for (int i = 0; i < numberOfUsers; i++) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID + i,
+                                    usersList.get(i));
+                        }
+                    });
                     return null;
                 });
             }
@@ -1255,10 +1305,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param baseQuery        The base insert or remove query.
      * @param mappingQuery     The query containing mapping values.
      * @param mappingConnector The mapping value connector.
+     * @param queryTail        The tail of insert or remove query.
      * @return The final query string for inserting or removing values.
      */
     private String buildQueryForInsertAndRemoveValues(int numberOfElements, String baseQuery, String mappingQuery,
-                                                      String mappingConnector) {
+                                                      String mappingConnector, String queryTail) {
 
         StringBuilder sb = new StringBuilder(baseQuery);
         for (int i = 0; i < numberOfElements; i++) {
@@ -1267,6 +1318,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 sb.append(mappingConnector);
             }
         }
+        sb.append(queryTail);
         return sb.toString();
     }
 
@@ -1288,6 +1340,62 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
         sb.append(")").append(AND).append(TENANT_ID_APPENDER).append(AND).append(UM_ACTION_APPENDER);
         return sb.toString();
+    }
+
+    /**
+     * Query builder for inserting users based on type of connected database.
+     *
+     * @param numberOfElements Number of user elements in the list to be mapped with role.
+     * @return The final query string for inserting user values considering the database type.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
+     *                                               checking database type.
+     */
+    private String getAddRoleUserMappingQuery(int numberOfElements) throws OrganizationManagementException {
+        if (isOracleDB()) {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING_ORACLE,
+                    ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
+        } else {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING,
+                    ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
+        }
+    }
+
+    /**
+     * Query builder for inserting groups based on type of connected database.
+     *
+     * @param numberOfElements Number of group elements in the list to be mapped with role.
+     * @return The final query string for inserting group values considering the database type.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
+     *                                               checking database type.
+     */
+    private String getAddRoleGroupMappingQuery(int numberOfElements) throws OrganizationManagementException {
+        if (isOracleDB()) {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_MAPPING_ORACLE,
+                    ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE);
+        } else {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_MAPPING,
+                    ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
+        }
+    }
+
+    /**
+     * Query builder for inserting permissions based on type of connected database.
+     *
+     * @param numberOfElements Number of permission elements in the list to be mapped with role.
+     * @return The final query string for inserting permission values considering the database type.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
+     *                                               checking database type.
+     */
+    private String getAddRolePermissionMappingQuery(int numberOfElements) throws OrganizationManagementException {
+
+        if (isOracleDB()) {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_PERMISSION_MAPPING_ORACLE,
+                    ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
+                    ADD_ROLE_PERMISSION_MAPPING_TAIL_ORACLE);
+        } else {
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_PERMISSION_MAPPING,
+                    ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
+        }
     }
 
     /**
