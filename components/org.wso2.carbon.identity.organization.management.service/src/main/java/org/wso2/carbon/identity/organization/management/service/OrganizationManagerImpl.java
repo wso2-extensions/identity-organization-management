@@ -342,11 +342,11 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String childOrgId,
+    public List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String currentOrganizationId,
                                                                                 String ancestorOrganizationId)
             throws OrganizationManagementException {
 
-        return organizationManagementDAO.getAncestorOrganizationIdsUpToGivenOrganization(childOrgId,
+        return organizationManagementDAO.getAncestorOrganizationIdsUpToGivenOrganization(currentOrganizationId,
                 ancestorOrganizationId);
     }
 

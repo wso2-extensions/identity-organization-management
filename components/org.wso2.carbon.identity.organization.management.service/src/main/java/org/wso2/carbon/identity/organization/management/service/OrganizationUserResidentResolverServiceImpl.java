@@ -97,12 +97,13 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
             if (ancestorOrganizationIds != null) {
                 for (String organizationId : ancestorOrganizationIds) {
                     String associatedTenantDomainForOrg = resolveTenantDomainForOrg(organizationId);
-                    if (associatedTenantDomainForOrg != null) {
-                        AbstractUserStoreManager userStoreManager = getUserStoreManager(associatedTenantDomainForOrg);
-                        if (userStoreManager.isExistingUserWithID(userId)) {
-                            residentOrgId = organizationId;
-                            break;
-                        }
+                    if (StringUtils.isBlank(associatedTenantDomainForOrg)) {
+                        continue;
+                    }
+                    AbstractUserStoreManager userStoreManager = getUserStoreManager(associatedTenantDomainForOrg);
+                    if (userStoreManager.isExistingUserWithID(userId)) {
+                        residentOrgId = organizationId;
+                        break;
                     }
                 }
             }

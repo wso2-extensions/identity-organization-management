@@ -155,11 +155,11 @@ public interface OrganizationManager {
     /**
      * Get ancestor organization ids (including itself) of an organization up to the given ancestor organization.
      *
-     * @param childOrgId             The child organization ID.
+     * @param currentOrganizationId  The current organization ID.
      * @param ancestorOrganizationId The ancestor organization ID.
      * @return List of ancestor organization ids including itself.
      */
-    List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String childOrgId,
+    List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String currentOrganizationId,
                                                                          String ancestorOrganizationId)
             throws OrganizationManagementException;
 }
