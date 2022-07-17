@@ -29,7 +29,6 @@ import org.wso2.carbon.identity.application.authentication.framework.Authenticat
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -184,7 +183,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(ORGANIZATION_ATTRIBUTE, organizationName);
             authenticatorProperties.put(OAUTH2_AUTHZ_URL, getAuthorizationEndpoint(sharedOrgTenantDomain));
             authenticatorProperties.put(OAUTH2_TOKEN_URL, getTokenEndpoint(sharedOrgTenantDomain));
-            authenticatorProperties.put(CALLBACK_URL, createCallbackUrl());
+            authenticatorProperties.put(CALLBACK_URL, oauthApp.getCallbackUrl());
 
         } catch (IdentityOAuthAdminException | URLBuilderException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN, e);
@@ -411,16 +410,6 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
         return ServiceURLBuilder.create().addPath(TOKEN_ENDPOINT_TENANTED_PATH.replace(TENANT_PLACEHOLDER,
                 tenantDomain)).build().getAbsolutePublicURL();
-    }
-
-    /**
-     * Returns the token endpoint url for a given organization.
-     *
-     * @return The callback URL.
-     */
-    private String createCallbackUrl() throws URLBuilderException {
-
-        return ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build().getAbsolutePublicURL();
     }
 
     /**
