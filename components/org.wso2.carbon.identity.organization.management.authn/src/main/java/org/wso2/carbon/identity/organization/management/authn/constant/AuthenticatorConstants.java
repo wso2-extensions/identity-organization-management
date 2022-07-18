@@ -38,8 +38,9 @@ public class AuthenticatorConstants {
     public static final String ORG_PARAMETER = "org";
     public static final String IDP_PARAMETER = "idp";
     public static final String AUTHENTICATOR_PARAMETER = "authenticator";
-    public static final String ORG_LIST_PARAMETER = "orgList";
     public static final String ORG_ID_PARAMETER = "orgId";
+    public static final String ORG_COUNT_PARAMETER = "orgCount";
+    public static final String ORG_DESCRIPTION_PARAMETER = "orgDesc";
 
     public static final String ORGANIZATION_LOGIN_FAILURE = "organizationLoginFailure";
     public static final String ERROR_MESSAGE = "&authFailure=true&authFailureMsg=";
