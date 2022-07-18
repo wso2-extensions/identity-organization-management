@@ -1147,9 +1147,6 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
 
     private List<String> getListOrganizationsAllowedPermissions() {
 
-        List<String> permissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
-        permissions.add(VIEW_ORGANIZATION_PERMISSION);
-        permissions.add(SWITCH_ORGANIZATION_PERMISSION);
-        return permissions;
+        return getAllowedPermissions(SWITCH_ORGANIZATION_PERMISSION);
     }
 }

@@ -37,7 +37,7 @@
         </ManagementPermission>
         <ManagementPermission>
             <DisplayName>Switch</DisplayName>
-            <ResourceId>/permission/admin/manage/identity/organizationmgt/switch</ResourceId>
+            <ResourceId>/permission/admin/manage/identity/organizationmgt/view/switch</ResourceId>
         </ManagementPermission>
     </ManagementPermissions>
 </component>

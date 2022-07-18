@@ -80,7 +80,7 @@ public class OrganizationManagementConstants {
     public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "delete";
     public static final String SWITCH_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
-            "switch";
+            "view/switch";
     public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
             .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
                     DELETE_ORGANIZATION_PERMISSION, SWITCH_ORGANIZATION_PERMISSION));
