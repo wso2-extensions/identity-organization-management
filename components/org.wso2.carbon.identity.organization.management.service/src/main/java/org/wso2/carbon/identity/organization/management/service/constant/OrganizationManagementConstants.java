@@ -239,9 +239,13 @@ public class OrganizationManagementConstants {
         ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
                 "Both userId and UserName cannot be null.",
                 "Either userId or UserName is required to resolve user from resident organization."),
-        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60056", "Unable to patch the role.",
+        ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME("60056", "No organization found.",
+                "Organizations not found by name: %s"),
+        ERROR_CODE_INVALID_ORGANIZATION_ID("65057", "Unable to retrieve the organization name.",
+                "Organization not found with organization with ID: %s."),
+        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60058", "Unable to patch the role.",
                 "Unsupported patch path/ operation for role with ID: %s."),
-        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60057", "Invalid organization user.",
+        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60059", "Invalid organization user.",
                 "Resident organization for user with ID: %s is not found."),
 
         // Server errors.
@@ -325,7 +329,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_GETTING_ROLE_FROM_ID("65034", "Error getting role.",
                 "Server encountered an error while retrieving role from role id %s."),
         ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65035", "Unable to redirect to request organization.",
-                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
+                "Server encountered an error when redirecting to requested organization via Organization Login."),
         ERROR_CODE_GETTING_USERS_USING_ROLE_ID("65036", "Error getting users.",
                 "Server encountered an error while retrieving user(s) from role id %s."),
         ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID("65037", "Error getting users of role Id.",
@@ -373,8 +377,8 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65057", "Unable to link the shared application.",
                 "Server encountered an error when linking the application: %s to shared application: %s."),
-        ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
-                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN("65058", "Unable to resolve the shared app for organization " +
+                "login.", "Server encountered an error when resolving organization login for application: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
@@ -410,11 +414,15 @@ public class OrganizationManagementConstants {
                 "organization."),
         ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65071", "Error while validating user " +
                 "association with root organization.", "Server encountered when authorizing user against the root " +
-                                                             "organization."),
-        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65072", "Unable to retrieve the role name.",
+                "organization."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
+                "Server encountered an error while retrieving organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",
+                "Server encountered an error while retrieving organizations with name: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65074", "Unable to retrieve the role name.",
                 "Server encountered an error while retrieving role ID from role name: %s in organization " +
                         "with ID: %s."),
-        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65073", "Unable to resolve user's resident organization.",
+        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65075", "Unable to resolve user's resident organization.",
                 "Error while resolving resident organization of user with ID: %s.");
 
         private final String code;

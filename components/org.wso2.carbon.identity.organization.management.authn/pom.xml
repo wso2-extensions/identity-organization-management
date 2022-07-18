@@ -20,13 +20,13 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.0.55-SNAPSHOT</version>
+        <version>1.0.57-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.organization.management.authn</artifactId>
-    <name>WSO2 - Organization Management Application Authenticator</name>
+    <name>WSO2 - Organization Login Authenticator</name>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -133,11 +133,11 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.management.application.authn.internal
+                            org.wso2.carbon.identity.organization.management.authn.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.management.application.authn.internal,
-                            org.wso2.carbon.identity.organization.management.application.authn.*; version="${project.version}"
+                            !org.wso2.carbon.identity.organization.management.authn.internal,
+                            org.wso2.carbon.identity.organization.management.authn.*; version="${project.version}"
                         </Export-Package>
                         <Import-Package>
                             javax.servlet.http; version="${javax.servlet.imp.pkg.version.range}",
