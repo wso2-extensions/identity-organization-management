@@ -58,7 +58,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -81,8 +80,9 @@ import static org.wso2.carbon.identity.organization.management.authn.constant.Au
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_LOGIN_FAILURE;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_COUNT_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_DESCRIPTION_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_ID_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_LIST_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.REQUEST_ORG_PAGE_URL;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
@@ -264,10 +264,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
                     runtimeParams.put(ORG_ID_PARAMETER, organizations.get(0).getId());
                     return true;
                 }
-                List<String> orgDetails = organizations.stream()
-                        .map(organization -> organization.getId() + ":" + organization.getName() + ":" +
-                                organization.getDescription()).collect(Collectors.toList());
-                redirectToSelectOrganization(response, context, String.join(",", orgDetails));
+                redirectToSelectOrganization(response, context, organizations);
             }
         } catch (OrganizationManagementClientException e) {
             context.setProperty(ORGANIZATION_LOGIN_FAILURE, "Invalid Organization Name");
@@ -312,7 +309,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
 
     @SuppressFBWarnings(value = "UNVALIDATED_REDIRECT", justification = "Redirect params are not based on user inputs.")
     private void redirectToSelectOrganization(HttpServletResponse response, AuthenticationContext context,
-                                              String orgDetails) throws AuthenticationFailedException {
+                                              List<Organization> organizations) throws AuthenticationFailedException {
 
         try {
             StringBuilder queryStringBuilder = new StringBuilder();
@@ -320,7 +317,18 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
                     .append(urlEncode(context.getContextIdentifier()));
             addQueryParam(queryStringBuilder, IDP_PARAMETER, context.getExternalIdP().getName());
             addQueryParam(queryStringBuilder, AUTHENTICATOR_PARAMETER, getName());
-            addQueryParam(queryStringBuilder, ORG_LIST_PARAMETER, urlEncode(orgDetails));
+            addQueryParam(queryStringBuilder, ORG_COUNT_PARAMETER, String.valueOf(organizations.size()));
+            int count = 1;
+            for (Organization organization : organizations) {
+                addQueryParam(queryStringBuilder, ORG_ID_PARAMETER + "_" + count, organization.getId());
+                addQueryParam(queryStringBuilder, ORG_PARAMETER + "_" + count, organization.getName());
+                String orgDescription = StringUtils.EMPTY;
+                if (organization.getDescription() != null) {
+                    orgDescription = organization.getDescription();
+                }
+                addQueryParam(queryStringBuilder, ORG_DESCRIPTION_PARAMETER + "_" + count, orgDescription);
+                count += 1;
+            }
 
             String url = FrameworkUtils.appendQueryParamsStringToUrl(ServiceURLBuilder.create()
                             .addPath(REQUEST_ORG_SELECT_PAGE_URL).build().getAbsolutePublicURL(),
@@ -331,9 +339,9 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
         }
     }
 
-    private void addQueryParam(StringBuilder builder, String query, String param) {
+    private void addQueryParam(StringBuilder builder, String query, String param) throws UnsupportedEncodingException {
 
-        builder.append(AMPERSAND_SIGN).append(query).append(EQUAL_SIGN).append(param);
+        builder.append(AMPERSAND_SIGN).append(query).append(EQUAL_SIGN).append(urlEncode(param));
     }
 
     /**
