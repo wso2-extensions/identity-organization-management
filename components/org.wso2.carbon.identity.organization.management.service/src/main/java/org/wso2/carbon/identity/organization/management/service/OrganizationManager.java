@@ -68,6 +68,15 @@ public interface OrganizationManager {
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementException;
 
     /**
+     * Retrieve the organization name for the given organization id.
+     *
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementException The exception thrown when retrieving the name of an organization.
+     */
+    String getOrganizationNameById(String organizationId) throws OrganizationManagementException;
+
+    /**
      * Retrieve {@link Organization} by ID.
      *
      * @param organizationId     The organization ID.
@@ -151,4 +160,15 @@ public interface OrganizationManager {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve list of organizations by the organization name.
+     *
+     * @param organizationName The name of the organizations.
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementException The server exception thrown when retrieving the list of
+     *                                         organizations by name.
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementException;
+
 }
