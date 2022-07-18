@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.carbon.identity.organization.management.application.authn.internal;
+package org.wso2.carbon.identity.organization.management.authn.internal;
 
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -23,11 +23,11 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * This class acts as a data holder to the enterprise idp login authenticator service.
+ * This class acts as a data holder to the organization login authenticator service.
  */
-public class EnterpriseIDPAuthenticatorDataHolder {
+public class AuthenticatorDataHolder {
 
-    private static final EnterpriseIDPAuthenticatorDataHolder instance = new EnterpriseIDPAuthenticatorDataHolder();
+    private static final AuthenticatorDataHolder instance = new AuthenticatorDataHolder();
 
     private RealmService realmService;
 
@@ -37,7 +37,7 @@ public class EnterpriseIDPAuthenticatorDataHolder {
 
     private OrgApplicationManager orgApplicationManager;
 
-    public static EnterpriseIDPAuthenticatorDataHolder getInstance() {
+    public static AuthenticatorDataHolder getInstance() {
 
         return instance;
     }

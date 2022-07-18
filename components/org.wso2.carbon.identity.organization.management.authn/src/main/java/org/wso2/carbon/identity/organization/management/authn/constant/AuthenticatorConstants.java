@@ -16,18 +16,18 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.authn.constant;
+package org.wso2.carbon.identity.organization.management.authn.constant;
 
 /**
  * Class for constants.
  */
-public class EnterpriseIDPAuthenticatorConstants {
+public class AuthenticatorConstants {
 
-    private EnterpriseIDPAuthenticatorConstants() {
+    private AuthenticatorConstants() {
     }
 
-    public static final String AUTHENTICATOR_NAME = "EnterpriseIDPAuthenticator";
-    public static final String AUTHENTICATOR_FRIENDLY_NAME = "EnterpriseIDP";
+    public static final String AUTHENTICATOR_NAME = "OrganizationAuthenticator";
+    public static final String AUTHENTICATOR_FRIENDLY_NAME = "OrganizationLogin";
 
     public static final String AUTHORIZATION_ENDPOINT_TENANTED_PATH = "t/{tenant}/oauth2/authorize";
     public static final String TOKEN_ENDPOINT_TENANTED_PATH = "t/{tenant}/oauth2/token";
@@ -41,7 +41,7 @@ public class EnterpriseIDPAuthenticatorConstants {
     public static final String ORG_LIST_PARAMETER = "orgList";
     public static final String ORG_ID_PARAMETER = "orgId";
 
-    public static final String ENTERPRISE_LOGIN_FAILURE = "enterpriseLoginFailure";
+    public static final String ORGANIZATION_LOGIN_FAILURE = "organizationLoginFailure";
     public static final String ERROR_MESSAGE = "&authFailure=true&authFailureMsg=";
 
     public static final String REQUEST_ORG_PAGE_URL = "authenticationendpoint/org_name.do";

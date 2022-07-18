@@ -36,8 +36,6 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_PATH = "organizations";
     public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
     public static final String SERVER_API_PATH_COMPONENT = "/api/server/";
-    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
-
     public static final String VIEW_ID_COLUMN = "UM_ID";
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
@@ -49,7 +47,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
     public static final String VIEW_TENANT_UUID_COLUMN = "UM_TENANT_UUID";
-
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -57,7 +54,6 @@ public class OrganizationManagementConstants {
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
     public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
-
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
     public static final String ORGANIZATION_ID_FIELD = "id";
@@ -65,10 +61,8 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
     public static final String ORGANIZATION_STATUS_FIELD = "status";
-
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
-
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String BASE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -79,11 +73,9 @@ public class OrganizationManagementConstants {
             "update";
     public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "delete";
-
     public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
             .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
                     DELETE_ORGANIZATION_PERMISSION));
-
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -93,11 +85,11 @@ public class OrganizationManagementConstants {
     public static final String GT = "gt";
     public static final String LT = "lt";
     public static final String AND = "and";
-
     public static final String FILTER_PLACEHOLDER_PREFIX = "FILTER_ID_";
     public static final String PARENT_ID_FILTER_PLACEHOLDER_PREFIX = "FILTER_PARENT_ID_";
-
+    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     static {
 
@@ -109,8 +101,6 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
-
-    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for organization types.
@@ -323,7 +313,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_GETTING_ROLE_FROM_ID("65034", "Error getting role.",
                 "Server encountered an error while retrieving role from role id %s."),
         ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65035", "Unable to redirect to request organization.",
-                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
+                "Server encountered an error when redirecting to requested organization via Organization Login."),
         ERROR_CODE_GETTING_USERS_USING_ROLE_ID("65036", "Error getting users.",
                 "Server encountered an error while retrieving user(s) from role id %s."),
         ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID("65037", "Error getting users of role Id.",
@@ -371,8 +361,8 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65057", "Unable to link the shared application.",
                 "Server encountered an error when linking the application: %s to shared application: %s."),
-        ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
-                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN("65058", "Unable to resolve the shared app for organization " +
+                "login.", "Server encountered an error when resolving organization login for application: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
@@ -408,7 +398,7 @@ public class OrganizationManagementConstants {
                 "organization."),
         ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65071", "Error while validating user " +
                 "association with root organization.", "Server encountered when authorizing user against the root " +
-                                                             "organization."),
+                "organization."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
                 "Server encountered an error while retrieving organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",

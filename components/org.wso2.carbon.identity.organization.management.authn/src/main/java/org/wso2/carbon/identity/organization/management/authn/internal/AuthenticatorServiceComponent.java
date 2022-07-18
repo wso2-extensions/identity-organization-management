@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.authn.internal;
+package org.wso2.carbon.identity.organization.management.authn.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,33 +30,33 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
-import org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticator;
+import org.wso2.carbon.identity.organization.management.authn.OrganizationAuthenticator;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * This class contains the service component of the organization management enterprise idp login authenticator.
+ * This class contains the service component of the organization login authenticator.
  */
 @Component(
-        name = "identity.organization.application.authenticator.component",
+        name = "identity.organization.authenticator.component",
         immediate = true
 )
-public class EnterpriseIDPAuthenticatorServiceComponent {
+public class AuthenticatorServiceComponent {
 
-    private static final Log log = LogFactory.getLog(EnterpriseIDPAuthenticatorServiceComponent.class);
+    private static final Log log = LogFactory.getLog(AuthenticatorServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext ctxt) {
 
         try {
-            EnterpriseIDPAuthenticator enterpriseIDPAuthenticator = new EnterpriseIDPAuthenticator();
+            OrganizationAuthenticator organizationAuthenticator = new OrganizationAuthenticator();
             ctxt.getBundleContext()
-                    .registerService(ApplicationAuthenticator.class.getName(), enterpriseIDPAuthenticator, null);
+                    .registerService(ApplicationAuthenticator.class.getName(), organizationAuthenticator, null);
             if (log.isDebugEnabled()) {
-                log.debug("Enterprise IDP Authenticator bundle is activated");
+                log.debug("Organization Authenticator bundle is activated");
             }
         } catch (Exception e) {
-            log.error(" Error while activating enterprise idp authenticator ", e);
+            log.error(" Error while activating Organization Authenticator ", e);
         }
     }
 
@@ -64,7 +64,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
     protected void deactivate(ComponentContext ctxt) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Enterprise IDP Authenticator bundle is deactivated");
+            log.debug("Organization Authenticator bundle is deactivated");
         }
     }
 
@@ -79,7 +79,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Setting the Realm Service");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setRealmService(realmService);
+        AuthenticatorDataHolder.getInstance().setRealmService(realmService);
     }
 
     protected void unsetRealmService(RealmService realmService) {
@@ -87,7 +87,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Unset the Realm Service.");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setRealmService(null);
+        AuthenticatorDataHolder.getInstance().setRealmService(null);
     }
 
     @Reference(name = "identity.oauth.component",
@@ -100,7 +100,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("OAuth Management Service is set in the OpenID Connect Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOAuthAdminService(oAuthAdminService);
+        AuthenticatorDataHolder.getInstance().setOAuthAdminService(oAuthAdminService);
     }
 
     protected void unsetOAuthAdminService(OAuthAdminServiceImpl oAuthAdminService) {
@@ -108,7 +108,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("OAuth Management Service is unset in the OpenID Connect Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOAuthAdminService(null);
+        AuthenticatorDataHolder.getInstance().setOAuthAdminService(null);
     }
 
     @Reference(name = "identity.organization.management.component",
@@ -121,7 +121,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Organization Manager is set in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance()
+        AuthenticatorDataHolder.getInstance()
                 .setOrganizationManager(organizationManager);
     }
 
@@ -130,7 +130,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Organization Manager is unset in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrganizationManager(null);
+        AuthenticatorDataHolder.getInstance().setOrganizationManager(null);
     }
 
     @Reference(name = "identity.organization.application.management.component",
@@ -143,7 +143,7 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Organization Application Manager is set in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrgApplicationManager(orgApplicationManager);
+        AuthenticatorDataHolder.getInstance().setOrgApplicationManager(orgApplicationManager);
     }
 
     protected void unsetOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
@@ -151,6 +151,6 @@ public class EnterpriseIDPAuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Organization Application Manager is unset in the Authenticator");
         }
-        EnterpriseIDPAuthenticatorDataHolder.getInstance().setOrgApplicationManager(null);
+        AuthenticatorDataHolder.getInstance().setOrgApplicationManager(null);
     }
 }

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.authn;
+package org.wso2.carbon.identity.organization.management.authn;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.collections.CollectionUtils;
@@ -42,7 +42,7 @@ import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
-import org.wso2.carbon.identity.organization.management.application.authn.internal.EnterpriseIDPAuthenticatorDataHolder;
+import org.wso2.carbon.identity.organization.management.authn.internal.AuthenticatorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -69,29 +69,29 @@ import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthen
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_AUTHZ_URL;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.OAuth2.CALLBACK_URL;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AMPERSAND_SIGN;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_NAME;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHENTICATOR_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.AUTHORIZATION_ENDPOINT_TENANTED_PATH;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ENTERPRISE_LOGIN_FAILURE;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.EQUAL_SIGN;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ERROR_MESSAGE;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.IDP_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_ID_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_LIST_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.ORG_PARAMETER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.REQUEST_ORG_SELECT_PAGE_URL;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.TENANT_PLACEHOLDER;
-import static org.wso2.carbon.identity.organization.management.application.authn.constant.EnterpriseIDPAuthenticatorConstants.TOKEN_ENDPOINT_TENANTED_PATH;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AMPERSAND_SIGN;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_NAME;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHORIZATION_ENDPOINT_TENANTED_PATH;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.EQUAL_SIGN;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ERROR_MESSAGE;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.IDP_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_LOGIN_FAILURE;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_ID_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_LIST_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_PARAMETER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.REQUEST_ORG_PAGE_URL;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.REQUEST_ORG_PAGE_URL_CONFIG;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.REQUEST_ORG_SELECT_PAGE_URL;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.TENANT_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.TOKEN_ENDPOINT_TENANTED_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_DOMAIN_FROM_TENANT_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME;
@@ -102,14 +102,14 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
 
 /**
- * Authenticator implementation to redirect the authentication request to shared applications of the requested
- * organization.
+ * Authenticator implementation to redirect the authentication request to the access delegated business application in
+ * the requested organization.
  * <p/>
  * Class extends the {@link OpenIDConnectAuthenticator}.
  */
-public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
+public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
 
-    private static final Log log = LogFactory.getLog(EnterpriseIDPAuthenticator.class);
+    private static final Log log = LogFactory.getLog(OrganizationAuthenticator.class);
 
     @Override
     public String getFriendlyName() {
@@ -127,7 +127,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     protected void initiateAuthenticationRequest(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
-        resolvePropertiesForEnterpriseIDP(context);
+        resolvePropertiesForAuthenticator(context);
         super.initiateAuthenticationRequest(request, response, context);
     }
 
@@ -135,7 +135,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
-        resolvePropertiesForEnterpriseIDP(context);
+        resolvePropertiesForAuthenticator(context);
         super.processAuthenticationResponse(request, response, context);
 
         // Add organization name to the user attributes.
@@ -148,9 +148,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
      * Process the authenticator properties based on the user information.
      *
      * @param context The authentication context.
-     * @throws AuthenticationFailedException The exception thrown when resolving EnterpriseIDP login properties
+     * @throws AuthenticationFailedException thrown when resolving organization login authenticator properties.
      */
-    private void resolvePropertiesForEnterpriseIDP(AuthenticationContext context) throws AuthenticationFailedException {
+    private void resolvePropertiesForAuthenticator(AuthenticationContext context) throws AuthenticationFailedException {
 
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
 
@@ -186,7 +186,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(CALLBACK_URL, oauthApp.getCallbackUrl());
 
         } catch (IdentityOAuthAdminException | URLBuilderException e) {
-            throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN, e);
+            throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN, e);
         }
     }
 
@@ -254,7 +254,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     }
 
     private boolean validateOrganizationName(String organizationName, AuthenticationContext context,
-                                          HttpServletResponse response) throws AuthenticationFailedException {
+                                             HttpServletResponse response) throws AuthenticationFailedException {
 
         Map<String, String> runtimeParams = getRuntimeParams(context);
         try {
@@ -270,7 +270,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
                 redirectToSelectOrganization(response, context, String.join(",", orgDetails));
             }
         } catch (OrganizationManagementClientException e) {
-            context.setProperty(ENTERPRISE_LOGIN_FAILURE, "Invalid Organization Name");
+            context.setProperty(ORGANIZATION_LOGIN_FAILURE, "Invalid Organization Name");
             redirectToOrgNameCapture(response, context);
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME, e);
@@ -297,9 +297,9 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
             addQueryParam(queryStringBuilder, IDP_PARAMETER, context.getExternalIdP().getName());
             addQueryParam(queryStringBuilder, AUTHENTICATOR_PARAMETER, getName());
 
-            if (context.getProperties().get(ENTERPRISE_LOGIN_FAILURE) != null) {
+            if (context.getProperties().get(ORGANIZATION_LOGIN_FAILURE) != null) {
                 queryStringBuilder.append(ERROR_MESSAGE)
-                        .append(urlEncode((String) context.getProperties().get(ENTERPRISE_LOGIN_FAILURE)));
+                        .append(urlEncode((String) context.getProperties().get(ORGANIZATION_LOGIN_FAILURE)));
             }
 
             String url = FrameworkUtils.appendQueryParamsStringToUrl(getOrganizationRequestPageUrl(context),
@@ -360,7 +360,7 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
     /**
      * Obtain inbound authentication configuration of the application registered for the organization.
      *
-     * @param application Enterprise login management application.
+     * @param application oauth application of the fragment.
      * @return InboundAuthenticationRequestConfig  Inbound authentication request configurations.
      */
     private Optional<InboundAuthenticationRequestConfig> getAuthenticationConfig(ServiceProvider application) {
@@ -472,21 +472,21 @@ public class EnterpriseIDPAuthenticator extends OpenIDConnectAuthenticator {
 
     private RealmService getRealmService() {
 
-        return EnterpriseIDPAuthenticatorDataHolder.getInstance().getRealmService();
+        return AuthenticatorDataHolder.getInstance().getRealmService();
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
 
-        return EnterpriseIDPAuthenticatorDataHolder.getInstance().getOAuthAdminService();
+        return AuthenticatorDataHolder.getInstance().getOAuthAdminService();
     }
 
     private OrgApplicationManager getOrgApplicationManager() {
 
-        return EnterpriseIDPAuthenticatorDataHolder.getInstance().getOrgApplicationManager();
+        return AuthenticatorDataHolder.getInstance().getOrgApplicationManager();
     }
 
     private OrganizationManager getOrganizationManager() {
 
-        return EnterpriseIDPAuthenticatorDataHolder.getInstance().getOrganizationManager();
+        return AuthenticatorDataHolder.getInstance().getOrganizationManager();
     }
 }
