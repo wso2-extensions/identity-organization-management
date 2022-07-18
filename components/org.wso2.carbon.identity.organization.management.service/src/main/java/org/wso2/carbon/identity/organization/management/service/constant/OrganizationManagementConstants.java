@@ -228,6 +228,10 @@ public class OrganizationManagementConstants {
         ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
                 "Both userId and UserName cannot be null.",
                 "Either userId or UserName is required to resolve user from resident organization."),
+        ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME("60055", "No organization found",
+                "Organizations not found by name: %s"),
+        ERROR_CODE_INVALID_ORGANIZATION_ID("65056", "Unable to retrieve the organization name",
+                "Organization not found with organization with ID: %s."),
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
@@ -394,7 +398,11 @@ public class OrganizationManagementConstants {
                 "organization."),
         ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65071", "Error while validating user " +
                 "association with root organization.", "Server encountered when authorizing user against the root " +
-                "organization.");
+                "organization."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
+                "Server encountered an error while retrieving organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",
+                "Server encountered an error while retrieving organizations with name: %s.");
 
         private final String code;
         private final String message;

@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.management.service;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.dao.impl.OrganizationManagementDAOImpl;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -39,6 +38,7 @@ import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -73,7 +73,7 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
                         } else if (userId != null && userStoreManager.isExistingUserWithID(userId)) {
                             user = userStoreManager.getUser(userId, null);
                         } else {
-                            return Optional.empty();
+                            continue;
                         }
                         // Check whether user has any association against the org the user is trying to access.
                         boolean userHasAccessPermissions =
@@ -95,8 +95,7 @@ public class OrganizationUserResidentResolverServiceImpl implements Organization
 
     private String resolveTenantDomainForOrg(String organizationId) throws OrganizationManagementServerException {
 
-        String rootOrgID = organizationManagementDAO.getOrganizationIdByName(OrganizationManagementConstants.ROOT);
-        if (StringUtils.equals(rootOrgID, organizationId)) {
+        if (StringUtils.equals(ROOT_ORG_ID, organizationId)) {
             // super tenant domain will be returned.
             return MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         } else {

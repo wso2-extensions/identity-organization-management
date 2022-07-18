@@ -71,6 +71,15 @@ public interface OrganizationManagementDAO {
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
 
     /**
+     * Retrieve organization name for the given organization id if organization exists.
+     *
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization name.
+     */
+    Optional<String> getOrganizationNameById(String organizationId) throws OrganizationManagementServerException;
+
+    /**
      * Retrieve {@link Organization} by ID.
      *
      * @param organizationId The organization ID.
@@ -268,4 +277,14 @@ public interface OrganizationManagementDAO {
      * @return List of ancestor organization ids including itself.
      */
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve list of organizations by the organization name.
+     *
+     * @param organizationName The name of the organizations.
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the list of
+     *                                               organization by name.
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementServerException;
 }
