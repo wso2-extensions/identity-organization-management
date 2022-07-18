@@ -38,6 +38,7 @@ import java.util.Collections;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_SWITCHER_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SWITCH_ORGANIZATION_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.tenant.association.Constants.MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW;
 
 /**
  * This class contains the implementation of the tenant management listener.  This listener will be used to add tenant
@@ -100,8 +101,14 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         organizationCreatorRole.setUsers(Collections.singletonList(orgCreator));
         // Set permissions for org-creator role.
         ArrayList<String> orgCreatorRolePermissions = new ArrayList<>();
+        // Adding mandatory permissions for the org-creator role.
         orgCreatorRolePermissions.add(Constants.ORG_MGT_PERMISSION);
         orgCreatorRolePermissions.add(Constants.ORG_ROLE_MGT_PERMISSION);
+        /*
+        Adding the bear minimum permission set that org creator should have to logged in to the console and view
+        user, groups, roles, SP, IDP sections.
+         */
+        orgCreatorRolePermissions.addAll(MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW);
         organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
     }
