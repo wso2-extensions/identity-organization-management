@@ -115,7 +115,9 @@ public class RoleManagerImpl implements RoleManager {
             }
         }
         roleManagementDAO.createRole(organizationId, role);
-        switchRoleAssignmentInAncestorOrganizations(organizationId, role);
+        if (isSwitcherRoleAssignmentRequired(role.getPermissions())) {
+            assignSwitcherRoleInAncestorOrganizations(organizationId, role);
+        }
         return new Role(role.getId(), role.getDisplayName());
     }
 
@@ -200,7 +202,7 @@ public class RoleManagerImpl implements RoleManager {
                 patchPath = StringUtils.strip(patchPath.split("\\[")[0]);
             }
             if (organizationSwitcherRole) {
-                validatePatchForOrganizationSwitchRole(patchPath, patchOp, roleId);
+                validatePatchForOrganizationSwitcherRole(patchPath, patchOp, roleId);
             }
             if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) &&
                     StringUtils.equalsIgnoreCase(patchOp, PATCH_OP_REMOVE)) {
@@ -224,12 +226,20 @@ public class RoleManagerImpl implements RoleManager {
                 }
             }
         }
-        return roleManagementDAO.patchRole(organizationId, roleId, patchOperations);
+        Role role = roleManagementDAO.patchRole(organizationId, roleId, patchOperations);
+        if (isSwitcherRoleAssignmentRequired(role.getPermissions())) {
+            assignSwitcherRoleInAncestorOrganizations(organizationId, role);
+        }
+        return role;
     }
 
-    private void validatePatchForOrganizationSwitchRole(String patchPath, String patchOp, String roleId)
+    private void validatePatchForOrganizationSwitcherRole(String patchPath, String patchOp, String roleId)
             throws OrganizationManagementClientException {
 
+        /*
+        Since this is a system generated role, display name and permissions for the organization switcher role is
+        considered as read only.
+         */
         if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME) ||
                 StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS)) {
             throw handleClientException(ERROR_CODE_UNSUPPORTED_ROLE_PATCH, roleId);
@@ -266,7 +276,11 @@ public class RoleManagerImpl implements RoleManager {
                 validateGroups(groupIdList, getTenantId());
             }
         }
-        return roleManagementDAO.putRole(organizationId, roleId, role);
+        Role updatedRole = roleManagementDAO.putRole(organizationId, roleId, role);
+        if (isSwitcherRoleAssignmentRequired(updatedRole.getPermissions())) {
+            assignSwitcherRoleInAncestorOrganizations(organizationId, role);
+        }
+        return updatedRole;
     }
 
     @Override
@@ -468,40 +482,41 @@ public class RoleManagerImpl implements RoleManager {
         }
     }
 
-    private void switchRoleAssignmentInAncestorOrganizations(String organizationId, Role role)
+    private void assignSwitcherRoleInAncestorOrganizations(String currentOrganizationId, Role role)
             throws OrganizationManagementException {
 
-        List<String> organizationSwitcherAllowedPermissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
-        organizationSwitcherAllowedPermissions.addAll(ALL_ORGANIZATION_PERMISSIONS);
-
-        boolean switchRoleRequired = false;
-        for (String rolePermission : role.getPermissions()) {
-            if (organizationSwitcherAllowedPermissions.contains(rolePermission)) {
-                switchRoleRequired = true;
-                break;
-            }
-        }
-
-        if (switchRoleRequired) {
-            // TODO: support groups.
-            List<User> users = role.getUsers();
-            if (users != null) {
-                List<String> userIds = users.stream().map(User::getId).collect(Collectors.toList());
-                for (String userId : userIds) {
-                    String residentOrgId = getOrganizationUserResidentResolverService()
-                            .resolveResidentOrganization(userId, organizationId)
-                            .orElseThrow(() -> handleClientException(ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND));
-                    List<String> ancestorOrgIds = getOrganizationManager()
-                            .getAncestorOrganizationIdsUpToGivenAncestorOrganization(organizationId, residentOrgId);
-                    for (String ancestorOrgId : ancestorOrgIds) {
-                        String roleId = roleManagementDAO.getRoleIdByName(ancestorOrgId, ORG_SWITCHER_ROLE);
-                        if (StringUtils.isNotBlank(roleId)) {
-                            patchRole(ancestorOrgId, roleId, Collections.singletonList(new PatchOperation
-                                    (PATCH_OP_ADD, USERS, Collections.singletonList(userId))));
-                        }
+        // TODO: support groups.
+        List<User> users = role.getUsers();
+        if (users != null) {
+            List<String> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+            for (String userId : userIds) {
+                String residentOrgId = getOrganizationUserResidentResolverService()
+                        .resolveResidentOrganization(userId, currentOrganizationId)
+                        .orElseThrow(() -> handleClientException(ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND));
+                List<String> ancestorOrgIds = getOrganizationManager()
+                        .getAncestorOrganizationIdsUpToGivenAncestorOrganization(currentOrganizationId,
+                                residentOrgId);
+                for (String ancestorOrgId : ancestorOrgIds) {
+                    String roleId = roleManagementDAO.getRoleIdByName(ancestorOrgId, ORG_SWITCHER_ROLE);
+                    if (StringUtils.isNotBlank(roleId)) {
+                        roleManagementDAO.patchRole(ancestorOrgId, roleId,
+                                Collections.singletonList(new PatchOperation(PATCH_OP_ADD, USERS,
+                                        Collections.singletonList(userId))));
                     }
                 }
             }
         }
+    }
+
+    private boolean isSwitcherRoleAssignmentRequired(List<String> permissions) {
+
+        List<String> organizationSwitcherAllowedPermissions = getAllowedPermissions(BASE_ORGANIZATION_PERMISSION);
+        organizationSwitcherAllowedPermissions.addAll(ALL_ORGANIZATION_PERMISSIONS);
+        for (String rolePermission : permissions) {
+            if (organizationSwitcherAllowedPermissions.contains(rolePermission)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

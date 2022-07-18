@@ -451,7 +451,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.withTransaction(template -> {
+            namedJdbcTemplate.withTransaction(template -> {
                 for (PatchOperation patchOp : patchOperations) {
                     if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_ADD)) {
                         patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues());
@@ -463,7 +463,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
                     }
                 }
-                return getRoleById(organizationId, roleId);
+                return null;
             });
         } catch (TransactionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
@@ -478,6 +478,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             }
             throw handleServerException(ERROR_CODE_PATCHING_ROLE, e, organizationId);
         }
+        return getRoleById(organizationId, roleId);
     }
 
     @Override
