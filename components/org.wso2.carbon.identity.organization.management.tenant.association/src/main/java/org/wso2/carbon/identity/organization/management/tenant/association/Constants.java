@@ -45,8 +45,9 @@ public class Constants {
             "/permission/admin/manage/identity/claimmgt/metadata/view";
 
     /*
-    Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP, IDP sections.
-     */
+    Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
+    IDP sections.
+    */
     public static final List<String> MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW =
             Collections.unmodifiableList(Arrays
                     .asList(SESSION_MGT_VIEW_PERMISSION, GROUP_MGT_VIEW_PERMISSION, GOVERNANCE_VIEW_PERMISSION,
