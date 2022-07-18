@@ -53,6 +53,16 @@ public interface RoleManagementDAO {
     Role getRoleById(String organizationId, String roleId) throws OrganizationManagementServerException;
 
     /**
+     * Retrieve role ID by the given role name and organization ID.
+     *
+     * @param organizationId The organization ID.
+     * @param roleName       The role name.
+     * @return the role ID.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the role ID.
+     */
+    String getRoleIdByName(String organizationId, String roleName) throws OrganizationManagementServerException;
+
+    /**
      * Get all the {@link Role}s of an organization.
      *
      * @param organizationId  The ID of the organization.

@@ -162,6 +162,17 @@ public interface OrganizationManager {
     List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
 
     /**
+     * Get ancestor organization ids (including itself) of an organization up to the given ancestor organization.
+     *
+     * @param currentOrganizationId  The current organization ID.
+     * @param ancestorOrganizationId The ancestor organization ID.
+     * @return List of ancestor organization ids including itself.
+     */
+    List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String currentOrganizationId,
+                                                                         String ancestorOrganizationId)
+            throws OrganizationManagementException;
+
+    /**
      * Retrieve list of organizations by the organization name.
      *
      * @param organizationName The name of the organizations.

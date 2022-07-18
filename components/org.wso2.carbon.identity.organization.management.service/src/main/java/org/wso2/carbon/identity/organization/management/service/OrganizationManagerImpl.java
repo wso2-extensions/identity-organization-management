@@ -351,6 +351,15 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
+    public List<String> getAncestorOrganizationIdsUpToGivenAncestorOrganization(String currentOrganizationId,
+                                                                                String ancestorOrganizationId)
+            throws OrganizationManagementException {
+
+        return organizationManagementDAO.getAncestorOrganizationIdsUpToGivenOrganization(currentOrganizationId,
+                ancestorOrganizationId);
+    }
+
+    @Override
     public List<Organization> getOrganizationsByName(String organizationName)
             throws OrganizationManagementException {
 

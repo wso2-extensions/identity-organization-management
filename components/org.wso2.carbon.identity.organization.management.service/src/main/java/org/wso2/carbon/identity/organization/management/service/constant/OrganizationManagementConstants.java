@@ -36,6 +36,8 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_PATH = "organizations";
     public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
     public static final String SERVER_API_PATH_COMPONENT = "/api/server/";
+    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
+
     public static final String VIEW_ID_COLUMN = "UM_ID";
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
@@ -47,6 +49,7 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
     public static final String VIEW_TENANT_UUID_COLUMN = "UM_TENANT_UUID";
+
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -54,6 +57,7 @@ public class OrganizationManagementConstants {
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
     public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
+
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
     public static final String ORGANIZATION_ID_FIELD = "id";
@@ -61,8 +65,10 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
     public static final String ORGANIZATION_STATUS_FIELD = "status";
+
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
+
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String BASE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -73,9 +79,12 @@ public class OrganizationManagementConstants {
             "update";
     public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "delete";
+    public static final String SWITCH_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
+            "view/switch";
     public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
             .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
-                    DELETE_ORGANIZATION_PERMISSION));
+                    DELETE_ORGANIZATION_PERMISSION, SWITCH_ORGANIZATION_PERMISSION));
+
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -85,11 +94,11 @@ public class OrganizationManagementConstants {
     public static final String GT = "gt";
     public static final String LT = "lt";
     public static final String AND = "and";
+
     public static final String FILTER_PLACEHOLDER_PREFIX = "FILTER_ID_";
     public static final String PARENT_ID_FILTER_PLACEHOLDER_PREFIX = "FILTER_PARENT_ID_";
-    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
+
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
-    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     static {
 
@@ -101,6 +110,8 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
+
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for organization types.
@@ -219,8 +230,8 @@ public class OrganizationManagementConstants {
                 "Organization %s can't be disabled or deleted."),
         ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
                 "Organization %s can't be renamed."),
-        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
-                "Role %s cannot be updated or deleted."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "The role can't be modified.",
+                "The role with ID: %s is not allowed to be updated or deleted."),
         ERROR_CODE_INVALID_ORGANIZATION_NAME("60053", "Organization not found",
                 "Organization with name %s not found"),
         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
@@ -228,10 +239,15 @@ public class OrganizationManagementConstants {
         ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
                 "Both userId and UserName cannot be null.",
                 "Either userId or UserName is required to resolve user from resident organization."),
-        ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME("60055", "No organization found",
+        ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME("60056", "No organization found.",
                 "Organizations not found by name: %s"),
-        ERROR_CODE_INVALID_ORGANIZATION_ID("65056", "Unable to retrieve the organization name",
+        ERROR_CODE_INVALID_ORGANIZATION_ID("65057", "Unable to retrieve the organization name.",
                 "Organization not found with organization with ID: %s."),
+        ERROR_CODE_UNSUPPORTED_ROLE_PATCH("60058", "Unable to patch the role.",
+                "Unsupported patch path/ operation for role with ID: %s."),
+        ERROR_CODE_RESIDENT_ORGANIZATION_NOT_FOUND("60059", "Invalid organization user.",
+                "Resident organization for user with ID: %s is not found."),
+
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),
@@ -402,7 +418,12 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
                 "Server encountered an error while retrieving organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",
-                "Server encountered an error while retrieving organizations with name: %s.");
+                "Server encountered an error while retrieving organizations with name: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ROLE_ID_BY_NAME("65074", "Unable to retrieve the role name.",
+                "Server encountered an error while retrieving role ID from role name: %s in organization " +
+                        "with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RESOLVING_RESIDENT_ORG("65075", "Unable to resolve user's resident organization.",
+                "Error while resolving resident organization of user with ID: %s.");
 
         private final String code;
         private final String message;

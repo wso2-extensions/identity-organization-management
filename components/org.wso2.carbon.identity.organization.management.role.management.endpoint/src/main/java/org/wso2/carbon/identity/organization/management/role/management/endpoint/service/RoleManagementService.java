@@ -227,8 +227,10 @@ public class RoleManagementService {
 
             Role role = RoleManagementEndpointUtils.getRoleManager().putRole(organizationId, roleId,
                     new Role(roleId, displayName,
-                            groups.stream().map(group -> new Group(group.getValue())).collect(Collectors.toList()),
-                            users.stream().map(user -> new User(user.getValue())).collect(Collectors.toList()),
+                            (groups != null ? groups.stream().map(group -> new Group(group.getValue()))
+                                    .collect(Collectors.toList()) : null),
+                            (users != null ? users.stream().map(user -> new User(user.getValue()))
+                                    .collect(Collectors.toList()) : null),
                             permissions));
             URI roleURI = RoleManagementEndpointUtils.getUri(organizationId, roleId, ROLE_PATH,
                     ERROR_CODE_ERROR_BUILDING_ROLE_URI);
