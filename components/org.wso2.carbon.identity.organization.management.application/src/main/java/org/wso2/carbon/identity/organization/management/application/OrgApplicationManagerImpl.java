@@ -45,6 +45,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.List;
@@ -171,10 +172,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
-            String sharedOrgAdmin =
-                    getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdmin);
-
+            String sharedOrgAdmin = getRealmService().getTenantUserRealm(tenantId)
+                    .getRealmConfiguration().getAdminUserName();
+            Optional<User> maybeUser = OrgApplicationMgtDataHolder.getInstance()
+                    .getOrganizationUserResidentResolverService()
+                    .resolveUserFromResidentOrganization(null, sharedOrgAdmin, sharedOrgId);
+            if (maybeUser.isPresent()) {
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(maybeUser.get().getUsername());
+            } else {
+                return;
+            }
+            // todo improve returns with error codes
             Optional<String> mayBeSharedAppId = resolveSharedApp(
                     mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
             if (mayBeSharedAppId.isPresent()) {
