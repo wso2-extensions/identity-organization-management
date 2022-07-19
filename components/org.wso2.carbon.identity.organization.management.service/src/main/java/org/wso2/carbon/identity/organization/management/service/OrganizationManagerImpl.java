@@ -43,7 +43,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
-import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.stratos.common.exception.TenantManagementClientException;
 import org.wso2.carbon.stratos.common.exception.TenantMgtException;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtService;
@@ -104,6 +103,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_RENAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -518,9 +518,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
         } else {
             Organization parent = organizationManagementDAO.getOrganization(parentId);
             if (parent == null) {
-                throw Utils.handleClientException(ERROR_CODE_INVALID_PARENT_ORGANIZATION, parentId);
+                throw handleClientException(ERROR_CODE_INVALID_PARENT_ORGANIZATION, parentId);
             }
         }
+        /*
+        To create an organization as an immediate child of ROOT organization, the request should be invoked from the
+        ROOT organization (super tenant) space.
+         */
+        if (StringUtils.equals(ROOT_ORG_ID, parentId) && getTenantId() != MultitenantConstants.SUPER_TENANT_ID) {
+            throw handleClientException(ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT);
+        }
+
         validateAddOrganizationParentStatus(parentId);
         /*
         Having '/permission/admin/' assigned to the user would be sufficient to create an organization as an
