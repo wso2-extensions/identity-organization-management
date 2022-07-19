@@ -232,6 +232,10 @@ public class OrganizationManagementConstants {
                 "Organizations not found by name: %s"),
         ERROR_CODE_INVALID_ORGANIZATION_ID("65056", "Unable to retrieve the organization name",
                 "Organization not found with organization with ID: %s."),
+        ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT("60057", "Unable to create the organization.",
+                "To create a child organization in root, the request should be invoked from the root " +
+                        "organization."),
+
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
                 "Server encountered an error while serving the request."),

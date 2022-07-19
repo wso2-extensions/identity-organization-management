@@ -43,6 +43,7 @@ import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -156,6 +157,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
 
+            when(Utils.getTenantId()).thenReturn(MultitenantConstants.SUPER_TENANT_ID);
             Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
             assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
             assertEquals(addedOrganization.getName(), sampleOrganization.getName());
@@ -288,6 +290,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.getTenantId()).thenReturn(MultitenantConstants.SUPER_TENANT_ID);
             when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                     new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
             organizationManager.addOrganization(organization);
