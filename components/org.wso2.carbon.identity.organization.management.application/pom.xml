@@ -142,6 +142,7 @@
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.common;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",

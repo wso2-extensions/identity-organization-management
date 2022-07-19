@@ -22,6 +22,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -37,9 +38,21 @@ public class OrgApplicationMgtDataHolder {
     private ApplicationManagementService applicationManagementService;
     private OAuthAdminServiceImpl oAuthAdminService;
     private OrganizationManager organizationManager;
+    private OrganizationUserResidentResolverService organizationUserResidentResolverService;
 
     private OrgApplicationMgtDataHolder() {
 
+    }
+
+    public OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
+
+        return organizationUserResidentResolverService;
+    }
+
+    public void setOrganizationUserResidentResolverService(OrganizationUserResidentResolverService
+                                                                   organizationUserResidentResolverService) {
+
+        this.organizationUserResidentResolverService = organizationUserResidentResolverService;
     }
 
     public static OrgApplicationMgtDataHolder getInstance() {
