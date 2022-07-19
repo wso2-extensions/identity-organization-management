@@ -406,7 +406,10 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
                 "Server encountered an error while retrieving organization with ID: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",
-                "Server encountered an error while retrieving organizations with name: %s.");
+                "Server encountered an error while retrieving organizations with name: %s."),
+        ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION("65074", "Unable to retrieve " +
+                "admin user for the organization.", "Server encountered an error while retrieving " +
+                "organization user with id: %s.");
 
         private final String code;
         private final String message;

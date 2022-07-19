@@ -60,6 +60,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
@@ -174,15 +175,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
             String sharedOrgAdmin = getRealmService().getTenantUserRealm(tenantId)
                     .getRealmConfiguration().getAdminUserName();
-            Optional<User> maybeUser = OrgApplicationMgtDataHolder.getInstance()
+            User user = OrgApplicationMgtDataHolder.getInstance()
                     .getOrganizationUserResidentResolverService()
-                    .resolveUserFromResidentOrganization(null, sharedOrgAdmin, sharedOrgId);
-            if (maybeUser.isPresent()) {
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(maybeUser.get().getUsername());
-            } else {
-                return;
-            }
-            // todo improve returns with error codes
+                    .resolveUserFromResidentOrganization(null, sharedOrgAdmin, sharedOrgId)
+                    .orElseThrow(() -> handleServerException(ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION,
+                            null, sharedOrgAdmin));
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(user.getUsername());
+
             Optional<String> mayBeSharedAppId = resolveSharedApp(
                     mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
             if (mayBeSharedAppId.isPresent()) {
