@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomainFromURLMapping;
 import static org.wso2.carbon.tomcat.ext.constants.Constants.TENANT_DOMAIN_FROM_REQUEST_PATH;
@@ -40,7 +41,8 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
     @Override
     public void initCarbonContext(Request request) throws Exception {
 
-        if (StringUtils.startsWith(request.getRequestURI(), ORGANIZATION_PATH_PARAM)) {
+        String requestURI = request.getRequestURI();
+        if (StringUtils.startsWith(requestURI, ORGANIZATION_PATH_PARAM)) {
             String tenantDomain;
             String appName;
             PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
@@ -56,8 +58,19 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             request.setAttribute(TENANT_DOMAIN_FROM_REQUEST_PATH, tenantDomain);
             super.setValuesToCarbonContext(carbonContext, tenantDomain, appName);
             super.setMDCValues(carbonContext.getTenantId(), tenantDomain, appName);
+            setOrganizationIdToCarbonContext(carbonContext, requestURI);
         } else {
             super.initCarbonContext(request);
         }
+    }
+
+    private static void setOrganizationIdToCarbonContext(PrivilegedCarbonContext carbonContext, String requestURI) {
+
+        String organizationIdInRequestPath = requestURI.substring(requestURI.indexOf(ORGANIZATION_PATH_PARAM) + 3);
+        if (organizationIdInRequestPath.contains(PATH_SEPARATOR)) {
+            organizationIdInRequestPath = organizationIdInRequestPath.substring(0,
+                    organizationIdInRequestPath.indexOf(PATH_SEPARATOR));
+        }
+        carbonContext.setOrganizationId(organizationIdInRequestPath);
     }
 }

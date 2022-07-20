@@ -30,13 +30,12 @@ import java.util.Map;
 public class OrganizationManagementConstants {
 
     public static final String ROOT = "ROOT";
+    public static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String PATH_SEPARATOR = "/";
     public static final String V1_API_PATH_COMPONENT = "v1";
     public static final String ORGANIZATION_PATH = "organizations";
-    public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
+    public static final String ORGANIZATION_CONTEXT_PATH_COMPONENT = "/o/%s";
     public static final String SERVER_API_PATH_COMPONENT = "/api/server/";
-    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
-
     public static final String VIEW_ID_COLUMN = "UM_ID";
     public static final String VIEW_NAME_COLUMN = "UM_ORG_NAME";
     public static final String VIEW_DESCRIPTION_COLUMN = "UM_ORG_DESCRIPTION";
@@ -48,7 +47,6 @@ public class OrganizationManagementConstants {
     public static final String VIEW_ATTR_VALUE_COLUMN = "UM_ATTRIBUTE_VALUE";
     public static final String VIEW_TYPE_COLUMN = "UM_ORG_TYPE";
     public static final String VIEW_TENANT_UUID_COLUMN = "UM_TENANT_UUID";
-
     public static final String PATCH_OP_ADD = "ADD";
     public static final String PATCH_OP_REMOVE = "REMOVE";
     public static final String PATCH_OP_REPLACE = "REPLACE";
@@ -56,7 +54,6 @@ public class OrganizationManagementConstants {
     public static final String PATCH_PATH_ORG_DESCRIPTION = "/description";
     public static final String PATCH_PATH_ORG_STATUS = "/status";
     public static final String PATCH_PATH_ORG_ATTRIBUTES = "/attributes/";
-
     public static final String PARENT_ID_FIELD = "parentId";
     public static final String ORGANIZATION_NAME_FIELD = "name";
     public static final String ORGANIZATION_ID_FIELD = "id";
@@ -64,10 +61,8 @@ public class OrganizationManagementConstants {
     public static final String ORGANIZATION_CREATED_TIME_FIELD = "created";
     public static final String ORGANIZATION_LAST_MODIFIED_FIELD = "lastModified";
     public static final String ORGANIZATION_STATUS_FIELD = "status";
-
     public static final String PAGINATION_AFTER = "after";
     public static final String PAGINATION_BEFORE = "before";
-
     public static final String CREATE_ORGANIZATION_ADMIN_PERMISSION = "/permission/admin/";
     public static final String BASE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String CREATE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
@@ -78,11 +73,9 @@ public class OrganizationManagementConstants {
             "update";
     public static final String DELETE_ORGANIZATION_PERMISSION = "/permission/admin/manage/identity/organizationmgt/" +
             "delete";
-
     public static final List<String> ALL_ORGANIZATION_PERMISSIONS = Collections.unmodifiableList(Arrays
             .asList(CREATE_ORGANIZATION_PERMISSION, VIEW_ORGANIZATION_PERMISSION, UPDATE_ORGANIZATION_PERMISSION,
                     DELETE_ORGANIZATION_PERMISSION));
-
     public static final String EQ = "eq";
     public static final String CO = "co";
     public static final String SW = "sw";
@@ -92,11 +85,11 @@ public class OrganizationManagementConstants {
     public static final String GT = "gt";
     public static final String LT = "lt";
     public static final String AND = "and";
-
     public static final String FILTER_PLACEHOLDER_PREFIX = "FILTER_ID_";
     public static final String PARENT_ID_FILTER_PLACEHOLDER_PREFIX = "FILTER_PARENT_ID_";
-
+    private static final String ORGANIZATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORG-";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     static {
 
@@ -108,8 +101,6 @@ public class OrganizationManagementConstants {
         attributeColumnMap.put(PAGINATION_AFTER, VIEW_CREATED_TIME_COLUMN);
         attributeColumnMap.put(PAGINATION_BEFORE, VIEW_CREATED_TIME_COLUMN);
     }
-
-    public static final Map<String, String> ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeColumnMap);
 
     /**
      * Enum for organization types.
@@ -144,8 +135,6 @@ public class OrganizationManagementConstants {
                 "Attribute keys cannot be duplicated."),
         ERROR_CODE_INVALID_PARENT_ORGANIZATION("60005", "Invalid parent organization.",
                 "Defined parent organization: %s doesn't exist."),
-        ERROR_CODE_ORGANIZATION_NAME_CONFLICT("60006", "Organization name unavailable.",
-                "Provided organization name: %s already exists."), // 409
         ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS("60007", "Unable to delete the organization.",
                 "Organization with ID: %s has one or more child organizations."),
         ERROR_CODE_PATCH_OPERATION_UNDEFINED("60008", "Unable to patch the organization.",
@@ -224,6 +213,28 @@ public class OrganizationManagementConstants {
                 "The patch values cannot be null for ADD and REPLACE operations."),
         ERROR_CODE_INVALID_ATTRIBUTE("60048", "Invalid attribute to assign for a role",
                 "Invalid attribute to assign for a role."),
+        ERROR_CODE_ROLE_LIST_INVALID_CURSOR("60049", "Cursor decoding failed.",
+                "Malformed cursor %s cannot be processed."),
+        ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE("60050", "ROOT organization can't be disabled or deleted.",
+                "Organization %s can't be disabled or deleted."),
+        ERROR_CODE_ROOT_ORG_RENAME("60051", "ROOT organization can't be renamed.",
+                "Organization %s can't be renamed."),
+        ERROR_CODE_ROLE_IS_UNMODIFIABLE("60052", "Role can't be modified.",
+                "Role %s cannot be updated or deleted."),
+        ERROR_CODE_INVALID_ORGANIZATION_NAME("60053", "Organization not found",
+                "Organization with name %s not found"),
+        ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT("60054", "Organization not found for the tenant",
+                "Organization for the tenant domain %s not found."),
+        ERROR_CODE_NO_USERNAME_OR_ID_TO_RESOLVE_USER_FROM_RESIDENT_ORG("60055",
+                "Both userId and UserName cannot be null.",
+                "Either userId or UserName is required to resolve user from resident organization."),
+        ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME("60055", "No organization found",
+                "Organizations not found by name: %s"),
+        ERROR_CODE_INVALID_ORGANIZATION_ID("65056", "Unable to retrieve the organization name",
+                "Organization not found with organization with ID: %s."),
+        ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT("60057", "Unable to create the organization.",
+                "To create a child organization in root, the request should be invoked from the root " +
+                        "organization."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
@@ -306,7 +317,7 @@ public class OrganizationManagementConstants {
         ERROR_CODE_GETTING_ROLE_FROM_ID("65034", "Error getting role.",
                 "Server encountered an error while retrieving role from role id %s."),
         ERROR_CODE_ERROR_REQUEST_ORGANIZATION_REDIRECT("65035", "Unable to redirect to request organization.",
-                "Server encountered an error when redirecting enterpriseIDP login to requested organization."),
+                "Server encountered an error when redirecting to requested organization via Organization Login."),
         ERROR_CODE_GETTING_USERS_USING_ROLE_ID("65036", "Error getting users.",
                 "Server encountered an error while retrieving user(s) from role id %s."),
         ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID("65037", "Error getting users of role Id.",
@@ -354,8 +365,8 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when sharing application: %s to organization: %s."),
         ERROR_CODE_ERROR_LINK_APPLICATIONS("65057", "Unable to link the shared application.",
                 "Server encountered an error when linking the application: %s to shared application: %s."),
-        ERROR_CODE_ERROR_RESOLVING_ENTERPRISE_IDP_LOGIN("65058", "Unable to resolve the enterpriseIDP shared app." +
-                "login", "Server encountered an error when resolving enterpriseIDP login for application: %s."),
+        ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN("65058", "Unable to resolve the shared app for organization " +
+                "login.", "Server encountered an error when resolving organization login for application: %s."),
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS("65059", "Unable to retrieve organizations permissions.",
                 "Server encountered an error while retrieving the organizations permissions of organization " +
                         "with ID: %s for user with ID: %s."),
@@ -373,7 +384,32 @@ public class OrganizationManagementConstants {
                 "with ID: %s is a child organization of organization with ID: %s."),
         ERROR_CODE_ERROR_CHECKING_IF_IMMEDIATE_CHILD_OF_PARENT("65064", "Error while checking if an organization " +
                 "is an immediate child of another organization.", "Server encountered an error while " +
-                "checking if organization with ID: %s is an immediate child organization of organization with ID: %s.");
+                "checking if organization with ID: %s is an immediate child organization of organization with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RETRIEVING_ANCESTORS("65065", "Error while retrieving ancestors of an organization.",
+                "Error while retrieving ancestors of organization with ID: %s."),
+        ERROR_CODE_ERROR_WHILE_RESOLVING_USER_FROM_RESIDENT_ORG("65066",
+                "Error while resolving user from resident organization.",
+                "Error while resolving user: %s from resident organization, to access organization with ID: %s."),
+        ERROR_CODE_ERROR_CHECKING_DB_METADATA("65067", "Error while checking the database metadata.",
+                "Server encountered an error while checking database type."),
+        ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES("65068", "Error while retrieving organization roles of " +
+                "the user.", "Server encountered an error while retrieving the organizations roles of organization " +
+                "with ID: %s for user with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_AUTHENTICATED_USER("65069", "Error while retrieving authenticated user.",
+                "Server encountered while retrieving the authenticated user from user store."),
+        ERROR_CODE_ERROR_VALIDATING_USER_ASSOCIATION("65070", "Error while validating user association " +
+                "for organization.", "Server encountered when authorizing user against the associated " +
+                "organization."),
+        ERROR_CODE_ERROR_VALIDATING_USER_ROOT_ASSOCIATION("65071", "Error while validating user " +
+                "association with root organization.", "Server encountered when authorizing user against the root " +
+                "organization."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_NAME_BY_ID("65072", "Unable to retrieve the organization.",
+                "Server encountered an error while retrieving organization with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATIONS_BY_NAME("65073", "Unable to retrieve organizations.",
+                "Server encountered an error while retrieving organizations with name: %s."),
+        ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION("65074", "Unable to retrieve " +
+                "admin user for the organization.", "Server encountered an error while retrieving " +
+                "organization user with id: %s.");
 
         private final String code;
         private final String message;

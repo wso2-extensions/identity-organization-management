@@ -43,7 +43,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
-import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.stratos.common.exception.TenantManagementClientException;
 import org.wso2.carbon.stratos.common.exception.TenantMgtException;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtService;
@@ -81,14 +80,15 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_TYPE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PARENT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_PATCH_OPERATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_TENANT_TYPE_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_ID_UNDEFINED;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NAME_RESERVED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_TYPE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PARENT_ORGANIZATION_IS_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_OPERATION_UNDEFINED;
@@ -100,6 +100,10 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_REPLACE_NON_EXISTING_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCH_REQUEST_VALUE_UNDEFINED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REQUIRED_FIELDS_MISSING;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROOT_ORG_RENAME;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -125,6 +129,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ROOT_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
@@ -170,6 +175,13 @@ public class OrganizationManagerImpl implements OrganizationManager {
     public String getOrganizationIdByName(String organizationName) throws OrganizationManagementException {
 
         return organizationManagementDAO.getOrganizationIdByName(organizationName);
+    }
+
+    @Override
+    public String getOrganizationNameById(String organizationId) throws OrganizationManagementException {
+
+        return organizationManagementDAO.getOrganizationNameById(organizationId).orElseThrow(
+                () -> handleClientException(ERROR_CODE_INVALID_ORGANIZATION_ID, organizationId));
     }
 
     @Override
@@ -222,13 +234,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         List<ExpressionNode> expressionNodes = getExpressionNodes(filter, after, before);
 
-        String tenantDomain = getTenantDomain();
-        String orgId;
-        if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
-            orgId = organizationManagementDAO.getOrganizationIdByName(ROOT);
-        } else {
-            orgId = organizationManagementDAO.resolveOrganizationId(tenantDomain);
-        }
+        String orgId = resolveOrganizationId(getTenantDomain());
 
         List<ExpressionNode> filteringByParentIdExpressionNodes = new ArrayList<>();
         for (ExpressionNode expressionNode : expressionNodes) {
@@ -320,12 +326,40 @@ public class OrganizationManagerImpl implements OrganizationManager {
     @Override
     public String resolveTenantDomain(String organizationId) throws OrganizationManagementException {
 
-        String rootOrgID = getOrganizationIdByName(OrganizationManagementConstants.ROOT);
-        if (StringUtils.equals(rootOrgID, organizationId)) {
+        if (StringUtils.equals(ROOT_ORG_ID, organizationId)) {
             // super tenant domain will be returned.
             return MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         }
         return organizationManagementDAO.resolveTenantDomain(organizationId);
+    }
+
+    @Override
+    public String resolveOrganizationId(String tenantDomain) throws OrganizationManagementException {
+
+        if (StringUtils.equals(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, tenantDomain)) {
+            return OrganizationManagementConstants.ROOT_ORG_ID;
+        } else {
+            return organizationManagementDAO.resolveOrganizationId(tenantDomain).orElseThrow(
+                    () -> handleClientException(ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT, tenantDomain));
+        }
+    }
+
+    @Override
+    public List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException {
+
+        return organizationManagementDAO.getAncestorOrganizationIds(organizationId);
+    }
+
+    @Override
+    public List<Organization> getOrganizationsByName(String organizationName)
+            throws OrganizationManagementException {
+
+        List<Organization> organizations = organizationManagementDAO.getOrganizationsByName(organizationName);
+        if (CollectionUtils.isNotEmpty(organizations)) {
+            return organizations;
+        } else {
+            throw handleClientException(ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME, organizationName);
+        }
     }
 
     private void updateTenantStatus(String status, String organizationId) throws OrganizationManagementServerException {
@@ -353,6 +387,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     private void validateOrganizationDelete(String organizationId) throws OrganizationManagementException {
 
+        if (StringUtils.equals(ROOT_ORG_ID, organizationId)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE, organizationId);
+        }
         if (organizationManagementDAO.hasChildOrganizations(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_HAS_CHILD_ORGANIZATIONS, organizationId);
         }
@@ -368,7 +405,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private void validateAddOrganizationRequest(Organization organization) throws OrganizationManagementException {
 
         validateAddOrganizationRequiredFields(organization);
-        validateAddOrganizationNameField(organization.getName());
+        validateOrganizationNameField(organization.getName());
         validateOrganizationAttributes(organization.getAttributes());
         validateAddOrganizationType(organization);
     }
@@ -442,7 +479,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             if (StringUtils.isBlank(attributeKey)) {
                 throw handleClientException(ERROR_CODE_ATTRIBUTE_KEY_MISSING);
             }
-            if (attributeValue == null) {
+            if (StringUtils.isBlank(attributeValue)) {
                 throw handleClientException(ERROR_CODE_ATTRIBUTE_VALUE_MISSING);
             }
             attribute.setKey(attributeKey.trim());
@@ -457,14 +494,10 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
     }
 
-    private void validateAddOrganizationNameField(String organizationName) throws OrganizationManagementException {
+    private void validateOrganizationNameField(String organizationName) throws OrganizationManagementException {
 
-        if (StringUtils.equals(ROOT, organizationName)) {
+        if (StringUtils.equalsIgnoreCase(ROOT, organizationName)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_RESERVED, ROOT);
-        }
-
-        if (isOrganizationExistByName(organizationName)) {
-            throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, organizationName);
         }
     }
 
@@ -477,7 +510,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         immediate child of the ROOT organization.
          */
         if (StringUtils.equals(ROOT, parentId)) {
-            String rootOrganizationId = getOrganizationIdByName(ROOT);
+            String rootOrganizationId = ROOT_ORG_ID;
             if (StringUtils.isBlank(rootOrganizationId)) {
                 throw handleServerException(ERROR_CODE_ERROR_MISSING_ROOT, null);
             }
@@ -485,15 +518,23 @@ public class OrganizationManagerImpl implements OrganizationManager {
         } else {
             Organization parent = organizationManagementDAO.getOrganization(parentId);
             if (parent == null) {
-                throw Utils.handleClientException(ERROR_CODE_INVALID_PARENT_ORGANIZATION, parentId);
+                throw handleClientException(ERROR_CODE_INVALID_PARENT_ORGANIZATION, parentId);
             }
         }
+        /*
+        To create an organization as an immediate child of ROOT organization, the request should be invoked from the
+        ROOT organization (super tenant) space.
+         */
+        if (StringUtils.equals(ROOT_ORG_ID, parentId) && getTenantId() != MultitenantConstants.SUPER_TENANT_ID) {
+            throw handleClientException(ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT);
+        }
+
         validateAddOrganizationParentStatus(parentId);
         /*
         Having '/permission/admin/' assigned to the user would be sufficient to create an organization as an
         immediate child organization of the ROOT organization.
         */
-        if (StringUtils.equals(getOrganizationIdByName(ROOT), parentId)) {
+        if (StringUtils.equals(ROOT_ORG_ID, parentId)) {
             if (!isUserAuthorizedToCreateChildOrganizationInRoot() && !isUserAuthorizedToCreateOrganization(parentId)) {
                 throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED_TO_CREATE_ORGANIZATION, parentId);
             }
@@ -534,10 +575,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
         validateOrganizationStatusUpdate(organization.getStatus(), organization.getId());
 
         String newOrganizationName = organization.getName().trim();
-        // Check if the organization name already exists for the given tenant.
-        if (!StringUtils.equals(currentOrganizationName, newOrganizationName) &&
-                isOrganizationExistByName(newOrganizationName)) {
-            throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, newOrganizationName);
+        if (StringUtils.equals(ROOT, currentOrganizationName)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_RENAME, organization.getId());
+        }
+        // Check if the organization name is reserved.
+        if (!StringUtils.equals(currentOrganizationName, newOrganizationName)) {
+            validateOrganizationNameField(newOrganizationName);
         }
         organization.setName(newOrganizationName);
 
@@ -588,10 +631,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 throw handleClientException(ERROR_CODE_PATCH_REQUEST_MANDATORY_FIELD_INVALID_OPERATION, op, path);
             }
 
-            // Check if the new organization name already exists.
-            if (path.equals(PATCH_PATH_ORG_NAME) && isOrganizationExistByName(value) &&
-                    !StringUtils.equals(getOrganizationIdByName(value), organizationId)) {
-                throw handleClientException(ERROR_CODE_ORGANIZATION_NAME_CONFLICT, value);
+            // Check whether the new organization name is reserved.
+            if (path.equals(PATCH_PATH_ORG_NAME)) {
+                if (StringUtils.equals(ROOT_ORG_ID, organizationId)) {
+                    throw handleClientException(ERROR_CODE_ROOT_ORG_RENAME, organizationId);
+                }
+                validateOrganizationNameField(value);
             }
 
             if (StringUtils.equals(PATCH_PATH_ORG_STATUS, path)) {
@@ -643,6 +688,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
             throw handleClientException(ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS, value);
         }
         if (StringUtils.equals(DISABLED.toString(), value) &&
+                StringUtils.equals(ROOT_ORG_ID, organizationId)) {
+            throw handleClientException(ERROR_CODE_ROOT_ORG_DELETE_OR_DISABLE, organizationId);
+        } else if (StringUtils.equals(DISABLED.toString(), value) &&
                 organizationManagementDAO.hasActiveChildOrganizations(organizationId)) {
             throw handleClientException(ERROR_CODE_ACTIVE_CHILD_ORGANIZATIONS_EXIST, organizationId);
         } else if (StringUtils.equals(ACTIVE.toString(), value) &&

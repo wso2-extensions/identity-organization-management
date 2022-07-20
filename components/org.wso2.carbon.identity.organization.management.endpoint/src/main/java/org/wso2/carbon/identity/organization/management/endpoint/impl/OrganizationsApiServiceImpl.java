@@ -50,10 +50,9 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     }
 
     @Override
-    public Response organizationsOrganizationIdGet(String organizationId, Boolean showChildren,
-                                                   Boolean includePermissions) {
+    public Response organizationsOrganizationIdGet(String organizationId, Boolean includePermissions) {
 
-        return organizationManagementService.getOrganization(organizationId, showChildren, includePermissions);
+        return organizationManagementService.getOrganization(organizationId, includePermissions);
     }
 
     @Override

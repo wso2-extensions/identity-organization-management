@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -133,5 +134,31 @@ public class OrgApplicationMgtServiceComponent {
     protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(null);
+    }
+
+    @Reference(
+            name = "organization.user.resident.resolver.service",
+            service = OrganizationUserResidentResolverService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationUserResidentResolverService"
+    )
+    protected void setOrganizationUserResidentResolverService(OrganizationUserResidentResolverService
+                                                                      organizationUserResidentResolverService) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Setting the organization user resolver service.");
+        }
+        OrgApplicationMgtDataHolder.getInstance().setOrganizationUserResidentResolverService
+                (organizationUserResidentResolverService);
+    }
+
+    protected void unsetOrganizationUserResidentResolverService(OrganizationUserResidentResolverService
+                                                                        organizationUserResidentResolverService) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Unset organization user resolver service.");
+        }
+        OrgApplicationMgtDataHolder.getInstance().setOrganizationUserResidentResolverService(null);
     }
 }

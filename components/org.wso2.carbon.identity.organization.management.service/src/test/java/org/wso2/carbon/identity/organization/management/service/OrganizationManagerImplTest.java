@@ -43,6 +43,7 @@ import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -156,6 +157,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
 
+            when(Utils.getTenantId()).thenReturn(MultitenantConstants.SUPER_TENANT_ID);
             Organization addedOrganization = organizationManager.addOrganization(sampleOrganization);
             assertNotNull(addedOrganization.getId(), "Created organization id cannot be null");
             assertEquals(addedOrganization.getName(), sampleOrganization.getName());
@@ -271,21 +273,6 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testAddOrganizationOrganizationNameTaken() throws Exception {
-
-        Organization organization = getOrganization(UUID.randomUUID().toString(), ORG1_NAME, ORG_DESCRIPTION,
-                ROOT_ORG_ID, STRUCTURAL.toString());
-        mockCarbonContext();
-        try (Connection connection = TestUtils.getConnection()) {
-            Connection spyConnection = TestUtils.spyConnection(connection);
-            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
-            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
-                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-            organizationManager.addOrganization(organization);
-        }
-    }
-
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testAddOrganizationUserNotAuthorized() throws Exception {
 
         Organization organization = getOrganization(UUID.randomUUID().toString(), NEW_ORG_NAME, ORG_DESCRIPTION,
@@ -303,6 +290,7 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
         try (Connection connection = TestUtils.getConnection()) {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
+            when(Utils.getTenantId()).thenReturn(MultitenantConstants.SUPER_TENANT_ID);
             when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                     new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
             organizationManager.addOrganization(organization);
@@ -541,21 +529,6 @@ public class OrganizationManagerImplTest extends PowerMockTestCase {
             Connection spyConnection = TestUtils.spyConnection(connection);
             when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
             when(Utils.handleClientException(anyObject(), anyString(), anyString())).thenReturn(
-                    new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
-            organizationManager.patchOrganization(ORG1_ID, patchOperations);
-        }
-    }
-
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testPatchOrganizationNameUnavailable() throws Exception {
-
-        List<PatchOperation> patchOperations = new ArrayList<>();
-        PatchOperation patchOperation = new PatchOperation(PATCH_OP_REPLACE, PATCH_PATH_ORG_NAME, ORG2_NAME);
-        patchOperations.add(patchOperation);
-        try (Connection connection = TestUtils.getConnection()) {
-            Connection spyConnection = TestUtils.spyConnection(connection);
-            when(TestUtils.mockDataSource().getConnection()).thenReturn(spyConnection);
-            when(Utils.handleClientException(anyObject(), anyString())).thenReturn(
                     new OrganizationManagementClientException(ERROR_MESSAGE, ERROR_DESCRIPTION, ERROR_CODE));
             organizationManager.patchOrganization(ORG1_ID, patchOperations);
         }

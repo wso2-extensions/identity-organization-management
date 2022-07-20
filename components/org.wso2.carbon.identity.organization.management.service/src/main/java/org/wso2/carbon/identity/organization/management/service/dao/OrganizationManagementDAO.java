@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.service.model.PatchOpera
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This interface performs CRUD operations for {@link Organization}
@@ -68,6 +69,15 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization ID.
      */
     String getOrganizationIdByName(String organizationName) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve organization name for the given organization id if organization exists.
+     *
+     * @param organizationId The organization id.
+     * @return the organization Name.
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the organization name.
+     */
+    Optional<String> getOrganizationNameById(String organizationId) throws OrganizationManagementServerException;
 
     /**
      * Retrieve {@link Organization} by ID.
@@ -258,5 +268,23 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the tenant domain of
      *                                               an organization.
      */
-    String resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException;
+    Optional<String> resolveOrganizationId(String tenantDomain) throws OrganizationManagementServerException;
+
+    /**
+     * Get ancestor organization ids (including itself) of a given organization.
+     *
+     * @param organizationId Organization id.
+     * @return List of ancestor organization ids including itself.
+     */
+    List<String> getAncestorOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve list of organizations by the organization name.
+     *
+     * @param organizationName The name of the organizations.
+     * @return List of {@link Organization}
+     * @throws OrganizationManagementServerException The server exception thrown when retrieving the list of
+     *                                               organization by name.
+     */
+    List<Organization> getOrganizationsByName(String organizationName) throws OrganizationManagementServerException;
 }

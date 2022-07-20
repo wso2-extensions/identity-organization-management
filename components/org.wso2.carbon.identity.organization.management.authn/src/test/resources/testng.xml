@@ -21,7 +21,7 @@
 
     <test name="organization-management-application-authn-tests">
         <classes>
-            <class name="org.wso2.carbon.identity.organization.management.application.authn.EnterpriseIDPAuthenticatorTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.authn.OrganizationAuthenticatorTest"/>
         </classes>
     </test>
 </suite>

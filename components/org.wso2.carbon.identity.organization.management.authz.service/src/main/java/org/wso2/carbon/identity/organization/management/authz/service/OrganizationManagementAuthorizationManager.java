@@ -53,6 +53,22 @@ public class OrganizationManagementAuthorizationManager {
     }
 
     /**
+     * Check whether user has any permission/association for the given organization.
+     *
+     * @param userId User id.
+     * @param orgId  Organization id.
+     * @return True if user has at least single permission against organization.
+     * @throws OrganizationManagementAuthzServiceServerException Error occurred while retrieving user
+     *                                                           association to organization.
+     */
+    public boolean hasUserOrgAssociation(String userId, String orgId)
+            throws OrganizationManagementAuthzServiceServerException {
+
+        OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
+        return organizationMgtAuthzDAO.hasUserOrgAssociation(userId, orgId);
+    }
+
+    /**
      * Resolve root organization id.
      *
      * @return Root organization id.

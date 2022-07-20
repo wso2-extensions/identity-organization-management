@@ -35,32 +35,112 @@ import javax.xml.bind.annotation.*;
 
 public class RolesListResponse  {
   
-    private List<RoleObj> roles = null;
+    private Integer totalResults;
+    private String nextCursor;
+    private String previousCursor;
+    private Integer itemsPerPage;
+    private List<RoleObj> resources = null;
 
 
     /**
+    * Total results to be fetched.
     **/
-    public RolesListResponse roles(List<RoleObj> roles) {
+    public RolesListResponse totalResults(Integer totalResults) {
 
-        this.roles = roles;
+        this.totalResults = totalResults;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "100", value = "Total results to be fetched.")
+    @JsonProperty("totalResults")
+    @Valid
+    public Integer getTotalResults() {
+        return totalResults;
+    }
+    public void setTotalResults(Integer totalResults) {
+        this.totalResults = totalResults;
+    }
+
+    /**
+    * A cursor to obtain the next page of results in a subsequent request.
+    **/
+    public RolesListResponse nextCursor(String nextCursor) {
+
+        this.nextCursor = nextCursor;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6ImQgcm9sZSIsImRpcmVjdGlvbiI6IkZPUldBUkQifQ", value = "A cursor to obtain the next page of results in a subsequent request.")
+    @JsonProperty("nextCursor")
+    @Valid
+    public String getNextCursor() {
+        return nextCursor;
+    }
+    public void setNextCursor(String nextCursor) {
+        this.nextCursor = nextCursor;
+    }
+
+    /**
+    * A cursor to obtain the previous page of results in a subsequent request.
+    **/
+    public RolesListResponse previousCursor(String previousCursor) {
+
+        this.previousCursor = previousCursor;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "eyJjdXJzb3JWYWx1ZSI6ImIgcm9sZSIsImRpcmVjdGlvbiI6IkJBQ0tXQVJEIn0", value = "A cursor to obtain the previous page of results in a subsequent request.")
+    @JsonProperty("previousCursor")
+    @Valid
+    public String getPreviousCursor() {
+        return previousCursor;
+    }
+    public void setPreviousCursor(String previousCursor) {
+        this.previousCursor = previousCursor;
+    }
+
+    /**
+    * Number of roles per page.
+    **/
+    public RolesListResponse itemsPerPage(Integer itemsPerPage) {
+
+        this.itemsPerPage = itemsPerPage;
+        return this;
+    }
+    
+    @ApiModelProperty(example = "10", value = "Number of roles per page.")
+    @JsonProperty("itemsPerPage")
+    @Valid
+    public Integer getItemsPerPage() {
+        return itemsPerPage;
+    }
+    public void setItemsPerPage(Integer itemsPerPage) {
+        this.itemsPerPage = itemsPerPage;
+    }
+
+    /**
+    **/
+    public RolesListResponse resources(List<RoleObj> resources) {
+
+        this.resources = resources;
         return this;
     }
     
     @ApiModelProperty(value = "")
-    @JsonProperty("roles")
+    @JsonProperty("Resources")
     @Valid
-    public List<RoleObj> getRoles() {
-        return roles;
+    public List<RoleObj> getResources() {
+        return resources;
     }
-    public void setRoles(List<RoleObj> roles) {
-        this.roles = roles;
+    public void setResources(List<RoleObj> resources) {
+        this.resources = resources;
     }
 
-    public RolesListResponse addRolesItem(RoleObj rolesItem) {
-        if (this.roles == null) {
-            this.roles = new ArrayList<>();
+    public RolesListResponse addResourcesItem(RoleObj resourcesItem) {
+        if (this.resources == null) {
+            this.resources = new ArrayList<>();
         }
-        this.roles.add(rolesItem);
+        this.resources.add(resourcesItem);
         return this;
     }
 
@@ -76,12 +156,16 @@ public class RolesListResponse  {
             return false;
         }
         RolesListResponse rolesListResponse = (RolesListResponse) o;
-        return Objects.equals(this.roles, rolesListResponse.roles);
+        return Objects.equals(this.totalResults, rolesListResponse.totalResults) &&
+            Objects.equals(this.nextCursor, rolesListResponse.nextCursor) &&
+            Objects.equals(this.previousCursor, rolesListResponse.previousCursor) &&
+            Objects.equals(this.itemsPerPage, rolesListResponse.itemsPerPage) &&
+            Objects.equals(this.resources, rolesListResponse.resources);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(roles);
+        return Objects.hash(totalResults, nextCursor, previousCursor, itemsPerPage, resources);
     }
 
     @Override
@@ -90,7 +174,11 @@ public class RolesListResponse  {
         StringBuilder sb = new StringBuilder();
         sb.append("class RolesListResponse {\n");
         
-        sb.append("    roles: ").append(toIndentedString(roles)).append("\n");
+        sb.append("    totalResults: ").append(toIndentedString(totalResults)).append("\n");
+        sb.append("    nextCursor: ").append(toIndentedString(nextCursor)).append("\n");
+        sb.append("    previousCursor: ").append(toIndentedString(previousCursor)).append("\n");
+        sb.append("    itemsPerPage: ").append(toIndentedString(itemsPerPage)).append("\n");
+        sb.append("    resources: ").append(toIndentedString(resources)).append("\n");
         sb.append("}");
         return sb.toString();
     }

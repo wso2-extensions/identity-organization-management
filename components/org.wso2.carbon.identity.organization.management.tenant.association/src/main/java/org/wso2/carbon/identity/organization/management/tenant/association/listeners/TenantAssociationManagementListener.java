@@ -35,6 +35,9 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
+import static org.wso2.carbon.identity.organization.management.tenant.association.Constants.MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW;
+
 /**
  * This class contains the implementation of the tenant management listener.  This listener will be used to add tenant
  * associations between the tenant creator and tenant, during the tenant creation flow.
@@ -89,13 +92,19 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
     private Role buildOrgCreatorRole(String adminUUID) {
 
         Role organizationCreatorRole = new Role();
-        organizationCreatorRole.setDisplayName(Constants.ORG_CREATOR_ROLE);
+        organizationCreatorRole.setDisplayName(ORG_CREATOR_ROLE);
         User orgCreator = new User(adminUUID);
         organizationCreatorRole.setUsers(Collections.singletonList(orgCreator));
         // Set permissions for org-creator role.
         ArrayList<String> orgCreatorRolePermissions = new ArrayList<>();
+        // Adding mandatory permissions for the org-creator role.
         orgCreatorRolePermissions.add(Constants.ORG_MGT_PERMISSION);
         orgCreatorRolePermissions.add(Constants.ORG_ROLE_MGT_PERMISSION);
+        /*
+        Adding the bear minimum permission set that org creator should have to logged in to the console and view
+        user, groups, roles, SP, IDP sections.
+         */
+        orgCreatorRolePermissions.addAll(MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW);
         organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
     }

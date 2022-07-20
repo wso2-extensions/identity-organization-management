@@ -22,10 +22,10 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -33,11 +33,13 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_BUILDING_URL_FOR_RESPONSE_BODY;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_DB_METADATA;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SERVER_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.TENANT_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.V1_API_PATH_COMPONENT;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.ORACLE;
 
 /**
  * This class provides utility functions for the Organization Management.
@@ -90,6 +92,22 @@ public class Utils {
     }
 
     /**
+     * Check whether the string, "oracle", contains in the driver name or db product name.
+     *
+     * @return true if the database type matches the driver type, false otherwise.
+     * @throws OrganizationManagementServerException If error occurred while checking the DB metadata.
+     */
+    public static boolean isOracleDB() throws OrganizationManagementServerException {
+        try {
+            NamedJdbcTemplate jdbcTemplate = getNewTemplate();
+            return jdbcTemplate.getDriverName().toLowerCase().contains(ORACLE) ||
+                    jdbcTemplate.getDatabaseProductName().toLowerCase().contains(ORACLE);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_DB_METADATA, e);
+        }
+    }
+
+    /**
      * Get the tenant ID.
      *
      * @return the tenant ID.
@@ -107,6 +125,16 @@ public class Utils {
     public static String getTenantDomain() {
 
         return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+    }
+
+    /**
+     * Get the organization id from context.
+     *
+     * @return the organization id.
+     */
+    public static String getOrganizationId() {
+
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
     }
 
     /**
@@ -148,32 +176,20 @@ public class Utils {
     }
 
     /**
-     * Builds the API context on whether the tenant qualified url is enabled or not. In tenant qualified mode the
-     * ServiceURLBuilder appends the tenant domain to the URI as a path param automatically. But
-     * in non tenant qualified mode we need to append the tenant domain to the path manually.
+     * Builds the API context.
      *
      * @param endpoint Relative endpoint path.
      * @return Context of the API.
      */
     public static String getContext(String endpoint) {
 
-        String context;
-        if (IdentityTenantUtil.isTenantQualifiedUrlsEnabled()) {
-            context = SERVER_API_PATH_COMPONENT + endpoint;
+        String organizationId = getOrganizationId();
+        if (StringUtils.isNotBlank(organizationId)) {
+            return String.format(ORGANIZATION_CONTEXT_PATH_COMPONENT, organizationId) + SERVER_API_PATH_COMPONENT +
+                    endpoint;
         } else {
-            context = String.format(TENANT_CONTEXT_PATH_COMPONENT, getTenantDomainFromContext()) +
-                    SERVER_API_PATH_COMPONENT + endpoint;
+            return SERVER_API_PATH_COMPONENT + endpoint;
         }
-        return context;
-    }
-
-    private static String getTenantDomainFromContext() {
-
-        String tenantDomain = IdentityTenantUtil.getTenantDomainFromContext();
-        if (StringUtils.isBlank(tenantDomain)) {
-            tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        }
-        return tenantDomain;
     }
 
     /**

@@ -70,8 +70,8 @@ public enum TypeEnum {
     }
 }
 
-    private TypeEnum type;
-    private String parentId;
+    private TypeEnum type = TypeEnum.TENANT;
+    private String parentId = "10084a8d-113f-4211-a0d5-efe36b082211";
     private List<Attribute> attributes = null;
 
 
@@ -121,11 +121,9 @@ public enum TypeEnum {
         return this;
     }
     
-    @ApiModelProperty(example = "TENANT", required = true, value = "")
+    @ApiModelProperty(example = "TENANT", value = "")
     @JsonProperty("type")
     @Valid
-    @NotNull(message = "Property type cannot be null.")
-
     public TypeEnum getType() {
         return type;
     }

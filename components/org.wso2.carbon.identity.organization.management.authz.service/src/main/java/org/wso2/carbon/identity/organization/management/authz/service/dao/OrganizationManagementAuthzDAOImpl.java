@@ -33,11 +33,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_GROUPS_ASSIGNED_TO_ROLES;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_USER_ROLE_ASSIGNMENT;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_GROUP_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.IS_USER_AUTHORIZED;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.PERMISSION_LIST_PLACEHOLDER;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_USER_ID;
@@ -68,7 +69,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
         boolean isAuthorized;
         try {
             isAuthorized = namedJdbcTemplate.fetchSingleRecord(sqlStmt,
-                    (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
+                    (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
@@ -105,7 +106,7 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
             for (Group group: groupListOfUser) {
                 NamedJdbcTemplate groupNamedJdbcTemplate = getNewTemplate();
                     isAuthorized = groupNamedJdbcTemplate.fetchSingleRecord(groupSqlStmt,
-                            (resultSet, rowNumber) -> resultSet.getInt(DB_SCHEMA_COLUMN_NAME_COUNT_UM_RESOURCE_ID) > 0,
+                            (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, group.getGroupID());
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
@@ -116,14 +117,67 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
                                 }
                             });
 
-                    if (isAuthorized) {
-                        return true;
-                    }
+                if (isAuthorized) {
+                    return true;
+                }
             }
         } catch (UserStoreException | DataAccessException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);
         }
 
+        return false;
+    }
+
+    @Override
+    public boolean hasUserOrgAssociation(String userId, String orgId)
+            throws OrganizationManagementAuthzServiceServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        boolean hasOrgAssociation;
+        try {
+            hasOrgAssociation =
+                    namedJdbcTemplate.fetchSingleRecord(CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_USER_ROLE_ASSIGNMENT,
+                            (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
+                            namedPreparedStatement -> {
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, userId);
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
+                            });
+            if (hasOrgAssociation) {
+                return true;
+            }
+        } catch (DataAccessException e) {
+            throw new OrganizationManagementAuthzServiceServerException(e);
+        }
+
+        try {
+            AbstractUserStoreManager userStoreManager =
+                    getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+            /*
+            Currently, userstore groups in the same organization can be assigned to a role.
+            A user can be belonged only to the groups in the userstore where user resides.
+            So group authorization is not required if the user is not inside the same org.
+             */
+            boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
+            if (!isUserExists) {
+                return false;
+            }
+            List<Group> groupListOfUser = userStoreManager.getGroupListOfUser(userId, null, null);
+            for (Group group : groupListOfUser) {
+                NamedJdbcTemplate groupNamedJdbcTemplate = getNewTemplate();
+                hasOrgAssociation = groupNamedJdbcTemplate.fetchSingleRecord(
+                        CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_GROUPS_ASSIGNED_TO_ROLES,
+                        (resultSet, rowNumber) -> resultSet.getInt(1) > 0,
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_USER_ID, group.getGroupID());
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_ID, orgId);
+                        });
+                if (hasOrgAssociation) {
+                    return true;
+                }
+            }
+        } catch (UserStoreException | DataAccessException e) {
+            throw new OrganizationManagementAuthzServiceServerException(e);
+        }
         return false;
     }
 

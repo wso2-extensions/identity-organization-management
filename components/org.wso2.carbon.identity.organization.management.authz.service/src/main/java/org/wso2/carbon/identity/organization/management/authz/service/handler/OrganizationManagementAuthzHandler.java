@@ -41,14 +41,9 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_VALIDATE_SCOPE;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.RESOURCE_PERMISSION_NONE;
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SCOPE_PERMISSION_MAP;
 import static org.wso2.carbon.identity.organization.management.authz.service.util.OrganizationManagementAuthzUtil.getUserStoreManager;
 
 /**
@@ -82,8 +77,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
             try {
                 // If the scopes are configured for the API, it gets the first priority.
                 if (isScopeValidationRequired(validateScope, authorizationContext)) {
-                    validateScopes(tenantOrgUUIDOfURLDomain, allowedScopes, user, authorizationContext,
-                            authorizationResult);
+                    validateScopes(allowedScopes, authorizationContext, authorizationResult);
                 } else if (StringUtils.isNotBlank(permissionString)) {
                     validatePermissions(tenantOrgUUIDOfURLDomain, permissionString, user, authorizationResult);
                 }
@@ -168,13 +162,12 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         return validateScope && CollectionUtils.isNotEmpty(authorizationContext.getRequiredScopes());
     }
 
-    private void validateScopes(String orgId, String[] tokenScopes, User user,
-                                AuthorizationContext authorizationContext, AuthorizationResult authorizationResult)
+    private void validateScopes(String[] tokenScopes, AuthorizationContext authorizationContext,
+                                AuthorizationResult authorizationResult)
             throws OrganizationManagementAuthzServiceServerException {
 
         boolean granted = true;
         if (tokenScopes != null) {
-            // todo: check on scope validation during token issuance.
             for (String scope : authorizationContext.getRequiredScopes()) {
                 if (!ArrayUtils.contains(tokenScopes, scope)) {
                     granted = false;
@@ -182,23 +175,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 }
             }
             if (granted) {
-                List<String> permissions = new ArrayList<>();
-                for (Map.Entry<String, String> entry : SCOPE_PERMISSION_MAP.entrySet()) {
-                    String scope = entry.getKey();
-                    for (String tokenScope : tokenScopes) {
-                        if (StringUtils.equals(tokenScope, scope)) {
-                            permissions.add(entry.getValue());
-                        }
-                    }
-                }
-                for (String permissionString : permissions) {
-                    boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance()
-                            .isUserAuthorized(getUserId(user), permissionString, orgId);
-                    if (isUserAuthorized) {
-                        authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
-                        break;
-                    }
-                }
+                authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
             }
         }
     }
