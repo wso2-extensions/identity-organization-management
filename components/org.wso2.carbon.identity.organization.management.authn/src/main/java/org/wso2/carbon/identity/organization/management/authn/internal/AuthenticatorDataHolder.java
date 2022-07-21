@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.organization.management.authn.internal;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * This class acts as a data holder to the organization login authenticator service.
@@ -28,8 +27,6 @@ import org.wso2.carbon.user.core.service.RealmService;
 public class AuthenticatorDataHolder {
 
     private static final AuthenticatorDataHolder instance = new AuthenticatorDataHolder();
-
-    private RealmService realmService;
 
     private OAuthAdminServiceImpl oAuthAdminService;
 
@@ -40,16 +37,6 @@ public class AuthenticatorDataHolder {
     public static AuthenticatorDataHolder getInstance() {
 
         return instance;
-    }
-
-    public RealmService getRealmService() {
-
-        return realmService;
-    }
-
-    public void setRealmService(RealmService realmService) {
-
-        this.realmService = realmService;
     }
 
     public OAuthAdminServiceImpl getOAuthAdminService() {

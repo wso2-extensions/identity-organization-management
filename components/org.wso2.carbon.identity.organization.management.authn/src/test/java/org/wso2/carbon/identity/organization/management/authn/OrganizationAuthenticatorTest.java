@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.authn;
 
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -43,9 +42,6 @@ import org.wso2.carbon.identity.organization.management.authn.internal.Authentic
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.user.api.Tenant;
-import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,12 +51,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_USER_PROPERTIES;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_NAME;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
@@ -97,8 +93,6 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     private HttpServletResponse mockServletResponse;
     @Mock
     private AuthenticationContext mockAuthenticationContext;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private RealmService mockRealmService;
     @Mock
     private OrganizationManager mockOrganizationManager;
     @Mock
@@ -119,7 +113,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     private AuthenticatorDataHolder authenticatorDataHolder;
 
     @BeforeMethod
-    public void init() throws UserStoreException {
+    public void init() {
 
         organizationAuthenticator = new OrganizationAuthenticator();
         authenticatorParamProperties = new HashMap<>();
@@ -127,16 +121,12 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
 
         authenticatorDataHolder = spy(new AuthenticatorDataHolder());
         mockStatic(AuthenticatorDataHolder.class);
-        authenticatorDataHolder.setRealmService(mockRealmService);
         authenticatorDataHolder.setOrganizationManager(mockOrganizationManager);
         authenticatorDataHolder.setOrgApplicationManager(mockOrgApplicationManager);
         authenticatorDataHolder.setOAuthAdminService(mockOAuthAdminServiceImpl);
         when(AuthenticatorDataHolder.getInstance()).thenReturn(authenticatorDataHolder);
         mockStatic(IdentityTenantUtil.class);
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(12);
-        Tenant tenant = mock(Tenant.class);
-        when(mockRealmService.getTenantManager().getTenant(anyInt())).thenReturn(tenant);
-        when(tenant.getAssociatedOrganizationUUID()).thenReturn(orgId);
     }
 
     private void mockServiceURLBuilder() {
@@ -314,6 +304,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         when(mockAuthenticationContext.getAuthenticatorProperties()).thenReturn(authenticatorProperties);
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
+        when(mockAuthenticationContext.getProperty(ORGANIZATION_USER_PROPERTIES)).thenReturn(new HashMap<>());
 
         mockServiceURLBuilder();
         AuthenticatorFlowStatus status = organizationAuthenticator.process(mockServletRequest, mockServletResponse,

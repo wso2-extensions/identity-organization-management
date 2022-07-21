@@ -49,7 +49,6 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -66,6 +65,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static java.util.Objects.isNull;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_USER_PROPERTIES;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.SESSION_DATA_KEY;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.CLIENT_ID;
@@ -146,7 +146,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
     @Override
     protected void processAuthenticatedUserScopes(AuthenticationContext context, String scopes) {
 
-        if (StringUtils.isNotBlank(scopes)) {
+        if (isNotBlank(scopes)) {
             createOrGetOrganizationUserProperties(context).put(OAuthConstants.OAuth20Params.SCOPE, scopes);
         }
     }
@@ -460,7 +460,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
     private String getRequestedScopes(AuthenticationContext context) throws UnsupportedEncodingException {
 
         String queryString = context.getQueryParams();
-        if (StringUtils.isNotBlank(queryString)) {
+        if (isNotBlank(queryString)) {
             String[] params = queryString.split("&");
             for (String param : params) {
                 String[] keyValue = param.split("=");
@@ -508,11 +508,6 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             log.debug(error.getMessage());
         }
         return new AuthenticationFailedException(error.getCode(), error.getMessage(), e);
-    }
-
-    private RealmService getRealmService() {
-
-        return AuthenticatorDataHolder.getInstance().getRealmService();
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {

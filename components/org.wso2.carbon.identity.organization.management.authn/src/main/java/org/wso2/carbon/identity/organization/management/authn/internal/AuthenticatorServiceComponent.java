@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.authn.OrganizationAuthenticator;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * This class contains the service component of the organization login authenticator.
@@ -66,28 +65,6 @@ public class AuthenticatorServiceComponent {
         if (log.isDebugEnabled()) {
             log.debug("Organization Authenticator bundle is deactivated");
         }
-    }
-
-    @Reference(
-            name = "realm.service",
-            service = RealmService.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetRealmService")
-    protected void setRealmService(RealmService realmService) {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Setting the Realm Service");
-        }
-        AuthenticatorDataHolder.getInstance().setRealmService(realmService);
-    }
-
-    protected void unsetRealmService(RealmService realmService) {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Unset the Realm Service.");
-        }
-        AuthenticatorDataHolder.getInstance().setRealmService(null);
     }
 
     @Reference(name = "identity.oauth.component",
