@@ -99,7 +99,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETER_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED;
 
 /**
  * Authenticator implementation to redirect the authentication request to the access delegated business application in
@@ -158,15 +158,15 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             String application = context.getServiceProviderName();
             String ownerTenantDomain = context.getTenantDomain();
 
-            Map<String, String> runtimeParams = getRuntimeParams(context);
-            String organizationName = runtimeParams.get(ORG_PARAMETER);
-            if (StringUtils.isBlank(organizationName)) {
-                throw handleAuthFailures(ERROR_CODE_ORG_PARAMETER_NOT_FOUND);
+            if (!context.getParameters().containsKey(ORG_PARAMETER) || !context.getParameters()
+                    .containsKey(ORG_ID_PARAMETER)) {
+                throw handleAuthFailures(ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED);
             }
+            String organizationName = context.getProperty(ORG_PARAMETER).toString();
 
             // Get the shared service provider based on the requested organization.
             String ownerOrgId = getOrgIdByTenantDomain(ownerTenantDomain);
-            String sharedOrgId = runtimeParams.get(ORG_ID_PARAMETER);
+            String sharedOrgId = context.getProperty(ORG_ID_PARAMETER).toString();
             ServiceProvider sharedApplication = getSharedApplication(application, ownerOrgId, sharedOrgId);
 
             InboundAuthenticationRequestConfig oidcConfigurations =
@@ -220,22 +220,21 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
         }
 
-        Map<String, String> runtimeParams = getRuntimeParams(context);
         // First priority for organization Id.
         if (request.getParameterMap().containsKey(ORG_ID_PARAMETER)) {
             String organizationId = request.getParameter(ORG_ID_PARAMETER);
-            runtimeParams.put(ORG_ID_PARAMETER, organizationId);
+            context.setProperty(ORG_ID_PARAMETER, organizationId);
             String organizationName = getOrganizationNameById(organizationId);
-            runtimeParams.put(ORG_PARAMETER, organizationName);
+            context.setProperty(ORG_PARAMETER, organizationName);
         } else if (request.getParameterMap().containsKey(ORG_PARAMETER)) {
             String organizationName = request.getParameter(ORG_PARAMETER);
-            runtimeParams.put(ORG_PARAMETER, organizationName);
+            context.setProperty(ORG_PARAMETER, organizationName);
             if (!validateOrganizationName(organizationName, context, response)) {
                 return AuthenticatorFlowStatus.INCOMPLETE;
             }
         }
 
-        if (StringUtils.isBlank(runtimeParams.get(ORG_PARAMETER))) {
+        if (!context.getParameters().containsKey(ORG_PARAMETER)) {
             redirectToOrgNameCapture(response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
         }
@@ -256,12 +255,11 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
     private boolean validateOrganizationName(String organizationName, AuthenticationContext context,
                                              HttpServletResponse response) throws AuthenticationFailedException {
 
-        Map<String, String> runtimeParams = getRuntimeParams(context);
         try {
             List<Organization> organizations = getOrganizationManager().getOrganizationsByName(organizationName);
             if (CollectionUtils.isNotEmpty(organizations)) {
                 if (organizations.size() == 1) {
-                    runtimeParams.put(ORG_ID_PARAMETER, organizations.get(0).getId());
+                    context.setProperty(ORG_ID_PARAMETER, organizations.get(0).getId());
                     return true;
                 }
                 redirectToSelectOrganization(response, context, organizations);
