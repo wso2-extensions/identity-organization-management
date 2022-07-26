@@ -29,9 +29,9 @@ import org.wso2.carbon.identity.application.authentication.framework.Authenticat
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
-import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.authn.internal.AuthenticatorDataHolder;
@@ -48,13 +49,14 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +64,9 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_USER_PROPERTIES;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.SESSION_DATA_KEY;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.CLIENT_ID;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.CLIENT_SECRET;
@@ -79,7 +84,6 @@ import static org.wso2.carbon.identity.organization.management.authn.constant.Au
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_LOGIN_FAILURE;
-import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORGANIZATION_USER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_COUNT_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_DESCRIPTION_PARAMETER;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.ORG_ID_PARAMETER;
@@ -137,11 +141,14 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
 
         resolvePropertiesForAuthenticator(context);
         super.processAuthenticationResponse(request, response, context);
+    }
 
-        // Add organization name to the user attributes.
-        context.getSubject().getUserAttributes()
-                .put(ClaimMapping.build(ORGANIZATION_USER_ATTRIBUTE, ORGANIZATION_USER_ATTRIBUTE, null, false),
-                        context.getAuthenticatorProperties().get(ORGANIZATION_ATTRIBUTE));
+    @Override
+    protected void processAuthenticatedUserScopes(AuthenticationContext context, String scopes) {
+
+        if (isNotBlank(scopes)) {
+            createOrGetOrganizationUserProperties(context).put(OAuthConstants.OAuth20Params.SCOPE, scopes);
+        }
     }
 
     /**
@@ -184,8 +191,11 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             authenticatorProperties.put(OAUTH2_AUTHZ_URL, getAuthorizationEndpoint(sharedOrgTenantDomain));
             authenticatorProperties.put(OAUTH2_TOKEN_URL, getTokenEndpoint(sharedOrgTenantDomain));
             authenticatorProperties.put(CALLBACK_URL, oauthApp.getCallbackUrl());
+            authenticatorProperties.put(FrameworkConstants.QUERY_PARAMS, getRequestedScopes(context));
 
-        } catch (IdentityOAuthAdminException | URLBuilderException e) {
+            createOrGetOrganizationUserProperties(context).put("organization", sharedOrgId);
+
+        } catch (IdentityOAuthAdminException | URLBuilderException | UnsupportedEncodingException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_ORGANIZATION_LOGIN, e);
         }
     }
@@ -208,6 +218,13 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
         } catch (OrganizationManagementException e) {
             throw handleAuthFailures(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN);
         }
+    }
+
+    private HashMap<String, String> createOrGetOrganizationUserProperties(AuthenticationContext context) {
+        if (isNull(context.getProperty(ORGANIZATION_USER_PROPERTIES))) {
+            context.setProperty(ORGANIZATION_USER_PROPERTIES, new HashMap<String, String>());
+        }
+        return (HashMap<String, String>) context.getProperty(ORGANIZATION_USER_PROPERTIES);
     }
 
     @Override
@@ -440,6 +457,21 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
         return URLEncoder.encode(value, FrameworkUtils.UTF_8);
     }
 
+    private String getRequestedScopes(AuthenticationContext context) throws UnsupportedEncodingException {
+
+        String queryString = context.getQueryParams();
+        if (isNotBlank(queryString)) {
+            String[] params = queryString.split("&");
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length >= 2 && OAuthConstants.OAuth20Params.SCOPE.equals(keyValue[0])) {
+                    return URLDecoder.decode(param, FrameworkUtils.UTF_8);
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Read configurations from application-authentication.xml for given authenticator.
      *
@@ -476,11 +508,6 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             log.debug(error.getMessage());
         }
         return new AuthenticationFailedException(error.getCode(), error.getMessage(), e);
-    }
-
-    private RealmService getRealmService() {
-
-        return AuthenticatorDataHolder.getInstance().getRealmService();
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
