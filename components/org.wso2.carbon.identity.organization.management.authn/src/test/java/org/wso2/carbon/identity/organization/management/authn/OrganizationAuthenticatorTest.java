@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,14 +18,11 @@
 
 package org.wso2.carbon.identity.organization.management.authn;
 
-import org.mockito.Answers;
-import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.wso2.carbon.base.CarbonBaseConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
@@ -33,9 +30,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.core.ServiceURL;
-import org.wso2.carbon.identity.core.ServiceURLBuilder;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -46,7 +41,9 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.tenant.TenantManager;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,13 +51,12 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.wso2.carbon.base.MultitenantConstants.SUPER_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.AUTHENTICATOR_NAME;
 import static org.wso2.carbon.identity.organization.management.authn.constant.AuthenticatorConstants.INBOUND_AUTH_TYPE_OAUTH;
@@ -71,13 +67,14 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
+import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 /**
  * Unit test class for {@link OrganizationAuthenticator} class.
  */
-@PrepareForTest({OrganizationAuthenticator.class, AuthenticatorDataHolder.class,
-        ServiceURLBuilder.class, IdentityTenantUtil.class})
-public class OrganizationAuthenticatorTest extends PowerMockTestCase {
+
+@WithAxisConfiguration
+public class OrganizationAuthenticatorTest {
 
     private static final String contextIdentifier = "4952b467-86b2-31df-b63c-0bf25cec4f86s";
     private static final String orgId = "ef35863f-58f0-4a18-aef1-a8d9dd20cfbe";
@@ -91,29 +88,17 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     private static Map<String, String> authenticatorParamProperties;
     private static Map<String, String> authenticatorProperties;
 
-    @Mock
     private HttpServletRequest mockServletRequest;
-    @Mock
     private HttpServletResponse mockServletResponse;
-    @Mock
     private AuthenticationContext mockAuthenticationContext;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private RealmService mockRealmService;
-    @Mock
     private OrganizationManager mockOrganizationManager;
-    @Mock
     private OrgApplicationManager mockOrgApplicationManager;
-    @Mock
     private ServiceProvider mockServiceProvider;
-    @Mock
     private InboundAuthenticationConfig mockInboundAuthenticationConfig;
-    @Mock
     private OAuthAdminServiceImpl mockOAuthAdminServiceImpl;
-    @Mock
     private OAuthConsumerAppDTO mockOAuthConsumerAppDTO;
-    @Mock
     private ExternalIdPConfig mockExternalIdPConfig;
-    @Mock
     private Organization mockOrganization;
     private OrganizationAuthenticator organizationAuthenticator;
     private AuthenticatorDataHolder authenticatorDataHolder;
@@ -121,68 +106,45 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     @BeforeMethod
     public void init() throws UserStoreException {
 
+        mockServletRequest = mock(HttpServletRequest.class);
+        mockServletResponse = mock(HttpServletResponse.class);
+        mockAuthenticationContext = mock(AuthenticationContext.class);
+        mockRealmService = mock(RealmService.class);
+        mockOrganizationManager = mock(OrganizationManager.class);
+        mockOrgApplicationManager = mock(OrgApplicationManager.class);
+        mockServiceProvider = mock(ServiceProvider.class);
+        mockInboundAuthenticationConfig = mock(InboundAuthenticationConfig.class);
+        mockOAuthAdminServiceImpl = mock(OAuthAdminServiceImpl.class);
+        mockOAuthConsumerAppDTO = mock(OAuthConsumerAppDTO.class);
+        mockExternalIdPConfig = mock(ExternalIdPConfig.class);
+        mockOrganization = mock(Organization.class);
+
         organizationAuthenticator = new OrganizationAuthenticator();
         authenticatorParamProperties = new HashMap<>();
         authenticatorProperties = new HashMap<>();
 
-        authenticatorDataHolder = spy(new AuthenticatorDataHolder());
-        mockStatic(AuthenticatorDataHolder.class);
+        authenticatorDataHolder = AuthenticatorDataHolder.getInstance();
         authenticatorDataHolder.setRealmService(mockRealmService);
         authenticatorDataHolder.setOrganizationManager(mockOrganizationManager);
         authenticatorDataHolder.setOrgApplicationManager(mockOrgApplicationManager);
         authenticatorDataHolder.setOAuthAdminService(mockOAuthAdminServiceImpl);
-        when(AuthenticatorDataHolder.getInstance()).thenReturn(authenticatorDataHolder);
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(12);
         Tenant tenant = mock(Tenant.class);
+        TenantManager mockTenantManager = mock(TenantManager.class);
+        when(mockRealmService.getTenantManager()).thenReturn(mockTenantManager);
         when(mockRealmService.getTenantManager().getTenant(anyInt())).thenReturn(tenant);
         when(tenant.getAssociatedOrganizationUUID()).thenReturn(orgId);
     }
 
-    private void mockServiceURLBuilder() {
+    private void mockCarbonContext() {
 
-        ServiceURLBuilder builder = new ServiceURLBuilder() {
+        String carbonHome = Paths.get(System.getProperty("user.dir"), "target", "test-classes").toString();
+        System.setProperty(CarbonBaseConstants.CARBON_HOME, carbonHome);
+        System.setProperty(CarbonBaseConstants.CARBON_CONFIG_DIR_PATH, Paths.get(carbonHome,
+                "repository/conf").toString());
 
-            String path = "";
-
-            @Override
-            public ServiceURLBuilder addPath(String... strings) {
-
-                Arrays.stream(strings).forEach(x -> path += "/" + x);
-                return this;
-            }
-
-            @Override
-            public ServiceURLBuilder addParameter(String s, String s1) {
-
-                return this;
-            }
-
-            @Override
-            public ServiceURLBuilder setFragment(String s) {
-
-                return this;
-            }
-
-            @Override
-            public ServiceURLBuilder addFragmentParameter(String s, String s1) {
-
-                return this;
-            }
-
-            @Override
-            public ServiceURL build() {
-
-                ServiceURL serviceURL = mock(ServiceURL.class);
-                PowerMockito.when(serviceURL.getAbsolutePublicURL()).thenReturn("https://localhost:9443" + path);
-                PowerMockito.when(serviceURL.getRelativePublicURL()).thenReturn(path);
-                path = "";
-                return serviceURL;
-            }
-        };
-
-        mockStatic(ServiceURLBuilder.class);
-        when(ServiceURLBuilder.create()).thenReturn(builder);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(SUPER_TENANT_DOMAIN_NAME);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(SUPER_TENANT_ID);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername("admin");
     }
 
     @Test
@@ -214,7 +176,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
         when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
-        mockServiceURLBuilder();
+        mockCarbonContext();
 
         AuthenticatorFlowStatus status = organizationAuthenticator.process(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
@@ -234,7 +196,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
         when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
-        mockServiceURLBuilder();
+        mockCarbonContext();
 
         AuthenticatorFlowStatus status = organizationAuthenticator.process(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
@@ -265,13 +227,13 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         when(mockOrganization.getId()).thenReturn(orgId);
         when(mockOrganization.getName()).thenReturn(org);
         when(mockOrganization.getDescription()).thenReturn("description");
-        when(authenticatorDataHolder.getOrganizationManager().getOrganizationsByName(anyString()))
+        when(mockOrganizationManager.getOrganizationsByName(anyString()))
                 .thenReturn(Arrays.asList(mockOrganization, mockOrganization));
 
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
         when(mockExternalIdPConfig.getName()).thenReturn(AUTHENTICATOR_FRIENDLY_NAME);
-        mockServiceURLBuilder();
+        mockCarbonContext();
 
         AuthenticatorFlowStatus status = organizationAuthenticator.process(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
@@ -315,7 +277,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         when(mockAuthenticationContext.getContextIdentifier()).thenReturn(contextIdentifier);
         when(mockAuthenticationContext.getExternalIdP()).thenReturn(mockExternalIdPConfig);
 
-        mockServiceURLBuilder();
+        mockCarbonContext();
         AuthenticatorFlowStatus status = organizationAuthenticator.process(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
 
@@ -333,17 +295,20 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     public void testInitiateAuthenticationRequestNoSharedApp() throws Exception {
 
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
+        authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
-        when(authenticatorDataHolder.getOrganizationManager()
+        when(mockOrganizationManager
                 .getOrganizationIdByName(anyString())).thenReturn(orgId);
-        when(authenticatorDataHolder.getOrganizationManager()
+        when(mockOrganizationManager
                 .getOrganization(anyString(), anyBoolean(), anyBoolean())).thenReturn(mockOrganization);
-        when(authenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
-                anyString(), anyString())).thenReturn(mockServiceProvider);
 
-        when(authenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
+        when(mockOrganizationManager.resolveOrganizationId(anyString()))
+                .thenReturn(saasAppOwnedOrgId);
+        when(mockAuthenticationContext.getTenantDomain()).thenReturn(saasAppOwnedTenant);
+        when(mockAuthenticationContext.getServiceProviderName()).thenReturn(saasApp);
+        when(mockOrgApplicationManager.resolveSharedApplication(anyString(),
                 anyString(), anyString())).thenThrow(
                 new OrganizationManagementServerException(ERROR_CODE_APPLICATION_NOT_SHARED.getCode(),
                         ERROR_CODE_APPLICATION_NOT_SHARED.getMessage()));
@@ -355,6 +320,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     public void testInitiateAuthenticationRequestInvalidSharedAppInbound() throws Exception {
 
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
+        authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
@@ -369,6 +335,10 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
                 anyString(), anyString())).thenThrow(
                 new OrganizationManagementServerException(ERROR_CODE_INVALID_APPLICATION.getCode(),
                         ERROR_CODE_INVALID_APPLICATION.getMessage()));
+        when(authenticatorDataHolder.getOrganizationManager().resolveOrganizationId(anyString()))
+                .thenReturn(saasAppOwnedOrgId);
+        when(mockAuthenticationContext.getTenantDomain()).thenReturn(saasAppOwnedTenant);
+        when(mockAuthenticationContext.getServiceProviderName()).thenReturn(saasApp);
 
         organizationAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
@@ -378,6 +348,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
     public void testInitiateAuthenticationRequestInvalidSharedApp() throws Exception {
 
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
+        authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
                 .thenReturn(authenticatorParamProperties);
 
@@ -390,7 +361,11 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
 
         when(authenticatorDataHolder.getOrgApplicationManager().resolveSharedApplication(anyString(),
                 anyString(), anyString())).thenReturn(mockServiceProvider);
+        when(authenticatorDataHolder.getOrganizationManager().resolveOrganizationId(anyString()))
+                .thenReturn(saasAppOwnedOrgId);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
+        when(mockAuthenticationContext.getTenantDomain()).thenReturn(saasAppOwnedTenant);
+        when(mockAuthenticationContext.getServiceProviderName()).thenReturn(saasApp);
 
         organizationAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
