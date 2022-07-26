@@ -164,7 +164,8 @@ public interface OrganizationManagementDAO {
      * @throws OrganizationManagementServerException The server exception thrown when retrieving the child
      *                                               organizations.
      */
-    List<String> getChildOrganizationIds(String organizationId) throws OrganizationManagementServerException;
+    List<String> getChildOrganizationIds(String organizationId, boolean recursive)
+            throws OrganizationManagementServerException;
 
     /**
      * Check if the organization has any child organizations with the status as 'ACTIVE'.

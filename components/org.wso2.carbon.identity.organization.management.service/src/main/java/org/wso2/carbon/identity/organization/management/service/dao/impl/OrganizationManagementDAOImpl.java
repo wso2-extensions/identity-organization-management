@@ -121,7 +121,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_ATTRIBUTES_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF;
-import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATION_IDS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
@@ -494,19 +494,19 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public List<String> getChildOrganizationIds(String organizationId) throws OrganizationManagementServerException {
+    public List<String> getChildOrganizationIds(String organizationId, boolean recursive)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        List<String> childOrganizationIds;
+        String sqlStmt = String.format(GET_CHILD_ORGANIZATION_IDS, recursive ? "> 0" : "= 1");
         try {
-            childOrganizationIds = namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATIONS,
+            return namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId);
         }
-        return childOrganizationIds;
     }
 
     @Override
@@ -1099,7 +1099,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void equalFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" = :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" = :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1107,7 +1108,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void startWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                    FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value + "%");
     }
@@ -1115,7 +1117,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void endWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                  FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value);
     }
@@ -1123,7 +1126,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void containsFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                   FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }
@@ -1131,7 +1135,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void greaterThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                             FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" >= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" >= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1139,7 +1144,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void lessThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                          FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" <= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" <= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1147,7 +1153,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void lessThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                   FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" < :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" < :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1155,7 +1162,8 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void greaterThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                      FilterQueryBuilder filterQueryBuilder) {
 
-        String filterString = String.format(" > :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String
+                filterString = String.format(" > :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }

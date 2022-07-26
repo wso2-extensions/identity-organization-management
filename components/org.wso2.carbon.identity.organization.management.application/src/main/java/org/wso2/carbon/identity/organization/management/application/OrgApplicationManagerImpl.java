@@ -42,7 +42,6 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
@@ -85,19 +84,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
-        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, Boolean.TRUE, Boolean.FALSE);
+        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
+        List<String> childOrganizations = getOrganizationManager().getChildOrganizationsIds(ownerOrgId, true);
+
         // Filter the child organization in case user send a list of organizations to share the original application.
-        List<ChildOrganizationDO> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
-                organization.getChildOrganizations() :
-                organization.getChildOrganizations().stream().filter(o -> sharedOrgs.contains(o.getId()))
+        List<String> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
+                childOrganizations :
+                childOrganizations.stream().filter(sharedOrgs::contains)
                         .collect(Collectors.toList());
 
-        for (ChildOrganizationDO child : filteredChildOrgs) {
-            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE,
-                    Boolean.FALSE);
+        for (String childOrgId : filteredChildOrgs) {
+            Organization childOrg = getOrganizationManager().getOrganization(childOrgId, false, false);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {

@@ -414,7 +414,8 @@ public class OrganizationManagementService {
                 organizationsResponse.addLinksItem(link);
             }
             if (!isLastPage) {
-                String encodedString = Base64.getEncoder().encodeToString(organizations.get(organizations.size() - 1)
+                String
+                        encodedString = Base64.getEncoder().encodeToString(organizations.get(organizations.size() - 1)
                         .getCreated().getBytes(StandardCharsets.UTF_8));
                 Link link = new Link();
                 link.setHref(URI.create(buildURIForPagination(url) + "&after=" + encodedString));
