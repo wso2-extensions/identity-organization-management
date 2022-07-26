@@ -40,8 +40,10 @@ import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
@@ -88,16 +90,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
-        List<String> childOrganizations = getOrganizationManager().getChildOrganizationsIds(ownerOrgId, true);
+        List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(ownerOrgId, true);
 
         // Filter the child organization in case user send a list of organizations to share the original application.
-        List<String> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
+        List<BasicOrganization> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
                 childOrganizations :
-                childOrganizations.stream().filter(sharedOrgs::contains)
+                childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId()))
                         .collect(Collectors.toList());
 
-        for (String childOrgId : filteredChildOrgs) {
-            Organization childOrg = getOrganizationManager().getOrganization(childOrgId, false, false);
+        for (BasicOrganization child : filteredChildOrgs) {
+            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), false, false);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -109,6 +111,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 }, executorService);
             }
         }
+    }
+
+    @Override
+    public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
+            throws OrganizationManagementException {
+
+        List<SharedApplicationDO> sharedApps =
+                getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
+
+        List<String> sharedOrganizationIds = sharedApps.stream().map(SharedApplicationDO::getOrganizationId).collect(
+                Collectors.toList());
+
+        List<BasicOrganization> organizations = getOrganizationManager().getChildOrganizations(organizationId, true);
+
+        return organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
+                Collectors.toList());
     }
 
     @Override

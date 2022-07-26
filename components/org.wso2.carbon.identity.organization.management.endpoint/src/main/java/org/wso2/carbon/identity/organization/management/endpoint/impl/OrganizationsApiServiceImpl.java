@@ -80,4 +80,10 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
 
         return organizationManagementService.shareOrganizationApplication(organizationId, applicationId, sharedOrg);
     }
+
+    @Override
+    public Response shareOrgApplicationGet(String organizationId, String applicationId) {
+
+        return organizationManagementService.getApplicationSharedOrganizations(organizationId, applicationId);
+    }
 }

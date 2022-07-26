@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
+import org.wso2.carbon.identity.organization.management.endpoint.model.SharedOrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -222,6 +223,19 @@ public class OrganizationManagementService {
         try {
             getOrgApplicationManager().shareOrganizationApplication(organizationId, applicationId, sharedOrg);
             return Response.ok().build();
+        } catch (OrganizationManagementClientException e) {
+            return handleClientErrorResponse(e, LOG);
+        } catch (OrganizationManagementException e) {
+            return handleServerErrorResponse(e, LOG);
+        }
+    }
+
+    public Response getApplicationSharedOrganizations(String organizationId, String applicationId) {
+
+        try {
+            List<BasicOrganization> basicOrganizations =
+                    getOrgApplicationManager().getApplicationSharedOrganizations(organizationId, applicationId);
+            return Response.ok(createSharedOrgResponse(basicOrganizations)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -464,6 +478,19 @@ public class OrganizationManagementService {
             organization.setAttributes(null);
         }
         return getOrganizationManager().updateOrganization(organizationId, currentOrganizationName, organization);
+    }
+
+    private SharedOrganizationsResponse createSharedOrgResponse(List<BasicOrganization> organizations)
+            throws OrganizationManagementServerException {
+
+        SharedOrganizationsResponse response = new SharedOrganizationsResponse();
+        for (BasicOrganization org : organizations) {
+            BasicOrganizationResponse basicOrganizationResponse =
+                    new BasicOrganizationResponse().id(org.getId()).name(org.getName())
+                            .ref(buildURIForBody(org.getId()));
+            response.addOrganizationsItem(basicOrganizationResponse);
+        }
+        return response;
     }
 
     private Organization createOrganizationClone(Organization organization) {

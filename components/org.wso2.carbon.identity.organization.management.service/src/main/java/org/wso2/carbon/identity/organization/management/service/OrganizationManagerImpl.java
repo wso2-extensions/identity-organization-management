@@ -203,7 +203,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         if (showChildren) {
             List<String> childOrganizationIds =
-                    organizationManagementDAO.getChildOrganizationIds(organizationId, false);
+                    organizationManagementDAO.getChildOrganizationIds(organizationId);
             if (CollectionUtils.isNotEmpty(childOrganizationIds)) {
                 List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
                 for (String childOrganizationId : childOrganizationIds) {
@@ -229,10 +229,17 @@ public class OrganizationManagerImpl implements OrganizationManager {
     }
 
     @Override
-    public List<String> getChildOrganizationsIds(String organizationId, boolean recursive)
+    public List<BasicOrganization> getChildOrganizations(String organizationId, boolean recursive)
             throws OrganizationManagementException {
 
-        return organizationManagementDAO.getChildOrganizationIds(organizationId, recursive);
+        return organizationManagementDAO.getChildOrganizations(organizationId, recursive);
+    }
+
+    @Override
+    public List<String> getChildOrganizationsIds(String organizationId)
+            throws OrganizationManagementException {
+
+        return organizationManagementDAO.getChildOrganizationIds(organizationId);
     }
 
     @Override

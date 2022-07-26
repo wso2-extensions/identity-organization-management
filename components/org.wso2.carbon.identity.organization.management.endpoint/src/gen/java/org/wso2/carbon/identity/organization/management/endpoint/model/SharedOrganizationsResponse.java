@@ -22,7 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import org.wso2.carbon.identity.organization.management.endpoint.model.BasicOrganizationResponse;
 import javax.validation.constraints.*;
 
 
@@ -31,50 +33,38 @@ import java.util.Objects;
 import javax.validation.Valid;
 import javax.xml.bind.annotation.*;
 
-public class Link  {
+public class SharedOrganizationsResponse  {
   
-    private URI href;
-    private String rel;
+    private List<BasicOrganizationResponse> organizations = null;
+
 
     /**
-    * Endpoint that will return the next or previous page of data.
     **/
-    public Link href(URI href) {
+    public SharedOrganizationsResponse organizations(List<BasicOrganizationResponse> organizations) {
 
-        this.href = href;
+        this.organizations = organizations;
         return this;
     }
     
-    @ApiModelProperty(value = "Endpoint that will return the next or previous page of data.")
-    @JsonProperty("href")
+    @ApiModelProperty(value = "")
+    @JsonProperty("organizations")
     @Valid
-    public URI getHref() {
-        return href;
+    public List<BasicOrganizationResponse> getOrganizations() {
+        return organizations;
     }
-    public void setHref(URI href) {
-        this.href = href;
+    public void setOrganizations(List<BasicOrganizationResponse> organizations) {
+        this.organizations = organizations;
     }
 
-    /**
-    * Describes whether the provided link is to access the next or previous page of data.
-    **/
-    public Link rel(String rel) {
-
-        this.rel = rel;
+    public SharedOrganizationsResponse addOrganizationsItem(BasicOrganizationResponse organizationsItem) {
+        if (this.organizations == null) {
+            this.organizations = new ArrayList<>();
+        }
+        this.organizations.add(organizationsItem);
         return this;
     }
+
     
-    @ApiModelProperty(value = "Describes whether the provided link is to access the next or previous page of data.")
-    @JsonProperty("rel")
-    @Valid
-    public String getRel() {
-        return rel;
-    }
-    public void setRel(String rel) {
-        this.rel = rel;
-    }
-
-
 
     @Override
     public boolean equals(java.lang.Object o) {
@@ -85,24 +75,22 @@ public class Link  {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Link link = (Link) o;
-        return Objects.equals(this.href, link.href) &&
-            Objects.equals(this.rel, link.rel);
+        SharedOrganizationsResponse sharedOrganizationsResponse = (SharedOrganizationsResponse) o;
+        return Objects.equals(this.organizations, sharedOrganizationsResponse.organizations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(href, rel);
+        return Objects.hash(organizations);
     }
 
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("class Link {\n");
+        sb.append("class SharedOrganizationsResponse {\n");
         
-        sb.append("    href: ").append(toIndentedString(href)).append("\n");
-        sb.append("    rel: ").append(toIndentedString(rel)).append("\n");
+        sb.append("    organizations: ").append(toIndentedString(organizations)).append("\n");
         sb.append("}");
         return sb.toString();
     }

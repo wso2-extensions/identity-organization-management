@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application;
 
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
 import java.util.List;
 
@@ -37,6 +38,15 @@ public interface OrgApplicationManager {
      * @throws OrganizationManagementException on errors when sharing the application.
      */
     void shareOrganizationApplication(String ownerOrgId, String mainAppId, List<String> sharedOrgs)
+            throws OrganizationManagementException;
+
+    /**
+     *
+     * @param ownerOrgId
+     * @param mainAppId
+     * @throws OrganizationManagementException
+     */
+    List<BasicOrganization> getApplicationSharedOrganizations(String ownerOrgId, String mainAppId)
             throws OrganizationManagementException;
 
     /**

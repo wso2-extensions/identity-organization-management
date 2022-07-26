@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
+import org.wso2.carbon.identity.organization.management.endpoint.model.SharedOrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.OrganizationsApiService;
 
 import javax.validation.Valid;
@@ -202,7 +203,7 @@ public class OrganizationsApi  {
         @Authorization(value = "OAuth2", scopes = {
             
         })
-    }, tags={ "Organization Application Management" })
+    }, tags={ "Organization Application Management", })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Ok", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
@@ -214,6 +215,30 @@ public class OrganizationsApi  {
     public Response shareOrgApplication(@ApiParam(value = "ID of the parent organization where the application is created.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the application which will be shared to child organizations.",required=true) @PathParam("application-id") String applicationId, @ApiParam(value = "Array of IDs of child organizations, if not provided application will be shared to all child organizations." ) @Valid List<String> requestBody) {
 
         return delegate.shareOrgApplication(organizationId,  applicationId,  requestBody );
+    }
+
+    @Valid
+    @GET
+    @Path("/{organization-id}/applications/{application-id}/share")
+    
+    @Produces({ "application/json" })
+    @ApiOperation(value = "List of organizations that the application is shared to. ", notes = "This API returns the list of organizations that the application is shared to. ", response = SharedOrganizationsResponse.class, authorizations = {
+        @Authorization(value = "BasicAuth"),
+        @Authorization(value = "OAuth2", scopes = {
+            
+        })
+    }, tags={ "Organization Application Management" })
+    @ApiResponses(value = { 
+        @ApiResponse(code = 200, message = "Successful response", response = SharedOrganizationsResponse.class),
+        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
+        @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
+        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
+    })
+    public Response shareOrgApplicationGet(@ApiParam(value = "ID of the parent organization where the application is created.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the application which will be shared to child organizations.",required=true) @PathParam("application-id") String applicationId) {
+
+        return delegate.shareOrgApplicationGet(organizationId,  applicationId );
     }
 
 }

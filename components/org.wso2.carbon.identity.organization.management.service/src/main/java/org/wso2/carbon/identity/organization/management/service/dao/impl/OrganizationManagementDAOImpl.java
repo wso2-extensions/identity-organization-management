@@ -121,6 +121,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_ATTRIBUTES_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.DELETE_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ANCESTORS_OF_GIVEN_ORG_INCLUDING_ITSELF;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_CHILD_ORGANIZATION_IDS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_NAME;
@@ -494,13 +495,33 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     }
 
     @Override
-    public List<String> getChildOrganizationIds(String organizationId, boolean recursive)
+    public List<BasicOrganization> getChildOrganizations(String organizationId, boolean recursive)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        String sqlStmt = String.format(GET_CHILD_ORGANIZATION_IDS, recursive ? "> 0" : "= 1");
+        String sqlStmt = String.format(GET_CHILD_ORGANIZATIONS, recursive ? "> 0" : "= 1");
         try {
             return namedJdbcTemplate.executeQuery(sqlStmt,
+                    (resultSet, rowNumber) -> {
+                        BasicOrganization organization = new BasicOrganization();
+                        organization.setId(resultSet.getString(1));
+                        organization.setName(resultSet.getString(2));
+                        organization.setCreated(resultSet.getTimestamp(3).toString());
+                        return organization;
+                    },
+                    namedPreparedStatement ->
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId));
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_CHILD_ORGANIZATIONS, e, organizationId);
+        }
+    }
+
+    @Override
+    public List<String> getChildOrganizationIds(String organizationId) throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_CHILD_ORGANIZATION_IDS,
                     (resultSet, rowNumber) -> resultSet.getString(1),
                     namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_PARENT_ID, organizationId));
