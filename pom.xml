@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+  ~ Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -290,24 +290,6 @@
 
             <!--Test Dependencies-->
             <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng-common</artifactId>
-                <version>${org.powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${org.powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${org.powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.jacoco</groupId>
                 <artifactId>org.jacoco.agent</artifactId>
                 <classifier>runtime</classifier>
@@ -324,6 +306,18 @@
                 <artifactId>h2</artifactId>
                 <version>${h2database.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito-core.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.testutil</artifactId>
+                <scope>test</scope>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -411,6 +405,23 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>${maven.buildnumber.plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>create</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <doCheck>false</doCheck>
+                        <doUpdate>false</doUpdate>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -505,7 +516,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>5.20.267</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.21.0</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
         <carbon.identity.scim2.package.import.version.range>[1.5.122, 3.1.0)
@@ -554,9 +565,11 @@
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <findbugs.annotations.version>3.0.1</findbugs.annotations.version>
         <carbon.p2.plugin.version>5.1.2</carbon.p2.plugin.version>
+        <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
 
         <compiler-source.version>1.8</compiler-source.version>
         <compiler-target.version>1.8</compiler-target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mockito-core.version>4.6.1</mockito-core.version>
     </properties>
 </project>

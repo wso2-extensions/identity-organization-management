@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,20 +19,16 @@
 package org.wso2.carbon.identity.organization.management.service.dao.impl;
 
 import org.apache.commons.lang.StringUtils;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.database.utils.jdbc.JdbcUtils;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.dao.OrganizationManagementDAO;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
-import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,20 +39,15 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
 
-import javax.sql.DataSource;
-
 import static java.time.ZoneOffset.UTC;
-import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.OrganizationTypes.STRUCTURAL;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.util.TestUtils.closeH2Base;
 import static org.wso2.carbon.identity.organization.management.util.TestUtils.getConnection;
 import static org.wso2.carbon.identity.organization.management.util.TestUtils.initiateH2Base;
 import static org.wso2.carbon.identity.organization.management.util.TestUtils.mockDataSource;
-import static org.wso2.carbon.identity.organization.management.util.TestUtils.spyConnection;
 
-@PrepareForTest({Utils.class, JdbcUtils.class})
-public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
+public class OrganizationManagementDAOImplTest {
 
     private OrganizationManagementDAO organizationManagementDAO = new OrganizationManagementDAOImpl();
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone(UTC));
@@ -71,6 +62,7 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     public void setUp() throws Exception {
 
         initiateH2Base();
+        mockDataSource();
         storeChildOrganization(ROOT_ORG_ID);
     }
 
@@ -84,31 +76,26 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     public void testAddOrganization() throws Exception {
 
         String orgId = generateUniqueID();
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
 
-            Organization organization = new Organization();
-            organization.setId(orgId);
-            organization.setName("org1");
-            organization.setDescription("org1 description.");
-            organization.setCreated(Instant.now());
-            organization.setLastModified(Instant.now());
-            organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
-            organization.setType(STRUCTURAL.toString());
+        Organization organization = new Organization();
+        organization.setId(orgId);
+        organization.setName("org1");
+        organization.setDescription("org1 description.");
+        organization.setCreated(Instant.now());
+        organization.setLastModified(Instant.now());
+        organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+        organization.setType(STRUCTURAL.toString());
 
-            ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
-            parentOrganizationDO.setId(ROOT_ORG_ID);
-            organization.setParent(parentOrganizationDO);
+        ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
+        parentOrganizationDO.setId(ROOT_ORG_ID);
+        organization.setParent(parentOrganizationDO);
 
-            List<OrganizationAttribute> attributes = new ArrayList<>();
-            attributes.add(new OrganizationAttribute(ATTRIBUTE_KEY, ATTRIBUTE_VALUE));
-            organization.setAttributes(attributes);
+        List<OrganizationAttribute> attributes = new ArrayList<>();
+        attributes.add(new OrganizationAttribute(ATTRIBUTE_KEY, ATTRIBUTE_VALUE));
+        organization.setAttributes(attributes);
 
-            organizationManagementDAO.addOrganization(organization);
-            Assert.assertNotNull(organizationManagementDAO.getOrganization(orgId));
-        }
+        organizationManagementDAO.addOrganization(organization);
+        Assert.assertNotNull(organizationManagementDAO.getOrganization(orgId));
     }
 
     @DataProvider(name = "dataForIsOrganizationExistByName")
@@ -124,16 +111,11 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     @Test(dataProvider = "dataForIsOrganizationExistByName")
     public void testIsOrganizationExistByName(String name) throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistByName(name);
-            if (StringUtils.equals(name, ORG_NAME)) {
-                Assert.assertTrue(organizationExistByName);
-            } else if (StringUtils.equals(name, INVALID_DATA)) {
-                Assert.assertFalse(organizationExistByName);
-            }
+        boolean organizationExistByName = organizationManagementDAO.isOrganizationExistByName(name);
+        if (StringUtils.equals(name, ORG_NAME)) {
+            Assert.assertTrue(organizationExistByName);
+        } else if (StringUtils.equals(name, INVALID_DATA)) {
+            Assert.assertFalse(organizationExistByName);
         }
     }
 
@@ -150,43 +132,28 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     @Test(dataProvider = "dataForIsOrganizationExistById")
     public void testIsOrganizationExistById(String id) throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            boolean organizationExistByName = organizationManagementDAO.isOrganizationExistById(id);
-            if (StringUtils.equals(id, orgId)) {
-                Assert.assertTrue(organizationExistByName);
-            } else if (StringUtils.equals(id, INVALID_DATA)) {
-                Assert.assertFalse(organizationExistByName);
-            }
+        boolean organizationExistByName = organizationManagementDAO.isOrganizationExistById(id);
+        if (StringUtils.equals(id, orgId)) {
+            Assert.assertTrue(organizationExistByName);
+        } else if (StringUtils.equals(id, INVALID_DATA)) {
+            Assert.assertFalse(organizationExistByName);
         }
     }
 
     @Test
     public void testGetOrganizationIdByName() throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            String organizationId = organizationManagementDAO.getOrganizationIdByName(
-                    ORG_NAME);
-            Assert.assertEquals(organizationId, orgId);
-        }
+        String organizationId = organizationManagementDAO.getOrganizationIdByName(
+                ORG_NAME);
+        Assert.assertEquals(organizationId, orgId);
     }
 
     @Test
     public void testGetOrganization() throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            Organization organization = organizationManagementDAO.getOrganization(orgId);
-            Assert.assertEquals(organization.getName(), ORG_NAME);
-            Assert.assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
-        }
+        Organization organization = organizationManagementDAO.getOrganization(orgId);
+        Assert.assertEquals(organization.getName(), ORG_NAME);
+        Assert.assertEquals(organization.getParent().getId(), ROOT_ORG_ID);
     }
 
     @DataProvider(name = "dataForHasChildOrganizations")
@@ -202,16 +169,11 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     @Test(dataProvider = "dataForHasChildOrganizations")
     public void testHasChildOrganizations(String id) throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            boolean hasChildOrganizations = organizationManagementDAO.hasChildOrganizations(id);
-            if (StringUtils.equals(id, orgId)) {
-                Assert.assertFalse(hasChildOrganizations);
-            } else if (StringUtils.equals(id, ROOT_ORG_ID)) {
-                Assert.assertTrue(hasChildOrganizations);
-            }
+        boolean hasChildOrganizations = organizationManagementDAO.hasChildOrganizations(id);
+        if (StringUtils.equals(id, orgId)) {
+            Assert.assertFalse(hasChildOrganizations);
+        } else if (StringUtils.equals(id, ROOT_ORG_ID)) {
+            Assert.assertTrue(hasChildOrganizations);
         }
     }
 
@@ -228,17 +190,11 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
     @Test(dataProvider = "dataForIsAttributeExistByKey")
     public void testIsAttributeExistByKey(String key) throws Exception {
 
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            boolean attributeExistByKey = organizationManagementDAO.isAttributeExistByKey(orgId,
-                    key);
-            if (StringUtils.equals(key, ATTRIBUTE_KEY)) {
-                Assert.assertTrue(attributeExistByKey);
-            } else if (StringUtils.equals(key, INVALID_DATA)) {
-                Assert.assertFalse(attributeExistByKey);
-            }
+        boolean attributeExistByKey = organizationManagementDAO.isAttributeExistByKey(orgId, key);
+        if (StringUtils.equals(key, ATTRIBUTE_KEY)) {
+            Assert.assertTrue(attributeExistByKey);
+        } else if (StringUtils.equals(key, INVALID_DATA)) {
+            Assert.assertFalse(attributeExistByKey);
         }
     }
 
@@ -248,14 +204,8 @@ public class OrganizationManagementDAOImplTest extends PowerMockTestCase {
         String id = generateUniqueID();
         storeOrganization(id, "Dummy organization",
                 "This is a sample organization to test the delete functionality.", ROOT_ORG_ID);
-
-        DataSource dataSource = mockDataSource();
-        try (Connection connection = getConnection()) {
-            Connection spy = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spy);
-            organizationManagementDAO.deleteOrganization(id);
-            Assert.assertNull(organizationManagementDAO.getOrganization(id));
-        }
+        organizationManagementDAO.deleteOrganization(id);
+        Assert.assertNull(organizationManagementDAO.getOrganization(id));
     }
 
     private void storeChildOrganization(String parentId) throws Exception {
