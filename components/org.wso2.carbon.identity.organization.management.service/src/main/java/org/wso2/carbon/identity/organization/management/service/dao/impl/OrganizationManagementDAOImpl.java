@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -1120,8 +1120,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void equalFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" = :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" = :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1129,8 +1128,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void startWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                    FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value + "%");
     }
@@ -1138,8 +1136,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void endWithFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                  FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value);
     }
@@ -1147,8 +1144,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void containsFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                   FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" like :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }
@@ -1156,8 +1152,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void greaterThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                             FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" >= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" >= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1165,8 +1160,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void lessThanOrEqualFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                          FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" <= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" <= :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1174,8 +1168,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void lessThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                   FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" < :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" < :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
@@ -1183,8 +1176,7 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
     private void greaterThanFilterBuilderForParentId(int count, String value, StringBuilder filter,
                                                      FilterQueryBuilder filterQueryBuilder) {
 
-        String
-                filterString = String.format(" > :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
+        String filterString = String.format(" > :%s%s; ", PARENT_ID_FILTER_PLACEHOLDER_PREFIX, count);
         appendFilterForParentId(filterString, filter);
         filterQueryBuilder.setFilterAttributeValue(PARENT_ID_FILTER_PLACEHOLDER_PREFIX, value);
     }
