@@ -52,5 +52,7 @@ public interface OrganizationsApiService {
 
       public Response shareOrgApplication(String organizationId, String applicationId, List<String> requestBody);
 
+      public Response shareOrgApplicationDelete(String organizationId, String applicationId, String sharedOrganizationId);
+
       public Response shareOrgApplicationGet(String organizationId, String applicationId);
 }

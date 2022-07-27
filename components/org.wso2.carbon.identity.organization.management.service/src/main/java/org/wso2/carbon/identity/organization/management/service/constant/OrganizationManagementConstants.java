@@ -413,9 +413,11 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_CREATING_OAUTH_APP("65075", "Unable create oauth consumer app for fragment application",
                 "Server encountered an error when creating oauth consumer app for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to share the application",
-                "Server encountered an error when removing oauth consumer app: % for fragment application: %s in " +
-                        "organization: %s.");
+        ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to remove the oauth consumer app for fragment application",
+                "Server encountered an error when removing oauth consumer app: %s for fragment application: %s in " +
+                        "organization: %s."),
+        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65077", "Unable to remove the fragment application",
+                "Server encountered an error when removing fragment app: %s in organization: %s.");
 
         private final String code;
         private final String message;

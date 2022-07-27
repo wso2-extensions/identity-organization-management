@@ -41,10 +41,23 @@ public interface OrgApplicationManager {
             throws OrganizationManagementException;
 
     /**
+     * Remove the shared (fragment) application for given organization to stop sharing the business application.
      *
-     * @param ownerOrgId
-     * @param mainAppId
-     * @throws OrganizationManagementException
+     * @param organizationId       ID of the organization owning the primary application.
+     * @param applicationId        ID of the primary application.
+     * @param sharedOrganizationId organization ID which owns the fragment application.
+     * @throws OrganizationManagementException on errors when removing the fragment application.
+     */
+    void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
+            throws OrganizationManagementException;
+
+    /**
+     * Returns the list of organization with whom the primary application is shared.
+     *
+     * @param ownerOrgId ID of the organization owning the primary application.
+     * @param mainAppId  ID of the primary application.
+     * @throws OrganizationManagementException on errors when retrieving the list of organization owning the
+     *                                         fragment applications.
      */
     List<BasicOrganization> getApplicationSharedOrganizations(String ownerOrgId, String mainAppId)
             throws OrganizationManagementException;

@@ -230,6 +230,33 @@ public class OrganizationManagementService {
         }
     }
 
+    /**
+     * Stop application sharing to an organization by removing the fragment application from the given organization.
+     *
+     * @param organizationId       ID of the organization owning the primary application.
+     * @param applicationId        primary application ID.
+     * @param sharedOrganizationId ID of the organization owning the fragment application.
+     * @return the stop application sharing response.
+     */
+    public Response deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId) {
+
+        try {
+            getOrgApplicationManager().deleteSharedApplication(organizationId, applicationId, sharedOrganizationId);
+            return Response.noContent().build();
+        } catch (OrganizationManagementClientException e) {
+            return handleClientErrorResponse(e, LOG);
+        } catch (OrganizationManagementException e) {
+            return handleServerErrorResponse(e, LOG);
+        }
+    }
+
+    /**
+     * Returns the list of organization with whom the primary application is shared.
+     *
+     * @param organizationId ID of the organization owning the primary application.
+     * @param applicationId  ID of the primary application.
+     * @return list of organization having the fragment applications.
+     */
     public Response getApplicationSharedOrganizations(String organizationId, String applicationId) {
 
         try {

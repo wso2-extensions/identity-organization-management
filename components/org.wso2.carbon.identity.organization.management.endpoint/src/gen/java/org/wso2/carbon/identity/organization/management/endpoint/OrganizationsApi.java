@@ -218,6 +218,30 @@ public class OrganizationsApi  {
     }
 
     @Valid
+    @DELETE
+    @Path("/{organization-id}/applications/{application-id}/share/{shared-organization-id}")
+    
+    @Produces({ "application/json" })
+    @ApiOperation(value = "Stop sharing an application to a organization. ", notes = "This API provides the capability to stop sharing an application to an organization by providing its ID. ", response = Void.class, authorizations = {
+        @Authorization(value = "BasicAuth"),
+        @Authorization(value = "OAuth2", scopes = {
+            
+        })
+    }, tags={ "Organization Application Management", })
+    @ApiResponses(value = { 
+        @ApiResponse(code = 204, message = "Successfully deleted", response = Void.class),
+        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
+        @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
+        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
+    })
+    public Response shareOrgApplicationDelete(@ApiParam(value = "ID of the organization to be deleted.",required=true) @PathParam("organization-id") String organizationId, @ApiParam(value = "ID of the application.",required=true) @PathParam("application-id") String applicationId, @ApiParam(value = "ID of the organization to stop sharing.",required=true) @PathParam("shared-organization-id") String sharedOrganizationId) {
+
+        return delegate.shareOrgApplicationDelete(organizationId,  applicationId,  sharedOrganizationId );
+    }
+
+    @Valid
     @GET
     @Path("/{organization-id}/applications/{application-id}/share")
     

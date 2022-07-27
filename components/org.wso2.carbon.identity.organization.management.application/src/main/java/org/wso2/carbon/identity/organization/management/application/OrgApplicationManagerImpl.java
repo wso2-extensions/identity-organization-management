@@ -63,6 +63,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_OAUTH_APP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
@@ -109,6 +110,29 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                 rootApplication.getApplicationID(), childOrg.getId()), e);
                     }
                 }, executorService);
+            }
+        }
+    }
+
+    @Override
+    public void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
+            throws OrganizationManagementException {
+
+        Optional<String> fragmentApplicationId = resolveSharedApp(applicationId, organizationId, sharedOrganizationId);
+
+        if (fragmentApplicationId.isPresent()) {
+            try {
+                String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+                ServiceProvider fragmentApplication =
+                        getApplicationManagementService().getApplicationByResourceId(fragmentApplicationId.get(),
+                                sharedTenantDomain);
+                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+
+                getApplicationManagementService().deleteApplication(fragmentApplication.getApplicationName(),
+                        sharedTenantDomain, username);
+            } catch (IdentityApplicationManagementException e) {
+                throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, fragmentApplicationId.get(),
+                        sharedOrganizationId);
             }
         }
     }

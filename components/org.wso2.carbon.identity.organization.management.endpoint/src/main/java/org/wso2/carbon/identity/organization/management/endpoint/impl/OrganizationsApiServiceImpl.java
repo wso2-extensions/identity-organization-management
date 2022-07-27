@@ -82,6 +82,14 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     }
 
     @Override
+    public Response shareOrgApplicationDelete(String organizationId, String applicationId,
+                                              String sharedOrganizationId) {
+
+        return organizationManagementService.deleteSharedApplication(organizationId, applicationId,
+                sharedOrganizationId);
+    }
+
+    @Override
     public Response shareOrgApplicationGet(String organizationId, String applicationId) {
 
         return organizationManagementService.getApplicationSharedOrganizations(organizationId, applicationId);
