@@ -73,12 +73,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         try {
             return namedJdbcTemplate.executeQuery(GET_SHARED_APPLICATIONS,
                     (resultSet, rowNumber) -> new SharedApplicationDO(
-                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID)),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, applicationId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, organizationId);
-
                     });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, applicationId,
