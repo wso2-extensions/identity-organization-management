@@ -22,7 +22,7 @@ package org.wso2.carbon.identity.organization.management.service;
  * This service can be used to check whether organization management is enabled in the
  * IS deployment.
  */
-public interface OrganizationManagementInitializeInstance {
+public interface OrganizationManagementInitialize {
 
     boolean isOrganizationManagementEnabled();
 }
