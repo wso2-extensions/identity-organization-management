@@ -45,7 +45,6 @@ public class Constants {
             "/permission/admin/manage/identity/claimmgt/metadata/view";
     public static final String USER_MGT_CREATE_PERMISSION = "/permission/admin/manage/identity/usermgt/create";
 
-
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
     IDP sections.
