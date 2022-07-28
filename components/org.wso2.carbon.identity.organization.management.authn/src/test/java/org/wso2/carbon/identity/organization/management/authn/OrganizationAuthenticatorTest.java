@@ -139,7 +139,7 @@ public class OrganizationAuthenticatorTest extends PowerMockTestCase {
         Tenant tenant = mock(Tenant.class);
         when(mockRealmService.getTenantManager().getTenant(anyInt())).thenReturn(tenant);
         when(tenant.getAssociatedOrganizationUUID()).thenReturn(orgId);
-        when(mockAuthenticationContext.getParameters()).thenReturn(mockContextParam);
+        when(mockAuthenticationContext.getProperties()).thenReturn(mockContextParam);
     }
 
     private void mockServiceURLBuilder() {

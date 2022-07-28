@@ -158,7 +158,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             String application = context.getServiceProviderName();
             String ownerTenantDomain = context.getTenantDomain();
 
-            if (!context.getParameters().containsKey(ORG_PARAMETER) || !context.getParameters()
+            if (!context.getProperties().containsKey(ORG_PARAMETER) || !context.getProperties()
                     .containsKey(ORG_ID_PARAMETER)) {
                 throw handleAuthFailures(ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED);
             }
@@ -234,7 +234,7 @@ public class OrganizationAuthenticator extends OpenIDConnectAuthenticator {
             }
         }
 
-        if (!context.getParameters().containsKey(ORG_PARAMETER)) {
+        if (!context.getProperties().containsKey(ORG_PARAMETER)) {
             redirectToOrgNameCapture(response, context);
             return AuthenticatorFlowStatus.INCOMPLETE;
         }
