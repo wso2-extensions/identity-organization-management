@@ -87,6 +87,7 @@ public class OrganizationAuthenticatorTest {
 
     private static Map<String, String> authenticatorParamProperties;
     private static Map<String, String> authenticatorProperties;
+    private static Map<String, Object> mockContextParam;
 
     private HttpServletRequest mockServletRequest;
     private HttpServletResponse mockServletResponse;
@@ -122,6 +123,7 @@ public class OrganizationAuthenticatorTest {
         organizationAuthenticator = new OrganizationAuthenticator();
         authenticatorParamProperties = new HashMap<>();
         authenticatorProperties = new HashMap<>();
+        mockContextParam = new HashMap<>();
 
         authenticatorDataHolder = AuthenticatorDataHolder.getInstance();
         authenticatorDataHolder.setRealmService(mockRealmService);
@@ -133,6 +135,7 @@ public class OrganizationAuthenticatorTest {
         when(mockRealmService.getTenantManager()).thenReturn(mockTenantManager);
         when(mockRealmService.getTenantManager().getTenant(anyInt())).thenReturn(tenant);
         when(tenant.getAssociatedOrganizationUUID()).thenReturn(orgId);
+        when(mockAuthenticationContext.getProperties()).thenReturn(mockContextParam);
     }
 
     private void mockCarbonContext() {
@@ -257,6 +260,7 @@ public class OrganizationAuthenticatorTest {
         when(mockAuthenticationContext.getTenantDomain()).thenReturn(saasAppOwnedTenant);
         when(authenticatorDataHolder.getOrganizationManager().resolveOrganizationId(anyString()))
                 .thenReturn(saasAppOwnedOrgId);
+        setMockContextParamForValidOrganization();
         when(authenticatorDataHolder.getOrgApplicationManager()
                 .resolveSharedApplication(anyString(), anyString(), anyString())).thenReturn(mockServiceProvider);
         when(mockServiceProvider.getInboundAuthenticationConfig()).thenReturn(mockInboundAuthenticationConfig);
@@ -294,6 +298,7 @@ public class OrganizationAuthenticatorTest {
     @Test(expectedExceptions = {AuthenticationFailedException.class})
     public void testInitiateAuthenticationRequestNoSharedApp() throws Exception {
 
+        setMockContextParamForValidOrganization();
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
@@ -319,6 +324,7 @@ public class OrganizationAuthenticatorTest {
     @Test(expectedExceptions = {AuthenticationFailedException.class})
     public void testInitiateAuthenticationRequestInvalidSharedAppInbound() throws Exception {
 
+        setMockContextParamForValidOrganization();
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
@@ -347,6 +353,7 @@ public class OrganizationAuthenticatorTest {
     @Test(expectedExceptions = {AuthenticationFailedException.class})
     public void testInitiateAuthenticationRequestInvalidSharedApp() throws Exception {
 
+        setMockContextParamForValidOrganization();
         authenticatorParamProperties.put(ORG_PARAMETER, orgId);
         authenticatorParamProperties.put(ORG_ID_PARAMETER, orgId);
         when(organizationAuthenticator.getRuntimeParams(mockAuthenticationContext))
@@ -369,5 +376,13 @@ public class OrganizationAuthenticatorTest {
 
         organizationAuthenticator.initiateAuthenticationRequest(mockServletRequest, mockServletResponse,
                 mockAuthenticationContext);
+    }
+
+    private void setMockContextParamForValidOrganization() {
+
+        mockContextParam.put(ORG_PARAMETER, org);
+        when(mockAuthenticationContext.getProperty(ORG_PARAMETER)).thenReturn(org);
+        mockContextParam.put(ORG_ID_PARAMETER, orgId);
+        when(mockAuthenticationContext.getProperty(ORG_ID_PARAMETER)).thenReturn(orgId);
     }
 }
