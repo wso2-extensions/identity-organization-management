@@ -105,7 +105,7 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         user, groups, roles, SP, IDP sections.
          */
         orgCreatorRolePermissions.addAll(MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW);
-        // Add user creator permission to organization creator to delegate permissions to other org users.
+        // Add user create permission to organization creator to delegate permissions to other org users.
         // This permission is assigned until https://github.com/wso2/product-is/issues/14439 is fixed
         orgCreatorRolePermissions.add(Constants.USER_MGT_CREATE_PERMISSION);
         organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
