@@ -26,6 +26,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitialize;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -65,5 +66,25 @@ public class OrganizationManagementTomcatServiceComponent {
             LOG.debug("Unsetting the Organization Manager.");
         }
         OrganizationManagementTomcatDataHolder.getInstance().setOrganizationManager(null);
+    }
+
+    @Reference(
+            name = "organization.mgt.initialize.service",
+            service = OrganizationManagementInitialize.class,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManagementEnablingService"
+    )
+    protected void setOrganizationManagementEnablingService(
+            OrganizationManagementInitialize organizationManagementInitializeService) {
+
+        OrganizationManagementTomcatDataHolder.getInstance()
+                .setOrganizationManagementEnable(organizationManagementInitializeService);
+    }
+
+    protected void unsetOrganizationManagementEnablingService(
+            OrganizationManagementInitialize organizationManagementInitializeInstance) {
+
+        OrganizationManagementTomcatDataHolder.getInstance().setOrganizationManagementEnable(null);
     }
 }

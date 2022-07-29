@@ -22,6 +22,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.catalina.connector.Request;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
@@ -42,7 +43,8 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
     public void initCarbonContext(Request request) throws Exception {
 
         String requestURI = request.getRequestURI();
-        if (StringUtils.startsWith(requestURI, ORGANIZATION_PATH_PARAM)) {
+        if (OrganizationManagementTomcatDataHolder.getInstance().isOrganizationManagementEnabled() &&
+                StringUtils.startsWith(requestURI, ORGANIZATION_PATH_PARAM)) {
             String tenantDomain;
             String appName;
             PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();

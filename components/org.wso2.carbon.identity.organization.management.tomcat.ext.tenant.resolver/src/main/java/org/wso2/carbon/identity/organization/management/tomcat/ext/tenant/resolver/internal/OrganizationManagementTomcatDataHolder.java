@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal;
 
+import org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitialize;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -27,6 +28,7 @@ public class OrganizationManagementTomcatDataHolder {
 
     private static final OrganizationManagementTomcatDataHolder instance = new OrganizationManagementTomcatDataHolder();
     private OrganizationManager organizationManager;
+    private boolean isOrganizationManagementEnable;
 
     public static OrganizationManagementTomcatDataHolder getInstance() {
 
@@ -41,5 +43,28 @@ public class OrganizationManagementTomcatDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    /**
+     * Get is organization management enabled.
+     *
+     * @return True if organization management is enabled.
+     */
+    public boolean isOrganizationManagementEnabled() {
+
+        return isOrganizationManagementEnable;
+    }
+
+    /**
+     * Set organization management enable/disable state.
+     *
+     * @param organizationManagementInitializeService OrganizationManagementInitializeInstance.
+     */
+    public void setOrganizationManagementEnable(
+            OrganizationManagementInitialize organizationManagementInitializeService) {
+
+        if (organizationManagementInitializeService != null) {
+            isOrganizationManagementEnable = organizationManagementInitializeService.isOrganizationManagementEnabled();
+        }
     }
 }
