@@ -41,10 +41,8 @@
 
     <modules>
         <module>components/org.wso2.carbon.identity.organization.management.authz.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
         <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
