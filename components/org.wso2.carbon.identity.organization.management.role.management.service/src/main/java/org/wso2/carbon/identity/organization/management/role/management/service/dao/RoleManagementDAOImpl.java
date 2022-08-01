@@ -121,9 +121,11 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_MSSQL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_MSSQL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
@@ -178,6 +180,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
@@ -292,6 +295,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             if (StringUtils.equals(BACKWARD.toString(), direction)) {
                 sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
                         GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_ORACLE;
+            }
+        } else if (isMSSqlDB()) {
+            sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +
+                    GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_MSSQL;
+
+            if (StringUtils.equals(BACKWARD.toString(), direction)) {
+                sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD + filterQuery +
+                        GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_MSSQL;
             }
         } else {
             sqlStm = GET_ROLES_FROM_ORGANIZATION_ID_FORWARD + filterQuery +

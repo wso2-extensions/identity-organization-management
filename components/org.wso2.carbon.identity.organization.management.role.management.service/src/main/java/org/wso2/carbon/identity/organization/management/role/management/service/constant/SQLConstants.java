@@ -218,6 +218,11 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME ASC FETCH FIRST :"  +
             SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY";
 
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_MSSQL = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME > :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME ASC OFFSET 0 " +
+            "ROWS FETCH NEXT :" + SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY";
+
     public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC LIMIT :"  +
@@ -227,6 +232,11 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC FETCH FIRST :"  +
             SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY) R ORDER BY R.UM_ROLE_NAME ASC";
+
+    public static final String GET_ROLES_FROM_ORGANIZATION_ID_BACKWARD_TAIL_MSSQL = "UM_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + "; AND UM_ROLE_NAME <= :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; ORDER BY UM_ROLE_NAME DESC OFFSET 0 " +
+            "ROWS FETCH NEXT :" + SQLPlaceholders.DB_SCHEMA_LIMIT + "; ROWS ONLY) R ORDER BY R.UM_ROLE_NAME ASC";
 
     public static final String GET_ROLES_COUNT_FROM_ORGANIZATION_ID_TAIL = "UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
