@@ -190,8 +190,6 @@ public class OrganizationManagementConstants {
         ERROR_CODE_INVALID_ORGANIZATION_TYPE("60034", "Invalid organization type.", "The organization " +
                 "type should be 'TENANT' or 'STRUCTURAL'."),
         ERROR_CODE_INVALID_APPLICATION("60035", "Invalid application", "The requested application %s is invalid."),
-        ERROR_CODE_ORG_PARAMETER_NOT_FOUND("60036", "Organization parameter could not be found.", "The organization " +
-                "parameter for shared application authentication is not found."),
         ERROR_CODE_APPLICATION_NOT_SHARED("60037", "Application not shared with organization.", "The " +
                 "application %s is not shared with organization with ID %s."),
         ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE("60038", "Unable to remove a required attribute.",
@@ -416,7 +414,9 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to remove the oauth consumer app for fragment application",
                 "Server encountered an error when removing oauth consumer app: %s for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65077", "Unable to remove the fragment application",
+        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65077", "Organization name or organization id is not " +
+                "resolved.", "The organization information has not resolved before the authentication."),
+        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65078", "Unable to remove the fragment application",
                 "Server encountered an error when removing fragment app: %s in organization: %s.");
 
         private final String code;

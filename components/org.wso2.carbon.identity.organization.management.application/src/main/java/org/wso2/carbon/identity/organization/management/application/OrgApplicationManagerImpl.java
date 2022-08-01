@@ -279,7 +279,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setOAuthVersion(OAuthConstants.OAuthVersions.VERSION_2);
         consumerApp.setGrantTypes(OAuthConstants.GrantTypes.AUTHORIZATION_CODE);
         consumerApp.setCallbackUrl(callbackUrl);
-        consumerApp.setApplicationName(mainAppName + "-fragment-" + UUID.randomUUID());
+        consumerApp.setApplicationName(mainAppName);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
@@ -307,7 +307,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         ServiceProvider delegatedApplication = new ServiceProvider();
         delegatedApplication.setApplicationName(oAuthConsumerApp.getApplicationName());
-        delegatedApplication.setDescription("Delegated access from:" + mainApplication.getApplicationName());
+        delegatedApplication.setDescription("Delegated access from: " + mainApplication.getApplicationName());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
         appendFragmentAppProperty(delegatedApplication);
 

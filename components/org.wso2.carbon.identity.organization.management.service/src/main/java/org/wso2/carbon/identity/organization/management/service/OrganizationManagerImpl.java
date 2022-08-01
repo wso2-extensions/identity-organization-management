@@ -487,25 +487,27 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private void validateOrganizationAttributes(List<OrganizationAttribute> organizationAttributes) throws
             OrganizationManagementClientException {
 
-        for (OrganizationAttribute attribute : organizationAttributes) {
-            String attributeKey = attribute.getKey();
-            String attributeValue = attribute.getValue();
+        if (organizationAttributes != null) {
+            for (OrganizationAttribute attribute : organizationAttributes) {
+                String attributeKey = attribute.getKey();
+                String attributeValue = attribute.getValue();
 
-            if (StringUtils.isBlank(attributeKey)) {
-                throw handleClientException(ERROR_CODE_ATTRIBUTE_KEY_MISSING);
+                if (StringUtils.isBlank(attributeKey)) {
+                    throw handleClientException(ERROR_CODE_ATTRIBUTE_KEY_MISSING);
+                }
+                if (StringUtils.isBlank(attributeValue)) {
+                    throw handleClientException(ERROR_CODE_ATTRIBUTE_VALUE_MISSING);
+                }
+                attribute.setKey(attributeKey.trim());
+                attribute.setValue(attributeValue.trim());
             }
-            if (StringUtils.isBlank(attributeValue)) {
-                throw handleClientException(ERROR_CODE_ATTRIBUTE_VALUE_MISSING);
-            }
-            attribute.setKey(attributeKey.trim());
-            attribute.setValue(attributeValue.trim());
-        }
 
-        // Check if attribute keys are duplicated.
-        Set<String> tempSet = organizationAttributes.stream().map(OrganizationAttribute::getKey)
-                .collect(Collectors.toSet());
-        if (organizationAttributes.size() > tempSet.size()) {
-            throw handleClientException(ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS);
+            // Check if attribute keys are duplicated.
+            Set<String> tempSet = organizationAttributes.stream().map(OrganizationAttribute::getKey)
+                    .collect(Collectors.toSet());
+            if (organizationAttributes.size() > tempSet.size()) {
+                throw handleClientException(ERROR_CODE_DUPLICATE_ATTRIBUTE_KEYS);
+            }
         }
     }
 
