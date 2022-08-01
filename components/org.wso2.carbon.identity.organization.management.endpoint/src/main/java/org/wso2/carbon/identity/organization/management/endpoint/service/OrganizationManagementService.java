@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
  *
- * WSO2 LLC. licenses this file to you under the Apache License,
+ * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.ParentOrganization;
-import org.wso2.carbon.identity.organization.management.endpoint.model.SharedOrganizationsResponse;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
@@ -223,46 +222,6 @@ public class OrganizationManagementService {
         try {
             getOrgApplicationManager().shareOrganizationApplication(organizationId, applicationId, sharedOrg);
             return Response.ok().build();
-        } catch (OrganizationManagementClientException e) {
-            return handleClientErrorResponse(e, LOG);
-        } catch (OrganizationManagementException e) {
-            return handleServerErrorResponse(e, LOG);
-        }
-    }
-
-    /**
-     * Stop application sharing to an organization by removing the fragment application from the given organization.
-     *
-     * @param organizationId       ID of the organization owning the primary application.
-     * @param applicationId        primary application ID.
-     * @param sharedOrganizationId ID of the organization owning the fragment application.
-     * @return the stop application sharing response.
-     */
-    public Response deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId) {
-
-        try {
-            getOrgApplicationManager().deleteSharedApplication(organizationId, applicationId, sharedOrganizationId);
-            return Response.noContent().build();
-        } catch (OrganizationManagementClientException e) {
-            return handleClientErrorResponse(e, LOG);
-        } catch (OrganizationManagementException e) {
-            return handleServerErrorResponse(e, LOG);
-        }
-    }
-
-    /**
-     * Returns the list of organization with whom the primary application is shared.
-     *
-     * @param organizationId ID of the organization owning the primary application.
-     * @param applicationId  ID of the primary application.
-     * @return list of organization having the fragment applications.
-     */
-    public Response getApplicationSharedOrganizations(String organizationId, String applicationId) {
-
-        try {
-            List<BasicOrganization> basicOrganizations =
-                    getOrgApplicationManager().getApplicationSharedOrganizations(organizationId, applicationId);
-            return Response.ok(createSharedOrgResponse(basicOrganizations)).build();
         } catch (OrganizationManagementClientException e) {
             return handleClientErrorResponse(e, LOG);
         } catch (OrganizationManagementException e) {
@@ -455,8 +414,7 @@ public class OrganizationManagementService {
                 organizationsResponse.addLinksItem(link);
             }
             if (!isLastPage) {
-                String
-                        encodedString = Base64.getEncoder().encodeToString(organizations.get(organizations.size() - 1)
+                String encodedString = Base64.getEncoder().encodeToString(organizations.get(organizations.size() - 1)
                         .getCreated().getBytes(StandardCharsets.UTF_8));
                 Link link = new Link();
                 link.setHref(URI.create(buildURIForPagination(url) + "&after=" + encodedString));
@@ -505,19 +463,6 @@ public class OrganizationManagementService {
             organization.setAttributes(null);
         }
         return getOrganizationManager().updateOrganization(organizationId, currentOrganizationName, organization);
-    }
-
-    private SharedOrganizationsResponse createSharedOrgResponse(List<BasicOrganization> organizations)
-            throws OrganizationManagementServerException {
-
-        SharedOrganizationsResponse response = new SharedOrganizationsResponse();
-        for (BasicOrganization org : organizations) {
-            BasicOrganizationResponse basicOrganizationResponse =
-                    new BasicOrganizationResponse().id(org.getId()).name(org.getName())
-                            .ref(buildURIForBody(org.getId()));
-            response.addOrganizationsItem(basicOrganizationResponse);
-        }
-        return response;
     }
 
     private Organization createOrganizationClone(Organization organization) {

@@ -267,85 +267,6 @@ paths:
           $ref: '#/components/responses/ServerError'
       tags:
         - Organization Application Management
-    get:
-      summary: |
-        List of organizations that the application is shared to.
-      description: |
-        This API returns the list of organizations that the application is shared to.
-      operationId: shareOrgApplicationGet
-      parameters:
-        - name: organization-id
-          in: path
-          description: ID of the parent organization where the application is created.
-          required: true
-          schema:
-            type: string
-        - name: application-id
-          in: path
-          description: ID of the application which will be shared to child organizations.
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedOrganizationsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-      tags:
-        - Organization Application Management
-  /organizations/{organization-id}/applications/{application-id}/share/{shared-organization-id}:
-    delete:
-      description: |
-        This API provides the capability to stop sharing an application to an organization by providing its ID.
-      summary: |
-        Stop sharing an application to a organization.
-      operationId: shareOrgApplicationDelete
-      parameters:
-        - name: organization-id
-          in: path
-          description: ID of the organization to be deleted.
-          required: true
-          schema:
-            type: string
-        - name: application-id
-          in: path
-          description: ID of the application.
-          required: true
-          schema:
-            type: string
-        - name: shared-organization-id
-          in: path
-          description: ID of the organization to stop sharing.
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Successfully deleted
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-      tags:
-        - Organization Application Management
 
 components:
   parameters:
@@ -673,16 +594,6 @@ components:
           type: string
           description: The value to be used within the operations.
           example: 'XYZ Builders'
-    #-----------------------------------------------------
-    # Get Application shared organizations
-    #-----------------------------------------------------
-    SharedOrganizationsResponse:
-      type: object
-      properties:
-        organizations:
-          type: array
-          items:
-            $ref: '#/components/schemas/BasicOrganizationResponse'
 
   #--------------------------------------------------------
   # Descriptions of Organization Management API responses.

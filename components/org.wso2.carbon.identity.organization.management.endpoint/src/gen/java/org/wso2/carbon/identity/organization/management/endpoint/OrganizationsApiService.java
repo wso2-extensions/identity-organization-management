@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.organization.management.endpoint.model.Organizat
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationPatchRequestItem;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationResponse;
 import org.wso2.carbon.identity.organization.management.endpoint.model.OrganizationsResponse;
-import org.wso2.carbon.identity.organization.management.endpoint.model.SharedOrganizationsResponse;
 import javax.ws.rs.core.Response;
 
 
@@ -51,8 +50,4 @@ public interface OrganizationsApiService {
       public Response organizationsPost(OrganizationPOSTRequest organizationPOSTRequest);
 
       public Response shareOrgApplication(String organizationId, String applicationId, List<String> requestBody);
-
-      public Response shareOrgApplicationDelete(String organizationId, String applicationId, String sharedOrganizationId);
-
-      public Response shareOrgApplicationGet(String organizationId, String applicationId);
 }

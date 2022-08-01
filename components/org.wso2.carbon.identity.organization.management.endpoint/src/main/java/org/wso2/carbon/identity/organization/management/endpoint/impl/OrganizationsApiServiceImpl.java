@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
  *
- * WSO2 LLC. licenses this file to you under the Apache License,
+ * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -79,19 +79,5 @@ public class OrganizationsApiServiceImpl implements OrganizationsApiService {
     public Response shareOrgApplication(String organizationId, String applicationId, List<String> sharedOrg) {
 
         return organizationManagementService.shareOrganizationApplication(organizationId, applicationId, sharedOrg);
-    }
-
-    @Override
-    public Response shareOrgApplicationDelete(String organizationId, String applicationId,
-                                              String sharedOrganizationId) {
-
-        return organizationManagementService.deleteSharedApplication(organizationId, applicationId,
-                sharedOrganizationId);
-    }
-
-    @Override
-    public Response shareOrgApplicationGet(String organizationId, String applicationId) {
-
-        return organizationManagementService.getApplicationSharedOrganizations(organizationId, applicationId);
     }
 }
