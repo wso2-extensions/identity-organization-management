@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.management.oauth2.grant.util;
 public class OrganizationSwitchGrantConstants {
 
     public static final String ORG_SWITCH_PERMISSION = "/permission/admin/manage/identity/organizationmgt/view";
-    public static final String ORG_SWITCH_PERMISSION_FOR_ROOT = "/permission/admin";
+    public static final String ORG_SWITCH_PERMISSION_FOR_SUPER = "/permission/admin";
 
     /**
      * Constants related to request parameters.
