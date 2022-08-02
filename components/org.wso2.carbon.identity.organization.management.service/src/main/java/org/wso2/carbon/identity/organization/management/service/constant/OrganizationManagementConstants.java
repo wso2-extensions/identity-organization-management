@@ -417,7 +417,9 @@ public class OrganizationManagementConstants {
                 "Server encountered an error when removing oauth consumer app: % for fragment application: %s in " +
                         "organization: %s."),
         ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65075", "Organization name or organization id is not " +
-                "resolved.", "The organization information has not resolved before the authentication.");
+                "resolved.", "The organization information has not resolved before the authentication."),
+        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65076", "Unable to resolve user's root organization.",
+                "Error while resolving root organization of user with ID: %s.");;
 
         private final String code;
         private final String message;
