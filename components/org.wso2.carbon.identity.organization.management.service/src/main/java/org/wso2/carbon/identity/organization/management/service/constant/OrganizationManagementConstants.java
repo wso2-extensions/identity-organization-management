@@ -416,8 +416,11 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to share the application",
                 "Server encountered an error when removing oauth consumer app: % for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65075", "Organization name or organization id is not " +
-                "resolved.", "The organization information has not resolved before the authentication.");
+        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65077", "Organization name or organization id is not " +
+                "resolved.", "The organization information has not resolved before the authentication."),
+        ERROR_CODE_CHECKING_APPLICATION_HAS_FRAGMENTS("65078", "Unable to check whether the application has fragments.",
+                "Server encountered an error when checking whether the application: %s already has fragments.");
+        ;
 
         private final String code;
         private final String message;
