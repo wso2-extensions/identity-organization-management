@@ -125,6 +125,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_BY_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL;
+import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL_MSSQL;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATIONS_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_BY_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.GET_ORGANIZATION_NAME_BY_ID;
@@ -162,6 +163,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.SQLConstants.UPDATE_ORGANIZATION_LAST_MODIFIED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
@@ -344,7 +346,13 @@ public class OrganizationManagementDAOImpl implements OrganizationManagementDAO 
         String parentIdFilterQuery = parentIdFilterQueryBuilder.getFilterQuery();
 
         String sqlStmt;
-        String getOrgSqlStmtTail = isOracleDB() ? GET_ORGANIZATIONS_TAIL_ORACLE : GET_ORGANIZATIONS_TAIL;
+        String getOrgSqlStmtTail = GET_ORGANIZATIONS_TAIL;
+
+        if (isOracleDB()) {
+            getOrgSqlStmtTail = GET_ORGANIZATIONS_TAIL_ORACLE;
+        } else if (isMSSqlDB()) {
+            getOrgSqlStmtTail = GET_ORGANIZATIONS_TAIL_MSSQL;
+        }
 
         if (StringUtils.isBlank(parentIdFilterQuery)) {
             sqlStmt = GET_ORGANIZATIONS + filterQueryBuilder.getFilterQuery() +
