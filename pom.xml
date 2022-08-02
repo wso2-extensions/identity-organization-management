@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.0.71-SNAPSHOT</version>
+    <version>1.0.74-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -41,10 +41,8 @@
 
     <modules>
         <module>components/org.wso2.carbon.identity.organization.management.authz.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
-        <module>components/org.wso2.carbon.identity.organization.management.role.management.endpoint</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.authn</module>
         <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
