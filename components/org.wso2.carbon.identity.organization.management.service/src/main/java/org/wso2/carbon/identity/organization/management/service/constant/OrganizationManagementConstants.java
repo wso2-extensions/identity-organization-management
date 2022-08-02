@@ -233,6 +233,8 @@ public class OrganizationManagementConstants {
         ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_ROOT("60057", "Unable to create the organization.",
                 "To create a child organization in root, the request should be invoked from the root " +
                         "organization."),
+        ERROR_CODE_USER_ROOT_ORGANIZATION_NOT_FOUND("60058", "Unable to retrieve the root organization.",
+                "A root organization is not found for the authenticated user with ID: %s."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
