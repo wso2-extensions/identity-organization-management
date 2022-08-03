@@ -418,7 +418,9 @@ public class OrganizationManagementConstants {
                         "organization: %s."),
         ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65077", "Organization name or organization id is not " +
                 "resolved.", "The organization information has not resolved before the authentication."),
-        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65078", "Unable to remove the fragment application",
+        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65078", "Unable to resolve user's root organization.",
+                "Error while resolving root organization of user with ID: %s."),
+        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65079", "Unable to remove the fragment application",
                 "Server encountered an error when removing fragment app: %s in organization: %s.");
 
         private final String code;
