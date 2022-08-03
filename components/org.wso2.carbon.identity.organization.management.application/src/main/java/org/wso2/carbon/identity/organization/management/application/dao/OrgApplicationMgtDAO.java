@@ -54,10 +54,10 @@ public interface OrgApplicationMgtDAO {
     /**
      * Returns whether the given application has fragment applications.
      *
-     * @param applicationId Application ID
+     * @param applicationId Application ID.
      * @return boolean value indicating whether the given application has fragments created.
      * @throws OrganizationManagementException the server exception is thrown in a failure when checking the fragments
-     * of the application.
+     *                                         of the application.
      */
     boolean hasFragments(String applicationId) throws OrganizationManagementException;
 }
