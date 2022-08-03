@@ -144,8 +144,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
             throws OrganizationManagementException {
 
+        ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
         List<SharedApplicationDO> sharedApps =
-                getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
+                getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
 
         List<String> sharedOrganizationIds = sharedApps.stream().map(SharedApplicationDO::getOrganizationId).collect(
                 Collectors.toList());
