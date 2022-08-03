@@ -418,9 +418,10 @@ public class OrganizationManagementConstants {
                         "organization: %s."),
         ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65077", "Organization name or organization id is not " +
                 "resolved.", "The organization information has not resolved before the authentication."),
-        ERROR_CODE_CHECKING_APPLICATION_HAS_FRAGMENTS("65078", "Unable to check whether the application has fragments.",
+        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65078", "Unable to resolve user's root organization.",
+                "Error while resolving root organization of user with ID: %s."),
+        ERROR_CODE_CHECKING_APPLICATION_HAS_FRAGMENTS("65079", "Unable to check whether the application has fragments.",
                 "Server encountered an error when checking whether the application: %s already has fragments.");
-        ;
 
         private final String code;
         private final String message;
