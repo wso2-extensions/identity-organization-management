@@ -202,8 +202,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         }
 
         if (showChildren) {
-            List<String> childOrganizationIds =
-                    organizationManagementDAO.getChildOrganizationIds(organizationId);
+            List<String> childOrganizationIds = organizationManagementDAO.getChildOrganizationIds(organizationId);
             if (CollectionUtils.isNotEmpty(childOrganizationIds)) {
                 List<ChildOrganizationDO> childOrganizations = new ArrayList<>();
                 for (String childOrganizationId : childOrganizationIds) {
@@ -741,14 +740,12 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
         try {
             if (StringUtils.isNotBlank(before)) {
-                String
-                        decodedString = new String(Base64.getDecoder().decode(before), StandardCharsets.UTF_8);
+                String decodedString = new String(Base64.getDecoder().decode(before), StandardCharsets.UTF_8);
                 Timestamp.valueOf(decodedString);
                 paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and before gt " + decodedString :
                         "before gt " + decodedString;
             } else if (StringUtils.isNotBlank(after)) {
-                String
-                        decodedString = new String(Base64.getDecoder().decode(after), StandardCharsets.UTF_8);
+                String decodedString = new String(Base64.getDecoder().decode(after), StandardCharsets.UTF_8);
                 Timestamp.valueOf(decodedString);
                 paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and after lt " + decodedString :
                         "after lt " + decodedString;

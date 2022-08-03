@@ -118,7 +118,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
             throws OrganizationManagementException {
 
-        Optional<String> fragmentApplicationId = resolveSharedApp(applicationId, organizationId, sharedOrganizationId);
+        ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
+
+        Optional<String> fragmentApplicationId =
+                resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
 
         if (fragmentApplicationId.isPresent()) {
             try {
