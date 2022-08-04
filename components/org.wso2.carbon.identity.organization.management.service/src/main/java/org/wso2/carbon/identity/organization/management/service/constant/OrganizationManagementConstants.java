@@ -416,10 +416,16 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to share the application",
                 "Server encountered an error when removing oauth consumer app: % for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65075", "Organization name or organization id is not " +
+        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65076", "Organization name or organization id is not " +
                 "resolved.", "The organization information has not resolved before the authentication."),
-        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65076", "Unable to resolve user's root organization.",
-                "Error while resolving root organization of user with ID: %s.");;
+        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65077", "Unable to resolve user's root organization.",
+                "Error while resolving root organization of user with ID: %s."),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST("65078", "Unable to retrieve organization IDP list.",
+                "Error while retrieving the IDP list of the organization: %s"),
+        ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP("65079", "Unable to create organization IDP.",
+                "Error while creating the Organization Login IDP in organization: %s"),
+        ERROR_CODE_ERROR_UPDATING_APPLICATION("65079", "Unable to update the application authentication steps.",
+                "Error while updating the authentication details of the application: %s");
 
         private final String code;
         private final String message;
