@@ -16,23 +16,30 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.oauth2.grant;
-
-import org.apache.oltu.oauth2.common.validators.AbstractValidator;
-import org.wso2.carbon.identity.organization.management.oauth2.grant.util.OrganizationSwitchGrantConstants;
-
-import javax.servlet.http.HttpServletRequest;
-
+package org.wso2.carbon.identity.organization.management.application.model;
 
 /**
- * This validates the organization switch grant request.
+ * This class contains the fragment application id and its organization id.
  */
-public class OrganizationSwitchGrantValidator extends AbstractValidator<HttpServletRequest> {
+public class SharedApplicationDO {
 
+    String organizationId;
 
-    public OrganizationSwitchGrantValidator() {
+    String fragmentApplicationId;
 
-        requiredParams.add(OrganizationSwitchGrantConstants.Params.TOKEN_PARAM);
-        requiredParams.add(OrganizationSwitchGrantConstants.Params.ORG_PARAM);
+    public SharedApplicationDO(String organizationId, String fragmentApplicationId) {
+
+        this.organizationId = organizationId;
+        this.fragmentApplicationId = fragmentApplicationId;
+    }
+
+    public String getOrganizationId() {
+
+        return organizationId;
+    }
+
+    public String getFragmentApplicationId() {
+
+        return fragmentApplicationId;
     }
 }
