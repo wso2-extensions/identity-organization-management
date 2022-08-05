@@ -32,7 +32,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.ROOT;
+import static org.wso2.carbon.identity.organization.management.authz.service.constant.AuthorizationConstants.SUPER;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_GROUPS_ASSIGNED_TO_ROLES;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.CHECK_USER_HAS_PERMISSION_TO_ORG_THROUGH_USER_ROLE_ASSIGNMENT;
 import static org.wso2.carbon.identity.organization.management.authz.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_NAME;
@@ -182,13 +182,13 @@ public class OrganizationManagementAuthzDAOImpl implements OrganizationManagemen
     }
 
     @Override
-    public String getRootOrganizationId() throws OrganizationManagementAuthzServiceServerException {
+    public String getSuperOrganizationId() throws OrganizationManagementAuthzServiceServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_ID_BY_NAME,
                     (resultSet, rowNumber) -> resultSet.getString(VIEW_ID_COLUMN), namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_NAME, ROOT));
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_ORGANIZATION_NAME, SUPER));
         } catch (DataAccessException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);
         }
