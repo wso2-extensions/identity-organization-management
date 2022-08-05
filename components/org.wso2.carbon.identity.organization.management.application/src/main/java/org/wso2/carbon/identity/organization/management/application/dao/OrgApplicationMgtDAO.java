@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,8 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.application.dao;
 
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -37,6 +39,17 @@ public interface OrgApplicationMgtDAO {
      * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
      */
     void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException;
+
+    /**
+     * Retrieve the list of shared applications entries for a given application.
+     *
+     * @param organizationId The unique ID corresponding to the organization where the main application resides.
+     * @param applicationId  Unique identifier of the main application.
+     * @return list of {@link SharedApplicationDO}s for a given application.
+     * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
+     */
+    List<SharedApplicationDO> getSharedApplications(String organizationId, String applicationId)
             throws OrganizationManagementException;
 
     /**

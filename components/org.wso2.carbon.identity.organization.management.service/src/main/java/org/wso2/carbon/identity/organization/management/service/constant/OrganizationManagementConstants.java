@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -413,18 +413,20 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_CREATING_OAUTH_APP("65075", "Unable create oauth consumer app for fragment application",
                 "Server encountered an error when creating oauth consumer app for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to share the application",
-                "Server encountered an error when removing oauth consumer app: % for fragment application: %s in " +
+        ERROR_CODE_ERROR_REMOVING_OAUTH_APP("65076", "Unable to remove the oauth consumer app for fragment application",
+                "Server encountered an error when removing oauth consumer app: %s for fragment application: %s in " +
                         "organization: %s."),
-        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65076", "Organization name or organization id is not " +
+        ERROR_CODE_ORG_PARAMETERS_NOT_RESOLVED("65077", "Organization name or organization id is not " +
                 "resolved.", "The organization information has not resolved before the authentication."),
-        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65077", "Unable to resolve user's root organization.",
+        ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65078", "Unable to resolve user's root organization.",
                 "Error while resolving root organization of user with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST("65078", "Unable to retrieve organization IDP list.",
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST("65079", "Unable to retrieve organization IDP list.",
                 "Error while retrieving the IDP list of the organization: %s"),
-        ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP("65079", "Unable to create organization IDP.",
+        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65080", "Unable to remove the fragment application",
+                "Server encountered an error when removing fragment app: %s in organization: %s."),
+        ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP("65081", "Unable to create organization IDP.",
                 "Error while creating the Organization Login IDP in organization: %s"),
-        ERROR_CODE_ERROR_UPDATING_APPLICATION("65079", "Unable to update the application authentication steps.",
+        ERROR_CODE_ERROR_UPDATING_APPLICATION("65082", "Unable to update the application authentication steps.",
                 "Error while updating the authentication details of the application: %s");
 
         private final String code;

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,10 +45,11 @@ import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.management.service.model.ChildOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -75,6 +76,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_OAUTH_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
@@ -101,21 +103,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
-        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, Boolean.TRUE, Boolean.FALSE);
+        Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
 
-        addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
-
+        List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(ownerOrgId, true);
         // Filter the child organization in case user send a list of organizations to share the original application.
-        List<ChildOrganizationDO> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
-                organization.getChildOrganizations() :
-                organization.getChildOrganizations().stream().filter(o -> sharedOrgs.contains(o.getId()))
+        List<BasicOrganization> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
+                childOrganizations :
+                childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId()))
                         .collect(Collectors.toList());
 
-        for (ChildOrganizationDO child : filteredChildOrgs) {
-            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), Boolean.FALSE,
-                    Boolean.FALSE);
+        if (filteredChildOrgs.isEmpty()) {
+            // Adding Organization login IDP to the root application.
+            addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
+        }
+
+        for (BasicOrganization child : filteredChildOrgs) {
+            Organization childOrg = getOrganizationManager().getOrganization(child.getId(), false, false);
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -127,6 +132,49 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 }, executorService);
             }
         }
+    }
+
+    @Override
+    public void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
+            throws OrganizationManagementException {
+
+        ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
+
+        Optional<String> fragmentApplicationId =
+                resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
+
+        if (fragmentApplicationId.isPresent()) {
+            try {
+                String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+                ServiceProvider fragmentApplication =
+                        getApplicationManagementService().getApplicationByResourceId(fragmentApplicationId.get(),
+                                sharedTenantDomain);
+                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+
+                getApplicationManagementService().deleteApplication(fragmentApplication.getApplicationName(),
+                        sharedTenantDomain, username);
+            } catch (IdentityApplicationManagementException e) {
+                throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, fragmentApplicationId.get(),
+                        sharedOrganizationId);
+            }
+        }
+    }
+
+    @Override
+    public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
+            throws OrganizationManagementException {
+
+        ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
+        List<SharedApplicationDO> sharedApps =
+                getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
+
+        List<String> sharedOrganizationIds = sharedApps.stream().map(SharedApplicationDO::getOrganizationId).collect(
+                Collectors.toList());
+
+        List<BasicOrganization> organizations = getOrganizationManager().getChildOrganizations(organizationId, true);
+
+        return organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
+                Collectors.toList());
     }
 
     @Override
