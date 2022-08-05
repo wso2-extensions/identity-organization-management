@@ -114,7 +114,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId()))
                         .collect(Collectors.toList());
 
-        if (filteredChildOrgs.isEmpty()) {
+        if (!filteredChildOrgs.isEmpty()) {
             // Adding Organization login IDP to the root application.
             addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
         }
