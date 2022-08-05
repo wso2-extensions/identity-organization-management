@@ -23,6 +23,7 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -39,9 +40,15 @@ public class OrgApplicationMgtDataHolder {
     private OAuthAdminServiceImpl oAuthAdminService;
     private OrganizationManager organizationManager;
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
+    private IdpManager idpManager;
 
     private OrgApplicationMgtDataHolder() {
 
+    }
+
+    public static OrgApplicationMgtDataHolder getInstance() {
+
+        return dataHolder;
     }
 
     public OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
@@ -53,11 +60,6 @@ public class OrgApplicationMgtDataHolder {
                                                                    organizationUserResidentResolverService) {
 
         this.organizationUserResidentResolverService = organizationUserResidentResolverService;
-    }
-
-    public static OrgApplicationMgtDataHolder getInstance() {
-
-        return dataHolder;
     }
 
     public OrgApplicationMgtDAO getOrgApplicationMgtDAO() {
@@ -108,5 +110,15 @@ public class OrgApplicationMgtDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    public IdpManager getIdpManager() {
+
+        return idpManager;
+    }
+
+    public void setIdpManager(IdpManager idpManager) {
+
+        this.idpManager = idpManager;
     }
 }

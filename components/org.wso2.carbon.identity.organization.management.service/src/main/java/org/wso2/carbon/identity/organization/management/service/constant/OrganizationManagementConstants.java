@@ -420,8 +420,14 @@ public class OrganizationManagementConstants {
                 "resolved.", "The organization information has not resolved before the authentication."),
         ERROR_CODE_ERROR_WHILE_RESOLVING_ROOT_ORG("65078", "Unable to resolve user's root organization.",
                 "Error while resolving root organization of user with ID: %s."),
-        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65079", "Unable to remove the fragment application",
-                "Server encountered an error when removing fragment app: %s in organization: %s.");
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST("65079", "Unable to retrieve organization IDP list.",
+                "Error while retrieving the IDP list of the organization: %s"),
+        ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP("65080", "Unable to remove the fragment application",
+                "Server encountered an error when removing fragment app: %s in organization: %s."),
+        ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP("65081", "Unable to create organization IDP.",
+                "Error while creating the Organization Login IDP in organization: %s"),
+        ERROR_CODE_ERROR_UPDATING_APPLICATION("65082", "Unable to update the application authentication steps.",
+                "Error while updating the authentication details of the application: %s");
 
         private final String code;
         private final String message;
