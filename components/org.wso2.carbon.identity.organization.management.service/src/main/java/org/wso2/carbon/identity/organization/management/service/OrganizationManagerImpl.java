@@ -153,8 +153,9 @@ public class OrganizationManagerImpl implements OrganizationManager {
         setCreatedAndLastModifiedTime(organization);
         organizationManagementDAO.addOrganization(organization);
         String orgCreatorID = getUserId();
+        String orgCreatorName = getAuthenticatedUsername();
         if (StringUtils.equals(TENANT.toString(), organization.getType())) {
-            createTenant(organization.getId(), orgCreatorID);
+            createTenant(organization.getId(), orgCreatorID, orgCreatorName);
         }
         return organization;
     }
@@ -797,13 +798,15 @@ public class OrganizationManagerImpl implements OrganizationManager {
                 !attributeValue.equalsIgnoreCase(PAGINATION_BEFORE);
     }
 
-    private void createTenant(String domain, String orgCreatorID) throws OrganizationManagementException {
+    private void createTenant(String domain, String orgCreatorID, String orgCreatorName)
+            throws OrganizationManagementException {
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(MultitenantConstants
                     .SUPER_TENANT_DOMAIN_NAME);
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(MultitenantConstants.SUPER_TENANT_ID);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(orgCreatorName);
             getTenantMgtService().addTenant(createTenantInfoBean(domain, orgCreatorID));
         } catch (TenantMgtException e) {
             // Rollback created organization.
