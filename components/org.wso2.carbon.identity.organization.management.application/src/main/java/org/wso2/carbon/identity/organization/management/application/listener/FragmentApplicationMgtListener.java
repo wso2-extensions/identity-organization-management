@@ -18,13 +18,17 @@
 
 package org.wso2.carbon.identity.organization.management.application.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
+import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 
 import java.util.Arrays;
 
@@ -38,7 +42,24 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     @Override
     public int getDefaultOrderId() {
 
-        return 250;
+        return 50;
+    }
+
+    @Override
+    public boolean isEnable() {
+
+        IdentityEventListenerConfig identityEventListenerConfig = IdentityUtil.readEventListenerProperty
+                (UserOperationEventListener.class.getName(), this.getClass().getName());
+
+        if (identityEventListenerConfig == null) {
+            return false;
+        }
+
+        if (StringUtils.isNotBlank(identityEventListenerConfig.getEnable())) {
+            return Boolean.parseBoolean(identityEventListenerConfig.getEnable());
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -62,7 +83,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     @Override
     public boolean doPreDeleteApplication(String applicationName, String tenantDomain, String userName)
             throws IdentityApplicationManagementException {
-
 
         ServiceProvider application = getApplicationByName(applicationName, tenantDomain);
         if (application == null) {
