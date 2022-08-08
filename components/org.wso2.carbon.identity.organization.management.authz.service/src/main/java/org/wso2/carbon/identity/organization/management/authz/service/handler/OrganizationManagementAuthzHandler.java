@@ -115,7 +115,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         String associatedOrgId = StringUtils.EMPTY;
         try {
             if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomainFromURL)) {
-                return OrganizationManagementAuthorizationManager.getInstance().getRootOrganizationId();
+                return OrganizationManagementAuthorizationManager.getInstance().getSuperOrganizationId();
             }
             int tenantIdForURLDomain = IdentityTenantUtil.getTenantId(tenantDomainFromURL);
             RealmService realmService = OrganizationManagementAuthzServiceHolder.getInstance().getRealmService();

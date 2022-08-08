@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.0.75-SNAPSHOT</version>
+        <version>1.1.3-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -34,10 +34,6 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.application</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.authn</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
@@ -58,10 +54,6 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.oauth2.grant</artifactId>
         </dependency>
     </dependencies>
 
@@ -88,13 +80,11 @@
                             </adviceFile>
                             <bundles>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.application</bundleDef>
-                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.authn</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.authz.service</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.role.management.service</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.service</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.tenant.association</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</bundleDef>
-                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.oauth2.grant</bundleDef>
                             </bundles>
                             <importFeatures>
                                 <importFeatureDef>org.wso2.carbon.core:compatible:${carbon.kernel.feature.version}</importFeatureDef>

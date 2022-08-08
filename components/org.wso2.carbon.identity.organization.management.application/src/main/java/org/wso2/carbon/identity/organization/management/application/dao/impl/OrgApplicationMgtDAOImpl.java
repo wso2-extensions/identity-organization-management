@@ -22,10 +22,13 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.HAS_FRAGMENT_APPS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
@@ -34,7 +37,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_CHECKING_APPLICATION_HAS_FRAGMENTS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LINK_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -65,6 +68,26 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     }
 
     @Override
+    public List<SharedApplicationDO> getSharedApplications(String organizationId, String applicationId)
+            throws OrganizationManagementException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_SHARED_APPLICATIONS,
+                    (resultSet, rowNumber) -> new SharedApplicationDO(
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, applicationId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, organizationId);
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, applicationId,
+                    organizationId);
+        }
+    }
+
+    @Override
     public Optional<String> getSharedApplicationResourceId(String mainAppId, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException {
 
@@ -81,7 +104,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     });
             return Optional.ofNullable(sharedAppId);
         } catch (DataAccessException e) {
-            //TODO: Update the vars after finalizing the table structure for sp_shared_app table.
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppId, ownerOrgId);
         }
     }
@@ -97,7 +119,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, applicationId));
             return hasFragment > 0;
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_CHECKING_APPLICATION_HAS_FRAGMENTS, e, applicationId);
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS, e, applicationId);
         }
     }
 }

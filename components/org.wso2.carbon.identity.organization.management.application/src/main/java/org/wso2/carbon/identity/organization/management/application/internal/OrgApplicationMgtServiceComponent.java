@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.impl.Org
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -164,5 +165,28 @@ public class OrgApplicationMgtServiceComponent {
             log.debug("Unset organization user resolver service.");
         }
         OrgApplicationMgtDataHolder.getInstance().setOrganizationUserResidentResolverService(null);
+    }
+
+    @Reference(
+            name = "idp.mgt.dscomponent",
+            service = IdpManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdpManager"
+    )
+    protected void setIdpManager(IdpManager idpManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Setting the Identity Provider manager service.");
+        }
+        OrgApplicationMgtDataHolder.getInstance().setIdpManager(idpManager);
+    }
+
+    protected void unsetIdpManager(IdpManager idpManager) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Unset the Identity Provider manager service.");
+        }
+        OrgApplicationMgtDataHolder.getInstance().setIdpManager(null);
     }
 }

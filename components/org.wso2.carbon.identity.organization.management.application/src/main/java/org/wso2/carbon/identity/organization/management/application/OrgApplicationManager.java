@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application;
 
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
 import java.util.List;
 
@@ -37,6 +38,28 @@ public interface OrgApplicationManager {
      * @throws OrganizationManagementException on errors when sharing the application.
      */
     void shareOrganizationApplication(String ownerOrgId, String mainAppId, List<String> sharedOrgs)
+            throws OrganizationManagementException;
+
+    /**
+     * Remove the shared (fragment) application for given organization to stop sharing the business application.
+     *
+     * @param organizationId       ID of the organization owning the primary application.
+     * @param applicationId        ID of the primary application.
+     * @param sharedOrganizationId organization ID which owns the fragment application.
+     * @throws OrganizationManagementException on errors when removing the fragment application.
+     */
+    void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
+            throws OrganizationManagementException;
+
+    /**
+     * Returns the list of organization with whom the primary application is shared.
+     *
+     * @param ownerOrgId ID of the organization owning the primary application.
+     * @param mainAppId  ID of the primary application.
+     * @throws OrganizationManagementException on errors when retrieving the list of organization owning the
+     *                                         fragment applications.
+     */
+    List<BasicOrganization> getApplicationSharedOrganizations(String ownerOrgId, String mainAppId)
             throws OrganizationManagementException;
 
     /**

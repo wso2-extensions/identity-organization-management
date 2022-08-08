@@ -38,6 +38,10 @@ public class SQLConstants {
     public static final String HAS_FRAGMENT_APPS = "SELECT COUNT(1) FROM SP_SHARED_APP WHERE " +
             "MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
 
+    public static final String GET_SHARED_APPLICATIONS = "SELECT SHARED_APP_ID, SHARED_ORG_ID FROM SP_SHARED_APP " +
+            "WHERE OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND MAIN_APP_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
+
     private SQLConstants() {
 
     }

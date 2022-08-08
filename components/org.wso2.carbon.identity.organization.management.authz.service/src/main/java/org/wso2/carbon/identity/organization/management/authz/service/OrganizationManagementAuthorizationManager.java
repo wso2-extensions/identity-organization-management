@@ -69,14 +69,14 @@ public class OrganizationManagementAuthorizationManager {
     }
 
     /**
-     * Resolve root organization id.
+     * Resolve super organization id.
      *
-     * @return Root organization id.
-     * @throws OrganizationManagementAuthzServiceServerException if error occurred when retrieving root org id.
+     * @return Super organization id.
+     * @throws OrganizationManagementAuthzServiceServerException if error occurred when retrieving super org id.
      */
-    public String getRootOrganizationId() throws OrganizationManagementAuthzServiceServerException {
+    public String getSuperOrganizationId() throws OrganizationManagementAuthzServiceServerException {
 
         OrganizationManagementAuthzDAO organizationMgtAuthzDAO = new OrganizationManagementAuthzDAOImpl();
-        return organizationMgtAuthzDAO.getRootOrganizationId();
+        return organizationMgtAuthzDAO.getSuperOrganizationId();
     }
 }

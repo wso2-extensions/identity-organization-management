@@ -26,4 +26,7 @@ public class OrgApplicationMgtConstants {
     public static final String TENANT = "TENANT";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
+
+    public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
+
 }

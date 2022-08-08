@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -155,7 +155,12 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + "; AND UM_ATTRIBUTE_KEY = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_KEY + ";";
 
-    public static final String GET_CHILD_ORGANIZATIONS = "SELECT UM_ID FROM UM_ORG WHERE UM_PARENT_ID = :" +
+    public static final String GET_CHILD_ORGANIZATIONS = "SELECT UM_ORG.UM_ID, UM_ORG.UM_ORG_NAME, " +
+            "UM_ORG.UM_CREATED_TIME FROM UM_ORG JOIN UM_ORG_HIERARCHY ON UM_ORG.UM_ID = UM_ORG_HIERARCHY.UM_ID " +
+            "WHERE UM_ORG_HIERARCHY.UM_PARENT_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID +
+            "; AND UM_ORG_HIERARCHY.DEPTH %s ;";
+
+    public static final String GET_CHILD_ORGANIZATION_IDS = "SELECT UM_ID FROM UM_ORG WHERE UM_PARENT_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_PARENT_ID + ";";
 
     public static final String CHECK_CHILD_ORGANIZATIONS_STATUS = "SELECT COUNT(1) FROM UM_ORG WHERE UM_PARENT_ID = :" +
