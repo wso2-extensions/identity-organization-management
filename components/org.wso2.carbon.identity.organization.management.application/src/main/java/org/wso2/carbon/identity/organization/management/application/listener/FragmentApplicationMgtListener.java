@@ -57,9 +57,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
 
         if (StringUtils.isNotBlank(identityEventListenerConfig.getEnable())) {
             return Boolean.parseBoolean(identityEventListenerConfig.getEnable());
-        } else {
-            return false;
         }
+        return false;
+
     }
 
     @Override
@@ -72,7 +72,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            if (!validateUpdatedData(existingApplication, serviceProvider)) {
+            if (!hasUpdatedAllowedData(existingApplication, serviceProvider)) {
                 return false;
             }
         }
@@ -107,11 +107,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
     }
 
-    private boolean validateUpdatedData(ServiceProvider existingApplication, ServiceProvider serviceProvider) {
+    private boolean hasUpdatedAllowedData(ServiceProvider existingApplication, ServiceProvider serviceProvider) {
 
         return existingApplication.getInboundAuthenticationConfig() ==
-                serviceProvider.getInboundAuthenticationConfig() ||
-                existingApplication.getPermissionAndRoleConfig() == serviceProvider.getPermissionAndRoleConfig() ||
+                serviceProvider.getInboundAuthenticationConfig() &&
+                existingApplication.getPermissionAndRoleConfig() == serviceProvider.getPermissionAndRoleConfig() &&
                 existingApplication.getSpProperties() == serviceProvider.getSpProperties();
     }
 
