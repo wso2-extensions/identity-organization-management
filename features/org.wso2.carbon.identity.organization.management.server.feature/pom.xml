@@ -45,6 +45,10 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.tenant.association</artifactId>
         </dependency>
         <dependency>
@@ -78,6 +82,7 @@
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.application</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.authz.service</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.role.management.service</bundleDef>
+                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.service</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.tenant.association</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</bundleDef>
                             </bundles>
