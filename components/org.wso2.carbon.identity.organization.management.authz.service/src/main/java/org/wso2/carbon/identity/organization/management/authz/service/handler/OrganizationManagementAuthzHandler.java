@@ -32,10 +32,9 @@ import org.wso2.carbon.identity.authz.service.handler.AuthorizationHandler;
 import org.wso2.carbon.identity.core.handler.InitConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationContext;
+import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationManager;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
-import org.wso2.carbon.identity.organization.management.service.authz.OrganizationManagementAuthorizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -125,7 +124,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
                 associatedOrgId = tenant.getAssociatedOrganizationUUID();
             }
             return associatedOrgId;
-        } catch (UserStoreException | OrganizationManagementServerException e) {
+        } catch (UserStoreException | OrganizationManagementAuthzServiceServerException e) {
             String errorMessage = "Error occurred while trying to authorize, " + e.getMessage();
             LOG.error(errorMessage);
             throw new AuthzServiceServerException(errorMessage, e);
@@ -141,14 +140,10 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
             return;
         }
 
-        try {
-            boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized
-                    (getUserId(user), permissionString, orgId);
-            if (isUserAuthorized) {
-                authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
-            }
-        } catch (OrganizationManagementServerException e) {
-            throw new OrganizationManagementAuthzServiceServerException(e);
+        boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized
+                (getUserId(user), permissionString, orgId);
+        if (isUserAuthorized) {
+            authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
         }
     }
 
@@ -168,7 +163,8 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
     }
 
     private void validateScopes(String[] tokenScopes, AuthorizationContext authorizationContext,
-                                AuthorizationResult authorizationResult) {
+                                AuthorizationResult authorizationResult)
+            throws OrganizationManagementAuthzServiceServerException {
 
         boolean granted = true;
         if (tokenScopes != null) {
