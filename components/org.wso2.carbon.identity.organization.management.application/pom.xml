@@ -122,6 +122,7 @@
                             org.wso2.carbon.identity.application.common; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.model; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.mgt.listener; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.base; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.cache; version="${carbon.identity.package.import.version.range}",

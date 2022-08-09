@@ -428,7 +428,10 @@ public class OrganizationManagementConstants {
         ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP("65081", "Unable to create organization IDP.",
                 "Error while creating the Organization Login IDP in organization: %s"),
         ERROR_CODE_ERROR_UPDATING_APPLICATION("65082", "Unable to update the application authentication steps.",
-                "Error while updating the authentication details of the application: %s");
+                "Error while updating the authentication details of the application: %s"),
+        ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS("65083",
+                "Unable to check whether the application has fragments.",
+                "Server encountered an error when checking whether the application: %s already has fragments.");
 
         private final String code;
         private final String message;
