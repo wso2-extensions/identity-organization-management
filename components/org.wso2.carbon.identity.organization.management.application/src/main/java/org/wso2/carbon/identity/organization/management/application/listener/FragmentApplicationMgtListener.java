@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 
 import java.util.Arrays;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
@@ -92,7 +93,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         // If the application is a fragment application, application cannot be deleted
         if (Arrays.stream(application.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            return false;
+            return IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION);
         }
 
         try {
