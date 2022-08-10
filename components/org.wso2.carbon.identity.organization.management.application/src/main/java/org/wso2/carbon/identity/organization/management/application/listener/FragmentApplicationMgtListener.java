@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 
 import java.util.Arrays;
 
+import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
@@ -93,13 +94,19 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         // If the application is a fragment application, application cannot be deleted
         if (Arrays.stream(application.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            return IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION);
+            if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION)) {
+                return true;
+            }
+            throw new IdentityApplicationManagementException(
+                    format("Application with resource id: %s is a fragment application, hence the application cannot " +
+                            "be deleted.", application.getApplicationResourceId()));
         }
-
         try {
             // If an application has fragment applications, application cannot be deleted.
             if (getOrgApplicationMgtDAO().hasFragments(application.getApplicationResourceId())) {
-                return false;
+                throw new IdentityApplicationManagementException(
+                        format("Application with resource id: %s is shared to other organization(s), hence the " +
+                                "application cannot be deleted.", application.getApplicationResourceId()));
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException("Error in validating the application for deletion.", e);
