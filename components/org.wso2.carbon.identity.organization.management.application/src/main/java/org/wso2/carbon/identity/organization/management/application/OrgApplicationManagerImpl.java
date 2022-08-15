@@ -68,6 +68,7 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
+import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
@@ -423,18 +424,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         delegatedApplication.setDescription("Delegated access from: " + mainApplication.getApplicationName());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
         delegatedApplication.setClaimConfig(mainApplication.getClaimConfig());
-        appendFragmentAppProperty(delegatedApplication);
+        appendFragmentAppProperties(delegatedApplication);
 
         return delegatedApplication;
     }
 
-    private void appendFragmentAppProperty(ServiceProvider serviceProvider) {
+    private void appendFragmentAppProperties(ServiceProvider serviceProvider) {
 
         ServiceProviderProperty fragmentAppProperty = new ServiceProviderProperty();
         fragmentAppProperty.setName(IS_FRAGMENT_APP);
         fragmentAppProperty.setValue(Boolean.TRUE.toString());
 
-        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{fragmentAppProperty};
+        ServiceProviderProperty skipConsentProp = new ServiceProviderProperty();
+        skipConsentProp.setName(SKIP_CONSENT);
+        skipConsentProp.setValue(Boolean.TRUE.toString());
+
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{fragmentAppProperty, skipConsentProp};
         serviceProvider.setSpProperties(spProperties);
     }
 
