@@ -70,7 +70,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_IS_UNMODIFIABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUPER_ORG_ROLE_CREATE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -88,6 +90,9 @@ public class RoleManagerImpl implements RoleManager {
 
         role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
+        if (StringUtils.equals(SUPER_ORG_ID, organizationId)) {
+            throw handleClientException(ERROR_CODE_SUPER_ORG_ROLE_CREATE, organizationId);
+        }
         validateRoleNameNotExist(organizationId, role.getDisplayName());
         // skip user existence check atm, this user can be from any org. Fix this through
         // https://github.com/wso2-extensions/identity-organization-management/issues/50

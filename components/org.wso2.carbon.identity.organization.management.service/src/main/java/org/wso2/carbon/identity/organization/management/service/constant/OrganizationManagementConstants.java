@@ -236,6 +236,8 @@ public class OrganizationManagementConstants {
                         "organization."),
         ERROR_CODE_USER_ROOT_ORGANIZATION_NOT_FOUND("60058", "Unable to retrieve the root organization.",
                 "A root organization is not found for the authenticated user with ID: %s."),
+        ERROR_CODE_SUPER_ORG_ROLE_CREATE("60059", "Super organization level roles can't be created",
+                "Organization %s can't manage organization roles."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
