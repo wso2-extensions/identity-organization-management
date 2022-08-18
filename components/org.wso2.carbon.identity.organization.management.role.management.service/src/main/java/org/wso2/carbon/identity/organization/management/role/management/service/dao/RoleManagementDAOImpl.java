@@ -90,7 +90,6 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_NAME_EXISTS;
-import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
@@ -164,7 +163,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USERS_USING_ROLE_ID;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USER_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
@@ -566,23 +564,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return roleCount > 0;
         } catch (DataAccessException e) {
             throw handleServerException(errorMessage, e, roleId, organizationId);
-        }
-    }
-
-    @Override
-    public boolean checkUserExists(String userId, int tenantId) throws OrganizationManagementServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            int value = namedJdbcTemplate.fetchSingleRecord(CHECK_USER_EXISTS,
-                    (resultSet, rowNumber) -> resultSet.getInt(1),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID, tenantId);
-                    });
-            return value > 0;
-        } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_GETTING_USER_VALIDITY, e, userId);
         }
     }
 

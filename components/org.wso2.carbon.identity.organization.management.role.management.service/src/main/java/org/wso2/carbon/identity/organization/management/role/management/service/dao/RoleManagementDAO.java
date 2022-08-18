@@ -140,17 +140,6 @@ public interface RoleManagementDAO {
             throws OrganizationManagementServerException;
 
     /**
-     * Check whether a user exists inside a tenant.
-     *
-     * @param userId   The ID of the user.
-     * @param tenantId The ID of the tenant.
-     * @return If there is a user then returns true, else false.
-     * @throws OrganizationManagementServerException The exception is thrown when an error occurs during checking the
-     *                                               user existence.
-     */
-    boolean checkUserExists(String userId, int tenantId) throws OrganizationManagementServerException;
-
-    /**
      * Get the count of {@link Role}s of an organization with respect to the filter criteria.
      *
      * @param organizationId  The ID of the organization.

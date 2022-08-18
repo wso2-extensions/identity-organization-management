@@ -89,15 +89,13 @@ public class RoleManagerImpl implements RoleManager {
         role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        // skip user existence check atm, this user can be from any org. Fix this through
-        // https://github.com/wso2-extensions/identity-organization-management/issues/50
 
-//        if (CollectionUtils.isNotEmpty(role.getUsers())) {
-//            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-//            if (CollectionUtils.isNotEmpty(userIdList)) {
-//                validateUsers(userIdList, getTenantId());
-//            }
-//        }
+        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userIdList)) {
+                validateUsers(userIdList, organizationId);
+            }
+        }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
             List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(groupIdList)) {
@@ -201,7 +199,7 @@ public class RoleManagerImpl implements RoleManager {
             }
             if (CollectionUtils.isNotEmpty(patchOperation.getValues())) {
                 if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
-                    validateUsers(patchOperation.getValues(), getTenantId());
+                    validateUsers(patchOperation.getValues(), organizationId);
                 } else if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
                     validateGroups(patchOperation.getValues(), getTenantId());
                 } else if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME)) {
@@ -226,7 +224,7 @@ public class RoleManagerImpl implements RoleManager {
         if (CollectionUtils.isNotEmpty(role.getUsers())) {
             List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
+                validateUsers(userIdList, organizationId);
             }
         }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
@@ -336,16 +334,16 @@ public class RoleManagerImpl implements RoleManager {
     /**
      * Check the passed user ID list is valid.
      *
-     * @param userIdList The user ID list.
-     * @param tenantId   The tenant ID.
+     * @param userIdList     The user ID list.
+     * @param organizationId The organization id where the user ID is about to resolve over ancestor organizations.
      * @throws OrganizationManagementException Throws an exception if a user ID is not valid.
      */
-    private void validateUsers(List<String> userIdList, int tenantId) throws OrganizationManagementException {
+    private void validateUsers(List<String> userIdList, String organizationId) throws OrganizationManagementException {
 
         for (String userId : userIdList) {
-            if (!roleManagementDAO.checkUserExists(userId, tenantId)) {
-                throw handleClientException(ERROR_CODE_INVALID_USER_ID, userId);
-            }
+            RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService()
+                    .resolveResidentOrganization(userId, organizationId)
+                    .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_USER_ID, userId));
         }
     }
 
