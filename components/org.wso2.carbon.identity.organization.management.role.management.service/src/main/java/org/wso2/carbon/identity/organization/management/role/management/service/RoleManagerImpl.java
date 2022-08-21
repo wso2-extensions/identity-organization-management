@@ -71,9 +71,11 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_IS_UNMODIFIABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUPER_ORG_ROLE_CREATE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -88,6 +90,9 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
+        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName())) {
+            validateOrganizationRoleAllowedToAccess(organizationId);
+        }
         role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
         if (StringUtils.equals(SUPER_ORG_ID, organizationId)) {
@@ -114,6 +119,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role getRoleById(String organizationId, String roleId) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         return roleManagementDAO.getRoleById(organizationId, roleId);
@@ -123,6 +129,7 @@ public class RoleManagerImpl implements RoleManager {
     public RolesResponse getOrganizationRoles(int count, String filter, String organizationId, String cursor)
             throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         String direction = FORWARD.toString();
         String cursorValue = " ";
         String nextCursor = null;
@@ -179,6 +186,7 @@ public class RoleManagerImpl implements RoleManager {
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -218,6 +226,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -245,6 +254,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public void deleteRole(String organizationId, String roleId) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -427,6 +437,15 @@ public class RoleManagerImpl implements RoleManager {
             return Utils.getGson().fromJson(decodeString, Cursor.class);
         } catch (JsonSyntaxException e) {
             throw handleClientException(ERROR_CODE_ROLE_LIST_INVALID_CURSOR, cursorString);
+        }
+    }
+
+    private void validateOrganizationRoleAllowedToAccess(String organizationId) throws OrganizationManagementException {
+
+        String authorizedOrganizationId = getOrganizationId(); // The organization the user is authorized to access
+        if (!StringUtils.equals(organizationId, authorizedOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS, organizationId,
+                    authorizedOrganizationId);
         }
     }
 }

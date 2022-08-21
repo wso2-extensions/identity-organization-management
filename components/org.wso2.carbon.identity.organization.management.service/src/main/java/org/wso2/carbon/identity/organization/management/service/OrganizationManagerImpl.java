@@ -104,6 +104,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUPER_ORG_DELETE_OR_DISABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUPER_ORG_RENAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNABLE_TO_CREATE_CHILD_ORGANIZATION_IN_SUPER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ACCESS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_ORGANIZATION_STATUS;
@@ -132,6 +133,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.buildURIForBody;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserId;
@@ -192,6 +194,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (StringUtils.isBlank(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
+        validateOrganizationAllowedToAccess(organizationId);
         Organization organization = organizationManagementDAO.getOrganization(organizationId.trim());
 
         if (organization == null) {
@@ -269,6 +272,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
         if (StringUtils.isBlank(organizationId)) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
+        validateOrganizationAllowedToAccess(organizationId);
         validateOrganizationDelete(organizationId);
         Organization organization = organizationManagementDAO.getOrganization(organizationId);
         if (organization == null) {
@@ -295,6 +299,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
         organizationId = organizationId.trim();
+        validateOrganizationAllowedToAccess(organizationId);
         if (!isOrganizationExistById(organizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
@@ -319,6 +324,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
             throw handleClientException(ERROR_CODE_ORGANIZATION_ID_UNDEFINED);
         }
         organizationId = organizationId.trim();
+        validateOrganizationAllowedToAccess(organizationId);
         if (!isOrganizationExistById(organizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
@@ -849,5 +855,13 @@ public class OrganizationManagerImpl implements OrganizationManager {
     private TenantMgtService getTenantMgtService() {
 
         return OrganizationManagementDataHolder.getInstance().getTenantMgtService();
+    }
+
+    private void validateOrganizationAllowedToAccess(String organizationId) throws OrganizationManagementException {
+
+        String authorizedOrganizationId = getOrganizationId(); // The organization the user is authorized to access
+        if (!organizationManagementDAO.isImmediateChildOfParent(organizationId, authorizedOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ACCESS, organizationId, authorizedOrganizationId);
+        }
     }
 }
