@@ -68,15 +68,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreUpdateApplication(ServiceProvider serviceProvider, String tenantDomain,
                                           String userName) throws IdentityApplicationManagementException {
 
-        // If the application is a shared application, only certain updates to the application are allowed,
-        // if any other data has been change, listener will reject the update request.
+        // If the application is a fragment application, only certain configurations are allowed to be updated since
+        // the organization login authenticator needs some configurations unchanged. Hence, the listener will override
+        // any configs changes that are required for organization login.
         ServiceProvider existingApplication =
                 getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            if (!hasUpdatedAllowedData(existingApplication, serviceProvider)) {
-                return false;
-            }
+            serviceProvider.setSpProperties(existingApplication.getSpProperties());
+            serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
         }
 
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
@@ -113,14 +113,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
-    }
-
-    private boolean hasUpdatedAllowedData(ServiceProvider existingApplication, ServiceProvider serviceProvider) {
-
-        return existingApplication.getInboundAuthenticationConfig() ==
-                serviceProvider.getInboundAuthenticationConfig() &&
-                existingApplication.getPermissionAndRoleConfig() == serviceProvider.getPermissionAndRoleConfig() &&
-                existingApplication.getSpProperties() == serviceProvider.getSpProperties();
     }
 
     private ServiceProvider getApplicationByResourceId(String applicationResourceId, String tenantDomain)
