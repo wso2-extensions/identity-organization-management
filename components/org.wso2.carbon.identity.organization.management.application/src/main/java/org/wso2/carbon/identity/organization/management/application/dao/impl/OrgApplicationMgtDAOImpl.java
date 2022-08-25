@@ -22,12 +22,14 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
+import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.HAS_FRAGMENT_APPS;
@@ -39,6 +41,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LINK_APPLICATIONS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -84,6 +87,28 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, applicationId,
                     organizationId);
+        }
+    }
+
+    @Override
+    public Optional<MainApplicationDO> getMainApplication(String sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        MainApplicationDO mainApplicationDO;
+        try {
+            mainApplicationDO = namedJdbcTemplate.fetchSingleRecord(GET_MAIN_APPLICATION,
+                    (resultSet, rowNumber) -> new MainApplicationDO(
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
+                    });
+            return Optional.ofNullable(mainApplicationDO);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_MAIN_APPLICATION, e, sharedAppId,
+                    sharedOrgId);
         }
     }
 

@@ -28,9 +28,12 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
@@ -78,6 +81,48 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
+    }
+
+    @Override
+    public boolean doPostGetServiceProvider(ServiceProvider serviceProvider, String applicationName,
+                                            String tenantDomain) throws IdentityApplicationManagementException {
+
+        // If the application is a shared application, updates to the application are allowed
+        if (Arrays.stream(serviceProvider.getSpProperties())
+                .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+            Optional<MainApplicationDO> mainApplicationDO;
+            try {
+                String sharedOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+                mainApplicationDO = getOrgApplicationMgtDAO()
+                        .getMainApplication(serviceProvider.getApplicationResourceId(), sharedOrgId);
+
+                if (mainApplicationDO.isPresent()) {
+                    // Add User Attribute Section related configurations from the
+                    // main application to the shared application
+                    String mainApplicationTenantDomain = getOrganizationManager()
+                            .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
+                    ServiceProvider mainApplication = getApplicationByResourceId
+                            (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
+                    serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
+                    serviceProvider.getClaimConfig().setAlwaysSendMappedLocalSubjectId
+                            (mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().setUseTenantDomainInLocalSubjectIdentifier
+                            (mainApplication.getLocalAndOutBoundAuthenticationConfig()
+                                    .isUseTenantDomainInLocalSubjectIdentifier());
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig()
+                            .setUseUserstoreDomainInLocalSubjectIdentifier
+                                    (mainApplication.getLocalAndOutBoundAuthenticationConfig()
+                                            .isUseUserstoreDomainInLocalSubjectIdentifier());
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().setUseUserstoreDomainInRoles
+                            (mainApplication.getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
+                }
+            } catch (OrganizationManagementException e) {
+                throw new IdentityApplicationManagementException
+                        ("Error when retrieving the main app id using shared app id.", e);
+            }
+        }
+
+        return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
     }
 
     @Override
@@ -135,5 +180,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private OrgApplicationMgtDAO getOrgApplicationMgtDAO() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO();
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
     }
 }
