@@ -47,6 +47,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</module>
         <module>components/org.wso2.carbon.identity.organization.management.ext</module>
         <module>features/org.wso2.carbon.identity.organization.management.server.feature</module>
+        <module>components/org.wso2.carbon.identity.organization.management.claim.provider</module>
     </modules>
 
     <dependencyManagement>
@@ -460,5 +461,6 @@
         <compiler-source.version>1.8</compiler-source.version>
         <compiler-target.version>1.8</compiler-target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <identity.inbound.auth.oauth.imp.pkg.version.range>[6.0.0, 7.0.0)</identity.inbound.auth.oauth.imp.pkg.version.range>
     </properties>
 </project>
