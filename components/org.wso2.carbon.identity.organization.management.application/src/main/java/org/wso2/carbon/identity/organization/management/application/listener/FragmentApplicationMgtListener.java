@@ -104,8 +104,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     ServiceProvider mainApplication = getApplicationByResourceId
                             (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
                     serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
-                    serviceProvider.getClaimConfig().setAlwaysSendMappedLocalSubjectId
-                            (mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
                     serviceProvider.getLocalAndOutBoundAuthenticationConfig().setUseTenantDomainInLocalSubjectIdentifier
                             (mainApplication.getLocalAndOutBoundAuthenticationConfig()
                                     .isUseTenantDomainInLocalSubjectIdentifier());
@@ -118,7 +116,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 }
             } catch (OrganizationManagementException e) {
                 throw new IdentityApplicationManagementException
-                        ("Error when retrieving the main app id using shared app id.", e);
+                        ("Error while retrieving the fragment application details.", e);
             }
         }
 
