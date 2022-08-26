@@ -95,9 +95,8 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        MainApplicationDO mainApplicationDO;
         try {
-            mainApplicationDO = namedJdbcTemplate.fetchSingleRecord(GET_MAIN_APPLICATION,
+            MainApplicationDO mainApplicationDO = namedJdbcTemplate.fetchSingleRecord(GET_MAIN_APPLICATION,
                     (resultSet, rowNumber) -> new MainApplicationDO(
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID)),
