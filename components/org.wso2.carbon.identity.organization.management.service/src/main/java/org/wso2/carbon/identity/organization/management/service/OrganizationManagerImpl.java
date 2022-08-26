@@ -859,7 +859,7 @@ public class OrganizationManagerImpl implements OrganizationManager {
 
     private void validateOrganizationAllowedToAccess(String organizationId) throws OrganizationManagementException {
 
-        String authorizedOrganizationId = getOrganizationId(); // The organization the user is authorized to access
+        String authorizedOrganizationId = getOrganizationId(); // The organization that the user is authorized to access
         if (!organizationManagementDAO.isImmediateChildOfParent(organizationId, authorizedOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ACCESS, organizationId, authorizedOrganizationId);
         }

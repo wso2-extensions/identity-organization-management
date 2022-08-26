@@ -442,7 +442,7 @@ public class RoleManagerImpl implements RoleManager {
 
     private void validateOrganizationRoleAllowedToAccess(String organizationId) throws OrganizationManagementException {
 
-        String authorizedOrganizationId = getOrganizationId(); // The organization the user is authorized to access
+        String authorizedOrganizationId = getOrganizationId(); // The organization that the user is authorized to access
         if (!StringUtils.equals(organizationId, authorizedOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS, organizationId,
                     authorizedOrganizationId);
