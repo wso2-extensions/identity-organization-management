@@ -87,7 +87,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPostGetServiceProvider(ServiceProvider serviceProvider, String applicationName,
                                             String tenantDomain) throws IdentityApplicationManagementException {
 
-        // If the application is a shared application, updates to the application are allowed
+        // If the application is a shared application, updates to the application are allowed.
         if (Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             Optional<MainApplicationDO> mainApplicationDO;
