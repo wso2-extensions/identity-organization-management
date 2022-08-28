@@ -97,8 +97,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         .getMainApplication(serviceProvider.getApplicationResourceId(), sharedOrgId);
 
                 if (mainApplicationDO.isPresent()) {
-                    // Add User Attribute Section related configurations from the
-                    // main application to the shared application
+                    /* Add User Attribute Section related configurations from the
+                    main application to the shared application
+                     */
                     String mainApplicationTenantDomain = getOrganizationManager()
                             .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
                     ServiceProvider mainApplication = getApplicationByResourceId

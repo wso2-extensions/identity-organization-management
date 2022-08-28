@@ -24,7 +24,6 @@ package org.wso2.carbon.identity.organization.management.application.model;
 public class MainApplicationDO {
 
     String organizationId;
-
     String mainApplicationId;
 
     public MainApplicationDO(String organizationId, String mainApplicationId) {

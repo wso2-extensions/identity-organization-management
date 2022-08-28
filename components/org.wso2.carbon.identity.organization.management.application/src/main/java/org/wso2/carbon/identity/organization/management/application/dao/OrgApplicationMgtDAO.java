@@ -59,7 +59,7 @@ public interface OrgApplicationMgtDAO {
      * @param sharedAppId Unique identifier of the shared application.
      * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
      * @return {@link MainApplicationDO} for a given shared application.
-     * @throws OrganizationManagementException
+     * @throws OrganizationManagementException the server exception is thrown in a failure to retrieve the entry.
      */
     Optional<MainApplicationDO> getMainApplication(String sharedAppId, String sharedOrgId)
             throws OrganizationManagementException;
