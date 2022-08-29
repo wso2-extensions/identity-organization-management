@@ -87,7 +87,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPostGetServiceProvider(ServiceProvider serviceProvider, String applicationName,
                                             String tenantDomain) throws IdentityApplicationManagementException {
 
-        // If the application is a shared application, updates to the application are allowed
+        // If the application is a shared application, retrieving some data from the main application is allowed.
         if (Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             Optional<MainApplicationDO> mainApplicationDO;
@@ -105,15 +105,20 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     ServiceProvider mainApplication = getApplicationByResourceId
                             (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
                     serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().setUseTenantDomainInLocalSubjectIdentifier
-                            (mainApplication.getLocalAndOutBoundAuthenticationConfig()
-                                    .isUseTenantDomainInLocalSubjectIdentifier());
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig()
-                            .setUseUserstoreDomainInLocalSubjectIdentifier
-                                    (mainApplication.getLocalAndOutBoundAuthenticationConfig()
-                                            .isUseUserstoreDomainInLocalSubjectIdentifier());
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().setUseUserstoreDomainInRoles
-                            (mainApplication.getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
+                    if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
+                            && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
+                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
+                                .setUseTenantDomainInLocalSubjectIdentifier(mainApplication
+                                        .getLocalAndOutBoundAuthenticationConfig()
+                                        .isUseTenantDomainInLocalSubjectIdentifier());
+                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
+                                .setUseUserstoreDomainInLocalSubjectIdentifier(mainApplication
+                                        .getLocalAndOutBoundAuthenticationConfig()
+                                        .isUseUserstoreDomainInLocalSubjectIdentifier());
+                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
+                                .setUseUserstoreDomainInRoles(mainApplication
+                                        .getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
+                    }
                 }
             } catch (OrganizationManagementException e) {
                 throw new IdentityApplicationManagementException
