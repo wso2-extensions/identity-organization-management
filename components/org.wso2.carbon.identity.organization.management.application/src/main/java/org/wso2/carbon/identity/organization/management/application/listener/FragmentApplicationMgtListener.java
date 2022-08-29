@@ -32,6 +32,8 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 
 import java.util.Arrays;
 
+import static java.lang.String.format;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
@@ -66,15 +68,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreUpdateApplication(ServiceProvider serviceProvider, String tenantDomain,
                                           String userName) throws IdentityApplicationManagementException {
 
-        // If the application is a shared application, only certain updates to the application are allowed,
-        // if any other data has been change, listener will reject the update request.
+        // If the application is a fragment application, only certain configurations are allowed to be updated since
+        // the organization login authenticator needs some configurations unchanged. Hence, the listener will override
+        // any configs changes that are required for organization login.
         ServiceProvider existingApplication =
                 getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            if (!hasUpdatedAllowedData(existingApplication, serviceProvider)) {
-                return false;
-            }
+            serviceProvider.setSpProperties(existingApplication.getSpProperties());
+            serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
         }
 
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
@@ -92,27 +94,25 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         // If the application is a fragment application, application cannot be deleted
         if (Arrays.stream(application.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            return false;
+            if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION)) {
+                return true;
+            }
+            throw new IdentityApplicationManagementException(
+                    format("Application with resource id: %s is a fragment application, hence the application cannot " +
+                            "be deleted.", application.getApplicationResourceId()));
         }
-
         try {
             // If an application has fragment applications, application cannot be deleted.
             if (getOrgApplicationMgtDAO().hasFragments(application.getApplicationResourceId())) {
-                return false;
+                throw new IdentityApplicationManagementException(
+                        format("Application with resource id: %s is shared to other organization(s), hence the " +
+                                "application cannot be deleted.", application.getApplicationResourceId()));
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException("Error in validating the application for deletion.", e);
         }
 
         return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
-    }
-
-    private boolean hasUpdatedAllowedData(ServiceProvider existingApplication, ServiceProvider serviceProvider) {
-
-        return existingApplication.getInboundAuthenticationConfig() ==
-                serviceProvider.getInboundAuthenticationConfig() &&
-                existingApplication.getPermissionAndRoleConfig() == serviceProvider.getPermissionAndRoleConfig() &&
-                existingApplication.getSpProperties() == serviceProvider.getSpProperties();
     }
 
     private ServiceProvider getApplicationByResourceId(String applicationResourceId, String tenantDomain)

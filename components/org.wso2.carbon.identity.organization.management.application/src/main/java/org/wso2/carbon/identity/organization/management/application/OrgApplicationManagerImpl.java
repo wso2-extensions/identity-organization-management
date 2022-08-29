@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
@@ -70,6 +71,7 @@ import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
@@ -152,11 +154,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                 sharedTenantDomain);
                 String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
 
+                // Setting the thread local property to allow deleting fragment application. Otherwise
+                // FragmentApplicationMgtListener will reject application deletion.
+                IdentityUtil.threadLocalProperties.get().put(DELETE_FRAGMENT_APPLICATION, true);
                 getApplicationManagementService().deleteApplication(fragmentApplication.getApplicationName(),
                         sharedTenantDomain, username);
             } catch (IdentityApplicationManagementException e) {
                 throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, fragmentApplicationId.get(),
                         sharedOrganizationId);
+            } finally {
+                IdentityUtil.threadLocalProperties.get().remove(DELETE_FRAGMENT_APPLICATION);
             }
         }
     }

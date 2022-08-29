@@ -28,5 +28,6 @@ public class OrgApplicationMgtConstants {
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
 
     public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
+    public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
 
 }
