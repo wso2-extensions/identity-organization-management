@@ -329,6 +329,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setOrganizationId(sharedOrgId);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
 
             try {
