@@ -87,6 +87,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
@@ -106,6 +107,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
+        validateOrganizationApplicationsAllowedToAccess(ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
@@ -141,6 +143,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
             throws OrganizationManagementException {
 
+        validateOrganizationApplicationsAllowedToAccess(organizationId);
         ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
 
         Optional<String> fragmentApplicationId =
@@ -172,6 +175,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
             throws OrganizationManagementException {
 
+        validateOrganizationApplicationsAllowedToAccess(organizationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
         List<SharedApplicationDO> sharedApps =
                 getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
@@ -448,6 +452,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{fragmentAppProperty, skipConsentProp};
         serviceProvider.setSpProperties(spProperties);
+    }
+
+    private void validateOrganizationApplicationsAllowedToAccess(String organizationId)
+            throws OrganizationManagementException {
+
+        String authorizedOrganizationId = getOrganizationId(); // The organization that the user is authorized to access
+        if (!StringUtils.equals(organizationId, authorizedOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS, organizationId,
+                    authorizedOrganizationId);
+        }
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {

@@ -238,6 +238,10 @@ public class OrganizationManagementConstants {
                 "A root organization is not found for the authenticated user with ID: %s."),
         ERROR_CODE_SUPER_ORG_ROLE_CREATE("60059", "Organization roles can't be created in Super organization.",
                 "Organization %s can't manage organization roles."),
+        ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS("60060", "Organization roles can't be managed from a another " +
+                "organization.", "Organization roles of organization %s can't manage from organization %s."),
+        ERROR_CODE_UNAUTHORIZED_ORG_ACCESS("60061", "Organization can only be managed from immediate parent " +
+                "organization.", "Organization %s can't manage from organization %s."),
 
         // Server errors.
         ERROR_CODE_UNEXPECTED("65001", "Unexpected processing error",
