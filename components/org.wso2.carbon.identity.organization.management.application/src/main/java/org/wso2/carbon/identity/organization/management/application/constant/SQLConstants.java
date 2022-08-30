@@ -42,6 +42,10 @@ public class SQLConstants {
             "WHERE OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND MAIN_APP_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
 
+    public static final String GET_MAIN_APPLICATION = "SELECT MAIN_APP_ID, OWNER_ORG_ID FROM SP_SHARED_APP WHERE " +
+            "SHARED_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + "; AND SHARED_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
+
     private SQLConstants() {
 
     }

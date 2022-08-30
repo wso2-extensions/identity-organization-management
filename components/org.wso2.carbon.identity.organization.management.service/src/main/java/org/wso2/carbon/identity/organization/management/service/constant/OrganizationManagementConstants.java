@@ -433,7 +433,10 @@ public class OrganizationManagementConstants {
                 "Error while updating the authentication details of the application: %s"),
         ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS("65083",
                 "Unable to check whether the application has fragments.",
-                "Server encountered an error when checking whether the application: %s already has fragments.");
+                "Server encountered an error when checking whether the application: %s already has fragments."),
+        ERROR_CODE_ERROR_RESOLVING_MAIN_APPLICATION("65084", "Unable to resolve the main application",
+                "Server encountered an error while resolving the main application for " +
+                        "shared application: %s in shared organization: %s.");
 
         private final String code;
         private final String message;
