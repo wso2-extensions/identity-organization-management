@@ -467,16 +467,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     /**
      * Allow sharing application only from the organization the application exists.
      *
-     * @param requestInvokingOrganizationId The organization qualifier id where the request is authorized to access.
-     * @param accessedOrganizationId        The id of the organization where the application exist.
+     * @param requestInvokingOrganizationId     The organization qualifier id where the request is authorized to access.
+     * @param applicationResidingOrganizationId The id of the organization where the application exist.
      * @throws OrganizationManagementException The exception is thrown when the request invoked organization is not the
      *                                         application resides organization.
      */
-    private void validateApplicationShareAccess(String requestInvokingOrganizationId, String accessedOrganizationId)
+    private void validateApplicationShareAccess(String requestInvokingOrganizationId,
+                                                String applicationResidingOrganizationId)
             throws OrganizationManagementException {
 
-        if (!StringUtils.equals(requestInvokingOrganizationId, accessedOrganizationId)) {
-            throw handleClientException(ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE, accessedOrganizationId,
+        if (!StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE, applicationResidingOrganizationId,
                     requestInvokingOrganizationId);
         }
     }
@@ -484,17 +485,18 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     /**
      * Allow managing fragment application only from the organization the fragment application exists.
      *
-     * @param requestInvokingOrganizationId The organization qualifier id where the request is authorized to access.
-     * @param accessedOrganizationId        The id of the organization where the fragment application exist.
+     * @param requestInvokingOrganizationId     The organization qualifier id where the request is authorized to access.
+     * @param applicationResidingOrganizationId The id of the organization where the fragment application exist.
      * @throws OrganizationManagementException The exception is thrown when the request invoked organization is not
      *                                         the fragment application resides organization.
      */
-    private void validateFragmentApplicationAccess(String requestInvokingOrganizationId, String accessedOrganizationId)
+    private void validateFragmentApplicationAccess(String requestInvokingOrganizationId,
+                                                   String applicationResidingOrganizationId)
             throws OrganizationManagementException {
 
         if (requestInvokingOrganizationId == null ||
-                !StringUtils.equals(requestInvokingOrganizationId, accessedOrganizationId)) {
-            throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, accessedOrganizationId,
+                !StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, applicationResidingOrganizationId,
                     requestInvokingOrganizationId);
         }
     }
