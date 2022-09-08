@@ -87,7 +87,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
@@ -107,7 +109,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
             throws OrganizationManagementException {
 
-        validateOrganizationApplicationsAllowedToAccess(ownerOrgId);
+        String requestInvokingOrganizationId = getOrganizationId();
+        if (requestInvokingOrganizationId == null) {
+            requestInvokingOrganizationId = SUPER_ORG_ID;
+        }
+        validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
         ServiceProvider rootApplication = getOrgApplication(originalAppId, ownerTenantDomain);
@@ -143,7 +149,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void deleteSharedApplication(String organizationId, String applicationId, String sharedOrganizationId)
             throws OrganizationManagementException {
 
-        validateOrganizationApplicationsAllowedToAccess(organizationId);
+        validateFragmentApplicationAccess(getOrganizationId(), organizationId);
         ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
 
         Optional<String> fragmentApplicationId =
@@ -175,7 +181,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
             throws OrganizationManagementException {
 
-        validateOrganizationApplicationsAllowedToAccess(organizationId);
+        String requestInvokingOrganizationId = getOrganizationId();
+        if (requestInvokingOrganizationId == null) {
+            requestInvokingOrganizationId = SUPER_ORG_ID;
+        }
+        validateApplicationShareAccess(requestInvokingOrganizationId, organizationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
         List<SharedApplicationDO> sharedApps =
                 getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
@@ -454,13 +464,40 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         serviceProvider.setSpProperties(spProperties);
     }
 
-    private void validateOrganizationApplicationsAllowedToAccess(String organizationId)
+    /**
+     * Allow sharing application only from the organization the application exists.
+     *
+     * @param requestInvokingOrganizationId     The organization qualifier id where the request is authorized to access.
+     * @param applicationResidingOrganizationId The id of the organization where the application exist.
+     * @throws OrganizationManagementException The exception is thrown when the request invoked organization is not the
+     *                                         application resides organization.
+     */
+    private void validateApplicationShareAccess(String requestInvokingOrganizationId,
+                                                String applicationResidingOrganizationId)
             throws OrganizationManagementException {
 
-        String authorizedOrganizationId = getOrganizationId(); // The organization that the user is authorized to access
-        if (!StringUtils.equals(organizationId, authorizedOrganizationId)) {
-            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS, organizationId,
-                    authorizedOrganizationId);
+        if (!StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE, applicationResidingOrganizationId,
+                    requestInvokingOrganizationId);
+        }
+    }
+
+    /**
+     * Allow managing fragment application only from the organization the fragment application exists.
+     *
+     * @param requestInvokingOrganizationId     The organization qualifier id where the request is authorized to access.
+     * @param applicationResidingOrganizationId The id of the organization where the fragment application exist.
+     * @throws OrganizationManagementException The exception is thrown when the request invoked organization is not
+     *                                         the fragment application resides organization.
+     */
+    private void validateFragmentApplicationAccess(String requestInvokingOrganizationId,
+                                                   String applicationResidingOrganizationId)
+            throws OrganizationManagementException {
+
+        if (requestInvokingOrganizationId == null ||
+                !StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, applicationResidingOrganizationId,
+                    requestInvokingOrganizationId);
         }
     }
 
