@@ -25,6 +25,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomain;
@@ -52,13 +53,15 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             String requestedHostName = request.getHost().getName();
             String defaultHost = URLMappingHolder.getInstance().getDefaultHost();
             try {
-                tenantDomain = findTenantDomain(request);
+                tenantDomain = resolveTenantDomain(request);
             } catch (OrganizationManagementException e) {
-                // findTenantDomain method includes db calls and user realm has to be set beforehand. Super tenant is
-                // set as temporary tenant domain and the correct tenant domain will be set by the next call for
-                // findTenantDomain method.
-                super.setValuesToCarbonContext(carbonContext, "carbon.super", null);
-                tenantDomain = findTenantDomain(request);
+                /**
+                 * resolveTenantDomain method includes db calls and user realm has to be set beforehand. Super tenant
+                 * domain is set as temporary tenant domain and the correct tenant domain will be set by the next call
+                 * for resolveTenantDomain method.
+                 */
+                super.setValuesToCarbonContext(carbonContext, MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, null);
+                tenantDomain = resolveTenantDomain(request);
             }
             if (StringUtils.equalsIgnoreCase(requestedHostName, defaultHost)) {
                 appName = super.getAppNameFromRequest(request);
@@ -74,7 +77,7 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
         }
     }
 
-    private static String findTenantDomain(Request request) throws OrganizationManagementException {
+    private static String resolveTenantDomain(Request request) throws OrganizationManagementException {
 
         if (StringUtils.equalsIgnoreCase(request.getHost().getName(),
                 URLMappingHolder.getInstance().getDefaultHost())) {
