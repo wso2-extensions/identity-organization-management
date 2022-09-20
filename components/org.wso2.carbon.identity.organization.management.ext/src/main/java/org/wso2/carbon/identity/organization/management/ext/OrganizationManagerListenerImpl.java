@@ -135,7 +135,6 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
         try {
             Event event = new Event(eventName, eventProperties);
             eventService.handleEvent(event);
-
         } catch (IdentityEventException e) {
             throw new OrganizationManagementServerException(
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getMessage(),
