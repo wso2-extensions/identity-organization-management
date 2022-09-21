@@ -507,12 +507,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     /**
-     *
+     * Update application to indicate it is shared with all child organizations.
      *
      * @param serviceProvider The application being shared with all child organizations.
      * @param tenantDomain    Tenant domain.
      * @throws OrganizationManagementException The exception is thrown when the application could not be updated
-     *                                         with the SHARE_WITH_SUB_ORGS property.
      */
     private void markShareWithAllSubOrganizations(ServiceProvider serviceProvider, String tenantDomain)
             throws OrganizationManagementServerException {

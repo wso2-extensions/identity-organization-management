@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.logging.Log;
@@ -24,16 +42,14 @@ import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_SUB_ORGS;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
- * This class contains the implementation of the tenant management listener. This listener will be used to add
- * shared applications to newly created organizations.
+ * This class contains the implementation of the handler for post organization creation.
+ * This handler will be used to add shared applications to newly created organizations.
  */
 public class OrganizationCreationHandler extends AbstractEventHandler {
 
@@ -93,7 +109,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                     getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(), serviceProvider);
                 }
             } catch (IdentityApplicationManagementException e) {
-                LOG.error("Encountered an error while retrieving applications in tenant domain " + getTenantDomain(), e);
+                LOG.error(String.format("Encountered an error while retrieving application  %s",
+                        applicationBasicInfo.getApplicationResourceId()), e);
             } catch (OrganizationManagementException e) {
                 LOG.error(String.format("Encountered an error while sharing application %s to new organization %s",
                         applicationBasicInfo.getApplicationResourceId(), organization.getId()), e);
