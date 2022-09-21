@@ -78,6 +78,10 @@
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.ext</artifactId>
+        </dependency>
 
         <!--Test Dependencies-->
         <dependency>
@@ -153,6 +157,8 @@
                             org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.model; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.event.handler; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

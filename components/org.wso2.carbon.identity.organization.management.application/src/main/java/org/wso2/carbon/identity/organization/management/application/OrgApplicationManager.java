@@ -73,4 +73,15 @@ public interface OrgApplicationManager {
      */
     ServiceProvider resolveSharedApplication(String mainAppName, String ownerOrgId, String sharedOrgId)
             throws OrganizationManagementException;
+
+    /**
+     * Share the application to a child organization.
+     *
+     * @param ownerOrgId      Identifier of the organization owning the application.
+     * @param sharedOrgId     Identifier of the organization to which the application being shared to.
+     * @param mainApplication Identifier of the main application.
+     * @throws OrganizationManagementException on errors when sharing the application.
+     */
+    void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication)
+            throws OrganizationManagementException;
 }

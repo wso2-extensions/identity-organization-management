@@ -74,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_SUB_ORGS;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
@@ -128,6 +129,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (!filteredChildOrgs.isEmpty()) {
             // Adding Organization login IDP to the root application.
             addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
+        }
+
+        if (CollectionUtils.isEmpty(sharedOrgs)) {
+            markShareWithAllSubOrganizations(rootApplication, ownerTenantDomain);
         }
 
         for (BasicOrganization child : filteredChildOrgs) {
@@ -341,7 +346,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return idp;
     }
 
-    private void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication)
+    public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication)
             throws OrganizationManagementException {
 
         try {
@@ -498,6 +503,36 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 !StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, applicationResidingOrganizationId,
                     requestInvokingOrganizationId);
+        }
+    }
+
+    /**
+     *
+     *
+     * @param serviceProvider The application being shared with all child organizations.
+     * @param tenantDomain    Tenant domain.
+     * @throws OrganizationManagementException The exception is thrown when the application could not be updated
+     *                                         with the SHARE_WITH_SUB_ORGS property.
+     */
+    private void markShareWithAllSubOrganizations(ServiceProvider serviceProvider, String tenantDomain)
+            throws OrganizationManagementServerException {
+        try {
+            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
+
+            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
+
+            ServiceProviderProperty shareWithSubOrgs = new ServiceProviderProperty();
+            shareWithSubOrgs.setName(SHARE_WITH_SUB_ORGS);
+            shareWithSubOrgs.setValue(Boolean.TRUE.toString());
+            newSpProperties[spProperties.length] = shareWithSubOrgs;
+
+            serviceProvider.setSpProperties(newSpProperties);
+            getApplicationManagementService().updateApplication(serviceProvider,
+                    tenantDomain, getAuthenticatedUsername());
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
+                    serviceProvider.getApplicationResourceId(), tenantDomain);
         }
     }
 

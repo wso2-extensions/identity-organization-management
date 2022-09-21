@@ -29,11 +29,13 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
+import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
+import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -65,6 +67,8 @@ public class OrgApplicationMgtServiceComponent {
             bundleContext.registerService(OrgApplicationManager.class.getName(), new OrgApplicationManagerImpl(), null);
             //Fragment application listener.
             bundleContext.registerService(ApplicationMgtListener.class.getName(), new FragmentApplicationMgtListener(),
+                    null);
+            bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
             if (log.isDebugEnabled()) {
                 log.debug("Organization Application Management component activated successfully.");
