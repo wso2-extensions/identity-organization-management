@@ -39,8 +39,8 @@ public interface OrgApplicationMgtDAO {
      * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
      * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
      */
-    void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId)
-            throws OrganizationManagementException;
+    void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId,
+            boolean shareWithSubOrgs) throws OrganizationManagementException;
 
     /**
      * Retrieve the list of shared applications entries for a given application.
@@ -65,6 +65,17 @@ public interface OrgApplicationMgtDAO {
             throws OrganizationManagementException;
 
     /**
+     * Retrieve shared application for a given shared application id.
+     *
+     * @param sharedAppId Unique identifier of the shared application.
+     * @param sharedOrgId The unique ID of the organization, to whom the application is shared.
+     * @return {@link SharedApplicationDO}
+     * @throws OrganizationManagementException the server exception is thrown in a failure to retrieve the entry.
+     */
+    Optional<SharedApplicationDO> getSharedApplication(int sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException;
+
+    /**
      * Returns the unique identifier of the shared application.
      *
      * @param mainAppId   Main application identifier.
@@ -85,4 +96,6 @@ public interface OrgApplicationMgtDAO {
      *                                         of the application.
      */
     boolean hasFragments(String applicationId) throws OrganizationManagementException;
+
+    boolean isFragmentApplication(int applicationId) throws OrganizationManagementException;
 }

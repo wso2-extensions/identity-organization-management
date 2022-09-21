@@ -24,11 +24,12 @@ package org.wso2.carbon.identity.organization.management.application.constant;
 public class SQLConstants {
 
     public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (MAIN_APP_ID, OWNER_ORG_ID, " +
-            "SHARED_APP_ID, SHARED_ORG_ID) VALUES (:" +
+            "SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_SUB_ORGS) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";);";
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS + ";);";
 
     public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
             "OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND " +
@@ -38,13 +39,23 @@ public class SQLConstants {
     public static final String HAS_FRAGMENT_APPS = "SELECT COUNT(1) FROM SP_SHARED_APP WHERE " +
             "MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
 
-    public static final String GET_SHARED_APPLICATIONS = "SELECT SHARED_APP_ID, SHARED_ORG_ID FROM SP_SHARED_APP " +
-            "WHERE OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND MAIN_APP_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
+    public static final String GET_SHARED_APPLICATIONS = "SELECT SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_SUB_ORGS " +
+            "FROM SP_SHARED_APP WHERE OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID +
+            "; AND MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
+
+    public static final String GET_SHARED_APPLICATION = "SELECT SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_SUB_ORGS " +
+            "FROM SP_SHARED_APP JOIN SP_APP ON SP_APP.UUID = SP_SHARED_APP.SHARED_APP_ID WHERE SHARED_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + "; AND SP_APP.ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID + ";";
 
     public static final String GET_MAIN_APPLICATION = "SELECT MAIN_APP_ID, OWNER_ORG_ID FROM SP_SHARED_APP WHERE " +
             "SHARED_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + "; AND SHARED_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
+
+    public static final String IS_FRAGMENT_APPLICATION = "SELECT COUNT(1) FROM SP_METADATA WHERE " +
+            "SP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID + "; AND NAME = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME + "; AND `VALUE` = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE + ";";
 
     private SQLConstants() {
 
@@ -59,6 +70,11 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID = "OWNER_ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID = "SHARED_APP_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID = "SHARED_ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS = "SHARE_WITH_SUB_ORGS";
+        public static final String DB_SCHEMA_COLUMN_NAME_SP_ID = "SP_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_METADATA_NAME = "METADATA_NAME";
+        public static final String DB_SCHEMA_COLUMN_NAME_METADATA_VALUE = "METADATA_VALUE";
+        public static final String DB_SCHEMA_COLUMN_NAME_SP_APP_ID = "SP_APP_ID";
 
         private SQLPlaceholders() {
 

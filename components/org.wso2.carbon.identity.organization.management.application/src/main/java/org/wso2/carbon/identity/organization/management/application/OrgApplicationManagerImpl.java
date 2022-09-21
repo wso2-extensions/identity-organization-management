@@ -140,7 +140,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (TENANT.equalsIgnoreCase(childOrg.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
-                        shareApplication(organization.getId(), childOrg.getId(), rootApplication);
+                        shareApplication(organization.getId(), childOrg.getId(), rootApplication,
+                                CollectionUtils.isEmpty(sharedOrgs));
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to organization: %s",
                                 rootApplication.getApplicationID(), childOrg.getId()), e);
@@ -346,8 +347,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return idp;
     }
 
-    public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication)
-            throws OrganizationManagementException {
+    @Override
+    public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
+            boolean shareWithSubOrgs) throws OrganizationManagementException {
 
         try {
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
@@ -391,7 +393,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                         sharedOrgId, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
-                        sharedApplicationId, sharedOrgId);
+                        sharedApplicationId, sharedOrgId, shareWithSubOrgs);
             } catch (IdentityApplicationManagementException e) {
                 removeOAuthApplication(createdOAuthApp);
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,

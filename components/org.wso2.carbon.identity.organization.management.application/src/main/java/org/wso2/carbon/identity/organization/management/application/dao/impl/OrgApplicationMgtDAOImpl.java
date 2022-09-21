@@ -29,17 +29,26 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.HAS_FRAGMENT_APPS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.IS_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_IS_A_FRAGMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LINK_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
@@ -51,8 +60,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
     @Override
-    public void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId)
-            throws OrganizationManagementException {
+    public void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId,
+            boolean shareWithSubOrgs) throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -62,6 +71,8 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrgId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS,
+                            String.valueOf(shareWithSubOrgs));
                 }, null, false);
                 return null;
             });
@@ -87,6 +98,29 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, applicationId,
                     organizationId);
+        }
+    }
+
+    @Override
+    public Optional<SharedApplicationDO> getSharedApplication(int sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            SharedApplicationDO sharedApplicationDO = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_APPLICATION,
+                    (resultSet, rowNumber) -> new SharedApplicationDO(
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
+                            resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_APP_ID,
+                                Integer.toString(sharedAppId));
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
+                    });
+            return Optional.ofNullable(sharedApplicationDO);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, String.valueOf(sharedAppId),
+                    sharedOrgId);
         }
     }
 
@@ -144,6 +178,24 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             return hasFragment > 0;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS, e, applicationId);
+        }
+    }
+
+    @Override
+    public boolean isFragmentApplication(int applicationId) throws OrganizationManagementException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            int isFragment = namedJdbcTemplate.fetchSingleRecord(IS_FRAGMENT_APPLICATION,
+                    (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_ID, Integer.toString(applicationId));
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_NAME, IS_FRAGMENT_APP);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_VALUE, "true");
+                    });
+            return isFragment > 0;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECKING_APPLICATION_IS_A_FRAGMENT, e,
+                    String.valueOf(applicationId));
         }
     }
 }
