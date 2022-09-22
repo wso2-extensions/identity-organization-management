@@ -517,6 +517,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      */
     private void markShareWithAllSubOrganizations(ServiceProvider serviceProvider, String tenantDomain)
             throws OrganizationManagementServerException {
+
         try {
             ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
             ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];

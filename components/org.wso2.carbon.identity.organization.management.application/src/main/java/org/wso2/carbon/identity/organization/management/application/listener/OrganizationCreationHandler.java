@@ -101,16 +101,16 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                                     sharedApplicationDO.get().getFragmentApplicationId(),
                                     sharedApplicationDO.get().getOrganizationId());
                             if (mainApplicationDO.isPresent()) {
-                                ServiceProvider mainApplication = new ServiceProvider();
-                                mainApplication.setApplicationName(applicationBasicInfo.getApplicationName());
-                                mainApplication.setApplicationResourceId(
-                                        mainApplicationDO.get().getMainApplicationId());
+                                ServiceProvider mainApplication = getApplicationManagementService().getServiceProvider(
+                                        applicationBasicInfo.getApplicationId());
                                 ownerOrgId = mainApplicationDO.get().getOrganizationId();
                                 getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
                                         mainApplication, true);
                             }
                         } catch (OrganizationManagementException e) {
-                            throw new RuntimeException(e);
+                            LOG.error("Encountered an error while sharing application", e);
+                        } catch (IdentityApplicationManagementException e) {
+                            LOG.error("Encountered an error while retrieving application", e);
                         }
                     }
                 } else {
