@@ -69,7 +69,11 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             if (StringUtils.isBlank(organizationID)) {
                 return;
             }
-            String adminUUID = realmService.getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
+            String adminUUID = tenant.getAdminUserId();
+            if (StringUtils.isBlank(adminUUID)) {
+                // If realms were not migrated after https://github.com/wso2/product-is/issues/14001.
+                adminUUID = realmService.getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
+            }
             String tenantUuid = tenant.getTenantUniqueID();
             if (StringUtils.isBlank(tenantUuid)) {
                 LOG.error("Tenant UUID was not found for tenant: " + tenantId + ". Therefore, tenant association " +
