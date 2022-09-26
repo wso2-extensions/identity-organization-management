@@ -22,10 +22,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.catalina.connector.Request;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomain;
@@ -52,20 +50,11 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
             String requestedHostName = request.getHost().getName();
             String defaultHost = URLMappingHolder.getInstance().getDefaultHost();
-            try {
-                tenantDomain = resolveTenantDomain(request);
-            } catch (OrganizationManagementException e) {
-                /**
-                 * resolveTenantDomain method includes db calls and user realm has to be set beforehand. Super tenant
-                 * domain is set as temporary tenant domain and the correct tenant domain will be set by the next call
-                 * for resolveTenantDomain method.
-                 */
-                super.setValuesToCarbonContext(carbonContext, MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, null);
-                tenantDomain = resolveTenantDomain(request);
-            }
             if (StringUtils.equalsIgnoreCase(requestedHostName, defaultHost)) {
+                tenantDomain = getTenantDomain(request);
                 appName = super.getAppNameFromRequest(request);
             } else {
+                tenantDomain = getTenantDomainFromURLMapping(request);
                 appName = super.getAppNameForURLMapping(request);
             }
             request.setAttribute(TENANT_DOMAIN_FROM_REQUEST_PATH, tenantDomain);
@@ -74,16 +63,6 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             setOrganizationIdToCarbonContext(carbonContext, requestURI);
         } else {
             super.initCarbonContext(request);
-        }
-    }
-
-    private static String resolveTenantDomain(Request request) throws OrganizationManagementException {
-
-        if (StringUtils.equalsIgnoreCase(request.getHost().getName(),
-                URLMappingHolder.getInstance().getDefaultHost())) {
-            return getTenantDomain(request);
-        } else {
-            return getTenantDomainFromURLMapping(request);
         }
     }
 
