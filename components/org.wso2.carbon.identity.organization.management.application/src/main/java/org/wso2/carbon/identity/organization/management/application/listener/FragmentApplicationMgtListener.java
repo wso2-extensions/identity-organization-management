@@ -164,7 +164,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         // If the application is a fragment application and the main application is shared with all its descendants,
-        // the application can be deleted only if the main application is being deleted.
+        // the application can be deleted only if the main application is being deleted or if main application delete
+        // sharing with all organizations.
         if (Arrays.stream(application.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             Optional<SharedApplicationDO> sharedApplicationDO;
