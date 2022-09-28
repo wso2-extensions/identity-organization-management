@@ -421,6 +421,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             Optional<String> mayBeSharedAppId = resolveSharedApp(
                     mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
             if (mayBeSharedAppId.isPresent()) {
+                getOrgApplicationMgtDAO().updateSharedApplication(mayBeSharedAppId.get(), sharedOrgId,
+                        shareWithAllChildren);
                 return;
             }
             // Create Oauth consumer app to redirect login to shared (fragment) application.

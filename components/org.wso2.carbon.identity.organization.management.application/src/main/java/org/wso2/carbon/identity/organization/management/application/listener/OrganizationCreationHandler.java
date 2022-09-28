@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 
@@ -101,8 +102,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                                     sharedApplicationDO.get().getFragmentApplicationId(),
                                     sharedApplicationDO.get().getOrganizationId());
                             if (mainApplicationDO.isPresent()) {
-                                ServiceProvider mainApplication = getApplicationManagementService().getServiceProvider(
-                                        applicationBasicInfo.getApplicationId());
+                                String tenantDomain = getOrganizationManager().resolveTenantDomain(
+                                        mainApplicationDO.get().getOrganizationId());
+                                ServiceProvider mainApplication = getApplicationManagementService()
+                                        .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
+                                                tenantDomain);
                                 ownerOrgId = mainApplicationDO.get().getOrganizationId();
                                 getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
                                         mainApplication, true);
@@ -151,6 +155,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     private OrgApplicationMgtDAO getOrgApplicationMgtDAO() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationMgtDAO();
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
     }
 
 }

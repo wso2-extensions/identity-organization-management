@@ -44,6 +44,17 @@ public interface OrgApplicationMgtDAO {
             boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
+     * Update shared application.
+     *
+     * @param sharedAppId           Unique identifier of the shared application.
+     * @param sharedOrgId           The unique ID of the organization, to whom the application is shared.
+     * @param shareWithAllChildren  Attribute indicating if the application is shared with all child organizations.
+     * @throws OrganizationManagementException the server exception is thrown in a failure to update the entry.
+     */
+    void updateSharedApplication(String sharedAppId, String sharedOrgId,
+            boolean shareWithAllChildren) throws OrganizationManagementException;
+
+    /**
      * Retrieve the list of shared applications entries for a given application.
      *
      * @param organizationId The unique ID corresponding to the organization where the main application resides.

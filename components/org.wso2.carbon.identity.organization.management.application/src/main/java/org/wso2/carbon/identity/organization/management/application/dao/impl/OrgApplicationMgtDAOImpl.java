@@ -46,12 +46,14 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.UPDATE_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_IS_A_FRAGMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LINK_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
@@ -78,6 +80,26 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             });
         } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_ERROR_LINK_APPLICATIONS, e, mainAppId, sharedAppId);
+        }
+    }
+
+    @Override
+    public void updateSharedApplication(String sharedAppId, String sharedOrgId,
+                                     boolean shareWithAllChildren) throws OrganizationManagementException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeInsert(UPDATE_SHARED_APP, namedPreparedStatement -> {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
+                            String.valueOf(shareWithAllChildren));
+                }, null, false);
+                return null;
+            });
+        } catch (TransactionException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, sharedAppId);
         }
     }
 
