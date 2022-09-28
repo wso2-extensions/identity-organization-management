@@ -43,7 +43,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
@@ -61,7 +61,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
     @Override
     public void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId,
-            boolean shareWithSubOrgs) throws OrganizationManagementException {
+            boolean shareWithAllChildren) throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -71,8 +71,8 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrgId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS,
-                            String.valueOf(shareWithSubOrgs));
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
+                            String.valueOf(shareWithAllChildren));
                 }, null, false);
                 return null;
             });
@@ -111,7 +111,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     (resultSet, rowNumber) -> new SharedApplicationDO(
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
-                            resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_SUB_ORGS)),
+                            resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN)),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_APP_ID,
                                 Integer.toString(sharedAppId));

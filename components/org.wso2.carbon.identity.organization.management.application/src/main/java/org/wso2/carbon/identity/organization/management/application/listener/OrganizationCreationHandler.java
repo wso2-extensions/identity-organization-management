@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_SUB_ORGS;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -94,7 +94,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         continue;
                     }
 
-                    if (sharedApplicationDO.isPresent() && sharedApplicationDO.get().shareWithSubOrgs()) {
+                    if (sharedApplicationDO.isPresent() && sharedApplicationDO.get().shareWithAllChildren()) {
                         Optional<MainApplicationDO> mainApplicationDO;
                         try {
                             mainApplicationDO = getOrgApplicationMgtDAO().getMainApplication(
@@ -119,7 +119,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         mainApplication = getApplicationManagementService().getServiceProvider(
                                 applicationBasicInfo.getApplicationId());
                         if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
-                                .anyMatch(p -> SHARE_WITH_SUB_ORGS.equalsIgnoreCase(
+                                .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
                                         p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                             getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
                                     mainApplication, true);

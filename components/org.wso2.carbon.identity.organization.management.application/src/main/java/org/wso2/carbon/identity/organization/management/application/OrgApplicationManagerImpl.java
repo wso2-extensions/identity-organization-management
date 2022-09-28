@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.application;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -58,6 +57,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,10 +72,13 @@ import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_SUB_ORGS;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_OAUTH_APP;
@@ -87,6 +90,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS;
@@ -107,8 +111,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
 
     @Override
-    public void shareOrganizationApplication(String ownerOrgId, String originalAppId, List<String> sharedOrgs)
-            throws OrganizationManagementException {
+    public void shareOrganizationApplication(String ownerOrgId, String originalAppId, boolean shareWithAllChildren,
+            List<String> sharedOrgs) throws OrganizationManagementException {
 
         String requestInvokingOrganizationId = getOrganizationId();
         if (requestInvokingOrganizationId == null) {
@@ -121,18 +125,26 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(ownerOrgId, true);
         // Filter the child organization in case user send a list of organizations to share the original application.
-        List<BasicOrganization> filteredChildOrgs = CollectionUtils.isEmpty(sharedOrgs) ?
+        List<BasicOrganization> filteredChildOrgs = shareWithAllChildren ?
                 childOrganizations :
                 childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId()))
                         .collect(Collectors.toList());
 
-        if (!filteredChildOrgs.isEmpty()) {
+        if (shareWithAllChildren) {
+            setShareWithAllChildrenProperty(rootApplication, true);
+            IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
+            try {
+                getApplicationManagementService().updateApplication(rootApplication,
+                        ownerTenantDomain, getAuthenticatedUsername());
+            } catch (IdentityApplicationManagementException e) {
+                throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, originalAppId);
+            } finally {
+                IdentityUtil.threadLocalProperties.get().remove(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN);
+            }
+        }
+        if (shareWithAllChildren || !filteredChildOrgs.isEmpty()) {
             // Adding Organization login IDP to the root application.
             addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
-        }
-
-        if (CollectionUtils.isEmpty(sharedOrgs)) {
-            markShareWithAllSubOrganizations(rootApplication, ownerTenantDomain);
         }
 
         for (BasicOrganization child : filteredChildOrgs) {
@@ -141,7 +153,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 CompletableFuture.runAsync(() -> {
                     try {
                         shareApplication(organization.getId(), childOrg.getId(), rootApplication,
-                                CollectionUtils.isEmpty(sharedOrgs));
+                                shareWithAllChildren);
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to organization: %s",
                                 rootApplication.getApplicationID(), childOrg.getId()), e);
@@ -157,6 +169,37 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         validateFragmentApplicationAccess(getOrganizationId(), organizationId);
         ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
+
+        if (sharedOrganizationId == null) {
+
+            // Delete share for all shared applications.
+            List<SharedApplicationDO> sharedApplicationDOList =
+                    getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
+            for (SharedApplicationDO sharedApplicationDO: sharedApplicationDOList) {
+                IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
+                deleteSharedApplication(serviceProvider, organizationId, sharedApplicationDO.getOrganizationId());
+                IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
+            }
+            if (Arrays.stream(serviceProvider.getSpProperties()).anyMatch(p ->
+                    SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+                setShareWithAllChildrenProperty(serviceProvider, false);
+                IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
+                try {
+                    getApplicationManagementService().updateApplication(
+                            serviceProvider, getTenantDomain(), getAuthenticatedUsername());
+                } catch (IdentityApplicationManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, applicationId);
+                } finally {
+                    IdentityUtil.threadLocalProperties.get().remove(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN);
+                }
+            }
+        } else {
+            deleteSharedApplication(serviceProvider, organizationId, sharedOrganizationId);
+        }
+    }
+
+    private void deleteSharedApplication(ServiceProvider serviceProvider, String organizationId,
+            String sharedOrganizationId) throws OrganizationManagementException {
 
         Optional<String> fragmentApplicationId =
                 resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
@@ -179,6 +222,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         sharedOrganizationId);
             } finally {
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_FRAGMENT_APPLICATION);
+                IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
             }
         }
     }
@@ -349,7 +393,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
     public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
-            boolean shareWithSubOrgs) throws OrganizationManagementException {
+            boolean shareWithAllChildren) throws OrganizationManagementException {
 
         try {
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
@@ -393,7 +437,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                         sharedOrgId, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
-                        sharedApplicationId, sharedOrgId, shareWithSubOrgs);
+                        sharedApplicationId, sharedOrgId, shareWithAllChildren);
             } catch (IdentityApplicationManagementException e) {
                 removeOAuthApplication(createdOAuthApp);
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
@@ -505,36 +549,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 !StringUtils.equals(requestInvokingOrganizationId, applicationResidingOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, applicationResidingOrganizationId,
                     requestInvokingOrganizationId);
-        }
-    }
-
-    /**
-     * Update application to indicate it is shared with all child organizations.
-     *
-     * @param serviceProvider The application being shared with all child organizations.
-     * @param tenantDomain    Tenant domain.
-     * @throws OrganizationManagementException The exception is thrown when the application could not be updated
-     */
-    private void markShareWithAllSubOrganizations(ServiceProvider serviceProvider, String tenantDomain)
-            throws OrganizationManagementServerException {
-
-        try {
-            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
-            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
-
-            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
-
-            ServiceProviderProperty shareWithSubOrgs = new ServiceProviderProperty();
-            shareWithSubOrgs.setName(SHARE_WITH_SUB_ORGS);
-            shareWithSubOrgs.setValue(Boolean.TRUE.toString());
-            newSpProperties[spProperties.length] = shareWithSubOrgs;
-
-            serviceProvider.setSpProperties(newSpProperties);
-            getApplicationManagementService().updateApplication(serviceProvider,
-                    tenantDomain, getAuthenticatedUsername());
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
-                    serviceProvider.getApplicationResourceId(), tenantDomain);
         }
     }
 

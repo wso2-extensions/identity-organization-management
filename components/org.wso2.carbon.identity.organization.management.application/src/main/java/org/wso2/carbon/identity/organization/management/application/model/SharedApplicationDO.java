@@ -27,7 +27,7 @@ public class SharedApplicationDO {
 
     String fragmentApplicationId;
 
-    boolean shareWithSubOrgs;
+    boolean shareWithAllChildren;
 
     public SharedApplicationDO(String organizationId, String fragmentApplicationId) {
 
@@ -35,11 +35,11 @@ public class SharedApplicationDO {
         this.fragmentApplicationId = fragmentApplicationId;
     }
 
-    public SharedApplicationDO(String organizationId, String fragmentApplicationId, boolean shareWithSubOrgs) {
+    public SharedApplicationDO(String organizationId, String fragmentApplicationId, boolean shareWithAllChildren) {
 
         this.organizationId = organizationId;
         this.fragmentApplicationId = fragmentApplicationId;
-        this.shareWithSubOrgs = shareWithSubOrgs;
+        this.shareWithAllChildren = shareWithAllChildren;
     }
 
     public String getOrganizationId() {
@@ -52,8 +52,8 @@ public class SharedApplicationDO {
         return fragmentApplicationId;
     }
 
-    public boolean shareWithSubOrgs() {
+    public boolean shareWithAllChildren() {
 
-        return this.shareWithSubOrgs;
+        return this.shareWithAllChildren;
     }
 }
