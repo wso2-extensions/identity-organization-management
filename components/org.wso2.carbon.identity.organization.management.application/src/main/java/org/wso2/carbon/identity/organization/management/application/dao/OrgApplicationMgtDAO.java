@@ -44,17 +44,6 @@ public interface OrgApplicationMgtDAO {
             boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
-     * Update shared application.
-     *
-     * @param sharedAppId           Unique identifier of the shared application.
-     * @param sharedOrgId           The unique ID of the organization, to whom the application is shared.
-     * @param shareWithAllChildren  Attribute indicating if the application is shared with all child organizations.
-     * @throws OrganizationManagementException the server exception is thrown in a failure to update the entry.
-     */
-    void updateSharedApplication(String sharedAppId, String sharedOrgId,
-            boolean shareWithAllChildren) throws OrganizationManagementException;
-
-    /**
      * Retrieve the list of shared applications entries for a given application.
      *
      * @param organizationId The unique ID corresponding to the organization where the main application resides.
@@ -118,4 +107,15 @@ public interface OrgApplicationMgtDAO {
      *                                         application is a fragment.
      */
     boolean isFragmentApplication(int applicationId) throws OrganizationManagementException;
+
+    /**
+     * Update the shareWithAllChildren value of shared applications for a given main application.
+     *
+     * @param mainApplicationId     The unique ID of the main application.
+     * @param ownerOrganizationId   The unique ID corresponding to the organization where the main application resides.
+     * @param shareWithAllChildren  Value to be updated.
+     * @throws OrganizationManagementException the server exception is thrown in a failure when updating.
+     */
+    void updateShareWithAllChildren(String mainApplicationId, String ownerOrganizationId, boolean shareWithAllChildren)
+            throws OrganizationManagementException;
 }
