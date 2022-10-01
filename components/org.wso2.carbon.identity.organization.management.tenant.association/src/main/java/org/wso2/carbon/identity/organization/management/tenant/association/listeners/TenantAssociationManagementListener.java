@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.core.AbstractIdentityTenantMgtListener;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.tenant.association.Constants;
 import org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder;
 import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
@@ -67,6 +68,10 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             // Association will be created only if the tenant created with an organization id.
             String organizationID = tenant.getAssociatedOrganizationUUID();
             if (StringUtils.isBlank(organizationID)) {
+                return;
+            }
+            // If the organization uses carbon roles, this organization association is not required.
+            if (!Utils.useOrganizationRolesForValidation(organizationID)) {
                 return;
             }
             String adminUUID = tenant.getAdminUserId();
