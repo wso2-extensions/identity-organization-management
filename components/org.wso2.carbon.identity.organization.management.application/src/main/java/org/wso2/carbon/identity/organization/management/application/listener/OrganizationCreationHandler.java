@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -56,18 +57,24 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     private static final Log LOG = LogFactory.getLog(OrganizationCreationHandler.class);
 
     @Override
-    public void handleEvent(Event event) {
+    public void handleEvent(Event event) throws IdentityEventException {
 
         String eventName = event.getEventName();
 
         if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
             Map<String, Object> eventProperties = event.getEventProperties();
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
-            addSharedApplicationsToOrganization(organization);
+            try {
+                addSharedApplicationsToOrganization(organization);
+            } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
+                throw new IdentityEventException("An error occured while creating shared applications in the new " +
+                        "organization", e);
+            }
         }
     }
 
-    private void addSharedApplicationsToOrganization(Organization organization) {
+    private void addSharedApplicationsToOrganization(Organization organization)
+            throws IdentityApplicationManagementException, OrganizationManagementException {
 
         String ownerOrgId = getOrganizationId();
         if (ownerOrgId == null) {
@@ -75,69 +82,42 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
 
         ApplicationBasicInfo[] applicationBasicInfos;
-        try {
-            applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
-                    getTenantDomain(), getAuthenticatedUsername());
-        } catch (IdentityApplicationManagementException e) {
-            LOG.error("Encountered an error while retrieving applications in organization " + ownerOrgId, e);
-            return;
-        }
+        applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
+                getTenantDomain(), getAuthenticatedUsername());
 
         for (ApplicationBasicInfo applicationBasicInfo: applicationBasicInfos) {
-            try {
-                if (getOrgApplicationMgtDAO().isFragmentApplication(applicationBasicInfo.getApplicationId())) {
-                    Optional<SharedApplicationDO> sharedApplicationDO;
-                    try {
-                        sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(
-                                applicationBasicInfo.getApplicationId(), ownerOrgId);
-                    } catch (OrganizationManagementException e) {
-                        LOG.error("Encountered an error while retrieving shared application", e);
-                        continue;
-                    }
+            if (getOrgApplicationMgtDAO().isFragmentApplication(applicationBasicInfo.getApplicationId())) {
+                Optional<SharedApplicationDO> sharedApplicationDO;
+                sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(
+                        applicationBasicInfo.getApplicationId(), ownerOrgId);
 
-                    if (sharedApplicationDO.isPresent() && sharedApplicationDO.get().shareWithAllChildren()) {
-                        Optional<MainApplicationDO> mainApplicationDO;
-                        try {
-                            mainApplicationDO = getOrgApplicationMgtDAO().getMainApplication(
-                                    sharedApplicationDO.get().getFragmentApplicationId(),
-                                    sharedApplicationDO.get().getOrganizationId());
-                            if (mainApplicationDO.isPresent()) {
-                                String tenantDomain = getOrganizationManager().resolveTenantDomain(
-                                        mainApplicationDO.get().getOrganizationId());
-                                ServiceProvider mainApplication = getApplicationManagementService()
-                                        .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
-                                                tenantDomain);
-                                ownerOrgId = mainApplicationDO.get().getOrganizationId();
-                                getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
-                                        mainApplication, true);
-                            }
-                        } catch (OrganizationManagementException e) {
-                            LOG.error("Encountered an error while sharing application", e);
-                        } catch (IdentityApplicationManagementException e) {
-                            LOG.error("Encountered an error while retrieving application", e);
-                        }
-                    }
-                } else {
-                    ServiceProvider mainApplication;
-                    try {
-                        mainApplication = getApplicationManagementService().getServiceProvider(
-                                applicationBasicInfo.getApplicationId());
-                        if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
-                                .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
-                                        p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-                            getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
-                                    mainApplication, true);
-                        }
-                    } catch (IdentityApplicationManagementException e) {
-                        LOG.error("Encountered an error while retrieving application", e);
-                    } catch (OrganizationManagementException e) {
-                        LOG.error("Encountered an error while sharing application", e);
+                if (sharedApplicationDO.isPresent() && sharedApplicationDO.get().shareWithAllChildren()) {
+                    Optional<MainApplicationDO> mainApplicationDO;
+                    mainApplicationDO = getOrgApplicationMgtDAO().getMainApplication(
+                            sharedApplicationDO.get().getFragmentApplicationId(),
+                            sharedApplicationDO.get().getOrganizationId());
+                    if (mainApplicationDO.isPresent()) {
+                        String tenantDomain = getOrganizationManager().resolveTenantDomain(
+                                mainApplicationDO.get().getOrganizationId());
+                        ServiceProvider mainApplication = getApplicationManagementService()
+                                .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
+                                        tenantDomain);
+                        ownerOrgId = mainApplicationDO.get().getOrganizationId();
+                        getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
+                                mainApplication, true);
                     }
                 }
-            } catch (OrganizationManagementException e) {
-                LOG.error("Encountered an error while checking if application is a fragment application", e);
+            } else {
+                ServiceProvider mainApplication;
+                mainApplication = getApplicationManagementService().getServiceProvider(
+                        applicationBasicInfo.getApplicationId());
+                if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
+                        .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
+                                p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+                    getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
+                            mainApplication, true);
+                }
             }
-
         }
     }
 

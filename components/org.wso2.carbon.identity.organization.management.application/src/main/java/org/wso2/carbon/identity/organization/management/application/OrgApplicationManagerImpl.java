@@ -136,18 +136,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         Collections.emptyList());
 
         // check if share with all children property needs to be updated.
-        boolean updateShareWithAllChildren = false;
-        if (shareWithAllChildren &&
+        boolean updateShareWithAllChildren = (shareWithAllChildren &&
                 (!(Arrays.stream(rootApplication.getSpProperties())
                         .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()))) ||
-                (Arrays.stream(rootApplication.getSpProperties())
+                        (Arrays.stream(rootApplication.getSpProperties())
+                                .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) &&
+                                        !Boolean.parseBoolean(p.getValue()))))) ||
+                (!shareWithAllChildren && Arrays.stream(rootApplication.getSpProperties())
                         .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) &&
-                                !Boolean.parseBoolean(p.getValue()))))) {
-            updateShareWithAllChildren = true;
-        } else if (!shareWithAllChildren && Arrays.stream(rootApplication.getSpProperties())
-                .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            updateShareWithAllChildren = true;
-        }
+                                Boolean.parseBoolean(p.getValue())));
+
         if (updateShareWithAllChildren) {
             try {
                 IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);

@@ -174,14 +174,13 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         tenantDomain);
                 if (sharedApplicationDO.isPresent()) {
                     if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_MAIN_APPLICATION) ||
-                            IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION)) {
+                        IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
+                        (!sharedApplicationDO.get().shareWithAllChildren() &&
+                                IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
                         return true;
                     }
                     if (sharedApplicationDO.get().shareWithAllChildren())  {
                         return false;
-                    }
-                    if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))  {
-                        return true;
                     }
                 }
             } catch (OrganizationManagementException e) {

@@ -192,7 +192,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_ID, Integer.toString(applicationId));
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_NAME, IS_FRAGMENT_APP);
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_VALUE, "true");
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_VALUE, Boolean.TRUE.toString());
                     });
             return isFragment > 0;
         } catch (DataAccessException e) {
