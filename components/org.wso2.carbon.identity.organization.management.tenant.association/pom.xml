@@ -78,6 +78,7 @@
                             org.wso2.carbon.identity.organization.management.role.management.service;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.role.management.service.models;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>
