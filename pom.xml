@@ -461,6 +461,5 @@
         <compiler-source.version>1.8</compiler-source.version>
         <compiler-target.version>1.8</compiler-target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <identity.inbound.auth.oauth.imp.pkg.version.range>[6.0.0, 7.0.0)</identity.inbound.auth.oauth.imp.pkg.version.range>
     </properties>
 </project>
