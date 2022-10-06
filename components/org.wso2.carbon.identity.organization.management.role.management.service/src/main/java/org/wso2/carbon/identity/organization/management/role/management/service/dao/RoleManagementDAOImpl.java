@@ -1084,7 +1084,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        int numberOfGroups = valueList.size();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
         switch (attribute) {
@@ -1109,10 +1108,17 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(query,
                         namedPreparedStatement -> {
-                            for (int i = 0; i < numberOfGroups; i++) {
-                                namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i,
-                                        roleId);
+                            if (DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID.equals(finalColumnName)) {
+                                for (int i = 0; i < valueList.size(); i++) {
+                                    namedPreparedStatement.setInt(finalColumnName + i,
+                                            Integer.parseInt(valueList.get(i)));
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                                }
+                            } else {
+                                for (int i = 0; i < valueList.size(); i++) {
+                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                                }
                             }
                         }, valueList, false);
                 return null;
