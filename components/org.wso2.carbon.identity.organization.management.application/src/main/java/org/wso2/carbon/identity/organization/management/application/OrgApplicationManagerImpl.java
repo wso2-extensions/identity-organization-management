@@ -356,22 +356,19 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             try {
                 String adminUserId =
                         getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserId();
-                if (StringUtils.isNotBlank(adminUserId)) {
-                    String sharedOrgAdminUsername = getRealmService().getTenantUserRealm(tenantId)
-                            .getRealmConfiguration().getAdminUserName();
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharedOrgAdminUsername);
-                } else {
+                if (StringUtils.isBlank(adminUserId)) {
                     // If realms were not migrated after https://github.com/wso2/product-is/issues/14001.
-                    String sharedOrgAdmin = getRealmService().getTenantUserRealm(tenantId)
+                    adminUserId = getRealmService().getTenantUserRealm(tenantId)
                             .getRealmConfiguration().getAdminUserName();
-                    User user = OrgApplicationMgtDataHolder.getInstance()
-                            .getOrganizationUserResidentResolverService()
-                            .resolveUserFromResidentOrganization(null, sharedOrgAdmin, sharedOrgId)
-                            .orElseThrow(
-                                    () -> handleServerException(ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION,
-                                            null, sharedOrgAdmin));
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(user.getUsername());
                 }
+                String finalAdminUserId = adminUserId;
+                User user = OrgApplicationMgtDataHolder.getInstance()
+                        .getOrganizationUserResidentResolverService()
+                        .resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId)
+                        .orElseThrow(
+                                () -> handleServerException(ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION,
+                                        null, finalAdminUserId));
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(user.getDomainQualifiedUsername());
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
