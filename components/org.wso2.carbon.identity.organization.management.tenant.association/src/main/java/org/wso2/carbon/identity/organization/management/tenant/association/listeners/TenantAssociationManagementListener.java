@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.core.AbstractIdentityTenantMgtListener;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.tenant.association.Constants;
 import org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder;
 import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
@@ -69,7 +70,15 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             if (StringUtils.isBlank(organizationID)) {
                 return;
             }
-            String adminUUID = realmService.getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
+            // If the organization uses carbon roles, this organization association is not required.
+            if (!Utils.useOrganizationRolesForValidation(organizationID)) {
+                return;
+            }
+            String adminUUID = tenant.getAdminUserId();
+            if (StringUtils.isBlank(adminUUID)) {
+                // If realms were not migrated after https://github.com/wso2/product-is/issues/14001.
+                adminUUID = realmService.getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserName();
+            }
             String tenantUuid = tenant.getTenantUniqueID();
             if (StringUtils.isBlank(tenantUuid)) {
                 LOG.error("Tenant UUID was not found for tenant: " + tenantId + ". Therefore, tenant association " +
