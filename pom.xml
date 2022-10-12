@@ -198,12 +198,6 @@
                 <version>${carbon.identity.auth.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
-                <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
-                <version>${carbon.identity.inbound.provisioning.scim2.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.wso2.carbon.utils</groupId>
                 <artifactId>org.wso2.carbon.database.utils</artifactId>
                 <version>${carbon.database.utils.version}</version>
@@ -509,11 +503,6 @@
         <carbon.identity.framework.version>5.21.0</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
         </carbon.identity.package.import.version.range>
-        <carbon.identity.scim2.package.import.version.range>[1.5.122, 4.0.0)
-        </carbon.identity.scim2.package.import.version.range>
-        <charon3.core.import.version.range>[3.4.22, 4.1.0)</charon3.core.import.version.range>
-        <carbon.identity.inbound.provisioning.scim2.version>1.5.122
-        </carbon.identity.inbound.provisioning.scim2.version>
 
         <identity.extension.utils.version>1.0.8</identity.extension.utils.version>
         <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
