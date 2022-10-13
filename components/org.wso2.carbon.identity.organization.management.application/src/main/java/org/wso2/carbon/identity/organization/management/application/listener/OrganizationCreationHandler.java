@@ -100,8 +100,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         ServiceProvider mainApplication = getApplicationManagementService()
                                 .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
                                         tenantDomain);
-                        parentOrgId = mainApplicationDO.get().getOrganizationId();
-                        getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
+                        String ownerOrgIdOfMainApplication = mainApplicationDO.get().getOrganizationId();
+                        getOrgApplicationManager().shareApplication(ownerOrgIdOfMainApplication, organization.getId(),
                                 mainApplication, true);
                     }
                 }

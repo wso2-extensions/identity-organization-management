@@ -580,6 +580,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     /**
      * Check if the shareWithAllChildren property in the application should be updated or not.
+     *
      * @param shareWithAllChildren  Attribute indicating if the application is shared with all sub-organizations.
      * @param mainApplication       Main Application
      * @return if the shareWithAllChildren property in the main application should be updated
