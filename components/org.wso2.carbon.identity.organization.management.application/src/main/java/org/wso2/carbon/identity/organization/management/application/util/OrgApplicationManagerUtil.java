@@ -19,7 +19,14 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+
+import java.util.Arrays;
+import java.util.Optional;
+
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 
 /**
  * This class provides utility functions for the Organization Application Management.
@@ -34,6 +41,33 @@ public class OrgApplicationManagerUtil {
     public static NamedJdbcTemplate getNewTemplate() {
 
         return new NamedJdbcTemplate(IdentityDatabaseUtil.getDataSource());
+    }
+
+    /**
+     * Set property value to service provider indicating if it should be shared with all child organizations.
+     *
+     * @param serviceProvider The main application.
+     * @param value           Property value.
+     */
+    public static void setShareWithAllChildrenProperty(ServiceProvider serviceProvider, boolean value) {
+
+        Optional<ServiceProviderProperty> shareWithAllChildren = Arrays.stream(serviceProvider.getSpProperties())
+                .filter(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()))
+                .findFirst();
+        if (shareWithAllChildren.isPresent()) {
+            shareWithAllChildren.get().setValue(Boolean.toString(value));
+        } else {
+            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
+            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
+
+            ServiceProviderProperty shareWithAllChildrenProperty = new ServiceProviderProperty();
+            shareWithAllChildrenProperty.setName(SHARE_WITH_ALL_CHILDREN);
+            shareWithAllChildrenProperty.setValue(Boolean.TRUE.toString());
+            newSpProperties[spProperties.length] = shareWithAllChildrenProperty;
+
+            serviceProvider.setSpProperties(newSpProperties);
+        }
     }
 }
 

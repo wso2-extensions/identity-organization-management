@@ -19,8 +19,10 @@
 package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
@@ -29,15 +31,24 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
  * Application listener to restrict actions on shared applications and fragment applications.
@@ -82,6 +93,18 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
         }
 
+        // Updating the shareWithAllChildren flag of application is blocked.
+        if (existingApplication != null
+                && !IdentityUtil.threadLocalProperties.get().containsKey(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN)) {
+            Optional<ServiceProviderProperty> shareWithAllChildren =
+                    Arrays.stream(existingApplication.getSpProperties())
+                            .filter(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()))
+                            .findFirst();
+            shareWithAllChildren.ifPresent(serviceProviderProperty ->
+                    setShareWithAllChildrenProperty(serviceProvider,
+                            Boolean.parseBoolean(serviceProviderProperty.getValue())));
+        }
+
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
     }
 
@@ -90,7 +113,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                             String tenantDomain) throws IdentityApplicationManagementException {
 
         // If the application is a shared application, updates to the application are allowed
-        if (Arrays.stream(serviceProvider.getSpProperties())
+        if (serviceProvider != null && Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             Optional<MainApplicationDO> mainApplicationDO;
             try {
@@ -140,25 +163,53 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             return false;
         }
 
-        // If the application is a fragment application, application cannot be deleted
+        // If the application is a fragment application and the main application is shared with all its descendants,
+        // the application can be deleted only if the main application is being deleted or if main application delete
+        // sharing with all organizations.
         if (Arrays.stream(application.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-            if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION)) {
-                return true;
+            Optional<SharedApplicationDO> sharedApplicationDO;
+            try {
+                sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(application.getApplicationID(),
+                        tenantDomain);
+                if (sharedApplicationDO.isPresent()) {
+                    if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_MAIN_APPLICATION) ||
+                        IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
+                        (!sharedApplicationDO.get().shareWithAllChildren() &&
+                                IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
+                        return true;
+                    }
+                    if (sharedApplicationDO.get().shareWithAllChildren())  {
+                        return false;
+                    }
+                }
+            } catch (OrganizationManagementException e) {
+                throw new IdentityApplicationManagementException(
+                        format("Unable to delete fragment application with resource id: %s ",
+                                application.getApplicationResourceId()));
             }
-            throw new IdentityApplicationManagementException(
-                    format("Application with resource id: %s is a fragment application, hence the application cannot " +
-                            "be deleted.", application.getApplicationResourceId()));
         }
         try {
-            // If an application has fragment applications, application cannot be deleted.
+            // If an application has fragment applications, delete all its fragment applications.
             if (getOrgApplicationMgtDAO().hasFragments(application.getApplicationResourceId())) {
-                throw new IdentityApplicationManagementException(
-                        format("Application with resource id: %s is shared to other organization(s), hence the " +
-                                "application cannot be deleted.", application.getApplicationResourceId()));
+                String organizationId = getOrganizationId();
+                if (organizationId == null) {
+                    organizationId = SUPER_ORG_ID;
+                }
+
+                List<SharedApplicationDO> sharedApplications = getOrgApplicationMgtDAO().getSharedApplications(
+                        organizationId, application.getApplicationResourceId());
+                IdentityUtil.threadLocalProperties.get().put(DELETE_MAIN_APPLICATION, true);
+                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                for (SharedApplicationDO sharedApplicationDO: sharedApplications) {
+                    getApplicationMgtService().deleteApplication(application.getApplicationName(),
+                            sharedApplicationDO.getOrganizationId(), username);
+                }
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException("Error in validating the application for deletion.", e);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(DELETE_MAIN_APPLICATION);
         }
 
         return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
