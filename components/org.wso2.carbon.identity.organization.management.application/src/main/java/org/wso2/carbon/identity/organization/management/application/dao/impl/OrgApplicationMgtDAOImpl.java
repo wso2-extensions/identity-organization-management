@@ -121,7 +121,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     });
             return Optional.ofNullable(sharedApplicationDO);
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, String.valueOf(sharedAppId),
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, Integer.toString(sharedAppId),
                     sharedOrgId);
         }
     }

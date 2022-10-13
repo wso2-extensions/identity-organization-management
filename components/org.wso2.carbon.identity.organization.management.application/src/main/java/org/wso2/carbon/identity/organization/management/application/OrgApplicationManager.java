@@ -32,12 +32,13 @@ public interface OrgApplicationManager {
     /**
      * Share the application to all the child organizations or to a list of child organizations based on the user input.
      *
-     * @param ownerOrgId Identifier of the organization owning the application.
-     * @param mainAppId  Identifier of the main application.
+     * @param ownerOrgId            Identifier of the organization owning the application.
+     * @param mainAppId             Identifier of the main application.
+     * @param shareWithAllChildren  Attribute indicating if the application is shared with all sub-organizations.
      * @param sharedOrgs Optional list of identifiers of child organization to share the application.
      * @throws OrganizationManagementException on errors when sharing the application.
      */
-    void shareOrganizationApplication(String ownerOrgId, String mainAppId, boolean shareWithAllChildrean,
+    void shareOrganizationApplication(String ownerOrgId, String mainAppId, boolean shareWithAllChildren,
             List<String> sharedOrgs) throws OrganizationManagementException;
 
     /**
@@ -79,7 +80,7 @@ public interface OrgApplicationManager {
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
      * @param sharedOrgId          Identifier of the organization to which the application being shared to.
-     * @param mainApplication      Identifier of the main application.
+     * @param mainApplication      The application which is shared with the child organizations.
      * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
      * @throws OrganizationManagementException on errors when sharing the application.
      */

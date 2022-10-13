@@ -45,8 +45,6 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
 /**
  * This class contains the implementation of the handler for post organization creation.
@@ -76,20 +74,20 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     private void addSharedApplicationsToOrganization(Organization organization)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
-        String ownerOrgId = getOrganizationId();
-        if (ownerOrgId == null) {
-            ownerOrgId = SUPER_ORG_ID;
+        String parentOrgId = organization.getParent().getId();
+        if (parentOrgId == null) {
+            parentOrgId = SUPER_ORG_ID;
         }
 
         ApplicationBasicInfo[] applicationBasicInfos;
         applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
-                getTenantDomain(), getAuthenticatedUsername());
+                getOrganizationManager().resolveTenantDomain(parentOrgId), getAuthenticatedUsername());
 
         for (ApplicationBasicInfo applicationBasicInfo: applicationBasicInfos) {
             if (getOrgApplicationMgtDAO().isFragmentApplication(applicationBasicInfo.getApplicationId())) {
                 Optional<SharedApplicationDO> sharedApplicationDO;
                 sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(
-                        applicationBasicInfo.getApplicationId(), ownerOrgId);
+                        applicationBasicInfo.getApplicationId(), parentOrgId);
 
                 if (sharedApplicationDO.isPresent() && sharedApplicationDO.get().shareWithAllChildren()) {
                     Optional<MainApplicationDO> mainApplicationDO;
@@ -102,8 +100,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         ServiceProvider mainApplication = getApplicationManagementService()
                                 .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
                                         tenantDomain);
-                        ownerOrgId = mainApplicationDO.get().getOrganizationId();
-                        getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
+                        parentOrgId = mainApplicationDO.get().getOrganizationId();
+                        getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
                                 mainApplication, true);
                     }
                 }
@@ -114,7 +112,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
                         .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
                                 p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-                    getOrgApplicationManager().shareApplication(ownerOrgId, organization.getId(),
+                    getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
                             mainApplication, true);
                 }
             }

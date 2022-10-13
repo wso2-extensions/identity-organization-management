@@ -136,15 +136,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         Collections.emptyList());
 
         // check if share with all children property needs to be updated.
-        boolean updateShareWithAllChildren = (shareWithAllChildren &&
-                (!(Arrays.stream(rootApplication.getSpProperties())
-                        .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()))) ||
-                        (Arrays.stream(rootApplication.getSpProperties())
-                                .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) &&
-                                        !Boolean.parseBoolean(p.getValue()))))) ||
-                (!shareWithAllChildren && Arrays.stream(rootApplication.getSpProperties())
-                        .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) &&
-                                Boolean.parseBoolean(p.getValue())));
+        boolean updateShareWithAllChildren = shouldUpdateShareWithAllChildren(shareWithAllChildren, rootApplication);
 
         if (updateShareWithAllChildren) {
             try {
@@ -584,6 +576,38 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS, applicationResidingOrganizationId,
                     requestInvokingOrganizationId);
         }
+    }
+
+    /**
+     * Check if the shareWithAllChildren property in the application should be updated or not.
+     * @param shareWithAllChildren  Attribute indicating if the application is shared with all sub-organizations.
+     * @param mainApplication       Main Application
+     * @return if the shareWithAllChildren property in the main application should be updated
+     */
+    private boolean shouldUpdateShareWithAllChildren(boolean shareWithAllChildren, ServiceProvider mainApplication) {
+
+        // If shareWithAllChildren is true and in the main application there is no shareWithAllChildren property,
+        // then the value should be updated.
+        if (shareWithAllChildren && !(stream(mainApplication.getSpProperties()).anyMatch(
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())))) {
+            return true;
+        }
+
+        // If shareWithAllChildren is true and in the main application it is set as false,
+        // then the value should be updated.
+        if (shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && !Boolean.parseBoolean(p.getValue()))) {
+            return true;
+        }
+
+        // If shareWithAllChildren is false and in the main application it is set as true,
+        // then the value should be updated.
+        if (!shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+            return true;
+        }
+
+        return false;
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
