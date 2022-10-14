@@ -155,7 +155,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         if (shareWithAllChildren || !filteredChildOrgs.isEmpty()) {
             // Adding Organization login IDP to the root application.
-            addOrganizationAuthenticatorToApp(rootApplication, ownerTenantDomain);
+            modifyRootApplication(rootApplication, ownerTenantDomain);
         }
 
         for (BasicOrganization child : filteredChildOrgs) {
@@ -318,7 +318,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_APPLICATION, applicationId));
     }
 
-    private void addOrganizationAuthenticatorToApp(ServiceProvider rootApplication, String tenantDomain)
+    /**
+     * This method will update the root application by adding the organization login authenticator and updating the
+     * claim configurations to enable use of local subject identifier for JIT provisioned users.
+     */
+    private void modifyRootApplication(ServiceProvider rootApplication, String tenantDomain)
             throws OrganizationManagementServerException {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
@@ -372,6 +376,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         newAuthSteps[0] = first;
         outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
         rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
+
+        // Enabling use of local subject id for provisioned users.
+        rootApplication.getClaimConfig().setAlwaysSendMappedLocalSubjectId(true);
         try {
             getApplicationManagementService().updateApplication(rootApplication, tenantDomain,
                     getAuthenticatedUsername());
