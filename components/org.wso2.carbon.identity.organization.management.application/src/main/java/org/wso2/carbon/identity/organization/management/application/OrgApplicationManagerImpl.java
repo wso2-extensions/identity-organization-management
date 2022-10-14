@@ -247,11 +247,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
             throws OrganizationManagementException {
 
-        String requestInvokingOrganizationId = getOrganizationId();
-        if (requestInvokingOrganizationId == null) {
-            requestInvokingOrganizationId = SUPER_ORG_ID;
-        }
-        validateApplicationShareAccess(requestInvokingOrganizationId, organizationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
         List<SharedApplicationDO> sharedApps =
                 getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
