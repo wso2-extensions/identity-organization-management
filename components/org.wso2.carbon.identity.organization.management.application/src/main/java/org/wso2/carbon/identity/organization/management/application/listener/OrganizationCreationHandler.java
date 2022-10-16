@@ -65,7 +65,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             try {
                 addSharedApplicationsToOrganization(organization);
             } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
-                throw new IdentityEventException("An error occured while creating shared applications in the new " +
+                throw new IdentityEventException("An error occurred while creating shared applications in the new " +
                         "organization", e);
             }
         }

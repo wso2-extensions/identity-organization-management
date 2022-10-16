@@ -54,6 +54,11 @@ public class SQLConstants {
 
     public static final String IS_FRAGMENT_APPLICATION = "SELECT COUNT(1) FROM SP_METADATA WHERE " +
             "SP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID + "; AND NAME = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME + "; AND VALUE = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE + ";";
+
+    public static final String IS_FRAGMENT_APPLICATION_H2 = "SELECT COUNT(1) FROM SP_METADATA WHERE " +
+            "SP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID + "; AND NAME = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME + "; AND `VALUE` = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE + ";";
 
