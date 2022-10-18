@@ -35,9 +35,7 @@ public class OrgApplicationMgtConstants {
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
 
     public static final String FEDERATED_ORG_CLAIM_URL =  "http://wso2.org/claims/runtime/federated_org";
-
     public static final String FEDERATED_ORG_CLAIM_DISPLAY_NAME = "federated_org";
-
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
 
 }

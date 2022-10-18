@@ -125,10 +125,12 @@ public class OrgApplicationMgtDataHolder {
     }
 
     public ClaimMetadataManagementService getClaimMetadataManagementService() {
+
         return claimMetadataManagementService;
     }
 
     public void setClaimMetadataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
+
         this.claimMetadataManagementService = claimMetadataManagementService;
     }
 }
