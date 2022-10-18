@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -42,6 +43,7 @@ public class OrgApplicationMgtDataHolder {
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
     private IdpManager idpManager;
 
+    private ClaimMetadataManagementService claimMetadataManagementService;
     private OrgApplicationMgtDataHolder() {
 
     }
@@ -120,5 +122,15 @@ public class OrgApplicationMgtDataHolder {
     public void setIdpManager(IdpManager idpManager) {
 
         this.idpManager = idpManager;
+    }
+
+    public ClaimMetadataManagementService getClaimMetadataManagementService() {
+
+        return claimMetadataManagementService;
+    }
+
+    public void setClaimMetadataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
+
+        this.claimMetadataManagementService = claimMetadataManagementService;
     }
 }
