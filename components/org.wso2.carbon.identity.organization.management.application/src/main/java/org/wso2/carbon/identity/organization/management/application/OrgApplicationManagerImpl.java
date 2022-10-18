@@ -217,9 +217,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
 
             ScopeDTO scopeDTO = getOAuthAdminService().getScope(OPENID);
-            Optional<String> optionalOidcClaim = stream(scopeDTO.getClaim())
+            Optional<String> optionalOIDCClaim = stream(scopeDTO.getClaim())
                     .filter(FEDERATED_ORG_CLAIM_DISPLAY_NAME::equals).findAny();
-            if (!optionalOidcClaim.isPresent()) {
+            if (!optionalOIDCClaim.isPresent()) {
                 List<String> claimList = new ArrayList<>(Arrays.asList(scopeDTO.getClaim()));
                 claimList.add(FEDERATED_ORG_CLAIM_DISPLAY_NAME);
                 int index = 0;
