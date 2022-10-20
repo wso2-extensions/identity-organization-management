@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
@@ -137,8 +138,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                             .startsWith("http://wso2.org/claims/runtime/"))
                                     .collect(Collectors.toList());
                     ClaimMapping[] filteredClaimMapping = claimMappings.toArray(new ClaimMapping[0]);
-                    serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
-                    serviceProvider.getClaimConfig().setClaimMappings(filteredClaimMapping);
+                    ClaimConfig claimConfig = new ClaimConfig();
+                    claimConfig.setClaimMappings(filteredClaimMapping);
+                    serviceProvider.setClaimConfig(claimConfig);
                     if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
                             && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
                         serviceProvider.getLocalAndOutBoundAuthenticationConfig()
