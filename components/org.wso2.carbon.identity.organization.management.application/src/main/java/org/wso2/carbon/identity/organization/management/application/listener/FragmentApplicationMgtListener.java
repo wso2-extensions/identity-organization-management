@@ -131,17 +131,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                             .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
                     ServiceProvider mainApplication = getApplicationByResourceId
                             (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
-                    List<ClaimMapping> claimMappings =  Arrays.stream(mainApplication.getClaimConfig().getClaimMappings())
-                            .filter(claim -> !claim.getLocalClaim().getClaimUri().startsWith("http://wso2.org/claims/runtime/"))
+                    List<ClaimMapping> claimMappings =
+                            Arrays.stream(mainApplication.getClaimConfig().getClaimMappings())
+                                    .filter(claim -> !claim.getLocalClaim().getClaimUri()
+                                            .startsWith("http://wso2.org/claims/runtime/"))
                                     .collect(Collectors.toList());
-                    ClaimMapping[] filteredClaimMappings = new ClaimMapping[claimMappings.size()];
-                    int i = 0;
-                    for (ClaimMapping claimMapping : claimMappings) {
-                        filteredClaimMappings[i] = claimMapping;
-                        i += 1;
-                    }
+                    ClaimMapping[] filteredClaimMapping = claimMappings.toArray(new ClaimMapping[0]);
                     serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
-                    serviceProvider.getClaimConfig().setClaimMappings(filteredClaimMappings);
+                    serviceProvider.getClaimConfig().setClaimMappings(filteredClaimMapping);
                     if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
                             && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
                         serviceProvider.getLocalAndOutBoundAuthenticationConfig()
