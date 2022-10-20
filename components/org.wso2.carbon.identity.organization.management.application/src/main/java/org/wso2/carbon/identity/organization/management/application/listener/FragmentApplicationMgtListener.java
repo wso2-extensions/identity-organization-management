@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -38,6 +39,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
@@ -129,7 +131,17 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                             .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
                     ServiceProvider mainApplication = getApplicationByResourceId
                             (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
+                    List<ClaimMapping> claimMappings =  Arrays.stream(mainApplication.getClaimConfig().getClaimMappings())
+                            .filter(claim -> !claim.getLocalClaim().getClaimUri().startsWith("http://wso2.org/claims/runtime/"))
+                                    .collect(Collectors.toList());
+                    ClaimMapping[] filteredClaimMappings = new ClaimMapping[claimMappings.size()];
+                    int i = 0;
+                    for (ClaimMapping claimMapping : claimMappings) {
+                        filteredClaimMappings[i] = claimMapping;
+                        i += 1;
+                    }
                     serviceProvider.setClaimConfig(mainApplication.getClaimConfig());
+                    serviceProvider.getClaimConfig().setClaimMappings(filteredClaimMappings);
                     if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
                             && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
                         serviceProvider.getLocalAndOutBoundAuthenticationConfig()
