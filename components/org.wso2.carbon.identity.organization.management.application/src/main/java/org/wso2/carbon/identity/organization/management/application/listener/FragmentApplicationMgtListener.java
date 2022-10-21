@@ -40,7 +40,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
@@ -132,14 +131,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                             .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
                     ServiceProvider mainApplication = getApplicationByResourceId
                             (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
-                    List<ClaimMapping> claimMappings =
+                    ClaimMapping[] filteredClaimMappings =
                             Arrays.stream(mainApplication.getClaimConfig().getClaimMappings())
                                     .filter(claim -> !claim.getLocalClaim().getClaimUri()
                                             .startsWith("http://wso2.org/claims/runtime/"))
-                                    .collect(Collectors.toList());
-                    ClaimMapping[] filteredClaimMapping = claimMappings.toArray(new ClaimMapping[0]);
+                                    .toArray(ClaimMapping[]::new);
                     ClaimConfig claimConfig = new ClaimConfig();
-                    claimConfig.setClaimMappings(filteredClaimMapping);
+                    claimConfig.setClaimMappings(filteredClaimMappings);
+                    claimConfig.setAlwaysSendMappedLocalSubjectId(
+                            mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
                     serviceProvider.setClaimConfig(claimConfig);
                     if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
                             && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
