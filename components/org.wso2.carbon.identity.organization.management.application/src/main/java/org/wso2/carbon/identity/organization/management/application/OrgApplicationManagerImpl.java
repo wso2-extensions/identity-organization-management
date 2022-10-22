@@ -86,14 +86,14 @@ import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.FEDERATED_ORG_CLAIM_DISPLAY_NAME;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.FEDERATED_ORG_CLAIM_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.OIDC_CLAIM_DIALECT_URI;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM_URI;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
@@ -130,7 +130,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, boolean shareWithAllChildren,
-            List<String> sharedOrgs) throws OrganizationManagementException {
+                                             List<String> sharedOrgs) throws OrganizationManagementException {
 
         String requestInvokingOrganizationId = getOrganizationId();
         if (requestInvokingOrganizationId == null) {
@@ -170,7 +170,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         if (shareWithAllChildren || !filteredChildOrgs.isEmpty()) {
             // Adding federated_org custom oidc claim to the root application reside organization.
-            addCustomLocalAndOidcClaims(ownerTenantDomain);
+            addUserOrganizationOIDCClaim(ownerTenantDomain);
             // Adding Organization login IDP to the root application.
             modifyRootApplication(rootApplication, ownerTenantDomain);
         }
@@ -191,45 +191,40 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private void addCustomLocalAndOidcClaims(String tenantDomain) throws OrganizationManagementServerException {
+    private void addUserOrganizationOIDCClaim(String tenantDomain) throws OrganizationManagementServerException {
 
         try {
             Optional<LocalClaim> optionalLocalClaim = getClaimMetadataManagementService().getLocalClaims(tenantDomain)
-                    .stream().filter(localClaim -> FEDERATED_ORG_CLAIM_URL.equals(localClaim.getClaimURI())).findAny();
+                    .stream().filter(localClaim -> USER_ORGANIZATION_CLAIM_URI.equals(localClaim.getClaimURI()))
+                    .findAny();
             if (!optionalLocalClaim.isPresent()) {
                 List<AttributeMapping> attributeMappings = new ArrayList<>();
                 attributeMappings.add(new AttributeMapping(PRIMARY_DEFAULT_DOMAIN_NAME,
-                        FEDERATED_ORG_CLAIM_DISPLAY_NAME));
+                        USER_ORGANIZATION_CLAIM));
                 Map<String, String> claimProperties = new HashMap<>();
-                claimProperties.put("DisplayName", "Federated Organization");
-                claimProperties.put("Description", "Local claim for federated organization identifier");
-                getClaimMetadataManagementService().addLocalClaim(new LocalClaim(FEDERATED_ORG_CLAIM_URL,
+                claimProperties.put("DisplayName", "Organization");
+                claimProperties.put("Description", "Local claim for user organization identifier");
+                getClaimMetadataManagementService().addLocalClaim(new LocalClaim(USER_ORGANIZATION_CLAIM_URI,
                         attributeMappings, claimProperties), tenantDomain);
             }
 
             Optional<ExternalClaim> optionalExternalClaim = getClaimMetadataManagementService()
                     .getExternalClaims(OIDC_CLAIM_DIALECT_URI, tenantDomain).stream()
-                    .filter(externalClaim -> FEDERATED_ORG_CLAIM_DISPLAY_NAME.equals(externalClaim.getClaimURI()))
+                    .filter(externalClaim -> USER_ORGANIZATION_CLAIM.equals(externalClaim.getClaimURI()))
                     .findAny();
             if (!optionalExternalClaim.isPresent()) {
                 getClaimMetadataManagementService().addExternalClaim(new ExternalClaim(OIDC_CLAIM_DIALECT_URI,
-                        FEDERATED_ORG_CLAIM_DISPLAY_NAME, FEDERATED_ORG_CLAIM_URL), tenantDomain);
+                        USER_ORGANIZATION_CLAIM, USER_ORGANIZATION_CLAIM_URI), tenantDomain);
             }
 
             ScopeDTO scopeDTO = getOAuthAdminService().getScope(OPENID);
             Optional<String> optionalOIDCClaim = stream(scopeDTO.getClaim())
-                    .filter(FEDERATED_ORG_CLAIM_DISPLAY_NAME::equals).findAny();
+                    .filter(USER_ORGANIZATION_CLAIM::equals).findAny();
             if (!optionalOIDCClaim.isPresent()) {
                 List<String> claimList = new ArrayList<>(Arrays.asList(scopeDTO.getClaim()));
-                claimList.add(FEDERATED_ORG_CLAIM_DISPLAY_NAME);
-                int index = 0;
-                String[] claimArray = new String[claimList.size()];
-                for (String claim : claimList) {
-                    claimArray[index] = claim;
-                    index += 1;
-                }
+                claimList.add(USER_ORGANIZATION_CLAIM);
                 scopeDTO = new ScopeDTO(scopeDTO.getName(), scopeDTO.getDisplayName(), scopeDTO.getDescription(),
-                        claimArray);
+                        claimList.toArray(new String[0]));
                 getOAuthAdminService().updateScope(scopeDTO);
             }
         } catch (ClaimMetadataException | IdentityOAuthAdminException e) {
@@ -439,7 +434,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Enabling use of local subject id for provisioned users.
         rootApplication.getClaimConfig().setAlwaysSendMappedLocalSubjectId(true);
 
-        addFederatedOrgApplicationClaim(rootApplication);
+        addUserOrganizationApplicationClaim(rootApplication);
         try {
             getApplicationManagementService().updateApplication(rootApplication, tenantDomain,
                     getAuthenticatedUsername());
@@ -449,22 +444,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private void addFederatedOrgApplicationClaim(ServiceProvider application) {
+    private void addUserOrganizationApplicationClaim(ServiceProvider application) {
 
         ClaimMapping[] claimMappings = application.getClaimConfig().getClaimMappings();
         Optional<ClaimMapping> optionalClaimMapping = stream(claimMappings)
-                .filter(claimMapping -> FEDERATED_ORG_CLAIM_URL.equals(claimMapping.getLocalClaim().getClaimUri()))
+                .filter(claimMapping -> USER_ORGANIZATION_CLAIM_URI.equals(claimMapping.getLocalClaim().getClaimUri()))
                 .findAny();
         if (!optionalClaimMapping.isPresent()) {
             List<ClaimMapping> claimMappingList = new ArrayList<>(Arrays.asList(claimMappings));
-            claimMappingList.add(ClaimMapping.build(FEDERATED_ORG_CLAIM_URL, FEDERATED_ORG_CLAIM_URL, null, true));
-            ClaimMapping[] newClaimMappings = new ClaimMapping[claimMappingList.size()];
-            int i = 0;
-            for (ClaimMapping claimMapping : claimMappingList) {
-                newClaimMappings[i] = claimMapping;
-                i += 1;
-            }
-            application.getClaimConfig().setClaimMappings(newClaimMappings);
+            claimMappingList.add(ClaimMapping.build(USER_ORGANIZATION_CLAIM_URI, USER_ORGANIZATION_CLAIM_URI,
+                    null, true));
+            application.getClaimConfig().setClaimMappings(claimMappingList.toArray(new ClaimMapping[0]));
         }
     }
 
