@@ -50,7 +50,6 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
  * Application listener to restrict actions on shared applications and fragment applications.
@@ -203,7 +202,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         try {
             // If an application has fragment applications, delete all its fragment applications.
             if (getOrgApplicationMgtDAO().hasFragments(application.getApplicationResourceId())) {
-                String organizationId = getOrganizationId();
+                String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
                 if (organizationId == null) {
                     organizationId = SUPER_ORG_ID;
                 }
