@@ -37,6 +37,7 @@ public class Constants {
             "/permission/admin/manage/identity/userstore/config/view";
     public static final String USER_MGT_VIEW_PERMISSION = "/permission/admin/manage/identity/usermgt/view";
     public static final String USER_MGT_LIST_PERMISSION = "/permission/admin/manage/identity/usermgt/list";
+    public static final String USER_MGT_UPDATE_PERMISSION = "/permission/admin/manage/identity/usermgt/update";
     public static final String APPLICATION_MGT_VIEW_PERMISSION =
             "/permission/admin/manage/identity/applicationmgt/view";
     public static final String CORS_CONFIG_MGT_VIEW_PERMISSION = "/permission/admin/manage/identity/cors/origins/view";
@@ -53,6 +54,7 @@ public class Constants {
             Collections.unmodifiableList(Arrays
                     .asList(SESSION_MGT_VIEW_PERMISSION, GROUP_MGT_VIEW_PERMISSION, GOVERNANCE_VIEW_PERMISSION,
                             USER_STORE_CONFIG_VIEW_PERMISSION, USER_MGT_VIEW_PERMISSION, USER_MGT_LIST_PERMISSION,
-                            APPLICATION_MGT_VIEW_PERMISSION, CORS_CONFIG_MGT_VIEW_PERMISSION, IDP_MGT_VIEW_PERMISSION,
+                            USER_MGT_UPDATE_PERMISSION, APPLICATION_MGT_VIEW_PERMISSION,
+                            CORS_CONFIG_MGT_VIEW_PERMISSION, IDP_MGT_VIEW_PERMISSION,
                             CLAIM_META_DATA_MGT_VIEW_PERMISSION));
 }
