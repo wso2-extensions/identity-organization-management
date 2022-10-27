@@ -686,20 +686,26 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             replaceDisplayName(values.get(0), roleId);
         } else if (StringUtils.equalsIgnoreCase(path, USERS)) {
             removeAttributesFromRoleUsingRoleId(roleId, USERS);
-            String query = getAddRoleUserMappingQuery(values.size());
-            assignRoleAttributes(values, roleId, query, USERS);
+            if (CollectionUtils.isNotEmpty(values)) {
+                String query = getAddRoleUserMappingQuery(values.size());
+                assignRoleAttributes(values, roleId, query, USERS);
+            }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             removeAttributesFromRoleUsingRoleId(roleId, GROUPS);
-            String query = getAddRoleGroupMappingQuery(values.size());
-            assignRoleAttributes(values, roleId, query, GROUPS);
+            if (CollectionUtils.isNotEmpty(values)) {
+                String query = getAddRoleGroupMappingQuery(values.size());
+                assignRoleAttributes(values, roleId, query, GROUPS);
+            }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             removeAttributesFromRoleUsingRoleId(roleId, PERMISSIONS);
-            List<String> nonExistingPermissions = getNonExistingPermissions(values, getTenantId(), roleId);
-            addNonExistingPermissions(nonExistingPermissions, roleId, getTenantId());
-            List<String> permissionList = getPermissionIds(values,
-                    getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
-            String query = getAddRolePermissionMappingQuery(values.size());
-            assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
+            if (CollectionUtils.isNotEmpty(values)) {
+                List<String> nonExistingPermissions = getNonExistingPermissions(values, getTenantId(), roleId);
+                addNonExistingPermissions(nonExistingPermissions, roleId, getTenantId());
+                List<String> permissionList = getPermissionIds(values,
+                        getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
+                String query = getAddRolePermissionMappingQuery(values.size());
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
+            }
         }
     }
 
