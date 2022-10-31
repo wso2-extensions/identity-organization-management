@@ -193,7 +193,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             String prepStmt = JdbcUtils.isH2DB() ? IS_FRAGMENT_APPLICATION_H2 : IS_FRAGMENT_APPLICATION;
             int isFragment = namedJdbcTemplate.fetchSingleRecord(prepStmt,
                     (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_ID, Integer.toString(applicationId));
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SP_ID, applicationId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_NAME, IS_FRAGMENT_APP);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_METADATA_VALUE, Boolean.TRUE.toString());
                     });
