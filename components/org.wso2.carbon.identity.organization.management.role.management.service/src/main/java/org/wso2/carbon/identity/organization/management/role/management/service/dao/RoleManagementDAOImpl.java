@@ -164,7 +164,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_USERS_USING_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORG_ROLE_PATCH_REMOVE_OPERATION_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_PATCHING_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_PERMISSIONS_FROM_ROLE;
@@ -713,22 +713,25 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     private void patchOperationRemove(String roleId, String path) throws OrganizationManagementException {
 
         String patchPath = path;
+        String pathFilterExpression = StringUtils.EMPTY;
         if (patchPath.contains("[")) {
-            patchPath = patchPath.split("\\[")[0];
+            if (StringUtils.strip(patchPath).endsWith("]")) {
+                patchPath = StringUtils.strip(patchPath.split("\\[")[0]);
+                //get the filter expression associated with the path.
+                pathFilterExpression = StringUtils.strip(path.split("\\[")[1].replace("]", "")).toLowerCase();
+            } else {
+                throw handleClientException(ERROR_CODE_ORG_ROLE_PATCH_REMOVE_OPERATION_INVALID_FILTER_FORMAT,
+                        StringUtils.strip(path.substring(path.indexOf("[") + 1)), roleId);
+            }
         }
-        patchPath = StringUtils.strip(patchPath);
 
-        //get the values associated with the path.
-        String pathValues = StringUtils.strip(path.split("\\[")[1].replace("]", ""))
-                .toLowerCase();
-
-        if (StringUtils.isNotBlank(pathValues)) {
+        if (StringUtils.isNotBlank(pathFilterExpression)) {
             if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
-                patchRemoveOpWithFilters(roleId, pathValues, GROUPS);
+                patchRemoveOpWithFilters(roleId, pathFilterExpression, GROUPS);
             } else if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
-                patchRemoveOpWithFilters(roleId, pathValues, USERS);
+                patchRemoveOpWithFilters(roleId, pathFilterExpression, USERS);
             } else if (StringUtils.equalsIgnoreCase(patchPath, PERMISSIONS)) {
-                patchRemoveOpWithFilters(roleId, pathValues, PERMISSIONS);
+                patchRemoveOpWithFilters(roleId, pathFilterExpression, PERMISSIONS);
             }
         } else {
             if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
@@ -886,12 +889,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * The filtering for patch operation, remove operation.
      *
      * @param roleId The ID of the role.
-     * @param values The values passed along with path.
+     * @param filter The filter expression passed along with path.
      * @param path   The patch operation path.
      * @throws OrganizationManagementException This exception is thrown when an error occurs while retrieving
      *                                         the values.
      */
-    private void patchRemoveOpWithFilters(String roleId, String values, String path)
+    private void patchRemoveOpWithFilters(String roleId, String filter, String path)
             throws OrganizationManagementException {
 
         String filterDbColumn = StringUtils.EMPTY;
@@ -928,7 +931,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         List<ExpressionNode> expressionNodes = new ArrayList<>();
         List<String> operators = new ArrayList<>();
         try {
-            FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(values);
+            FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filter);
             Node rootNode = filterTreeBuilder.buildTree();
             Utils.setExpressionNodeAndOperatorLists(rootNode, expressionNodes, operators, false);
             FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
@@ -949,7 +952,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
             }
         } catch (IOException | IdentityException e) {
-            throw handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
+            throw handleClientException(ERROR_CODE_ORG_ROLE_PATCH_REMOVE_OPERATION_INVALID_FILTER_FORMAT, filter,
+                    roleId);
         }
     }
 
