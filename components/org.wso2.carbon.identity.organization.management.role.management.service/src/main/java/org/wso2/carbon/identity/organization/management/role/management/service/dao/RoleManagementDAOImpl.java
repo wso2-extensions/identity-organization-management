@@ -721,7 +721,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 pathFilterExpression = StringUtils.strip(path.split("\\[")[1].replace("]", "")).toLowerCase();
             } else {
                 throw handleClientException(ERROR_CODE_ORG_ROLE_PATCH_REMOVE_OPERATION_INVALID_FILTER_FORMAT,
-                        StringUtils.strip(path.substring(path.indexOf("[")+1)));
+                        StringUtils.strip(path.substring(path.indexOf("[") + 1)));
             }
         }
 
