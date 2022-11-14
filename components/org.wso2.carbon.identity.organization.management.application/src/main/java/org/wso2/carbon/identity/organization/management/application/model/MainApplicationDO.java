@@ -19,27 +19,17 @@
 package org.wso2.carbon.identity.organization.management.application.model;
 
 /**
- * This class contains the fragment application id and its organization id.
+ * This class contains the main application id and its organization id.
  */
-public class SharedApplicationDO {
+public class MainApplicationDO {
 
     String organizationId;
+    String mainApplicationId;
 
-    String fragmentApplicationId;
-
-    boolean shareWithAllChildren;
-
-    public SharedApplicationDO(String organizationId, String fragmentApplicationId) {
+    public MainApplicationDO(String organizationId, String mainApplicationId) {
 
         this.organizationId = organizationId;
-        this.fragmentApplicationId = fragmentApplicationId;
-    }
-
-    public SharedApplicationDO(String organizationId, String fragmentApplicationId, boolean shareWithAllChildren) {
-
-        this.organizationId = organizationId;
-        this.fragmentApplicationId = fragmentApplicationId;
-        this.shareWithAllChildren = shareWithAllChildren;
+        this.mainApplicationId = mainApplicationId;
     }
 
     public String getOrganizationId() {
@@ -47,13 +37,8 @@ public class SharedApplicationDO {
         return organizationId;
     }
 
-    public String getFragmentApplicationId() {
+    public String getMainApplicationId() {
 
-        return fragmentApplicationId;
-    }
-
-    public boolean shareWithAllChildren() {
-
-        return this.shareWithAllChildren;
+        return mainApplicationId;
     }
 }

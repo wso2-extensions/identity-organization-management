@@ -118,10 +118,6 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + "; AND UM_ACTION=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION + ";)";
 
-    public static final String CHECK_USER_EXISTS = "SELECT COUNT(1) FROM UM_USER WHERE UM_USER_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + "; AND UM_TENANT_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID + ";";
-
     public static final String ADD_PERMISSION_IF_NOT_EXISTS = "INSERT INTO UM_ORG_PERMISSION (UM_RESOURCE_ID, " +
             "UM_ACTION, UM_TENANT_ID) VALUES ";
 

@@ -26,7 +26,16 @@ public class OrgApplicationMgtConstants {
     public static final String TENANT = "TENANT";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
+    public static final String SHARE_WITH_ALL_CHILDREN = "shareWithAllChildren";
 
     public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
+    public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
+    public static final String DELETE_MAIN_APPLICATION = "deleteMainApplication";
+    public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
+    public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
+
+    public static final String USER_ORGANIZATION_CLAIM_URI =  "http://wso2.org/claims/runtime/user_organization";
+    public static final String USER_ORGANIZATION_CLAIM = "user_organization";
+    public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
 
 }

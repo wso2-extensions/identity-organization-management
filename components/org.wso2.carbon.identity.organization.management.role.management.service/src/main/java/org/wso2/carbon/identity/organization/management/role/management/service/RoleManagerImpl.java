@@ -59,19 +59,23 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUP_VALIDITY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ATTRIBUTE_PATCHING;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_USER_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_REMOVING_REQUIRED_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_RETRIEVING_ORG_ROLES_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_DISPLAY_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_IS_UNMODIFIABLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ROLE_LIST_INVALID_CURSOR;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUPER_ORG_ROLE_CREATE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.generateUniqueID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -86,18 +90,22 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
+        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName())) {
+            validateOrganizationRoleAllowedToAccess(organizationId);
+        }
         role.setId(generateUniqueID());
         validateOrganizationId(organizationId);
+        if (StringUtils.equals(SUPER_ORG_ID, organizationId)) {
+            throw handleClientException(ERROR_CODE_SUPER_ORG_ROLE_CREATE, organizationId);
+        }
         validateRoleNameNotExist(organizationId, role.getDisplayName());
-        // skip user existence check atm, this user can be from any org. Fix this through
-        // https://github.com/wso2-extensions/identity-organization-management/issues/50
 
-//        if (CollectionUtils.isNotEmpty(role.getUsers())) {
-//            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
-//            if (CollectionUtils.isNotEmpty(userIdList)) {
-//                validateUsers(userIdList, getTenantId());
-//            }
-//        }
+        if (CollectionUtils.isNotEmpty(role.getUsers())) {
+            List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userIdList)) {
+                validateUsers(userIdList, organizationId);
+            }
+        }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
             List<String> groupIdList = role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(groupIdList)) {
@@ -111,6 +119,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role getRoleById(String organizationId, String roleId) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         return roleManagementDAO.getRoleById(organizationId, roleId);
@@ -120,6 +129,7 @@ public class RoleManagerImpl implements RoleManager {
     public RolesResponse getOrganizationRoles(int count, String filter, String organizationId, String cursor)
             throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         String direction = FORWARD.toString();
         String cursorValue = " ";
         String nextCursor = null;
@@ -176,6 +186,7 @@ public class RoleManagerImpl implements RoleManager {
     public Role patchRole(String organizationId, String roleId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -201,7 +212,7 @@ public class RoleManagerImpl implements RoleManager {
             }
             if (CollectionUtils.isNotEmpty(patchOperation.getValues())) {
                 if (StringUtils.equalsIgnoreCase(patchPath, USERS)) {
-                    validateUsers(patchOperation.getValues(), getTenantId());
+                    validateUsers(patchOperation.getValues(), organizationId);
                 } else if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
                     validateGroups(patchOperation.getValues(), getTenantId());
                 } else if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME)) {
@@ -215,6 +226,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role putRole(String organizationId, String roleId, Role role) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -226,7 +238,7 @@ public class RoleManagerImpl implements RoleManager {
         if (CollectionUtils.isNotEmpty(role.getUsers())) {
             List<String> userIdList = role.getUsers().stream().map(User::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(userIdList)) {
-                validateUsers(userIdList, getTenantId());
+                validateUsers(userIdList, organizationId);
             }
         }
         if (CollectionUtils.isNotEmpty(role.getGroups())) {
@@ -242,6 +254,7 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public void deleteRole(String organizationId, String roleId) throws OrganizationManagementException {
 
+        validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
         if (!isRoleModifiable(organizationId, roleId)) {
@@ -276,7 +289,7 @@ public class RoleManagerImpl implements RoleManager {
                 Utils.setExpressionNodeAndOperatorLists(rootNode, expressionNodes, operators, true);
             }
         } catch (IOException | IdentityException e) {
-            throw handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
+            throw handleClientException(ERROR_CODE_RETRIEVING_ORG_ROLES_INVALID_FILTER_FORMAT, filter);
         }
     }
 
@@ -336,16 +349,16 @@ public class RoleManagerImpl implements RoleManager {
     /**
      * Check the passed user ID list is valid.
      *
-     * @param userIdList The user ID list.
-     * @param tenantId   The tenant ID.
+     * @param userIdList     The user ID list.
+     * @param organizationId The organization id where the user ID is about to resolve over ancestor organizations.
      * @throws OrganizationManagementException Throws an exception if a user ID is not valid.
      */
-    private void validateUsers(List<String> userIdList, int tenantId) throws OrganizationManagementException {
+    private void validateUsers(List<String> userIdList, String organizationId) throws OrganizationManagementException {
 
         for (String userId : userIdList) {
-            if (!roleManagementDAO.checkUserExists(userId, tenantId)) {
-                throw handleClientException(ERROR_CODE_INVALID_USER_ID, userId);
-            }
+            RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService()
+                    .resolveResidentOrganization(userId, organizationId)
+                    .orElseThrow(() -> handleClientException(ERROR_CODE_INVALID_USER_ID, userId));
         }
     }
 
@@ -424,6 +437,16 @@ public class RoleManagerImpl implements RoleManager {
             return Utils.getGson().fromJson(decodeString, Cursor.class);
         } catch (JsonSyntaxException e) {
             throw handleClientException(ERROR_CODE_ROLE_LIST_INVALID_CURSOR, cursorString);
+        }
+    }
+
+    private void validateOrganizationRoleAllowedToAccess(String organizationId) throws OrganizationManagementException {
+
+        String authorizedOrganizationId =
+                getOrganizationId(); // The organization that the user is authorized to access.
+        if (!StringUtils.equals(organizationId, authorizedOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_ROLE_ACCESS, organizationId,
+                    authorizedOrganizationId);
         }
     }
 }

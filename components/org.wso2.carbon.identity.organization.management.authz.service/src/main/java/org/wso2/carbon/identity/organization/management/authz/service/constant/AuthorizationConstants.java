@@ -25,5 +25,4 @@ public class AuthorizationConstants {
 
     public static final String PERMISSION_SPLITTER = "/";
     public static final String RESOURCE_PERMISSION_NONE = "none";
-    public static final String SUPER = "Super";
 }
