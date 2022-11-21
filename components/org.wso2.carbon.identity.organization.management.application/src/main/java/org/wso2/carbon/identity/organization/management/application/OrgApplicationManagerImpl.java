@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRe
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
@@ -64,6 +65,7 @@ import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -381,8 +383,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
                 rootApplication.getLocalAndOutBoundAuthenticationConfig();
-
         AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
+
+        if (StringUtils.equalsIgnoreCase(outboundAuthenticationConfig.getAuthenticationType(), AUTH_TYPE_DEFAULT)) {
+            // We need to set the default tenant authentication sequence.
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Authentication type is set to 'DEFAULT'. Reading the authentication sequence from the " +
+                        "'default' application and showing the effective authentication sequence for application " +
+                        "with id: " + rootApplication.getApplicationResourceId());
+            }
+            LocalAndOutboundAuthenticationConfig defaultAuthenticationConfig = getDefaultAuthenticationConfig();
+            if (defaultAuthenticationConfig != null) {
+                authSteps = defaultAuthenticationConfig.getAuthenticationSteps();
+            }
+            // Change the authType to flow, since we are adding organization login authenticator.
+            outboundAuthenticationConfig = new LocalAndOutboundAuthenticationConfig();
+            outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
+        }
 
         AuthenticationStep first = new AuthenticationStep();
         if (ArrayUtils.isNotEmpty(authSteps)) {
@@ -399,11 +416,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             first.setAttributeStep(exist.isAttributeStep());
             first.setFederatedIdentityProviders(exist.getFederatedIdentityProviders());
             first.setLocalAuthenticatorConfigs(exist.getLocalAuthenticatorConfigs());
-        }
-
-        if (StringUtils.equalsIgnoreCase(outboundAuthenticationConfig.getAuthenticationType(), AUTH_TYPE_DEFAULT)) {
-            outboundAuthenticationConfig = new LocalAndOutboundAuthenticationConfig();
-            outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
         }
 
         AuthenticationStep[] newAuthSteps =
@@ -718,5 +730,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private ClaimMetadataManagementService getClaimMetadataManagementService() {
 
         return OrgApplicationMgtDataHolder.getInstance().getClaimMetadataManagementService();
+    }
+
+    private LocalAndOutboundAuthenticationConfig getDefaultAuthenticationConfig()
+            throws OrganizationManagementServerException {
+
+        ServiceProvider defaultSP = getDefaultServiceProvider();
+        return defaultSP != null ? defaultSP.getLocalAndOutBoundAuthenticationConfig() : null;
+    }
+
+    private ServiceProvider getDefaultServiceProvider() throws OrganizationManagementServerException {
+
+        try {
+            return OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService()
+                    .getServiceProvider(IdentityApplicationConstants.DEFAULT_SP_CONFIG,
+                            MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+        } catch (IdentityApplicationManagementException e) {
+            throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
+        }
     }
 }
