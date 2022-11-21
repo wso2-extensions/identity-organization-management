@@ -18,11 +18,13 @@
 
 package org.wso2.carbon.identity.organization.management.ext;
 
+import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.organization.management.ext.internal.OrganizationManagementExtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.listener.OrganizationManagerListener;
@@ -129,12 +131,14 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
     }
 
     private void fireEvent(String eventName, Map<String, Object> eventProperties)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementException {
 
         IdentityEventService eventService = OrganizationManagementExtDataHolder.getInstance().getIdentityEventService();
         try {
             Event event = new Event(eventName, eventProperties);
             eventService.handleEvent(event);
+        } catch (IdentityEventClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode(), e);
         } catch (IdentityEventException e) {
             throw new OrganizationManagementServerException(
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getMessage(),
