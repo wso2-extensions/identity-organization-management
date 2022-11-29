@@ -89,7 +89,8 @@ public class SQLConstants {
     public static final String UM_ACTION_APPENDER = "UM_ACTION=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION +
             ";";
 
-    public static final String CHECK_ROLE_NAME_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE UM_ROLE_NAME=:" +
+    public static final String CHECK_ROLE_NAME_EXISTS = "SELECT COUNT(1) FROM UM_ORG_ROLE WHERE " +
+            "UM_ROLE_NAME COLLATE Latin1_General_CS_AS=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; AND UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
