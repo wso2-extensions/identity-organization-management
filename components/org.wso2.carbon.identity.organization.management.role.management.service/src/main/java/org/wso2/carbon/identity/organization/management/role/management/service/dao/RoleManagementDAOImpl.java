@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.core.util.JdbcUtils;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.FilterOperator;
 import org.wso2.carbon.identity.organization.management.role.management.service.internal.RoleManagementDataHolder;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.FilterQueryBuilder;
@@ -90,6 +91,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_NAME_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_ROLE_NAME_EXISTS_MSSQL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_USER_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_GROUPS_FROM_ROLE_MAPPING;
@@ -548,13 +550,15 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String roleAttribute = StringUtils.isBlank(roleId) ? roleName : roleId;
         String roleParameter = StringUtils.isBlank(roleId) ? DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME :
                 DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID;
-        String stm = StringUtils.isBlank(roleId) ? CHECK_ROLE_NAME_EXISTS : CHECK_ROLE_EXISTS;
         ErrorMessages errorMessage = StringUtils.isBlank(roleId) ?
                 ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_NAME :
                 ERROR_CODE_GETTING_ROLE_FROM_ORGANIZATION_ID_ROLE_ID;
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            String stm = StringUtils.isBlank(roleId) ?
+                    (JdbcUtils.isMSSqlDB() ? CHECK_ROLE_NAME_EXISTS_MSSQL : CHECK_ROLE_NAME_EXISTS) : CHECK_ROLE_EXISTS;
+
+            NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
             int roleCount = namedJdbcTemplate.fetchSingleRecord(stm,
                     (resultSet, rowNumber) -> resultSet.getInt(1),
                     namedPreparedStatement -> {
