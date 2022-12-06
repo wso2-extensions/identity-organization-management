@@ -501,6 +501,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                  boolean shareWithAllChildren) throws OrganizationManagementException {
 
         try {
+            String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
             // loaded, tenant domain will be derived from the user who created the application.
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
@@ -538,7 +539,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             // Create Oauth consumer app to redirect login to shared (fragment) application.
             OAuthConsumerAppDTO createdOAuthApp;
             try {
-                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName());
+                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), ownerTenantDomain);
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
@@ -566,10 +567,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
     }
 
-    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName)
+    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String tenantDomain)
             throws URLBuilderException, IdentityOAuthAdminException {
 
-        ServiceURL commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build();
+        ServiceURL commonAuthServiceUrl =
+                ServiceURLBuilder.create().setTenant(tenantDomain).addPath(FrameworkConstants.COMMONAUTH).build();
         String callbackUrl = commonAuthServiceUrl.getAbsolutePublicURL();
 
         OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
