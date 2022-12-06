@@ -119,6 +119,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.useTenantQualifiedURLs;
 import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
 
 /**
@@ -506,7 +507,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setOrganizationId(sharedOrgId);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
 
             try {
@@ -538,7 +538,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             // Create Oauth consumer app to redirect login to shared (fragment) application.
             OAuthConsumerAppDTO createdOAuthApp;
             try {
-                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName());
+                String callbackUrl = getCallbackURL(ownerOrgId);
+                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
@@ -566,11 +567,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
     }
 
-    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName)
-            throws URLBuilderException, IdentityOAuthAdminException {
-
-        ServiceURL commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build();
-        String callbackUrl = commonAuthServiceUrl.getAbsolutePublicURL();
+    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String callbackUrl)
+            throws IdentityOAuthAdminException {
 
         OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
         String clientId = UUID.randomUUID().toString();
@@ -580,6 +578,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setCallbackUrl(callbackUrl);
         consumerApp.setApplicationName(mainAppName);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
+    }
+
+    private String getCallbackURL(String ownerOrgId) throws URLBuilderException, OrganizationManagementException {
+
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
+        ServiceURL commonAuthServiceUrl;
+        if (useTenantQualifiedURLs(ownerOrgId)) {
+            commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH)
+                    .setTenant(tenantDomain).build();
+        } else {
+            commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH)
+                    .setTenant(tenantDomain).setOrganization(ownerOrgId).build();
+        }
+        return commonAuthServiceUrl.getAbsolutePublicURL();
     }
 
     private void removeOAuthApplication(OAuthConsumerAppDTO oauthApp)
