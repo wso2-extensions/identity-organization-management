@@ -406,7 +406,6 @@ public class RoleManagerImpl implements RoleManager {
         if (values.size() > 1) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES);
         }
-        validateRoleNameNotExist(organizationId, values.get(0));
         try {
             validateRoleNameNotExist(organizationId, values.get(0));
         } catch (OrganizationManagementException e) {
