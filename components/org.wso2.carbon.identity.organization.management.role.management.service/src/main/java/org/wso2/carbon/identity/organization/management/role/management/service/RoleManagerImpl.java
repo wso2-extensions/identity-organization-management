@@ -406,16 +406,11 @@ public class RoleManagerImpl implements RoleManager {
         if (values.size() > 1) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES);
         }
-        try {
-            validateRoleNameNotExist(organizationId, values.get(0));
-        } catch (OrganizationManagementException e) {
-            if (StringUtils.equals(e.getErrorCode(), ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS.getCode())) {
-                Role role = roleManagementDAO.getRoleById(organizationId, roleId);
-                if (!StringUtils.equalsIgnoreCase(role.getDisplayName(), values.get(0))) {
-                    throw e;
-                }
-            }
+        Role role = roleManagementDAO.getRoleById(organizationId, roleId);
+        if (StringUtils.equalsIgnoreCase(role.getDisplayName(), values.get(0))) {
+            return;
         }
+        validateRoleNameNotExist(organizationId, values.get(0));
     }
 
     /**
