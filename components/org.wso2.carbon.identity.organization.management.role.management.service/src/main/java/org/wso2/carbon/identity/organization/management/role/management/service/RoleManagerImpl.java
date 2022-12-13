@@ -216,7 +216,7 @@ public class RoleManagerImpl implements RoleManager {
                 } else if (StringUtils.equalsIgnoreCase(patchPath, GROUPS)) {
                     validateGroups(patchOperation.getValues(), getTenantId());
                 } else if (StringUtils.equalsIgnoreCase(patchPath, DISPLAY_NAME)) {
-                    validatePatchOpDisplayName(patchOperation.getValues(), organizationId);
+                    validatePatchOpDisplayName(patchOperation.getValues(), organizationId, roleId);
                 }
             }
         }
@@ -400,11 +400,15 @@ public class RoleManagerImpl implements RoleManager {
         }
     }
 
-    private void validatePatchOpDisplayName(List<String> values, String organizationId)
+    private void validatePatchOpDisplayName(List<String> values, String organizationId, String roleId)
             throws OrganizationManagementException {
 
         if (values.size() > 1) {
             throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_MULTIPLE_VALUES);
+        }
+        Role role = roleManagementDAO.getRoleById(organizationId, roleId);
+        if (StringUtils.equalsIgnoreCase(role.getDisplayName(), values.get(0))) {
+            return;
         }
         validateRoleNameNotExist(organizationId, values.get(0));
     }
