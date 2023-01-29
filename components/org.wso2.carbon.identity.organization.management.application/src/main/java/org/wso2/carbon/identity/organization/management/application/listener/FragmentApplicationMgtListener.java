@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
+
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
@@ -92,8 +94,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
+            AuthenticationScriptConfig authenticationScriptConfig =
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig();
+            if (authenticationScriptConfig.isEnabled() &&
+                    !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
+                throw new IdentityApplicationManagementException(
+                        "Authentication script configuration not allowed for fragment applications");
+            }
         }
-
         // Updating the shareWithAllChildren flag of application is blocked.
         if (existingApplication != null
                 && !IdentityUtil.threadLocalProperties.get().containsKey(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN)) {
@@ -184,12 +192,13 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         tenantDomain);
                 if (sharedApplicationDO.isPresent()) {
                     if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_MAIN_APPLICATION) ||
-                        IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
-                        (!sharedApplicationDO.get().shareWithAllChildren() &&
-                                IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
+                            IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
+                            (!sharedApplicationDO.get().shareWithAllChildren() &&
+                                    IdentityUtil.threadLocalProperties.get()
+                                            .containsKey(DELETE_FRAGMENT_APPLICATION))) {
                         return true;
                     }
-                    if (sharedApplicationDO.get().shareWithAllChildren())  {
+                    if (sharedApplicationDO.get().shareWithAllChildren()) {
                         return false;
                     }
                 }
@@ -211,7 +220,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         organizationId, application.getApplicationResourceId());
                 IdentityUtil.threadLocalProperties.get().put(DELETE_MAIN_APPLICATION, true);
                 String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                for (SharedApplicationDO sharedApplicationDO: sharedApplications) {
+                for (SharedApplicationDO sharedApplicationDO : sharedApplications) {
                     getApplicationMgtService().deleteApplication(application.getApplicationName(),
                             sharedApplicationDO.getOrganizationId(), username);
                 }
