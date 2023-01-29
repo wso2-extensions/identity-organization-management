@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
@@ -92,8 +93,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
+            AuthenticationScriptConfig authenticationScriptConfig =
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig();
+            if (authenticationScriptConfig.isEnabled() &&
+                    !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
+                throw new IdentityApplicationManagementException(
+                        "Authentication script configuration not allowed for fragment applications");
+            }
         }
-
         // Updating the shareWithAllChildren flag of application is blocked.
         if (existingApplication != null
                 && !IdentityUtil.threadLocalProperties.get().containsKey(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN)) {
