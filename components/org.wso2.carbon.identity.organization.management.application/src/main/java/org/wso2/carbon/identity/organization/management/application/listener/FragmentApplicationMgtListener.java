@@ -98,7 +98,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             if (authenticationScriptConfig.isEnabled() &&
                     !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
                 throw new IdentityApplicationManagementException(
-                        "Authentication script configuration not allowed for fragment applications");
+                        "Authentication script configuration not allowed for shared applications.");
             }
         }
         // Updating the shareWithAllChildren flag of application is blocked.
