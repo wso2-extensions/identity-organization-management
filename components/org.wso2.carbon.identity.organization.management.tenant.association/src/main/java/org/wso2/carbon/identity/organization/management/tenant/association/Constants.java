@@ -44,6 +44,7 @@ public class Constants {
     public static final String CLAIM_META_DATA_MGT_VIEW_PERMISSION =
             "/permission/admin/manage/identity/claimmgt/metadata/view";
     public static final String USER_MGT_CREATE_PERMISSION = "/permission/admin/manage/identity/usermgt/create";
+    public static final String ADMINISTRATOR_ROLE_PERMISSION = "/permission/admin";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,

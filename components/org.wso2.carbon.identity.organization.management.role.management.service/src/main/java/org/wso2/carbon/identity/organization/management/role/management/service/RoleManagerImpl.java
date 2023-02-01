@@ -54,6 +54,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
@@ -90,7 +91,8 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
-        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName())) {
+        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName()) &&
+                !StringUtils.equals(ORG_ADMINISTRATOR_ROLE, role.getDisplayName())) {
             validateOrganizationRoleAllowedToAccess(organizationId);
         }
         role.setId(generateUniqueID());

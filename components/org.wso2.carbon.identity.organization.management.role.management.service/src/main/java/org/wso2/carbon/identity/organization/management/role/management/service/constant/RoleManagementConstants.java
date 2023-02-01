@@ -42,6 +42,7 @@ public class RoleManagementConstants {
     public static final String UNION_SEPARATOR = " UNION ALL ";
 
     public static final String ORG_CREATOR_ROLE = "org-creator";
+    public static final String ORG_ADMINISTRATOR_ROLE = "Administrator";
 
     /**
      * Enum for cursor based pagination direction.
