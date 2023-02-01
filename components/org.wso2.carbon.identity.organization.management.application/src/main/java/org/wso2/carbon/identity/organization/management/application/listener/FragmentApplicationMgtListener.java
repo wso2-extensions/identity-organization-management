@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
+
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
@@ -95,13 +97,18 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
-            AuthenticationScriptConfig authenticationScriptConfig =
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig();
-            if (authenticationScriptConfig.isEnabled() &&
-                    !StringUtils.equals(authenticationScriptConfig.getContent(),
-                            OrgApplicationMgtConstants.DEFAULT_AUTH_SCRIPT)) {
-                throw new IdentityApplicationManagementClientException(
-                        "Authentication script configuration not allowed for shared applications.");
+            LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig();
+            if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null &&
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig() != null) {
+                AuthenticationScriptConfig authenticationScriptConfig =
+                        localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig();
+                if (authenticationScriptConfig.isEnabled() &&
+                        !StringUtils.equals(authenticationScriptConfig.getContent(),
+                                OrgApplicationMgtConstants.DEFAULT_AUTH_SCRIPT)) {
+                    throw new IdentityApplicationManagementClientException(
+                            "Authentication script configuration not allowed for shared applications.");
+                }
             }
         }
         // Updating the shareWithAllChildren flag of application is blocked.
