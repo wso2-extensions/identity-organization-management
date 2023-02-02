@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -96,13 +97,13 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
             LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
                     serviceProvider.getLocalAndOutBoundAuthenticationConfig();
-            if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null &&
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig() != null) {
+            if (localAndOutBoundAuthenticationConfig != null &&
+                    localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig() != null) {
                 AuthenticationScriptConfig authenticationScriptConfig =
                         localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig();
                 if (authenticationScriptConfig.isEnabled() &&
                         !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
-                    throw new IdentityApplicationManagementException(
+                    throw new IdentityApplicationManagementClientException(
                             "Authentication script configuration not allowed for shared applications.");
                 }
             }
