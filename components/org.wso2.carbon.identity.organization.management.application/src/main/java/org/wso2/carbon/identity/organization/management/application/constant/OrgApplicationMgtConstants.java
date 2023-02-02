@@ -34,10 +34,8 @@ public class OrgApplicationMgtConstants {
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
 
-    public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
+    public static final String USER_ORGANIZATION_CLAIM_URI =  "http://wso2.org/claims/runtime/user_organization";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
-    public static final String DEFAULT_AUTH_SCRIPT =
-            "var onLoginRequest = function(context) {\n    executeStep(1);\n};\n";
 
 }
