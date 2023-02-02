@@ -107,6 +107,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 }
             }
         }
+
         // Updating the shareWithAllChildren flag of application is blocked.
         if (existingApplication != null
                 && !IdentityUtil.threadLocalProperties.get().containsKey(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN)) {
@@ -197,9 +198,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         tenantDomain);
                 if (sharedApplicationDO.isPresent()) {
                     if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_MAIN_APPLICATION) ||
-                            IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
-                            (!sharedApplicationDO.get().shareWithAllChildren() &&
-                                    IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
+                        IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
+                        (!sharedApplicationDO.get().shareWithAllChildren() &&
+                                IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
                         return true;
                     }
                     if (sharedApplicationDO.get().shareWithAllChildren())  {
