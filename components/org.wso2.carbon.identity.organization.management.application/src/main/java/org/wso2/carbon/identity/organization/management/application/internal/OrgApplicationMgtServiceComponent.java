@@ -31,11 +31,14 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
+import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListener;
+import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
@@ -71,6 +74,8 @@ public class OrgApplicationMgtServiceComponent {
                     null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
+            bundleContext.registerService(OrgApplicationManagerListener.class.getName(),
+                    new OrgApplicationManagerListenerImpl(), null);
             if (log.isDebugEnabled()) {
                 log.debug("Organization Application Management component activated successfully.");
             }
@@ -212,5 +217,24 @@ public class OrgApplicationMgtServiceComponent {
 
         log.debug("Unset the claim metadata management service.");
         OrgApplicationMgtDataHolder.getInstance().setClaimMetadataManagementService(null);
+    }
+
+    @Reference(
+            name = "identity.event.service",
+            service = IdentityEventService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityEventService"
+    )
+    protected void setIdentityEventService(IdentityEventService identityEventService) {
+
+        log.debug("Set Identity Event Service.");
+        OrgApplicationMgtDataHolder.getInstance().setIdentityEventService(identityEventService);
+    }
+
+    protected void unsetIdentityEventService(IdentityEventService identityEventService) {
+
+        log.debug("Unset Identity Event Service.");
+        OrgApplicationMgtDataHolder.getInstance().setIdentityEventService(null);
     }
 }

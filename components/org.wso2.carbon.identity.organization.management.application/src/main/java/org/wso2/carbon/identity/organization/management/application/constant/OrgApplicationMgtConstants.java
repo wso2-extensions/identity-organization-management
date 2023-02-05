@@ -34,8 +34,28 @@ public class OrgApplicationMgtConstants {
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
 
-    public static final String USER_ORGANIZATION_CLAIM_URI =  "http://wso2.org/claims/runtime/user_organization";
+    public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
 
+    // Event constants related to shared application management.
+    public static final String EVENT_PROP_PARENT_ORGANIZATION_ID = "PARENT_ORGANIZATION_ID";
+    public static final String EVENT_PROP_SHARED_ORGANIZATION_ID = "SHARED_ORGANIZATION_ID";
+    public static final String EVENT_PROP_PARENT_APPLICATION_ID = "PARENT_APPLICATION_ID";
+    public static final String EVENT_PROP_SHARED_APPLICATION_ID = "SHARED_APPLICATION_ID";
+    public static final String EVENT_PROP_SHARED_APPLICATIONS_DATA = "SHARED_APPLICATIONS_DATA";
+    public static final String EVENT_PROP_SHARE_WITH_ALL_CHILDREN = "SHARE_WITH_ALL_CHILDREN";
+    public static final String EVENT_PROP_SHARED_ORGANIZATIONS = "SHARED_ORGANIZATIONS";
+    public static final String EVENT_PRE_SHARE_APPLICATION = "PRE_SHARE_APPLICATION";
+    public static final String EVENT_POST_SHARE_APPLICATION = "POST_SHARE_APPLICATION";
+    public static final String EVENT_PRE_DELETE_SHARED_APPLICATION = "PRE_DELETE_SHARED_APPLICATION";
+    public static final String EVENT_POST_DELETE_SHARED_APPLICATION = "POST_DELETE_SHARED_APPLICATION";
+    public static final String EVENT_PRE_DELETE_ALL_SHARED_APPLICATIONS = "PRE_DELETE_ALL_SHARED_APPLICATIONS";
+    public static final String EVENT_POST_DELETE_ALL_SHARED_APPLICATIONS = "POST_DELETE_ALL_SHARED_APPLICATIONS";
+    public static final String EVENT_PRE_GET_APPLICATION_SHARED_ORGANIZATIONS =
+            "PRE_GET_APPLICATION_SHARED_ORGANIZATIONS";
+    public static final String EVENT_POST_GET_APPLICATION_SHARED_ORGANIZATIONS =
+            "POST_GET_APPLICATION_SHARED_ORGANIZATIONS";
+    public static final String EVENT_PRE_GET_SHARED_APPLICATIONS = "PRE_GET_SHARED_APPLICATIONS";
+    public static final String EVENT_POST_GET_SHARED_APPLICATIONS = "POST_GET_SHARED_APPLICATIONS";
 }

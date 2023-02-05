@@ -20,8 +20,10 @@ package org.wso2.carbon.identity.organization.management.application.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
+import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -42,6 +44,8 @@ public class OrgApplicationMgtDataHolder {
     private OrganizationManager organizationManager;
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
     private IdpManager idpManager;
+    private OrgApplicationManagerListener orgApplicationManagerListener;
+    private IdentityEventService identityEventService;
 
     private ClaimMetadataManagementService claimMetadataManagementService;
     private OrgApplicationMgtDataHolder() {
@@ -202,5 +206,45 @@ public class OrgApplicationMgtDataHolder {
     public void setClaimMetadataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
 
         this.claimMetadataManagementService = claimMetadataManagementService;
+    }
+
+    /**
+     * Get {@link OrgApplicationManagerListener}.
+     *
+     * @return Organization application management listener.
+     */
+    public OrgApplicationManagerListener getOrgApplicationManagerListener() {
+
+        return orgApplicationManagerListener;
+    }
+
+    /**
+     * Set {@link OrgApplicationManagerListener}.
+     *
+     * @param orgApplicationManagerListener Instance of {@link OrgApplicationManagerListener}.
+     */
+    public void setOrgApplicationManagerListener(OrgApplicationManagerListener orgApplicationManagerListener) {
+
+        this.orgApplicationManagerListener = orgApplicationManagerListener;
+    }
+
+    /**
+     * Get {@link IdentityEventService}.
+     *
+     * @return IdentityEventService.
+     */
+    public IdentityEventService getIdentityEventService() {
+
+        return identityEventService;
+    }
+
+    /**
+     * Set {@link IdentityEventService}.
+     *
+     * @param identityEventService Instance of {@link IdentityEventService}.
+     */
+    public void setIdentityEventService(IdentityEventService identityEventService) {
+
+        this.identityEventService = identityEventService;
     }
 }

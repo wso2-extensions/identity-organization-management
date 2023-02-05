@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application;
 
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
@@ -61,6 +62,17 @@ public interface OrgApplicationManager {
      *                                         fragment applications.
      */
     List<BasicOrganization> getApplicationSharedOrganizations(String ownerOrgId, String mainAppId)
+            throws OrganizationManagementException;
+
+    /**
+     * Returns the shared applications list of a given primary application, along with their organizations.
+     *
+     * @param ownerOrgId ID of the organization owning the primary application.
+     * @param mainAppId ID of the primary application.
+     * @return A list of shared applications details.
+     * @throws OrganizationManagementException on errors occurred while retrieving the list of shared applications.
+     */
+    List<SharedApplication> getSharedApplications(String ownerOrgId, String mainAppId)
             throws OrganizationManagementException;
 
     /**
