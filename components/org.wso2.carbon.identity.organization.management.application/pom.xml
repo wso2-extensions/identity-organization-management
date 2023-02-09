@@ -168,6 +168,7 @@
                             org.wso2.carbon.identity.event.handler; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

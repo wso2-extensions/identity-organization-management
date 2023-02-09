@@ -37,7 +37,6 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
-import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListener;
 import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -67,6 +66,8 @@ public class OrgApplicationMgtServiceComponent {
         try {
             OrgApplicationMgtDataHolder.getInstance()
                     .setOrgApplicationMgtDAO(new OrgApplicationMgtDAOImpl());
+            OrgApplicationMgtDataHolder.getInstance()
+                    .setOrgApplicationManagerListener(new OrgApplicationManagerListenerImpl());
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(OrgApplicationManager.class.getName(), new OrgApplicationManagerImpl(), null);
             //Fragment application listener.
@@ -74,8 +75,6 @@ public class OrgApplicationMgtServiceComponent {
                     null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
-            bundleContext.registerService(OrgApplicationManagerListener.class.getName(),
-                    new OrgApplicationManagerListenerImpl(), null);
             if (log.isDebugEnabled()) {
                 log.debug("Organization Application Management component activated successfully.");
             }
@@ -201,25 +200,6 @@ public class OrgApplicationMgtServiceComponent {
     }
 
     @Reference(
-            name = "claim.metadata.management.service",
-            service = ClaimMetadataManagementService.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetClaimMetaDataManagementService"
-    )
-    protected void setClaimMetaDataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
-
-        log.debug("Setting the claim metadata management service.");
-        OrgApplicationMgtDataHolder.getInstance().setClaimMetadataManagementService(claimMetadataManagementService);
-    }
-
-    protected void unsetClaimMetaDataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
-
-        log.debug("Unset the claim metadata management service.");
-        OrgApplicationMgtDataHolder.getInstance().setClaimMetadataManagementService(null);
-    }
-
-    @Reference(
             name = "identity.event.service",
             service = IdentityEventService.class,
             cardinality = ReferenceCardinality.MANDATORY,
@@ -236,5 +216,24 @@ public class OrgApplicationMgtServiceComponent {
 
         log.debug("Unset Identity Event Service.");
         OrgApplicationMgtDataHolder.getInstance().setIdentityEventService(null);
+    }
+
+    @Reference(
+            name = "claim.metadata.management.service",
+            service = ClaimMetadataManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetClaimMetaDataManagementService"
+    )
+    protected void setClaimMetaDataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
+
+        log.debug("Setting the claim metadata management service.");
+        OrgApplicationMgtDataHolder.getInstance().setClaimMetadataManagementService(claimMetadataManagementService);
+    }
+
+    protected void unsetClaimMetaDataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
+
+        log.debug("Unset the claim metadata management service.");
+        OrgApplicationMgtDataHolder.getInstance().setClaimMetadataManagementService(null);
     }
 }

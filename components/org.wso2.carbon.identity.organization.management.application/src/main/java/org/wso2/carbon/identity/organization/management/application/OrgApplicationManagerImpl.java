@@ -250,11 +250,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
             for (SharedApplicationDO sharedApplicationDO : sharedApplicationDOList) {
                 IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
-                Optional<String> fragmentApplicationId =
+                Optional<String> sharedApplicationId =
                         resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId,
                                 sharedApplicationDO.getOrganizationId());
-                if (fragmentApplicationId.isPresent()) {
-                    deleteSharedApplication(sharedApplicationDO.getOrganizationId(), fragmentApplicationId.get());
+                if (sharedApplicationId.isPresent()) {
+                    deleteSharedApplication(sharedApplicationDO.getOrganizationId(), sharedApplicationId.get());
                 }
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
             }
@@ -279,33 +279,33 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 throw handleClientException(ERROR_CODE_INVALID_DELETE_SHARE_REQUEST,
                         serviceProvider.getApplicationResourceId(), sharedOrganizationId);
             }
-            Optional<String> fragmentApplicationId =
+            Optional<String> sharedApplicationId =
                     resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
-            if (fragmentApplicationId.isPresent()) {
-                deleteSharedApplication(sharedOrganizationId, fragmentApplicationId.get());
+            if (sharedApplicationId.isPresent()) {
+                deleteSharedApplication(sharedOrganizationId, sharedApplicationId.get());
                 getListener().postDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId,
-                        fragmentApplicationId.get());
+                        sharedApplicationId.get());
             }
         }
     }
 
-    private void deleteSharedApplication(String sharedOrganizationId, String fragmentApplicationId)
+    private void deleteSharedApplication(String sharedOrganizationId, String sharedApplicationId)
             throws OrganizationManagementException {
 
         try {
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-            ServiceProvider fragmentApplication =
-                    getApplicationManagementService().getApplicationByResourceId(fragmentApplicationId,
+            ServiceProvider sharedApplication =
+                    getApplicationManagementService().getApplicationByResourceId(sharedApplicationId,
                             sharedTenantDomain);
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
 
             // Setting the thread local property to allow deleting fragment application. Otherwise
             // FragmentApplicationMgtListener will reject application deletion.
             IdentityUtil.threadLocalProperties.get().put(DELETE_FRAGMENT_APPLICATION, true);
-            getApplicationManagementService().deleteApplication(fragmentApplication.getApplicationName(),
+            getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
                     sharedTenantDomain, username);
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, fragmentApplicationId,
+            throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, sharedApplicationId,
                     sharedOrganizationId);
         } finally {
             IdentityUtil.threadLocalProperties.get().remove(DELETE_FRAGMENT_APPLICATION);

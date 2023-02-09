@@ -91,7 +91,6 @@ public class OrgApplicationManagerListenerImpl implements OrgApplicationManagerL
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
         fireEvent(OrgApplicationMgtConstants.EVENT_POST_DELETE_SHARED_APPLICATION, eventProperties);
-
     }
 
     @Override
@@ -124,7 +123,6 @@ public class OrgApplicationManagerListenerImpl implements OrgApplicationManagerL
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID, parentOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID, parentApplicationId);
         fireEvent(OrgApplicationMgtConstants.EVENT_PRE_GET_APPLICATION_SHARED_ORGANIZATIONS, eventProperties);
-
     }
 
     @Override
