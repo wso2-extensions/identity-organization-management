@@ -404,7 +404,7 @@ public class RoleManagerImpl implements RoleManager {
         // The Administrator role permissions and display name are not allowed to be updated.
         if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
             return new HashSet<>(role.getPermissions()).equals(new HashSet<>(modifiedRole.getPermissions()))
-                    || ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(modifiedRole.getDisplayName());
+                    && ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(modifiedRole.getDisplayName());
         }
         // The org-creator role assigned during org creation, is not allowed to be updated.
         return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
