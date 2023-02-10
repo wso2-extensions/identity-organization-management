@@ -380,7 +380,7 @@ public class RoleManagerImpl implements RoleManager {
         if (role == null) {
             throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
         }
-        // The org-creator role assigned during org creation, is not allowed for update / delete.
+        // The org-creator role assigned during org creation, is not allowed to be deleted.
         return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName())
                 && !ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
     }
