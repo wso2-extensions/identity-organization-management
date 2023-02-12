@@ -33,8 +33,8 @@ public class MainApplicationDO {
     }
 
     /**
-     * Get the organization id.
-     * @return String: organizationId.
+     * Get the Organization Id.
+     * @return {@link String} : OrganizationId.
      */
     public String getOrganizationId() {
 
@@ -42,8 +42,8 @@ public class MainApplicationDO {
     }
 
     /**
-     * Get the main application id.
-     * @return String: mainApplicationId
+     * Get the Main Application Id.
+     * @return {@link String} : MainApplicationId.
      */
     public String getMainApplicationId() {
 
