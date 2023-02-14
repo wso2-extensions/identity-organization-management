@@ -175,7 +175,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         ("Error while retrieving the fragment application details.", e);
             }
         }
-
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
     }
 

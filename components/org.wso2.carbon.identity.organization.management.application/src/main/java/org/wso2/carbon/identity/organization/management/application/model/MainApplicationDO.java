@@ -32,11 +32,19 @@ public class MainApplicationDO {
         this.mainApplicationId = mainApplicationId;
     }
 
+    /**
+     * Get the Organization Id.
+     * @return {@link String} : OrganizationId.
+     */
     public String getOrganizationId() {
 
         return organizationId;
     }
 
+    /**
+     * Get the Main Application Id.
+     * @return {@link String} : MainApplicationId.
+     */
     public String getMainApplicationId() {
 
         return mainApplicationId;
