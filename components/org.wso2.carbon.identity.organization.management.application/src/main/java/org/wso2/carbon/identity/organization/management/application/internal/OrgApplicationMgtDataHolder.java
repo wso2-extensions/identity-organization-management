@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
-import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListener;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -44,7 +44,7 @@ public class OrgApplicationMgtDataHolder {
     private OrganizationManager organizationManager;
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
     private IdpManager idpManager;
-    private OrgApplicationManagerListener orgApplicationManagerListener;
+    private ApplicationSharingManagerListener applicationSharingManagerListener;
     private IdentityEventService identityEventService;
 
     private ClaimMetadataManagementService claimMetadataManagementService;
@@ -209,23 +209,24 @@ public class OrgApplicationMgtDataHolder {
     }
 
     /**
-     * Get {@link OrgApplicationManagerListener}.
+     * Get {@link ApplicationSharingManagerListener}.
      *
-     * @return Organization application management listener.
+     * @return Application sharing manager listener.
      */
-    public OrgApplicationManagerListener getOrgApplicationManagerListener() {
+    public ApplicationSharingManagerListener getApplicationSharingManagerListener() {
 
-        return orgApplicationManagerListener;
+        return applicationSharingManagerListener;
     }
 
     /**
-     * Set {@link OrgApplicationManagerListener}.
+     * Set {@link ApplicationSharingManagerListener}.
      *
-     * @param orgApplicationManagerListener Instance of {@link OrgApplicationManagerListener}.
+     * @param applicationSharingManagerListener Instance of {@link ApplicationSharingManagerListener}.
      */
-    public void setOrgApplicationManagerListener(OrgApplicationManagerListener orgApplicationManagerListener) {
+    public void setApplicationSharingManagerListener(
+            ApplicationSharingManagerListener applicationSharingManagerListener) {
 
-        this.orgApplicationManagerListener = orgApplicationManagerListener;
+        this.applicationSharingManagerListener = applicationSharingManagerListener;
     }
 
     /**

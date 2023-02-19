@@ -26,9 +26,9 @@ import org.wso2.carbon.identity.organization.management.service.model.BasicOrgan
 import java.util.List;
 
 /**
- * Organization application management listener.
+ * Organization application sharing manager listener.
  */
-public interface OrgApplicationManagerListener {
+public interface ApplicationSharingManagerListener {
 
     /**
      * Pre listener of sharing an application.

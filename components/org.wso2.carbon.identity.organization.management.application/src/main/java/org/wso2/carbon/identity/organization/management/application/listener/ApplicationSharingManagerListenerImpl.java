@@ -38,9 +38,9 @@ import java.util.Map;
 
 /**
  * Listener implementation for organization's application sharing operations.
- * Class implements {@link OrgApplicationManagerListener}.
+ * Class implements {@link ApplicationSharingManagerListener}.
  */
-public class OrgApplicationManagerListenerImpl implements OrgApplicationManagerListener {
+public class ApplicationSharingManagerListenerImpl implements ApplicationSharingManagerListener {
 
     @Override
     public void preShareApplication(String parentOrganizationId, String parentApplicationId,

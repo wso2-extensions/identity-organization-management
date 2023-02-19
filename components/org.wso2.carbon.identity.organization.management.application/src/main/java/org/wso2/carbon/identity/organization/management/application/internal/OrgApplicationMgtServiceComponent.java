@@ -36,8 +36,8 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
-import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
@@ -67,7 +67,7 @@ public class OrgApplicationMgtServiceComponent {
             OrgApplicationMgtDataHolder.getInstance()
                     .setOrgApplicationMgtDAO(new OrgApplicationMgtDAOImpl());
             OrgApplicationMgtDataHolder.getInstance()
-                    .setOrgApplicationManagerListener(new OrgApplicationManagerListenerImpl());
+                    .setApplicationSharingManagerListener(new ApplicationSharingManagerListenerImpl());
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(OrgApplicationManager.class.getName(), new OrgApplicationManagerImpl(), null);
             //Fragment application listener.

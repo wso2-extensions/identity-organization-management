@@ -53,7 +53,7 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
-import org.wso2.carbon.identity.organization.management.application.listener.OrgApplicationManagerListener;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -326,9 +326,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 Collectors.toList());
 
         List<BasicOrganization> organizations = getOrganizationManager().getChildOrganizations(organizationId, true);
-        getListener().postGetApplicationSharedOrganizations(organizationId, applicationId, organizations);
-        return organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
-                Collectors.toList());
+        List<BasicOrganization> applicationSharedOrganizationsList =
+                organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
+                        Collectors.toList());
+        getListener().postGetApplicationSharedOrganizations(organizationId, applicationId,
+                applicationSharedOrganizationsList);
+        return applicationSharedOrganizationsList;
     }
 
     @Override
@@ -789,8 +792,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private OrgApplicationManagerListener getListener() {
+    private ApplicationSharingManagerListener getListener() {
 
-        return OrgApplicationMgtDataHolder.getInstance().getOrgApplicationManagerListener();
+        return OrgApplicationMgtDataHolder.getInstance().getApplicationSharingManagerListener();
     }
 }

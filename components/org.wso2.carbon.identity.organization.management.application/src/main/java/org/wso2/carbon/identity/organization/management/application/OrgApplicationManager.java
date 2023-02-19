@@ -68,7 +68,7 @@ public interface OrgApplicationManager {
      * Returns the shared applications list of a given primary application, along with their organizations.
      *
      * @param ownerOrgId ID of the organization owning the primary application.
-     * @param mainAppId ID of the primary application.
+     * @param mainAppId UUID of the primary application.
      * @return A list of shared applications details.
      * @throws OrganizationManagementException on errors occurred while retrieving the list of shared applications.
      */
