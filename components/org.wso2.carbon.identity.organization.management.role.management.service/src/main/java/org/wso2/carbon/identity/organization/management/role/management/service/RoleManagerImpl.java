@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.CursorDirection.FORWARD;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.GROUPS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.USERS;
@@ -90,7 +92,8 @@ public class RoleManagerImpl implements RoleManager {
     @Override
     public Role createRole(String organizationId, Role role) throws OrganizationManagementException {
 
-        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName())) {
+        if (!StringUtils.equals(ORG_CREATOR_ROLE, role.getDisplayName()) &&
+                !StringUtils.equals(ORG_ADMINISTRATOR_ROLE, role.getDisplayName())) {
             validateOrganizationRoleAllowedToAccess(organizationId);
         }
         role.setId(generateUniqueID());
@@ -189,7 +192,7 @@ public class RoleManagerImpl implements RoleManager {
         validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        if (!isPatchOperationAllowed(organizationId, roleId, patchOperations)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
         for (PatchOperation patchOperation : patchOperations) {
@@ -229,7 +232,7 @@ public class RoleManagerImpl implements RoleManager {
         validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        if (!isPutOperationAllowed(organizationId, roleId, role)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
         if (StringUtils.isBlank(role.getDisplayName())) {
@@ -257,7 +260,7 @@ public class RoleManagerImpl implements RoleManager {
         validateOrganizationRoleAllowedToAccess(organizationId);
         validateOrganizationId(organizationId);
         validateRoleId(organizationId, roleId);
-        if (!isRoleModifiable(organizationId, roleId)) {
+        if (!isDeleteOperationAllowed(organizationId, roleId)) {
             throw handleClientException(ERROR_CODE_ROLE_IS_UNMODIFIABLE, roleId);
         }
         roleManagementDAO.deleteRole(organizationId, roleId);
@@ -363,20 +366,73 @@ public class RoleManagerImpl implements RoleManager {
     }
 
     /**
-     * Check whether the role is allowed for modification.
+     * Check whether the role is allowed to be deleted.
      *
      * @param organizationId Organization Id.
      * @param roleId         Role Id.
-     * @return Whether role can be modified.
+     * @return Whether role can be deleted.
      * @throws OrganizationManagementServerException Error while retrieving role.
      */
-    private boolean isRoleModifiable(String organizationId, String roleId) throws OrganizationManagementException {
+    private boolean isDeleteOperationAllowed(String organizationId, String roleId)
+            throws OrganizationManagementException {
 
         Role role = roleManagementDAO.getRoleById(organizationId, roleId);
         if (role == null) {
             throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
         }
-        // The org-creator role assigned during org creation, is not allowed for update / delete.
+        // The org-creator role assigned during org creation, is not allowed to be deleted.
+        return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName())
+                && !ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
+    }
+
+    /**
+     * Check whether the incoming updates are allowed for the role.
+     *
+     * @param organizationId Organization Id.
+     * @param roleId         Role Id.
+     * @param modifiedRole    Incoming updated role.
+     * @return Whether put operation on the role is allowed with incoming values.
+     * @throws OrganizationManagementServerException Error while retrieving role.
+     */
+    private boolean isPutOperationAllowed(String organizationId, String roleId, Role modifiedRole)
+            throws OrganizationManagementException {
+
+        Role role = roleManagementDAO.getRoleById(organizationId, roleId);
+        if (role == null) {
+            throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
+        }
+        // The Administrator role permissions and display name are not allowed to be updated.
+        if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
+            return new HashSet<>(role.getPermissions()).equals(new HashSet<>(modifiedRole.getPermissions()))
+                    && ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(modifiedRole.getDisplayName());
+        }
+        // The org-creator role assigned during org creation, is not allowed to be updated.
+        return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
+    }
+
+    /**
+     * Check whether the incoming patch operations are allowed for the role.
+     *
+     * @param organizationId Organization Id.
+     * @param roleId         Role Id.
+     * @param patchOperations    Incoming patch operations with updated values.
+     * @return Whether incoming patch operations are allowed on the role.
+     * @throws OrganizationManagementServerException Error while retrieving role.
+     */
+    private boolean isPatchOperationAllowed(String organizationId, String roleId, List<PatchOperation> patchOperations)
+            throws OrganizationManagementException {
+
+        Role role = roleManagementDAO.getRoleById(organizationId, roleId);
+        if (role == null) {
+            throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
+        }
+        // The Administrator role permissions and display name are not allowed to be patched.
+        if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
+            return !patchOperations.stream().anyMatch(patchOperation ->
+                    PERMISSIONS.equals(patchOperation.getPath()) ||
+                    DISPLAY_NAME.equals(patchOperation.getPath()));
+        }
+        // The org-creator role assigned during org creation, is not allowed to be patched.
         return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
     }
 
