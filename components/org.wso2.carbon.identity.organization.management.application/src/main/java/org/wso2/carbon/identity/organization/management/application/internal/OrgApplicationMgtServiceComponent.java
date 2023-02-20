@@ -31,10 +31,12 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -64,6 +66,8 @@ public class OrgApplicationMgtServiceComponent {
         try {
             OrgApplicationMgtDataHolder.getInstance()
                     .setOrgApplicationMgtDAO(new OrgApplicationMgtDAOImpl());
+            OrgApplicationMgtDataHolder.getInstance()
+                    .setApplicationSharingManagerListener(new ApplicationSharingManagerListenerImpl());
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(OrgApplicationManager.class.getName(), new OrgApplicationManagerImpl(), null);
             //Fragment application listener.
@@ -193,6 +197,25 @@ public class OrgApplicationMgtServiceComponent {
             log.debug("Unset the Identity Provider manager service.");
         }
         OrgApplicationMgtDataHolder.getInstance().setIdpManager(null);
+    }
+
+    @Reference(
+            name = "identity.event.service",
+            service = IdentityEventService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdentityEventService"
+    )
+    protected void setIdentityEventService(IdentityEventService identityEventService) {
+
+        log.debug("Set Identity Event Service.");
+        OrgApplicationMgtDataHolder.getInstance().setIdentityEventService(identityEventService);
+    }
+
+    protected void unsetIdentityEventService(IdentityEventService identityEventService) {
+
+        log.debug("Unset Identity Event Service.");
+        OrgApplicationMgtDataHolder.getInstance().setIdentityEventService(null);
     }
 
     @Reference(
