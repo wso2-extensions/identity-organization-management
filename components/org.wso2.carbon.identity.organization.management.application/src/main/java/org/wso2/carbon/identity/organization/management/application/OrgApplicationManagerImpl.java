@@ -57,10 +57,12 @@ import org.wso2.carbon.identity.organization.management.application.listener.App
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -408,7 +410,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * application with federated_org oidc claim as requested claim of the application.
      */
     private void modifyRootApplication(ServiceProvider rootApplication, String tenantDomain)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementServerException, OrganizationManagementClientException {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
                 rootApplication.getLocalAndOutBoundAuthenticationConfig();
@@ -461,6 +463,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
                     getIdentityProviderManager().addIdPWithResourceId(createOrganizationLoginIDP(), tenantDomain);
+        } catch (IdentityProviderManagementClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
         } catch (IdentityProviderManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
         }
