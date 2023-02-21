@@ -247,7 +247,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         if (sharedOrganizationId == null) {
             getListener().preDeleteAllSharedApplications(organizationId, applicationId);
-            // Delete share for all shared applications.
+            // Unshare application for all shared organizations.
             List<SharedApplicationDO> sharedApplicationDOList =
                     getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
             for (SharedApplicationDO sharedApplicationDO : sharedApplicationDOList) {
@@ -719,22 +719,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      */
     private boolean shouldUpdateShareWithAllChildren(boolean shareWithAllChildren, ServiceProvider mainApplication) {
 
-        // If shareWithAllChildren is true and in the main application there is no shareWithAllChildren property,
-        // then the value should be updated.
+        /* If shareWithAllChildren is true and in the main application there is no shareWithAllChildren property,
+        then the value should be updated. */
         if (shareWithAllChildren && !(stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())))) {
             return true;
         }
 
-        // If shareWithAllChildren is true and in the main application it is set as false,
-        // then the value should be updated.
+        /* If shareWithAllChildren is true and in the main application it is set as false,
+        then the value should be updated. */
         if (shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && !Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
-        // If shareWithAllChildren is false and in the main application it is set as true,
-        // then the value should be updated.
+        /* If shareWithAllChildren is false and in the main application it is set as true,
+        then the value should be updated. */
         if (!shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             return true;

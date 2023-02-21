@@ -86,9 +86,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreUpdateApplication(ServiceProvider serviceProvider, String tenantDomain,
                                           String userName) throws IdentityApplicationManagementException {
 
-        // If the application is a fragment application, only certain configurations are allowed to be updated since
-        // the organization login authenticator needs some configurations unchanged. Hence, the listener will override
-        // any configs changes that are required for organization login.
+        /* If the application is a fragment application, only certain configurations are allowed to be updated since
+        the organization login authenticator needs some configurations unchanged. Hence, the listener will override
+        any configs changes that are required for organization login. */
         ServiceProvider existingApplication =
                 getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
