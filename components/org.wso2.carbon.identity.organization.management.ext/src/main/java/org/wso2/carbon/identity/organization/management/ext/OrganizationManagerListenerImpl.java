@@ -82,6 +82,7 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
         fireEvent(Constants.EVENT_PRE_DELETE_ORGANIZATION, eventProperties);
     }
 
+    @Deprecated
     @Override
     public void postDeleteOrganization(String organizationId) throws OrganizationManagementException {
 
