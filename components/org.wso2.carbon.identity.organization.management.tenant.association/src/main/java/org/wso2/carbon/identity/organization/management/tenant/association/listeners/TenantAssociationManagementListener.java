@@ -36,6 +36,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.tenant.association.Constants.MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW;
 
@@ -91,7 +92,9 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
                 return;
             }
             Role organizationCreatorRole = buildOrgCreatorRole(adminUUID);
+            Role administratorRole = buildAdministratorRole(adminUUID);
             TenantAssociationDataHolder.getRoleManager().createRole(organizationID, organizationCreatorRole);
+            TenantAssociationDataHolder.getRoleManager().createRole(organizationID, administratorRole);
         } catch (UserStoreException | OrganizationManagementException e) {
             String error = "Error occurred while adding user-tenant association for the tenant id: " + tenantId;
             LOG.error(error, e);
@@ -119,5 +122,19 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         orgCreatorRolePermissions.add(Constants.USER_MGT_CREATE_PERMISSION);
         organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
+    }
+
+    private Role buildAdministratorRole(String adminUUID) {
+
+        Role organizationAdministratorRole = new Role();
+        organizationAdministratorRole.setDisplayName(ORG_ADMINISTRATOR_ROLE);
+        User orgAdministrator = new User(adminUUID);
+        organizationAdministratorRole.setUsers(Collections.singletonList(orgAdministrator));
+        // Set permissions for org-administrator role.
+        ArrayList<String> orgAdministratorRolePermissions = new ArrayList<>();
+        // Setting all administrative permissions for the Administrator role
+        orgAdministratorRolePermissions.add(Constants.ADMINISTRATOR_ROLE_PERMISSION);
+        organizationAdministratorRole.setPermissions(orgAdministratorRolePermissions);
+        return organizationAdministratorRole;
     }
 }

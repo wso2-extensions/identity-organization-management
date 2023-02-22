@@ -20,9 +20,11 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -84,23 +86,29 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreUpdateApplication(ServiceProvider serviceProvider, String tenantDomain,
                                           String userName) throws IdentityApplicationManagementException {
 
-        // If the application is a fragment application, only certain configurations are allowed to be updated since
-        // the organization login authenticator needs some configurations unchanged. Hence, the listener will override
-        // any configs changes that are required for organization login.
+        /* If the application is a fragment application, only certain configurations are allowed to be updated since
+        the organization login authenticator needs some configurations unchanged. Hence, the listener will override
+        any configs changes that are required for organization login. */
         ServiceProvider existingApplication =
                 getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
-            AuthenticationScriptConfig authenticationScriptConfig =
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig().getAuthenticationScriptConfig();
-            if (authenticationScriptConfig.isEnabled() &&
-                    !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
-                throw new IdentityApplicationManagementException(
-                        "Authentication script configuration not allowed for shared applications.");
+            LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig();
+            if (localAndOutBoundAuthenticationConfig != null &&
+                    localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig() != null) {
+                AuthenticationScriptConfig authenticationScriptConfig =
+                        localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig();
+                if (authenticationScriptConfig.isEnabled() &&
+                        !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
+                    throw new IdentityApplicationManagementClientException(
+                            "Authentication script configuration not allowed for shared applications.");
+                }
             }
         }
+
         // Updating the shareWithAllChildren flag of application is blocked.
         if (existingApplication != null
                 && !IdentityUtil.threadLocalProperties.get().containsKey(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN)) {
@@ -167,7 +175,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         ("Error while retrieving the fragment application details.", e);
             }
         }
-
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
     }
 

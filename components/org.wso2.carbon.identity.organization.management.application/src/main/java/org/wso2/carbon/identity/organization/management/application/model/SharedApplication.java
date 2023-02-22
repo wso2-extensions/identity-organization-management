@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,34 +19,26 @@
 package org.wso2.carbon.identity.organization.management.application.model;
 
 /**
- * This class contains the main application id and its organization id.
+ * Shared application model.
  */
-public class MainApplicationDO {
+public class SharedApplication {
 
     String organizationId;
-    String mainApplicationId;
+    String sharedApplicationId;
 
-    public MainApplicationDO(String organizationId, String mainApplicationId) {
+    public SharedApplication(String sharedApplicationId, String organizationId) {
 
+        this.sharedApplicationId = sharedApplicationId;
         this.organizationId = organizationId;
-        this.mainApplicationId = mainApplicationId;
     }
 
-    /**
-     * Get the Organization Id.
-     * @return {@link String} : OrganizationId.
-     */
     public String getOrganizationId() {
 
         return organizationId;
     }
 
-    /**
-     * Get the Main Application Id.
-     * @return {@link String} : MainApplicationId.
-     */
-    public String getMainApplicationId() {
+    public String getSharedApplicationId() {
 
-        return mainApplicationId;
+        return sharedApplicationId;
     }
 }

@@ -53,12 +53,16 @@ import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -242,15 +246,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
 
         if (sharedOrganizationId == null) {
-
-            // Delete share for all shared applications.
+            getListener().preDeleteAllSharedApplications(organizationId, applicationId);
+            // Unshare application for all shared organizations.
             List<SharedApplicationDO> sharedApplicationDOList =
                     getOrgApplicationMgtDAO().getSharedApplications(organizationId, applicationId);
             for (SharedApplicationDO sharedApplicationDO : sharedApplicationDOList) {
                 IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
-                deleteSharedApplication(serviceProvider, organizationId, sharedApplicationDO.getOrganizationId());
+                Optional<String> sharedApplicationId =
+                        resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId,
+                                sharedApplicationDO.getOrganizationId());
+                if (sharedApplicationId.isPresent()) {
+                    deleteSharedApplication(sharedApplicationDO.getOrganizationId(), sharedApplicationId.get());
+                }
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
             }
+            getListener().postDeleteAllSharedApplications(organizationId, applicationId, sharedApplicationDOList);
             if (Arrays.stream(serviceProvider.getSpProperties()).anyMatch(p ->
                     SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 setShareWithAllChildrenProperty(serviceProvider, false);
@@ -265,41 +275,43 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 }
             }
         } else {
+            getListener().preDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId);
             if (Arrays.stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 throw handleClientException(ERROR_CODE_INVALID_DELETE_SHARE_REQUEST,
                         serviceProvider.getApplicationResourceId(), sharedOrganizationId);
             }
-            deleteSharedApplication(serviceProvider, organizationId, sharedOrganizationId);
+            Optional<String> sharedApplicationId =
+                    resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
+            if (sharedApplicationId.isPresent()) {
+                deleteSharedApplication(sharedOrganizationId, sharedApplicationId.get());
+                getListener().postDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId,
+                        sharedApplicationId.get());
+            }
         }
     }
 
-    private void deleteSharedApplication(ServiceProvider serviceProvider, String organizationId,
-                                         String sharedOrganizationId) throws OrganizationManagementException {
+    private void deleteSharedApplication(String sharedOrganizationId, String sharedApplicationId)
+            throws OrganizationManagementException {
 
-        Optional<String> fragmentApplicationId =
-                resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
+        try {
+            String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+            ServiceProvider sharedApplication =
+                    getApplicationManagementService().getApplicationByResourceId(sharedApplicationId,
+                            sharedTenantDomain);
+            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
 
-        if (fragmentApplicationId.isPresent()) {
-            try {
-                String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                ServiceProvider fragmentApplication =
-                        getApplicationManagementService().getApplicationByResourceId(fragmentApplicationId.get(),
-                                sharedTenantDomain);
-                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-
-                // Setting the thread local property to allow deleting fragment application. Otherwise
-                // FragmentApplicationMgtListener will reject application deletion.
-                IdentityUtil.threadLocalProperties.get().put(DELETE_FRAGMENT_APPLICATION, true);
-                getApplicationManagementService().deleteApplication(fragmentApplication.getApplicationName(),
-                        sharedTenantDomain, username);
-            } catch (IdentityApplicationManagementException e) {
-                throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, fragmentApplicationId.get(),
-                        sharedOrganizationId);
-            } finally {
-                IdentityUtil.threadLocalProperties.get().remove(DELETE_FRAGMENT_APPLICATION);
-                IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
-            }
+            // Setting the thread local property to allow deleting fragment application. Otherwise
+            // FragmentApplicationMgtListener will reject application deletion.
+            IdentityUtil.threadLocalProperties.get().put(DELETE_FRAGMENT_APPLICATION, true);
+            getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
+                    sharedTenantDomain, username);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, sharedApplicationId,
+                    sharedOrganizationId);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(DELETE_FRAGMENT_APPLICATION);
+            IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
         }
     }
 
@@ -307,6 +319,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public List<BasicOrganization> getApplicationSharedOrganizations(String organizationId, String applicationId)
             throws OrganizationManagementException {
 
+        getListener().preGetApplicationSharedOrganizations(organizationId, applicationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
         List<SharedApplicationDO> sharedApps =
                 getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
@@ -315,9 +328,27 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 Collectors.toList());
 
         List<BasicOrganization> organizations = getOrganizationManager().getChildOrganizations(organizationId, true);
+        List<BasicOrganization> applicationSharedOrganizationsList =
+                organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
+                        Collectors.toList());
+        getListener().postGetApplicationSharedOrganizations(organizationId, applicationId,
+                applicationSharedOrganizationsList);
+        return applicationSharedOrganizationsList;
+    }
 
-        return organizations.stream().filter(o -> sharedOrganizationIds.contains(o.getId())).collect(
-                Collectors.toList());
+    @Override
+    public List<SharedApplication> getSharedApplications(String organizationId, String applicationId)
+            throws OrganizationManagementException {
+
+        getListener().preGetSharedApplications(organizationId, applicationId);
+        ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
+        List<SharedApplicationDO> sharedApplicationDOList =
+                getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
+        List<SharedApplication> sharedApplications = sharedApplicationDOList.stream()
+                .map(sharedAppDO -> new SharedApplication(sharedAppDO.getFragmentApplicationId(),
+                        sharedAppDO.getOrganizationId())).collect(Collectors.toList());
+        getListener().postGetSharedApplications(organizationId, applicationId, sharedApplications);
+        return sharedApplications;
     }
 
     @Override
@@ -379,7 +410,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * application with federated_org oidc claim as requested claim of the application.
      */
     private void modifyRootApplication(ServiceProvider rootApplication, String tenantDomain)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementServerException, OrganizationManagementClientException {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
                 rootApplication.getLocalAndOutBoundAuthenticationConfig();
@@ -432,6 +463,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
                     getIdentityProviderManager().addIdPWithResourceId(createOrganizationLoginIDP(), tenantDomain);
+        } catch (IdentityProviderManagementClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
         } catch (IdentityProviderManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
         }
@@ -501,6 +534,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                  boolean shareWithAllChildren) throws OrganizationManagementException {
 
         try {
+            getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
+                    shareWithAllChildren);
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
             // loaded, tenant domain will be derived from the user who created the application.
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
@@ -543,10 +578,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
-
+            String sharedApplicationId;
             try {
                 ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
-                String sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
+                sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                         sharedOrgId, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
                         sharedApplicationId, sharedOrgId, shareWithAllChildren);
@@ -555,6 +590,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
+            getListener().postShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
+                    sharedApplicationId, shareWithAllChildren);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -682,22 +719,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      */
     private boolean shouldUpdateShareWithAllChildren(boolean shareWithAllChildren, ServiceProvider mainApplication) {
 
-        // If shareWithAllChildren is true and in the main application there is no shareWithAllChildren property,
-        // then the value should be updated.
+        /* If shareWithAllChildren is true and in the main application there is no shareWithAllChildren property,
+        then the value should be updated. */
         if (shareWithAllChildren && !(stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())))) {
             return true;
         }
 
-        // If shareWithAllChildren is true and in the main application it is set as false,
-        // then the value should be updated.
+        /* If shareWithAllChildren is true and in the main application it is set as false,
+        then the value should be updated. */
         if (shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && !Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
-        // If shareWithAllChildren is false and in the main application it is set as true,
-        // then the value should be updated.
+        /* If shareWithAllChildren is false and in the main application it is set as true,
+        then the value should be updated. */
         if (!shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
                 p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             return true;
@@ -757,5 +794,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } catch (IdentityApplicationManagementException e) {
             throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
         }
+    }
+
+    private ApplicationSharingManagerListener getListener() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getApplicationSharingManagerListener();
     }
 }

@@ -20,8 +20,10 @@ package org.wso2.carbon.identity.organization.management.application.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -42,6 +44,8 @@ public class OrgApplicationMgtDataHolder {
     private OrganizationManager organizationManager;
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
     private IdpManager idpManager;
+    private ApplicationSharingManagerListener applicationSharingManagerListener;
+    private IdentityEventService identityEventService;
 
     private ClaimMetadataManagementService claimMetadataManagementService;
     private OrgApplicationMgtDataHolder() {
@@ -202,5 +206,46 @@ public class OrgApplicationMgtDataHolder {
     public void setClaimMetadataManagementService(ClaimMetadataManagementService claimMetadataManagementService) {
 
         this.claimMetadataManagementService = claimMetadataManagementService;
+    }
+
+    /**
+     * Get {@link ApplicationSharingManagerListener}.
+     *
+     * @return Application sharing manager listener.
+     */
+    public ApplicationSharingManagerListener getApplicationSharingManagerListener() {
+
+        return applicationSharingManagerListener;
+    }
+
+    /**
+     * Set {@link ApplicationSharingManagerListener}.
+     *
+     * @param applicationSharingManagerListener Instance of {@link ApplicationSharingManagerListener}.
+     */
+    public void setApplicationSharingManagerListener(
+            ApplicationSharingManagerListener applicationSharingManagerListener) {
+
+        this.applicationSharingManagerListener = applicationSharingManagerListener;
+    }
+
+    /**
+     * Get {@link IdentityEventService}.
+     *
+     * @return IdentityEventService.
+     */
+    public IdentityEventService getIdentityEventService() {
+
+        return identityEventService;
+    }
+
+    /**
+     * Set {@link IdentityEventService}.
+     *
+     * @param identityEventService Instance of {@link IdentityEventService}.
+     */
+    public void setIdentityEventService(IdentityEventService identityEventService) {
+
+        this.identityEventService = identityEventService;
     }
 }
