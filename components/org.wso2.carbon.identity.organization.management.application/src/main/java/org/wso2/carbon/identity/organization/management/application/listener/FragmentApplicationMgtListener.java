@@ -203,9 +203,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                 IdentityUtil.threadLocalProperties.get().containsKey(DELETE_FRAGMENT_APPLICATION))) {
                         return true;
                     }
-                    if (sharedApplicationDO.get().shareWithAllChildren())  {
-                        return false;
-                    }
+                    return false;
                 }
             } catch (OrganizationManagementException e) {
                 throw new IdentityApplicationManagementException(
