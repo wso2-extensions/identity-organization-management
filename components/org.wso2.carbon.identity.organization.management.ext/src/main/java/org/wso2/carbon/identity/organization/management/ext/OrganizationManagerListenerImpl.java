@@ -82,11 +82,22 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
         fireEvent(Constants.EVENT_PRE_DELETE_ORGANIZATION, eventProperties);
     }
 
+    @Deprecated
     @Override
     public void postDeleteOrganization(String organizationId) throws OrganizationManagementException {
 
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
+        fireEvent(Constants.EVENT_POST_DELETE_ORGANIZATION, eventProperties);
+    }
+
+    @Override
+    public void postDeleteOrganization(String organizationId, int organizationDepthInHierarchy)
+            throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
+        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_DEPTH_IN_HIERARCHY, organizationDepthInHierarchy);
         fireEvent(Constants.EVENT_POST_DELETE_ORGANIZATION, eventProperties);
     }
 

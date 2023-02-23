@@ -25,6 +25,7 @@ public class Constants {
 
     public static final String EVENT_PROP_ORGANIZATION = "ORGANIZATION";
     public static final String EVENT_PROP_ORGANIZATION_ID = "ORGANIZATION_ID";
+    public static final String EVENT_PROP_ORGANIZATION_DEPTH_IN_HIERARCHY = "ORGANIZATION_DEPTH_IN_HIERARCHY";
     public static final String EVENT_PRE_ADD_ORGANIZATION = "PRE_ADD_ORGANIZATION";
     public static final String EVENT_POST_ADD_ORGANIZATION = "POST_ADD_ORGANIZATION";
     public static final String EVENT_PRE_GET_ORGANIZATION = "PRE_GET_ORGANIZATION";
