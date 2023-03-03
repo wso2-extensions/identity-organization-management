@@ -1004,11 +1004,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.executeQuery(GET_USERS_FROM_ROLE_ID,
+            return namedJdbcTemplate.withTransaction(template -> template.executeQuery(GET_USERS_FROM_ROLE_ID,
                     (resultSet, rowNumber) -> new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
                     namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
-        } catch (DataAccessException e) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+        } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_GETTING_USERS_USING_ROLE_ID, e, roleId);
         }
     }
