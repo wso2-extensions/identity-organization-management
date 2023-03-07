@@ -29,8 +29,10 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManagerImpl;
+import org.wso2.carbon.identity.organization.management.role.management.service.listener.OrganizationUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -50,6 +52,7 @@ public class RoleManagementServiceComponent {
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(RoleManager.class.getName(), new RoleManagerImpl(), null);
+            bundleContext.registerService(UserOperationEventListener.class.getName(), new OrganizationUserOperationEventListener(), null);
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Organization Management - Role Management component activated successfully.");

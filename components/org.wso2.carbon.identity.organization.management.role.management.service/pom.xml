@@ -75,6 +75,7 @@
                             org.wso2.carbon;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.base;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.bean.context; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.persistence; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.model;version="${carbon.identity.package.import.version.range}",
@@ -92,6 +93,7 @@
                             org.wso2.carbon.user.core; version="${carbon.user.core.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.common; version="${carbon.user.core.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service; version="${carbon.user.core.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.listener; version="${carbon.user.core.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>
