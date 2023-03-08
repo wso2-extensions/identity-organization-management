@@ -52,7 +52,8 @@ public class RoleManagementServiceComponent {
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(RoleManager.class.getName(), new RoleManagerImpl(), null);
-            bundleContext.registerService(UserOperationEventListener.class.getName(), new OrganizationUserOperationEventListener(), null);
+            bundleContext.registerService(UserOperationEventListener.class.getName(),
+                    new OrganizationUserOperationEventListener(), null);
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Organization Management - Role Management component activated successfully.");
