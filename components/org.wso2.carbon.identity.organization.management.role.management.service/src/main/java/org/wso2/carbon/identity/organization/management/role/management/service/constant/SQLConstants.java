@@ -293,6 +293,8 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME + "; WHERE UM_ROLE_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
+    public static final String DELETE_USER_ROLE_BY_USER_ID = "DELETE FROM UM_ORG_ROLE_USER WHERE UM_USER_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + ";";
     /**
      * Placeholders to be used in NamedJdbcTemplate.
      */

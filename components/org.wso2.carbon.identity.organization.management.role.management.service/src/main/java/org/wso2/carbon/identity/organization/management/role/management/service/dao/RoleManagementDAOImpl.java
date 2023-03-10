@@ -107,6 +107,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_MAPPING_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USERS_FROM_ROLE_USING_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.DELETE_USER_ROLE_BY_USER_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_GROUP_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_IDS_FROM_ROLE_ID_TAIL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_MEMBER_GROUP_IDS_FROM_ROLE_ID;
@@ -153,6 +154,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_USER_TO_ROLE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_USER_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_USER_ORGANIZATION_ROLES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID;
@@ -591,6 +593,16 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
     }
 
+    public void deleteUserFromOrganizationRoles(String userId) throws OrganizationManagementServerException {
+
+        try {
+            getNewTemplate().executeUpdate(DELETE_USER_ROLE_BY_USER_ID, namedPreparedStatement -> {
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
+            });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETING_USER_ROLE_ASSIGNMENTS, e, userId);
+        }
+    }
     /**
      * Check whether the permissions are in the UM_ORG_PERMISSION table and select the permission that are
      * not in the UM_ORG_PERMISSION table by returning them.
