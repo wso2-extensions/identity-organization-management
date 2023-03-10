@@ -50,7 +50,7 @@ public class OrganizationUserOperationEventListener extends AbstractIdentityUser
         }
 
         try {
-            roleManagementDAO.deleteUserRoleByUserId(userID);
+            roleManagementDAO.deleteUserFromOrganizationRoles(userID);
             return true;
         } catch (OrganizationManagementServerException e) {
             LOG.error(e.getDescription(), e);

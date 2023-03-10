@@ -152,5 +152,12 @@ public interface RoleManagementDAO {
     int getTotalOrganizationRoles(String organizationId, List<ExpressionNode> expressionNodes, List<String> operators)
             throws OrganizationManagementServerException;
 
-    void deleteUserRoleByUserId(String userId) throws OrganizationManagementServerException;
+    /**
+     * Delete the user from all the organization roles which were assigned to the user.
+     *
+     * @param userId The ID of the user.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs during
+     *                                               deleting the user role assignments.
+     */
+    void deleteUserFromOrganizationRoles(String userId) throws OrganizationManagementServerException;
 }

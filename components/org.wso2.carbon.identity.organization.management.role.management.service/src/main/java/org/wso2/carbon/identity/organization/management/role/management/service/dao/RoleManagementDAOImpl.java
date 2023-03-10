@@ -593,7 +593,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
     }
 
-    public void deleteUserRoleByUserId(String userId) throws OrganizationManagementServerException {
+    public void deleteUserFromOrganizationRoles(String userId) throws OrganizationManagementServerException {
 
         try {
             getNewTemplate().executeUpdate(DELETE_USER_ROLE_BY_USER_ID, namedPreparedStatement -> {
