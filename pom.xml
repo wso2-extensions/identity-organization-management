@@ -407,7 +407,7 @@
         </carbon.multitenancy.package.import.version.range>
 
         <carbon.identity.framework.version>5.25.70</carbon.identity.framework.version>
-        <carbon.identity.package.import.version.range>[5.20.0, 6.0.0)
+        <carbon.identity.package.import.version.range>[5.20.0, 7.0.0)
         </carbon.identity.package.import.version.range>
 
         <identity.extension.utils.version>1.0.8</identity.extension.utils.version>
