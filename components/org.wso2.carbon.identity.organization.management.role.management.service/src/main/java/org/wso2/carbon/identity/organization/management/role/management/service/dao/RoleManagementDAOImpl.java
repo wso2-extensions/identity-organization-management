@@ -186,6 +186,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -212,12 +213,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
                     String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
-                            role.getId(), query, GROUPS, organizationId);
+                            role.getId(), query, GROUPS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
                     String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
-                            role.getId(), query, USERS, organizationId);
+                            role.getId(), query, USERS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
                     int tenantID = getTenantId();
@@ -227,7 +228,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     List<String> permissionList = getPermissionIds(role.getPermissions(),
                             tenantID).stream().map(Object::toString).collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, organizationId);
+                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS);
                 }
                 return null;
             });
@@ -455,13 +456,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return namedJdbcTemplate.withTransaction(template -> {
                 for (PatchOperation patchOp : patchOperations) {
                     if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_ADD)) {
-                        patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues(), organizationId);
+                        patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues());
                     } else if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_REMOVE)) {
                         /* If values are passed they should be on the path param. Therefore, if values are passed
                         with this, they would not be considered. */
                         patchOperationRemove(roleId, patchOp.getPath());
                     } else if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_REPLACE)) {
-                        patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues(), organizationId);
+                        patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
                     }
                 }
                 return getRoleById(organizationId, roleId);
@@ -526,12 +527,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
                     String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
-                            roleId, query, USERS, organizationId);
+                            roleId, query, USERS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
                     String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
-                            roleId, query, GROUPS, organizationId);
+                            roleId, query, GROUPS);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
                     int tenantID = getTenantId();
@@ -542,7 +543,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             getPermissionIds(role.getPermissions(), tenantID).stream().map(Object::toString)
                                     .collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
                 }
                 return null;
             });
@@ -700,7 +701,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementException The exception is thrown when an error occurs during patch
      *                                         operation.
      */
-    private void patchOperationReplace(String roleId, String path, List<String> values, String organizationId)
+    private void patchOperationReplace(String roleId, String path, List<String> values)
             throws OrganizationManagementException {
 
         if (StringUtils.equals(path, DISPLAY_NAME)) {
@@ -709,13 +710,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             removeAttributesFromRoleUsingRoleId(roleId, USERS);
             if (CollectionUtils.isNotEmpty(values)) {
                 String query = getAddRoleUserMappingQuery(values.size());
-                assignRoleAttributes(values, roleId, query, USERS, organizationId);
+                assignRoleAttributes(values, roleId, query, USERS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             removeAttributesFromRoleUsingRoleId(roleId, GROUPS);
             if (CollectionUtils.isNotEmpty(values)) {
                 String query = getAddRoleGroupMappingQuery(values.size());
-                assignRoleAttributes(values, roleId, query, GROUPS, organizationId);
+                assignRoleAttributes(values, roleId, query, GROUPS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             removeAttributesFromRoleUsingRoleId(roleId, PERMISSIONS);
@@ -725,7 +726,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(values,
                         getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(values.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
             }
         }
     }
@@ -779,7 +780,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param values The value for the patch operation.
      * @throws OrganizationManagementException The exception is thrown when an error occurs during patch operation.
      */
-    private void patchOperationAdd(String roleId, String path, List<String> values, String organizationId)
+    private void patchOperationAdd(String roleId, String path, List<String> values)
             throws OrganizationManagementException {
 
         if (StringUtils.equalsIgnoreCase(path, USERS)) {
@@ -787,14 +788,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     DB_SCHEMA_COLUMN_NAME_UM_USER_ID, false, values);
             if (CollectionUtils.isNotEmpty(newUserList)) {
                 String query = getAddRoleUserMappingQuery(newUserList.size());
-                assignRoleAttributes(newUserList, roleId, query, USERS, organizationId);
+                assignRoleAttributes(newUserList, roleId, query, USERS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             List<String> newGroupList = findNonAssignedAttributeValues(roleId, CHECK_GROUP_ROLE_MAPPING_EXISTS,
                     DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, false, values);
             if (CollectionUtils.isNotEmpty(newGroupList)) {
                 String query = getAddRoleGroupMappingQuery(newGroupList.size());
-                assignRoleAttributes(newGroupList, roleId, query, GROUPS, organizationId);
+                assignRoleAttributes(newGroupList, roleId, query, GROUPS);
             }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             int tenantID = getTenantId();
@@ -808,7 +809,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(newPermissionList, tenantID).stream()
                         .map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(permissionList.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
             }
         } else if (StringUtils.equals(path, DISPLAY_NAME)) {
             replaceDisplayName(values.get(0), roleId);
@@ -1131,10 +1132,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param attribute The role attribute.
      * @throws OrganizationManagementServerException The exception is thrown if an error occurs while inserting values.
      */
-    private void assignRoleAttributes(List<String> valueList, String roleId, String query, String attribute,
-                                      String organizationId) throws OrganizationManagementServerException {
+    private void assignRoleAttributes(List<String> valueList, String roleId, String query, String attribute)
+            throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        String requestInvokingOrgId = getOrganizationId();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
         switch (attribute) {
@@ -1158,30 +1160,34 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             String finalColumnName = columnName;
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(query, namedPreparedStatement -> {
-                    if (DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID.equals(finalColumnName)) {
+                    if (PERMISSIONS.equals(attribute)) {
                         for (int i = 0; i < valueList.size(); i++) {
                             namedPreparedStatement.setInt(finalColumnName + i,
                                     Integer.parseInt(valueList.get(i)));
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                         }
                     } else {
-                        for (int i = 0; i < valueList.size(); i++) {
-                            namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                            try {
-                                if (DB_SCHEMA_COLUMN_NAME_UM_USER_ID.equals(finalColumnName) &&
-                                        checkUserResOrgIDColumnExists()) {
+                        try {
+                            if (USERS.equals(attribute) && checkUserResOrgIDColumnExists()) {
+                                for (int i = 0; i < valueList.size(); i++) {
+                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                                     Optional<String> userResOrgID = RoleManagementDataHolder.getInstance()
                                             .getOrganizationUserResidentResolverService()
-                                            .resolveResidentOrganization(valueList.get(i), organizationId);
+                                            .resolveResidentOrganization(valueList.get(i), requestInvokingOrgId);
                                     if (userResOrgID.isPresent()) {
                                         namedPreparedStatement.setString(
                                                 DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i, userResOrgID.get());
                                     }
                                 }
-                            } catch (OrganizationManagementException e) {
-                                throw new RuntimeException(e);
+                            } else {
+                                for (int i = 0; i < valueList.size(); i++) {
+                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                                }
                             }
+                        } catch (OrganizationManagementException e) {
+                            throw new RuntimeException(e);
                         }
                     }
                 }, valueList, false);
