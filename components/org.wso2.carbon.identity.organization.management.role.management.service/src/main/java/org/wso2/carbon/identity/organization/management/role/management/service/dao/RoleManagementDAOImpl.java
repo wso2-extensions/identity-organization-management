@@ -1021,12 +1021,32 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
      *                                               retrieving the users assigned for a particular role.
      */
-    private List<User> getUsersFromRoleId(String roleId) throws OrganizationManagementServerException {
+    private List<User> getUsersFromRoleId(String roleId)
+            throws OrganizationManagementServerException, UserStoreException {
+
+        AbstractUserStoreManager userStoreManager =
+                getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             return namedJdbcTemplate.withTransaction(template -> template.executeQuery(GET_USERS_FROM_ROLE_ID,
-                    (resultSet, rowNumber) -> new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
+                    (resultSet, rowNumber) -> {
+                        User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
+                        try {
+                            user.setUserName(userStoreManager.getUser(
+                                    resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID), null).getUsername());
+                        } catch (org.wso2.carbon.user.core.UserStoreException e) {
+                            throw new RuntimeException(e);
+                        }
+                        try {
+                            if (checkUserResOrgIDColumnExists()) {
+                                user.setUserResOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+                            }
+                        } catch (OrganizationManagementServerException e) {
+                            throw new RuntimeException(e);
+                        }
+                        return user;
+                    },
                     namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
         } catch (TransactionException e) {
