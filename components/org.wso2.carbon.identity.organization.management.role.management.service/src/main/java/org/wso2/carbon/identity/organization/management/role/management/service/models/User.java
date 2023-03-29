@@ -25,8 +25,8 @@ public class User {
 
     private String id;
     private String userName;
-    private String userResOrgId;
-    private String userResOrgName;
+    private String userResidentOrgId;
+    private String userResidentOrgName;
 
     public User(String id, String userName) {
 
@@ -59,23 +59,23 @@ public class User {
         this.userName = userName;
     }
 
-    public String getUserResOrgId() {
+    public String getUserResidentOrgId() {
 
-        return userResOrgId;
+        return userResidentOrgId;
     }
 
-    public void setUserResOrgId(String userResOrgId) {
+    public void setUserResidentOrgId(String userResidentOrgId) {
 
-        this.userResOrgId = userResOrgId;
+        this.userResidentOrgId = userResidentOrgId;
     }
 
-    public String getUserResOrgName() {
+    public String getUserResidentOrgName() {
 
-        return userResOrgName;
+        return userResidentOrgName;
     }
 
-    public void setUserResOrgName(String userResOrgName) {
+    public void setUserResidentOrgName(String userResidentOrgName) {
 
-        this.userResOrgName = userResOrgName;
+        this.userResidentOrgName = userResidentOrgName;
     }
 }

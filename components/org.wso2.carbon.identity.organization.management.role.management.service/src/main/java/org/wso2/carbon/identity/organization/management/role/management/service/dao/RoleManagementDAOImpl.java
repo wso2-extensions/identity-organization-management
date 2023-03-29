@@ -1040,8 +1040,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             throw new RuntimeException(e);
                         }
                         try {
-                            if (checkUserResOrgIDColumnExists()) {
-                                user.setUserResOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+                            if (checkUserResidentOrgIDColumnExists()) {
+                                user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
                             }
                         } catch (OrganizationManagementServerException e) {
                             throw new RuntimeException(e);
@@ -1168,16 +1168,16 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         }
                     } else {
                         try {
-                            if (USERS.equals(attribute) && checkUserResOrgIDColumnExists()) {
+                            if (USERS.equals(attribute) && checkUserResidentOrgIDColumnExists()) {
                                 for (int i = 0; i < valueList.size(); i++) {
                                     namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
                                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                    Optional<String> userResOrgID = RoleManagementDataHolder.getInstance()
+                                    Optional<String> userResidentOrgID = RoleManagementDataHolder.getInstance()
                                             .getOrganizationUserResidentResolverService()
                                             .resolveResidentOrganization(valueList.get(i), requestInvokingOrgId);
-                                    if (userResOrgID.isPresent()) {
+                                    if (userResidentOrgID.isPresent()) {
                                         namedPreparedStatement.setString(
-                                                DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i, userResOrgID.get());
+                                                DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i, userResidentOrgID.get());
                                     }
                                 }
                             } else {
@@ -1400,7 +1400,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      *                                               checking database type.
      */
     private String getAddRoleUserMappingQuery(int numberOfElements) throws OrganizationManagementException {
-        if (checkUserResOrgIDColumnExists()) {
+        if (checkUserResidentOrgIDColumnExists()) {
             if (isOracleDB()) {
                 return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING_ORACLE,
                         ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
@@ -1548,7 +1548,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     }
 
-    private boolean checkUserResOrgIDColumnExists() throws OrganizationManagementServerException {
+    private boolean checkUserResidentOrgIDColumnExists() throws OrganizationManagementServerException {
 
         String sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS;
         if (isOracleDB()) {
