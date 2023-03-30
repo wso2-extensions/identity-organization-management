@@ -1027,6 +1027,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         AbstractUserStoreManager userStoreManager =
                 getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+        boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -1036,16 +1037,17 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         try {
                             user.setUserName(userStoreManager.getUser(
                                     resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID), null).getUsername());
-                        } catch (org.wso2.carbon.user.core.UserStoreException e) {
-                            throw new RuntimeException(e);
-                        }
-                        try {
-                            if (checkUserResidentOrgIDColumnExists()) {
+                            if (isUserResidentOrgIDColumnExists) {
                                 user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+                                user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
+                                        .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
                             }
-                        } catch (OrganizationManagementServerException e) {
+                        } catch (UserStoreException e) {
+                            throw new RuntimeException(e);
+                        } catch (OrganizationManagementException e) {
                             throw new RuntimeException(e);
                         }
+
                         return user;
                     },
                     namedPreparedStatement ->
@@ -1139,6 +1141,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         String requestInvokingOrgId = getOrganizationId();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
+        boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
+
         switch (attribute) {
             case USERS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
@@ -1168,7 +1172,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                         }
                     } else {
                         try {
-                            if (USERS.equals(attribute) && checkUserResidentOrgIDColumnExists()) {
+                            if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
                                 for (int i = 0; i < valueList.size(); i++) {
                                     namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
                                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
