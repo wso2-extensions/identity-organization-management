@@ -1042,9 +1042,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                 user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
                                         .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
                             }
-                        } catch (UserStoreException e) {
-                            throw new RuntimeException(e);
-                        } catch (OrganizationManagementException e) {
+                        } catch (UserStoreException | OrganizationManagementException e) {
                             throw new RuntimeException(e);
                         }
 
