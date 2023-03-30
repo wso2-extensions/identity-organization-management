@@ -1550,6 +1550,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
     }
 
+    /**
+     * Check if USER_RESIDENT_ORG_ID column exists in UM_ORG_ROLE_USER table.
+     *
+     * @return Boolean that indicates if USER_RESIDENT_ORG_ID column exists in UM_ORG_ROLE_USER table.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
+     *                                               checking database type.
+     */
     private boolean checkUserResidentOrgIDColumnExists() throws OrganizationManagementServerException {
 
         String sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS;
