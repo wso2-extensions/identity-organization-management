@@ -1023,10 +1023,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      *                                               retrieving the users assigned for a particular role.
      */
     private List<User> getUsersFromRoleId(String roleId)
-            throws OrganizationManagementServerException, UserStoreException {
+            throws OrganizationManagementServerException {
 
-        AbstractUserStoreManager userStoreManager =
-                getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
         boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -1035,14 +1033,18 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     (resultSet, rowNumber) -> {
                         User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
                         try {
-                            user.setUserName(userStoreManager.getUser(
-                                    resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID), null).getUsername());
                             if (isUserResidentOrgIDColumnExists) {
+                                String userName = RoleManagementDataHolder.getInstance()
+                                        .getOrganizationUserResidentResolverService()
+                                        .getUserFromResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID),
+                                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID))
+                                        .getUsername();
+                                user.setUserName(userName);
                                 user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
                                 user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
                                         .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
                             }
-                        } catch (UserStoreException | OrganizationManagementException e) {
+                        } catch (OrganizationManagementException e) {
                             throw new RuntimeException(e);
                         }
 
