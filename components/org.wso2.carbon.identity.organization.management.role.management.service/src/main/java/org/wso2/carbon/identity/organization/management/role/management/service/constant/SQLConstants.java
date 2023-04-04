@@ -319,6 +319,11 @@ public class SQLConstants {
     public static final String IS_USER_RES_ORG_ID_COLUMN_EXISTS_ORACLE = "SELECT UM_USER_RESIDENT_ORG_ID " +
             "FROM UM_ORG_ROLE_USER WHERE ROWNUM < 2";
 
+    public static final String UPDATE_USER_RES_ORG_ID = "UPDATE UM_ORG_ROLE_USER SET UM_USER_RESIDENT_ORG_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + "; WHERE UM_ROLE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_USER_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID + ";";
+
     /**
      * Placeholders to be used in NamedJdbcTemplate.
      */

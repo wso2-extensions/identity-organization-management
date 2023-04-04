@@ -159,6 +159,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.TENANT_ID_APPENDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UM_ACTION_APPENDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UPDATE_ROLE_DISPLAY_NAME;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UPDATE_USER_RES_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_GROUP_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
@@ -1022,37 +1023,64 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
      *                                               retrieving the users assigned for a particular role.
      */
-    private List<User> getUsersFromRoleId(String roleId)
-            throws OrganizationManagementServerException {
+    private List<User> getUsersFromRoleId(String roleId) throws OrganizationManagementServerException {
 
         boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
+        String requestInvokingOrgId = getOrganizationId();
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.withTransaction(template -> template.executeQuery(GET_USERS_FROM_ROLE_ID,
+            List<User> users = namedJdbcTemplate.withTransaction(template ->
+                    template.executeQuery(GET_USERS_FROM_ROLE_ID,
                     (resultSet, rowNumber) -> {
                         User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
-                        try {
-                            if (isUserResidentOrgIDColumnExists) {
-                                String userName = RoleManagementDataHolder.getInstance()
-                                        .getOrganizationUserResidentResolverService()
-                                        .getUserFromResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID),
-                                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID))
-                                        .getUsername();
-                                user.setUserName(userName);
-                                user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
-                                user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
-                                        .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
-                            }
-                        } catch (OrganizationManagementException e) {
-                            throw new RuntimeException(e);
+                        if (isUserResidentOrgIDColumnExists) {
+                            user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
                         }
-
                         return user;
                     },
                     namedPreparedStatement ->
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
-        } catch (TransactionException e) {
+
+            if (isUserResidentOrgIDColumnExists) {
+                for (User user : users) {
+                    // Resolving and saving the user's resident organization ID if it is not available in the DB.
+                    if (StringUtils.isBlank(user.getUserResidentOrgId())) {
+                        Optional<String> resolvedUserResidentOrgId = RoleManagementDataHolder.getInstance()
+                                .getOrganizationUserResidentResolverService()
+                                .resolveResidentOrganization(user.getId(), requestInvokingOrgId);
+                        if (resolvedUserResidentOrgId.isPresent()) {
+                            Optional<String> resolvedUserName = RoleManagementDataHolder.getInstance()
+                                    .getOrganizationUserResidentResolverService()
+                                    .getUserNameFromResidentOrgId(user.getId(), resolvedUserResidentOrgId.get());
+                            resolvedUserName.ifPresent(user::setUserName);
+                            user.setUserResidentOrgId(resolvedUserResidentOrgId.get());
+                            user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
+                                    .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
+                            namedJdbcTemplate.withTransaction(template -> {
+                                template.executeUpdate(UPDATE_USER_RES_ORG_ID,
+                                        namedPreparedStatement -> {
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID,
+                                                    resolvedUserResidentOrgId.get());
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID,
+                                                    user.getId());
+                                        });
+                                return null;
+                            });
+                        }
+                    } else {
+                        Optional<String> resolvedUserName = RoleManagementDataHolder.getInstance()
+                                .getOrganizationUserResidentResolverService()
+                                .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
+                        resolvedUserName.ifPresent(user::setUserName);
+                        user.setUserResidentOrgName(RoleManagementDataHolder.getInstance()
+                                .getOrganizationManager().getOrganizationNameById(user.getUserResidentOrgId()));
+                    }
+                }
+            }
+            return users;
+        } catch (TransactionException | OrganizationManagementException e) {
             throw handleServerException(ERROR_CODE_GETTING_USERS_USING_ROLE_ID, e, roleId);
         }
     }
