@@ -1437,18 +1437,16 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING_ORACLE,
                         ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
                         ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
-            } else {
-                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING,
-                        ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
             }
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING,
+                    ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         } else {
             if (isOracleDB()) {
                 return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING_ORACLE,
                         ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
-            } else {
-                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING,
-                        ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
             }
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING,
+                    ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         }
     }
 
