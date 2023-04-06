@@ -156,8 +156,8 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
-    public static final String GET_USERS_FROM_ROLE_ID = "SELECT * FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+    public static final String GET_USERS_FROM_ROLE_ID = "SELECT UM_USER_ID, UM_ROLE_ID, UM_USER_RESIDENT_ORG_ID " +
+            "FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String GET_MEMBER_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE " +
             "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
