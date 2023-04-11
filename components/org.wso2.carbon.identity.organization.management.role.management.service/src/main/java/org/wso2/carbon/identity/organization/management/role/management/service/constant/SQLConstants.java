@@ -156,8 +156,13 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "; AND UM_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID + ";";
 
-    public static final String GET_USERS_FROM_ROLE_ID = "SELECT UM_USER_ID, UM_ROLE_ID, UM_USER_RESIDENT_ORG_ID " +
-            "FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+    public static final String GET_USERS_FROM_ROLE_ID = "SELECT * FROM UM_ORG_ROLE_USER WHERE UM_ROLE_ID=:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
+
+    public static final String GET_USERS_FROM_ROLE_ID_WITH_ORG = "SELECT UM_USER_ID, UM_ROLE_ID, " +
+            "UM_USER_RESIDENT_ORG_ID, UM_ORG_NAME FROM UM_ORG_ROLE_USER " +
+            "JOIN UM_ORG ON UM_USER_RESIDENT_ORG_ID = UM_ID " +
+            "WHERE UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
 
     public static final String GET_MEMBER_GROUP_IDS_FROM_ROLE_ID = "SELECT UM_GROUP_ID FROM UM_ORG_ROLE_GROUP WHERE " +
             "UM_ROLE_ID=:" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + ";";
@@ -333,6 +338,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID = "UM_ROLE_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME = "UM_ROLE_NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ORG_ID = "UM_ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_UM_ORG_NAME = "UM_ORG_NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID = "UM_TENANT_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID = "UM_GROUP_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_GROUP_NAME = "UM_GROUP_NAME";

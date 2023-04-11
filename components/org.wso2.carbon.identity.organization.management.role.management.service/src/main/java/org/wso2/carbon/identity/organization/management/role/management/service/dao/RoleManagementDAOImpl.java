@@ -136,6 +136,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID_WITH_ORG;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS_FROM_GROUPS;
@@ -150,6 +151,7 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID;
@@ -1032,28 +1034,24 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            List<User> users = namedJdbcTemplate.withTransaction(template ->
-                    template.executeQuery(GET_USERS_FROM_ROLE_ID,
-                    (resultSet, rowNumber) -> {
-                        User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
-                        if (isUserResidentOrgIDColumnExists) {
-                            user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
-                        }
-                        return user;
-                    },
-                    namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+            List<User> users;
 
             if (isUserResidentOrgIDColumnExists) {
+                users = namedJdbcTemplate.withTransaction(template ->
+                        template.executeQuery(GET_USERS_FROM_ROLE_ID_WITH_ORG, (resultSet, rowNumber) -> {
+                            User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
+                            user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+                            user.setUserResidentOrgName(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ORG_NAME));
+                            return user;
+                            }, namedPreparedStatement ->
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+
+                // Resolving and saving the user's resident organization ID if it is not available in the DB.
                 for (User user : users) {
-                    // Resolving and saving the user's resident organization ID if it is not available in the DB.
                     if (StringUtils.isBlank(user.getUserResidentOrgId())) {
                         Optional<String> resolvedUserResidentOrgId = getOrganizationUserResidentResolverService()
                                 .resolveResidentOrganization(user.getId(), requestInvokingOrgId);
                         if (resolvedUserResidentOrgId.isPresent()) {
-                            Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
-                                    .getUserNameFromResidentOrgId(user.getId(), resolvedUserResidentOrgId.get());
-                            resolvedUserName.ifPresent(user::setUserName);
                             user.setUserResidentOrgId(resolvedUserResidentOrgId.get());
                             user.setUserResidentOrgName(getOrganizationManager()
                                     .getOrganizationNameById(user.getUserResidentOrgId()));
@@ -1069,14 +1067,20 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                 return null;
                             });
                         }
-                    } else {
-                        Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
-                                .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
-                        resolvedUserName.ifPresent(user::setUserName);
-                        user.setUserResidentOrgName(getOrganizationManager()
-                                .getOrganizationNameById(user.getUserResidentOrgId()));
                     }
                 }
+            } else {
+                users = namedJdbcTemplate.withTransaction(template ->
+                        template.executeQuery(GET_USERS_FROM_ROLE_ID, (resultSet, rowNumber) ->
+                                new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
+                                namedPreparedStatement ->
+                                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+            }
+
+            for (User user : users) {
+                Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
+                        .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
+                resolvedUserName.ifPresent(user::setUserName);
             }
             return users;
         } catch (TransactionException | OrganizationManagementException e) {
@@ -1162,18 +1166,28 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementServerException The exception is thrown if an error occurs while inserting values.
      */
     private void assignRoleAttributes(List<String> valueList, String roleId, String query, String attribute)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         String requestInvokingOrgId = getOrganizationId();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
+        List<User> users = new ArrayList<>();
         boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
 
         switch (attribute) {
             case USERS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
                 errorMessage = ERROR_CODE_ADDING_USER_TO_ROLE;
+                if (isUserResidentOrgIDColumnExists) {
+                    for (String userId : valueList) {
+                        User user = new User(userId);
+                        Optional<String> userResidentOrgID = getOrganizationUserResidentResolverService()
+                                .resolveResidentOrganization(userId, requestInvokingOrgId);
+                        userResidentOrgID.ifPresent(user::setUserResidentOrgId);
+                        users.add(user);
+                    }
+                }
                 break;
             case GROUPS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
@@ -1198,26 +1212,19 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                         }
                     } else {
-                        try {
-                            if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
-                                for (int i = 0; i < valueList.size(); i++) {
-                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                    Optional<String> userResidentOrgID = getOrganizationUserResidentResolverService()
-                                            .resolveResidentOrganization(valueList.get(i), requestInvokingOrgId);
-                                    if (userResidentOrgID.isPresent()) {
-                                        namedPreparedStatement.setString(
-                                                DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i, userResidentOrgID.get());
-                                    }
-                                }
-                            } else {
-                                for (int i = 0; i < valueList.size(); i++) {
-                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                }
+                        if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
+                            for (int i = 0; i < users.size(); i++) {
+                                namedPreparedStatement.setString(finalColumnName + i, users.get(i).getId());
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i,
+                                        users.get(i).getUserResidentOrgId());
+
                             }
-                        } catch (OrganizationManagementException e) {
-                            throw new RuntimeException(e);
+                        } else {
+                            for (int i = 0; i < valueList.size(); i++) {
+                                namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            }
                         }
                     }
                 }, valueList, false);
