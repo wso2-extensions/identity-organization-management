@@ -1058,6 +1058,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
                                     .getUserNameFromResidentOrgId(user.getId(), resolvedUserResidentOrgId.get());
                             resolvedUserName.ifPresent(user::setUserName);
+
                             namedJdbcTemplate.withTransaction(template -> {
                                 template.executeUpdate(UPDATE_USER_RES_ORG_ID,
                                         namedPreparedStatement -> {
