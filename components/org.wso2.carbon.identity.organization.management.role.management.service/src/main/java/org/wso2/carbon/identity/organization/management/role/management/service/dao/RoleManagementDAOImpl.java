@@ -1046,15 +1046,18 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             }, namedPreparedStatement ->
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
 
-                // Resolving and saving the user's resident organization ID if it is not available in the DB.
                 for (User user : users) {
+                    // Resolving and saving the user's resident organization ID if it is not available in the DB.
                     if (StringUtils.isBlank(user.getUserResidentOrgId())) {
                         Optional<String> resolvedUserResidentOrgId = getOrganizationUserResidentResolverService()
                                 .resolveResidentOrganization(user.getId(), requestInvokingOrgId);
                         if (resolvedUserResidentOrgId.isPresent()) {
                             user.setUserResidentOrgId(resolvedUserResidentOrgId.get());
                             user.setUserResidentOrgName(getOrganizationManager()
-                                    .getOrganizationNameById(user.getUserResidentOrgId()));
+                                    .getOrganizationNameById(resolvedUserResidentOrgId.get()));
+                            Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
+                                    .getUserNameFromResidentOrgId(user.getId(), resolvedUserResidentOrgId.get());
+                            resolvedUserName.ifPresent(user::setUserName);
                             namedJdbcTemplate.withTransaction(template -> {
                                 template.executeUpdate(UPDATE_USER_RES_ORG_ID,
                                         namedPreparedStatement -> {
@@ -1067,6 +1070,10 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                 return null;
                             });
                         }
+                    } else {
+                        Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
+                                .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
+                        resolvedUserName.ifPresent(user::setUserName);
                     }
                 }
             } else {
@@ -1075,12 +1082,6 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                 new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
                                 namedPreparedStatement ->
                                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
-            }
-
-            for (User user : users) {
-                Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
-                        .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
-                resolvedUserName.ifPresent(user::setUserName);
             }
             return users;
         } catch (TransactionException | OrganizationManagementException e) {
@@ -1609,10 +1610,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     }
 
     private OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
+
         return RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService();
     }
 
     private OrganizationManager getOrganizationManager() {
+
         return RoleManagementDataHolder.getInstance().getOrganizationManager();
     }
 }
