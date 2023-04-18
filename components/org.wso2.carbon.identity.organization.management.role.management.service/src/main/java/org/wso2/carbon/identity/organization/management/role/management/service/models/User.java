@@ -25,6 +25,8 @@ public class User {
 
     private String id;
     private String userName;
+    private String userResidentOrgId;
+    private String userResidentOrgName;
 
     public User(String id, String userName) {
 
@@ -55,5 +57,25 @@ public class User {
     public void setUserName(String userName) {
 
         this.userName = userName;
+    }
+
+    public String getUserResidentOrgId() {
+
+        return userResidentOrgId;
+    }
+
+    public void setUserResidentOrgId(String userResidentOrgId) {
+
+        this.userResidentOrgId = userResidentOrgId;
+    }
+
+    public String getUserResidentOrgName() {
+
+        return userResidentOrgName;
+    }
+
+    public void setUserResidentOrgName(String userResidentOrgName) {
+
+        this.userResidentOrgName = userResidentOrgName;
     }
 }

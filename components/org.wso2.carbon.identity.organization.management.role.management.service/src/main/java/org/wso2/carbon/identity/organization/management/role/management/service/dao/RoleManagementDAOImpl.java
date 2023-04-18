@@ -37,6 +37,8 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -51,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.AND_OPERATOR;
@@ -84,6 +87,10 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_MAPPING_TAIL_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_WITH_ORG_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_USER_WITH_ORG_MAPPING_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.AND;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_GROUP_ROLE_MAPPING_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.CHECK_PERMISSION_EXISTS;
@@ -129,27 +136,34 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLES_FROM_ORGANIZATION_ID_FORWARD_TAIL_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_ROLE_FROM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USERS_FROM_ROLE_ID_WITH_ORG;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_IDS_FROM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_PERMISSIONS_FROM_GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES_FROM_GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GROUP_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ORG_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_LIMIT;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.TENANT_ID_APPENDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UM_ACTION_APPENDER;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UPDATE_ROLE_DISPLAY_NAME;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.UPDATE_USER_RES_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_GROUP_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_PERMISSION_TO_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION;
@@ -177,6 +191,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -596,9 +611,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
     public void deleteUserFromOrganizationRoles(String userId) throws OrganizationManagementServerException {
 
         try {
-            getNewTemplate().executeUpdate(DELETE_USER_ROLE_BY_USER_ID, namedPreparedStatement -> {
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId);
-            });
+            getNewTemplate().executeUpdate(DELETE_USER_ROLE_BY_USER_ID,
+                    namedPreparedStatement -> namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID, userId)
+            );
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETING_USER_ROLE_ASSIGNMENTS, e, userId);
         }
@@ -1014,13 +1029,63 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      */
     private List<User> getUsersFromRoleId(String roleId) throws OrganizationManagementServerException {
 
+        boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
+        String requestInvokingOrgId = getOrganizationId();
+
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.withTransaction(template -> template.executeQuery(GET_USERS_FROM_ROLE_ID,
-                    (resultSet, rowNumber) -> new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
-                    namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
-        } catch (TransactionException e) {
+            List<User> users;
+
+            if (isUserResidentOrgIDColumnExists) {
+                users = namedJdbcTemplate.withTransaction(template ->
+                        template.executeQuery(GET_USERS_FROM_ROLE_ID_WITH_ORG, (resultSet, rowNumber) -> {
+                            User user = new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID));
+                            user.setUserResidentOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+                            user.setUserResidentOrgName(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_ORG_NAME));
+                            return user;
+                            }, namedPreparedStatement ->
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+
+                for (User user : users) {
+                    // Resolving and saving the user's resident organization ID if it is not available in the DB.
+                    if (StringUtils.isBlank(user.getUserResidentOrgId())) {
+                        Optional<String> resolvedUserResidentOrgId = getOrganizationUserResidentResolverService()
+                                .resolveResidentOrganization(user.getId(), requestInvokingOrgId);
+                        if (resolvedUserResidentOrgId.isPresent()) {
+                            user.setUserResidentOrgId(resolvedUserResidentOrgId.get());
+                            user.setUserResidentOrgName(getOrganizationManager()
+                                    .getOrganizationNameById(resolvedUserResidentOrgId.get()));
+                            Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
+                                    .getUserNameFromResidentOrgId(user.getId(), resolvedUserResidentOrgId.get());
+                            resolvedUserName.ifPresent(user::setUserName);
+
+                            namedJdbcTemplate.withTransaction(template -> {
+                                template.executeUpdate(UPDATE_USER_RES_ORG_ID,
+                                        namedPreparedStatement -> {
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID,
+                                                    resolvedUserResidentOrgId.get());
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId);
+                                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID,
+                                                    user.getId());
+                                        });
+                                return null;
+                            });
+                        }
+                    } else {
+                        Optional<String> resolvedUserName = getOrganizationUserResidentResolverService()
+                                .getUserNameFromResidentOrgId(user.getId(), user.getUserResidentOrgId());
+                        resolvedUserName.ifPresent(user::setUserName);
+                    }
+                }
+            } else {
+                users = namedJdbcTemplate.withTransaction(template ->
+                        template.executeQuery(GET_USERS_FROM_ROLE_ID, (resultSet, rowNumber) ->
+                                new User(resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_USER_ID)),
+                                namedPreparedStatement ->
+                                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+            }
+            return users;
+        } catch (TransactionException | OrganizationManagementException e) {
             throw handleServerException(ERROR_CODE_GETTING_USERS_USING_ROLE_ID, e, roleId);
         }
     }
@@ -1103,15 +1168,28 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementServerException The exception is thrown if an error occurs while inserting values.
      */
     private void assignRoleAttributes(List<String> valueList, String roleId, String query, String attribute)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        String requestInvokingOrgId = getOrganizationId();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
+        List<User> users = new ArrayList<>();
+        boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
+
         switch (attribute) {
             case USERS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_USER_ID;
                 errorMessage = ERROR_CODE_ADDING_USER_TO_ROLE;
+                if (isUserResidentOrgIDColumnExists) {
+                    for (String userId : valueList) {
+                        User user = new User(userId);
+                        Optional<String> userResidentOrgID = getOrganizationUserResidentResolverService()
+                                .resolveResidentOrganization(userId, requestInvokingOrgId);
+                        userResidentOrgID.ifPresent(user::setUserResidentOrgId);
+                        users.add(user);
+                    }
+                }
                 break;
             case GROUPS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
@@ -1128,21 +1206,30 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         try {
             String finalColumnName = columnName;
             namedJdbcTemplate.withTransaction(template -> {
-                template.executeInsert(query,
-                        namedPreparedStatement -> {
-                            if (DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID.equals(finalColumnName)) {
-                                for (int i = 0; i < valueList.size(); i++) {
-                                    namedPreparedStatement.setInt(finalColumnName + i,
-                                            Integer.parseInt(valueList.get(i)));
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                }
-                            } else {
-                                for (int i = 0; i < valueList.size(); i++) {
-                                    namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                }
+                template.executeInsert(query, namedPreparedStatement -> {
+                    if (PERMISSIONS.equals(attribute)) {
+                        for (int i = 0; i < valueList.size(); i++) {
+                            namedPreparedStatement.setInt(finalColumnName + i,
+                                    Integer.parseInt(valueList.get(i)));
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                        }
+                    } else {
+                        if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
+                            for (int i = 0; i < users.size(); i++) {
+                                namedPreparedStatement.setString(finalColumnName + i, users.get(i).getId());
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i,
+                                        users.get(i).getUserResidentOrgId());
+
                             }
-                        }, valueList, false);
+                        } else {
+                            for (int i = 0; i < valueList.size(); i++) {
+                                namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            }
+                        }
+                    }
+                }, valueList, false);
                 return null;
             });
         } catch (TransactionException e) {
@@ -1352,10 +1439,19 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      *                                               checking database type.
      */
     private String getAddRoleUserMappingQuery(int numberOfElements) throws OrganizationManagementException {
-        if (isOracleDB()) {
-            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING_ORACLE,
-                    ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
+        if (checkUserResidentOrgIDColumnExists()) {
+            if (isOracleDB()) {
+                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING_ORACLE,
+                        ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
+                        ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
+            }
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_WITH_ORG_MAPPING,
+                    ADD_ROLE_USER_WITH_ORG_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         } else {
+            if (isOracleDB()) {
+                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING_ORACLE,
+                        ADD_ROLE_USER_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_USER_MAPPING_TAIL_ORACLE);
+            }
             return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_USER_MAPPING,
                     ADD_ROLE_USER_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         }
@@ -1487,5 +1583,40 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         return StringUtils.isNotBlank(filterQueryBuilder.getFilterQuery()) ?
                 filterQueryBuilder.getFilterQuery() + AND : StringUtils.EMPTY;
 
+    }
+
+    /**
+     * Check if USER_RESIDENT_ORG_ID column exists in UM_ORG_ROLE_USER table.
+     *
+     * @return Boolean that indicates if USER_RESIDENT_ORG_ID column exists in UM_ORG_ROLE_USER table.
+     * @throws OrganizationManagementServerException The server exception is thrown when an error occurs while
+     *                                               checking database type.
+     */
+    private boolean checkUserResidentOrgIDColumnExists() throws OrganizationManagementServerException {
+
+        String sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS;
+        if (isOracleDB()) {
+            sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS_ORACLE;
+        } else if (isMSSqlDB()) {
+            sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
+        }
+        try {
+            getNewTemplate().executeQuery(sqlStm, (resultSet, rowNumber) ->
+                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+            return true;
+        } catch (DataAccessException e) {
+            // Ignore since this exception is thrown when the column is not available.
+            return false;
+        }
+    }
+
+    private OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
+
+        return RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService();
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return RoleManagementDataHolder.getInstance().getOrganizationManager();
     }
 }
