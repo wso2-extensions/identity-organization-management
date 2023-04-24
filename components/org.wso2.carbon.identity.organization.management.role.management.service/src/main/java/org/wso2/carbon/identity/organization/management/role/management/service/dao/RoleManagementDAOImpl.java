@@ -1102,12 +1102,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.executeQuery(GET_MEMBER_GROUP_IDS_FROM_ROLE_ID,
-                    (resultSet, rowNumber) ->
+            return namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+                    GET_MEMBER_GROUP_IDS_FROM_ROLE_ID, (resultSet, rowNumber) ->
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID),
                     namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
-        } catch (DataAccessException e) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+        } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_GETTING_GROUPS_USING_ROLE_ID, e, roleId);
         }
     }
@@ -1124,12 +1124,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            return namedJdbcTemplate.executeQuery(
-                    GET_PERMISSIONS_FROM_ROLE_ID,
-                    (resultSet, rowNumber) -> resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
+            return namedJdbcTemplate.withTransaction(template -> template.executeQuery(
+                    GET_PERMISSIONS_FROM_ROLE_ID, (resultSet, rowNumber) ->
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID),
                     namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId));
-        } catch (DataAccessException e) {
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, roleId)));
+        } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_GETTING_PERMISSIONS_USING_ROLE_ID, e, roleId);
         }
     }
