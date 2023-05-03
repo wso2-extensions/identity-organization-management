@@ -401,11 +401,23 @@ public class RoleManagerImpl implements RoleManager {
         if (role == null) {
             throw handleClientException(ERROR_CODE_INVALID_ROLE, roleId);
         }
+
         // The Administrator role permissions and display name are not allowed to be updated.
         if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
             return new HashSet<>(role.getPermissions()).equals(new HashSet<>(modifiedRole.getPermissions()))
                     && ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(modifiedRole.getDisplayName());
         }
+
+        // Update is not allowed, if the modified role display name is equal to a display name of an existing role.
+        if (!role.getDisplayName().equalsIgnoreCase(modifiedRole.getDisplayName())) {
+            boolean checkRoleNameExists = roleManagementDAO.checkRoleExists(organizationId, null,
+                    modifiedRole.getDisplayName());
+            if (checkRoleNameExists) {
+                throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS,
+                        modifiedRole.getDisplayName(), organizationId);
+            }
+        }
+
         // The org-creator role assigned during org creation, is not allowed to be updated.
         return !ORG_CREATOR_ROLE.equalsIgnoreCase(role.getDisplayName());
     }
