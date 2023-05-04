@@ -410,12 +410,7 @@ public class RoleManagerImpl implements RoleManager {
 
         // Update is not allowed, if the modified role display name is equal to a display name of an existing role.
         if (!role.getDisplayName().equalsIgnoreCase(modifiedRole.getDisplayName())) {
-            boolean checkRoleNameExists = roleManagementDAO.checkRoleExists(organizationId, null,
-                    modifiedRole.getDisplayName());
-            if (checkRoleNameExists) {
-                throw handleClientException(ERROR_CODE_ROLE_DISPLAY_NAME_ALREADY_EXISTS,
-                        modifiedRole.getDisplayName(), organizationId);
-            }
+            validateRoleNameNotExist(organizationId, modifiedRole.getDisplayName());
         }
 
         // The org-creator role assigned during org creation, is not allowed to be updated.
