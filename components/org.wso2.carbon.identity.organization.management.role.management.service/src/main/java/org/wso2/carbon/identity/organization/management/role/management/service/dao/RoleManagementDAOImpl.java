@@ -218,12 +218,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
                     String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
-                            role.getId(), query, GROUPS);
+                            role.getId(), query, GROUPS, organizationId);
                 }
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
                     String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
-                            role.getId(), query, USERS);
+                            role.getId(), query, USERS, organizationId);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
                     int tenantID = getTenantId();
@@ -233,7 +233,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     List<String> permissionList = getPermissionIds(role.getPermissions(),
                             tenantID).stream().map(Object::toString).collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS);
+                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, null);
                 }
                 return null;
             });
@@ -461,13 +461,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             return namedJdbcTemplate.withTransaction(template -> {
                 for (PatchOperation patchOp : patchOperations) {
                     if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_ADD)) {
-                        patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues());
+                        patchOperationAdd(roleId, patchOp.getPath(), patchOp.getValues(), organizationId);
                     } else if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_REMOVE)) {
                         /* If values are passed they should be on the path param. Therefore, if values are passed
                         with this, they would not be considered. */
                         patchOperationRemove(roleId, patchOp.getPath());
                     } else if (StringUtils.equalsIgnoreCase(patchOp.getOp(), PATCH_OP_REPLACE)) {
-                        patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues());
+                        patchOperationReplace(roleId, patchOp.getPath(), patchOp.getValues(), organizationId);
                     }
                 }
                 return getRoleById(organizationId, roleId);
@@ -532,12 +532,12 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 if (CollectionUtils.isNotEmpty(role.getUsers())) {
                     String query = getAddRoleUserMappingQuery(role.getUsers().size());
                     assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
-                            roleId, query, USERS);
+                            roleId, query, USERS, organizationId);
                 }
                 if (CollectionUtils.isNotEmpty(role.getGroups())) {
                     String query = getAddRoleGroupMappingQuery(role.getGroups().size());
                     assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
-                            roleId, query, GROUPS);
+                            roleId, query, GROUPS, organizationId);
                 }
                 if (CollectionUtils.isNotEmpty(role.getPermissions())) {
                     int tenantID = getTenantId();
@@ -548,7 +548,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             getPermissionIds(role.getPermissions(), tenantID).stream().map(Object::toString)
                                     .collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
+                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
                 }
                 return null;
             });
@@ -706,7 +706,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @throws OrganizationManagementException The exception is thrown when an error occurs during patch
      *                                         operation.
      */
-    private void patchOperationReplace(String roleId, String path, List<String> values)
+    private void patchOperationReplace(String roleId, String path, List<String> values, String organizationId)
             throws OrganizationManagementException {
 
         if (StringUtils.equals(path, DISPLAY_NAME)) {
@@ -715,13 +715,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             removeAttributesFromRoleUsingRoleId(roleId, USERS);
             if (CollectionUtils.isNotEmpty(values)) {
                 String query = getAddRoleUserMappingQuery(values.size());
-                assignRoleAttributes(values, roleId, query, USERS);
+                assignRoleAttributes(values, roleId, query, USERS, organizationId);
             }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             removeAttributesFromRoleUsingRoleId(roleId, GROUPS);
             if (CollectionUtils.isNotEmpty(values)) {
                 String query = getAddRoleGroupMappingQuery(values.size());
-                assignRoleAttributes(values, roleId, query, GROUPS);
+                assignRoleAttributes(values, roleId, query, GROUPS, organizationId);
             }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             removeAttributesFromRoleUsingRoleId(roleId, PERMISSIONS);
@@ -731,7 +731,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(values,
                         getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(values.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
             }
         }
     }
@@ -785,7 +785,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param values The value for the patch operation.
      * @throws OrganizationManagementException The exception is thrown when an error occurs during patch operation.
      */
-    private void patchOperationAdd(String roleId, String path, List<String> values)
+    private void patchOperationAdd(String roleId, String path, List<String> values, String organizationId)
             throws OrganizationManagementException {
 
         if (StringUtils.equalsIgnoreCase(path, USERS)) {
@@ -793,14 +793,14 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     DB_SCHEMA_COLUMN_NAME_UM_USER_ID, false, values);
             if (CollectionUtils.isNotEmpty(newUserList)) {
                 String query = getAddRoleUserMappingQuery(newUserList.size());
-                assignRoleAttributes(newUserList, roleId, query, USERS);
+                assignRoleAttributes(newUserList, roleId, query, USERS, organizationId);
             }
         } else if (StringUtils.equalsIgnoreCase(path, GROUPS)) {
             List<String> newGroupList = findNonAssignedAttributeValues(roleId, CHECK_GROUP_ROLE_MAPPING_EXISTS,
                     DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID, false, values);
             if (CollectionUtils.isNotEmpty(newGroupList)) {
                 String query = getAddRoleGroupMappingQuery(newGroupList.size());
-                assignRoleAttributes(newGroupList, roleId, query, GROUPS);
+                assignRoleAttributes(newGroupList, roleId, query, GROUPS, organizationId);
             }
         } else if (StringUtils.equalsIgnoreCase(path, PERMISSIONS)) {
             int tenantID = getTenantId();
@@ -814,7 +814,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(newPermissionList, tenantID).stream()
                         .map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(permissionList.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
             }
         } else if (StringUtils.equals(path, DISPLAY_NAME)) {
             replaceDisplayName(values.get(0), roleId);
@@ -1167,11 +1167,10 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      * @param attribute The role attribute.
      * @throws OrganizationManagementServerException The exception is thrown if an error occurs while inserting values.
      */
-    private void assignRoleAttributes(List<String> valueList, String roleId, String query, String attribute)
-            throws OrganizationManagementException {
+    private void assignRoleAttributes(List<String> valueList, String roleId, String query,
+                                      String attribute, String organizationId) throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        String requestInvokingOrgId = getOrganizationId();
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
         List<User> users = new ArrayList<>();
@@ -1185,7 +1184,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     for (String userId : valueList) {
                         User user = new User(userId);
                         Optional<String> userResidentOrgID = getOrganizationUserResidentResolverService()
-                                .resolveResidentOrganization(userId, requestInvokingOrgId);
+                                .resolveResidentOrganization(userId, organizationId);
                         userResidentOrgID.ifPresent(user::setUserResidentOrgId);
                         users.add(user);
                     }
