@@ -233,7 +233,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                     List<String> permissionList = getPermissionIds(role.getPermissions(),
                             tenantID).stream().map(Object::toString).collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, organizationId);
+                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, null);
                 }
                 return null;
             });
@@ -548,7 +548,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                             getPermissionIds(role.getPermissions(), tenantID).stream().map(Object::toString)
                                     .collect(Collectors.toList());
                     String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                    assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
                 }
                 return null;
             });
@@ -731,7 +731,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(values,
                         getTenantId()).stream().map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(values.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
             }
         }
     }
@@ -814,7 +814,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 List<String> permissionList = getPermissionIds(newPermissionList, tenantID).stream()
                         .map(Object::toString).collect(Collectors.toList());
                 String query = getAddRolePermissionMappingQuery(permissionList.size());
-                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, organizationId);
+                assignRoleAttributes(permissionList, roleId, query, PERMISSIONS, null);
             }
         } else if (StringUtils.equals(path, DISPLAY_NAME)) {
             replaceDisplayName(values.get(0), roleId);
