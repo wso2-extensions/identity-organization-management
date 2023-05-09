@@ -29,6 +29,8 @@ public class Group {
     private String groupName;
     private List<Role> roleList;
     private List<User> userList;
+    private String groupResidentOrgId;
+    private String groupResidentOrgName;
 
     public Group(String groupId, String groupName, List<Role> roleList, List<User> userList) {
 
@@ -87,5 +89,25 @@ public class Group {
     public void setUserList(List<User> userList) {
 
         this.userList = userList;
+    }
+
+    public String getGroupResidentOrgId() {
+
+        return groupResidentOrgId;
+    }
+
+    public void setGroupResidentOrgId(String groupResidentOrgId) {
+
+        this.groupResidentOrgId = groupResidentOrgId;
+    }
+
+    public String getGroupResidentOrgName() {
+
+        return groupResidentOrgName;
+    }
+
+    public void setGroupResidentOrgName(String groupResidentOrgName) {
+
+        this.groupResidentOrgName = groupResidentOrgName;
     }
 }
