@@ -37,6 +37,12 @@ public class SQLConstants {
     public static final String ADD_ROLE_GROUP_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, " +
             "UM_ROLE_ID) WITH orgRoleGroups AS (";
 
+    public static final String ADD_ROLE_GROUP_WITH_ORG_MAPPING = "INSERT INTO UM_ORG_ROLE_GROUP " +
+            "(UM_GROUP_ID, UM_ROLE_ID, UM_GROUP_RESIDENT_ORG_ID) VALUES ";
+
+    public static final String ADD_ROLE_GROUP_WITH_ORG_MAPPING_ORACLE = "INSERT INTO UM_ORG_ROLE_GROUP (UM_GROUP_ID, " +
+            "UM_ROLE_ID, UM_GROUP_RESIDENT_ORG_ID) WITH orgRoleGroups AS (";
+
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES = "(:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;,:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;)";
@@ -44,6 +50,16 @@ public class SQLConstants {
     public static final String ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE = "SELECT :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;, :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d; FROM dual";
+
+    public static final String ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES = "(:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;,:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID + "%1$d;)";
+
+    public static final String ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE = "SELECT :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID + "%1$d;, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + "%1$d;, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID + "%1$d; FROM dual";
 
     public static final String ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE = ") SELECT * FROM orgRoleGroups";
 
@@ -323,6 +339,12 @@ public class SQLConstants {
             "FROM UM_ORG_ROLE_USER";
     public static final String IS_USER_RES_ORG_ID_COLUMN_EXISTS_ORACLE = "SELECT UM_USER_RESIDENT_ORG_ID " +
             "FROM UM_ORG_ROLE_USER WHERE ROWNUM < 2";
+    public static final String IS_GROUP_RES_ORG_ID_COLUMN_EXISTS = "SELECT UM_GROUP_RESIDENT_ORG_ID " +
+            "FROM UM_ORG_ROLE_GROUP LIMIT 1";
+    public static final String IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_MSSQL = "SELECT TOP 1 UM_GROUP_RESIDENT_ORG_ID " +
+            "FROM UM_ORG_ROLE_GROUP";
+    public static final String IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_ORACLE = "SELECT UM_GROUP_RESIDENT_ORG_ID " +
+            "FROM UM_ORG_ROLE_GROUP WHERE ROWNUM < 2";
 
     public static final String UPDATE_USER_RES_ORG_ID = "UPDATE UM_ORG_ROLE_USER SET UM_USER_RESIDENT_ORG_ID=:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + "; WHERE UM_ROLE_ID=:" +
@@ -347,6 +369,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_UM_USER_ID = "UM_USER_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_UM_ACTION = "UM_ACTION";
         public static final String DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID = "UM_USER_RESIDENT_ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID = "UM_GROUP_RESIDENT_ORG_ID";
 
         public static final String DB_SCHEMA_LIMIT = "LIMIT";
     }

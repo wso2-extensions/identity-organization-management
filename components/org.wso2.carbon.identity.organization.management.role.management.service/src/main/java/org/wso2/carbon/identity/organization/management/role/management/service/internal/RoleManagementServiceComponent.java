@@ -30,6 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManagerImpl;
 import org.wso2.carbon.identity.organization.management.role.management.service.listener.OrganizationUserOperationEventListener;
+import org.wso2.carbon.identity.organization.management.service.OrganizationGroupResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
@@ -132,5 +133,31 @@ public class RoleManagementServiceComponent {
             LOG.debug("Unset organization user resident resolver service.");
         }
         RoleManagementDataHolder.getInstance().setOrganizationUserResidentResolverService(null);
+    }
+
+    @Reference(
+            name = "organization.group.resident.resolver.service",
+            service = OrganizationGroupResidentResolverService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationGroupResidentResolverService"
+    )
+    protected void setOrganizationGroupResidentResolverService(
+            OrganizationGroupResidentResolverService organizationGroupResidentResolverService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting the organization user resident resolver service.");
+        }
+        RoleManagementDataHolder.getInstance()
+                .setOrganizationGroupResidentResolverService(organizationGroupResidentResolverService);
+    }
+
+    protected void unsetOrganizationGroupResidentResolverService(
+            OrganizationGroupResidentResolverService organizationGroupResidentResolverService) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unset organization group resident resolver service.");
+        }
+        RoleManagementDataHolder.getInstance().setOrganizationGroupResidentResolverService(null);
     }
 }

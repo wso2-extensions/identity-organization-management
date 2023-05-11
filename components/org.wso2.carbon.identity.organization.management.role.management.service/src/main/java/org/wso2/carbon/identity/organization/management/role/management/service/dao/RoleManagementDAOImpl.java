@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.role.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.service.OrganizationGroupResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages;
@@ -76,6 +77,10 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_WITH_ORG_MAPPING;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_GROUP_WITH_ORG_MAPPING_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.ADD_ROLE_PERMISSION_MAPPING_INSERT_VALUES_ORACLE;
@@ -143,10 +148,14 @@ import static org.wso2.carbon.identity.organization.management.role.management.s
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GET_USER_ORGANIZATION_ROLES_FROM_GROUPS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.GROUP_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_GROUP_RES_ORG_ID_COLUMN_EXISTS;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.IS_USER_RES_ORG_ID_COLUMN_EXISTS_ORACLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.OR;
+import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ACTION;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID;
@@ -1174,7 +1183,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         ErrorMessages errorMessage;
         String columnName = StringUtils.EMPTY;
         List<User> users = new ArrayList<>();
+        List<Group> groups = new ArrayList<>();
         boolean isUserResidentOrgIDColumnExists = checkUserResidentOrgIDColumnExists();
+        boolean isGroupResidentOrgIDColumnExists = checkGroupResidentOrgIDColumnExists();
 
         switch (attribute) {
             case USERS:
@@ -1193,6 +1204,15 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             case GROUPS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_GROUP_ID;
                 errorMessage = ERROR_CODE_ADDING_GROUP_TO_ROLE;
+                if (isGroupResidentOrgIDColumnExists) {
+                    for (String groupId : valueList) {
+                        Group group = new Group(groupId);
+                        Optional<String> groupResidentOrgID = getOrganizationGroupResidentResolverService()
+                                .resolveResidentOrganization(groupId, organizationId);
+                        groupResidentOrgID.ifPresent(group::setGroupResidentOrgId);
+                        groups.add(group);
+                    }
+                }
                 break;
             case PERMISSIONS:
                 columnName = DB_SCHEMA_COLUMN_NAME_UM_PERMISSION_ID;
@@ -1212,20 +1232,26 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                                     Integer.parseInt(valueList.get(i)));
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                         }
-                    } else {
-                        if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
-                            for (int i = 0; i < users.size(); i++) {
-                                namedPreparedStatement.setString(finalColumnName + i, users.get(i).getId());
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i,
-                                        users.get(i).getUserResidentOrgId());
+                    } else if (USERS.equals(attribute) && isUserResidentOrgIDColumnExists) {
+                        for (int i = 0; i < users.size(); i++) {
+                            namedPreparedStatement.setString(finalColumnName + i, users.get(i).getId());
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID + i,
+                                    users.get(i).getUserResidentOrgId());
 
-                            }
-                        } else {
-                            for (int i = 0; i < valueList.size(); i++) {
-                                namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
-                                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
-                            }
+                        }
+                    } else if (GROUPS.equals(attribute) && isGroupResidentOrgIDColumnExists) {
+                        for (int i = 0; i < groups.size(); i++) {
+                            namedPreparedStatement.setString(finalColumnName + i, groups.get(i).getGroupId());
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID + i,
+                                    groups.get(i).getGroupResidentOrgId());
+                        }
+                    } else {
+                        // Logic for users and groups when resident org id column is not available.
+                        for (int i = 0; i < valueList.size(); i++) {
+                            namedPreparedStatement.setString(finalColumnName + i, valueList.get(i));
+                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID + i, roleId);
                         }
                     }
                 }, valueList, false);
@@ -1465,10 +1491,20 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
      *                                               checking database type.
      */
     private String getAddRoleGroupMappingQuery(int numberOfElements) throws OrganizationManagementException {
-        if (isOracleDB()) {
-            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_MAPPING_ORACLE,
-                    ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR, ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE);
+        if (checkGroupResidentOrgIDColumnExists()) {
+            if (isOracleDB()) {
+                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_WITH_ORG_MAPPING_ORACLE,
+                        ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
+                        ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE);
+            }
+            return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_WITH_ORG_MAPPING,
+                    ADD_ROLE_GROUP_WITH_ORG_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         } else {
+            if (isOracleDB()) {
+                return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_MAPPING_ORACLE,
+                        ADD_ROLE_GROUP_MAPPING_INSERT_VALUES_ORACLE, UNION_SEPARATOR,
+                        ADD_ROLE_GROUP_MAPPING_TAIL_ORACLE);
+            }
             return buildQueryForInsertAndRemoveValues(numberOfElements, ADD_ROLE_GROUP_MAPPING,
                     ADD_ROLE_GROUP_MAPPING_INSERT_VALUES, COMMA_SEPARATOR, StringUtils.EMPTY);
         }
@@ -1609,9 +1645,32 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         }
     }
 
+    private boolean checkGroupResidentOrgIDColumnExists() throws OrganizationManagementServerException {
+
+        String sqlStm = IS_GROUP_RES_ORG_ID_COLUMN_EXISTS;
+        if (isOracleDB()) {
+            sqlStm = IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_ORACLE;
+        } else if (isMSSqlDB()) {
+            sqlStm = IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
+        }
+        try {
+            getNewTemplate().executeQuery(sqlStm, (resultSet, rowNumber) ->
+                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID));
+            return true;
+        } catch (DataAccessException e) {
+            // Ignore since this exception is thrown when the column is not available.
+            return false;
+        }
+    }
+
     private OrganizationUserResidentResolverService getOrganizationUserResidentResolverService() {
 
         return RoleManagementDataHolder.getInstance().getOrganizationUserResidentResolverService();
+    }
+
+    private OrganizationGroupResidentResolverService getOrganizationGroupResidentResolverService() {
+
+        return RoleManagementDataHolder.getInstance().getOrganizationGroupResidentResolverService();
     }
 
     private OrganizationManager getOrganizationManager() {
