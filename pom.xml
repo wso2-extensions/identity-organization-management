@@ -177,6 +177,16 @@
                 <artifactId>org.wso2.carbon.utils</artifactId>
                 <version>${carbon.kernel.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.governance</groupId>
+                <artifactId>org.wso2.carbon.identity.recovery</artifactId>
+                <version>${org.wso2.carbon.identity.governance.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.governance</groupId>
+                <artifactId>org.wso2.carbon.identity.governance</artifactId>
+                <version>${org.wso2.carbon.identity.governance.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -416,6 +426,8 @@
         <identity.inbound.auth.oauth.import.version.range>[6.7.116, 8.0.0)</identity.inbound.auth.oauth.import.version.range>
         <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
+        <org.wso2.carbon.identity.governance.version>1.8.39</org.wso2.carbon.identity.governance.version>
+        <identity.governance.imp.pkg.version.range>[1.0.0,2.0.0)</identity.governance.imp.pkg.version.range>
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
         <carbon.user.core.imp.pkg.version.range>[4.7.0, 5.0.0)</carbon.user.core.imp.pkg.version.range>

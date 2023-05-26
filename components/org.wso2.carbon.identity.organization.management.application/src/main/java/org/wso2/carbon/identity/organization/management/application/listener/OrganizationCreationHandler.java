@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -27,6 +28,8 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.governance.IdentityGovernanceException;
+import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
@@ -39,12 +42,16 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
+import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.EXPIRY_TIME;
+import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_BASED_PW_RECOVERY;
+import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS;
 
 /**
  * This class contains the implementation of the handler for post organization creation.
@@ -53,6 +60,10 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationCreationHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationCreationHandler.class);
+
+    private static final String EXPIRY_TIME_VALUE = "1440";
+    private static final String NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE = String.valueOf(true);
+    private static final String NOTIFICATION_BASED_PW_RECOVERY_VALUE = String.valueOf(true);
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -67,6 +78,14 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
                 throw new IdentityEventException("An error occurred while creating shared applications in the new " +
                         "organization", e);
+            }
+            if (organization.getParent().getId() != null) {
+                try {
+                    updateGovernanceConnectorProperty(organization);
+                } catch (IdentityGovernanceException e) {
+                    throw new IdentityEventException(
+                            "An error occurred while enabling recovery password for sub-organization", e);
+                }
             }
         }
     }
@@ -119,6 +138,21 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
     }
 
+    private void updateGovernanceConnectorProperty(Organization organization) throws IdentityGovernanceException {
+
+        IdentityGovernanceService identityGovernanceService = (IdentityGovernanceService)
+                PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                        .getOSGiService(IdentityGovernanceService.class, null);
+
+        String tenantDomain = organization.getId();
+
+        Map<String, String> configurationDetails = new HashMap<>();
+        configurationDetails.put(EXPIRY_TIME, EXPIRY_TIME_VALUE);
+        configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
+                NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE);
+        configurationDetails.put(NOTIFICATION_BASED_PW_RECOVERY, NOTIFICATION_BASED_PW_RECOVERY_VALUE);
+        identityGovernanceService.updateConfiguration(tenantDomain, configurationDetails);
+    }
 
     private ApplicationManagementService getApplicationManagementService() {
 
