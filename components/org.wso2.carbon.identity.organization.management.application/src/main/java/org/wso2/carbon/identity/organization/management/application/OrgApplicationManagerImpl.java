@@ -370,16 +370,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
         }
+        return resolveSharedApplicationByMainAppUUID(mainApplication.getApplicationResourceId(), ownerOrgId,
+                sharedOrgId);
+    }
+
+    @Override
+    public ServiceProvider resolveSharedApplicationByMainAppUUID(String mainAppUUID, String ownerOrgId,
+                                                                 String sharedOrgId)
+            throws OrganizationManagementException {
 
         String sharedAppId =
-                resolveSharedApp(mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId).orElseThrow(
-                        () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED,
-                                mainApplication.getApplicationResourceId(), ownerOrgId));
+                resolveSharedApp(mainAppUUID, ownerOrgId, sharedOrgId).orElseThrow(
+                        () -> handleClientException(ERROR_CODE_APPLICATION_NOT_SHARED, mainAppUUID, ownerOrgId));
         String sharedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
         try {
             return getApplicationManagementService().getApplicationByResourceId(sharedAppId, sharedOrgTenantDomain);
         } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppName, ownerOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppUUID, ownerOrgId);
         }
     }
 
