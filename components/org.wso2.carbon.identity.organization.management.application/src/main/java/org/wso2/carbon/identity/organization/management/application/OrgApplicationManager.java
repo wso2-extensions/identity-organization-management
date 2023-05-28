@@ -88,6 +88,22 @@ public interface OrgApplicationManager {
             throws OrganizationManagementException;
 
     /**
+     * Resolve the shared application based on the organization link and the UUID of the main application.
+     *
+     * @param mainAppUUID UUID of the main application.
+     * @param ownerOrgId  Identifier of the organization owning the application.
+     * @param sharedOrgId Identifier of the organization owning the shared application.
+     * @return shared application {@link ServiceProvider}.
+     * @throws OrganizationManagementException If errors occurred when resolving the shared application id.
+     */
+    default ServiceProvider resolveSharedApplicationByMainAppUUID(String mainAppUUID, String ownerOrgId,
+                                                                  String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return null;
+    }
+
+    /**
      * Share the application to an organization.
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
