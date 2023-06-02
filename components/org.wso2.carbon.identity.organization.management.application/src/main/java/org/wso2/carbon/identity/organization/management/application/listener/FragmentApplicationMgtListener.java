@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
@@ -33,6 +34,7 @@ import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtL
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
@@ -150,6 +152,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                     .filter(claim -> !claim.getLocalClaim().getClaimUri()
                                             .startsWith("http://wso2.org/claims/runtime/"))
                                     .toArray(ClaimMapping[]::new);
+                    filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
                     ClaimConfig claimConfig = new ClaimConfig();
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
@@ -262,5 +265,37 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private OrganizationManager getOrganizationManager() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+    }
+
+    /**
+     * Add application roles claim mapping to the filtered claim mappings.
+     *
+     * @param filteredClaimMappings ClaimMappings array be used to add application roles claim mapping.
+     * @return ClaimMappings array with application roles claim mapping.
+     */
+    private ClaimMapping[] addApplicationRolesToFilteredClaimMappings(ClaimMapping[] filteredClaimMappings) {
+
+        if (filteredClaimMappings == null) {
+            return filteredClaimMappings;
+        }
+        for (ClaimMapping claimMapping : filteredClaimMappings) {
+            if (OrgApplicationMgtConstants.APP_ROLES_CLAIM_URI.equals(claimMapping.getLocalClaim().getClaimUri())) {
+                return filteredClaimMappings;  // Return original array if the claim already exists
+            }
+        }
+        ClaimMapping appRoleClaimMapping = new ClaimMapping();
+        Claim localAppRoleClaim = new Claim();
+        localAppRoleClaim.setClaimUri(OrgApplicationMgtConstants.APP_ROLES_CLAIM_URI);
+        Claim fedAppRoleClaim = new Claim();
+        fedAppRoleClaim.setClaimUri(OrgApplicationMgtConstants.APP_ROLES_CLAIM_URI);
+        appRoleClaimMapping.setLocalClaim(localAppRoleClaim);
+        appRoleClaimMapping.setRemoteClaim(fedAppRoleClaim);
+        appRoleClaimMapping.setRequested(true);
+
+        ClaimMapping[] claimMappings = new ClaimMapping[filteredClaimMappings.length + 1];
+        System.arraycopy(filteredClaimMappings, 0, claimMappings, 0, filteredClaimMappings.length);
+        claimMappings[filteredClaimMappings.length] = appRoleClaimMapping;
+
+        return claimMappings;  // Return the updated array
     }
 }
