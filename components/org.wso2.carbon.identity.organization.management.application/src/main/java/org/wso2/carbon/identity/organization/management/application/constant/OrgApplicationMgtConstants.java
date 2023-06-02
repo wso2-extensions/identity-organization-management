@@ -35,6 +35,7 @@ public class OrgApplicationMgtConstants {
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
 
     public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
+    public static final String APP_ROLES_CLAIM_URI = "http://wso2.org/claims/applicationRoles";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
 
