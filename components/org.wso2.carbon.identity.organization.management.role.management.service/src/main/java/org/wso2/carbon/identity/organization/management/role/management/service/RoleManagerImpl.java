@@ -435,7 +435,7 @@ public class RoleManagerImpl implements RoleManager {
         }
         // The Administrator role permissions and display name are not allowed to be patched.
         if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
-            return !patchOperations.stream().anyMatch(patchOperation ->
+            return patchOperations.stream().noneMatch(patchOperation ->
                     PERMISSIONS.equals(patchOperation.getPath()) ||
                     DISPLAY_NAME.equals(patchOperation.getPath()));
         }
