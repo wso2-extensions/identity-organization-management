@@ -35,6 +35,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
@@ -130,10 +131,9 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         organizationAdministratorRole.setDisplayName(ORG_ADMINISTRATOR_ROLE);
         User orgAdministrator = new User(adminUUID);
         organizationAdministratorRole.setUsers(Collections.singletonList(orgAdministrator));
-        // Set permissions for org-administrator role.
-        ArrayList<String> orgAdministratorRolePermissions = new ArrayList<>();
-        // Setting all administrative permissions for the Administrator role
-        orgAdministratorRolePermissions.add(Constants.ADMINISTRATOR_ROLE_PERMISSION);
+        // Adding all administrative permissions for the org-administrator role
+        List<String> orgAdministratorRolePermissions =
+                Collections.singletonList(Constants.ADMINISTRATOR_ROLE_PERMISSION);
         organizationAdministratorRole.setPermissions(orgAdministratorRolePermissions);
         return organizationAdministratorRole;
     }
