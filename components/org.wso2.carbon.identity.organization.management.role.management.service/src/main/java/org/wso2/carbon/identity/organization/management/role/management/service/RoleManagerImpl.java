@@ -390,7 +390,7 @@ public class RoleManagerImpl implements RoleManager {
      *
      * @param organizationId Organization Id.
      * @param roleId         Role Id.
-     * @param modifiedRole    Incoming updated role.
+     * @param modifiedRole   Incoming updated role.
      * @return Whether put operation on the role is allowed with incoming values.
      * @throws OrganizationManagementServerException Error while retrieving role.
      */
@@ -420,9 +420,9 @@ public class RoleManagerImpl implements RoleManager {
     /**
      * Check whether the incoming patch operations are allowed for the role.
      *
-     * @param organizationId Organization Id.
-     * @param roleId         Role Id.
-     * @param patchOperations    Incoming patch operations with updated values.
+     * @param organizationId    Organization Id.
+     * @param roleId            Role Id.
+     * @param patchOperations   Incoming patch operations with updated values.
      * @return Whether incoming patch operations are allowed on the role.
      * @throws OrganizationManagementServerException Error while retrieving role.
      */
