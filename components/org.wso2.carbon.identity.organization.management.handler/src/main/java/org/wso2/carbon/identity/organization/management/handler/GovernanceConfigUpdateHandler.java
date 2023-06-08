@@ -35,17 +35,17 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.EXPIRY_TIME;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_BASED_PW_RECOVERY;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS;
 
 /**
- * This class contains the implementation of the handler for post organization creation.
- * This handler will be used to add shared applications to newly created organizations.
+ * Organization creation handler will be used to enable password recovery capability for newly created organizations.
  */
-public class OrganizationCreationHandler extends AbstractEventHandler {
+public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
 
-    private static final Log LOG = LogFactory.getLog(OrganizationCreationHandler.class);
+    private static final Log LOG = LogFactory.getLog(GovernanceConfigUpdateHandler.class);
 
     private static final String EXPIRY_TIME_VALUE = "1440";
     private static final String NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE = String.valueOf(true);
@@ -65,9 +65,9 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId());
             } catch (OrganizationManagementServerException e) {
                 throw new IdentityEventException(
-                        "An error occurred while getting depth of sub-organization", e);
+                        "An error occurred while getting depth of the sub-organization", e);
             }
-            if (organizationDepthInHierarchy >= 2) {
+            if (isSubOrganization(organizationDepthInHierarchy)) {
                 updateGovernanceConnectorProperty(organization);
             }
         }
@@ -79,10 +79,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         try {
             IdentityGovernanceService identityGovernanceService = OrganizationManagementHandlerDataHolder.getInstance()
                     .getIdentityGovernanceService();
-
             String organizationId = organization.getId();
             String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
-
             Map<String, String> configurationDetails = new HashMap<>();
             configurationDetails.put(EXPIRY_TIME, EXPIRY_TIME_VALUE);
             configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
@@ -91,7 +89,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             identityGovernanceService.updateConfiguration(tenantDomain, configurationDetails);
         } catch (IdentityGovernanceException | OrganizationManagementException e) {
             throw new IdentityEventException(
-                    "An error occurred while enabling recovery password for sub-organization", e);
+                    "An error occurred while enabling password recovery for sub-organization", e);
         }
     }
 

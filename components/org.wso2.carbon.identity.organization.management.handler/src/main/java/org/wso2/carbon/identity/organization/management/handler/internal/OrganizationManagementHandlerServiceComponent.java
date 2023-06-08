@@ -30,11 +30,11 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
-import org.wso2.carbon.identity.organization.management.handler.OrganizationCreationHandler;
+import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
- * Organization management handler data holder.
+ * Organization management handler service component.
  */
 @Component(
         name = "identity.organization.management.handler.component",
@@ -54,14 +54,11 @@ public class OrganizationManagementHandlerServiceComponent {
 
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
-            bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
+            bundleContext.registerService(AbstractEventHandler.class.getName(), new GovernanceConfigUpdateHandler(),
                     null);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Organization management ext component activated successfully.");
-            }
+            log.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
-            log.error("Error while activating organization management ext module.", e);
+            log.error("Error while activating organization management handler module.", e);
         }
     }
 
@@ -75,9 +72,7 @@ public class OrganizationManagementHandlerServiceComponent {
     protected void setIdentityEventService(IdentityEventService identityEventService) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setIdentityEventService(identityEventService);
-        if (log.isDebugEnabled()) {
-            log.debug("IdentityEventService set in Central logger.");
-        }
+        log.debug("IdentityEventService set in organization management handler.");
     }
 
     protected void unsetIdentityEventService(IdentityEventService identityEventService) {
