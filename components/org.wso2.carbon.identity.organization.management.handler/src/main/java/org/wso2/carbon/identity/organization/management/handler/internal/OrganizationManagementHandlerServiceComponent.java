@@ -111,3 +111,4 @@ public class OrganizationManagementHandlerServiceComponent {
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(null);
     }
 }
+

@@ -98,3 +98,4 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
         return OrganizationManagementHandlerDataHolder.getInstance().getOrganizationManager();
     }
 }
+

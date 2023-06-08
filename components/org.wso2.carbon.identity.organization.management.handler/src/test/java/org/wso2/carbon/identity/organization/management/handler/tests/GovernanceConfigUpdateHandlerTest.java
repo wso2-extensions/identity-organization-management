@@ -84,3 +84,4 @@ public class GovernanceConfigUpdateHandlerTest {
         verify(identityGovernanceService).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
     }
 }
+
