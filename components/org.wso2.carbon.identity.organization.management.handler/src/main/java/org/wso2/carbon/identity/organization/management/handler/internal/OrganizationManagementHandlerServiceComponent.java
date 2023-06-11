@@ -54,7 +54,7 @@ public class OrganizationManagementHandlerServiceComponent {
 
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
-            bundleContext.registerService(AbstractEventHandler.class.getName(), new GovernanceConfigUpdateHandler(),
+            bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(),
                     null);
             log.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
@@ -86,12 +86,12 @@ public class OrganizationManagementHandlerServiceComponent {
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetIdentityGovernanceService")
-    protected void setIdentityGovernanceService(IdentityGovernanceService idpManager) {
+    protected void setIdentityGovernanceService(IdentityGovernanceService governanceManager) {
 
-        OrganizationManagementHandlerDataHolder.getInstance().setIdentityGovernanceService(idpManager);
+        OrganizationManagementHandlerDataHolder.getInstance().setIdentityGovernanceService(governanceManager);
     }
 
-    protected void unsetIdentityGovernanceService(IdentityGovernanceService idpManager) {
+    protected void unsetIdentityGovernanceService(IdentityGovernanceService governanceManager) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setIdentityGovernanceService(null);
     }

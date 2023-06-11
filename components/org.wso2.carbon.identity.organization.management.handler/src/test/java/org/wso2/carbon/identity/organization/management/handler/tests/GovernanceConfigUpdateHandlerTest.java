@@ -70,7 +70,7 @@ public class GovernanceConfigUpdateHandlerTest {
 
         // Mock the necessary methods.
         when(organizationManager.resolveTenantDomain(organization.getId())).thenReturn("sampleTenantDomain");
-        when(organizationManager.getOrganizationDepthInHierarchy(organization.getId())).thenReturn(2);
+        when(organizationManager.getOrganizationDepthInHierarchy(organization.getId())).thenReturn(1);
 
         // Trigger the event.
         Map<String, Object> eventProperties = new HashMap<>();
