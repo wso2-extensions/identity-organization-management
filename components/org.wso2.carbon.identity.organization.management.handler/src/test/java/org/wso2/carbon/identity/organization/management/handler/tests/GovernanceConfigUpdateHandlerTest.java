@@ -41,6 +41,9 @@ import java.util.Map;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Test class for GovernanceConfigUpdateHandler.
+ */
 public class GovernanceConfigUpdateHandlerTest {
 
     @Mock

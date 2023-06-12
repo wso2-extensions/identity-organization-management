@@ -42,7 +42,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 )
 public class OrganizationManagementHandlerServiceComponent {
 
-    private static final Log log = LogFactory.getLog(OrganizationManagementHandlerServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(OrganizationManagementHandlerServiceComponent.class);
 
     /**
      * Register the organization mgt listener implementation in the OSGI context.
@@ -56,9 +56,9 @@ public class OrganizationManagementHandlerServiceComponent {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(),
                     null);
-            log.debug("Organization management handler component activated successfully.");
+            LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
-            log.error("Error while activating organization management handler module.", e);
+            LOG.error("Error while activating organization management handler module.", e);
         }
     }
 
@@ -72,7 +72,7 @@ public class OrganizationManagementHandlerServiceComponent {
     protected void setIdentityEventService(IdentityEventService identityEventService) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setIdentityEventService(identityEventService);
-        log.debug("IdentityEventService set in organization management handler.");
+        LOG.debug("IdentityEventService set in organization management handler.");
     }
 
     protected void unsetIdentityEventService(IdentityEventService identityEventService) {
