@@ -217,36 +217,35 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            namedJdbcTemplate.withTransaction(template -> {
+            namedJdbcTemplate.withTransaction(template ->
                 template.executeInsert(ADD_ROLE_UM_ORG_ROLE,
                         namedPreparedStatement -> {
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_ID, role.getId());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ROLE_NAME, role.getDisplayName());
                             namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_ORG_ID, organizationId);
-                        }, role, false);
-                if (CollectionUtils.isNotEmpty(role.getGroups())) {
-                    String query = getAddRoleGroupMappingQuery(role.getGroups().size());
-                    assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
-                            role.getId(), query, GROUPS, organizationId);
-                }
-                if (CollectionUtils.isNotEmpty(role.getUsers())) {
-                    String query = getAddRoleUserMappingQuery(role.getUsers().size());
-                    assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
-                            role.getId(), query, USERS, organizationId);
-                }
-                if (CollectionUtils.isNotEmpty(role.getPermissions())) {
-                    int tenantID = getTenantId();
-                    List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantID,
-                            role.getId());
-                    addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantID);
-                    List<String> permissionList = getPermissionIds(role.getPermissions(),
-                            tenantID).stream().map(Object::toString).collect(Collectors.toList());
-                    String query = getAddRolePermissionMappingQuery(permissionList.size());
-                    assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, null);
-                }
-                return null;
-            });
-        } catch (TransactionException e) {
+                        }, role, false)
+            );
+            if (CollectionUtils.isNotEmpty(role.getGroups())) {
+                String query = getAddRoleGroupMappingQuery(role.getGroups().size());
+                assignRoleAttributes(role.getGroups().stream().map(Group::getGroupId).collect(Collectors.toList()),
+                        role.getId(), query, GROUPS, organizationId);
+            }
+            if (CollectionUtils.isNotEmpty(role.getUsers())) {
+                String query = getAddRoleUserMappingQuery(role.getUsers().size());
+                assignRoleAttributes(role.getUsers().stream().map(User::getId).collect(Collectors.toList()),
+                        role.getId(), query, USERS, organizationId);
+            }
+            if (CollectionUtils.isNotEmpty(role.getPermissions())) {
+                int tenantID = getTenantId();
+                List<String> nonExistingPermissions = getNonExistingPermissions(role.getPermissions(), tenantID,
+                        role.getId());
+                addNonExistingPermissions(nonExistingPermissions, role.getId(), tenantID);
+                List<String> permissionList = getPermissionIds(role.getPermissions(),
+                        tenantID).stream().map(Object::toString).collect(Collectors.toList());
+                String query = getAddRolePermissionMappingQuery(permissionList.size());
+                assignRoleAttributes(permissionList, role.getId(), query, PERMISSIONS, null);
+            }
+        } catch (TransactionException | OrganizationManagementException e) {
             throw handleServerException(ERROR_CODE_ADDING_ROLE_TO_ORGANIZATION, e);
         }
     }
@@ -1222,6 +1221,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 errorMessage = ERROR_CODE_INVALID_ATTRIBUTE;
                 break;
         }
+
         try {
             String finalColumnName = columnName;
             namedJdbcTemplate.withTransaction(template -> {
