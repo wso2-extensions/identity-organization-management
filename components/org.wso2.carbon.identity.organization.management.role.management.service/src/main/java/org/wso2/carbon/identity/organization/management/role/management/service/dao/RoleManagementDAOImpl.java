@@ -1636,10 +1636,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             sqlStm = IS_USER_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
         }
         try {
-            getNewTemplate().executeQuery(sqlStm, (resultSet, rowNumber) ->
-                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID));
+            String finalSqlStm = sqlStm;
+            getNewTemplate().withTransaction(template -> template.executeQuery(finalSqlStm, (resultSet, rowNumber) ->
+                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_USER_RES_ORG_ID)));
             return true;
-        } catch (DataAccessException e) {
+        } catch (TransactionException e) {
             // Ignore since this exception is thrown when the column is not available.
             return false;
         }
@@ -1654,10 +1655,11 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
             sqlStm = IS_GROUP_RES_ORG_ID_COLUMN_EXISTS_MSSQL;
         }
         try {
-            getNewTemplate().executeQuery(sqlStm, (resultSet, rowNumber) ->
-                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID));
+            String finalSqlStm = sqlStm;
+            getNewTemplate().withTransaction(template -> template.executeQuery(finalSqlStm, (resultSet, rowNumber) ->
+                    resultSet.findColumn(DB_SCHEMA_COLUMN_NAME_GROUP_RES_ORG_ID)));
             return true;
-        } catch (DataAccessException e) {
+        } catch (TransactionException e) {
             // Ignore since this exception is thrown when the column is not available.
             return false;
         }
