@@ -66,7 +66,7 @@ public class GovernanceConfigUpdateHandlerTest {
     }
 
     @Test(dataProvider = "organizationDataProvider")
-    public void testHandleEventWithPostAddOrganizationEvent(Organization organization, int depth, boolean expectedPass)
+    public void testHandleEventWithPostAddOrganizationEvent(Organization organization, int depth)
             throws IdentityEventException, OrganizationManagementException, IdentityGovernanceException {
 
         // Mock the necessary methods.
@@ -81,7 +81,7 @@ public class GovernanceConfigUpdateHandlerTest {
 
         // Verify that the necessary methods are called.
         verify(organizationManager).getOrganizationDepthInHierarchy(organization.getId());
-        if (expectedPass) {
+        if (depth > 0) {
             verify(organizationManager).resolveTenantDomain(organization.getId());
             verify(identityGovernanceService).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
         } else {
@@ -99,8 +99,8 @@ public class GovernanceConfigUpdateHandlerTest {
         organization2.setId("orgId2");
 
         return new Object[][]{
-                {organization1, 0, false},
-                {organization2, 2, true}
+                {organization1, 0},
+                {organization2, 2}
         };
     }
 }
