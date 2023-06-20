@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -55,6 +55,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isB2BApplicationRoleSupportEnabled;
 
 /**
  * Application listener to restrict actions on shared applications and fragment applications.
@@ -152,7 +153,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                     .filter(claim -> !claim.getLocalClaim().getClaimUri()
                                             .startsWith("http://wso2.org/claims/runtime/"))
                                     .toArray(ClaimMapping[]::new);
-                    filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
+                    if (isB2BApplicationRoleSupportEnabled()) {
+                        // Add application roles to the filtered claim mappings (if any
+                        filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
+                    }
                     ClaimConfig claimConfig = new ClaimConfig();
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
