@@ -50,14 +50,6 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
     private static final String EXPIRY_TIME_VALUE = "1440";
     private static final String NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE = String.valueOf(true);
     private static final String NOTIFICATION_BASED_PW_RECOVERY_VALUE = String.valueOf(true);
-    private static final Map<String, String> configurationDetails = new HashMap<>();
-
-    static {
-        configurationDetails.put(EXPIRY_TIME, EXPIRY_TIME_VALUE);
-        configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
-                NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE);
-        configurationDetails.put(NOTIFICATION_BASED_PW_RECOVERY, NOTIFICATION_BASED_PW_RECOVERY_VALUE);
-    }
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -88,6 +80,11 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
             IdentityGovernanceService identityGovernanceService = OrganizationManagementHandlerDataHolder.getInstance()
                     .getIdentityGovernanceService();
             String tenantDomain = getOrganizationManager().resolveTenantDomain(organization.getId());
+            Map<String, String> configurationDetails = new HashMap<>();
+            configurationDetails.put(EXPIRY_TIME, EXPIRY_TIME_VALUE);
+            configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
+                    NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE);
+            configurationDetails.put(NOTIFICATION_BASED_PW_RECOVERY, NOTIFICATION_BASED_PW_RECOVERY_VALUE);
             identityGovernanceService.updateConfiguration(tenantDomain, configurationDetails);
         } catch (IdentityGovernanceException | OrganizationManagementException e) {
             throw new IdentityEventException(
