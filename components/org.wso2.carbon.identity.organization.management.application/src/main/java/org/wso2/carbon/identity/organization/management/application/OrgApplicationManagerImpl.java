@@ -597,7 +597,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             try {
                 ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
                 sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
-                        sharedOrgId, getAuthenticatedUsername());
+                        sharedTenantDomain, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
                         sharedApplicationId, sharedOrgId, shareWithAllChildren);
             } catch (IdentityApplicationManagementException e) {
