@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
@@ -94,7 +95,9 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.OIDC_CLAIM_DIALECT_URI;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.OIDC_LOGOUT_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORG_QUALIFIED_OIDC_LOGOUT_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
@@ -522,7 +525,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfigs[0].getName());
     }
 
-    private IdentityProvider createOrganizationLoginIDP() {
+    private IdentityProvider createOrganizationLoginIDP() throws IdentityProviderManagementException {
 
         FederatedAuthenticatorConfig authConfig = new FederatedAuthenticatorConfig();
         authConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
@@ -540,6 +543,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ClaimConfig claimConfig = new ClaimConfig();
         claimConfig.setLocalClaimDialect(true);
         idp.setClaimConfig(claimConfig);
+
+        FederatedAuthenticatorConfig[] fedAuthConfigs = new FederatedAuthenticatorConfig[1];
+        Property[] properties = new Property[1];
+        properties[0].setName(OIDC_LOGOUT_URL);
+        try {
+            properties[0].setValue(ServiceURLBuilder.create().addPath(ORG_QUALIFIED_OIDC_LOGOUT_URL)
+                    .build().getAbsolutePublicURL());
+        } catch (URLBuilderException e) {
+            throw new IdentityProviderManagementException(
+                    "Error while building url for context: /oidc/logout");
+        }
+        fedAuthConfigs[0].setProperties(properties);
+        fedAuthConfigs[0].setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+        fedAuthConfigs[0].setEnabled(true);
+        idp.setFederatedAuthenticatorConfigs(fedAuthConfigs);
 
         return idp;
     }

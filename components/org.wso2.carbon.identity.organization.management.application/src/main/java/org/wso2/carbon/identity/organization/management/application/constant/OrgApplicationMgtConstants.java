@@ -38,6 +38,8 @@ public class OrgApplicationMgtConstants {
     public static final String APP_ROLES_CLAIM_URI = "http://wso2.org/claims/applicationRoles";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
+    public static final String OIDC_LOGOUT_URL = "OIDCLogoutEPUrl";
+    public static final String ORG_QUALIFIED_OIDC_LOGOUT_URL = "/o/{organization_id}/oidc/logout";
 
     // Event constants related to shared application management.
     public static final String EVENT_PROP_PARENT_ORGANIZATION_ID = "PARENT_ORGANIZATION_ID";
