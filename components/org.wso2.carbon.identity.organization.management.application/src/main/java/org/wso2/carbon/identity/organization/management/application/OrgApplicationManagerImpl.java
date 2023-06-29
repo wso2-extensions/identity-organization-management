@@ -89,6 +89,7 @@ import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.base.IdentityConstants.OpenId.OPENID;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
+import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_LOGOUT_CONSENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
@@ -684,7 +685,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         skipConsentProp.setName(SKIP_CONSENT);
         skipConsentProp.setValue(Boolean.TRUE.toString());
 
-        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{fragmentAppProperty, skipConsentProp};
+        ServiceProviderProperty skipLogoutConsentProp = new ServiceProviderProperty();
+        skipLogoutConsentProp.setName(SKIP_LOGOUT_CONSENT);
+        skipLogoutConsentProp.setValue(Boolean.TRUE.toString());
+
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]
+                {fragmentAppProperty, skipConsentProp, skipLogoutConsentProp};
         serviceProvider.setSpProperties(spProperties);
     }
 
