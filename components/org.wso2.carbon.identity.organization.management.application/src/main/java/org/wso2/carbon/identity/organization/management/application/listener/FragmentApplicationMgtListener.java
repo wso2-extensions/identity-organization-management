@@ -139,7 +139,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 String sharedOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
                 mainApplicationDO = getOrgApplicationMgtDAO()
                         .getMainApplication(serviceProvider.getApplicationResourceId(), sharedOrgId);
-
+                // Add the skip logout consent property to true for the shared application
+                serviceProvider.getLocalAndOutBoundAuthenticationConfig().setSkipLogoutConsent(true);
                 if (mainApplicationDO.isPresent()) {
                     /* Add User Attribute Section related configurations from the
                     main application to the shared application
