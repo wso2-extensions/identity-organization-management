@@ -22,19 +22,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
  * Test class for FragmentApplicationMgtListener.
@@ -61,32 +63,37 @@ public class FragmentApplicationMgtListenerTest {
         userName = "sampleUser";
     }
 
-    @Test
-    public void testDoPreCreateApplicationWithOrganization()
-            throws IdentityApplicationManagementException, OrganizationManagementException {
+    @DataProvider(name = "organizationHierarchyData")
+    public Object[][] getOrganizationHierarchyData() {
 
-        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn("orgId1");
-        when(organizationManager.getOrganizationDepthInHierarchy("orgId1")).thenReturn(0);
-
-        boolean result = fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain, userName);
-
-        assertTrue(result);
-        verify(organizationManager, times(1)).resolveOrganizationId(tenantDomain);
-        verify(organizationManager, times(1)).getOrganizationDepthInHierarchy("orgId1");
+        return new Object[][]{
+                {"orgId1", 0, false, false},
+                {"orgId2", 2, false, true},
+                {"orgId3", 2, true, false}
+        };
     }
 
-    @Test(expectedExceptions = IdentityApplicationManagementClientException.class)
-    public void testDoPreCreateApplicationWithSubOrganization() throws IdentityApplicationManagementException,
-            OrganizationManagementException {
+    @Test(dataProvider = "organizationHierarchyData")
+    public void testDoPreCreateApplication(String organizationId, int hierarchyDepth, boolean subOrgCanCreateApp,
+                                           boolean expectException)
+            throws IdentityApplicationManagementException, OrganizationManagementException {
 
-        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn("orgId2");
-        when(organizationManager.getOrganizationDepthInHierarchy("orgId2")).thenReturn(2);
-
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationId);
+        when(organizationManager.getOrganizationDepthInHierarchy(organizationId)).thenReturn(hierarchyDepth);
+        // Set the property to true if the sub organization can create applications.
+        if (subOrgCanCreateApp) {
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[2];
+            spProperties[0] = new ServiceProviderProperty();
+            spProperties[0].setName(IS_FRAGMENT_APP);
+            spProperties[0].setValue(String.valueOf(true));
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+        }
         try {
-            fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain, userName);
-        } finally {
-            verify(organizationManager, times(1)).resolveOrganizationId(tenantDomain);
-            verify(organizationManager, times(1)).getOrganizationDepthInHierarchy("orgId2");
+            boolean result = fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain,
+                    userName);
+            assertEquals(result, !expectException);
+        } catch (IdentityApplicationManagementClientException e) {
+            assertTrue(expectException);
         }
     }
 }

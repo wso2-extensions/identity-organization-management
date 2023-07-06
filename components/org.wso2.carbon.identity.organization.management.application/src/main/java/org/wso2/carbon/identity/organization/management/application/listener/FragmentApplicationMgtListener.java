@@ -48,15 +48,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.CODE_SUB_ORG_CANNOT_CREATE_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ERROR_SUB_ORG_CANNOT_CREATE_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isB2BApplicationRoleSupportEnabled;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
@@ -99,8 +98,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
             if (isSubOrganization(organizationDepthInHierarchy)) {
                 if (!isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
-                    throw new IdentityApplicationManagementClientException(CODE_SUB_ORG_CANNOT_CREATE_APP,
-                            ERROR_SUB_ORG_CANNOT_CREATE_APP);
+                    throw new IdentityApplicationManagementClientException(
+                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
+                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
                 }
                 return true;
             }
@@ -330,9 +330,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     }
 
     /**
-     * Check whether the service provider app is shared application for a sub organization by an internal process of
-     * Asgardeo. In that process, the isFragmentApp attribute is set to true and request initiated tenant domain and the
-     * * service provider belonging tenant domain would be different.
+     * Check whether the service provider app is a shared application for a sub-organization by an internal process.
+     * In that process, the isFragmentApp attribute is set to true, and request initiated tenant domain and the
+     * service provider belonging tenant domain would be different.
      *
      * @param serviceProvider The service provider app which is going to be provisioned.
      * @param tenantDomain    The tenant domain which the service provider app is belongs to.
