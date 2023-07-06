@@ -96,13 +96,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             int organizationDepthInHierarchy =
                     getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
-            if (isSubOrganization(organizationDepthInHierarchy)) {
-                if (!isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
-                    throw new IdentityApplicationManagementClientException(
-                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
-                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
-                }
-                return true;
+            if (isSubOrganization(organizationDepthInHierarchy) &&
+                    !isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
+                throw new IdentityApplicationManagementClientException(
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException(
