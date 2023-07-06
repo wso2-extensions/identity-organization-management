@@ -68,23 +68,20 @@ public class FragmentApplicationMgtListenerTest {
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
     }
 
-    @DataProvider(name = "organizationHierarchyData")
-    public Object[][] getOrganizationHierarchyData() {
+    @DataProvider(name = "subOrganizationMetaData")
+    public Object[][] getSubOrganizationMetaData() {
 
-        return new Object[][]{
-                {"orgId1", 0, primaryTenantDomain, false, false}, // Test case with primary organization.
-                {"orgId2", 2, tenantDomain, false, true},
-                // Test case with sub-organization which cannot create applications and application is not shared.
+        return new Object[][]{{"orgId2", 2, tenantDomain, false, true}, // Create application in sub-organization.
                 {"orgId3", 2, tenantDomain, true, true},
-                // Test case with sub-organization which cannot create applications and application is shared.
+                // Create an application in a sub-organization, and it's marked as a fragment app.
                 {"orgId4", 2, primaryTenantDomain, true, false}
-                // Test case with sub-organization which can create applications and application is shared.
+                // Create an application marked as a fragmented app by an internal process of primaryTenantDomain.
         };
     }
 
-    @Test(dataProvider = "organizationHierarchyData")
-    public void testDoPreCreateApplication(String organizationId, int hierarchyDepth, String requestInitiatedDomain,
-                                           boolean isSharedApp, boolean expectException)
+    @Test(dataProvider = "subOrganizationMetaData")
+    public void testCreateApplicationInSubOrg(String organizationId, int hierarchyDepth, String requestInitiatedDomain,
+                                              boolean isSharedApp, boolean expectException)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
         when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationId);
@@ -98,12 +95,24 @@ public class FragmentApplicationMgtListenerTest {
         }
         mockUtils(requestInitiatedDomain);
         try {
-            boolean result = fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain,
-                    userName);
+            boolean result =
+                    fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain, userName);
             assertEquals(result, !expectException);
         } catch (IdentityApplicationManagementClientException e) {
             assertTrue(expectException);
         }
+    }
+
+    @Test
+    public void testCreateApplicationInPrimaryOrg()
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+
+        when(organizationManager.resolveOrganizationId(primaryTenantDomain)).thenReturn("orgId1");
+        when(organizationManager.getOrganizationDepthInHierarchy("orgId1")).thenReturn(0);
+        mockUtils(primaryTenantDomain);
+        boolean result =
+                fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, primaryTenantDomain, userName);
+        assertTrue(result);
     }
 
     private void mockUtils(String requestInitiatedDomain) {
