@@ -72,25 +72,30 @@ public class FragmentApplicationMgtListenerTest {
     public Object[][] getOrganizationHierarchyData() {
 
         return new Object[][]{
-                {"orgId1", 0, primaryTenantDomain, false}, // Test case with primary organization.
-                {"orgId2", 2, tenantDomain, true}, // Test case with sub-organization which cannot create applications.
-                {"orgId3", 2, primaryTenantDomain, false}
-                // Test case with sub-organization which can create applications.
+                {"orgId1", 0, primaryTenantDomain, false, false}, // Test case with primary organization.
+                {"orgId2", 2, tenantDomain, false, true},
+                // Test case with sub-organization which cannot create applications and application is not shared.
+                {"orgId3", 2, tenantDomain, true, true},
+                // Test case with sub-organization which cannot create applications and application is shared.
+                {"orgId4", 2, primaryTenantDomain, true, false}
+                // Test case with sub-organization which can create applications and application is shared.
         };
     }
 
     @Test(dataProvider = "organizationHierarchyData")
     public void testDoPreCreateApplication(String organizationId, int hierarchyDepth, String requestInitiatedDomain,
-                                           boolean expectException)
+                                           boolean isSharedApp, boolean expectException)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
         when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationId);
         when(organizationManager.getOrganizationDepthInHierarchy(organizationId)).thenReturn(hierarchyDepth);
-        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[1];
-        spProperties[0] = new ServiceProviderProperty();
-        spProperties[0].setName(IS_FRAGMENT_APP);
-        spProperties[0].setValue(String.valueOf(true));
-        when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+        if (isSharedApp) {
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[1];
+            spProperties[0] = new ServiceProviderProperty();
+            spProperties[0].setName(IS_FRAGMENT_APP);
+            spProperties[0].setValue(String.valueOf(true));
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+        }
         mockUtils(requestInitiatedDomain);
         try {
             boolean result = fragmentApplicationMgtListener.doPreCreateApplication(serviceProvider, tenantDomain,
