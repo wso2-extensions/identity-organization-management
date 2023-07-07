@@ -71,11 +71,13 @@ public class FragmentApplicationMgtListenerTest {
     @DataProvider(name = "subOrganizationMetaData")
     public Object[][] getSubOrganizationMetaData() {
 
-        return new Object[][]{{"orgId2", 2, tenantDomain, false, true}, // Create application in sub-organization.
-                {"orgId3", 2, tenantDomain, true, true},
+        return new Object[][]{
+                // Create application in sub-organization.
+                {"orgId2", 2, tenantDomain, false, true},
                 // Create an application in a sub-organization, and it's marked as a fragment app.
-                {"orgId4", 2, primaryTenantDomain, true, false}
+                {"orgId3", 2, tenantDomain, true, true},
                 // Create an application marked as a fragmented app by an internal process of primaryTenantDomain.
+                {"orgId4", 2, primaryTenantDomain, true, false}
         };
     }
 
