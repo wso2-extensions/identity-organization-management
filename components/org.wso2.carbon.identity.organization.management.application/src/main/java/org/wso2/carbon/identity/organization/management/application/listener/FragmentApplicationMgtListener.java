@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
@@ -54,8 +55,10 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isB2BApplicationRoleSupportEnabled;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 
 /**
  * Application listener to restrict actions on shared applications and fragment applications.
@@ -83,6 +86,27 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
         return false;
 
+    }
+
+    @Override
+    public boolean doPreCreateApplication(ServiceProvider serviceProvider, String tenantDomain, String userName)
+            throws IdentityApplicationManagementException {
+
+        try {
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            int organizationDepthInHierarchy =
+                    getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
+            if (isSubOrganization(organizationDepthInHierarchy) &&
+                    !isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
+                throw new IdentityApplicationManagementClientException(
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementException(
+                    "An error occurred while getting depth of the organization", e);
+        }
+        return true;
     }
 
     @Override
@@ -302,5 +326,22 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         claimMappings[filteredClaimMappings.length] = appRoleClaimMapping;
 
         return claimMappings;  // Return the updated array
+    }
+
+    /**
+     * Check whether the service provider app is a shared application for a sub-organization by an internal process.
+     * In that process, the isFragmentApp attribute is set to true, and request initiated tenant domain and the
+     * service provider belonging tenant domain would be different.
+     *
+     * @param serviceProvider The service provider app which is going to be provisioned.
+     * @param tenantDomain    The tenant domain which the service provider app is belongs to.
+     * @return True if app is shared by an internal process of Asgardeo for sharing apps to sub organizations.
+     */
+    private boolean isSharedAppFromInternalProcess(ServiceProvider serviceProvider, String tenantDomain) {
+
+        return serviceProvider.getSpProperties() != null && Arrays.stream(serviceProvider.getSpProperties())
+                .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                        Boolean.parseBoolean(property.getValue())) &&
+                !StringUtils.equals(IdentityTenantUtil.getTenantDomainFromContext(), tenantDomain);
     }
 }
