@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
@@ -125,6 +126,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOrganizationQualifiedURLsSupported;
+import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
+import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_FLAG;
 import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
 
 /**
@@ -540,6 +543,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ClaimConfig claimConfig = new ClaimConfig();
         claimConfig.setLocalClaimDialect(true);
         idp.setClaimConfig(claimConfig);
+
+        // Add system reserved properties.
+        IdentityProviderProperty[] idpProperties =  new IdentityProviderProperty[1];
+        IdentityProviderProperty property = new IdentityProviderProperty();
+        property.setName(IS_SYSTEM_RESERVED_IDP_FLAG);
+        property.setDisplayName(IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME);
+        property.setValue("true");
+        idpProperties[0] = property;
+        idp.setIdpProperties(idpProperties);
 
         return idp;
     }
