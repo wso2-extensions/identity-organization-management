@@ -40,8 +40,8 @@
     </scm>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.organization.management.authz.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.role.management.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.authz.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.application</module>
         <module>components/org.wso2.carbon.identity.organization.management.tenant.association</module>
         <module>components/org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</module>
