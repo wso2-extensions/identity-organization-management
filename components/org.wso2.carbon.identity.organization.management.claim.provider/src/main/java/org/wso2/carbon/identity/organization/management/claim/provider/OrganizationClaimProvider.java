@@ -99,9 +99,8 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
         } catch (OrganizationManagementClientException e) {
             if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
                 return additionalClaims;
-            } else {
-                throw new IdentityOAuth2Exception("Error while resolving organization id.", e);
             }
+            throw new IdentityOAuth2Exception("Error while resolving organization id.", e);
         } catch (OrganizationManagementException e) {
             throw new IdentityOAuth2Exception("Error while resolving organization id.", e);
         }
