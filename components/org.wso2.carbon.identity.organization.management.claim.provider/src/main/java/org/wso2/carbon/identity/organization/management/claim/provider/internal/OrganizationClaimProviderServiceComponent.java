@@ -67,18 +67,14 @@ public class OrganizationClaimProviderServiceComponent {
     )
     protected void setOrganizationManager(OrganizationManager organizationManager) {
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Setting the organization management service.");
-        }
         OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationManager(organizationManager);
+        LOG.debug("Set the organization management service.");
     }
 
     protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Unset organization management service.");
-        }
         OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationManager(null);
+        LOG.debug("Unset organization management service.");
     }
 
     @Reference(
@@ -93,11 +89,13 @@ public class OrganizationClaimProviderServiceComponent {
 
         OrganizationClaimProviderServiceComponentHolder.getInstance()
                 .setOrganizationManagementEnable(organizationManagementInitializeService);
+        LOG.debug("Set the organization management enable check service.");
     }
 
     protected void unsetOrganizationManagementEnablingService(
             OrganizationManagementInitialize organizationManagementInitializeInstance) {
 
         OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationManagementEnable(null);
+        LOG.debug("Unset organization management enable check service.");
     }
 }
