@@ -59,6 +59,14 @@
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.handler</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.claim.provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.governance.connector</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -90,6 +98,8 @@
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.ext</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.handler</bundleDef>
+                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.claim.provider</bundleDef>
+                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.governance.connector</bundleDef>
                             </bundles>
                             <importFeatures>
                                 <importFeatureDef>org.wso2.carbon.core:compatible:${carbon.kernel.feature.version}</importFeatureDef>

@@ -48,6 +48,8 @@
         <module>components/org.wso2.carbon.identity.organization.management.ext</module>
         <module>features/org.wso2.carbon.identity.organization.management.server.feature</module>
         <module>components/org.wso2.carbon.identity.organization.management.handler</module>
+        <module>components/org.wso2.carbon.identity.organization.management.claim.provider</module>
+        <module>components/org.wso2.carbon.identity.organization.management.governance.connector</module>
     </modules>
 
     <dependencyManagement>
@@ -140,6 +142,18 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.handler</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.claim.provider</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.governance.connector</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -427,7 +441,7 @@
         <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
-        <identity.organization.management.core.version>1.0.53</identity.organization.management.core.version>
+        <identity.organization.management.core.version>1.0.57</identity.organization.management.core.version>
         <org.wso2.identity.organization.mgt.core.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.core.imp.pkg.version.range>
 
@@ -441,7 +455,7 @@
 
         <identity.extension.utils.version>1.0.8</identity.extension.utils.version>
         <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
-        <identity.inbound.auth.oauth.version>6.7.116</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>6.11.66</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.import.version.range>[6.7.116, 8.0.0)</identity.inbound.auth.oauth.import.version.range>
         <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
@@ -482,6 +496,7 @@
         <findbugs.annotations.version>3.0.1</findbugs.annotations.version>
         <carbon.p2.plugin.version>5.1.2</carbon.p2.plugin.version>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
+        <jacoco.version>0.8.2</jacoco.version>
 
         <compiler-source.version>1.8</compiler-source.version>
         <compiler-target.version>1.8</compiler-target.version>
