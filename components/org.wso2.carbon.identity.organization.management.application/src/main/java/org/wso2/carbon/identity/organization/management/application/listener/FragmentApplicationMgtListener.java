@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -41,6 +43,7 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.Arrays;
@@ -64,6 +67,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  * Application listener to restrict actions on shared applications and fragment applications.
  */
 public class FragmentApplicationMgtListener extends AbstractApplicationMgtListener {
+
+    private static final Log LOG = LogFactory.getLog(FragmentApplicationMgtListener.class);
 
     @Override
     public int getDefaultOrderId() {
@@ -101,6 +106,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 throw new IdentityApplicationManagementClientException(
                         ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
                         ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
+            }
+        } catch (OrganizationManagementClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Organization not found for the tenant: " + tenantDomain);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException(
