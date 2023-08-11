@@ -38,7 +38,6 @@ import java.util.Collections;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
-import static org.wso2.carbon.identity.organization.management.tenant.association.Constants.MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW;
 
 /**
  * This class contains the implementation of the tenant management listener.  This listener will be used to add tenant
@@ -103,24 +102,16 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
 
     private Role buildOrgCreatorRole(String adminUUID) {
 
+        /*
+        This role will be used to maintain the organization creator's association with the organization.
+        No permission will be assigned to this role.
+        The org creating user get the administrator permissions through the administrator role.
+        creator can be assigned from administrator role, but not from the org-creator role.
+         */
         Role organizationCreatorRole = new Role();
         organizationCreatorRole.setDisplayName(ORG_CREATOR_ROLE);
         User orgCreator = new User(adminUUID);
         organizationCreatorRole.setUsers(Collections.singletonList(orgCreator));
-        // Set permissions for org-creator role.
-        ArrayList<String> orgCreatorRolePermissions = new ArrayList<>();
-        // Adding mandatory permissions for the org-creator role.
-        orgCreatorRolePermissions.add(Constants.ORG_MGT_PERMISSION);
-        orgCreatorRolePermissions.add(Constants.ORG_ROLE_MGT_PERMISSION);
-        /*
-        Adding the bear minimum permission set that org creator should have to logged in to the console and view
-        user, groups, roles, SP, IDP sections.
-         */
-        orgCreatorRolePermissions.addAll(MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW);
-        // Add user create permission to organization creator to delegate permissions to other org users.
-        // This permission is assigned until https://github.com/wso2/product-is/issues/14439 is fixed
-        orgCreatorRolePermissions.add(Constants.USER_MGT_CREATE_PERMISSION);
-        organizationCreatorRole.setPermissions(orgCreatorRolePermissions);
         return organizationCreatorRole;
     }
 
