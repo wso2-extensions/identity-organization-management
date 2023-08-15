@@ -105,8 +105,8 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         /*
         This role will be used to maintain the organization creator's association with the organization.
         No permission will be assigned to this role.
-        The org creating user get the administrator permissions through the administrator role.
-        creator can be unassigned from administrator role, but not from the org-creator role.
+        The org creating user gets the administrator permissions through the administrator role.
+        Creator can be unassigned from administrator role, but not from the org-creator role.
          */
         Role organizationCreatorRole = new Role();
         organizationCreatorRole.setDisplayName(ORG_CREATOR_ROLE);
