@@ -48,6 +48,16 @@ public interface UserInvitationDAO {
             throws UserInvitationMgtServerException;
 
     /**
+     * Get the invitation details with role assignments by using the confirmation code of the invitation.
+     *
+     * @param confirmationCode The confirmation code of the invitation.
+     * @return The invitation details with the role assignment for the confirmation code.
+     * @throws UserInvitationMgtServerException If an error occurs while retrieving the invitation.
+     */
+    Invitation getInvitationWithRolesByConfirmationCode(String confirmationCode)
+            throws UserInvitationMgtServerException;
+
+    /**
      * Get the invitation details by using the invitation id of the invitation.
      *
      * @param invitationId The invitation id of the invitation.
@@ -88,4 +98,16 @@ public interface UserInvitationDAO {
      */
     Invitation getActiveInvitationByUser(String username, String domain, String userOrganizationId,
                                          String invitedOrganizationId) throws UserInvitationMgtException;
+
+    /**
+     * Creates the association between the shared user and the actual user.
+     *
+     * @param realUserId Actual user id of the user in the parent organization.
+     * @param residentOrgId Organization id of the organization in which the user resides.
+     * @param sharedUserId ID of the user which is created in the invited organization.
+     * @param sharedOrgId Organization id of the invited organization.
+     * @throws UserInvitationMgtException If an error occurs while creating the association.
+     */
+    void createOrganizationAssociation(String realUserId, String residentOrgId, String sharedUserId,
+                                       String sharedOrgId) throws UserInvitationMgtException;
 }

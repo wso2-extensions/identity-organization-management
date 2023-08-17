@@ -24,7 +24,12 @@ package org.wso2.carbon.identity.organization.user.invitation.management.constan
 public class UserInvitationMgtConstants {
 
     public static final String CLAIM_EMAIL_ADDRESS = "http://wso2.org/claims/emailaddress";
+    public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/managedOrg";
+    public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
     public static final String INVITATION_ERROR_PREFIX = "OUI-";
+    public static final String DEFAULT_USER_STORE_DOMAIN = "DEFAULT";
+    public static final String DEFAULT_PROFILE = "default";
+    public static final String INVITED_USER_GROUP_NAME_PREFIX = "invitedOrgUserGroup-";
 
     // Filter Constants
     public static final String STATUS_PENDING = "PENDING";
@@ -43,6 +48,10 @@ public class UserInvitationMgtConstants {
     public static final String EVENT_PROP_TEMPLATE_TYPE = "TEMPLATE_TYPE";
     public static final String ORGANIZATION_USER_INVITATION_EMAIL_TEMPLATE_TYPE = "OrganizationUserInvitation";
     public static final String EVENT_NAME_POST_ADD_INVITATION = "POST_ADD_ORGANIZATION_USER_INVITATION";
+    public static final String EVENT_PROP_ORG_ID = "org-id";
+    public static final String EVENT_PROP_GROUP_NAME = "group-name";
+    public static final String EVENT_PROP_ROLE_ASSIGNMENTS = "role-assignments";
+    public static final String EVENT_POST_ADD_INVITED_ORG_USER = "POST_ADD_INVITED_ORG_USER";
 
     /**
      * Error messages for organization user invitation management related errors.
@@ -86,6 +95,12 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_INVALID_FILTER("10022",
                 "Invalid filter.",
                 "The filter '%s' is invalid."),
+        ERROR_CODE_USER_ALREADY_EXISTS("10023",
+                "User already exists.",
+                "User %s is already exists in the organization %s."),
+        ERROR_CODE_ACCEPT_INVITATION("10024",
+                "Unable to accept the invitation.",
+                "Could not accept the invitation for the user %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10001",
@@ -132,7 +147,13 @@ public class UserInvitationMgtConstants {
                 "Multiple invitations found for username %s."),
         ERROR_CODE_GET_INVITATION("10015",
                 "Unable to get the invitation.",
-                "Could not get the invitation for invitation id %s.");
+                "Could not get the invitation for invitation id %s."),
+        ERROR_CODE_CREATE_ORG_ASSOC("10016",
+                "Unable to create organization association.",
+                "Could not create organization association for user %s."),
+        ERROR_CODE_GET_INVITATION_BY_CONF_CODE("10017",
+                "Unable to get the invitation.",
+                "Could not get the invitation with role assignments for confirmation code %s."),;
 
         private final String code;
         private final String message;

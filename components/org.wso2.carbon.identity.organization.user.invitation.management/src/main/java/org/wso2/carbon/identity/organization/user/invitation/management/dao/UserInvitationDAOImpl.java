@@ -53,6 +53,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.CREATE_USER_ASSOCIATION_TO_ORG;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_INVITATION_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ROLE_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ACTIVE_INVITATION_BY_USER;
@@ -61,14 +62,17 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATIONS_BY_INVITED_ORG_ID_WITH_STATUS_FILTER_PENDING;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_FROM_CONFIRMATION_CODE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_ID_FROM_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ROLE_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.STORE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.STORE_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_COMMIT_INVITATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_ORG_ASSOC;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITATION_BY_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITATION_DETAILS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_ROLE_ASSIGNMENTS_BY_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION_BY_CONF_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION_BY_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_MULTIPLE_INVITATIONS_FOR_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_INVITATIONS_FOR_ORG_ID;
@@ -175,6 +179,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                                 getString(COLUMN_NAME_INVITED_ORG_ID));
                         invitation.setStatus(invitationsResultSet.getString(COLUMN_NAME_STATUS));
                         invitation.setCreatedAt(invitationsResultSet.getTimestamp(COLUMN_NAME_CREATED_AT));
+                        invitation.setExpiredAt(invitationsResultSet.getTimestamp(COLUMN_NAME_EXPIRED_AT));
                         invitation.setUserRedirectUrl(invitationsResultSet.getString(COLUMN_NAME_REDIRECT_URL));
                     } while (invitationsResultSet.next());
                 }
@@ -230,6 +235,26 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             throw handleServerException(ERROR_CODE_RETRIEVE_INVITATION_BY_CONFIRMATION_ID, confirmationCode, e);
         }
         return invitation;
+    }
+
+    @Override
+    public Invitation getInvitationWithRolesByConfirmationCode(String confirmationCode)
+            throws UserInvitationMgtServerException {
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+            PreparedStatement getInvitationIdFromCodePrepStat =
+                    connection.prepareStatement(GET_INVITATION_ID_FROM_CONFIRMATION_CODE)) {
+            getInvitationIdFromCodePrepStat.setString(1, confirmationCode);
+            try (ResultSet resultSet = getInvitationIdFromCodePrepStat.executeQuery()) {
+                if (resultSet.next()) {
+                    String invitationId = resultSet.getString(COLUMN_NAME_INVITATION_ID);
+                    return getInvitationByInvitationId(invitationId);
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw handleServerException(ERROR_CODE_GET_INVITATION_BY_CONF_CODE, confirmationCode, e);
+        }
     }
 
     @Override
@@ -351,6 +376,22 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             return null;
         }
         return invitationList.get(0);
+    }
+
+    @Override
+    public void createOrganizationAssociation(String realUserId, String residentOrgId, String sharedUserId,
+                                              String sharedOrgId) throws UserInvitationMgtException {
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+             PreparedStatement createOrgAssocPrepStat = connection.prepareStatement(CREATE_USER_ASSOCIATION_TO_ORG)) {
+            createOrgAssocPrepStat.setString(1, sharedUserId);
+            createOrgAssocPrepStat.setString(2, sharedOrgId);
+            createOrgAssocPrepStat.setString(3, realUserId);
+            createOrgAssocPrepStat.setString(4, residentOrgId);
+            createOrgAssocPrepStat.executeUpdate();
+        } catch (SQLException e) {
+            throw handleServerException(ERROR_CODE_CREATE_ORG_ASSOC, sharedUserId, e);
+        }
     }
 
     private List<RoleAssignments> processRoleAssignments(List<RoleAssignments> roleAssignmentsResultList) {
