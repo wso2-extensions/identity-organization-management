@@ -249,6 +249,24 @@
                 <version>${mockito-core.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-core</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito2</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-testng</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -487,6 +505,7 @@
         <testng.version>6.9.10</testng.version>
         <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
         <h2database.version>1.4.199</h2database.version>
+        <powermock.version>2.0.9</powermock.version>
 
         <openapi.tools.version>4.1.2</openapi.tools.version>
 
