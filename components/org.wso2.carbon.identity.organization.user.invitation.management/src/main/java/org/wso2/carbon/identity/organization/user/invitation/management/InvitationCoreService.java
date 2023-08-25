@@ -43,7 +43,7 @@ public interface InvitationCoreService {
      * @param confirmationCode The confirmation code of the invitation.
      * @return True if the invitation is accepted successfully.
      */
-    boolean acceptInvitation(String confirmationCode);
+    boolean acceptInvitation(String confirmationCode) throws UserInvitationMgtException;
 
     /**
      * Introspects the invitation with the given confirmation code.

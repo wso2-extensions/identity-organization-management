@@ -35,12 +35,14 @@ import org.wso2.carbon.identity.organization.user.invitation.management.exceptio
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -50,12 +52,20 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.DEFAULT_PROFILE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.DEFAULT_USER_STORE_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_NAME_POST_ADD_INVITATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_POST_ADD_INVITED_ORG_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_EMAIL_ADDRESS;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_GROUP_NAME;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_REDIRECT_URL;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_USER_NAME;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACCEPT_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACTIVE_INVITATION_EXISTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
@@ -67,8 +77,11 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_UNABLE_TO_RESEND_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE_VALUE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_USER_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_USER_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FILTER_STATUS_EQ;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ID_CLAIM_READ_ONLY;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.INVITED_USER_GROUP_NAME_PREFIX;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_EXPIRED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_PENDING;
 
@@ -139,9 +152,81 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     }
 
     @Override
-    public boolean acceptInvitation(String confirmationCode) {
+    public boolean acceptInvitation(String confirmationCode) throws UserInvitationMgtException {
 
-        return false;
+        String authenticatedUser = Utils.getAuthenticatedUsername();
+        Invitation invitation = userInvitationDAO.getInvitationWithRolesByConfirmationCode(confirmationCode);
+        if (invitation != null) {
+            String userDomainQualifiedUserName = UserCoreUtil
+                    .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
+            if (userDomainQualifiedUserName.equals(authenticatedUser)) {
+                if (invitation.getExpiredAt().getTime() > Instant.now().toEpochMilli()) {
+                    try {
+                        OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
+                                .getOrganizationManagerService();
+                        String invitedOrganizationId = invitation.getInvitedOrganizationId();
+                        String invitedTenantDomain = organizationManager.resolveTenantDomain(invitedOrganizationId);
+                        int invitedTenantId = IdentityTenantUtil.getTenantId(invitedTenantDomain);
+                        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(invitedTenantId);
+                        String userNameInInvitedOrg = UserCoreUtil
+                                .addDomainToName(invitation.getUsername(), DEFAULT_USER_STORE_DOMAIN);
+                        if (!userStoreManager.isExistingUser(userNameInInvitedOrg)) {
+                            HashMap<String, String> userClaims = new HashMap<>();
+                            userClaims.put(CLAIM_MANAGED_ORGANIZATION, invitation.getUserOrganizationId());
+                            userClaims.put(ID_CLAIM_READ_ONLY, "true");
+                            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+                            userStoreManager.addUser(userNameInInvitedOrg, generatePassword(), null,
+                                    userClaims, DEFAULT_PROFILE);
+                            // Adding the association with the organization.
+                            String sharedUserId = userStoreManager.getUserIDFromUserName(userNameInInvitedOrg);
+                            // Get the available group name for the group in the invited organization.
+                            String availableGroupName = getAvailableGroupName();
+                            userStoreManager.addRole(availableGroupName, new String[]{userNameInInvitedOrg}, null);
+                            String realUserId = Utils.getUserId();
+                            userInvitationDAO.createOrganizationAssociation(realUserId,
+                                    invitation.getUserOrganizationId(), sharedUserId, invitedOrganizationId);
+                            // Trigger event to add the role assignments if any available in the invitation.
+                            if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
+                                triggerRoleAssignmentEvent(invitedOrganizationId, availableGroupName,
+                                        Arrays.asList(invitation.getRoleAssignments()));
+                            }
+                            // Removing the invitation since the user is added to the organization.
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("User: " + invitation.getUsername() + " is added to the organization: "
+                                        + invitedOrganizationId + ". Hence deleting the invitation with the " +
+                                        "confirmation code: " + confirmationCode);
+                            }
+                            userInvitationDAO.deleteInvitation(invitation.getInvitationId());
+                            return true;
+                        }
+                        LOG.error("User: " + invitation.getUsername() + " exists in the organization: "
+                                + invitedOrganizationId + ". Hence deleting the invitation with the " +
+                                "confirmation code: " + confirmationCode);
+                        userInvitationDAO.deleteInvitation(invitation.getInvitationId());
+                        throw new UserInvitationMgtClientException(ERROR_CODE_USER_ALREADY_EXISTS.getCode(),
+                                ERROR_CODE_USER_ALREADY_EXISTS.getMessage(),
+                                String.format(ERROR_CODE_USER_ALREADY_EXISTS.getDescription(),
+                                        invitation.getUsername(), invitedOrganizationId));
+
+                    } catch (UserStoreException | OrganizationManagementException e) {
+                        UserCoreUtil.removeSkipPasswordPatternValidationThreadLocal();
+                        throw new UserInvitationMgtServerException(ERROR_CODE_ACCEPT_INVITATION.getCode(),
+                                ERROR_CODE_ACCEPT_INVITATION.getMessage(),
+                                String.format(ERROR_CODE_ACCEPT_INVITATION.getDescription(), confirmationCode), e);
+                    }
+                } else {
+                    // Removing the invitation since the invitation is expired.
+                    if (LOG.isDebugEnabled()) {
+                        LOG.error("Invitation with the confirmation code: " + confirmationCode + " is expired. Hence " +
+                                "deleting the invitation.");
+                    }
+                    userInvitationDAO.deleteInvitation(invitation.getInvitationId());
+                }
+            }
+        }
+        throw new UserInvitationMgtException(ERROR_CODE_INVALID_CONFIRMATION_CODE.getCode(),
+                ERROR_CODE_INVALID_CONFIRMATION_CODE.getMessage(),
+                String.format(ERROR_CODE_INVALID_CONFIRMATION_CODE.getDescription(), confirmationCode));
     }
 
     @Override
@@ -300,5 +385,36 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             return invitation.getExpiredAt().after(currentTime);
         }
         return false;
+    }
+
+    private String generatePassword() {
+
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString().substring(0, 12);
+    }
+
+    private String getAvailableGroupName() throws UserStoreException {
+
+        SecureRandom rnd = new SecureRandom();
+        int number = rnd.nextInt(999999);
+        // This will convert any number sequence into 6 character.
+        return DEFAULT_USER_STORE_DOMAIN + "/" + INVITED_USER_GROUP_NAME_PREFIX + String.format("%06d", number);
+    }
+
+    private void triggerRoleAssignmentEvent(String orgId, String groupName,
+                                                   List<RoleAssignments> roleAssignmentsList) {
+
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put(EVENT_PROP_ORG_ID, orgId);
+        properties.put(EVENT_PROP_GROUP_NAME, groupName);
+        properties.put(EVENT_PROP_ROLE_ASSIGNMENTS, roleAssignmentsList);
+
+        Event roleAssignmentEvent = new Event(EVENT_POST_ADD_INVITED_ORG_USER, properties);
+        try {
+            UserInvitationMgtDataHolder.getInstance().getIdentityEventService().handleEvent(roleAssignmentEvent);
+        } catch (IdentityEventException e) {
+            LOG.error("Error while triggering role assignment event for group: " + groupName + " in organization: " +
+                    orgId, e);
+        }
     }
 }
