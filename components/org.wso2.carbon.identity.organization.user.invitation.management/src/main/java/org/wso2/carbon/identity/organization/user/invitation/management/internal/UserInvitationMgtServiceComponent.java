@@ -33,6 +33,8 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreService;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreServiceImpl;
 import org.wso2.carbon.identity.organization.user.invitation.management.handler.UserInvitationEventHandler;
+import org.wso2.carbon.identity.organization.user.invitation.management.listener.OrgSharedUserOperationEventListener;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -57,6 +59,9 @@ public class UserInvitationMgtServiceComponent {
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     new UserInvitationEventHandler(), null);
             LOG.info("Organization User Invitation Handler activated successfully.");
+            bundleContext.registerService(UserOperationEventListener.class.getName(),
+                    new OrgSharedUserOperationEventListener(), null);
+            LOG.info("Shared Organization User Listener activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating Organization User Invitation Mgt Component", e);
         }

@@ -54,7 +54,9 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.CREATE_USER_ASSOCIATION_TO_ORG;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ALL_ORG_ASSOCIATIONS_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_INVITATION_BY_INVITATION_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ORG_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ROLE_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ACTIVE_INVITATION_BY_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATIONS_BY_INVITED_ORG_ID;
@@ -391,6 +393,40 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             createOrgAssocPrepStat.executeUpdate();
         } catch (SQLException e) {
             throw handleServerException(ERROR_CODE_CREATE_ORG_ASSOC, sharedUserId, e);
+        }
+    }
+
+    @Override
+    public boolean deleteOrgUserAssociationToSharedOrg(String userId, String organizationId)
+            throws UserInvitationMgtException {
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+             PreparedStatement userOrgDeletePrepStat =
+                     connection.prepareStatement(DELETE_ORG_ASSOCIATION_FOR_SHARED_USER)) {
+            userOrgDeletePrepStat.setString(1, userId);
+            userOrgDeletePrepStat.setString(2, organizationId);
+            userOrgDeletePrepStat.executeUpdate();
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            throw handleServerException(ERROR_CODE_GET_INVITATION_BY_USER, userId, e);
+        }
+    }
+
+    @Override
+    public boolean deleteAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
+            throws UserInvitationMgtException {
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+             PreparedStatement userOrgDeletePrepStat =
+                     connection.prepareStatement(DELETE_ALL_ORG_ASSOCIATIONS_FOR_SHARED_USER)) {
+            userOrgDeletePrepStat.setString(1, userId);
+            userOrgDeletePrepStat.setString(2, organizationId);
+            userOrgDeletePrepStat.executeUpdate();
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            throw handleServerException(ERROR_CODE_GET_INVITATION_BY_USER, userId, e);
         }
     }
 
