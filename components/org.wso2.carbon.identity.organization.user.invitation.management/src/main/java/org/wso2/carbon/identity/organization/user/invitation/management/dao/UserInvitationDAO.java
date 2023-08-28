@@ -110,4 +110,26 @@ public interface UserInvitationDAO {
      */
     void createOrganizationAssociation(String realUserId, String residentOrgId, String sharedUserId,
                                        String sharedOrgId) throws UserInvitationMgtException;
+
+    /**
+     * Delete the invited organization user association to the child organization from the child organization.
+     *
+     * @param userId The user id of the invited organization user.
+     * @param organizationId The organization id of the invited/child organization.
+     * @return True if the association is deleted successfully.
+     * @throws UserInvitationMgtException If an error occurs while deleting the association.
+     */
+    boolean deleteOrgUserAssociationToSharedOrg(String userId, String organizationId)
+            throws UserInvitationMgtException;
+
+    /**
+     * Delete all the associations for the child organizations when the user is deleting from the parent organization.
+     *
+     * @param userId Actual user id of the user in the parent organization.
+     * @param organizationId The organization id of the parent organization.
+     * @return True if the associations are deleted successfully.
+     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
+     */
+    boolean deleteAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
+            throws UserInvitationMgtException;
 }

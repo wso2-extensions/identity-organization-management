@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.I
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -69,6 +70,8 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACTIVE_INVITATION_EXISTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_PARENT_ORG;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_USER_CLAIMS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_FILTER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_INVITATION_ID;
@@ -328,6 +331,37 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     ERROR_CODE_UNABLE_TO_RESEND_INVITATION.getMessage(),
                     String.format(ERROR_CODE_UNABLE_TO_RESEND_INVITATION.getDescription(), username), e);
         }
+    }
+
+    @Override
+    public boolean deleteInvitedUserAssociation(String userId, UserStoreManager userStoreManager)
+            throws UserInvitationMgtException {
+
+        String authenticatedOrganizationId = Utils.getOrganizationId();
+        try {
+            String managedOrgClaimValue = ((AbstractUserStoreManager) userStoreManager).getUserClaimValueWithID(userId,
+                    CLAIM_MANAGED_ORGANIZATION, DEFAULT_PROFILE);
+            if (StringUtils.isEmpty(managedOrgClaimValue)) {
+                userInvitationDAO.deleteAllAssociationsOfOrgUserToSharedOrgs(userId, authenticatedOrganizationId);
+                return true;
+            }
+            String parentOrgOfAuthenticatedOrg = UserInvitationMgtDataHolder.getInstance()
+                    .getOrganizationManagerService()
+                    .getParentOrganizationId(authenticatedOrganizationId);
+            if (managedOrgClaimValue.equals(parentOrgOfAuthenticatedOrg)) {
+                userInvitationDAO.deleteOrgUserAssociationToSharedOrg(userId, authenticatedOrganizationId);
+                return true;
+            }
+        } catch (UserStoreException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_GET_USER_CLAIMS.getCode(),
+                    ERROR_CODE_GET_USER_CLAIMS.getMessage(), String.format(ERROR_CODE_GET_USER_CLAIMS
+                    .getDescription(), CLAIM_MANAGED_ORGANIZATION, userId), e);
+        } catch (OrganizationManagementException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_GET_PARENT_ORG.getCode(), ERROR_CODE_GET_PARENT_ORG
+                    .getMessage(), String.format(ERROR_CODE_GET_PARENT_ORG.getDescription(),
+                    authenticatedOrganizationId), e);
+        }
+        return false;
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

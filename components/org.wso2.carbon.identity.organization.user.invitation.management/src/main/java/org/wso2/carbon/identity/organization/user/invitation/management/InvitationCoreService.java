@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.user.invitation.management;
 
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.user.api.UserStoreManager;
 
 import java.util.List;
 
@@ -81,4 +82,15 @@ public interface InvitationCoreService {
      * @throws UserInvitationMgtException If an error occurs while resending the invitation.
      */
     Invitation resendInvitation(String username, String domain) throws UserInvitationMgtException;
+
+    /**
+     * Delete the associations of the invited user.
+     *
+     * @param userId The ID of the invited user.
+     * @param userStoreManager The user store manager of the invited user.
+     * @return True if the associations are deleted successfully.
+     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
+     */
+    boolean deleteInvitedUserAssociation(String userId, UserStoreManager userStoreManager)
+            throws UserInvitationMgtException;
 }

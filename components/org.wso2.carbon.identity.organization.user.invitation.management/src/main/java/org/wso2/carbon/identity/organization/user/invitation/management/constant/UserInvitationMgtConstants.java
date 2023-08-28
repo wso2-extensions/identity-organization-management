@@ -101,6 +101,12 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_ACCEPT_INVITATION("10024",
                 "Unable to accept the invitation.",
                 "Could not accept the invitation for the user %s."),
+        ERROR_CODE_GET_USER_CLAIMS("10025",
+                "Unable to remove the user.",
+                "Could not get the user claim: %s for the user: %s."),
+        ERROR_CODE_GET_PARENT_ORG("10026",
+                "Unable to get the parent organization.",
+                "Could not get the parent organization for the organization: %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10001",
@@ -153,7 +159,12 @@ public class UserInvitationMgtConstants {
                 "Could not create organization association for user %s."),
         ERROR_CODE_GET_INVITATION_BY_CONF_CODE("10017",
                 "Unable to get the invitation.",
-                "Could not get the invitation with role assignments for confirmation code %s."),;
+                "Could not get the invitation with role assignments for confirmation code %s."),
+
+        // Event listener errors
+        ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION("10400",
+                "Unable to delete invited user association.",
+                "Could not delete invited user association for user %s.");
 
         private final String code;
         private final String message;
