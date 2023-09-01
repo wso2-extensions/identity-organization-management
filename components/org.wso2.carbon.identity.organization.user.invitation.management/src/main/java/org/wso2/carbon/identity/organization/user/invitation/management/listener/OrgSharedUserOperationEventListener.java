@@ -53,10 +53,4 @@ public class OrgSharedUserOperationEventListener extends AbstractIdentityUserOpe
                     userID), ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION.getCode(), e);
         }
     }
-
-    @Override
-    public boolean isEnable() {
-
-        return false;
-    }
 }
