@@ -84,9 +84,11 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_INVITATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_ROLES_APP_ID_INVALID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FILTER_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.OPERATION_EQ;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_PENDING;
 
 /**
@@ -107,7 +109,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     }
 
     @Override
-    public void createInvitation(Invitation invitation) throws UserInvitationMgtServerException {
+    public void createInvitation(Invitation invitation) throws UserInvitationMgtException {
 
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(true)) {
             try (PreparedStatement invitationCreatePrepStat = connection.prepareStatement(STORE_INVITATION)) {
@@ -147,6 +149,11 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                     }
                     invitationRoleAssignmentPrepStat.executeBatch();
                 } catch (SQLException e) {
+                    IdentityDatabaseUtil.rollbackTransaction(connection);
+                    if (SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE == e.getErrorCode() &&
+                            StringUtils.containsIgnoreCase(e.getMessage(), "FK_ORG_USER_ROLE_SP_APP")) {
+                        throw handleClientException(ERROR_CODE_STORE_ROLES_APP_ID_INVALID, StringUtils.EMPTY, e);
+                    }
                     throw handleServerException(ERROR_CODE_STORE_ROLE_ASSIGNMENTS, invitation.getUsername(), e);
                 }
             }
@@ -332,6 +339,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                 invitationDeletePrepStat.setString(1, invitationId);
                 invitationDeletePrepStat.executeUpdate();
             } catch (SQLException e) {
+                IdentityDatabaseUtil.rollbackTransaction(connection);
                 throw handleServerException(ERROR_CODE_DELETE_INVITATION_DETAILS, invitationId, e);
             }
             connection.commit();
@@ -384,7 +392,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     public void createOrganizationAssociation(String realUserId, String residentOrgId, String sharedUserId,
                                               String sharedOrgId) throws UserInvitationMgtException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
              PreparedStatement createOrgAssocPrepStat = connection.prepareStatement(CREATE_USER_ASSOCIATION_TO_ORG)) {
             createOrgAssocPrepStat.setString(1, sharedUserId);
             createOrgAssocPrepStat.setString(2, sharedOrgId);
@@ -400,13 +408,12 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     public boolean deleteOrgUserAssociationToSharedOrg(String userId, String organizationId)
             throws UserInvitationMgtException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
              PreparedStatement userOrgDeletePrepStat =
                      connection.prepareStatement(DELETE_ORG_ASSOCIATION_FOR_SHARED_USER)) {
             userOrgDeletePrepStat.setString(1, userId);
             userOrgDeletePrepStat.setString(2, organizationId);
             userOrgDeletePrepStat.executeUpdate();
-            connection.commit();
             return true;
         } catch (SQLException e) {
             throw handleServerException(ERROR_CODE_GET_INVITATION_BY_USER, userId, e);
@@ -417,13 +424,12 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     public boolean deleteAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
             throws UserInvitationMgtException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
              PreparedStatement userOrgDeletePrepStat =
                      connection.prepareStatement(DELETE_ALL_ORG_ASSOCIATIONS_FOR_SHARED_USER)) {
             userOrgDeletePrepStat.setString(1, userId);
             userOrgDeletePrepStat.setString(2, organizationId);
             userOrgDeletePrepStat.executeUpdate();
-            connection.commit();
             return true;
         } catch (SQLException e) {
             throw handleServerException(ERROR_CODE_GET_INVITATION_BY_USER, userId, e);

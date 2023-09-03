@@ -75,6 +75,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_FILTER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_INVITATION_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVITATION_EXPIRED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_NO_INVITATION_FOR_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_UNABLE_TO_RESEND_INVITATION;
@@ -226,6 +227,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     userInvitationDAO.deleteInvitation(invitation.getInvitationId());
                 }
             }
+            throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_USER.getCode(),
+                    ERROR_CODE_INVALID_USER.getMessage(), String.format(ERROR_CODE_INVALID_USER.getDescription(),
+                            authenticatedUser));
         }
         throw new UserInvitationMgtException(ERROR_CODE_INVALID_CONFIRMATION_CODE.getCode(),
                 ERROR_CODE_INVALID_CONFIRMATION_CODE.getMessage(),

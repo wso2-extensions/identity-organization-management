@@ -33,9 +33,9 @@ public interface UserInvitationDAO {
      * Create an invitation in the DB layer with the provided details.
      *
      * @param invitation Contains the invitation details which needs to be stored.
-     * @throws UserInvitationMgtServerException If an error occurs while creating the invitation.
+     * @throws UserInvitationMgtException If an error occurs while creating the invitation.
      */
-    void createInvitation(Invitation invitation) throws UserInvitationMgtServerException;
+    void createInvitation(Invitation invitation) throws UserInvitationMgtException;
 
     /**
      * Get the invitation details by using the confirmation code of the invitation.
