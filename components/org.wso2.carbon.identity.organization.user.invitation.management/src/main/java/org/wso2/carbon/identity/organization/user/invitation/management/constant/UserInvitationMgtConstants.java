@@ -38,7 +38,7 @@ public class UserInvitationMgtConstants {
     public static final String FILTER_STATUS = "status";
     public static final String OPERATION_EQ = "eq";
 
-    // Event Properties Constants
+    // Event Handling related Constants
     public static final String EVENT_PROP_USER_NAME = "user-name";
     public static final String EVENT_PROP_EMAIL_ADDRESS = "email-address";
     public static final String EVENT_PROP_CONFIRMATION_CODE = "confirmation-code";
@@ -53,6 +53,7 @@ public class UserInvitationMgtConstants {
     public static final String EVENT_PROP_ROLE_ASSIGNMENTS = "role-assignments";
     public static final String EVENT_POST_ADD_INVITED_ORG_USER = "POST_ADD_INVITED_ORG_USER";
     public static final int SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE = 547;
+    public static final String INVITATION_EVENT_HANDLER_ENABLED = "UserInvitationEventHandler.enable";
 
     /**
      * Error messages for organization user invitation management related errors.
