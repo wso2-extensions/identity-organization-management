@@ -19,9 +19,13 @@
 package org.wso2.carbon.identity.organization.user.invitation.management.handler;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.base.IdentityRuntimeException;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.event.bean.IdentityEventMessageContext;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
@@ -34,12 +38,15 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_SEND_TO;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_TEMPLATE_TYPE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.INVITATION_EVENT_HANDLER_ENABLED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORGANIZATION_USER_INVITATION_EMAIL_TEMPLATE_TYPE;
 
 /**
  * Handles the events related to organization user invitations.
  */
 public class UserInvitationEventHandler extends AbstractEventHandler {
+
+    private static final Log LOG = LogFactory.getLog(UserInvitationEventHandler.class);
 
     public String getName() {
 
@@ -49,6 +56,22 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
     public int getPriority(MessageContext messageContext) {
 
         return 100;
+    }
+
+    public boolean canHandle(MessageContext messageContext) throws IdentityRuntimeException {
+
+        if (!isUserInvitationEventHandlerEnabled()) {
+            LOG.debug("Organization User Invitation Event Handler is not enabled");
+            return false;
+        }
+        String eventName = ((IdentityEventMessageContext) messageContext).getEvent().getEventName();
+        if (EVENT_NAME_POST_ADD_INVITATION.equals(eventName)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("canHandle() returning True for the event: " + eventName);
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -63,6 +86,17 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
             event.getEventProperties().put(EVENT_PROP_REDIRECT_URL, redirectUrl);
             triggerEmailNotification(event);
         }
+    }
+
+    private boolean isUserInvitationEventHandlerEnabled() {
+
+        if (this.configs.getModuleProperties() == null) {
+            return false;
+        }
+
+        String handlerEnabled = this.configs.getModuleProperties()
+                .getProperty(INVITATION_EVENT_HANDLER_ENABLED);
+        return Boolean.parseBoolean(handlerEnabled);
     }
 
     private void triggerEmailNotification(Event event) throws IdentityEventException {
