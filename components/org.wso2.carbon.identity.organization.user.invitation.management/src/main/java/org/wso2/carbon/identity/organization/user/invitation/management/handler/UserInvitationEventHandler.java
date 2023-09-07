@@ -90,7 +90,7 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
 
     private boolean isUserInvitationEventHandlerEnabled() {
 
-        if (this.configs.getModuleProperties() == null) {
+        if (this.configs == null) {
             return false;
         }
 
