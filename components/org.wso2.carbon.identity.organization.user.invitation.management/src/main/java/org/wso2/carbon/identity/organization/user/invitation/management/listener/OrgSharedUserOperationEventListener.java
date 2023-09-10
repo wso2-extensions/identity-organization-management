@@ -25,6 +25,9 @@ import org.wso2.carbon.identity.organization.user.invitation.management.exceptio
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 
+import java.util.Map;
+
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION;
 
 /**
@@ -35,7 +38,7 @@ public class OrgSharedUserOperationEventListener extends AbstractIdentityUserOpe
     @Override
     public int getExecutionOrderId() {
 
-        return 160;
+        return 8;
     }
 
     @Override
@@ -51,6 +54,22 @@ public class OrgSharedUserOperationEventListener extends AbstractIdentityUserOpe
         } catch (UserInvitationMgtException e) {
             throw new UserStoreException(String.format(ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION.getDescription(),
                     userID), ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION.getCode(), e);
+        }
+    }
+
+    @Override
+    public boolean doPreSetUserClaimValuesWithID(String userID, Map<String, String> claims, String profileName,
+                                                 UserStoreManager userStoreManager) throws UserStoreException {
+
+        if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        InvitationCoreService invitationCoreService = new InvitationCoreServiceImpl();
+        try {
+            return invitationCoreService.isUpdateUserClaimValuesAllowed(userID, profileName, userStoreManager);
+        } catch (UserInvitationMgtException e) {
+            throw new UserStoreException(String.format(ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED.getDescription(),
+                    userID), ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED.getCode(), e);
         }
     }
 

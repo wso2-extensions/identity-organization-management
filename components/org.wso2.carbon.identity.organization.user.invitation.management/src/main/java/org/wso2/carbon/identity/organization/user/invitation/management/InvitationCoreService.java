@@ -93,4 +93,16 @@ public interface InvitationCoreService {
      */
     boolean deleteInvitedUserAssociation(String userId, UserStoreManager userStoreManager)
             throws UserInvitationMgtException;
+
+    /**
+     * Checks whether the user claim values can be updated for the user.
+     *
+     * @param userID The ID of the user.
+     * @param profileName The profile name of the user.
+     * @param userStoreManager The user store manager of the user.
+     * @return True if the user claim values can be updated.
+     * @throws UserInvitationMgtException If an error occurs while checking the user claim values can be updated.
+     */
+    boolean isUpdateUserClaimValuesAllowed(String userID, String profileName, UserStoreManager userStoreManager)
+            throws UserInvitationMgtException;
 }
