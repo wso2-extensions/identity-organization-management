@@ -65,9 +65,11 @@ public class SQLConstants {
         public static final String CREATE_USER_ASSOCIATION_TO_ORG = "INSERT INTO IDN_ORG_USER_ASSOCIATION(" +
                 "SHARED_USER_ID, SUB_ORG_ID, REAL_USER_ID, USER_RESIDENT_ORG_ID) VALUES(?, ?, ?, ?)";
         public static final String DELETE_ORG_ASSOCIATION_FOR_SHARED_USER = "DELETE FROM " +
-                "IDN_ORG_USER_ASSOCIATION WHERE SHARED_USER_ID = ? AND SUB_ORG_ID = ?";
+                "IDN_ORG_USER_ASSOCIATION WHERE SHARED_USER_ID = ? AND USER_RESIDENT_ORG_ID = ?";
         public static final String DELETE_ALL_ORG_ASSOCIATIONS_FOR_SHARED_USER = "DELETE FROM " +
                 "IDN_ORG_USER_ASSOCIATION WHERE REAL_USER_ID = ? AND USER_RESIDENT_ORG_ID = ?";
+        public static final String GET_ALL_ORG_ASSOCIATIONS_FOR_SHARED_USER = "SELECT SHARED_USER_ID, SUB_ORG_ID " +
+                "FROM IDN_ORG_USER_ASSOCIATION WHERE REAL_USER_ID = ? AND USER_RESIDENT_ORG_ID = ?";
     }
 
     /**
@@ -88,5 +90,7 @@ public class SQLConstants {
         public static final String COLUMN_NAME_REDIRECT_URL = "USER_REDIRECT_URL";
         public static final String COLUMN_NAME_APP_ID = "APPLICATION_ID";
         public static final String COLUMN_NAME_ROLE_ID = "ROLE_ID";
+        public static final String COLUMN_NAME_SHARED_USER_ID = "SHARED_USER_ID";
+        public static final String COLUMN_NAME_SUB_ORG_ID = "SUB_ORG_ID";
     }
 }

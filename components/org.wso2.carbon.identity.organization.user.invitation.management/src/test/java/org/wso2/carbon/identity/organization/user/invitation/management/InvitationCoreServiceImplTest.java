@@ -28,6 +28,7 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
@@ -81,7 +82,8 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
         IdentityDatabaseUtil.class,
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
-        UserInvitationMgtDataHolder.class})
+        UserInvitationMgtDataHolder.class,
+        IdentityUtil.class})
 public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
@@ -96,6 +98,7 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         mockCarbonContextForTenant();
         mockStatic(IdentityTenantUtil.class);
         mockStatic(IdentityDatabaseUtil.class);
+        mockStatic(IdentityUtil.class);
 
         Connection connection1 = getConnection();
         Connection connection2 = getConnection();
@@ -274,6 +277,7 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
     private void populateH2Base(Connection connection, Invitation invitation) throws Exception {
 
         when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(connection);
+        when(IdentityUtil.getProperty(anyString())).thenReturn("1440");
         userInvitationDAO.createInvitation(invitation);
     }
 

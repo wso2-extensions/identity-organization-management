@@ -55,6 +55,11 @@ public class UserInvitationMgtConstants {
     public static final int SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE = 547;
     public static final String INVITATION_EVENT_HANDLER_ENABLED = "UserInvitationEventHandler.enable";
 
+    // Configurations
+    public static final String ORG_USER_INVITATION_USER_DOMAIN = "OrganizationUserInvitation.PrimaryUserDomain";
+    public static final String ORG_USER_INVITATION_DEFAULT_REDIRECT_URL =
+            "OrganizationUserInvitation.DefaultRedirectURL";
+
     /**
      * Error messages for organization user invitation management related errors.
      */
@@ -112,6 +117,21 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_INVALID_USER("10027",
                 "Invalid user identification provided.",
                 "Authenticated user %s is not entitled for the invitation."),
+        ERROR_CODE_GET_MANAGED_CLAIM("10028",
+                "Unable to get the claim.",
+                "Unable to get the managed org claim for user %s."),
+        ERROR_CODE_CONSTRUCT_REDIRECT_URL("10029",
+                "Unable to construct the redirect URL.",
+                "Unable to construct the redirect URL for invitation acceptance."),
+        ERROR_CODE_GET_ORG_ID_FROM_TENANT("10030",
+                "Unable to get the organization id.",
+                "Unable to get the organization id for the tenant %s."),
+        ERROR_CODE_GET_USER_STORE_MANAGER("10031",
+                "Unable to get the user store manager.",
+                "Unable to get the user store manager for the tenant."),
+        ERROR_CODE_GET_TENANT_FROM_ORG("10032",
+                "Unable to get the tenant domain.",
+                "Unable to get the tenant domain for the organization %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
@@ -168,11 +188,17 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_STORE_ROLES_APP_ID_INVALID("10518",
                 "Unable to store the role assignments.",
                 "Provided application/s is/are not valid."),
+        ERROR_CODE_GET_ORG_ASSOCIATIONS_FOR_USER("10519",
+                "Unable to get the organization associations.",
+                "Unable to get the organization associations for the user %s."),
 
         // Event listener errors
         ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION("10400",
                 "Unable to delete invited user association.",
-                "Could not delete invited user association for user %s.");
+                "Could not delete invited user association for user %s."),
+        ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED("10401",
+                   "Unable to check whether the update is allowed.",
+                   "Could not check whether the user claim update is allowed for user %s.");
 
         private final String code;
         private final String message;

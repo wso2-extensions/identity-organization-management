@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.user.invitation.management.dao;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.SharedUserAssociation;
 
 import java.util.List;
 
@@ -131,5 +132,16 @@ public interface UserInvitationDAO {
      * @throws UserInvitationMgtException If an error occurs while deleting the associations.
      */
     boolean deleteAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
+            throws UserInvitationMgtException;
+
+    /**
+     * Get all the associations for the child organizations when the user is deleting from the parent organization.
+     *
+     * @param userId Actual user id of the user in the parent organization.
+     * @param organizationId The organization id of the parent organization.
+     * @return True if the associations are deleted successfully.
+     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
+     */
+    List<SharedUserAssociation> getAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
             throws UserInvitationMgtException;
 }
