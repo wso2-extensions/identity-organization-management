@@ -24,7 +24,7 @@ package org.wso2.carbon.identity.organization.user.invitation.management.constan
 public class UserInvitationMgtConstants {
 
     public static final String CLAIM_EMAIL_ADDRESS = "http://wso2.org/claims/emailaddress";
-    public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/managedOrg";
+    public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
     public static final String INVITATION_ERROR_PREFIX = "OUI-";
     public static final String DEFAULT_USER_STORE_DOMAIN = "DEFAULT";
