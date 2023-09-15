@@ -27,8 +27,10 @@ import org.wso2.carbon.user.core.UserStoreManager;
 
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED;
 
 /**
  * Organization shared user operation event listener.
@@ -64,13 +66,33 @@ public class OrgSharedUserOperationEventListener extends AbstractIdentityUserOpe
         if (!isEnable() || userStoreManager == null) {
             return true;
         }
-        InvitationCoreService invitationCoreService = new InvitationCoreServiceImpl();
+        if (!claims.isEmpty() && claims.containsKey(CLAIM_MANAGED_ORGANIZATION)) {
+            throw new UserStoreException(String.format(
+                    ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED.getDescription(), CLAIM_MANAGED_ORGANIZATION),
+                    ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED.getCode());
+        }
         try {
+            InvitationCoreService invitationCoreService = new InvitationCoreServiceImpl();
             return invitationCoreService.isUpdateUserClaimValuesAllowed(userID, profileName, userStoreManager);
         } catch (UserInvitationMgtException e) {
             throw new UserStoreException(String.format(ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED.getDescription(),
                     userID), ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED.getCode(), e);
         }
+    }
+
+    @Override
+    public boolean doPreSetUserClaimValueWithID(String userID, String claimURI, String claimValue, String profileName,
+                                                UserStoreManager userStoreManager) throws UserStoreException {
+
+        if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        if (CLAIM_MANAGED_ORGANIZATION.equals(claimURI)) {
+            throw new UserStoreException(String.format(
+                    ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED.getDescription(), CLAIM_MANAGED_ORGANIZATION),
+                    ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED.getCode());
+        }
+        return true;
     }
 
     @Override
