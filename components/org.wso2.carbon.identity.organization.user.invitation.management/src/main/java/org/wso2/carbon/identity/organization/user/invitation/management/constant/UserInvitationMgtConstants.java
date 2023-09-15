@@ -58,7 +58,7 @@ public class UserInvitationMgtConstants {
     // Configurations
     public static final String ORG_USER_INVITATION_USER_DOMAIN = "OrganizationUserInvitation.PrimaryUserDomain";
     public static final String ORG_USER_INVITATION_DEFAULT_REDIRECT_URL =
-            "OrganizationUserInvitation.DefaultRedirectURL";
+            "OrganizationUserInvitation.DefaultAcceptURL";
 
     /**
      * Error messages for organization user invitation management related errors.
@@ -198,7 +198,10 @@ public class UserInvitationMgtConstants {
                 "Could not delete invited user association for user %s."),
         ERROR_CODE_CHECK_USER_CLAIM_UPDATE_ALLOWED("10401",
                    "Unable to check whether the update is allowed.",
-                   "Could not check whether the user claim update is allowed for user %s.");
+                   "Could not check whether the user claim update is allowed for user %s."),
+        ERROR_CODE_MANAGED_ORG_CLAIM_UPDATE_NOT_ALLOWED("10402",
+                "Claim update not allowed.",
+                "Update the value for the claim %s is not allowed.");
 
         private final String code;
         private final String message;
