@@ -304,7 +304,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     /**
-     * Revoke access token generated for a shared application.
+     * Revoke access tokens issued for a shared application.
      *
      * @param rootOrganizationId   Root organization id.
      * @param rootApplicationId    Root application id.
