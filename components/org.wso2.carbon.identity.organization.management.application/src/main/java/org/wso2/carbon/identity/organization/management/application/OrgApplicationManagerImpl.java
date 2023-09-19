@@ -51,6 +51,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth.dto.OAuthAppRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
@@ -264,6 +265,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId,
                                 sharedApplicationDO.getOrganizationId());
                 if (sharedApplicationId.isPresent()) {
+                    revokeAccessTokensOfSharedApp(organizationId, applicationId,
+                            sharedApplicationDO.getOrganizationId());
                     deleteSharedApplication(sharedApplicationDO.getOrganizationId(), sharedApplicationId.get());
                 }
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
@@ -292,9 +295,45 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             Optional<String> sharedApplicationId =
                     resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
             if (sharedApplicationId.isPresent()) {
+                revokeAccessTokensOfSharedApp(organizationId, applicationId, sharedOrganizationId);
                 deleteSharedApplication(sharedOrganizationId, sharedApplicationId.get());
                 getListener().postDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId,
                         sharedApplicationId.get());
+            }
+        }
+    }
+
+    /**
+     * Revoke access token generated for a shared application.
+     *
+     * @param rootOrganizationId   Root organization id.
+     * @param rootApplicationId    Root application id.
+     * @param sharedOrganizationId Shared organization id.
+     */
+    private void revokeAccessTokensOfSharedApp(String rootOrganizationId, String rootApplicationId,
+                                               String sharedOrganizationId) throws OrganizationManagementException {
+
+        String rootTenantDomain = getOrganizationManager().resolveTenantDomain(rootOrganizationId);
+        if (StringUtils.isBlank(rootTenantDomain)) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
+                    rootOrganizationId);
+        }
+        ServiceProvider rootApplication = getOrgApplication(rootApplicationId, rootTenantDomain);
+        ServiceProvider sharedApplication = resolveSharedApplicationByMainAppUUID(
+                rootApplication.getApplicationResourceId(), rootOrganizationId, sharedOrganizationId);
+
+        if (sharedApplication.getInboundAuthenticationConfig()
+                .getInboundAuthenticationRequestConfigs().length != 0) {
+            String consumerKey = sharedApplication.getInboundAuthenticationConfig()
+                    .getInboundAuthenticationRequestConfigs()[0].getInboundAuthKey();
+            OAuthAppRevocationRequestDTO application = new OAuthAppRevocationRequestDTO();
+            application.setConsumerKey(consumerKey);
+            try {
+                OrgApplicationMgtDataHolder.getInstance().getOAuthAdminService()
+                        .revokeIssuedTokensByApplication(application);
+            } catch (IdentityOAuthAdminException e) {
+                throw new OrganizationManagementException("Error while revoking issued tokens for application: " +
+                        application.getConsumerKey(), e.getErrorCode());
             }
         }
     }
