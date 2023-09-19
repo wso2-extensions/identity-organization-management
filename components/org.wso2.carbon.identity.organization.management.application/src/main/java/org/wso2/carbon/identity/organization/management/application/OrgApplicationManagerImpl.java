@@ -477,7 +477,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         IdentityProvider identityProvider;
         try {
             identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
-                    getIdentityProviderManager().addIdPWithResourceId(createOrganizationLoginIDP(), tenantDomain);
+                    getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
         } catch (IdentityProviderManagementClientException e) {
             throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
         } catch (IdentityProviderManagementException e) {
@@ -525,7 +525,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfigs[0].getName());
     }
 
-    private IdentityProvider createOrganizationLoginIDP() {
+    private IdentityProvider createOrganizationSSOIDP() {
 
         FederatedAuthenticatorConfig authConfig = new FederatedAuthenticatorConfig();
         authConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
@@ -533,11 +533,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         authConfig.setEnabled(true);
 
         IdentityProvider idp = new IdentityProvider();
-        idp.setIdentityProviderName("Organization Login");
+        idp.setIdentityProviderName("SSO");
         idp.setPrimary(false);
         idp.setFederationHub(false);
-        idp.setIdentityProviderDescription("Identity provider for Organization Login.");
-        idp.setHomeRealmId("OrganizationLogin");
+        idp.setIdentityProviderDescription("Identity provider for Organization SSO.");
+        idp.setHomeRealmId("OrganizationSSO");
         idp.setDefaultAuthenticatorConfig(authConfig);
         idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authConfig});
         ClaimConfig claimConfig = new ClaimConfig();
