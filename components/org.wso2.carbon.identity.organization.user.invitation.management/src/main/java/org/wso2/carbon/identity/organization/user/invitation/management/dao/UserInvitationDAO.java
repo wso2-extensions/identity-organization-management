@@ -144,4 +144,15 @@ public interface UserInvitationDAO {
      */
     List<SharedUserAssociation> getAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
             throws UserInvitationMgtException;
+
+    /**
+     * Get the association of the invited organization user to the child organization.
+     *
+     * @param userId Actual user id of the user in the parent organization.
+     * @param sharedOrgId Organization id of the invited organization.
+     * @return The association details.
+     * @throws UserInvitationMgtException If an error occurs while retrieving the association.
+     */
+    SharedUserAssociation getAssociationOfOrgUserToSharedOrg(String userId, String sharedOrgId)
+            throws UserInvitationMgtException;
 }

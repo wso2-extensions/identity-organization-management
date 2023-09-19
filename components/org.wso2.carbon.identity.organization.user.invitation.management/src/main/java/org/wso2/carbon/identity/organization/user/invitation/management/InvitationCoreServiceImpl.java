@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
@@ -358,8 +359,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
 
         try {
-            String managedOrgClaimValue = ((AbstractUserStoreManager) userStoreManager).getUserClaimValueWithID(userId,
-                    CLAIM_MANAGED_ORGANIZATION, DEFAULT_PROFILE);
+            Map<String, String> claimsMap = ((AbstractUserStoreManager) userStoreManager).getUserClaimValuesWithID(
+                    userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, DEFAULT_PROFILE);
+            String managedOrgClaimValue = claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
             if (StringUtils.isEmpty(managedOrgClaimValue)) {
                 List<SharedUserAssociation> sharedUserAssociationList = userInvitationDAO
                         .getAllAssociationsOfOrgUserToSharedOrgs(userId, authenticatedOrganizationId);
@@ -391,14 +393,22 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             throws UserInvitationMgtException {
 
         try {
-            String managedOrgClaimValue = ((AbstractUserStoreManager) userStoreManager).getUserClaimValueWithID(userId,
-                    CLAIM_MANAGED_ORGANIZATION, profileName);
+            Map<String, String> claimsMap = ((AbstractUserStoreManager) userStoreManager).getUserClaimValuesWithID(
+                    userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, profileName);
+            String managedOrgClaimValue = claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
             return StringUtils.isEmpty(managedOrgClaimValue);
         } catch (UserStoreException e) {
             throw new UserInvitationMgtServerException(ERROR_CODE_GET_MANAGED_CLAIM.getCode(),
                     ERROR_CODE_GET_MANAGED_CLAIM.getMessage(), String.format(ERROR_CODE_GET_MANAGED_CLAIM.
                     getDescription(), userId), e);
         }
+    }
+
+    @Override
+    public SharedUserAssociation getSharedUserAssociationOfUserAtSubOrg(String userId, String sharedOrganizationId)
+            throws UserInvitationMgtException {
+
+        return userInvitationDAO.getAssociationOfOrgUserToSharedOrg(userId, sharedOrganizationId);
     }
 
     private void validateInvitationPayload(Invitation invitation) throws UserInvitationMgtServerException {

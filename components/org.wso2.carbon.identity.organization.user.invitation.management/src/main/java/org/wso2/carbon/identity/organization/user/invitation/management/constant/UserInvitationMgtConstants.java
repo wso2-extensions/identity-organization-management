@@ -191,6 +191,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_GET_ORG_ASSOCIATIONS_FOR_USER("10519",
                 "Unable to get the organization associations.",
                 "Unable to get the organization associations for the user %s."),
+        ERROR_CODE_GET_ORG_ASSOCIATION_FOR_USER("10520",
+                "Unable to get the organization association.",
+                "Unable to get the organization association for the user %s."),
 
         // Event listener errors
         ERROR_CODE_DELETE_INVITED_USER_ASSOCIATION("10400",
