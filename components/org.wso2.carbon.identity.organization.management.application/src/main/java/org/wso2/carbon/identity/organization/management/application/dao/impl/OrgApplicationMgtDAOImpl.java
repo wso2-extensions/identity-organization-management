@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +58,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMySqlDB;
 
 /**
  * This class implements the {@link OrgApplicationMgtDAO} interface.
@@ -69,6 +71,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            String shareWithAllChildrenValue = getShareWithAllChildrenValue(shareWithAllChildren);
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_SHARED_APP, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainAppId);
@@ -76,7 +79,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
-                            String.valueOf(shareWithAllChildren));
+                            shareWithAllChildrenValue);
                 }, null, false);
                 return null;
             });
@@ -209,17 +212,34 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                                            boolean shareWithAllChildren) throws OrganizationManagementException {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            String shareWithAllChildrenValue = getShareWithAllChildrenValue(shareWithAllChildren);
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(UPDATE_SHARE_WITH_ALL_CHILDREN, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainApplicationId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrganizationId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
-                            String.valueOf(shareWithAllChildren));
+                            shareWithAllChildrenValue);
                 }, null, false);
                 return null;
             });
         } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
         }
+    }
+
+    /**
+     * Get the value for the shareWithAllChildren column according to the db type.
+     *
+     * @param shareWithAllChildren The value of the shareWithAllChildren column.
+     * @return The value of the shareWithAllChildren column according to the db type.
+     * @throws OrganizationManagementServerException If an error occurs while getting the value.
+     */
+    private String getShareWithAllChildrenValue(boolean shareWithAllChildren)
+            throws OrganizationManagementServerException {
+
+        if (isMySqlDB()) {
+            return shareWithAllChildren ? "1" : "0";
+        }
+        return String.valueOf(shareWithAllChildren);
     }
 }
