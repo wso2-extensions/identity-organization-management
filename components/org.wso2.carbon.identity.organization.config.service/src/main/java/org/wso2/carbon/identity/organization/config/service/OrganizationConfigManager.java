@@ -38,7 +38,7 @@ public interface OrganizationConfigManager {
     /**
      * Fetch the discovery configuration of the primary organization.
      *
-     * @return the discovery configuration.
+     * @return The discovery configuration.
      * @throws OrganizationConfigException The exception thrown when an error occurs while fetching the discovery
      *                                     configuration.
      */
