@@ -309,6 +309,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * @param rootOrganizationId   Root organization id.
      * @param rootApplicationId    Root application id.
      * @param sharedOrganizationId Shared organization id.
+     * @throws OrganizationManagementException Organization management exception.
      */
     private void revokeAccessTokensOfSharedApp(String rootOrganizationId, String rootApplicationId,
                                                String sharedOrganizationId) throws OrganizationManagementException {
