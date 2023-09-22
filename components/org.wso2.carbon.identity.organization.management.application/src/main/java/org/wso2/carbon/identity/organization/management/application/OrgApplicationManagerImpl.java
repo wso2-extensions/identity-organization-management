@@ -318,19 +318,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
                     rootOrganizationId);
         }
-        ServiceProvider rootApplication = getOrgApplication(rootApplicationId, rootTenantDomain);
-        ServiceProvider sharedApplication = resolveSharedApplicationByMainAppUUID(
-                rootApplication.getApplicationResourceId(), rootOrganizationId, sharedOrganizationId);
 
-        if (sharedApplication.getInboundAuthenticationConfig()
+        String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+        if (StringUtils.isBlank(sharedAppTenantDomain)) {
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
+                    sharedOrganizationId);
+        }
+
+        ServiceProvider rootApplication = getOrgApplication(rootApplicationId, rootTenantDomain);
+        if (rootApplication.getInboundAuthenticationConfig()
                 .getInboundAuthenticationRequestConfigs().length != 0) {
-            String consumerKey = sharedApplication.getInboundAuthenticationConfig()
+            String consumerKey = rootApplication.getInboundAuthenticationConfig()
                     .getInboundAuthenticationRequestConfigs()[0].getInboundAuthKey();
             OAuthAppRevocationRequestDTO application = new OAuthAppRevocationRequestDTO();
             application.setConsumerKey(consumerKey);
             try {
                 OrgApplicationMgtDataHolder.getInstance().getOAuthAdminService()
-                        .revokeIssuedTokensByApplication(application);
+                        .revokeIssuedTokensByApplication(application, sharedAppTenantDomain);
             } catch (IdentityOAuthAdminException e) {
                 throw new OrganizationManagementException("Error while revoking issued tokens for application: " +
                         application.getConsumerKey(), e.getErrorCode());
