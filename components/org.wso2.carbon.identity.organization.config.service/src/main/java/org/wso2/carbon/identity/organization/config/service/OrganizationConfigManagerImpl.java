@@ -22,6 +22,7 @@ import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
 import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
 import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
 import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
+import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
@@ -43,8 +44,10 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -118,11 +121,16 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         return getOrganizationManager().isPrimaryOrganization(getOrganizationId());
     }
 
-    private Resource buildResourceFromValidationConfig(DiscoveryConfig discoveryConfig) {
+    private Resource buildResourceFromValidationConfig(DiscoveryConfig discoveryConfig)
+            throws OrganizationConfigClientException {
 
         Map<String, String> configAttributes = new HashMap<>();
         for (ConfigProperty property : discoveryConfig.getConfigProperties()) {
-            configAttributes.put(property.getKey(), property.getValue());
+            String key = property.getKey();
+            if (!SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS.contains(key)) {
+                throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE, key);
+            }
+            configAttributes.put(key, property.getValue());
         }
         List<Attribute> resourceAttributes = configAttributes.entrySet().stream()
                 .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
