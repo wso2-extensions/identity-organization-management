@@ -319,7 +319,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
                     rootOrganizationId);
         }
-
         String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
         if (StringUtils.isBlank(sharedAppTenantDomain)) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN, null,
@@ -327,18 +326,35 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         ServiceProvider rootApplication = getOrgApplication(rootApplicationId, rootTenantDomain);
-        if (rootApplication.getInboundAuthenticationConfig()
+        ServiceProvider sharedAppApplication = resolveSharedApplication(
+                rootApplication.getApplicationName(), rootOrganizationId, sharedOrganizationId);
+
+        removeAccessTokenByAppConsumerKeyId(rootApplication, sharedAppTenantDomain);
+        removeAccessTokenByAppConsumerKeyId(sharedAppApplication, sharedAppTenantDomain);
+    }
+
+    /**
+     * Revoke access tokens issued for an application.
+     *
+     * @param application  Application of the token being removed.
+     * @param tenantDomain Tenant domain of the application.
+     * @throws OrganizationManagementException Organization management exception.
+     */
+    private void removeAccessTokenByAppConsumerKeyId(ServiceProvider application, String tenantDomain)
+            throws OrganizationManagementException {
+
+        if (application.getInboundAuthenticationConfig()
                 .getInboundAuthenticationRequestConfigs().length != 0) {
-            String consumerKey = rootApplication.getInboundAuthenticationConfig()
+            String consumerKey = application.getInboundAuthenticationConfig()
                     .getInboundAuthenticationRequestConfigs()[0].getInboundAuthKey();
-            OAuthAppRevocationRequestDTO application = new OAuthAppRevocationRequestDTO();
-            application.setConsumerKey(consumerKey);
+            OAuthAppRevocationRequestDTO applicationDTO = new OAuthAppRevocationRequestDTO();
+            applicationDTO.setConsumerKey(consumerKey);
             try {
                 OrgApplicationMgtDataHolder.getInstance().getOAuthAdminService()
-                        .revokeIssuedTokensByApplication(application, sharedAppTenantDomain);
+                        .revokeIssuedTokensByApplication(applicationDTO, tenantDomain);
             } catch (IdentityOAuthAdminException e) {
-                throw new OrganizationManagementException("Error while revoking issued tokens for application: " +
-                        application.getConsumerKey(), e.getErrorCode());
+                throw new OrganizationManagementException("Error while revoking issued tokens for applicationDTO: " +
+                        applicationDTO.getConsumerKey(), e.getErrorCode());
             }
         }
     }
