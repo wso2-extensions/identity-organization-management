@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.organization.config.service.constant;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Contains constants related to organization configuration management.
  */
@@ -25,6 +28,8 @@ public class OrganizationConfigConstants {
 
     public static final String RESOURCE_TYPE_NAME = "ORGANIZATION_CONFIGURATION";
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
+    public static final List<String> SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS =
+            Collections.singletonList("emailDomain.enable");
     private static final String ORGANIZATION_CONFIGURATION_ERROR_CODE_PREFIX = "OCM-";
 
     /**
@@ -40,6 +45,8 @@ public class OrganizationConfigConstants {
                 "There is no organization discovery configuration for organization with ID: %s."),
         ERROR_CODE_DISCOVERY_CONFIG_CONFLICT("60003", "The organization discovery configuration already exists.",
                 "The organization discovery configuration is already for available for the organization with id: %s."),
+        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE("60004", "Invalid organization discovery attribute.",
+                "The organization discovery attribute with key: %s is not supported."),
 
         // Server errors.
         ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG("65001", "Unable to add the organization discovery " +
