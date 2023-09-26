@@ -457,7 +457,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             getUserSharedOrgsPrepStat.setString(2, organizationId);
             List<SharedUserAssociation> sharedUserAssociationList = new ArrayList<>();
             try (ResultSet resultSet = getUserSharedOrgsPrepStat.executeQuery()) {
-                if (resultSet.next()) {
+                while (resultSet.next()) {
                     SharedUserAssociation sharedUserAssociation = new SharedUserAssociation();
                     sharedUserAssociation.setSharedUserId(resultSet.getString(COLUMN_NAME_SHARED_USER_ID));
                     sharedUserAssociation.setSharedOrganizationId(resultSet.getString(COLUMN_NAME_SUB_ORG_ID));
