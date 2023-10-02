@@ -52,7 +52,7 @@ public class OrganizationDiscoveryServiceComponent {
                 new OrganizationDiscoveryManagerImpl(), null);
         OrganizationDiscoveryTypeFactory emailDomainDiscovery = new EmailDomainDiscoveryFactory();
         bundleContext.registerService(OrganizationDiscoveryTypeFactory.class.getName(), emailDomainDiscovery, null);
-        LOG.debug("Organization discovery service component activated successfully.");
+        LOG.info("Organization discovery service component activated successfully.");
     }
 
     @Reference(name = "identity.organization.management.component",
