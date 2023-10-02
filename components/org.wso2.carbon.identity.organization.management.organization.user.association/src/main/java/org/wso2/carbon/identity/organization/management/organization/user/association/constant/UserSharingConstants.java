@@ -16,33 +16,14 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.user.invitation.management.models;
+package org.wso2.carbon.identity.organization.management.organization.user.association.constant;
 
 /**
- * Model class to represent the shared user association.
+ * Constants for organization user invitation management.
  */
-public class SharedUserAssociation {
+public class UserSharingConstants {
 
-    private String sharedUserId;
-    private String sharedOrganizationId;
-
-    public String getSharedUserId() {
-
-        return sharedUserId;
-    }
-
-    public void setSharedUserId(String sharedUserId) {
-
-        this.sharedUserId = sharedUserId;
-    }
-
-    public String getSharedOrganizationId() {
-
-        return sharedOrganizationId;
-    }
-
-    public void setSharedOrganizationId(String sharedOrganizationId) {
-
-        this.sharedOrganizationId = sharedOrganizationId;
-    }
+    public static final String DEFAULT_PROFILE = "default";
+    public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
+    public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
 }

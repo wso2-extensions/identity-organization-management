@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.user.invitation.management.dao;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
-import org.wso2.carbon.identity.organization.user.invitation.management.models.SharedUserAssociation;
 
 import java.util.List;
 
@@ -99,60 +98,4 @@ public interface UserInvitationDAO {
      */
     Invitation getActiveInvitationByUser(String username, String domain, String userOrganizationId,
                                          String invitedOrganizationId) throws UserInvitationMgtException;
-
-    /**
-     * Creates the association between the shared user and the actual user.
-     *
-     * @param realUserId Actual user id of the user in the parent organization.
-     * @param residentOrgId Organization id of the organization in which the user resides.
-     * @param sharedUserId ID of the user which is created in the invited organization.
-     * @param sharedOrgId Organization id of the invited organization.
-     * @throws UserInvitationMgtException If an error occurs while creating the association.
-     */
-    void createOrganizationAssociation(String realUserId, String residentOrgId, String sharedUserId,
-                                       String sharedOrgId) throws UserInvitationMgtException;
-
-    /**
-     * Delete the invited organization user association to the child organization from the child organization.
-     *
-     * @param userId The user id of the invited organization user.
-     * @param organizationId The organization id of the invited/child organization.
-     * @return True if the association is deleted successfully.
-     * @throws UserInvitationMgtException If an error occurs while deleting the association.
-     */
-    boolean deleteOrgUserAssociationToSharedOrg(String userId, String organizationId)
-            throws UserInvitationMgtException;
-
-    /**
-     * Delete all the associations for the child organizations when the user is deleting from the parent organization.
-     *
-     * @param userId Actual user id of the user in the parent organization.
-     * @param organizationId The organization id of the parent organization.
-     * @return True if the associations are deleted successfully.
-     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
-     */
-    boolean deleteAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
-            throws UserInvitationMgtException;
-
-    /**
-     * Get all the associations for the child organizations when the user is deleting from the parent organization.
-     *
-     * @param userId Actual user id of the user in the parent organization.
-     * @param organizationId The organization id of the parent organization.
-     * @return True if the associations are deleted successfully.
-     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
-     */
-    List<SharedUserAssociation> getAllAssociationsOfOrgUserToSharedOrgs(String userId, String organizationId)
-            throws UserInvitationMgtException;
-
-    /**
-     * Get the association of the invited organization user to the child organization.
-     *
-     * @param userId Actual user id of the user in the parent organization.
-     * @param sharedOrgId Organization id of the invited organization.
-     * @return The association details.
-     * @throws UserInvitationMgtException If an error occurs while retrieving the association.
-     */
-    SharedUserAssociation getAssociationOfOrgUserToSharedOrg(String userId, String sharedOrgId)
-            throws UserInvitationMgtException;
 }

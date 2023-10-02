@@ -42,7 +42,6 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.R
 import org.wso2.carbon.identity.organization.user.invitation.management.models.SharedUserAssociation;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -54,7 +53,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
@@ -77,11 +75,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CONSTRUCT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_MANAGED_CLAIM;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_ORG_ID_FROM_TENANT;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_PARENT_ORG;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_TENANT_FROM_ORG;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_USER_CLAIMS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_USER_STORE_MANAGER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_FILTER;
@@ -194,8 +188,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                         String realUserName = UserCoreUtil
                                 .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
                         String realUserId = getRealUserId(invitation.getUserOrganizationId(), realUserName);
-                        userInvitationDAO.createOrganizationAssociation(realUserId,
-                                invitation.getUserOrganizationId(), sharedUserId, invitedOrganizationId);
+                        UserInvitationMgtDataHolder.getInstance().getOrganizationUserAssociationService()
+                                .createOrganizationUserAssociation(realUserId, invitation.getUserOrganizationId(),
+                                        sharedUserId, invitedOrganizationId);
                         // Trigger event to add the role assignments if any available in the invitation.
                         if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                             // Get the available group name for the group in the invited organization.
@@ -341,82 +336,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     ERROR_CODE_UNABLE_TO_RESEND_INVITATION.getMessage(),
                     String.format(ERROR_CODE_UNABLE_TO_RESEND_INVITATION.getDescription(), username), e);
         }
-    }
-
-    @Override
-    public boolean deleteInvitedUserAssociation(String userId, UserStoreManager userStoreManager)
-            throws UserInvitationMgtException {
-
-        String authenticatedTenant = Utils.getTenantDomain();
-        OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
-                .getOrganizationManagerService();
-        String authenticatedOrganizationId;
-        try {
-            authenticatedOrganizationId = organizationManager.resolveOrganizationId(authenticatedTenant);
-        } catch (OrganizationManagementException e) {
-            // This is to handle the scenario where the tenant is not modeled as an organization.
-            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Organization not found for the tenant: " + authenticatedTenant);
-                }
-                return true;
-            }
-            throw new UserInvitationMgtServerException(ERROR_CODE_GET_ORG_ID_FROM_TENANT.getCode(),
-                    ERROR_CODE_GET_ORG_ID_FROM_TENANT.getMessage(),
-                    String.format(ERROR_CODE_GET_ORG_ID_FROM_TENANT.getDescription(), authenticatedTenant), e);
-        }
-
-        try {
-            Map<String, String> claimsMap = ((AbstractUserStoreManager) userStoreManager).getUserClaimValuesWithID(
-                    userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, DEFAULT_PROFILE);
-            String managedOrgClaimValue = claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
-            if (StringUtils.isEmpty(managedOrgClaimValue)) {
-                List<SharedUserAssociation> sharedUserAssociationList = userInvitationDAO
-                        .getAllAssociationsOfOrgUserToSharedOrgs(userId, authenticatedOrganizationId);
-                // Removing the shared users from the shared organizations.
-                for (SharedUserAssociation sharedUserAssociation : sharedUserAssociationList) {
-                    String organizationId = sharedUserAssociation.getSharedOrganizationId();
-                    String tenantDomain = organizationManager.resolveTenantDomain(organizationId);
-                    int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-                    AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-                    sharedOrgUserStoreManager.deleteUserWithID(sharedUserAssociation.getSharedUserId());
-                }
-                return true;
-            }
-            userInvitationDAO.deleteOrgUserAssociationToSharedOrg(userId, managedOrgClaimValue);
-            return true;
-        } catch (UserStoreException e) {
-            throw new UserInvitationMgtServerException(ERROR_CODE_GET_USER_CLAIMS.getCode(),
-                    ERROR_CODE_GET_USER_CLAIMS.getMessage(), String.format(ERROR_CODE_GET_USER_CLAIMS
-                    .getDescription(), CLAIM_MANAGED_ORGANIZATION, userId), e);
-        } catch (OrganizationManagementException e) {
-            throw new UserInvitationMgtServerException(ERROR_CODE_GET_PARENT_ORG.getCode(), ERROR_CODE_GET_PARENT_ORG
-                    .getMessage(), String.format(ERROR_CODE_GET_PARENT_ORG.getDescription(),
-                    authenticatedOrganizationId), e);
-        }
-    }
-
-    @Override
-    public boolean isUpdateUserClaimValuesAllowed(String userId, String profileName, UserStoreManager userStoreManager)
-            throws UserInvitationMgtException {
-
-        try {
-            Map<String, String> claimsMap = ((AbstractUserStoreManager) userStoreManager).getUserClaimValuesWithID(
-                    userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, profileName);
-            String managedOrgClaimValue = claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
-            return StringUtils.isEmpty(managedOrgClaimValue);
-        } catch (UserStoreException e) {
-            throw new UserInvitationMgtServerException(ERROR_CODE_GET_MANAGED_CLAIM.getCode(),
-                    ERROR_CODE_GET_MANAGED_CLAIM.getMessage(), String.format(ERROR_CODE_GET_MANAGED_CLAIM.
-                    getDescription(), userId), e);
-        }
-    }
-
-    @Override
-    public SharedUserAssociation getSharedUserAssociationOfUserAtSubOrg(String userId, String sharedOrganizationId)
-            throws UserInvitationMgtException {
-
-        return userInvitationDAO.getAssociationOfOrgUserToSharedOrg(userId, sharedOrganizationId);
     }
 
     private void validateInvitationPayload(Invitation invitation) throws UserInvitationMgtServerException {
