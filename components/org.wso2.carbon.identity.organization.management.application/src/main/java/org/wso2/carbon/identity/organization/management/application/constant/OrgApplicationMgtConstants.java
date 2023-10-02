@@ -33,11 +33,13 @@ public class OrgApplicationMgtConstants {
     public static final String DELETE_MAIN_APPLICATION = "deleteMainApplication";
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
+    public static final String USER_CUSTOM_ATTRIBUTE_PROPERTY = "USER_CUSTOM_ATTRIBUTE";
 
     public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
     public static final String APP_ROLES_CLAIM_URI = "http://wso2.org/claims/applicationRoles";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
+    public static final String RUNTIME_CLAIM_URI_PREFIX = "http://wso2.org/claims/runtime/";
 
     // Event constants related to shared application management.
     public static final String EVENT_PROP_PARENT_ORGANIZATION_ID = "PARENT_ORGANIZATION_ID";
@@ -47,6 +49,7 @@ public class OrgApplicationMgtConstants {
     public static final String EVENT_PROP_SHARED_APPLICATIONS_DATA = "SHARED_APPLICATIONS_DATA";
     public static final String EVENT_PROP_SHARE_WITH_ALL_CHILDREN = "SHARE_WITH_ALL_CHILDREN";
     public static final String EVENT_PROP_SHARED_ORGANIZATIONS = "SHARED_ORGANIZATIONS";
+    public static final String EVENT_PROP_SHARED_USER_ATTRIBUTES = "SHARED_USER_ATTRIBUTES";
     public static final String EVENT_PRE_SHARE_APPLICATION = "PRE_SHARE_APPLICATION";
     public static final String EVENT_POST_SHARE_APPLICATION = "POST_SHARE_APPLICATION";
     public static final String EVENT_PRE_DELETE_SHARED_APPLICATION = "PRE_DELETE_SHARED_APPLICATION";
