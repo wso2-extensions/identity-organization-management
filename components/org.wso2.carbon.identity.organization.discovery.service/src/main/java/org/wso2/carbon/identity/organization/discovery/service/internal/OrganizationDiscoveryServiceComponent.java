@@ -28,8 +28,10 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
+import org.wso2.carbon.identity.organization.discovery.service.EmailDomainDiscoveryFactory;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
+import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryTypeFactory;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -47,8 +49,9 @@ public class OrganizationDiscoveryServiceComponent {
 
         BundleContext bundleContext = componentContext.getBundleContext();
         bundleContext.registerService(OrganizationDiscoveryManager.class.getName(),
-                new OrganizationDiscoveryManagerImpl(),
-                null);
+                new OrganizationDiscoveryManagerImpl(), null);
+        OrganizationDiscoveryTypeFactory emailDomainDiscovery = new EmailDomainDiscoveryFactory();
+        bundleContext.registerService(OrganizationDiscoveryTypeFactory.class.getName(), emailDomainDiscovery, null);
         LOG.debug("Organization discovery service component activated successfully.");
     }
 
@@ -80,5 +83,24 @@ public class OrganizationDiscoveryServiceComponent {
     protected void unsetOrganizationConfigManager(OrganizationConfigManager organizationConfigManager) {
 
         OrganizationDiscoveryServiceHolder.getInstance().setOrganizationConfigManager(null);
+    }
+
+    @Reference(
+            name = "organization.discovery.type.component",
+            service = OrganizationDiscoveryTypeFactory.class,
+            cardinality = ReferenceCardinality.MULTIPLE,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationDiscoveryTypeFactory"
+    )
+    protected void setOrganizationDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory
+                                                                   organizationDiscoveryTypeFactory) {
+
+        OrganizationDiscoveryServiceHolder.getInstance().setDiscoveryTypeFactory(organizationDiscoveryTypeFactory);
+    }
+
+    protected void unsetOrganizationDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory
+                                                                 organizationDiscoveryTypeFactory) {
+
+        OrganizationDiscoveryServiceHolder.getInstance().unbindDiscoveryTypeFactory(organizationDiscoveryTypeFactory);
     }
 }

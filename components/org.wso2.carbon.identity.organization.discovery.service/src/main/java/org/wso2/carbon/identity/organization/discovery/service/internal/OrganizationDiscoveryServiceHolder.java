@@ -19,7 +19,12 @@
 package org.wso2.carbon.identity.organization.discovery.service.internal;
 
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
+import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryTypeFactory;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Organization discovery data holder.
@@ -29,6 +34,7 @@ public class OrganizationDiscoveryServiceHolder {
     private static final OrganizationDiscoveryServiceHolder instance = new OrganizationDiscoveryServiceHolder();
     private OrganizationManager organizationManager = null;
     private OrganizationConfigManager organizationConfigManager = null;
+    private Map<String, OrganizationDiscoveryTypeFactory> discoveryTypeFactoryMap;
 
     public static OrganizationDiscoveryServiceHolder getInstance() {
 
@@ -53,5 +59,31 @@ public class OrganizationDiscoveryServiceHolder {
     public void setOrganizationConfigManager(OrganizationConfigManager organizationConfigManager) {
 
         this.organizationConfigManager = organizationConfigManager;
+    }
+
+    public OrganizationDiscoveryTypeFactory getDiscoveryTypeFactory(String type) {
+
+        if (discoveryTypeFactoryMap == null) {
+            return null;
+        }
+        return discoveryTypeFactoryMap.get(type);
+    }
+
+    public Set<String> getDiscoveryTypes() {
+
+        return discoveryTypeFactoryMap.keySet();
+    }
+
+    public void setDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory discoveryTypeFactory) {
+
+        if (discoveryTypeFactoryMap == null) {
+            discoveryTypeFactoryMap = new HashMap<>();
+        }
+        discoveryTypeFactoryMap.put(discoveryTypeFactory.getType(), discoveryTypeFactory);
+    }
+
+    public void unbindDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory discoveryTypeFactory) {
+
+        discoveryTypeFactoryMap.remove(discoveryTypeFactory.getType());
     }
 }

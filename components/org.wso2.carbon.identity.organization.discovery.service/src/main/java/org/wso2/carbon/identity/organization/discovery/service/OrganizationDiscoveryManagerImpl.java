@@ -19,11 +19,6 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
-import org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants;
-import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
-import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
-import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
@@ -31,7 +26,6 @@ import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscover
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,13 +38,11 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_DISCOVERY_ATTRIBUTE_TYPES;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
  * Implementation of Organization Discovery Manager Interface.
@@ -58,8 +50,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryManager {
 
     private static final OrganizationDiscoveryDAO organizationDiscoveryDAO = new OrganizationDiscoveryDAOImpl();
-    private static final String EMAIL_DOMAIN = "emailDomain";
-    public static final String EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG = "emailDomain.enable";
 
     @Override
     public List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId,
@@ -67,18 +57,15 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                                   discoveryAttributes)
             throws OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
-        validateRootOrganization(rootOrgId, organizationId);
-
-        if (!isEmailDomainDiscoveryConfigurationEnabled(rootOrgId)) {
-            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
-        }
+        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+        validateRootOrganization(rootOrganizationId, organizationId);
 
         if (organizationDiscoveryDAO.isDiscoveryAttributeAddedToOrganization(organizationId)) {
             throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_ALREADY_ADDED_FOR_ORGANIZATION, organizationId);
         }
 
-        validateOrganizationDiscoveryAttributes(false, rootOrgId, null, discoveryAttributes);
+        validateOrganizationDiscoveryAttributes(false, rootOrganizationId, null,
+                discoveryAttributes);
 
         organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
         return discoveryAttributes;
@@ -90,9 +77,6 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         validateRootOrganization(rootOrgId, organizationId);
-        if (!isEmailDomainDiscoveryConfigurationEnabled(rootOrgId)) {
-            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
-        }
         return organizationDiscoveryDAO.getOrganizationDiscoveryAttributes(organizationId);
     }
 
@@ -101,9 +85,6 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         validateRootOrganization(rootOrgId, organizationId);
-        if (!isEmailDomainDiscoveryConfigurationEnabled(rootOrgId)) {
-            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
-        }
         organizationDiscoveryDAO.deleteOrganizationDiscoveryAttributes(organizationId);
     }
 
@@ -115,21 +96,16 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         validateRootOrganization(rootOrgId, organizationId);
-        if (!isEmailDomainDiscoveryConfigurationEnabled(rootOrgId)) {
-            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
-        }
         validateOrganizationDiscoveryAttributes(true, rootOrgId, organizationId, discoveryAttributes);
         organizationDiscoveryDAO.updateOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
         return discoveryAttributes;
     }
 
     @Override
-    public boolean isDiscoveryAttributeAvailable(String type, String value)
-            throws OrganizationManagementException {
+    public boolean isDiscoveryAttributeAvailable(String type, String value) throws OrganizationManagementException {
 
-        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy
-                (false, getOrganizationId(), null, type,
-                        Collections.singletonList(value));
+        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, getOrganizationId(),
+                null, type, Collections.singletonList(value));
     }
 
     @Override
@@ -139,29 +115,12 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(getOrganizationId());
     }
 
-    private boolean isEmailDomainDiscoveryConfigurationEnabled(String rootOrgId)
-            throws OrganizationManagementClientException, OrganizationManagementServerException {
+    private boolean isDiscoveryConfigurationEnabled(String rootOrgId, String type) throws
+            OrganizationManagementException {
 
-        try {
-            List<ConfigProperty> configProperties = getOrganizationConfigManager().getDiscoveryConfiguration()
-                    .getConfigProperties();
-            for (ConfigProperty configProperty : configProperties) {
-                // Currently only email domain discovery is supported.
-                if (EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(configProperty.getKey()) &&
-                        StringUtils.equalsIgnoreCase(configProperty.getValue(), "true")) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (OrganizationConfigException e) {
-            if (e instanceof OrganizationConfigClientException) {
-                if (StringUtils.equals(e.getErrorCode(),
-                        OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST.getCode())) {
-                    throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
-                }
-            }
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION, e, rootOrgId);
-        }
+        OrganizationDiscoveryTypeFactory organizationDiscoveryTypeFactory = OrganizationDiscoveryServiceHolder
+                .getInstance().getDiscoveryTypeFactory(type);
+        return organizationDiscoveryTypeFactory.isDiscoveryConfigurationEnabled(rootOrgId);
     }
 
     private void validateRootOrganization(String rootOrgId, String organizationId)
@@ -176,27 +135,32 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         }
     }
 
-    private void validateOrganizationDiscoveryAttributes(boolean excludeCurrentOrganization, String rootOrgId,
+    private void validateOrganizationDiscoveryAttributes(boolean excludeCurrentOrganization, String rootOrganizationId,
                                                          String organizationId,
                                                          List<OrgDiscoveryAttribute> discoveryAttributes)
             throws OrganizationManagementException {
 
         Set<String> uniqueDiscoveryAttributeTypes = new HashSet<>();
         for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
-            if (!uniqueDiscoveryAttributeTypes.add(attribute.getType())) {
-                throw handleClientException(ERROR_CODE_DUPLICATE_DISCOVERY_ATTRIBUTE_TYPES, attribute.getType());
+            String attributeType = attribute.getType();
+            if (!uniqueDiscoveryAttributeTypes.add(attributeType)) {
+                throw handleClientException(ERROR_CODE_DUPLICATE_DISCOVERY_ATTRIBUTE_TYPES, attributeType);
             }
 
-            // Currently only email domain discovery is supported.
-            if (!StringUtils.equals(EMAIL_DOMAIN, attribute.getType())) {
-                throw handleClientException(ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE, attribute.getType());
+            if (!OrganizationDiscoveryServiceHolder.getInstance().getDiscoveryTypes().contains(attributeType)) {
+                throw handleClientException(ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE, attributeType);
+            }
+
+            if (!isDiscoveryConfigurationEnabled(rootOrganizationId, attributeType)) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
             }
 
             attribute.setValues(attribute.getValues().stream().distinct().collect(Collectors.toList()));
             boolean discoveryAttributeTaken = organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy
-                    (excludeCurrentOrganization, rootOrgId, organizationId, attribute.getType(), attribute.getValues());
+                    (excludeCurrentOrganization, rootOrganizationId, organizationId, attributeType,
+                            attribute.getValues());
             if (discoveryAttributeTaken) {
-                throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN, attribute.getType());
+                throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN, attributeType);
             }
         }
     }
@@ -204,10 +168,5 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
-    }
-
-    private OrganizationConfigManager getOrganizationConfigManager() {
-
-        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationConfigManager();
     }
 }
