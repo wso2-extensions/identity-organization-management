@@ -54,11 +54,14 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     @Override
     public List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId,
                                                                           List<OrgDiscoveryAttribute>
-                                                                                  discoveryAttributes)
+                                                                                  discoveryAttributes,
+                                                                          boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
         String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
-        validateRootOrganization(rootOrganizationId, organizationId);
+        if (validateRootOrgAccess) {
+            validateRootOrganization(rootOrganizationId, organizationId);
+        }
 
         if (organizationDiscoveryDAO.isDiscoveryAttributeAddedToOrganization(organizationId)) {
             throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_ALREADY_ADDED_FOR_ORGANIZATION, organizationId);
@@ -72,31 +75,39 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     }
 
     @Override
-    public List<OrgDiscoveryAttribute> getOrganizationDiscoveryAttributes(String organizationId)
-            throws OrganizationManagementException {
+    public List<OrgDiscoveryAttribute> getOrganizationDiscoveryAttributes(String organizationId, boolean
+            validateRootOrgAccess) throws OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
-        validateRootOrganization(rootOrgId, organizationId);
+        if (validateRootOrgAccess) {
+            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            validateRootOrganization(rootOrganizationId, organizationId);
+        }
         return organizationDiscoveryDAO.getOrganizationDiscoveryAttributes(organizationId);
     }
 
     @Override
-    public void deleteOrganizationDiscoveryAttributes(String organizationId) throws OrganizationManagementException {
+    public void deleteOrganizationDiscoveryAttributes(String organizationId, boolean validateRootOrgAccess) throws
+            OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
-        validateRootOrganization(rootOrgId, organizationId);
+        if (validateRootOrgAccess) {
+            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            validateRootOrganization(rootOrganizationId, organizationId);
+        }
         organizationDiscoveryDAO.deleteOrganizationDiscoveryAttributes(organizationId);
     }
 
     @Override
     public List<OrgDiscoveryAttribute> updateOrganizationDiscoveryAttributes(String organizationId,
                                                                              List<OrgDiscoveryAttribute>
-                                                                                     discoveryAttributes)
+                                                                                     discoveryAttributes,
+                                                                             boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
-        validateRootOrganization(rootOrgId, organizationId);
-        validateOrganizationDiscoveryAttributes(true, rootOrgId, organizationId, discoveryAttributes);
+        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+        if (validateRootOrgAccess) {
+            validateRootOrganization(rootOrganizationId, organizationId);
+        }
+        validateOrganizationDiscoveryAttributes(true, rootOrganizationId, organizationId, discoveryAttributes);
         organizationDiscoveryDAO.updateOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
         return discoveryAttributes;
     }
@@ -115,22 +126,22 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(getOrganizationId());
     }
 
-    private boolean isDiscoveryConfigurationEnabled(String rootOrgId, String type) throws
+    private boolean isDiscoveryConfigurationEnabled(String rootOrganizationId, String type) throws
             OrganizationManagementException {
 
         OrganizationDiscoveryTypeFactory organizationDiscoveryTypeFactory = OrganizationDiscoveryServiceHolder
                 .getInstance().getDiscoveryTypeFactory(type);
-        return organizationDiscoveryTypeFactory.isDiscoveryConfigurationEnabled(rootOrgId);
+        return organizationDiscoveryTypeFactory.isDiscoveryConfigurationEnabled(rootOrganizationId);
     }
 
-    private void validateRootOrganization(String rootOrgId, String organizationId)
+    private void validateRootOrganization(String rootOrganizationId, String organizationId)
             throws OrganizationManagementClientException {
 
         // Not having a root organization implies that the organization is not a valid organization.
-        if (StringUtils.isBlank(rootOrgId)) {
+        if (StringUtils.isBlank(rootOrganizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
-        if (!StringUtils.equals(getOrganizationId(), rootOrgId)) {
+        if (!StringUtils.equals(getOrganizationId(), rootOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT, organizationId);
         }
     }
