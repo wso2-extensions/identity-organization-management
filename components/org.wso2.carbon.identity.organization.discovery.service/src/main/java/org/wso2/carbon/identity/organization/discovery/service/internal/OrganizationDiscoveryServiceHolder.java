@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.discovery.service.internal;
 
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
-import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryTypeFactory;
+import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 import java.util.HashMap;
@@ -34,7 +34,7 @@ public class OrganizationDiscoveryServiceHolder {
     private static final OrganizationDiscoveryServiceHolder instance = new OrganizationDiscoveryServiceHolder();
     private OrganizationManager organizationManager = null;
     private OrganizationConfigManager organizationConfigManager = null;
-    private Map<String, OrganizationDiscoveryTypeFactory> discoveryTypeFactoryMap;
+    private Map<String, AttributeBasedOrganizationDiscoveryHandler> attributeBasedOrganizationDiscoveryHandlerMap;
 
     public static OrganizationDiscoveryServiceHolder getInstance() {
 
@@ -61,29 +61,32 @@ public class OrganizationDiscoveryServiceHolder {
         this.organizationConfigManager = organizationConfigManager;
     }
 
-    public OrganizationDiscoveryTypeFactory getDiscoveryTypeFactory(String type) {
+    public AttributeBasedOrganizationDiscoveryHandler getAttributeBasedOrganizationDiscoveryHandler(String type) {
 
-        if (discoveryTypeFactoryMap == null) {
+        if (attributeBasedOrganizationDiscoveryHandlerMap == null) {
             return null;
         }
-        return discoveryTypeFactoryMap.get(type);
+        return attributeBasedOrganizationDiscoveryHandlerMap.get(type);
     }
 
     public Set<String> getDiscoveryTypes() {
 
-        return discoveryTypeFactoryMap.keySet();
+        return attributeBasedOrganizationDiscoveryHandlerMap.keySet();
     }
 
-    public void setDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory discoveryTypeFactory) {
+    public void setAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler
+                                                                      attributeBasedOrganizationDiscoveryHandler) {
 
-        if (discoveryTypeFactoryMap == null) {
-            discoveryTypeFactoryMap = new HashMap<>();
+        if (attributeBasedOrganizationDiscoveryHandlerMap == null) {
+            attributeBasedOrganizationDiscoveryHandlerMap = new HashMap<>();
         }
-        discoveryTypeFactoryMap.put(discoveryTypeFactory.getType(), discoveryTypeFactory);
+        attributeBasedOrganizationDiscoveryHandlerMap.put(attributeBasedOrganizationDiscoveryHandler.getType(),
+                attributeBasedOrganizationDiscoveryHandler);
     }
 
-    public void unbindDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory discoveryTypeFactory) {
+    public void unbindAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler
+                                                                         attributeBasedOrganizationDiscoveryHandler) {
 
-        discoveryTypeFactoryMap.remove(discoveryTypeFactory.getType());
+        attributeBasedOrganizationDiscoveryHandlerMap.remove(attributeBasedOrganizationDiscoveryHandler.getType());
     }
 }

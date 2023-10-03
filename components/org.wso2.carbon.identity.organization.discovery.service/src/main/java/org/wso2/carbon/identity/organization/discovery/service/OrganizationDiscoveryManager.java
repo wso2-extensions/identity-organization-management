@@ -86,7 +86,7 @@ public interface OrganizationDiscoveryManager {
      * @throws OrganizationManagementException The exception thrown when checking if the discovery attribute already
      *                                         exists within the hierarchy.
      */
-    boolean isDiscoveryAttributeAvailable(String type, String value) throws OrganizationManagementException;
+    boolean isDiscoveryAttributeValueAvailable(String type, String value) throws OrganizationManagementException;
 
     /**
      * List the discovery attributes of all the organizations under the root organization.

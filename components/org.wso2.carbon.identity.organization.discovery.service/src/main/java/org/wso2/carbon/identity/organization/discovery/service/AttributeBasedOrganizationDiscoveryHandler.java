@@ -21,9 +21,9 @@ package org.wso2.carbon.identity.organization.discovery.service;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 /**
- * Interface for organization discovery type factories.
+ * Interface for handling organization discovery types.
  */
-public interface OrganizationDiscoveryTypeFactory {
+public interface AttributeBasedOrganizationDiscoveryHandler {
 
     /**
      * Get the type of the organization discovery.

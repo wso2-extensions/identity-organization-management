@@ -50,6 +50,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryManager {
 
     private static final OrganizationDiscoveryDAO organizationDiscoveryDAO = new OrganizationDiscoveryDAOImpl();
+    private static final OrganizationManager organizationManager = OrganizationDiscoveryServiceHolder.getInstance()
+            .getOrganizationManager();
 
     @Override
     public List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId,
@@ -58,7 +60,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                           boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
-        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
         if (validateRootOrgAccess) {
             validateRootOrganization(rootOrganizationId, organizationId);
         }
@@ -67,8 +69,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_ALREADY_ADDED_FOR_ORGANIZATION, organizationId);
         }
 
-        validateOrganizationDiscoveryAttributes(false, rootOrganizationId, null,
-                discoveryAttributes);
+        validateOrganizationDiscoveryAttributes(false, rootOrganizationId, null, discoveryAttributes);
 
         organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
         return discoveryAttributes;
@@ -79,7 +80,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             validateRootOrgAccess) throws OrganizationManagementException {
 
         if (validateRootOrgAccess) {
-            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
             validateRootOrganization(rootOrganizationId, organizationId);
         }
         return organizationDiscoveryDAO.getOrganizationDiscoveryAttributes(organizationId);
@@ -90,7 +91,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             OrganizationManagementException {
 
         if (validateRootOrgAccess) {
-            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
             validateRootOrganization(rootOrganizationId, organizationId);
         }
         organizationDiscoveryDAO.deleteOrganizationDiscoveryAttributes(organizationId);
@@ -103,7 +104,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                              boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
-        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
         if (validateRootOrgAccess) {
             validateRootOrganization(rootOrganizationId, organizationId);
         }
@@ -113,7 +114,8 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     }
 
     @Override
-    public boolean isDiscoveryAttributeAvailable(String type, String value) throws OrganizationManagementException {
+    public boolean isDiscoveryAttributeValueAvailable(String type, String value) throws
+            OrganizationManagementException {
 
         return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, getOrganizationId(),
                 null, type, Collections.singletonList(value));
@@ -129,9 +131,9 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     private boolean isDiscoveryConfigurationEnabled(String rootOrganizationId, String type) throws
             OrganizationManagementException {
 
-        OrganizationDiscoveryTypeFactory organizationDiscoveryTypeFactory = OrganizationDiscoveryServiceHolder
-                .getInstance().getDiscoveryTypeFactory(type);
-        return organizationDiscoveryTypeFactory.isDiscoveryConfigurationEnabled(rootOrganizationId);
+        AttributeBasedOrganizationDiscoveryHandler attributeBasedOrganizationDiscoveryHandler =
+                OrganizationDiscoveryServiceHolder.getInstance().getAttributeBasedOrganizationDiscoveryHandler(type);
+        return attributeBasedOrganizationDiscoveryHandler.isDiscoveryConfigurationEnabled(rootOrganizationId);
     }
 
     private void validateRootOrganization(String rootOrganizationId, String organizationId)
@@ -141,6 +143,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         if (StringUtils.isBlank(rootOrganizationId)) {
             throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
         }
+        // Checks if the organization ID present in the context as the root organization of the given organization.
         if (!StringUtils.equals(getOrganizationId(), rootOrganizationId)) {
             throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT, organizationId);
         }
@@ -174,10 +177,5 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                 throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN, attributeType);
             }
         }
-    }
-
-    private OrganizationManager getOrganizationManager() {
-
-        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
     }
 }

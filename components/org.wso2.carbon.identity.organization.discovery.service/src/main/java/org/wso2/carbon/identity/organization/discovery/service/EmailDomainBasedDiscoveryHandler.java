@@ -27,7 +27,9 @@ import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION;
@@ -38,9 +40,11 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 /**
  * Implementation of email domain based organization discovery type.
  */
-public class EmailDomainDiscoveryFactory implements OrganizationDiscoveryTypeFactory {
+public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizationDiscoveryHandler {
 
     private static final String EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG = "emailDomain.enable";
+    private static final OrganizationConfigManager organizationConfigManager = OrganizationDiscoveryServiceHolder
+            .getInstance().getOrganizationConfigManager();
 
     @Override
     public String getType() {
@@ -52,15 +56,11 @@ public class EmailDomainDiscoveryFactory implements OrganizationDiscoveryTypeFac
     public boolean isDiscoveryConfigurationEnabled(String organizationId) throws OrganizationManagementException {
 
         try {
-            List<ConfigProperty> configProperties = getOrganizationConfigManager().getDiscoveryConfiguration()
+            List<ConfigProperty> configProperties = organizationConfigManager.getDiscoveryConfiguration()
                     .getConfigProperties();
-            for (ConfigProperty configProperty : configProperties) {
-                if (EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(configProperty.getKey()) &&
-                        StringUtils.equalsIgnoreCase(configProperty.getValue(), "true")) {
-                    return true;
-                }
-            }
-            return false;
+                return Optional.ofNullable(configProperties).orElse(Collections.emptyList()).stream()
+                        .filter(prop -> EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(prop.getKey()))
+                        .findAny().map(prop -> Boolean.valueOf(prop.getValue())).orElse(false);
         } catch (OrganizationConfigException e) {
             if (e instanceof OrganizationConfigClientException) {
                 if (StringUtils.equals(e.getErrorCode(),
@@ -70,10 +70,5 @@ public class EmailDomainDiscoveryFactory implements OrganizationDiscoveryTypeFac
             }
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION, e, organizationId);
         }
-    }
-
-    private OrganizationConfigManager getOrganizationConfigManager() {
-
-        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationConfigManager();
     }
 }

@@ -28,10 +28,10 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
-import org.wso2.carbon.identity.organization.discovery.service.EmailDomainDiscoveryFactory;
+import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
+import org.wso2.carbon.identity.organization.discovery.service.EmailDomainBasedDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
-import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryTypeFactory;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -50,8 +50,9 @@ public class OrganizationDiscoveryServiceComponent {
         BundleContext bundleContext = componentContext.getBundleContext();
         bundleContext.registerService(OrganizationDiscoveryManager.class.getName(),
                 new OrganizationDiscoveryManagerImpl(), null);
-        OrganizationDiscoveryTypeFactory emailDomainDiscovery = new EmailDomainDiscoveryFactory();
-        bundleContext.registerService(OrganizationDiscoveryTypeFactory.class.getName(), emailDomainDiscovery, null);
+        AttributeBasedOrganizationDiscoveryHandler emailDomainDiscovery = new EmailDomainBasedDiscoveryHandler();
+        bundleContext.registerService(AttributeBasedOrganizationDiscoveryHandler.class.getName(), emailDomainDiscovery,
+                null);
         LOG.info("Organization discovery service component activated successfully.");
     }
 
@@ -87,20 +88,22 @@ public class OrganizationDiscoveryServiceComponent {
 
     @Reference(
             name = "organization.discovery.type.component",
-            service = OrganizationDiscoveryTypeFactory.class,
+            service = AttributeBasedOrganizationDiscoveryHandler.class,
             cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetOrganizationDiscoveryTypeFactory"
+            unbind = "unsetAttributeBasedOrganizationDiscoveryHandler"
     )
-    protected void setOrganizationDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory
-                                                                   organizationDiscoveryTypeFactory) {
+    protected void setAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler
+                                                                   attributeBasedOrganizationDiscoveryHandler) {
 
-        OrganizationDiscoveryServiceHolder.getInstance().setDiscoveryTypeFactory(organizationDiscoveryTypeFactory);
+        OrganizationDiscoveryServiceHolder.getInstance().setAttributeBasedOrganizationDiscoveryHandler
+                (attributeBasedOrganizationDiscoveryHandler);
     }
 
-    protected void unsetOrganizationDiscoveryTypeFactory(OrganizationDiscoveryTypeFactory
-                                                                 organizationDiscoveryTypeFactory) {
+    protected void unsetAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler
+                                                                 attributeBasedOrganizationDiscoveryHandler) {
 
-        OrganizationDiscoveryServiceHolder.getInstance().unbindDiscoveryTypeFactory(organizationDiscoveryTypeFactory);
+        OrganizationDiscoveryServiceHolder.getInstance().unbindAttributeBasedOrganizationDiscoveryHandler
+                (attributeBasedOrganizationDiscoveryHandler);
     }
 }
