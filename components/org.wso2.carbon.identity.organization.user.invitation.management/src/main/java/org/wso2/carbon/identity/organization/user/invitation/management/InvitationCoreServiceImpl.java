@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.DEFAULT_PROFILE;
@@ -353,6 +354,13 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         try {
             authenticatedOrganizationId = organizationManager.resolveOrganizationId(authenticatedTenant);
         } catch (OrganizationManagementException e) {
+            // This is to handle the scenario where the tenant is not modeled as an organization.
+            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + authenticatedTenant);
+                }
+                return true;
+            }
             throw new UserInvitationMgtServerException(ERROR_CODE_GET_ORG_ID_FROM_TENANT.getCode(),
                     ERROR_CODE_GET_ORG_ID_FROM_TENANT.getMessage(),
                     String.format(ERROR_CODE_GET_ORG_ID_FROM_TENANT.getDescription(), authenticatedTenant), e);
