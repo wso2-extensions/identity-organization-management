@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
@@ -38,6 +39,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_DISCOVERY_ATTRIBUTE_TYPES;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMPTY_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE;
@@ -155,6 +157,9 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             throws OrganizationManagementException {
 
         Set<String> uniqueDiscoveryAttributeTypes = new HashSet<>();
+        if (CollectionUtils.isEmpty(discoveryAttributes)) {
+            throw handleClientException(ERROR_CODE_EMPTY_DISCOVERY_ATTRIBUTES, organizationId);
+        }
         for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
             String attributeType = attribute.getType();
             if (!uniqueDiscoveryAttributeTypes.add(attributeType)) {

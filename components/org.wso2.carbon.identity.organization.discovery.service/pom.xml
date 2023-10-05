@@ -67,6 +67,7 @@
                             org.wso2.carbon.identity.organization.discovery.service.*;version="${project.version}"
                         </Export-Package>
                         <Import-Package>
+                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
