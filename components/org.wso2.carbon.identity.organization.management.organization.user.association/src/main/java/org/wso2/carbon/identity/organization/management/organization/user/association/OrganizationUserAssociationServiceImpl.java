@@ -36,7 +36,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
- * Implementation of the user sharing for organizations.
+ * Implementation of the organization user association service.
  */
 public class OrganizationUserAssociationServiceImpl implements OrganizationUserAssociationService {
 
@@ -44,26 +44,26 @@ public class OrganizationUserAssociationServiceImpl implements OrganizationUserA
             new OrganizationUserAssociationDAOImpl();
 
     @Override
-    public void createOrganizationUserAssociation(String userId, String userOrganizationId, String sharedUserId,
+    public void createOrganizationUserAssociation(String userId, String userResidentOrgId, String sharedUserId,
                                                   String sharedOrgId) throws OrganizationManagementException {
 
-        organizationUserAssociationDAO.createOrganizationUserAssociation(userId, userOrganizationId, sharedUserId,
+        organizationUserAssociationDAO.createOrganizationUserAssociation(userId, userResidentOrgId, sharedUserId,
                 sharedOrgId);
     }
 
     @Override
-    public boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userOrganizationId)
+    public boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userResidentOrgId)
             throws OrganizationManagementException {
 
         return organizationUserAssociationDAO.deleteOrganizationUserAssociationOfSharedUser(sharedUserId,
-                userOrganizationId);
+                userResidentOrgId);
     }
 
-    public boolean deleteOrganizationUserAssociations(String userId, String userOrganizationId)
+    public boolean deleteOrganizationUserAssociations(String userId, String userResidentOrgId)
             throws OrganizationManagementException {
 
         List<SharedUserAssociation> sharedUserAssociationList =
-                organizationUserAssociationDAO.getOrganizationUserAssociationsOfUser(userId, userOrganizationId);
+                organizationUserAssociationDAO.getOrganizationUserAssociationsOfUser(userId, userResidentOrgId);
         // Removing the shared users from the shared organizations.
         for (SharedUserAssociation sharedUserAssociation : sharedUserAssociationList) {
             String sharedOrganizationId = sharedUserAssociation.getSharedOrganizationId();

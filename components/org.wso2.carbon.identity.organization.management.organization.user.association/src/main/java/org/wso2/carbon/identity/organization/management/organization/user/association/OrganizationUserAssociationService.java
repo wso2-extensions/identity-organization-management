@@ -30,34 +30,34 @@ public interface OrganizationUserAssociationService {
      * Creates the association between the shared user and the actual user in the shared organization.
      *
      * @param userId             Actual user ID of the user in the parent organization.
-     * @param userOrganizationId The organization ID where the user's identity is managed.
+     * @param userResidentOrgId The organization ID where the user's identity is managed.
      * @param sharedUserId       ID of the user which is created in the shared organization.
      * @param sharedOrgId        Organization ID of the user shared organization.
      * @throws OrganizationManagementException If an error occurs while creating the organization user association.
      */
-    void createOrganizationUserAssociation(String userId, String userOrganizationId, String sharedUserId,
+    void createOrganizationUserAssociation(String userId, String userResidentOrgId, String sharedUserId,
                                            String sharedOrgId) throws OrganizationManagementException;
 
     /**
      * Delete the organization user association of the shared user.
      *
      * @param sharedUserId       The ID of the shared user.
-     * @param userOrganizationId The ID of organization where the user's identity is managed.
+     * @param userResidentOrgId The ID of organization where the user's identity is managed.
      * @return True if the organization user association is deleted successfully.
      * @throws OrganizationManagementException If an error occurs while deleting the organization user association.
      */
-    boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userOrganizationId)
+    boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userResidentOrgId)
             throws OrganizationManagementException;
 
     /**
      * Delete the organization user associations of a given user.
      *
      * @param userId The ID of the user.
-     * @param userOrganizationId The ID of the organization where the user is managed.
+     * @param userResidentOrgId The ID of the organization where the user is managed.
      * @return True if the organization user associations are deleted successfully.
      * @throws OrganizationManagementException If an error occurs while deleting the organization user associations.
      */
-    boolean deleteOrganizationUserAssociations(String userId, String userOrganizationId)
+    boolean deleteOrganizationUserAssociations(String userId, String userResidentOrgId)
             throws OrganizationManagementException;
 
     /**
