@@ -16,11 +16,11 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.listener;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationService;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -29,18 +29,18 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 
 import java.util.Map;
 
-import static org.wso2.carbon.identity.organization.management.organization.user.association.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
- * Shared user operation event listener.
+ * User operation event listener for shared user management.
  */
 public class SharedUserOperationEventListener extends AbstractIdentityUserOperationEventListener {
 
-    private final OrganizationUserAssociationService organizationUserAssociationService =
-            new OrganizationUserAssociationServiceImpl();
+    private final OrganizationUserSharingService organizationUserSharingService =
+            new OrganizationUserSharingServiceImpl();
 
     @Override
     public int getExecutionOrderId() {
@@ -62,10 +62,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 if (organizationId == null) {
                     organizationId = SUPER_ORG_ID;
                 }
-                return organizationUserAssociationService.deleteOrganizationUserAssociations(userID, organizationId);
+                return organizationUserSharingService.unShareOrganizationUsers(userID, organizationId);
             }
             // Delete the organization user association of the shared user by shared user ID.
-            return organizationUserAssociationService.deleteOrganizationUserAssociationOfSharedUser(userID,
+            return organizationUserSharingService.deleteOrganizationUserAssociationOfSharedUser(userID,
                     userManagedOrganizationClaim);
         } catch (OrganizationManagementException e) {
             throw new UserStoreException(e.getMessage(), e.getErrorCode(), e);

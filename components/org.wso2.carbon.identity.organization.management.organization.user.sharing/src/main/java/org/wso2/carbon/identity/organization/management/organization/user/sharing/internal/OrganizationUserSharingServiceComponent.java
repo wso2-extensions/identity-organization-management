@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.internal;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,10 +28,10 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationService;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationServiceImpl;
-import org.wso2.carbon.identity.organization.management.organization.user.association.listener.SharedUserOperationEventListener;
-import org.wso2.carbon.identity.organization.management.organization.user.association.listener.SharingOrganizationCreatorUserEventHandler;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -40,19 +40,19 @@ import org.wso2.carbon.user.core.service.RealmService;
  * OSGi service component for Organization Management - User Sharing bundle.
  */
 @Component(
-        name = "identity.organization.management.organization.user.association.component",
+        name = "identity.organization.management.organization.user.sharing.component",
         immediate = true
 )
-public class OrganizationUserAssociationServiceComponent {
+public class OrganizationUserSharingServiceComponent {
 
-    private static final Log LOG = LogFactory.getLog(OrganizationUserAssociationServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext componentContext) {
 
         BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(OrganizationUserAssociationService.class.getName(),
-                new OrganizationUserAssociationServiceImpl(), null);
+        bundleContext.registerService(OrganizationUserSharingService.class.getName(),
+                new OrganizationUserSharingServiceImpl(), null);
         bundleContext.registerService(UserOperationEventListener.class.getName(),
                 new SharedUserOperationEventListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
@@ -68,13 +68,13 @@ public class OrganizationUserAssociationServiceComponent {
             unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
 
-        OrganizationUserAssociationDataHolder.getInstance().setRealmService(realmService);
+        OrganizationUserSharingDataHolder.getInstance().setRealmService(realmService);
         LOG.debug("Set the Realm Service");
     }
 
     protected void unsetRealmService(RealmService realmService) {
 
-        OrganizationUserAssociationDataHolder.getInstance().setRealmService(null);
+        OrganizationUserSharingDataHolder.getInstance().setRealmService(null);
         LOG.debug("Unset the Realm Service.");
     }
 
@@ -86,14 +86,14 @@ public class OrganizationUserAssociationServiceComponent {
             unbind = "unsetOrganizationManagementService")
     protected void setOrganizationManagementService(OrganizationManager organizationManager) {
 
-        OrganizationUserAssociationDataHolder.getInstance().setOrganizationManager(organizationManager);
+        OrganizationUserSharingDataHolder.getInstance().setOrganizationManager(organizationManager);
         LOG.debug("Set Organization Management Service");
 
     }
 
     protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {
 
-        OrganizationUserAssociationDataHolder.getInstance().setOrganizationManager(null);
+        OrganizationUserSharingDataHolder.getInstance().setOrganizationManager(null);
         LOG.debug("Unset Organization Management Service");
     }
 }

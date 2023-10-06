@@ -46,7 +46,7 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.organization.user.association</artifactId>
+            <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.utils</groupId>
@@ -137,7 +137,9 @@
                             org.wso2.carbon.user.core.listener;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.util;version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.organization.user.association;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.models;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>

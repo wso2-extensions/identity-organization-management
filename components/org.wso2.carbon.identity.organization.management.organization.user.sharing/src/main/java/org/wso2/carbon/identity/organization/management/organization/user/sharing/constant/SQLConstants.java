@@ -16,10 +16,10 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.constant;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
 /**
- * SQL constants for organization user association management.
+ * SQL constants for organization user sharing.
  */
 public class SQLConstants {
 
@@ -34,13 +34,17 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG = "SELECT SHARED_USER_ID, " +
             "SUB_ORG_ID FROM IDN_ORG_USER_ASSOCIATION WHERE REAL_USER_ID = ? AND SUB_ORG_ID = ?";
 
+    public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER = "SELECT REAL_USER_ID, " +
+            "USER_RESIDENT_ORG_ID  FROM IDN_ORG_USER_ASSOCIATION WHERE SHARED_USER_ID = ? AND SUB_ORG_ID = ?";
     /**
-     * SQL placeholders related to organization user association management SQL operations.
+     * SQL placeholders related to organization user sharing SQL operations.
      */
     public static final class SQLPlaceholders {
 
         public static final String COLUMN_NAME_SHARED_USER_ID = "SHARED_USER_ID";
         public static final String COLUMN_NAME_SUB_ORG_ID = "SUB_ORG_ID";
+        public static final String COLUMN_NAME_REAL_USER_ID = "REAL_USER_ID";
+        public static final String COLUMN_NAME_USER_RESIDENT_ORG_ID = "USER_RESIDENT_ORG_ID";
     }
 
 }

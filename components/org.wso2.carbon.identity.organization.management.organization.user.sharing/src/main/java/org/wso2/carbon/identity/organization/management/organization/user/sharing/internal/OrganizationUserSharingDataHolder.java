@@ -16,21 +16,21 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.internal;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.internal;
 
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * Data holder for organization user association management.
+ * Data holder for organization user sharing management.
  */
-public class OrganizationUserAssociationDataHolder {
+public class OrganizationUserSharingDataHolder {
 
-    private static final OrganizationUserAssociationDataHolder instance = new OrganizationUserAssociationDataHolder();
+    private static final OrganizationUserSharingDataHolder instance = new OrganizationUserSharingDataHolder();
     private RealmService realmService;
     private OrganizationManager organizationManager;
 
-    public static OrganizationUserAssociationDataHolder getInstance() {
+    public static OrganizationUserSharingDataHolder getInstance() {
 
         return instance;
     }

@@ -29,7 +29,7 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreService;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreServiceImpl;
@@ -120,24 +120,22 @@ public class UserInvitationMgtServiceComponent {
     }
 
     @Reference(
-            name = "organization.user.association.service",
-            service = OrganizationUserAssociationService.class,
+            name = "organization.user.sharing.service",
+            service = OrganizationUserSharingService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetOrganizationUserAssociationService")
-    protected void setOrganizationUserAssociationService(
-            OrganizationUserAssociationService organizationUserAssociationService) {
+    protected void setOrganizationUserSharingService(OrganizationUserSharingService organizationUserSharingService) {
 
-        UserInvitationMgtDataHolder.getInstance()
-                .setOrganizationUserAssociationService(organizationUserAssociationService);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(organizationUserSharingService);
         LOG.debug("Set organization user association service.");
 
     }
 
     protected void unsetOrganizationUserAssociationService(
-            OrganizationUserAssociationService organizationUserAssociationService) {
+            OrganizationUserSharingService organizationUserSharingService) {
 
-        UserInvitationMgtDataHolder.getInstance().setOrganizationUserAssociationService(null);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(null);
         LOG.debug("Unset organization user association Service.");
     }
 }

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.models;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
 /**
  * Model class to represent the shared user association.
@@ -25,6 +25,8 @@ public class SharedUserAssociation {
 
     private String sharedUserId;
     private String sharedOrganizationId;
+    private String realUserId;
+    private String userResidentOrganizationId;
 
     public String getSharedUserId() {
 
@@ -44,5 +46,25 @@ public class SharedUserAssociation {
     public void setSharedOrganizationId(String sharedOrganizationId) {
 
         this.sharedOrganizationId = sharedOrganizationId;
+    }
+
+    public String getRealUserId() {
+
+        return realUserId;
+    }
+
+    public void setRealUserId(String realUserId) {
+
+        this.realUserId = realUserId;
+    }
+
+    public String getUserResidentOrganizationId() {
+
+        return userResidentOrganizationId;
+    }
+
+    public void setUserResidentOrganizationId(String userResidentOrganizationId) {
+
+        this.userResidentOrganizationId = userResidentOrganizationId;
     }
 }

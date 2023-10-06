@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.user.invitation.management.internal;
 
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.organization.management.organization.user.association.OrganizationUserAssociationService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -33,7 +33,7 @@ public class UserInvitationMgtDataHolder {
     private RealmService realmService;
     private IdentityEventService identityEventService;
     private OrganizationManager organizationManager;
-    private OrganizationUserAssociationService organizationUserAssociationService;
+    private OrganizationUserSharingService organizationUserSharingService;
 
     public static UserInvitationMgtDataHolder getInstance() {
 
@@ -70,14 +70,14 @@ public class UserInvitationMgtDataHolder {
         this.organizationManager = organizationManager;
     }
 
-    public OrganizationUserAssociationService getOrganizationUserAssociationService() {
+    public OrganizationUserSharingService getOrganizationUserSharingService() {
 
-        return organizationUserAssociationService;
+        return organizationUserSharingService;
     }
 
-    public void setOrganizationUserAssociationService(
-            OrganizationUserAssociationService organizationUserAssociationService) {
+    public void setOrganizationUserSharingService(
+            OrganizationUserSharingService organizationUserSharingService) {
 
-        this.organizationUserAssociationService = organizationUserAssociationService;
+        this.organizationUserSharingService = organizationUserSharingService;
     }
 }

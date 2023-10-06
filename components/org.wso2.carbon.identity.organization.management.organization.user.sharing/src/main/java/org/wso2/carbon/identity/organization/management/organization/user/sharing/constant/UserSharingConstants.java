@@ -16,10 +16,10 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.user.association.constant;
+package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
 /**
- * Constants for organization user invitation management.
+ * Constants for organization user sharing.
  */
 public class UserSharingConstants {
 

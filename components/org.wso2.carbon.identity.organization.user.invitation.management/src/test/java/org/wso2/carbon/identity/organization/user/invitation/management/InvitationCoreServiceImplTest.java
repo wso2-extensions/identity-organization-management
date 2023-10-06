@@ -242,7 +242,7 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         UserRealm userRealm = mock(UserRealm.class);
         AbstractUserStoreManager userStoreManager = mock(AbstractUserStoreManager.class);
 
-        when(userStoreManager.isExistingUser("DEFAULT/samson")).thenReturn(false);
+        when(userStoreManager.isExistingUser("samson")).thenReturn(false);
         when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         UserInvitationMgtDataHolder.getInstance().setRealmService(realmService);
