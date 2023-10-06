@@ -94,10 +94,4 @@ public class OrgSharedUserOperationEventListener extends AbstractIdentityUserOpe
         }
         return true;
     }
-
-    @Override
-    public boolean isEnable() {
-
-        return false;
-    }
 }
