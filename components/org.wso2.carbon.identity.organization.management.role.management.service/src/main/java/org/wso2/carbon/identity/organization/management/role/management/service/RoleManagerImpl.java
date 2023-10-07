@@ -390,7 +390,7 @@ public class RoleManagerImpl implements RoleManager {
      *
      * @param organizationId Organization Id.
      * @param roleId         Role Id.
-     * @param modifiedRole    Incoming updated role.
+     * @param modifiedRole   Incoming updated role.
      * @return Whether put operation on the role is allowed with incoming values.
      * @throws OrganizationManagementServerException Error while retrieving role.
      */
@@ -420,9 +420,9 @@ public class RoleManagerImpl implements RoleManager {
     /**
      * Check whether the incoming patch operations are allowed for the role.
      *
-     * @param organizationId Organization Id.
-     * @param roleId         Role Id.
-     * @param patchOperations    Incoming patch operations with updated values.
+     * @param organizationId    Organization Id.
+     * @param roleId            Role Id.
+     * @param patchOperations   Incoming patch operations with updated values.
      * @return Whether incoming patch operations are allowed on the role.
      * @throws OrganizationManagementServerException Error while retrieving role.
      */
@@ -435,7 +435,7 @@ public class RoleManagerImpl implements RoleManager {
         }
         // The Administrator role permissions and display name are not allowed to be patched.
         if (ORG_ADMINISTRATOR_ROLE.equalsIgnoreCase(role.getDisplayName())) {
-            return !patchOperations.stream().anyMatch(patchOperation ->
+            return patchOperations.stream().noneMatch(patchOperation ->
                     PERMISSIONS.equals(patchOperation.getPath()) ||
                     DISPLAY_NAME.equals(patchOperation.getPath()));
         }
