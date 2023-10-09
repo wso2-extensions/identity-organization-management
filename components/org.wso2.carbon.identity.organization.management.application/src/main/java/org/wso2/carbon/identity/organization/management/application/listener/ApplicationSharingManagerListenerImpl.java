@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.application.listener;
 
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -32,9 +35,12 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
 /**
  * Listener implementation for organization's application sharing operations.
@@ -66,6 +72,8 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARE_WITH_ALL_CHILDREN, shareWithAllChildren);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_USER_ATTRIBUTES,
+                getSharedUserAttributes(sharedApplicationId));
         fireEvent(OrgApplicationMgtConstants.EVENT_POST_SHARE_APPLICATION, eventProperties);
     }
 
@@ -172,6 +180,23 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
             throw new OrganizationManagementServerException(
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getMessage(),
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getCode(), e);
+        }
+    }
+
+    private ClaimMapping[] getSharedUserAttributes(String sharedApplicationId) throws OrganizationManagementException {
+
+        try {
+            ServiceProvider application = OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService().
+                    getApplicationByResourceId(sharedApplicationId, getTenantDomain());
+
+            ClaimMapping[] filteredClaimMappings =
+                    Arrays.stream(application.getClaimConfig().getClaimMappings())
+                            .filter(claim -> !claim.getLocalClaim().getClaimUri()
+                                    .startsWith(OrgApplicationMgtConstants.RUNTIME_CLAIM_URI_PREFIX)).
+                            toArray(ClaimMapping[]::new);
+            return filteredClaimMappings;
+        } catch (IdentityApplicationManagementException e) {
+            throw new OrganizationManagementException("An error occurred while getting the application.");
         }
     }
 }

@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
+import org.wso2.carbon.identity.organization.management.application.handler.OrgClaimMgtHandler;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
@@ -75,6 +76,7 @@ public class OrgApplicationMgtServiceComponent {
                     null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
+            bundleContext.registerService(AbstractEventHandler.class.getName(), new OrgClaimMgtHandler(), null);
             if (log.isDebugEnabled()) {
                 log.debug("Organization Application Management component activated successfully.");
             }
