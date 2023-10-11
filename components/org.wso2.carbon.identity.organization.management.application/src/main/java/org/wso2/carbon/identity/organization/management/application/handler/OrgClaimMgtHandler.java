@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application.handler;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -25,6 +26,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.AttributeMapping;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.Claim;
+import org.wso2.carbon.identity.claim.metadata.mgt.model.ClaimDialect;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.ExternalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -374,6 +376,10 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                             getMappedExternalClaims(claimURI, parentTenantDomain);
                     if (!externalClaimMappingsInParentOrg.isEmpty()) {
                         for (Claim externalClaim : externalClaimMappingsInParentOrg) {
+                            if (!isDialectExists(externalClaim.getClaimDialectURI(), sharedOrganizationTenantDomain)) {
+                                getClaimMetadataManagementService().addClaimDialect(new ClaimDialect(
+                                        externalClaim.getClaimDialectURI()), sharedOrganizationTenantDomain);
+                            }
                             getClaimMetadataManagementService().addExternalClaim((new ExternalClaim(
                                             externalClaim.getClaimDialectURI(), externalClaim.getClaimURI(), claimURI)),
                                     sharedOrganizationTenantDomain);
@@ -440,5 +446,12 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
 
         return getClaimMetadataManagementService().getExternalClaims(externalClaimDialectURI, tenantDomain).stream().
                 filter(claim -> claim.getClaimURI().equalsIgnoreCase(externalClaimURI)).findFirst().isPresent();
+    }
+
+    private boolean isDialectExists(String dialectURI, String tenantDomain) throws ClaimMetadataException {
+
+        List<ClaimDialect> claimDialectList = getClaimMetadataManagementService().getClaimDialects(tenantDomain);
+        return claimDialectList.stream()
+                .anyMatch(dialect -> StringUtils.equals(dialect.getClaimDialectURI(), dialectURI));
     }
 }
