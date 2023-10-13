@@ -46,9 +46,8 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
     /**
      * Extract the attribute value from the given organization discovery input.
      *
-     * @param input The input.
+     * @param discoveryInput The discovery input provided by the user.
      * @return The extracted attribute value.
-     * @throws OrganizationManagementException The exception thrown when extracting the attribute value.
      */
-    String extractAttributeValue(String input) throws OrganizationManagementException;
+    String extractAttributeValue(String discoveryInput);
 }

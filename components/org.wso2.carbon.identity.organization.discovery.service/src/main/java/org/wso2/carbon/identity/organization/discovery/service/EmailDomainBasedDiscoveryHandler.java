@@ -73,9 +73,9 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     }
 
     @Override
-    public String extractAttributeValue(String input) throws OrganizationManagementException {
+    public String extractAttributeValue(String discoveryInput) {
 
-        String[] emailSplit = input.split("@");
+        String[] emailSplit = discoveryInput.split("@");
         if (emailSplit.length == 2) {
             return emailSplit[1];
         }
