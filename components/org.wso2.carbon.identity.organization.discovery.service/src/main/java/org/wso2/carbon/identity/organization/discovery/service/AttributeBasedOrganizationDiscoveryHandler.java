@@ -42,4 +42,12 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      */
     boolean isDiscoveryConfigurationEnabled(String organizationId)
             throws OrganizationManagementException;
+
+    /**
+     * Extract the attribute value from the given organization discovery input.
+     *
+     * @param discoveryInput The discovery input provided by the user.
+     * @return The extracted attribute value.
+     */
+    String extractAttributeValue(String discoveryInput);
 }

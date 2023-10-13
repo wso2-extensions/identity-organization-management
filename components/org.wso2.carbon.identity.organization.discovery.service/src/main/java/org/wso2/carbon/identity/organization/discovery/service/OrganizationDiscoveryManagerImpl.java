@@ -130,6 +130,27 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(getOrganizationId());
     }
 
+    @Override
+    public Map<String, AttributeBasedOrganizationDiscoveryHandler> getAttributeBasedOrganizationDiscoveryHandlers() {
+
+        return OrganizationDiscoveryServiceHolder.getInstance().getAttributeBasedOrganizationDiscoveryHandlers();
+    }
+
+    @Override
+    public String getOrganizationIdByDiscoveryAttribute(String attributeType, String discoveryInput,
+                                                        String rootOrganizationId)
+            throws OrganizationManagementException {
+
+        AttributeBasedOrganizationDiscoveryHandler handler = getAttributeBasedOrganizationDiscoveryHandlers()
+                .get(attributeType);
+        String attributeValue = handler.extractAttributeValue(discoveryInput);
+        if (StringUtils.isNotBlank(attributeValue)) {
+            return organizationDiscoveryDAO.getOrganizationIdByDiscoveryAttribute(attributeType, attributeValue,
+                    rootOrganizationId);
+        }
+        return null;
+    }
+
     private boolean isDiscoveryConfigurationEnabled(String rootOrganizationId, String type) throws
             OrganizationManagementException {
 

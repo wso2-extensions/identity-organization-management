@@ -58,9 +58,9 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
         try {
             List<ConfigProperty> configProperties = organizationConfigManager.getDiscoveryConfiguration()
                     .getConfigProperties();
-                return Optional.ofNullable(configProperties).orElse(Collections.emptyList()).stream()
-                        .filter(prop -> EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(prop.getKey()))
-                        .findAny().map(prop -> Boolean.valueOf(prop.getValue())).orElse(false);
+            return Optional.ofNullable(configProperties).orElse(Collections.emptyList()).stream()
+                    .filter(prop -> EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(prop.getKey()))
+                    .findAny().map(prop -> Boolean.valueOf(prop.getValue())).orElse(false);
         } catch (OrganizationConfigException e) {
             if (e instanceof OrganizationConfigClientException) {
                 if (StringUtils.equals(e.getErrorCode(),
@@ -70,5 +70,15 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
             }
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION, e, organizationId);
         }
+    }
+
+    @Override
+    public String extractAttributeValue(String discoveryInput) {
+
+        String[] emailSplit = discoveryInput.split("@");
+        if (emailSplit.length == 2) {
+            return emailSplit[1];
+        }
+        return null;
     }
 }

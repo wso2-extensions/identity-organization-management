@@ -108,4 +108,16 @@ public interface OrganizationDiscoveryDAO {
      */
     Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes(String rootOrganizationId) throws
             OrganizationManagementServerException;
+
+    /**
+     * Get the organization ID by discovery attribute in the hierarchy.
+     *
+     * @param attributeType      The organization discovery attribute type.
+     * @param attributeValue     The organization discovery attribute value.
+     * @param rootOrganizationId The root organization ID.
+     * @return The organization ID.
+     * @throws OrganizationManagementServerException The server exception thrown when fetching the organization ID.
+     */
+    String getOrganizationIdByDiscoveryAttribute(String attributeType, String attributeValue, String rootOrganizationId)
+            throws OrganizationManagementServerException;
 }
