@@ -97,4 +97,23 @@ public interface OrganizationDiscoveryManager {
      */
     Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes()
             throws OrganizationManagementException;
+
+    /**
+     * Get attribute based organization discovery handlers.
+     *
+     * @return Handlers.
+     */
+    Map<String, AttributeBasedOrganizationDiscoveryHandler> getAttributeBasedOrganizationDiscoveryHandlers();
+
+    /**
+     * Get the organization ID by discovery attribute in the hierarchy.
+     *
+     * @param attributeType      The organization discovery attribute type.
+     * @param discoveryInput     The organization discovery input.
+     * @param rootOrganizationId The root organization ID.
+     * @return The organization ID.
+     * @throws OrganizationManagementException The server exception thrown when fetching the organization ID.
+     */
+    String getOrganizationIdByDiscoveryAttribute(String attributeType, String discoveryInput, String rootOrganizationId)
+            throws OrganizationManagementException;
 }

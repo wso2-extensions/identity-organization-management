@@ -69,6 +69,11 @@ public class OrganizationDiscoveryServiceHolder {
         return attributeBasedOrganizationDiscoveryHandlerMap.get(type);
     }
 
+    public Map<String, AttributeBasedOrganizationDiscoveryHandler> getAttributeBasedOrganizationDiscoveryHandlers() {
+
+        return attributeBasedOrganizationDiscoveryHandlerMap;
+    }
+
     public Set<String> getDiscoveryTypes() {
 
         return attributeBasedOrganizationDiscoveryHandlerMap.keySet();

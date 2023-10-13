@@ -52,6 +52,11 @@ public class SQLConstants {
             "UM_DISCOVERY_VALUE FROM UM_ORG_DISCOVERY WHERE UM_ROOT_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + ";";
 
+    public static final String GET_ORGANIZATION_ID_BY_DISCOVERY_ATTRIBUTE = "SELECT UM_ORG_ID FROM UM_ORG_DISCOVERY " +
+            "WHERE UM_DISCOVERY_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE + "; AND UM_DISCOVERY_VALUE = :"
+            + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE + "; AND UM_ROOT_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + ";";
+
     /**
      * SQL placeholders related to organization discovery management SQL operations.
      */
