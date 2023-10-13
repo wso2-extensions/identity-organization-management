@@ -18,161 +18,166 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SharedUserAssociation;
+import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
+import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_REAL_USER_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_SHARED_USER_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_SUB_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_RESIDENT_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_OF_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
- * DAO implementation for organization user sharing.
+ * DAO implementation for managing organization user associations.
  */
 public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDAO {
 
     @Override
-    public void createOrganizationUserAssociation(String realUserId, String residentOrgId, String sharedUserId,
-                                                  String sharedOrgId) throws OrganizationManagementServerException {
+    public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
+                                                  String associatedOrgId) throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement createOrgAssocPrepStat = connection.prepareStatement(
-                     CREATE_ORGANIZATION_USER_ASSOCIATION)) {
-            createOrgAssocPrepStat.setString(1, sharedUserId);
-            createOrgAssocPrepStat.setString(2, sharedOrgId);
-            createOrgAssocPrepStat.setString(3, realUserId);
-            createOrgAssocPrepStat.setString(4, residentOrgId);
-            createOrgAssocPrepStat.executeUpdate();
-        } catch (SQLException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION, e, sharedUserId);
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION, namedPreparedStatement -> {
+                    namedPreparedStatement.setString(1, userId);
+                    namedPreparedStatement.setString(2, orgId);
+                    namedPreparedStatement.setString(3, associatedUserId);
+                    namedPreparedStatement.setString(4, associatedOrgId);
+                }, null, false);
+                return null;
+            });
+        } catch (TransactionException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION, e, associatedUserId);
         }
     }
 
-    @Override
-    public boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userOrganizationId)
+    public boolean deleteUserAssociationOfUserByAssociatedOrg(String userId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement userOrgDeletePrepStat =
-                     connection.prepareStatement(DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER)) {
-            userOrgDeletePrepStat.setString(1, sharedUserId);
-            userOrgDeletePrepStat.setString(2, userOrganizationId);
-            userOrgDeletePrepStat.executeUpdate();
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, userId);
+                        namedPreparedStatement.setString(2, associatedOrgId);
+                    });
             return true;
-        } catch (SQLException e) {
+        } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER, e,
-                    sharedUserId);
+                    userId);
         }
     }
 
     @Override
-    public boolean deleteOrganizationUserAssociations(String realUserId, String organizationId)
+    public boolean deleteUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement userOrgDeletePrepStat =
-                     connection.prepareStatement(DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER)) {
-            userOrgDeletePrepStat.setString(1, realUserId);
-            userOrgDeletePrepStat.setString(2, organizationId);
-            userOrgDeletePrepStat.executeUpdate();
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, associatedUserId);
+                        namedPreparedStatement.setString(2, associatedOrgId);
+                    });
             return true;
-        } catch (SQLException e) {
+        } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
 
     @Override
-    public List<SharedUserAssociation> getOrganizationUserAssociationsOfUser(String realUserId,
-                                                                             String userOrganizationId)
+    public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement getUserSharedOrgsPrepStat =
-                     connection.prepareStatement(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER)) {
-            getUserSharedOrgsPrepStat.setString(1, realUserId);
-            getUserSharedOrgsPrepStat.setString(2, userOrganizationId);
-            List<SharedUserAssociation> sharedUserAssociationList = new ArrayList<>();
-            try (ResultSet resultSet = getUserSharedOrgsPrepStat.executeQuery()) {
-                while (resultSet.next()) {
-                    SharedUserAssociation sharedUserAssociation = new SharedUserAssociation();
-                    sharedUserAssociation.setSharedUserId(resultSet.getString(COLUMN_NAME_SHARED_USER_ID));
-                    sharedUserAssociation.setSharedOrganizationId(resultSet.getString(COLUMN_NAME_SUB_ORG_ID));
-                    sharedUserAssociationList.add(sharedUserAssociation);
-                }
-            }
-            return sharedUserAssociationList;
-        } catch (SQLException e) {
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        return userAssociation;
+                    },
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, associatedUserId);
+                        namedPreparedStatement.setString(2, associatedOrgId);
+                    });
+        } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
 
     @Override
-    public SharedUserAssociation getOrganizationUserAssociation(String realUserId, String sharedOrgId)
+    public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement getUserSharedOrgPrepStat =
-                     connection.prepareStatement(GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG)) {
-            getUserSharedOrgPrepStat.setString(1, realUserId);
-            getUserSharedOrgPrepStat.setString(2, sharedOrgId);
-            try (ResultSet resultSet = getUserSharedOrgPrepStat.executeQuery()) {
-                if (resultSet.next()) {
-                    SharedUserAssociation sharedUserAssociation = new SharedUserAssociation();
-                    sharedUserAssociation.setSharedUserId(resultSet.getString(COLUMN_NAME_SHARED_USER_ID));
-                    sharedUserAssociation.setSharedOrganizationId(resultSet.getString(COLUMN_NAME_SUB_ORG_ID));
-                    return sharedUserAssociation;
-                }
-                return null;
-            }
-        } catch (SQLException e) {
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        return userAssociation;
+                    },
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, associatedUserId);
+                        namedPreparedStatement.setString(2, orgId);
+                    });
+        } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG, e,
-                    sharedOrgId);
+                    orgId);
         }
     }
 
     @Override
-    public SharedUserAssociation getSharedUserAssociationOfSharedUser(String sharedUserId, String sharedOrganizationId)
+    public UserAssociation getUserAssociation(String userId, String organizationId)
             throws OrganizationManagementServerException {
 
-        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-             PreparedStatement getUserSharedOrgPrepStat =
-                     connection.prepareStatement(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER)) {
-            getUserSharedOrgPrepStat.setString(1, sharedUserId);
-            getUserSharedOrgPrepStat.setString(2, sharedOrganizationId);
-            try (ResultSet resultSet = getUserSharedOrgPrepStat.executeQuery()) {
-                if (resultSet.next()) {
-                    SharedUserAssociation sharedUserAssociation = new SharedUserAssociation();
-                    sharedUserAssociation.setRealUserId(resultSet.getString(COLUMN_NAME_REAL_USER_ID));
-                    sharedUserAssociation.setUserResidentOrganizationId(
-                            resultSet.getString(COLUMN_NAME_USER_RESIDENT_ORG_ID));
-                    return sharedUserAssociation;
-                }
-                return null;
-            }
-        } catch (SQLException e) {
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        return userAssociation;
+                    },
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, userId);
+                        namedPreparedStatement.setString(2, organizationId);
+                    });
+        } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_OF_SHARED_USER, e,
-                    sharedUserId, sharedOrganizationId);
+                    userId, organizationId);
         }
     }
 }

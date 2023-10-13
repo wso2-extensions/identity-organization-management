@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SharedUserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.List;
@@ -31,71 +31,68 @@ public interface OrganizationUserSharingDAO {
     /**
      * Creates the association between the shared user and the actual user in the shared organization.
      *
-     * @param realUserId             Actual user ID of the user in the parent organization.
-     * @param userOrganizationId The organization ID where the user's identity is managed.
-     * @param sharedUserId       ID of the user which is created in the shared organization.
-     * @param sharedOrgId        Organization ID of the user shared organization.
+     * @param userId           ID of the user who gets created in the organization.
+     * @param orgId            Organization ID of the user shared organization.
+     * @param associatedUserId Actual user ID of the associated user.
+     * @param associatedOrgId  The organization ID where the associated user is managed.
      * @throws OrganizationManagementServerException If an error occurs while creating the organization user
      *                                               association.
      */
-    void createOrganizationUserAssociation(String realUserId, String userOrganizationId, String sharedUserId,
-                                           String sharedOrgId) throws OrganizationManagementServerException;
+    void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException;
 
     /**
      * Delete the organization user association for a shared user in a shared organization.
      *
-     * @param sharedUserId       The shared user ID of the user shared with an organization.
-     * @param userOrganizationId The organization ID where the user's identity is managed.
-     * @return True if the organization user association is deleted successfully.
-     * @throws OrganizationManagementServerException If an error occurs while deleting the organization user
-     *                                               association.
+     * @param userId          The ID of the user.
+     * @param associatedOrgId The organization ID where the associated user's identity is managed.
+     * @return True if the user association is deleted successfully.
+     * @throws OrganizationManagementServerException If an error occurs while deleting the user association.
      */
-    boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userOrganizationId)
+    boolean deleteUserAssociationOfUserByAssociatedOrg(String userId, String associatedOrgId)
             throws OrganizationManagementServerException;
 
     /**
      * Delete all the organization user associations for a given user.
      *
-     * @param realUserId             Actual user ID of the user.
-     * @param userOrganizationId The organization ID where the user's identity is managed.
-     * @return True if all the organization user associations are deleted successfully.
-     * @throws OrganizationManagementServerException If an error occurs while deleting the organization user
-     *                                               associations.
+     * @param associatedUserId Actual user ID of the user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @return True if all the user associations are deleted successfully.
+     * @throws OrganizationManagementServerException If an error occurs while deleting the user associations.
      */
-    boolean deleteOrganizationUserAssociations(String realUserId, String userOrganizationId)
+    boolean deleteUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException;
 
     /**
-     * Get all the organization user associations for a given user.
+     * Get all the user associations for a given user.
      *
-     * @param realUserId         Actual user ID of the user.
-     * @param userOrganizationId The organization ID where is the user is managed.
-     * @return the list of {@link SharedUserAssociation}s.
-     * @throws OrganizationManagementServerException If an error occurs while fetching organization user associations.
+     * @param associatedUserId Actual user ID of the user.
+     * @param associatedOrgId  The organization ID where is the user is managed.
+     * @return the list of {@link UserAssociation}s.
+     * @throws OrganizationManagementServerException If an error occurs while fetching user associations.
      */
-    List<SharedUserAssociation> getOrganizationUserAssociationsOfUser(String realUserId, String userOrganizationId)
+    List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException;
 
     /**
      * Get the organization user association of a given user in a given organization.
      *
-     * @param realUserId      Actual user ID of the user.
-     * @param sharedOrgId Organization ID where the user is shared.
+     * @param associatedUserId ID of the associated user.
+     * @param orgId            Organization ID where the user is shared.
      * @return The organization users association details.
-     * @throws OrganizationManagementServerException If an error occurs while retrieving the organization user
-     *                                               association.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the user association.
      */
-    SharedUserAssociation getOrganizationUserAssociation(String realUserId, String sharedOrgId)
+    UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException;
 
     /**
      * Get the shared user association of a shared user.
      *
-     * @param sharedUserId               The user ID of the shared user.
-     * @param sharedOrganizationId The organization ID of the user.
-     * @return The shared user association of the shared user.
-     * @throws OrganizationManagementServerException If an error occurs while retrieving the shared user association.
+     * @param userId         The user ID of the shared user.
+     * @param organizationId The organization ID of the user.
+     * @return The user association of the user.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the user association.
      */
-    SharedUserAssociation getSharedUserAssociationOfSharedUser(String sharedUserId, String sharedOrganizationId)
+    UserAssociation getUserAssociation(String userId, String organizationId)
             throws OrganizationManagementServerException;
 }

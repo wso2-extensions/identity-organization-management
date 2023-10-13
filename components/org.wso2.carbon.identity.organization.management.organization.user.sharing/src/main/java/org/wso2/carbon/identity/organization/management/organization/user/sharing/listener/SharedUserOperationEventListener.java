@@ -21,6 +21,8 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -31,8 +33,8 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
 /**
  * User operation event listener for shared user management.
@@ -55,18 +57,21 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         try {
-            String userManagedOrganizationClaim =
-                    getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
-            if (userManagedOrganizationClaim == null) {
-                String organizationId = getOrganizationId();
-                if (organizationId == null) {
-                    organizationId = SUPER_ORG_ID;
-                }
-                return organizationUserSharingService.unShareOrganizationUsers(userID, organizationId);
+            // The organization where the user identity is managed. Clear all the associations of the user.
+            String associatedOrgId = OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
+            if (associatedOrgId != null) {
+                // User is associated only for shared users. Hence, delete the user association.
+                return organizationUserSharingService.deleteUserAssociation(userID, associatedOrgId);
             }
-            // Delete the organization user association of the shared user by shared user ID.
-            return organizationUserSharingService.deleteOrganizationUserAssociationOfSharedUser(userID,
-                    userManagedOrganizationClaim);
+
+            String orgId = getOrganizationId();
+            if (orgId == null) {
+                orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveOrganizationId(getTenantDomain());
+            }
+            // Delete all the user associations of the user.
+            return organizationUserSharingService.unShareOrganizationUsers(userID, orgId);
         } catch (OrganizationManagementException e) {
             throw new UserStoreException(e.getMessage(), e.getErrorCode(), e);
         }
@@ -102,14 +107,5 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED.getCode());
         }
         return true;
-    }
-
-    private String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
-            throws UserStoreException {
-
-        String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
-        Map<String, String> claimsMap = userStoreManager
-                .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
-        return claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
     }
 }

@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.internal;
 
+import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -29,6 +30,7 @@ public class OrganizationUserSharingDataHolder {
     private static final OrganizationUserSharingDataHolder instance = new OrganizationUserSharingDataHolder();
     private RealmService realmService;
     private OrganizationManager organizationManager;
+    private RoleManager roleManager;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -53,5 +55,25 @@ public class OrganizationUserSharingDataHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    /**
+     * Get the organization role manager service.
+     *
+     * @return Organization role manager service.
+     */
+    public RoleManager getRoleManager() {
+
+        return this.roleManager;
+    }
+
+    /**
+     * Set the organization role manager service.
+     *
+     * @param roleManager Organization role manager service.
+     */
+    public void setRoleManager(RoleManager roleManager) {
+
+        this.roleManager = roleManager;
     }
 }

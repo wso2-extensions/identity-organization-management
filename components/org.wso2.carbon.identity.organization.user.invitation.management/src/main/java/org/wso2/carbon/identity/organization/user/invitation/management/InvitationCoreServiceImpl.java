@@ -29,7 +29,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
@@ -54,7 +54,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
@@ -185,9 +184,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                                         invitation.getUsername(), invitedOrganizationId));
                     }
 
-                    String realUserId = getRealUserId(invitation);
-                    getOrganizationUserSharingService().shareOrganizationUser(realUserId,
-                            invitation.getUserOrganizationId(), invitedOrganizationId);
+                    String userId = getRealUserId(invitation);
+                    getOrganizationUserSharingService().shareOrganizationUser(invitedOrganizationId, userId,
+                            invitation.getUserOrganizationId());
                     // Trigger event to add the role assignments if any available in the invitation.
                     if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                         // Get the available group name for the group in the invited organization.
@@ -361,12 +360,12 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             int userTenantId = IdentityTenantUtil.getTenantId(userTenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(userTenantId);
             String userId = userStoreManager.getUserIDFromUserName(userName);
-            String userManagedOrganizationClaim = getUserManagedOrganizationClaim(userStoreManager, userId);
+            String userManagedOrganizationClaim = OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim(userStoreManager, userId);
             if (userManagedOrganizationClaim != null) {
-                String sharedOrganizationId = invitation.getUserOrganizationId();
+                String orgId = invitation.getUserOrganizationId();
                 invitation.setUserOrganizationId(userManagedOrganizationClaim);
-                return getOrganizationUserSharingService().getSharedUserAssociationOfSharedUser(userId,
-                        sharedOrganizationId).getRealUserId();
+                return getOrganizationUserSharingService().getUserAssociation(userId, orgId).getAssociatedUserId();
             }
             return userId;
         } catch (UserStoreException e) {
@@ -454,16 +453,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             LOG.error("Error while triggering role assignment event for group: " + groupName + " in organization: " +
                     orgId, e);
         }
-    }
-
-    private String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
-            throws org.wso2.carbon.user.core.UserStoreException {
-
-        String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
-        Map<String, String> claimsMap = userStoreManager
-                .getUserClaimValuesWithID(userId, new String[]{UserSharingConstants.CLAIM_MANAGED_ORGANIZATION},
-                        userDomain);
-        return claimsMap.get(UserSharingConstants.CLAIM_MANAGED_ORGANIZATION);
     }
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {

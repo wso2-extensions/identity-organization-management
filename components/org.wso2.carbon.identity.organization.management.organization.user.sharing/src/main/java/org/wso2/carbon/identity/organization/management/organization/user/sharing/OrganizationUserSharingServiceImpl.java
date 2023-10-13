@@ -22,7 +22,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SharedUserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.api.UserRealm;
@@ -50,76 +50,71 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
 
     @Override
-    public void shareOrganizationUser(String realUserId, String userResidentOrgId, String sharedOrgId)
+    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
         try {
-            int userResidentTenantId =
-                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(userResidentOrgId));
-            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(userResidentTenantId);
-            String userName = userStoreManager.getUser(realUserId, null).getUsername();
+            int associatedUserTenantId =
+                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
+            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
 
             HashMap<String, String> userClaims = new HashMap<>();
-            userClaims.put(CLAIM_MANAGED_ORGANIZATION, userResidentOrgId);
+            userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
             userClaims.put(ID_CLAIM_READ_ONLY, "true");
             UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
 
-            int sharedOrgTenantId =
-                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(sharedOrgId));
-            userStoreManager = getAbstractUserStoreManager(sharedOrgTenantId);
-
-            userName = "sub-" + userName;
+            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
+            userStoreManager = getAbstractUserStoreManager(tenantId);
             userStoreManager.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
-            String sharedUserId = userStoreManager.getUserIDFromUserName(userName);
-            organizationUserSharingDAO.createOrganizationUserAssociation(realUserId, userResidentOrgId, sharedUserId,
-                    sharedOrgId);
+            String userId = userStoreManager.getUserIDFromUserName(userName);
+            organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
+                    associatedOrgId);
         } catch (UserStoreException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, sharedOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         }
     }
 
     @Override
-    public boolean unShareOrganizationUsers(String realUserId, String userResidentOrgId)
+    public boolean unShareOrganizationUsers(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        List<SharedUserAssociation> sharedUserAssociationList =
-                organizationUserSharingDAO.getOrganizationUserAssociationsOfUser(realUserId, userResidentOrgId);
+        List<UserAssociation> userAssociationList =
+                organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(associatedUserId, associatedOrgId);
         // Removing the shared users from the shared organizations.
-        for (SharedUserAssociation sharedUserAssociation : sharedUserAssociationList) {
-            String sharedOrganizationId = sharedUserAssociation.getSharedOrganizationId();
-            String tenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+        for (UserAssociation userAssociation : userAssociationList) {
+            String organizationId = userAssociation.getOrganizationId();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             try {
                 AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-                sharedOrgUserStoreManager.deleteUserWithID(sharedUserAssociation.getSharedUserId());
+                sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
-                        sharedUserAssociation.getSharedUserId(), sharedOrganizationId);
+                        userAssociation.getUserId(), organizationId);
             }
         }
         return true;
     }
 
     @Override
-    public boolean deleteOrganizationUserAssociationOfSharedUser(String sharedUserId, String userResidentOrgId)
-            throws OrganizationManagementException {
+    public boolean deleteUserAssociation(String userId, String associatedOrgId) throws OrganizationManagementException {
 
-        return organizationUserSharingDAO.deleteOrganizationUserAssociationOfSharedUser(sharedUserId,
-                userResidentOrgId);
+        return organizationUserSharingDAO.deleteUserAssociationOfUserByAssociatedOrg(userId, associatedOrgId);
     }
 
     @Override
-    public SharedUserAssociation getSharedUserAssociationOfUser(String realUserId, String sharedOrganizationId)
+    public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementException {
 
-        return organizationUserSharingDAO.getOrganizationUserAssociation(realUserId, sharedOrganizationId);
+        return organizationUserSharingDAO.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
     }
 
     @Override
-    public SharedUserAssociation getSharedUserAssociationOfSharedUser(String sharedUserId, String sharedOrganizationId)
+    public UserAssociation getUserAssociation(String sharedUserId, String sharedOrganizationId)
             throws OrganizationManagementException {
 
-        return organizationUserSharingDAO.getSharedUserAssociationOfSharedUser(sharedUserId, sharedOrganizationId);
+        return organizationUserSharingDAO.getUserAssociation(sharedUserId, sharedOrganizationId);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
