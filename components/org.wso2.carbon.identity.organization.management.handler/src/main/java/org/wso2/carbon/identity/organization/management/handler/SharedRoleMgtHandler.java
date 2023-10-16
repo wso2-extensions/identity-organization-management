@@ -35,11 +35,11 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,8 +124,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             String roleAudienceType = (String) eventProperties.get(IdentityEventConstants.EventProperty.AUDIENCE);
             String roleAudienceId = (String) eventProperties.get(IdentityEventConstants.EventProperty.AUDIENCE_ID);
             String roleOrgId = getOrganizationManager().resolveOrganizationId(roleTenantDomain);
-            boolean isPrimaryOrganization = getOrganizationManager().isPrimaryOrganization(roleOrgId);
-            if (!isPrimaryOrganization && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(roleTenantDomain)) {
+            if (Utils.isOrganization(roleTenantDomain)) {
                 return;
             }
             switch (roleAudienceType) {
