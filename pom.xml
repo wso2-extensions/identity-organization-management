@@ -240,7 +240,11 @@
                 <artifactId>org.wso2.carbon.identity.governance</artifactId>
                 <version>${org.wso2.carbon.identity.governance.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>

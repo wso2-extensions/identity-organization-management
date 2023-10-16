@@ -30,8 +30,11 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
+import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
 /**
  * Organization management handler service component.
@@ -54,8 +57,8 @@ public class OrganizationManagementHandlerServiceComponent {
 
         try {
             BundleContext bundleContext = componentContext.getBundleContext();
-            bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(),
-                    null);
+            bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(), null);
+            bundleContext.registerService(AbstractEventHandler.class, new SharedRoleMgtHandler(), null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);
@@ -110,5 +113,40 @@ public class OrganizationManagementHandlerServiceComponent {
 
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(null);
     }
-}
 
+    @Reference(
+            name = "org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService",
+            service = org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRoleManagementServiceV2")
+    protected void setRoleManagementServiceV2(RoleManagementService roleManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(roleManagementService);
+        LOG.debug("RoleManagementServiceV2 set in OrganizationManagementHandlerService bundle.");
+    }
+
+    protected void unsetRoleManagementServiceV2(RoleManagementService roleManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(null);
+        LOG.debug("RoleManagementServiceV2 unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.identity.organization.management.application.OrgApplicationManager",
+            service = org.wso2.carbon.identity.organization.management.application.OrgApplicationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrgApplicationManagementService")
+    protected void setOrgApplicationManagementService(OrgApplicationManager orgApplicationManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(orgApplicationManagementService);
+        LOG.debug("OrgApplication management service unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    protected void unsetOrgApplicationManagementService(OrgApplicationManager orgApplicationManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(null);
+        LOG.debug("OrgApplication management service unset in OrganizationManagementHandlerService bundle.");
+    }
+}

@@ -20,7 +20,9 @@ package org.wso2.carbon.identity.organization.management.handler.internal;
 
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
 /**
  * Organization management handler data holder.
@@ -31,10 +33,10 @@ public class OrganizationManagementHandlerDataHolder {
             new OrganizationManagementHandlerDataHolder();
 
     private IdentityEventService identityEventService;
-
     private IdentityGovernanceService identityGovernanceService;
-
     private OrganizationManager organizationManager;
+    private RoleManagementService roleManagementServiceV2;
+    private OrgApplicationManager orgApplicationManager;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -99,6 +101,46 @@ public class OrganizationManagementHandlerDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    /**
+     * Set {@link RoleManagementService}.
+     *
+     * @param roleManagementServiceV2 Instance of {@link RoleManagementService}.
+     */
+    public void setRoleManagementServiceV2(RoleManagementService roleManagementServiceV2) {
+
+        this.roleManagementServiceV2 = roleManagementServiceV2;
+    }
+
+    /**
+     * Get {@link RoleManagementService}.
+     *
+     * @return role management service instance {@link RoleManagementService}.
+     */
+    public RoleManagementService getRoleManagementServiceV2() {
+
+        return roleManagementServiceV2;
+    }
+
+    /**
+     * Get {@link OrgApplicationManager}.
+     *
+     * @return Org application manager instance {@link OrgApplicationManager}.
+     */
+    public OrgApplicationManager getOrgApplicationManager() {
+
+        return orgApplicationManager;
+    }
+
+    /**
+     * Set {@link OrgApplicationManager}.
+     *
+     * @param orgApplicationManager Instance of {@link OrgApplicationManager}.
+     */
+    public void setOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
+
+        this.orgApplicationManager = orgApplicationManager;
     }
 }
 
