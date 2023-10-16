@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
@@ -149,27 +150,21 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     break;
                 case RoleConstants.ORGANIZATION:
                     // If the audienced organization is a shared organization, create the role in the shared orgs.
-                    getOrganizationManager().getChildOrganizations(roleOrgId, true).forEach(childOrg -> {
-                        try {
-                            String sharedOrganizationId = childOrg.getId();
-                            String shareAppTenantDomain =
-                                    getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                            RoleBasicInfo sharedRoleInfo =
-                                    getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
-                                            Collections.emptyList(), Collections.emptyList(),
-                                            RoleConstants.ORGANIZATION, sharedOrganizationId,
-                                            shareAppTenantDomain);
-                            // Add relationship between main role and shared role.
-                            getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
-                                    sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
-                        } catch (OrganizationManagementException e) {
-                            //TODO : handle exception
-                            throw new RuntimeException(e);
-                        } catch (IdentityRoleManagementException e) {
-                            //TODO : handle exception
-                            throw new RuntimeException(e);
-                        }
-                    });
+                    List<BasicOrganization> childOrganizations =
+                            getOrganizationManager().getChildOrganizations(roleOrgId, true);
+                    for (BasicOrganization childOrg : childOrganizations) {
+                        String sharedOrganizationId = childOrg.getId();
+                        String shareAppTenantDomain =
+                                getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+                        RoleBasicInfo sharedRoleInfo =
+                                getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
+                                        Collections.emptyList(), Collections.emptyList(),
+                                        RoleConstants.ORGANIZATION, sharedOrganizationId,
+                                        shareAppTenantDomain);
+                        // Add relationship between main role and shared role.
+                        getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
+                                sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                    }
                     break;
                 default:
                     LOG.error("Unsupported audience type: " + roleAudienceType);
