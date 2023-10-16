@@ -24,10 +24,12 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -46,6 +48,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -210,6 +213,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                 .setUseUserstoreDomainInRoles(mainApplication
                                         .getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
                     }
+
+                    // Set application's associated roles.
+                    AssociatedRolesConfig associatedRolesConfigOfMainApp = mainApplication.getAssociatedRolesConfig();
+                    if (associatedRolesConfigOfMainApp != null) {
+                        AssociatedRolesConfig associatedRolesConfigForSharedApp =
+                                getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp);
+                        serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
+                    }
                 }
             } catch (OrganizationManagementException e) {
                 throw new IdentityApplicationManagementException
@@ -217,6 +228,19 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
+    }
+
+    private AssociatedRolesConfig getAssociatedRolesConfigForSharedApp(
+            AssociatedRolesConfig associatedRolesConfigOfMainApp) {
+
+        String allowedAudience = associatedRolesConfigOfMainApp.getAllowedAudience();
+        List<RoleV2> mainAppRoles = associatedRolesConfigOfMainApp.getRoles();
+        AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
+        associatedRolesConfigForSharedApp.setAllowedAudience(allowedAudience);
+        // TODO resolve to shared role id reference and re build.
+        List<RoleV2> associatedRolesOfSharedApp = mainAppRoles;
+        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
+        return associatedRolesConfigForSharedApp;
     }
 
     @Override
