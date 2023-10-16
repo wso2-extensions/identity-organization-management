@@ -31,7 +31,6 @@ import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
@@ -63,14 +62,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                  */
                 createSubOrgRolesOnAppSharing(eventProperties);
                 break;
-            case OrgApplicationMgtConstants.EVENT_POST_DELETE_SHARED_APPLICATION:
-                // TODO: no need to handle here if application audienced roles get
-                // deleted if the application is deleted.
-                break;
-            case OrgApplicationMgtConstants.EVENT_POST_DELETE_ALL_SHARED_APPLICATIONS:
-                // TODO: no need to handle here if application audienced roles get
-                //  deleted if the application is deleted.
-                break;
             case IdentityEventConstants.Event.POST_ADD_ROLE_V2_EVENT:
                 createSubOrgRolesOnNewRoleCreation(eventProperties);
                 break;
@@ -81,6 +72,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                  */
                 createSubOrgRolesOnNewOrgCreation(eventProperties);
                 break;
+            default:
+                LOG.debug("Unsupported event: " + eventName);
+                break;
         }
     }
 
@@ -89,13 +83,33 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         try {
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
             String organizationId = organization.getId();
-            String organizationName = organization.getName();
-            ParentOrganizationDO parentOrg = organization.getParent();
             if (getOrganizationManager().isPrimaryOrganization(organizationId)) {
                 return;
             }
-
-        } catch (OrganizationManagementServerException e) {
+            String subOrgTenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+            ParentOrganizationDO parentOrg = organization.getParent();
+            String parentOrgId = parentOrg.getId();
+            // Get parent organization's roles which has organization audience.
+            String filter = "audienceId eq " + parentOrg.getId();
+            String parenTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrgId);
+            List<RoleBasicInfo> parentOrgRoles =
+                    getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, parenTenantDomain);
+            for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
+                String parentOrgRoleName = parentOrgRole.getName();
+                // Create the role in the sub org.
+                RoleBasicInfo subOrgRole =
+                        getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
+                                Collections.emptyList(), Collections.emptyList(), RoleConstants.ORGANIZATION,
+                                organizationId, subOrgTenantDomain);
+                // Add relationship between parent org role and sub org role.
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(),
+                        subOrgRole.getId(), parenTenantDomain, subOrgTenantDomain);
+            }
+        } catch (OrganizationManagementException e) {
+            // TODO : handle exception
+            throw new RuntimeException(e);
+        } catch (IdentityRoleManagementException e) {
+            // TODO : handle exception
             throw new RuntimeException(e);
         }
 
@@ -188,10 +202,21 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 String mainApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
                 String sharedApplicationTenantDomain =
                         getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                RoleManagementService roleManagementServiceV2 = getRoleManagementServiceV2();
-                roleManagementServiceV2.shareRoles(parentApplicationId, mainApplicationTenantDomain,
-                        sharedApplicationId,
-                        sharedApplicationTenantDomain);
+                // Get parent organization's roles which has application audience.
+                String filter = "audienceId eq " + parentApplicationId;
+                List<RoleBasicInfo> parentOrgRoles =
+                        getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainApplicationTenantDomain);
+                for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
+                    String parentOrgRoleName = parentOrgRole.getName();
+                    // Create the role in the sub org.
+                    RoleBasicInfo subOrgRole =
+                            getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
+                                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION,
+                                    sharedApplicationId, sharedApplicationTenantDomain);
+                    // Add relationship between parent org role and sub org role.
+                    getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(),
+                            subOrgRole.getId(), mainApplicationTenantDomain, sharedApplicationTenantDomain);
+                }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 // TODO: handle exception
                 throw new RuntimeException(e);
