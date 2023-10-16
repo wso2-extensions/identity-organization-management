@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.handler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -37,6 +38,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Collections;
 import java.util.List;
@@ -78,7 +80,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
     }
 
-    private void createSubOrgRolesOnNewOrgCreation(Map<String, Object> eventProperties) {
+    private void createSubOrgRolesOnNewOrgCreation(Map<String, Object> eventProperties) throws IdentityEventException {
 
         try {
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
@@ -90,7 +92,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             ParentOrganizationDO parentOrg = organization.getParent();
             String parentOrgId = parentOrg.getId();
             // Get parent organization's roles which has organization audience.
-            String filter = "audienceId eq " + parentOrg.getId();
+            String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + parentOrg.getId();
             String parenTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrgId);
             List<RoleBasicInfo> parentOrgRoles =
                     getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, parenTenantDomain);
@@ -106,16 +108,13 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                         subOrgRole.getId(), parenTenantDomain, subOrgTenantDomain);
             }
         } catch (OrganizationManagementException e) {
-            // TODO : handle exception
-            throw new RuntimeException(e);
+            throw new IdentityEventException("Error occurred while resolving organization id from tenant domain.", e);
         } catch (IdentityRoleManagementException e) {
-            // TODO : handle exception
-            throw new RuntimeException(e);
+            throw new IdentityEventException("Error occurred while adding main role to shared role relationship.", e);
         }
-
     }
 
-    private void createSubOrgRolesOnNewRoleCreation(Map<String, Object> eventProperties) {
+    private void createSubOrgRolesOnNewRoleCreation(Map<String, Object> eventProperties) throws IdentityEventException {
 
         try {
             String mainRoleUUID = (String) eventProperties.get(IdentityEventConstants.EventProperty.ROLE_ID);
@@ -125,7 +124,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             String roleAudienceId = (String) eventProperties.get(IdentityEventConstants.EventProperty.AUDIENCE_ID);
             String roleOrgId = getOrganizationManager().resolveOrganizationId(roleTenantDomain);
             boolean isPrimaryOrganization = getOrganizationManager().isPrimaryOrganization(roleOrgId);
-            if (!isPrimaryOrganization) {
+            if (!isPrimaryOrganization && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(roleTenantDomain)) {
                 return;
             }
             switch (roleAudienceType) {
@@ -176,15 +175,13 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     LOG.error("Unsupported audience type: " + roleAudienceType);
             }
         } catch (OrganizationManagementException e) {
-            // TODO : handle exception
-            LOG.debug(e.getMessage());
+            throw new IdentityEventException("Error occurred while retrieving shared applications.", e);
         } catch (IdentityRoleManagementException e) {
-            // TODO : handle exception
-            throw new RuntimeException(e);
+            throw new IdentityEventException("Error occurred while adding main role to shared role relationship.", e);
         }
     }
 
-    private void createSubOrgRolesOnAppSharing(Map<String, Object> eventProperties) {
+    private void createSubOrgRolesOnAppSharing(Map<String, Object> eventProperties) throws IdentityEventException {
 
         String parentOrganizationId =
                 (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID);
@@ -194,33 +191,40 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID);
         String sharedApplicationId =
                 (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID);
-        boolean hasAppAudiencedRoles = true;
-        // TODO: check application is using the application audience roles.
-        if (hasAppAudiencedRoles) {
-            // Create the role if not exists, and add the relationship.
-            try {
-                String mainApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
-                String sharedApplicationTenantDomain =
-                        getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                // Get parent organization's roles which has application audience.
-                String filter = "audienceId eq " + parentApplicationId;
-                List<RoleBasicInfo> parentOrgRoles =
-                        getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainApplicationTenantDomain);
-                for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
-                    String parentOrgRoleName = parentOrgRole.getName();
-                    // Create the role in the sub org.
-                    RoleBasicInfo subOrgRole =
-                            getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
-                                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION,
-                                    sharedApplicationId, sharedApplicationTenantDomain);
-                    // Add relationship between parent org role and sub org role.
-                    getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(),
-                            subOrgRole.getId(), mainApplicationTenantDomain, sharedApplicationTenantDomain);
-                }
-            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-                // TODO: handle exception
-                throw new RuntimeException(e);
+        try {
+            String mainApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
+            String allowedAudienceForRoleAssociation =
+                    OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService()
+                            .getAllowedAudienceForRoleAssociation(parentApplicationId, mainApplicationTenantDomain);
+            boolean hasAppAudiencedRoles =
+                    RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociation);
+            if (!hasAppAudiencedRoles) {
+                return;
             }
+            // Create the role if not exists, and add the relationship.
+            String sharedApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+            // Get parent organization's roles which has application audience.
+            String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + parentApplicationId;
+            List<RoleBasicInfo> parentOrgRoles =
+                    getRoleManagementServiceV2().getRoles(filter, null, 0, null, null,
+                            mainApplicationTenantDomain);
+            for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
+                String parentOrgRoleName = parentOrgRole.getName();
+                // Create the role in the sub org.
+                RoleBasicInfo subOrgRole =
+                        getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
+                                Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION,
+                                sharedApplicationId, sharedApplicationTenantDomain);
+                // Add relationship between parent org role and sub org role.
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(),
+                        subOrgRole.getId(), mainApplicationTenantDomain, sharedApplicationTenantDomain);
+            }
+        } catch (IdentityApplicationManagementException e) {
+            throw new IdentityEventException("Error occurred checking main application allowed role audience.", e);
+        } catch (OrganizationManagementException e) {
+            throw new IdentityEventException("Error occurred while resolving tenant domain from organization id.", e);
+        } catch (IdentityRoleManagementException e) {
+            throw new IdentityEventException("Error occurred while adding main role to shared role relationship.", e);
         }
     }
 

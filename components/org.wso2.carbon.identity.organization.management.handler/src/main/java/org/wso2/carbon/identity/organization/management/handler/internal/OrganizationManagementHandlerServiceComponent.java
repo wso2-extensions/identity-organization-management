@@ -27,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
@@ -141,12 +142,31 @@ public class OrganizationManagementHandlerServiceComponent {
     protected void setOrgApplicationManagementService(OrgApplicationManager orgApplicationManagementService) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(orgApplicationManagementService);
-        LOG.debug("OrgApplication management service unset in OrganizationManagementHandlerService bundle.");
+        LOG.debug("OrgApplication management service set in OrganizationManagementHandlerService bundle.");
     }
 
     protected void unsetOrgApplicationManagementService(OrgApplicationManager orgApplicationManagementService) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(null);
         LOG.debug("OrgApplication management service unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.identity.application.mgt.ApplicationManagementService",
+            service = org.wso2.carbon.identity.application.mgt.ApplicationManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetApplicationManagementService")
+    protected void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(applicationManagementService);
+        LOG.debug("Application management service set in OrganizationManagementHandlerService bundle.");
+    }
+
+    protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setApplicationManagementService(null);
+        LOG.debug("Application management service unset in OrganizationManagementHandlerService bundle.");
     }
 }

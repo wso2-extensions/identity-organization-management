@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.handler.internal;
 
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -37,6 +38,7 @@ public class OrganizationManagementHandlerDataHolder {
     private OrganizationManager organizationManager;
     private RoleManagementService roleManagementServiceV2;
     private OrgApplicationManager orgApplicationManager;
+    private ApplicationManagementService applicationManagementService;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -141,6 +143,27 @@ public class OrganizationManagementHandlerDataHolder {
     public void setOrgApplicationManager(OrgApplicationManager orgApplicationManager) {
 
         this.orgApplicationManager = orgApplicationManager;
+    }
+
+    /**
+     * Get {@link ApplicationManagementService}.
+     *
+     * @return Application management instance {@link ApplicationManagementService}.
+     */
+    public ApplicationManagementService getApplicationManagementService() {
+
+        return applicationManagementService;
+    }
+
+    /**
+     * Set {@link ApplicationManagementService}.
+     *
+     * @param applicationManagementService Instance of {@link ApplicationManagementService}.
+     */
+    public void setApplicationManagementService(
+            ApplicationManagementService applicationManagementService) {
+
+        this.applicationManagementService = applicationManagementService;
     }
 }
 
