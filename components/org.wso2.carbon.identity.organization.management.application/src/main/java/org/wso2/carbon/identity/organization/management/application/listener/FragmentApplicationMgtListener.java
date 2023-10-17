@@ -47,11 +47,14 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
@@ -218,11 +221,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     AssociatedRolesConfig associatedRolesConfigOfMainApp = mainApplication.getAssociatedRolesConfig();
                     if (associatedRolesConfigOfMainApp != null) {
                         AssociatedRolesConfig associatedRolesConfigForSharedApp =
-                                getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp);
+                                getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp, tenantDomain);
                         serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
                     }
                 }
-            } catch (OrganizationManagementException e) {
+            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
                         ("Error while retrieving the fragment application details.", e);
             }
@@ -231,14 +234,37 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     }
 
     private AssociatedRolesConfig getAssociatedRolesConfigForSharedApp(
-            AssociatedRolesConfig associatedRolesConfigOfMainApp) {
+            AssociatedRolesConfig associatedRolesConfigOfMainApp, String tenantDomainOfSharedApp)
+            throws IdentityRoleManagementException {
 
         String allowedAudience = associatedRolesConfigOfMainApp.getAllowedAudience();
         List<RoleV2> mainAppRoles = associatedRolesConfigOfMainApp.getRoles();
         AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
         associatedRolesConfigForSharedApp.setAllowedAudience(allowedAudience);
-        // TODO resolve to shared role id reference and re build.
-        List<RoleV2> associatedRolesOfSharedApp = mainAppRoles;
+        List<String> mainAppRoleIds = mainAppRoles.stream().map(RoleV2::getId).collect(Collectors.toList());
+        Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
+                getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds,
+                        tenantDomainOfSharedApp);
+
+        List<RoleV2> associatedRolesOfSharedApp = mainRoleToSharedRoleMappingsBySubOrg.entrySet().stream()
+                .map(entry -> {
+                    String sharedRoleId = entry.getValue();
+                    String mainRoleId = entry.getKey();
+
+                    // Find the main role by ID and retrieve its name.
+                    String mainRoleName = mainAppRoles.stream()
+                            .filter(role -> role.getId().equals(mainRoleId))
+                            .findFirst()
+                            .map(RoleV2::getName)
+                            .orElse(null);
+
+                    RoleV2 sharedRole = new RoleV2();
+                    sharedRole.setId(sharedRoleId);
+                    sharedRole.setName(mainRoleName);
+                    return sharedRole;
+                })
+                .collect(Collectors.toList());
+
         associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
         return associatedRolesConfigForSharedApp;
     }
@@ -327,6 +353,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private OrganizationManager getOrganizationManager() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private RoleManagementService getRoleManagementServiceV2() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getRoleManagementServiceV2();
     }
 
     /**

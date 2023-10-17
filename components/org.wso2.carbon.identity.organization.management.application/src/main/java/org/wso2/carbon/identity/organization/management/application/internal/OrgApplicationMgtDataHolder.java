@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -46,8 +47,9 @@ public class OrgApplicationMgtDataHolder {
     private IdpManager idpManager;
     private ApplicationSharingManagerListener applicationSharingManagerListener;
     private IdentityEventService identityEventService;
-
     private ClaimMetadataManagementService claimMetadataManagementService;
+    private RoleManagementService roleManagementServiceV2;
+
     private OrgApplicationMgtDataHolder() {
 
     }
@@ -247,5 +249,25 @@ public class OrgApplicationMgtDataHolder {
     public void setIdentityEventService(IdentityEventService identityEventService) {
 
         this.identityEventService = identityEventService;
+    }
+
+    /**
+     * Get {@link RoleManagementService}.
+     *
+     * @return RoleManagementService.
+     */
+    public RoleManagementService getRoleManagementServiceV2() {
+
+        return roleManagementServiceV2;
+    }
+
+    /**
+     * Set {@link RoleManagementService}.
+     *
+     * @param roleManagementServiceV2 Instance of {@link RoleManagementService}.
+     */
+    public void setRoleManagementServiceV2(RoleManagementService roleManagementServiceV2) {
+
+        this.roleManagementServiceV2 = roleManagementServiceV2;
     }
 }
