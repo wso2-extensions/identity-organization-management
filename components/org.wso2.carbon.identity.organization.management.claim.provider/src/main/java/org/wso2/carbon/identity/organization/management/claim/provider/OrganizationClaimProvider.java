@@ -41,8 +41,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
  */
 public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenClaimProvider {
 
-    private static final String ORGANIZATION_ID_ATTRIBUTE = "org_id";
-    private static final String ORGANIZATION_NAME_ATTRIBUTE = "org_name";
+    private static final String AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE = "org_id";
+    private static final String AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE = "org_name";
+    private static final String USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "user_organization";
 
     @Override
     public Map<String, Object> getAdditionalClaims(OAuthAuthzReqMessageContext oAuthAuthzReqMessageContext,
@@ -50,7 +51,8 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
             throws IdentityOAuth2Exception {
 
         String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        return getOrganizationInformation(tenantDomain);
+        String organizationId = resolveOrganizationId(tenantDomain);
+        return setOrganizationInformation(organizationId, organizationId);
     }
 
     @Override
@@ -58,13 +60,13 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                                                    OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain();
-        return getOrganizationInformation(tenantDomain);
-    }
-
-    private OrganizationManager getOrganizationManager() {
-
-        return OrganizationClaimProviderServiceComponentHolder.getInstance().getOrganizationManager();
+        String userResidentOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
+        String accessingOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        if (StringUtils.isEmpty(accessingOrganization)) {
+            accessingOrganization =
+                    resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        }
+        return setOrganizationInformation(userResidentOrganization, accessingOrganization);
     }
 
     @Override
@@ -72,38 +74,61 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
             throws IdentityOAuth2Exception {
 
         String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        return getOrganizationInformation(tenantDomain);
+        String organizationId = resolveOrganizationId(tenantDomain);
+        return setOrganizationInformation(organizationId, organizationId);
     }
 
     @Override
     public Map<String, Object> getAdditionalClaims(OAuthTokenReqMessageContext oAuthTokenReqMessageContext)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain();
-        return getOrganizationInformation(tenantDomain);
+        String userResidentOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
+        String authorizedOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrganization)) {
+            authorizedOrganization =
+                    resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        }
+        return setOrganizationInformation(userResidentOrganization, authorizedOrganization);
     }
 
-    private Map<String, Object> getOrganizationInformation(String tenantDomain) throws IdentityOAuth2Exception {
+    private Map<String, Object> setOrganizationInformation(String userResidentOrganization,
+                                                           String authorizedOrganization)
+            throws IdentityOAuth2Exception {
 
         Map<String, Object> additionalClaims = new HashMap<>();
         if (!OrganizationClaimProviderServiceComponentHolder.getInstance().isOrganizationManagementEnable()) {
             return additionalClaims;
         }
         try {
-            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-            if (StringUtils.isNotBlank(organizationId)) {
-                String organizationName = getOrganizationManager().getOrganizationNameById(organizationId);
-                additionalClaims.put(ORGANIZATION_ID_ATTRIBUTE, organizationId);
-                additionalClaims.put(ORGANIZATION_NAME_ATTRIBUTE, organizationName);
+            if (StringUtils.isNotBlank(authorizedOrganization)) {
+                String authorizedOrganizationName =
+                        getOrganizationManager().getOrganizationNameById(authorizedOrganization);
+                additionalClaims.put(USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE, userResidentOrganization);
+                additionalClaims.put(AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE, authorizedOrganization);
+                additionalClaims.put(AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE, authorizedOrganizationName);
             }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityOAuth2Exception("Error while resolving organization name by ID.", e);
+        }
+        return additionalClaims;
+    }
+
+    private String resolveOrganizationId(String tenantDomain) throws IdentityOAuth2Exception {
+
+        try {
+            return getOrganizationManager().resolveOrganizationId(tenantDomain);
         } catch (OrganizationManagementClientException e) {
             if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
-                return additionalClaims;
+                return null;
             }
             throw new IdentityOAuth2Exception("Error while resolving organization id.", e);
         } catch (OrganizationManagementException e) {
             throw new IdentityOAuth2Exception("Error while resolving organization id.", e);
         }
-        return additionalClaims;
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrganizationClaimProviderServiceComponentHolder.getInstance().getOrganizationManager();
     }
 }
