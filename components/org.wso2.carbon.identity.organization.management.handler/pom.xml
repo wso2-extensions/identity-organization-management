@@ -128,7 +128,12 @@
                             org.wso2.carbon.identity.recovery.*; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.organization.management.application.*; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.application.*;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.mgt.*;
+                            version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.*;
+                            version="${carbon.identity.package.import.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

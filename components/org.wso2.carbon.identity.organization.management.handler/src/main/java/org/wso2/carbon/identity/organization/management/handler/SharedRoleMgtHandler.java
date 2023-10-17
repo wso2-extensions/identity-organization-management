@@ -35,7 +35,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
-import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
@@ -44,6 +44,9 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Event handler to manage shared roles in sub-organizations.
@@ -51,6 +54,7 @@ import java.util.Map;
 public class SharedRoleMgtHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(SharedRoleMgtHandler.class);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -60,28 +64,33 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         switch (eventName) {
             case OrgApplicationMgtConstants.EVENT_POST_SHARE_APPLICATION:
                 /*
-                If the main application use application audienced roles, create the role for sub org space,
-                and add the relationship.
+                If the main application use application audienced roles, create the role for shared app's org space,
+                and add the relationship. If the main application use organization audienced roles, create the role in
+                shared app's org space, and add the relationship if already not exists.
                  */
-                createSubOrgRolesOnAppSharing(eventProperties);
+                createOrganizationRolesOnAppSharing(eventProperties);
                 break;
             case IdentityEventConstants.Event.POST_ADD_ROLE_V2_EVENT:
-                createSubOrgRolesOnNewRoleCreation(eventProperties);
+                createOrganizationRolesOnNewRoleCreation(eventProperties);
                 break;
             case Constants.EVENT_POST_ADD_ORGANIZATION:
                 /*
-                 If the org is a sub organization and if primary org has roles with organization audience,
+                 If the created org's primary business org has roles with organization audience,
                  create them in the sub org as well.
                  */
-                createSubOrgRolesOnNewOrgCreation(eventProperties);
+                // TODO: This might not required with new approach of handling org audience roles
+                createOrganizationRolesOnNewOrgCreation(eventProperties);
                 break;
             default:
-                LOG.debug("Unsupported event: " + eventName);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unsupported event: " + eventName);
+                }
                 break;
         }
     }
 
-    private void createSubOrgRolesOnNewOrgCreation(Map<String, Object> eventProperties) throws IdentityEventException {
+    private void createOrganizationRolesOnNewOrgCreation(Map<String, Object> eventProperties)
+            throws IdentityEventException {
 
         try {
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
@@ -115,7 +124,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
     }
 
-    private void createSubOrgRolesOnNewRoleCreation(Map<String, Object> eventProperties) throws IdentityEventException {
+    private void createOrganizationRolesOnNewRoleCreation(Map<String, Object> eventProperties)
+            throws IdentityEventException {
 
         try {
             String mainRoleUUID = (String) eventProperties.get(IdentityEventConstants.EventProperty.ROLE_ID);
@@ -124,30 +134,53 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             String roleAudienceType = (String) eventProperties.get(IdentityEventConstants.EventProperty.AUDIENCE);
             String roleAudienceId = (String) eventProperties.get(IdentityEventConstants.EventProperty.AUDIENCE_ID);
             String roleOrgId = getOrganizationManager().resolveOrganizationId(roleTenantDomain);
-            if (Utils.isOrganization(roleTenantDomain)) {
+            if (OrganizationManagementUtil.isOrganization(roleTenantDomain)) {
                 return;
             }
             switch (roleAudienceType) {
                 case RoleConstants.APPLICATION:
-                    // If the audienced application is a shared application, create the role in the shared apps.
+                    /*
+                     If the audienced application is a shared application, create the role in
+                     the shared apps' org space.
+                     */
                     List<SharedApplication> sharedApplications =
                             getOrgApplicationManager().getSharedApplications(roleOrgId, roleAudienceId);
-                    for (SharedApplication sharedApplication : sharedApplications) {
-                        String sharedApplicationId = sharedApplication.getSharedApplicationId();
-                        String sharedOrganizationId = sharedApplication.getOrganizationId();
-                        String shareAppTenantDomain =
-                                getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                        RoleBasicInfo sharedRoleInfo =
-                                getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
-                                        Collections.emptyList(),
-                                        Collections.emptyList(), RoleConstants.APPLICATION, sharedApplicationId,
-                                        shareAppTenantDomain);
-                        // Add relationship between main role and shared role.
-                        getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
-                                sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                    int noOfSharedApps = sharedApplications.size();
+                    CompletableFuture<Void>[] creations = new CompletableFuture[noOfSharedApps];
+                    for (int i = 0; i < noOfSharedApps; i++) {
+                        final int taskId = i;
+                        CompletableFuture<Void> sharedRoleCreation = CompletableFuture.runAsync(() -> {
+                            try {
+                                String sharedApplicationId = sharedApplications.get(taskId).getSharedApplicationId();
+                                String sharedOrganizationId = sharedApplications.get(taskId).getOrganizationId();
+                                String shareAppTenantDomain =
+                                        getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+                                RoleBasicInfo sharedRoleInfo =
+                                        getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
+                                                Collections.emptyList(),
+                                                Collections.emptyList(), RoleConstants.APPLICATION, sharedApplicationId,
+                                                shareAppTenantDomain);
+                                // Add relationship between main role and shared role.
+                                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
+                                        sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                            } catch (IdentityRoleManagementException | OrganizationManagementException e) {
+                                LOG.error("Error occurred while creating shared role in organization with id: " +
+                                        sharedApplications.get(taskId).getOrganizationId(), e);
+                            }
+                        }, executorService);
+                        creations[taskId] = sharedRoleCreation;
                     }
+                    CompletableFuture<Void> allOfCreations = CompletableFuture.allOf(creations);
+                    allOfCreations.join();
                     break;
                 case RoleConstants.ORGANIZATION:
+                    /*
+                    TODO: Need to create organization roles in suborgs only if the role is
+                      attahced to at least on shared role
+                        on new org role creation, this role can't be associated to an app.
+                        therefore this logic can be removed
+
+                     */
                     // If the audienced organization is a shared organization, create the role in the shared orgs.
                     List<BasicOrganization> childOrganizations =
                             getOrganizationManager().getChildOrganizations(roleOrgId, true);
@@ -175,7 +208,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
     }
 
-    private void createSubOrgRolesOnAppSharing(Map<String, Object> eventProperties) throws IdentityEventException {
+    private void createOrganizationRolesOnAppSharing(Map<String, Object> eventProperties)
+            throws IdentityEventException {
 
         String parentOrganizationId =
                 (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID);
@@ -193,6 +227,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             boolean hasAppAudiencedRoles =
                     RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociation);
             if (!hasAppAudiencedRoles) {
+                // TODO: handle organization audience role creation if they doesn't exist in sub org.
                 return;
             }
             // Create the role if not exists, and add the relationship.
