@@ -43,7 +43,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
     private static final String AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE = "org_id";
     private static final String AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE = "org_name";
-    private static final String USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "user_organization";
+    private static final String USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "user_org";
 
     @Override
     public Map<String, Object> getAdditionalClaims(OAuthAuthzReqMessageContext oAuthAuthzReqMessageContext,
@@ -52,7 +52,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
         String organizationId = resolveOrganizationId(tenantDomain);
-        return setOrganizationInformation(organizationId, organizationId);
+        return buildOrganizationInformation(organizationId, organizationId);
     }
 
     @Override
@@ -60,13 +60,12 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                                                    OAuth2AccessTokenRespDTO oAuth2AccessTokenRespDTO)
             throws IdentityOAuth2Exception {
 
-        String userResidentOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
-        String accessingOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
-        if (StringUtils.isEmpty(accessingOrganization)) {
-            accessingOrganization =
-                    resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
+        String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
         }
-        return setOrganizationInformation(userResidentOrganization, accessingOrganization);
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
     @Override
@@ -75,24 +74,22 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
         String organizationId = resolveOrganizationId(tenantDomain);
-        return setOrganizationInformation(organizationId, organizationId);
+        return buildOrganizationInformation(organizationId, organizationId);
     }
 
     @Override
     public Map<String, Object> getAdditionalClaims(OAuthTokenReqMessageContext oAuthTokenReqMessageContext)
             throws IdentityOAuth2Exception {
 
-        String userResidentOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
-        String authorizedOrganization = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
-        if (StringUtils.isEmpty(authorizedOrganization)) {
-            authorizedOrganization =
-                    resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
+        String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
         }
-        return setOrganizationInformation(userResidentOrganization, authorizedOrganization);
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
-    private Map<String, Object> setOrganizationInformation(String userResidentOrganization,
-                                                           String authorizedOrganization)
+    private Map<String, Object> buildOrganizationInformation(String userResideOrgId, String authorizedOrgId)
             throws IdentityOAuth2Exception {
 
         Map<String, Object> additionalClaims = new HashMap<>();
@@ -100,12 +97,11 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
             return additionalClaims;
         }
         try {
-            if (StringUtils.isNotBlank(authorizedOrganization)) {
-                String authorizedOrganizationName =
-                        getOrganizationManager().getOrganizationNameById(authorizedOrganization);
-                additionalClaims.put(USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE, userResidentOrganization);
-                additionalClaims.put(AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE, authorizedOrganization);
-                additionalClaims.put(AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE, authorizedOrganizationName);
+            if (StringUtils.isNotBlank(authorizedOrgId)) {
+                String authorizedOrgName = getOrganizationManager().getOrganizationNameById(authorizedOrgId);
+                additionalClaims.put(USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE, userResideOrgId);
+                additionalClaims.put(AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE, authorizedOrgId);
+                additionalClaims.put(AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE, authorizedOrgName);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityOAuth2Exception("Error while resolving organization name by ID.", e);
@@ -118,6 +114,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
         try {
             return getOrganizationManager().resolveOrganizationId(tenantDomain);
         } catch (OrganizationManagementClientException e) {
+            // This client error handling should be removed once all the tenants have corresponding organization.
             if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
                 return null;
             }
