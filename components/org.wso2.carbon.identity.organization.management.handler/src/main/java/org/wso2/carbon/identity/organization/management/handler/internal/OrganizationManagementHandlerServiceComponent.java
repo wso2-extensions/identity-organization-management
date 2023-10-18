@@ -28,12 +28,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
+import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
@@ -60,6 +62,7 @@ public class OrganizationManagementHandlerServiceComponent {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(), null);
             bundleContext.registerService(AbstractEventHandler.class, new SharedRoleMgtHandler(), null);
+            bundleContext.registerService(ApplicationMgtListener.class.getName(), new SharedRoleMgtListener(), null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);

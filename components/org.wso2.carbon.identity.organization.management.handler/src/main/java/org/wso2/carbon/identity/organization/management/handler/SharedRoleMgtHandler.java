@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -72,14 +73,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 break;
             case IdentityEventConstants.Event.POST_ADD_ROLE_V2_EVENT:
                 createOrganizationRolesOnNewRoleCreation(eventProperties);
-                break;
-            case Constants.EVENT_POST_ADD_ORGANIZATION:
-                /*
-                 If the created org's primary business org has roles with organization audience,
-                 create them in the sub org as well.
-                 */
-                // TODO: This might not required with new approach of handling org audience roles
-                createOrganizationRolesOnNewOrgCreation(eventProperties);
                 break;
             default:
                 if (LOG.isDebugEnabled()) {
@@ -222,8 +215,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         try {
             String mainApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
             String allowedAudienceForRoleAssociation =
-                    OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService()
-                            .getAllowedAudienceForRoleAssociation(parentApplicationId, mainApplicationTenantDomain);
+                    getApplicationMgtService().getAllowedAudienceForRoleAssociation(parentApplicationId,
+                            mainApplicationTenantDomain);
             boolean hasAppAudiencedRoles =
                     RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociation);
             if (!hasAppAudiencedRoles) {
@@ -270,5 +263,10 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private static OrgApplicationManager getOrgApplicationManager() {
 
         return OrganizationManagementHandlerDataHolder.getInstance().getOrgApplicationManager();
+    }
+
+    private static ApplicationManagementService getApplicationMgtService() {
+
+        return OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService();
     }
 }
