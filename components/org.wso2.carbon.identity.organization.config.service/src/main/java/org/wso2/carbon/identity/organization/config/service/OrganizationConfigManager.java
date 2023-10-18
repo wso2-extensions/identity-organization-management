@@ -51,4 +51,14 @@ public interface OrganizationConfigManager {
      *                                     configuration.
      */
     void deleteDiscoveryConfiguration() throws OrganizationConfigException;
+
+    /**
+     * Fetch the discovery configuration by the tenant ID.
+     *
+     * @param tenantId The tenant ID.
+     * @return The discovery configuration.
+     * @throws OrganizationConfigException The exception thrown when an error occurs while fetching the discovery
+     *                                     configuration.
+     */
+    DiscoveryConfig getDiscoveryConfigurationByTenantId(int tenantId) throws OrganizationConfigException;
 }

@@ -78,14 +78,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     @Override
     public DiscoveryConfig getDiscoveryConfiguration() throws OrganizationConfigException {
 
-        Optional<Resource> resourceOptional = getDiscoveryResource();
-        if (!resourceOptional.isPresent()) {
-            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST, getOrganizationId());
-        }
-        List<ConfigProperty> configProperties = resourceOptional.map(resource -> resource.getAttributes().stream()
-                .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
-                .collect(Collectors.toList())).orElse(Collections.emptyList());
-        return new DiscoveryConfig(configProperties);
+        return getDiscoveryConfiguration(getDiscoveryResource());
     }
 
     @Override
@@ -104,10 +97,43 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         }
     }
 
+    @Override
+    public DiscoveryConfig getDiscoveryConfigurationByTenantId(int tenantId) throws OrganizationConfigException {
+
+        return getDiscoveryConfiguration(getDiscoveryResourceByTenantId(tenantId));
+    }
+
+    private DiscoveryConfig getDiscoveryConfiguration(Optional<Resource> resourceOptional)
+            throws OrganizationConfigException {
+
+        if (!resourceOptional.isPresent()) {
+            throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST, getOrganizationId());
+        }
+
+        List<ConfigProperty> configProperties = resourceOptional.map(resource -> resource.getAttributes().stream()
+                .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
+                .collect(Collectors.toList())).orElse(Collections.emptyList());
+
+        return new DiscoveryConfig(configProperties);
+    }
+
     private Optional<Resource> getDiscoveryResource() throws OrganizationConfigException {
 
         try {
             return Optional.ofNullable(getConfigurationManager().getResource(RESOURCE_TYPE_NAME, RESOURCE_NAME));
+        } catch (ConfigurationManagementException e) {
+            if (!ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
+                throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG, e, getOrganizationId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Resource> getDiscoveryResourceByTenantId(int tenantId) throws OrganizationConfigException {
+
+        try {
+            return Optional.ofNullable(getConfigurationManager().getResourceByTenantId(tenantId, RESOURCE_TYPE_NAME,
+                    RESOURCE_NAME));
         } catch (ConfigurationManagementException e) {
             if (!ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
                 throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG, e, getOrganizationId());
