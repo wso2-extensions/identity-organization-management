@@ -31,7 +31,6 @@ public class TenantAssociationDataHolder {
     private static RoleManager roleManager;
     private static OrganizationManager organizationManager;
 
-
     private TenantAssociationDataHolder() {
 
     }
