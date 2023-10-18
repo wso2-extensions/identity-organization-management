@@ -104,6 +104,36 @@ public interface OrgApplicationManager {
     }
 
     /**
+     * Check whether the application is shared with the given organization.
+     *
+     * @param mainAppId   UUID of the main application.
+     * @param ownerOrgId  Identifier of the organization owning the application.
+     * @param sharedOrgId Identifier of the organization which checking whether app is shared or not.
+     * @return True if the application is shared with the given organization.
+     * @throws OrganizationManagementException If errors occurred when checking whether the application is shared
+     *                                         with the given organization.
+     */
+    default boolean isApplicationSharedWithGivenOrganization(String mainAppId, String ownerOrgId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return false;
+    }
+
+    /**
+     * Get the main application id for given shared application.
+     *
+     * @param sharedAppId Shared application id.
+     * @param sharedOrgId Organization id of the shared application.
+     * @return Main application id.
+     * @throws OrganizationManagementException If errors occurred when getting the main application id.
+     */
+    default String getMainApplicationIdForGivenSharedApp(String sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return null;
+    }
+
+    /**
      * Share the application to an organization.
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
