@@ -56,6 +56,7 @@ import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
+import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -395,6 +396,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppUUID, ownerOrgId);
         }
+    }
+
+    @Override
+    public boolean isApplicationSharedWithGivenOrganization(String mainAppId, String ownerOrgId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return resolveSharedApp(mainAppId, ownerOrgId, sharedOrgId).isPresent();
+    }
+
+    @Override
+    public String getMainApplicationIdForGivenSharedApp(String sharedAppId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return getOrgApplicationMgtDAO()
+                .getMainApplication(sharedAppId, sharedOrgId)
+                .map(MainApplicationDO::getMainApplicationId)
+                .orElse(null);
     }
 
     /**
