@@ -24,7 +24,10 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.AbstractIdentityTenantMgtListener;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.management.tenant.association.Constants;
 import org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder;
@@ -35,6 +38,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
@@ -68,7 +72,17 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             Tenant tenant = realmService.getTenantManager().getTenant(tenantId);
             // Association will be created only if the tenant created with an organization id.
             String organizationID = tenant.getAssociatedOrganizationUUID();
-            if (StringUtils.isBlank(organizationID)) {
+            if (organizationID == null ||
+                    getOrganizationManager().getOrganizationDepthInHierarchy(organizationID) == -1) {
+                Organization organization = new Organization();
+                if (StringUtils.isBlank(organizationID)) {
+                    organizationID = UUID.randomUUID().toString();
+                }
+                organization.setId(organizationID);
+                organization.setName(tenantInfo.getTenantDomain());
+                organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.name());
+                organization.setType(OrganizationManagementConstants.OrganizationTypes.TENANT.name());
+                getOrganizationManager().addRootOrganization(tenant.getId(), organization);
                 return;
             }
             // If the organization uses carbon roles, this organization association is not required.
@@ -136,5 +150,10 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
         orgAdministratorRolePermissions.add(Constants.ADMINISTRATOR_ROLE_PERMISSION);
         organizationAdministratorRole.setPermissions(orgAdministratorRolePermissions);
         return organizationAdministratorRole;
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return TenantAssociationDataHolder.getOrganizationManager();
     }
 }

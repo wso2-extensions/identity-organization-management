@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.tenant.association.internal;
 
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -28,6 +29,7 @@ public class TenantAssociationDataHolder {
 
     private static RealmService realmService;
     private static RoleManager roleManager;
+    private static OrganizationManager organizationManager;
 
     private TenantAssociationDataHolder() {
 
@@ -74,5 +76,15 @@ public class TenantAssociationDataHolder {
     public static void setRoleManager(RoleManager roleManager) {
 
         TenantAssociationDataHolder.roleManager = roleManager;
+    }
+
+    public static OrganizationManager getOrganizationManager() {
+
+        return organizationManager;
+    }
+
+    public static void setOrganizationManager(OrganizationManager organizationManager) {
+
+        TenantAssociationDataHolder.organizationManager = organizationManager;
     }
 }
