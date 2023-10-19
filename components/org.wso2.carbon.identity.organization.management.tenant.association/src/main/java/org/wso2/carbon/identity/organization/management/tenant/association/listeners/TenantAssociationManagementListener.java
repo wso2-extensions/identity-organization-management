@@ -72,7 +72,8 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
             Tenant tenant = realmService.getTenantManager().getTenant(tenantId);
             // Association will be created only if the tenant created with an organization id.
             String organizationID = tenant.getAssociatedOrganizationUUID();
-            if (organizationID == null || getOrganizationManager().getOrganizationDepthInHierarchy(organizationID) == -1) {
+            if (organizationID == null ||
+                    getOrganizationManager().getOrganizationDepthInHierarchy(organizationID) == -1) {
                 Organization organization = new Organization();
                 if (StringUtils.isBlank(organizationID)) {
                     organizationID = UUID.randomUUID().toString();
