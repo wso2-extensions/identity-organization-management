@@ -36,7 +36,6 @@ import org.wso2.carbon.identity.organization.management.handler.internal.Organiz
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
-import org.wso2.carbon.identity.role.v2.mgt.core.AssociatedApplication;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
@@ -45,6 +44,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -201,7 +201,26 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             Object addedOrgRoles = IdentityUtil.threadLocalProperties.get().get(ADDED_ORGANIZATION_AUDIENCE_ROLES);
             if (addedOrgRoles != null) {
                 List<RoleV2> addedOrgRolesList = (List<RoleV2>) addedOrgRoles;
-                handleAddedOrganizationAudienceRolesOnAppUpdate(addedOrgRolesList, serviceProvider, tenantDomain);
+                List<RoleV2> namesResolvedAddedRolesList = addedOrgRolesList.stream()
+                        .map(role -> {
+                            try {
+                                String roleName =
+                                        getRoleManagementServiceV2().getRoleNameByRoleId(role.getId(), tenantDomain);
+                                if (roleName != null) {
+                                    return new RoleV2(role.getId(), roleName);
+                                } else {
+                                    return null;
+                                }
+                            } catch (Exception e) {
+                                LOG.error("Failed to resolve role name of role id: " + role.getId());
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull) // Filter out null values (roles that couldn't be resolved)
+                        .collect(Collectors.toList());
+
+                handleAddedOrganizationAudienceRolesOnAppUpdate(namesResolvedAddedRolesList, serviceProvider,
+                        tenantDomain);
             }
 
             Object removedOrgRoles = IdentityUtil.threadLocalProperties.get().get(REMOVED_ORGANIZATION_AUDIENCE_ROLES);
@@ -455,7 +474,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (associatedApplicationsIds.size() == 1 && mainApplicationId.equals(associatedApplicationsIds.get(0))) {
                 // Delete the role in org.
                 getRoleManagementServiceV2().deleteRole(sharedRoleId, sharedAppTenantDomain);
-                break;
             } else if (associatedApplicationsIds.size() > 1) {
                 boolean isRoleUsedByAnotherSharedApp = false;
                 for (String associatedApplicationId : associatedApplicationsIds) {
