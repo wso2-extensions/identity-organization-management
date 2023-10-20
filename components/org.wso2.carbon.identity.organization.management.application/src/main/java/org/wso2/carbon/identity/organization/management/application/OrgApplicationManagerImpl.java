@@ -313,8 +313,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             // Setting the thread local property to allow deleting fragment application. Otherwise
             // FragmentApplicationMgtListener will reject application deletion.
             IdentityUtil.threadLocalProperties.get().put(DELETE_FRAGMENT_APPLICATION, true);
-            getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
-                    sharedTenantDomain, username);
+
+            /* The shared application resides in a different tenant. Hence, before performing that operation, a tenant
+            flow corresponds to that tenant is started. */
+            try {
+                PrivilegedCarbonContext.startTenantFlow();
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
+                getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
+                        sharedTenantDomain, username);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP, e, sharedApplicationId,
                     sharedOrganizationId);
