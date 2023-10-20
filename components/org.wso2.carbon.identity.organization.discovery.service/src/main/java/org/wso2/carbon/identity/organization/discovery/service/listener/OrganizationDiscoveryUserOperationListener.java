@@ -50,7 +50,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION;
 
 /**
- * This is to perform organization discovery related user operations.
+ * This is to perform organization discovery related validations upon user operations.
  */
 public class OrganizationDiscoveryUserOperationListener extends AbstractIdentityUserOperationEventListener {
 
@@ -103,30 +103,7 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
                 if (!handler.requiredEventValidations().contains(PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE)) {
                     return true;
                 }
-                String domain = handler.extractAttributeValue(userName);
-                List<OrgDiscoveryAttribute> organizationDiscoveryAttributes = organizationDiscoveryManager
-                        .getOrganizationDiscoveryAttributes(organizationId, false);
-                // If the organization doesn't have any email domains mapped, then we need to check if the
-                // email domain in the username is not mapped to any other organization .
-                if (organizationDiscoveryAttributes.isEmpty()) {
-                    boolean domainAvailable = organizationDiscoveryManager.isDiscoveryAttributeValueAvailable
-                            (primaryOrganizationId, handler.getType(), domain);
-                    if (domainAvailable) {
-                        return true;
-                    }
-                    throw new UserStoreException(
-                            ERROR_CODE_EMAIL_DOMAIN_ASSOCIATED_WITH_DIFFERENT_ORGANIZATION.getDescription(),
-                            ERROR_CODE_EMAIL_DOMAIN_ASSOCIATED_WITH_DIFFERENT_ORGANIZATION.getCode());
-                }
-                for (OrgDiscoveryAttribute attribute : organizationDiscoveryAttributes) {
-                    List<String> organizationMappedEmailDomains = attribute.getValues();
-                    if (organizationMappedEmailDomains != null && organizationMappedEmailDomains.contains(domain)) {
-                        return true;
-                    }
-                    throw new UserStoreException(
-                            ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION.getDescription(),
-                            ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION.getCode());
-                }
+                return isValidEmailDomainForPreAddUser(userName, organizationId, primaryOrganizationId, handler);
             }
         } catch (OrganizationManagementException e) {
             LOG.error("Error while creating user", e);
@@ -137,6 +114,40 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
             }
             LOG.error("Error while creating user", e);
             return false;
+        }
+        return true;
+    }
+
+    private boolean isValidEmailDomainForPreAddUser(String userName, String organizationId,
+                                                    String primaryOrganizationId,
+                                                    AttributeBasedOrganizationDiscoveryHandler handler)
+            throws UserStoreException, OrganizationManagementException {
+
+        // Username should be in the email address format.
+        String emailDomain = handler.extractAttributeValue(userName);
+        List<OrgDiscoveryAttribute> organizationDiscoveryAttributes = organizationDiscoveryManager
+                .getOrganizationDiscoveryAttributes(organizationId, false);
+
+        // If the organization doesn't have any email domains mapped, then we need to check if the
+        // email domain in the username is not mapped to any other organization .
+        if (organizationDiscoveryAttributes.isEmpty()) {
+            boolean domainAvailable = organizationDiscoveryManager.isDiscoveryAttributeValueAvailable
+                    (primaryOrganizationId, handler.getType(), emailDomain);
+            if (domainAvailable) {
+                return true;
+            }
+            throw new UserStoreException(
+                    ERROR_CODE_EMAIL_DOMAIN_ASSOCIATED_WITH_DIFFERENT_ORGANIZATION.getDescription(),
+                    ERROR_CODE_EMAIL_DOMAIN_ASSOCIATED_WITH_DIFFERENT_ORGANIZATION.getCode());
+        }
+        for (OrgDiscoveryAttribute attribute : organizationDiscoveryAttributes) {
+            List<String> organizationMappedEmailDomains = attribute.getValues();
+            if (organizationMappedEmailDomains != null && organizationMappedEmailDomains.contains(emailDomain)) {
+                return true;
+            }
+            throw new UserStoreException(
+                    ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION.getDescription(),
+                    ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION.getCode());
         }
         return true;
     }
