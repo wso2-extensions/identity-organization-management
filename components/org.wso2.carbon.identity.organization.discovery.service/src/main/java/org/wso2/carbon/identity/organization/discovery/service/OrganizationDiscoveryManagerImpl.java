@@ -124,6 +124,14 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     }
 
     @Override
+    public boolean isDiscoveryAttributeValueAvailable(String organizationId, String type, String value)
+            throws OrganizationManagementException {
+
+        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, organizationId,
+                null, type, Collections.singletonList(value));
+    }
+
+    @Override
     public Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes()
             throws OrganizationManagementException {
 
