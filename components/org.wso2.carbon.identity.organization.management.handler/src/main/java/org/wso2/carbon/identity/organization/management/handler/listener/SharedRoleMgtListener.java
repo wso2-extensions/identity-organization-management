@@ -23,6 +23,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -459,21 +460,28 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             List<String> associatedApplicationsIds =
                     getRoleManagementServiceV2().getAssociatedApplicationByRoleId(mainAppRoleId,
                             mainApplicationTenantDomain);
-            if (associatedApplicationsIds == null) {
-                continue;
-            }
             String sharedRoleId = mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId);
             if (StringUtils.isBlank(sharedRoleId)) {
                 // There is no role available in the shared org. May be due to role creation issue.
                 continue;
             }
             /*
-            If the only associated application is the main app in this flow, delete the role in
-            the org.
+            If this private method is called from application update post listener, the role already removed
+            from the application. associatedApplicationsIds is empty means there are no any other applications.
+
+             If this private method is called from application deletion post listener,
+             and if the only associated application is the main app in this flow, this condition is satisfied.
+             Hence, deleting the shared roles.
              */
-            if (associatedApplicationsIds.size() == 1 && mainApplicationId.equals(associatedApplicationsIds.get(0))) {
-                // Delete the role in org.
-                getRoleManagementServiceV2().deleteRole(sharedRoleId, sharedAppTenantDomain);
+            if (CollectionUtils.isEmpty(associatedApplicationsIds) || (associatedApplicationsIds.size() == 1 &&
+                    mainApplicationId.equals(associatedApplicationsIds.get(0)))) {
+                try {
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedAppTenantDomain, true);
+                    getRoleManagementServiceV2().deleteRole(sharedRoleId, sharedAppTenantDomain);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
             } else if (associatedApplicationsIds.size() > 1) {
                 boolean isRoleUsedByAnotherSharedApp = false;
                 for (String associatedApplicationId : associatedApplicationsIds) {
