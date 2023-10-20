@@ -18,13 +18,18 @@
 
 package org.wso2.carbon.identity.organization.management.handler;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -56,8 +61,11 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         String eventName = event.getEventName();
         Map<String, Object> eventProperties = event.getEventProperties();
         switch (eventName) {
+            case OrgApplicationMgtConstants.EVENT_POST_SHARE_APPLICATION:
+                createSharedRolesOnApplicationSharing(eventProperties);
+                break;
             case IdentityEventConstants.Event.POST_ADD_ROLE_V2_EVENT:
-                createOrganizationRolesOnNewRoleCreation(eventProperties);
+                createSharedRolesOnNewRoleCreation(eventProperties);
                 break;
             default:
                 if (LOG.isDebugEnabled()) {
@@ -67,7 +75,103 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
     }
 
-    private void createOrganizationRolesOnNewRoleCreation(Map<String, Object> eventProperties)
+    private void createSharedRolesOnApplicationSharing(Map<String, Object> eventProperties)
+            throws IdentityEventException {
+
+        String parentOrganizationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID);
+        String parentApplicationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID);
+        String sharedOrganizationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID);
+        String sharedApplicationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID);
+        try {
+            String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+            String mainAppTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
+            String allowedAudienceForRoleAssociationInMainApp =
+                    getApplicationMgtService().getAllowedAudienceForRoleAssociation(parentApplicationId,
+                            mainAppTenantDomain);
+            switch (allowedAudienceForRoleAssociationInMainApp) {
+                case RoleConstants.APPLICATION:
+                    // Create the roles, and add the relationship.
+                    createSharedRolesWithAppAudience(parentApplicationId, mainAppTenantDomain, sharedApplicationId,
+                            sharedAppTenantDomain);
+                    break;
+                default:
+                    // Create the role if not exists, and add the relationship.
+                    List<RoleV2> associatedRolesOfApplication =
+                            getApplicationMgtService().getAssociatedRolesOfApplication(
+                                    parentApplicationId, mainAppTenantDomain);
+                    createSharedRolesWithOrgAudience(associatedRolesOfApplication, mainAppTenantDomain,
+                            sharedOrganizationId);
+                    break;
+            }
+        } catch (OrganizationManagementException | IdentityRoleManagementException |
+                 IdentityApplicationManagementException e) {
+            throw new IdentityEventException(
+                    String.format("Error while sharing roles related to application %s.", sharedApplicationId), e);
+        }
+    }
+
+    private void createSharedRolesWithOrgAudience(List<RoleV2> rolesList, String mainAppTenantDomain,
+                                                  String sharedAppOrgId)
+            throws IdentityRoleManagementException, OrganizationManagementException {
+
+        if (rolesList == null) {
+            return;
+        }
+        String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
+        for (RoleV2 role : rolesList) {
+            // Check if the role exists in the application shared org.
+            boolean roleExistsInSharedOrg =
+                    getRoleManagementServiceV2().isExistingRoleName(role.getName(), RoleConstants.ORGANIZATION,
+                            sharedAppOrgId, sharedAppTenantDomain);
+            Map<String, String> mainRoleToSharedRoleMappingInSharedOrg =
+                    getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(
+                            Collections.singletonList(role.getId()), sharedAppTenantDomain);
+            boolean roleRelationshipExistsInSharedOrg =
+                    MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
+            if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+                // Add relationship between main role and shared role.
+                String roleIdInSharedOrg =
+                        getRoleManagementServiceV2().getRoleIdByName(role.getName(), RoleConstants.ORGANIZATION,
+                                sharedAppOrgId, sharedAppTenantDomain);
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
+                        roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
+            } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+                // Create the role in the shared org.
+                RoleBasicInfo sharedRole =
+                        getRoleManagementServiceV2().addRole(role.getName(), Collections.emptyList(),
+                                Collections.emptyList(), Collections.emptyList(), RoleConstants.ORGANIZATION,
+                                sharedAppOrgId, sharedAppTenantDomain);
+                // Add relationship between main role and shared role.
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
+                        sharedRole.getId(), mainAppTenantDomain, sharedAppTenantDomain);
+            }
+        }
+    }
+
+    private void createSharedRolesWithAppAudience(String mainAppId, String mainAppTenantDomain, String sharedAppId,
+                                                  String sharedAppTenantDomain) throws IdentityRoleManagementException {
+
+        // Get parent organization's roles which has application audience.
+        String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + mainAppId;
+        List<RoleBasicInfo> parentOrgRoles =
+                getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainAppTenantDomain);
+        for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
+            String parentOrgRoleName = parentOrgRole.getName();
+            // Create the role in the shared org.
+            RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION, sharedAppId,
+                    sharedAppTenantDomain);
+            // Add relationship between main role and the shared role.
+            getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(), subOrgRole.getId(),
+                    mainAppTenantDomain, sharedAppTenantDomain);
+        }
+    }
+
+    private void createSharedRolesOnNewRoleCreation(Map<String, Object> eventProperties)
             throws IdentityEventException {
 
         try {
@@ -145,5 +249,10 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private static OrgApplicationManager getOrgApplicationManager() {
 
         return OrganizationManagementHandlerDataHolder.getInstance().getOrgApplicationManager();
+    }
+
+    private static ApplicationManagementService getApplicationMgtService() {
+
+        return OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService();
     }
 }

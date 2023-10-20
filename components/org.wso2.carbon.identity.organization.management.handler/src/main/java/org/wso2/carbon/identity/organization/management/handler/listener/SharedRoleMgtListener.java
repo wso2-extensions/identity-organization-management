@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.handler.listener;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -42,7 +43,6 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 
 /**
@@ -71,119 +70,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
     public int getDefaultOrderId() {
 
         return 49;
-    }
-
-    @Override
-    public boolean doPostCreateApplication(ServiceProvider serviceProvider, String tenantDomain, String userName)
-            throws IdentityApplicationManagementException {
-
-        // If the creating application is an application of tenant(i.e primary org) nothing to do here.
-        try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
-                return true;
-            }
-            boolean isSharedAppInOrg = Arrays.stream(serviceProvider.getSpProperties())
-                    .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()));
-            if (!isSharedAppInOrg) {
-                // This is not a valid case. Organization could only have shared applications.
-                return true;
-            }
-            ServiceProvider sharedApplication =
-                    getApplicationByName(serviceProvider.getApplicationName(), tenantDomain);
-            if (sharedApplication == null) {
-                return false;
-            }
-            String sharedAppId = sharedApplication.getApplicationResourceId();
-            String sharedAppOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-            String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
-            // Resolve the main application details.
-            String mainAppId =
-                    getOrgApplicationManager().getMainApplicationIdForGivenSharedApp(sharedAppId, sharedAppOrgId);
-            if (mainAppId == null) {
-                return false;
-            }
-            int mainAppTenantId = getApplicationMgtService().getTenantIdByApp(mainAppId);
-            String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
-            String allowedAudienceForRoleAssociationInMainApp =
-                    getApplicationMgtService().getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain);
-
-            switch (allowedAudienceForRoleAssociationInMainApp) {
-                case RoleConstants.APPLICATION:
-                    // Create the roles, and add the relationship.
-                    createSharedRolesWithAppAudience(mainAppId, mainAppTenantDomain, sharedAppId,
-                            sharedAppTenantDomain);
-                    break;
-                default:
-                    // Create the role if not exists, and add the relationship.
-                    List<RoleV2> associatedRolesOfApplication =
-                            getApplicationMgtService().getAssociatedRolesOfApplication(
-                                    mainAppId, mainAppTenantDomain);
-                    createSharedRolesWithOrgAudience(associatedRolesOfApplication, mainAppTenantDomain, sharedAppOrgId);
-                    break;
-            }
-        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            throw new IdentityApplicationManagementException(
-                    String.format("Error while sharing roles related to application %s.",
-                            serviceProvider.getApplicationID()), e);
-        }
-        return super.doPostCreateApplication(serviceProvider, tenantDomain, userName);
-    }
-
-    private void createSharedRolesWithOrgAudience(List<RoleV2> rolesList, String mainAppTenantDomain,
-                                                  String sharedAppOrgId)
-            throws IdentityRoleManagementException, OrganizationManagementException {
-
-        if (rolesList == null) {
-            return;
-        }
-        String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
-        for (RoleV2 role : rolesList) {
-            // Check if the role exists in the application shared org.
-            boolean roleExistsInSharedOrg =
-                    getRoleManagementServiceV2().isExistingRoleName(role.getName(), RoleConstants.ORGANIZATION,
-                            sharedAppOrgId, sharedAppTenantDomain);
-            Map<String, String> mainRoleToSharedRoleMappingInSharedOrg =
-                    getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(
-                            Collections.singletonList(role.getId()), sharedAppTenantDomain);
-            boolean roleRelationshipExistsInSharedOrg =
-                    MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
-            if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
-                // Add relationship between main role and shared role.
-                String roleIdInSharedOrg =
-                        getRoleManagementServiceV2().getRoleIdByName(role.getName(), RoleConstants.ORGANIZATION,
-                                sharedAppOrgId, sharedAppTenantDomain);
-                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
-                        roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
-            } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
-                // Create the role in the shared org.
-                RoleBasicInfo sharedRole =
-                        getRoleManagementServiceV2().addRole(role.getName(), Collections.emptyList(),
-                                Collections.emptyList(), Collections.emptyList(), RoleConstants.ORGANIZATION,
-                                sharedAppOrgId, sharedAppTenantDomain);
-                // Add relationship between main role and shared role.
-                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
-                        sharedRole.getId(), mainAppTenantDomain, sharedAppTenantDomain);
-            }
-        }
-    }
-
-    private void createSharedRolesWithAppAudience(String mainAppId, String mainAppTenantDomain, String sharedAppId,
-                                                  String sharedAppTenantDomain) throws IdentityRoleManagementException {
-
-        // Get parent organization's roles which has application audience.
-        String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + mainAppId;
-        List<RoleBasicInfo> parentOrgRoles =
-                getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainAppTenantDomain);
-        for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
-            String parentOrgRoleName = parentOrgRole.getName();
-            // Create the role in the shared org.
-            RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
-                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION, sharedAppId,
-                    sharedAppTenantDomain);
-            // Add relationship between main role and the shared role.
-            getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(), subOrgRole.getId(),
-                    mainAppTenantDomain, sharedAppTenantDomain);
-        }
     }
 
     @Override
@@ -403,6 +289,44 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
     }
 
+    private void createSharedRolesWithOrgAudience(List<RoleV2> rolesList, String mainAppTenantDomain,
+                                                  String sharedAppOrgId)
+            throws IdentityRoleManagementException, OrganizationManagementException {
+
+        if (rolesList == null) {
+            return;
+        }
+        String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
+        for (RoleV2 role : rolesList) {
+            // Check if the role exists in the application shared org.
+            boolean roleExistsInSharedOrg =
+                    getRoleManagementServiceV2().isExistingRoleName(role.getName(), RoleConstants.ORGANIZATION,
+                            sharedAppOrgId, sharedAppTenantDomain);
+            Map<String, String> mainRoleToSharedRoleMappingInSharedOrg =
+                    getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(
+                            Collections.singletonList(role.getId()), sharedAppTenantDomain);
+            boolean roleRelationshipExistsInSharedOrg =
+                    MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
+            if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+                // Add relationship between main role and shared role.
+                String roleIdInSharedOrg =
+                        getRoleManagementServiceV2().getRoleIdByName(role.getName(), RoleConstants.ORGANIZATION,
+                                sharedAppOrgId, sharedAppTenantDomain);
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
+                        roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
+            } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+                // Create the role in the shared org.
+                RoleBasicInfo sharedRole =
+                        getRoleManagementServiceV2().addRole(role.getName(), Collections.emptyList(),
+                                Collections.emptyList(), Collections.emptyList(), RoleConstants.ORGANIZATION,
+                                sharedAppOrgId, sharedAppTenantDomain);
+                // Add relationship between main role and shared role.
+                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
+                        sharedRole.getId(), mainAppTenantDomain, sharedAppTenantDomain);
+            }
+        }
+    }
+
     private void handleRemovedApplicationAudienceRolesOnAppUpdate(List<RoleV2> removedAppRolesList, String tenantDomain)
             throws IdentityRoleManagementException {
 
@@ -507,39 +431,42 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         if (mainApplicationOrgId == null) {
             mainApplicationOrgId = SUPER_ORG_ID;
         }
-        String unsharedApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
+        String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
         List<String> mainAppRoleIds =
                 rolesList.stream().map(RoleV2::getId).collect(Collectors.toList());
         Map<String, String> mainRoleToSharedRoleMappingsInSubOrg = getRoleManagementServiceV2()
-                .getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds, unsharedApplicationTenantDomain);
+                .getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds, sharedAppTenantDomain);
 
         // Get each role associated applications.
         for (String mainAppRoleId : mainAppRoleIds) {
-            // TODO use a service which return only associated role ids.
-            Role role = getRoleManagementServiceV2().getRole(mainAppRoleId, mainApplicationTenantDomain);
-            List<AssociatedApplication> associatedApplications = role.getAssociatedApplications();
-
-            if (associatedApplications == null) {
+            List<String> associatedApplicationsIds =
+                    getRoleManagementServiceV2().getAssociatedApplicationByRoleId(mainAppRoleId,
+                            mainApplicationTenantDomain);
+            if (associatedApplicationsIds == null) {
+                continue;
+            }
+            String sharedRoleId = mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId);
+            if (StringUtils.isBlank(sharedRoleId)) {
+                // There is no role available in the shared org. May be due to role creation issue.
                 continue;
             }
             /*
             If the only associated application is the main app in this flow, delete the role in
             the org.
              */
-            if (associatedApplications.size() == 1 && mainApplicationId.equals(associatedApplications.get(0).getId())) {
+            if (associatedApplicationsIds.size() == 1 && mainApplicationId.equals(associatedApplicationsIds.get(0))) {
                 // Delete the role in org.
-                getRoleManagementServiceV2().deleteRole(mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId),
-                        unsharedApplicationTenantDomain);
+                getRoleManagementServiceV2().deleteRole(sharedRoleId, sharedAppTenantDomain);
                 break;
-            } else if (associatedApplications.size() > 1) {
+            } else if (associatedApplicationsIds.size() > 1) {
                 boolean isRoleUsedByAnotherSharedApp = false;
-                for (AssociatedApplication associatedApplication : associatedApplications) {
-                    if (associatedApplication.getId().equals(mainApplicationId)) {
+                for (String associatedApplicationId : associatedApplicationsIds) {
+                    if (associatedApplicationId.equals(mainApplicationId)) {
                         continue;
                     }
                     boolean applicationSharedWithGivenOrganization =
-                            getOrgApplicationManager().isApplicationSharedWithGivenOrganization(
-                                    associatedApplication.getId(), mainApplicationOrgId, sharedAppOrgId);
+                            getOrgApplicationManager().isApplicationSharedWithGivenOrganization(associatedApplicationId,
+                                    mainApplicationOrgId, sharedAppOrgId);
                     if (applicationSharedWithGivenOrganization) {
                         isRoleUsedByAnotherSharedApp = true;
                         break;
@@ -547,8 +474,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                 }
                 if (!isRoleUsedByAnotherSharedApp) {
                     // Delete the role in org.
-                    getRoleManagementServiceV2().deleteRole(mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId),
-                            unsharedApplicationTenantDomain);
+                    getRoleManagementServiceV2().deleteRole(sharedRoleId, sharedAppTenantDomain);
                     break;
                 }
             }
