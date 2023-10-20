@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.AssociatedApplication;
 import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
@@ -203,7 +202,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (addedOrgRoles != null) {
                 List<RoleV2> addedOrgRolesList = (List<RoleV2>) addedOrgRoles;
                 handleAddedOrganizationAudienceRolesOnAppUpdate(addedOrgRolesList, serviceProvider, tenantDomain);
-
             }
 
             Object removedOrgRoles = IdentityUtil.threadLocalProperties.get().get(REMOVED_ORGANIZATION_AUDIENCE_ROLES);
