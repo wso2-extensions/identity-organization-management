@@ -305,14 +305,14 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
             } else {
                 List<OrgDiscoveryAttribute> discoveryAttributes = existingDiscovery.getDiscoveryAttributes();
                 boolean attributeExists = false;
-                List<String> newAttributeValues = new ArrayList<>();
+                String newAttributeValue = null;
                 List<String> existingAttributeValues = null;
-                List<String> attributeValues = new ArrayList<>();
                 for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
                     if (StringUtils.equals(attribute.getType(), attributeType)) {
                         existingAttributeValues = attribute.getValues();
-                        newAttributeValues.add(attributeValue);
+                        newAttributeValue = attributeValue;
                         attributeExists = true;
+                        break;
                     }
                 }
 
@@ -320,11 +320,11 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
                     for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
                         if (StringUtils.equals(attribute.getType(), attributeType)) {
                             if (existingAttributeValues == null) {
-                                attribute.setValues(newAttributeValues);
+                                attribute.setValues(Collections.singletonList(newAttributeValue));
                                 break;
                             }
-                            attributeValues.addAll(existingAttributeValues);
-                            attributeValues.addAll(newAttributeValues);
+                            List<String> attributeValues = new ArrayList<>(existingAttributeValues);
+                            attributeValues.add(newAttributeValue);
                             attribute.setValues(attributeValues);
                             break;
                         }
