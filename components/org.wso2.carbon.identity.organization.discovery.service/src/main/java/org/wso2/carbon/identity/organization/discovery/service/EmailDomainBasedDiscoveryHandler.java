@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -80,5 +81,11 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
             return emailSplit[1];
         }
         return null;
+    }
+
+    @Override
+    public List<String> requiredEventValidations() {
+
+        return Collections.singletonList(PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE);
     }
 }

@@ -32,7 +32,9 @@ import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrg
 import org.wso2.carbon.identity.organization.discovery.service.EmailDomainBasedDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
+import org.wso2.carbon.identity.organization.discovery.service.listener.OrganizationDiscoveryUserOperationListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 
 /**
  * Service component class for the organization discovery service.
@@ -53,6 +55,8 @@ public class OrganizationDiscoveryServiceComponent {
         AttributeBasedOrganizationDiscoveryHandler emailDomainDiscovery = new EmailDomainBasedDiscoveryHandler();
         bundleContext.registerService(AttributeBasedOrganizationDiscoveryHandler.class.getName(), emailDomainDiscovery,
                 null);
+        bundleContext.registerService(UserOperationEventListener.class.getName(),
+                new OrganizationDiscoveryUserOperationListener(), null);
         LOG.info("Organization discovery service component activated successfully.");
     }
 

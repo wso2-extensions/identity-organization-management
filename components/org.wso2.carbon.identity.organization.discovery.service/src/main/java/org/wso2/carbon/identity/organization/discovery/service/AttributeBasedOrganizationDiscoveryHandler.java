@@ -20,6 +20,8 @@ package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.List;
+
 /**
  * Interface for handling organization discovery types.
  */
@@ -50,4 +52,12 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      * @return The extracted attribute value.
      */
     String extractAttributeValue(String discoveryInput);
+
+    /**
+     * Get the list of validations that are required for events triggered during organization discovery related
+     * operations.
+     *
+     * @return the list of events.
+     */
+    List<String> requiredEventValidations();
 }

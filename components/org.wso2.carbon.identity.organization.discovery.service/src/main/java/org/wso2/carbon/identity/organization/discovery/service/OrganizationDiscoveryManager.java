@@ -89,6 +89,20 @@ public interface OrganizationDiscoveryManager {
     boolean isDiscoveryAttributeValueAvailable(String type, String value) throws OrganizationManagementException;
 
     /**
+     * Check if the given discovery attribute is already mapped to an organization within the hierarchy under the given
+     * organization.
+     *
+     * @param organizationId The organization ID.
+     * @param type           The organization discovery attribute type.
+     * @param value          The organization discovery attribute value.
+     * @return If the discovery attribute already exists within the hierarchy.
+     * @throws OrganizationManagementException The exception thrown when checking if the discovery attribute already
+     *                                         exists within the hierarchy.
+     */
+    boolean isDiscoveryAttributeValueAvailable(String organizationId, String type, String value) throws
+            OrganizationManagementException;
+
+    /**
      * List the discovery attributes of all the organizations under the root organization.
      *
      * @return The discovery attributes of the organizations.
