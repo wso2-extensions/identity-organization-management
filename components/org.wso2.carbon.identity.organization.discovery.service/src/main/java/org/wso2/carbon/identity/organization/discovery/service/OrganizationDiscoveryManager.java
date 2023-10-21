@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -109,8 +110,7 @@ public interface OrganizationDiscoveryManager {
      * @throws OrganizationManagementException The exception thrown when listing discovery attributes of the
      *                                         organizations.
      */
-    Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes()
-            throws OrganizationManagementException;
+    List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes() throws OrganizationManagementException;
 
     /**
      * Get attribute based organization discovery handlers.

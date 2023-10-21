@@ -23,6 +23,7 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
@@ -226,7 +227,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
     }
 
     @Override
-    public Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes(String rootOrganizationId)
+    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String rootOrganizationId)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
@@ -238,6 +239,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
                         collector.setId(resultSet.getString(1));
                         collector.setAttributeType(resultSet.getString(2));
                         collector.setAttributeValue(resultSet.getString(3));
+                        collector.setOrganizationName(resultSet.getString(4));
                         return collector;
                     },
                     namedPreparedStatement ->
@@ -246,7 +248,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
             throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
                     rootOrganizationId);
         }
-        return buildOrganizationDiscoveryAttributesFromRawData(rowDataCollectors);
+        return buildOrganizationsDiscoveryFromRawData(rowDataCollectors);
     }
 
     @Override
@@ -268,48 +270,73 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
         }
     }
 
-    private Map<String, List<OrgDiscoveryAttribute>> buildOrganizationDiscoveryAttributesFromRawData(
+    private List<OrganizationDiscovery> buildOrganizationsDiscoveryFromRawData(
             List<OrganizationDiscoveryRowDataCollector> organizationRowDataCollectors) {
 
-        Map<String, List<OrgDiscoveryAttribute>> organizationDiscoveryAttributeMap = new HashMap<>();
+        List<OrganizationDiscovery> discoveryList = new ArrayList<>();
 
         for (OrganizationDiscoveryRowDataCollector collector : organizationRowDataCollectors) {
-
-            String orgId = collector.getId();
+            String organizationId = collector.getId();
+            String organizationName = collector.getOrganizationName();
             String attributeType = collector.getAttributeType();
             String attributeValue = collector.getAttributeValue();
 
-            if (organizationDiscoveryAttributeMap.containsKey(orgId)) {
-                List<OrgDiscoveryAttribute> discoveryAttributes = organizationDiscoveryAttributeMap.get(orgId);
-                boolean newAttribute = true;
+            OrganizationDiscovery existingDiscovery = null;
+            for (OrganizationDiscovery discovery : discoveryList) {
+                if (StringUtils.equals(discovery.getOrganizationId(), organizationId)) {
+                    existingDiscovery = discovery;
+                    break;
+                }
+            }
+
+            if (existingDiscovery == null) {
+                OrgDiscoveryAttribute orgDiscoveryAttribute = new OrgDiscoveryAttribute();
+                orgDiscoveryAttribute.setType(attributeType);
+                orgDiscoveryAttribute.setValues(Collections.singletonList(attributeValue));
+                List<OrgDiscoveryAttribute> orgDiscoveryAttributeList = new ArrayList<>();
+                orgDiscoveryAttributeList.add(orgDiscoveryAttribute);
+
+                OrganizationDiscovery organizationDiscovery = new OrganizationDiscovery();
+                organizationDiscovery.setOrganizationId(organizationId);
+                organizationDiscovery.setOrganizationName(organizationName);
+                organizationDiscovery.setDiscoveryAttributes(orgDiscoveryAttributeList);
+
+                discoveryList.add(organizationDiscovery);
+            } else {
+                List<OrgDiscoveryAttribute> discoveryAttributes = existingDiscovery.getDiscoveryAttributes();
+                boolean attributeExists = false;
+                List<String> newAttributeValues = new ArrayList<>();
+                List<String> existingAttributeValues = null;
+                List<String> attributeValues = new ArrayList<>();
                 for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
                     if (StringUtils.equals(attribute.getType(), attributeType)) {
-                        List<String> values = attribute.getValues();
-                        values.add(attributeValue);
-                        attribute.setValues(values);
-                        newAttribute = false;
-                        break;
+                        existingAttributeValues = attribute.getValues();
+                        newAttributeValues.add(attributeValue);
+                        attributeExists = true;
                     }
                 }
-                if (newAttribute) {
+
+                if (attributeExists) {
+                    for (OrgDiscoveryAttribute attribute : discoveryAttributes) {
+                        if (StringUtils.equals(attribute.getType(), attributeType)) {
+                            if (existingAttributeValues == null) {
+                                attribute.setValues(newAttributeValues);
+                                break;
+                            }
+                            attributeValues.addAll(existingAttributeValues);
+                            attributeValues.addAll(newAttributeValues);
+                            attribute.setValues(attributeValues);
+                            break;
+                        }
+                    }
+                } else {
                     OrgDiscoveryAttribute orgDiscoveryAttribute = new OrgDiscoveryAttribute();
                     orgDiscoveryAttribute.setType(attributeType);
                     orgDiscoveryAttribute.setValues(Collections.singletonList(attributeValue));
                     discoveryAttributes.add(orgDiscoveryAttribute);
-                    organizationDiscoveryAttributeMap.put(orgId, discoveryAttributes);
                 }
-            } else {
-                List<OrgDiscoveryAttribute> discoveryAttributes = new ArrayList<>();
-                OrgDiscoveryAttribute orgDiscoveryAttribute = new OrgDiscoveryAttribute();
-                orgDiscoveryAttribute.setType(attributeType);
-                List<String> values = new ArrayList<>();
-                values.add(attributeValue);
-                orgDiscoveryAttribute.setValues(values);
-                discoveryAttributes.add(orgDiscoveryAttribute);
-                organizationDiscoveryAttributeMap.put(orgId, discoveryAttributes);
             }
         }
-
-        return organizationDiscoveryAttributeMap;
+        return discoveryList;
     }
 }

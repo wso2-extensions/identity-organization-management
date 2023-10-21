@@ -19,10 +19,10 @@
 package org.wso2.carbon.identity.organization.discovery.service.dao;
 
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * This interface performs CRUD operations for organization discovery.
@@ -106,7 +106,7 @@ public interface OrganizationDiscoveryDAO {
      * @throws OrganizationManagementServerException The server exception thrown when listing discovery attributes of
      *                                               the organizations.
      */
-    Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes(String rootOrganizationId) throws
+    List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String rootOrganizationId) throws
             OrganizationManagementServerException;
 
     /**

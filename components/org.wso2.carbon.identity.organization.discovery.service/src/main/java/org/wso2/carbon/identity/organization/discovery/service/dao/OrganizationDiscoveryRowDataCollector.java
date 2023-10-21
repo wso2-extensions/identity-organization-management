@@ -26,6 +26,7 @@ public class OrganizationDiscoveryRowDataCollector {
     private String id;
     private String attributeType;
     private String attributeValue;
+    private String organizationName;
 
     public String getId() {
 
@@ -55,5 +56,15 @@ public class OrganizationDiscoveryRowDataCollector {
     public void setAttributeValue(String attributeValue) {
 
         this.attributeValue = attributeValue;
+    }
+
+    public String getOrganizationName() {
+
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+
+        this.organizationName = organizationName;
     }
 }
