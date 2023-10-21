@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationD
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -132,8 +133,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     }
 
     @Override
-    public Map<String, List<OrgDiscoveryAttribute>> getOrganizationsDiscoveryAttributes()
-            throws OrganizationManagementException {
+    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes() throws OrganizationManagementException {
 
         return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(getOrganizationId());
     }
