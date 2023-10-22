@@ -41,6 +41,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DUPLICATE_DISCOVERY_ATTRIBUTE_TYPES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMPTY_DISCOVERY_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE;
@@ -159,14 +160,6 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         return null;
     }
 
-    private boolean isDiscoveryConfigurationEnabled(String rootOrganizationId, String type) throws
-            OrganizationManagementException {
-
-        AttributeBasedOrganizationDiscoveryHandler attributeBasedOrganizationDiscoveryHandler =
-                OrganizationDiscoveryServiceHolder.getInstance().getAttributeBasedOrganizationDiscoveryHandler(type);
-        return attributeBasedOrganizationDiscoveryHandler.isDiscoveryConfigurationEnabled(rootOrganizationId);
-    }
-
     private void validateRootOrganization(String rootOrganizationId, String organizationId)
             throws OrganizationManagementClientException {
 
@@ -199,11 +192,17 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                 throw handleClientException(ERROR_CODE_UNSUPPORTED_DISCOVERY_ATTRIBUTE, attributeType);
             }
 
-            if (!isDiscoveryConfigurationEnabled(rootOrganizationId, attributeType)) {
+            AttributeBasedOrganizationDiscoveryHandler discoveryHandler = OrganizationDiscoveryServiceHolder
+                    .getInstance().getAttributeBasedOrganizationDiscoveryHandler(attributeType);
+
+            if (!discoveryHandler.isDiscoveryConfigurationEnabled(rootOrganizationId)) {
                 throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
             }
 
             attribute.setValues(attribute.getValues().stream().distinct().collect(Collectors.toList()));
+            if (!discoveryHandler.areAttributeValuesInValidFormat(attribute.getValues())) {
+                throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUE, attributeType);
+            }
             boolean discoveryAttributeTaken = organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy
                     (excludeCurrentOrganization, rootOrganizationId, organizationId, attributeType,
                             attribute.getValues());

@@ -60,4 +60,12 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      * @return the list of events.
      */
     List<String> requiredEventValidations();
+
+    /**
+     * Check if the given discovery attribute values are in valid format.
+     *
+     * @param attributeValues The discovery attribute values.
+     * @return If the given discovery attribute values are in valid format.
+     */
+    boolean areAttributeValuesInValidFormat(List<String> attributeValues);
 }
