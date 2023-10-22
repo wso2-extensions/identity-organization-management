@@ -30,6 +30,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
@@ -46,6 +47,7 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     private static final String EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG = "emailDomain.enable";
     private static final OrganizationConfigManager organizationConfigManager = OrganizationDiscoveryServiceHolder
             .getInstance().getOrganizationConfigManager();
+    private static final Pattern EMAIL_DOMAIN_PATTERN = Pattern.compile("^[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     @Override
     public String getType() {
@@ -87,5 +89,11 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     public List<String> requiredEventValidations() {
 
         return Collections.singletonList(PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE);
+    }
+
+    @Override
+    public boolean areAttributeValuesInValidFormat(List<String> attributeValues) {
+
+        return attributeValues.stream().allMatch(emailDomain -> EMAIL_DOMAIN_PATTERN.matcher(emailDomain).matches());
     }
 }
