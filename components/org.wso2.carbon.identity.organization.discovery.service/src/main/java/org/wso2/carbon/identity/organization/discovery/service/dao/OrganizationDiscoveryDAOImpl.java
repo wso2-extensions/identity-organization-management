@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service.dao;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
@@ -25,6 +26,8 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.filter.ExpressionNode;
+import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.util.ArrayList;
@@ -33,12 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ATTRIBUTE_COLUMN_MAP;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.CHECK_DISCOVERY_ATTRIBUTE_ADDED_IN_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.CHECK_DISCOVERY_ATTRIBUTE_EXIST_IN_HIERARCHY;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DELETE_ORGANIZATION_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DISCOVERY_ATTRIBUTE_VALUE_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.EXCLUDE_CURRENT_ORGANIZATION_FROM_CHECK_DISCOVERY_ATTRIBUTE_EXIST;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES_TAIL;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.INSERT_ORGANIZATION_DISCOVERY_ATTRIBUTES;
@@ -46,6 +51,9 @@ import static org.wso2.carbon.identity.organization.discovery.service.constant.S
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CO;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EQ;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_ORGANIZATION_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_DISCOVERY_ATTRIBUTE_ADDED_IN_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_ORGANIZATION_DISCOVERY_ATTRIBUTE_EXIST_IN_HIERARCHY;
@@ -54,6 +62,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION_DISCOVERY_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.FILTER_PLACEHOLDER_PREFIX;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -227,13 +237,20 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
     }
 
     @Override
-    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String rootOrganizationId)
+    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String rootOrganizationId,
+                                                                           List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
+
+        FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
+        appendFilterQuery(expressionNodes, filterQueryBuilder);
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         List<OrganizationDiscoveryRowDataCollector> rowDataCollectors;
+        String sqlStmt = GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES + filterQueryBuilder.getFilterQuery() +
+                GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES_TAIL;
         try {
-            rowDataCollectors = namedJdbcTemplate.executeQuery(GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES,
+            rowDataCollectors = namedJdbcTemplate.executeQuery(sqlStmt,
                     (resultSet, rowNumber) -> {
                         OrganizationDiscoveryRowDataCollector collector = new OrganizationDiscoveryRowDataCollector();
                         collector.setId(resultSet.getString(1));
@@ -242,8 +259,12 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
                         collector.setOrganizationName(resultSet.getString(4));
                         return collector;
                     },
-                    namedPreparedStatement ->
-                            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROOT_ID, rootOrganizationId));
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROOT_ID, rootOrganizationId);
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                    });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
                     rootOrganizationId);
@@ -338,5 +359,85 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
             }
         }
         return discoveryList;
+    }
+
+    private void appendFilterQuery(List<ExpressionNode> expressionNodes, FilterQueryBuilder filterQueryBuilder) {
+
+        int count = 1;
+        StringBuilder filter = new StringBuilder();
+        if (CollectionUtils.isEmpty(expressionNodes)) {
+            filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
+        } else {
+            for (ExpressionNode expressionNode : expressionNodes) {
+                String operation = expressionNode.getOperation();
+                String value = expressionNode.getValue();
+                String attributeName = ATTRIBUTE_COLUMN_MAP.get(expressionNode.getAttributeValue());
+                if (StringUtils.isNotBlank(attributeName) && StringUtils.isNotBlank(value) && StringUtils
+                        .isNotBlank(operation)) {
+                    switch (operation) {
+                        case EQ: {
+                            equalFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case SW: {
+                            startWithFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case EW: {
+                            endWithFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        case CO: {
+                            containsFilterBuilder(count, value, attributeName, filter, filterQueryBuilder);
+                            count++;
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (StringUtils.isBlank(filter.toString())) {
+                filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
+            } else {
+                filterQueryBuilder.setFilterQuery(filter.toString());
+            }
+        }
+    }
+
+    private void equalFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                    FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" = :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
+    }
+
+    private void startWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                        FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value + "%");
+    }
+
+    private void endWithFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                      FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value);
+    }
+
+    private void containsFilterBuilder(int count, String value, String attributeName, StringBuilder filter,
+                                       FilterQueryBuilder filterQueryBuilder) {
+
+        String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
+        filter.append(attributeName).append(filterString);
+        filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
     }
 }
