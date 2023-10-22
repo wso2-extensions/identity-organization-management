@@ -254,7 +254,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             String operation = expressionNode.getOperation();
 
             if (StringUtils.isNotBlank(attributeValue)) {
-                if (isFilteringAttributeNotSupported(attributeValue)) {
+                if (!isFilteringAttributeSupported(attributeValue)) {
                     throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, attributeValue);
                 }
                 if (!SUPPORTED_OPERATIONS.contains(operation)) {
@@ -273,8 +273,8 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         }
     }
 
-    private boolean isFilteringAttributeNotSupported(String attributeValue) {
+    private boolean isFilteringAttributeSupported(String attributeValue) {
 
-        return !attributeValue.equalsIgnoreCase(ORGANIZATION_NAME);
+        return ORGANIZATION_NAME.equalsIgnoreCase(attributeValue);
     }
 }
