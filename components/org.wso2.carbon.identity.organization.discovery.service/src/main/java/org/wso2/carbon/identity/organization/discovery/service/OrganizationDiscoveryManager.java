@@ -106,11 +106,13 @@ public interface OrganizationDiscoveryManager {
     /**
      * List the discovery attributes of all the organizations under the root organization.
      *
+     * @param filter The filter to be applied.
      * @return The discovery attributes of the organizations.
      * @throws OrganizationManagementException The exception thrown when listing discovery attributes of the
      *                                         organizations.
      */
-    List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes() throws OrganizationManagementException;
+    List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String filter)
+            throws OrganizationManagementException;
 
     /**
      * Get attribute based organization discovery handlers.
