@@ -248,7 +248,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds,
                         tenantDomainOfSharedApp);
 
-        List<RoleV2> associatedRolesOfSharedApp = mainRoleToSharedRoleMappingsBySubOrg.entrySet().stream()
+        RoleV2[] associatedRolesOfSharedApp = mainRoleToSharedRoleMappingsBySubOrg.entrySet().stream()
                 .map(entry -> {
                     String sharedRoleId = entry.getValue();
                     String mainRoleId = entry.getKey();
@@ -265,9 +265,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     sharedRole.setName(mainRoleName);
                     return sharedRole;
                 })
-                .collect(Collectors.toList());
+                .toArray(RoleV2[]::new);
 
-        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp.toArray(new RoleV2[0]));
+        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
         return associatedRolesConfigForSharedApp;
     }
 
