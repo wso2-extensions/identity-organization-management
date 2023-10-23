@@ -102,9 +102,14 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             String updatedAllowedAudienceForRoleAssociation =
                     serviceProvider.getAssociatedRolesConfig() == null ? RoleConstants.ORGANIZATION :
                             serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
-            List<RoleV2> updatedAssociatedRolesList =
-                    serviceProvider.getAssociatedRolesConfig() == null ? Collections.emptyList() :
-                            new ArrayList<>(Arrays.asList(serviceProvider.getAssociatedRolesConfig().getRoles()));
+
+            List<RoleV2> updatedAssociatedRolesList;
+            if (serviceProvider.getAssociatedRolesConfig() != null &&
+                    serviceProvider.getAssociatedRolesConfig().getRoles() != null) {
+                updatedAssociatedRolesList = Arrays.asList(serviceProvider.getAssociatedRolesConfig().getRoles());
+            } else {
+                updatedAssociatedRolesList = new ArrayList<>();
+            }
 
             if (CollectionUtils.isEmpty(existingAssociatedRolesList) &&
                     CollectionUtils.isEmpty(updatedAssociatedRolesList)) {
