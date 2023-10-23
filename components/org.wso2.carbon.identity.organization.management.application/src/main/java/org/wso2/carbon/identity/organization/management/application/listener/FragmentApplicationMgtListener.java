@@ -47,8 +47,8 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -238,10 +238,12 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             throws IdentityRoleManagementException {
 
         String allowedAudience = associatedRolesConfigOfMainApp.getAllowedAudience();
-        List<RoleV2> mainAppRoles = associatedRolesConfigOfMainApp.getRoles();
+        RoleV2[] mainAppRoles = associatedRolesConfigOfMainApp.getRoles();
+        List<RoleV2> mainappRoleList = Arrays.asList(mainAppRoles);
         AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
         associatedRolesConfigForSharedApp.setAllowedAudience(allowedAudience);
-        List<String> mainAppRoleIds = mainAppRoles.stream().map(RoleV2::getId).collect(Collectors.toList());
+        List<String> mainAppRoleIds =
+                mainappRoleList.stream().map(RoleV2::getId).collect(Collectors.toList());
         Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
                 getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds,
                         tenantDomainOfSharedApp);
@@ -252,7 +254,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     String mainRoleId = entry.getKey();
 
                     // Find the main role by ID and retrieve its name.
-                    String mainRoleName = mainAppRoles.stream()
+                    String mainRoleName = mainappRoleList.stream()
                             .filter(role -> role.getId().equals(mainRoleId))
                             .findFirst()
                             .map(RoleV2::getName)
@@ -265,7 +267,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 })
                 .collect(Collectors.toList());
 
-        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
+        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp.toArray(new RoleV2[0]));
         return associatedRolesConfigForSharedApp;
     }
 
