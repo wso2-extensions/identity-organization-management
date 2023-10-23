@@ -240,7 +240,11 @@
                 <artifactId>org.wso2.carbon.identity.governance</artifactId>
                 <version>${org.wso2.carbon.identity.governance.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
@@ -499,7 +503,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>5.25.400</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.25.426</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 7.0.0)
         </carbon.identity.package.import.version.range>
 
