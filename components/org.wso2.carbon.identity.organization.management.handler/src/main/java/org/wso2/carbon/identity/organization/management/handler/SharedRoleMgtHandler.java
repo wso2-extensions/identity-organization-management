@@ -35,10 +35,10 @@ import org.wso2.carbon.identity.organization.management.handler.internal.Organiz
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
-import org.wso2.carbon.identity.role.v2.mgt.core.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.Collections;
 import java.util.List;
