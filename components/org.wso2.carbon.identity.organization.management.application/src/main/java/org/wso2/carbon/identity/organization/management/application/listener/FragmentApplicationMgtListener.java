@@ -24,10 +24,12 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -45,10 +47,14 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
@@ -210,13 +216,59 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                 .setUseUserstoreDomainInRoles(mainApplication
                                         .getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
                     }
+
+                    // Set application's associated roles.
+                    AssociatedRolesConfig associatedRolesConfigOfMainApp = mainApplication.getAssociatedRolesConfig();
+                    if (associatedRolesConfigOfMainApp != null) {
+                        AssociatedRolesConfig associatedRolesConfigForSharedApp =
+                                getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp, tenantDomain);
+                        serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
+                    }
                 }
-            } catch (OrganizationManagementException e) {
+            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
                         ("Error while retrieving the fragment application details.", e);
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
+    }
+
+    private AssociatedRolesConfig getAssociatedRolesConfigForSharedApp(
+            AssociatedRolesConfig associatedRolesConfigOfMainApp, String tenantDomainOfSharedApp)
+            throws IdentityRoleManagementException {
+
+        String allowedAudience = associatedRolesConfigOfMainApp.getAllowedAudience();
+        RoleV2[] mainAppRoles = associatedRolesConfigOfMainApp.getRoles();
+        List<RoleV2> mainappRoleList = Arrays.asList(mainAppRoles);
+        AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
+        associatedRolesConfigForSharedApp.setAllowedAudience(allowedAudience);
+        List<String> mainAppRoleIds =
+                mainappRoleList.stream().map(RoleV2::getId).collect(Collectors.toList());
+        Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
+                getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds,
+                        tenantDomainOfSharedApp);
+
+        RoleV2[] associatedRolesOfSharedApp = mainRoleToSharedRoleMappingsBySubOrg.entrySet().stream()
+                .map(entry -> {
+                    String sharedRoleId = entry.getValue();
+                    String mainRoleId = entry.getKey();
+
+                    // Find the main role by ID and retrieve its name.
+                    String mainRoleName = mainappRoleList.stream()
+                            .filter(role -> role.getId().equals(mainRoleId))
+                            .findFirst()
+                            .map(RoleV2::getName)
+                            .orElse(null);
+
+                    RoleV2 sharedRole = new RoleV2();
+                    sharedRole.setId(sharedRoleId);
+                    sharedRole.setName(mainRoleName);
+                    return sharedRole;
+                })
+                .toArray(RoleV2[]::new);
+
+        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
+        return associatedRolesConfigForSharedApp;
     }
 
     @Override
@@ -303,6 +355,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private OrganizationManager getOrganizationManager() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private RoleManagementService getRoleManagementServiceV2() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getRoleManagementServiceV2();
     }
 
     /**
