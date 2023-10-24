@@ -184,7 +184,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                                         invitation.getUsername(), invitedOrganizationId));
                     }
 
-                    String userId = getRealUserId(invitation);
+                    String userId = getInvitedUserId(invitation);
                     getOrganizationUserSharingService().shareOrganizationUser(invitedOrganizationId, userId,
                             invitation.getUserOrganizationId());
                     // Trigger event to add the role assignments if any available in the invitation.
@@ -351,7 +351,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
     }
 
-    private String getRealUserId(Invitation invitation) throws UserInvitationMgtServerException {
+    private String getInvitedUserId(Invitation invitation) throws UserInvitationMgtServerException {
 
         String userName = UserCoreUtil.addDomainToName(invitation.getUsername(), invitation.getUserDomain());
 
@@ -363,6 +363,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             String userManagedOrganizationClaim = OrganizationSharedUserUtil
                     .getUserManagedOrganizationClaim(userStoreManager, userId);
             if (userManagedOrganizationClaim != null) {
+                // UserManagedOrg claim exist for the shared users. Hence, required to find the associated user ID.
                 String orgId = invitation.getUserOrganizationId();
                 invitation.setUserOrganizationId(userManagedOrganizationClaim);
                 return getOrganizationUserSharingService().getUserAssociation(userId, orgId).getAssociatedUserId();
