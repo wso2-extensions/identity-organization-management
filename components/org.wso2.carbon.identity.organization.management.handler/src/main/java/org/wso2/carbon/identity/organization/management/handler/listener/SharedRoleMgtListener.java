@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -121,7 +122,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if old and new audiences are equals, need to handle the role diff.
              */
             if (existingAllowedAudienceForRoleAssociation.equalsIgnoreCase(updatedAllowedAudienceForRoleAssociation)) {
-                switch (updatedAllowedAudienceForRoleAssociation) {
+                switch (updatedAllowedAudienceForRoleAssociation.toLowerCase()) {
                     case RoleConstants.APPLICATION:
                         List<RoleV2> addedApplicationAudienceRoles = updatedAssociatedRolesList.stream()
                                 .filter(updatedRole -> !existingAssociatedRolesList.contains(updatedRole))
@@ -520,5 +521,73 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throws IdentityApplicationManagementException {
 
         return applicationManagementService.getServiceProvider(name, tenantDomain);
+    }
+
+    @Override
+    public boolean doPostGetAllowedAudienceForRoleAssociation(AssociatedRolesConfig allowedAudienceForRoleAssociation,
+                                                              String applicationUUID, String tenantDomain)
+            throws IdentityApplicationManagementException {
+
+        try {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                return true;
+            }
+            String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
+            int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
+            String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+            String resolvedAllowedAudienceFromMainApp =
+                    applicationManagementService.getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain);
+            allowedAudienceForRoleAssociation.setAllowedAudience(resolvedAllowedAudienceFromMainApp);
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementException(String.format(
+                    "Error while fetching the allowed audience for role association of application with: %s.",
+                    applicationUUID), e);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean doPostGetAssociatedRolesOfApplication(List<RoleV2> associatedRolesOfApplication,
+                                                         String applicationUUID, String tenantDomain)
+            throws IdentityApplicationManagementException {
+
+        try {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                return true;
+            }
+            String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
+            int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
+            String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+            List<RoleV2> resolvedAssociatedRolesFromMainApp =
+                    applicationManagementService.getAssociatedRolesOfApplication(mainAppId, mainAppTenantDomain);
+            List<String> mainAppRoleIds =
+                    resolvedAssociatedRolesFromMainApp.stream().map(RoleV2::getId).collect(Collectors.toList());
+            Map<String, String> mainRoleToSharedRoleMappingsInSubOrg =
+                    roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds, tenantDomain);
+            associatedRolesOfApplication = mainRoleToSharedRoleMappingsInSubOrg.entrySet().stream()
+                    .map(entry -> {
+                        String sharedRoleId = entry.getValue();
+                        String mainRoleId = entry.getKey();
+
+                        // Find the main role by ID and retrieve its name.
+                        String mainRoleName = resolvedAssociatedRolesFromMainApp.stream()
+                                .filter(role -> role.getId().equals(mainRoleId))
+                                .findFirst()
+                                .map(RoleV2::getName)
+                                .orElse(null);
+
+                        RoleV2 sharedRole = new RoleV2();
+                        sharedRole.setId(sharedRoleId);
+                        sharedRole.setName(mainRoleName);
+                        return sharedRole;
+                    })
+                    .collect(Collectors.toList());
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            throw new IdentityApplicationManagementException(String.format(
+                    "Error while fetching the allowed audience for role association of application with: %s.",
+                    applicationUUID), e);
+        }
+        return true;
+
     }
 }
