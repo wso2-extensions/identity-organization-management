@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.handler;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -92,7 +93,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             String allowedAudienceForRoleAssociationInMainApp =
                     getApplicationMgtService().getAllowedAudienceForRoleAssociation(parentApplicationId,
                             mainAppTenantDomain);
-            switch (allowedAudienceForRoleAssociationInMainApp) {
+            switch (allowedAudienceForRoleAssociationInMainApp.toLowerCase()) {
                 case RoleConstants.APPLICATION:
                     // Create the roles, and add the relationship.
                     createSharedRolesWithAppAudience(parentApplicationId, mainAppTenantDomain, sharedApplicationId,
@@ -184,7 +185,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             if (OrganizationManagementUtil.isOrganization(roleTenantDomain)) {
                 return;
             }
-            switch (roleAudienceType) {
+            switch (roleAudienceType.toLowerCase()) {
                 case RoleConstants.APPLICATION:
                     /*
                      If the audienced application is a shared application, create the role in
@@ -201,14 +202,21 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                 String sharedOrganizationId = sharedApplications.get(taskId).getOrganizationId();
                                 String shareAppTenantDomain =
                                         getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-                                RoleBasicInfo sharedRoleInfo =
+                                try {
+                                    PrivilegedCarbonContext.startTenantFlow();
+                                    PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                            .setTenantDomain(shareAppTenantDomain, true);
+                                    RoleBasicInfo sharedRoleInfo =
                                         getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
                                                 Collections.emptyList(),
                                                 Collections.emptyList(), RoleConstants.APPLICATION, sharedApplicationId,
                                                 shareAppTenantDomain);
-                                // Add relationship between main role and shared role.
-                                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
-                                        sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                                    // Add relationship between main role and shared role.
+                                    getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
+                                            sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                                } finally {
+                                    PrivilegedCarbonContext.endTenantFlow();
+                                }
                             } catch (IdentityRoleManagementException | OrganizationManagementException e) {
                                 LOG.error("Error occurred while creating shared role in organization with id: " +
                                         sharedApplications.get(taskId).getOrganizationId(), e);
