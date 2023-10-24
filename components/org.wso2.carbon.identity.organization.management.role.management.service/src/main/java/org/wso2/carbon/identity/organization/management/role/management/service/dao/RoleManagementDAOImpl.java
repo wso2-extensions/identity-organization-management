@@ -454,11 +454,9 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 permissions.addAll(groupAssignedRoles);
             }
 
-        } catch (UserStoreException | DataAccessException e) {
+        } catch (UserStoreException | DataAccessException | OrganizationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
                     userId);
-        } catch (OrganizationManagementException e) {
-            throw new RuntimeException(e);
         }
 
         return permissions;

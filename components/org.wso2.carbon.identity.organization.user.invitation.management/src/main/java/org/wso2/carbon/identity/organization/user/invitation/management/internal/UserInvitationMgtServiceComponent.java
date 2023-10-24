@@ -129,7 +129,6 @@ public class UserInvitationMgtServiceComponent {
 
         UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(organizationUserSharingService);
         LOG.debug("Set organization user association service.");
-
     }
 
     protected void unsetOrganizationUserAssociationService(

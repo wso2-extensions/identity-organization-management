@@ -38,7 +38,7 @@ public interface OrganizationUserSharingService {
             throws OrganizationManagementException;
 
     /**
-     * UnShare all the shared users for the given user.
+     * Unshare all the shared users for the given user.
      *
      * @param associatedUserId The ID of the associated user.
      * @param associatedOrgId  The ID of the organization where the user is managed.

@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +41,6 @@ import java.util.Map;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 
 /**
  * The event handler for sharing the organization creator to the child organization.
@@ -60,9 +60,9 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             String orgId = organization.getId();
 
             try {
-                int organizationDepth = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .getOrganizationDepthInHierarchy(orgId);
-                if (!isSubOrganization(organizationDepth)) {
+                String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveTenantDomain(orgId);
+                if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                     return;
                 }
 

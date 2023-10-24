@@ -35,9 +35,8 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG = "SELECT UM_USER_ID, " +
             "UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ORG_ID = ?";
-
     public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER = "SELECT UM_USER_ID, UM_ORG_ID, " +
-            "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID  FROM UM_ORG_USER_ASSOCIATION " +
+            "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_USER_ID = ? AND UM_ORG_ID = ?";
     /**
      * SQL placeholders related to organization user sharing SQL operations.

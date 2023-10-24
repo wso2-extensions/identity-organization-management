@@ -58,7 +58,7 @@ public class OrganizationUserSharingServiceComponent {
                 new SharedUserOperationEventListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
                 new SharingOrganizationCreatorUserEventHandler(), null);
-        LOG.info("Shared Organization User Listener activated successfully.");
+        LOG.info("OrganizationUserSharingServiceComponent activated successfully.");
     }
 
     @Reference(
@@ -89,7 +89,6 @@ public class OrganizationUserSharingServiceComponent {
 
         OrganizationUserSharingDataHolder.getInstance().setOrganizationManager(organizationManager);
         LOG.debug("Set Organization Management Service");
-
     }
 
     protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {

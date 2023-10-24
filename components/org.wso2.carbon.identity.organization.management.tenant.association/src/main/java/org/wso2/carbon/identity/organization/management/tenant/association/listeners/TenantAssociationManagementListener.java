@@ -25,7 +25,6 @@ import org.wso2.carbon.identity.core.AbstractIdentityTenantMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder;
 import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
@@ -75,11 +74,9 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
                 organization.setType(OrganizationManagementConstants.OrganizationTypes.TENANT.name());
                 getOrganizationManager().addRootOrganization(tenant.getId(), organization);
             }
-        } catch (UserStoreException | OrganizationManagementServerException e) {
+        } catch (UserStoreException | OrganizationManagementException e) {
             String error = "Error occurred while adding user-tenant association for the tenant id: " + tenantId;
             LOG.error(error, e);
-        } catch (OrganizationManagementException e) {
-            throw new RuntimeException(e);
         }
     }
 
