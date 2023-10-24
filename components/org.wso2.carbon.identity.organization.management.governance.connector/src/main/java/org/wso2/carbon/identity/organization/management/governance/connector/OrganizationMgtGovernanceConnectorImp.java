@@ -45,7 +45,7 @@ public class OrganizationMgtGovernanceConnectorImp implements IdentityConnectorC
 
     private static final String CONNECTOR_NAME = "organization-self-service";
     private static final String CATEGORY = "User Onboarding";
-    private static final String FRIENDLY_NAME = "Suborganization Self Service";
+    private static final String FRIENDLY_NAME = "Organization Self Service";
 
     @Override
     public String getName() {
