@@ -532,6 +532,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
+            // Resolve the allowed audience for associated roles of shared application from main application details.
             String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
             int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
             String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
@@ -555,6 +556,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
+            // Resolve the associated roles of shared application from main application details.
             String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
             int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
             String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
@@ -564,7 +566,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                     resolvedAssociatedRolesFromMainApp.stream().map(RoleV2::getId).collect(Collectors.toList());
             Map<String, String> mainRoleToSharedRoleMappingsInSubOrg =
                     roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(mainAppRoleIds, tenantDomain);
-            associatedRolesOfApplication = mainRoleToSharedRoleMappingsInSubOrg.entrySet().stream()
+            List<RoleV2> associatedRolesOfSharedApplication = mainRoleToSharedRoleMappingsInSubOrg.entrySet().stream()
                     .map(entry -> {
                         String sharedRoleId = entry.getValue();
                         String mainRoleId = entry.getKey();
@@ -582,6 +584,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                         return sharedRole;
                     })
                     .collect(Collectors.toList());
+            associatedRolesOfApplication.clear();
+            associatedRolesOfApplication.addAll(associatedRolesOfSharedApplication);
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             throw new IdentityApplicationManagementException(String.format(
                     "Error while fetching the allowed audience for role association of application with: %s.",
