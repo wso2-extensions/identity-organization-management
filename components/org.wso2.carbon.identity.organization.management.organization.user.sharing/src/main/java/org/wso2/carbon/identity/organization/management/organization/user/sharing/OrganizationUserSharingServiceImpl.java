@@ -76,7 +76,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public boolean unShareOrganizationUsers(String associatedUserId, String associatedOrgId)
+    public boolean unshareOrganizationUsers(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
         List<UserAssociation> userAssociationList =

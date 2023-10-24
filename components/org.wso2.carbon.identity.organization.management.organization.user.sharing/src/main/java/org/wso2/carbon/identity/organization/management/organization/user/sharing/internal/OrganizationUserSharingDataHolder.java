@@ -37,21 +37,41 @@ public class OrganizationUserSharingDataHolder {
         return instance;
     }
 
+    /**
+     * Get the organization manager service.
+     *
+     * @return Organization manager service.
+     */
     public OrganizationManager getOrganizationManager() {
 
         return organizationManager;
     }
 
+    /**
+     * Set the organization manager service.
+     *
+     * @param organizationManager Organization manager service.
+     */
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
     }
 
+    /**
+     * Get the realm service.
+     *
+     * @return Realm service.
+     */
     public RealmService getRealmService() {
 
         return realmService;
     }
 
+    /**
+     * Set the realm service.
+     *
+     * @param realmService RealmService service.
+     */
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;

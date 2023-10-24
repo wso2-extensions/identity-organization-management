@@ -45,7 +45,7 @@ public interface OrganizationUserSharingService {
      * @return True if the user associations are deleted successfully.
      * @throws OrganizationManagementException If an error occurs while deleting the user associations.
      */
-    boolean unShareOrganizationUsers(String associatedUserId, String associatedOrgId)
+    boolean unshareOrganizationUsers(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException;
 
     /**
