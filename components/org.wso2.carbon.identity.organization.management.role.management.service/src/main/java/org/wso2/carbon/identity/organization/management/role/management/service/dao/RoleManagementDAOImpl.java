@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.FilterOperator;
 import org.wso2.carbon.identity.organization.management.role.management.service.internal.RoleManagementDataHolder;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.FilterQueryBuilder;
@@ -430,8 +431,8 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         // Get the roles assigned to user via groups.
         try {
-            AbstractUserStoreManager userStoreManager =
-                    getUserStoreManager(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId());
+            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(organizationId));
+            AbstractUserStoreManager userStoreManager = getUserStoreManager(tenantId);
 
             boolean isUserExists = userStoreManager.isExistingUserWithID(userId);
             if (!isUserExists) {
@@ -453,7 +454,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 permissions.addAll(groupAssignedRoles);
             }
 
-        } catch (UserStoreException | DataAccessException e) {
+        } catch (UserStoreException | DataAccessException | OrganizationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_PERMISSIONS, e, organizationId,
                     userId);
         }

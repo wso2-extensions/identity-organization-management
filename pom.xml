@@ -53,6 +53,7 @@
         <module>components/org.wso2.carbon.identity.organization.user.invitation.management</module>
         <module>components/org.wso2.carbon.identity.organization.config.service</module>
         <module>components/org.wso2.carbon.identity.organization.discovery.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
     </modules>
 
     <dependencyManagement>
@@ -111,6 +112,12 @@
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.claim.metadata.mgt</artifactId>
                 <version>${carbon.identity.framework.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>

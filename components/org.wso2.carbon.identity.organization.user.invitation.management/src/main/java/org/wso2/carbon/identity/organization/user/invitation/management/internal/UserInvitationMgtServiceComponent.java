@@ -29,16 +29,15 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreService;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreServiceImpl;
 import org.wso2.carbon.identity.organization.user.invitation.management.handler.UserInvitationEventHandler;
-import org.wso2.carbon.identity.organization.user.invitation.management.listener.OrgSharedUserOperationEventListener;
-import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * OSGi service component for Organization Management - Role Management bundle.
+ * OSGi service component for Organization Management - User Invitation Management bundle.
  */
 @Component(
         name = "carbon.organization.organization.user.invitation.management.component",
@@ -59,9 +58,6 @@ public class UserInvitationMgtServiceComponent {
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     new UserInvitationEventHandler(), null);
             LOG.info("Organization User Invitation Handler activated successfully.");
-            bundleContext.registerService(UserOperationEventListener.class.getName(),
-                    new OrgSharedUserOperationEventListener(), null);
-            LOG.info("Shared Organization User Listener activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating Organization User Invitation Mgt Component", e);
         }
@@ -113,13 +109,32 @@ public class UserInvitationMgtServiceComponent {
     protected void setOrganizationManagementService(OrganizationManager organizationManager) {
 
         UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
-        LOG.debug("Set Organization Management Service");
+        LOG.debug("Set Organization Management Service.");
 
     }
 
     protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {
 
         UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(null);
-        LOG.debug("Unset Organization Management Service");
+        LOG.debug("Unset Organization Management Service.");
+    }
+
+    @Reference(
+            name = "organization.user.sharing.service",
+            service = OrganizationUserSharingService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationUserAssociationService")
+    protected void setOrganizationUserSharingService(OrganizationUserSharingService organizationUserSharingService) {
+
+        UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(organizationUserSharingService);
+        LOG.debug("Set organization user association service.");
+    }
+
+    protected void unsetOrganizationUserAssociationService(
+            OrganizationUserSharingService organizationUserSharingService) {
+
+        UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(null);
+        LOG.debug("Unset organization user association Service.");
     }
 }

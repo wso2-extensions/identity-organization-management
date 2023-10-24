@@ -20,8 +20,6 @@ package org.wso2.carbon.identity.organization.user.invitation.management;
 
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
-import org.wso2.carbon.identity.organization.user.invitation.management.models.SharedUserAssociation;
-import org.wso2.carbon.user.api.UserStoreManager;
 
 import java.util.List;
 
@@ -83,38 +81,4 @@ public interface InvitationCoreService {
      * @throws UserInvitationMgtException If an error occurs while resending the invitation.
      */
     Invitation resendInvitation(String username, String domain) throws UserInvitationMgtException;
-
-    /**
-     * Delete the associations of the invited user.
-     *
-     * @param userId The ID of the invited user.
-     * @param userStoreManager The user store manager of the invited user.
-     * @return True if the associations are deleted successfully.
-     * @throws UserInvitationMgtException If an error occurs while deleting the associations.
-     */
-    boolean deleteInvitedUserAssociation(String userId, UserStoreManager userStoreManager)
-            throws UserInvitationMgtException;
-
-    /**
-     * Checks whether the user claim values can be updated for the user.
-     *
-     * @param userID The ID of the user.
-     * @param profileName The profile name of the user.
-     * @param userStoreManager The user store manager of the user.
-     * @return True if the user claim values can be updated.
-     * @throws UserInvitationMgtException If an error occurs while checking the user claim values can be updated.
-     */
-    boolean isUpdateUserClaimValuesAllowed(String userID, String profileName, UserStoreManager userStoreManager)
-            throws UserInvitationMgtException;
-
-    /**
-     * Get the shared user association of the user.
-     *
-     * @param userId The actual ID of the user.
-     * @param sharedOrganizationId The organization ID of the user.
-     * @return The shared user association of the user.
-     * @throws UserInvitationMgtException If an error occurs while retrieving the shared user association.
-     */
-    SharedUserAssociation getSharedUserAssociationOfUserAtSubOrg(String userId, String sharedOrganizationId)
-            throws UserInvitationMgtException;
 }
