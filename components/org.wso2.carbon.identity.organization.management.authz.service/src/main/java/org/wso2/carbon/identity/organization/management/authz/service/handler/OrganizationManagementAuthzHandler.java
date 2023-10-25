@@ -34,13 +34,17 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.authz.service.OrganizationManagementAuthorizationContext;
 import org.wso2.carbon.identity.organization.management.authz.service.exception.OrganizationManagementAuthzServiceServerException;
 import org.wso2.carbon.identity.organization.management.authz.service.internal.OrganizationManagementAuthzServiceHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.authz.OrganizationManagementAuthorizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
+
+import java.util.Optional;
 
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.auth.service.util.Constants.OAUTH2_VALIDATE_SCOPE;
@@ -143,7 +147,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
 
         try {
             boolean isUserAuthorized = OrganizationManagementAuthorizationManager.getInstance().isUserAuthorized
-                    (getUserId(user), permissionString, orgId);
+                    (getUserId(user, orgId), permissionString, orgId);
             if (isUserAuthorized) {
                 authorizationResult.setAuthorizationStatus(AuthorizationStatus.GRANT);
             }
@@ -152,12 +156,15 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         }
     }
 
-    private String getUserId(User user) throws OrganizationManagementAuthzServiceServerException {
+    private String getUserId(User user, String orgId) throws OrganizationManagementAuthzServiceServerException {
 
         try {
             AbstractUserStoreManager userStoreManager = (AbstractUserStoreManager) getUserStoreManager(user);
-            return userStoreManager.getUser(null, user.getUserName()).getUserID();
-        } catch (UserStoreException e) {
+            String userId = userStoreManager.getUser(null, user.getUserName()).getUserID();
+            Optional<String> optionalUserId = OrganizationSharedUserUtil
+                    .fetchUserIdOfAssociatedUser(userId, orgId);
+            return optionalUserId.orElse(userId);
+        } catch (UserStoreException | OrganizationManagementException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);
         }
     }

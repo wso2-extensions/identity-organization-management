@@ -18,10 +18,13 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 
@@ -39,4 +42,11 @@ public class OrganizationSharedUserUtil {
         return claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
     }
 
+
+    public static Optional<String> fetchUserIdOfAssociatedUser(String userId, String accessingOrgId)
+            throws OrganizationManagementException {
+
+        return Optional.ofNullable(OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+                .getUserAssociationOfAssociatedUserByOrgId(userId, accessingOrgId).getUserId());
+    }
 }
