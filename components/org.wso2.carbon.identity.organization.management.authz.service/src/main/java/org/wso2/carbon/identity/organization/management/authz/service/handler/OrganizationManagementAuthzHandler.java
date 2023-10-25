@@ -161,6 +161,7 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         try {
             AbstractUserStoreManager userStoreManager = (AbstractUserStoreManager) getUserStoreManager(user);
             String userId = userStoreManager.getUser(null, user.getUserName()).getUserID();
+            // Retrieve the user ID of the shared user if an user association exists.
             Optional<String> optionalUserId =
                     OrganizationSharedUserUtil.getUserIdOfAssociatedUserByOrgId(userId, orgId);
             return optionalUserId.orElse(userId);
