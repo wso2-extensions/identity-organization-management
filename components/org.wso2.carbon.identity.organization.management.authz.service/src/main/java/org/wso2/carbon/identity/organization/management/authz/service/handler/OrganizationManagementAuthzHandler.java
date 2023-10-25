@@ -161,8 +161,8 @@ public class OrganizationManagementAuthzHandler extends AuthorizationHandler {
         try {
             AbstractUserStoreManager userStoreManager = (AbstractUserStoreManager) getUserStoreManager(user);
             String userId = userStoreManager.getUser(null, user.getUserName()).getUserID();
-            Optional<String> optionalUserId = OrganizationSharedUserUtil
-                    .fetchUserIdOfAssociatedUser(userId, orgId);
+            Optional<String> optionalUserId =
+                    OrganizationSharedUserUtil.getUserIdOfAssociatedUserByOrgId(userId, orgId);
             return optionalUserId.orElse(userId);
         } catch (UserStoreException | OrganizationManagementException e) {
             throw new OrganizationManagementAuthzServiceServerException(e);

@@ -43,10 +43,13 @@ public class OrganizationSharedUserUtil {
     }
 
 
-    public static Optional<String> fetchUserIdOfAssociatedUser(String userId, String accessingOrgId)
+    /**
+     * Get the user ID of the associated user by the organization ID.
+     */
+    public static Optional<String> getUserIdOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementException {
 
         return Optional.ofNullable(OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
-                .getUserAssociationOfAssociatedUserByOrgId(userId, accessingOrgId).getUserId());
+                .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId).getUserId());
     }
 }
