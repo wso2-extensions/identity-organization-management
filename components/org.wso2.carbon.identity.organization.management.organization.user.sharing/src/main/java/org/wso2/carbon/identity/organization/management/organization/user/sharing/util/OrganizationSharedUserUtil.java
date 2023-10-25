@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -49,7 +50,11 @@ public class OrganizationSharedUserUtil {
     public static Optional<String> getUserIdOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementException {
 
-        return Optional.ofNullable(OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
-                .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId).getUserId());
+        UserAssociation userAssociation = OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+                .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
+        if (userAssociation == null) {
+            return Optional.empty();
+        }
+        return Optional.of(userAssociation.getUserId());
     }
 }
