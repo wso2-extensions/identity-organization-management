@@ -52,8 +52,11 @@ public class OrganizationUserSharingServiceComponent {
     protected void activate(ComponentContext componentContext) {
 
         BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(OrganizationUserSharingService.class.getName(),
-                new OrganizationUserSharingServiceImpl(), null);
+        OrganizationUserSharingService organizationUserSharingService = new OrganizationUserSharingServiceImpl();
+        OrganizationUserSharingDataHolder.getInstance()
+                .setOrganizationUserSharingService(organizationUserSharingService);
+        bundleContext.registerService(OrganizationUserSharingService.class.getName(), organizationUserSharingService,
+                null);
         bundleContext.registerService(UserOperationEventListener.class.getName(),
                 new SharedUserOperationEventListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
