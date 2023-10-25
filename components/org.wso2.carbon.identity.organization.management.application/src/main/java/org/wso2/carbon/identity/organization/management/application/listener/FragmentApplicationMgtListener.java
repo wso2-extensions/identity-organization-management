@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,6 +48,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
@@ -54,6 +56,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -75,6 +80,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class FragmentApplicationMgtListener extends AbstractApplicationMgtListener {
 
     private static final Log LOG = LogFactory.getLog(FragmentApplicationMgtListener.class);
+    private static final String IS_APP_NAME_UPDATED = "isAppNameUpdated";
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Override
     public int getDefaultOrderId() {
@@ -128,11 +135,28 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreUpdateApplication(ServiceProvider serviceProvider, String tenantDomain,
                                           String userName) throws IdentityApplicationManagementException {
 
+        ServiceProvider existingApplication =
+                getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
+        try {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                if (existingApplication != null &&
+                        !existingApplication.getApplicationName().equals(serviceProvider.getApplicationName())) {
+                    IdentityUtil.threadLocalProperties.get().put(IS_APP_NAME_UPDATED, true);
+                }
+            } else if (!isInternalProcess(tenantDomain)) {
+                if (existingApplication != null &&
+                        !existingApplication.getApplicationName().equals(serviceProvider.getApplicationName())) {
+                    throw new IdentityApplicationManagementClientException(
+                            "Application name modification is not allowed for this organization.");
+                }
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementException(
+                    String.format("Error while resolving the organization for the tenant  %s .", tenantDomain), e);
+        }
         /* If the application is a fragment application, only certain configurations are allowed to be updated since
         the organization login authenticator needs some configurations unchanged. Hence, the listener will override
         any configs changes that are required for organization login. */
-        ServiceProvider existingApplication =
-                getApplicationByResourceId(serviceProvider.getApplicationResourceId(), tenantDomain);
         if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
                 .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
@@ -164,6 +188,28 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
+    }
+
+    @Override
+    public boolean doPostUpdateApplication(ServiceProvider serviceProvider, String tenantDomain, String userName)
+            throws IdentityApplicationManagementException {
+
+        try {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                Object isAppNameUpdated = IdentityUtil.threadLocalProperties.get().get(IS_APP_NAME_UPDATED);
+                if (isAppNameUpdated != null && (Boolean) isAppNameUpdated) {
+                    handleApplicationNameUpdate(serviceProvider.getApplicationResourceId(), tenantDomain, userName,
+                            serviceProvider.getApplicationName());
+                }
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementException(
+                    String.format("Error while updating the application name related to application %s update.",
+                            serviceProvider.getApplicationID()), e);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(IS_APP_NAME_UPDATED);
+        }
+        return super.doPostUpdateApplication(serviceProvider, tenantDomain, userName);
     }
 
     @Override
@@ -409,5 +455,67 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                         Boolean.parseBoolean(property.getValue())) &&
                 !StringUtils.equals(IdentityTenantUtil.getTenantDomainFromContext(), tenantDomain);
+    }
+
+    /**
+     * Check whether the application name update for a sub-organization by an internal process.
+     * In that process, request initiated tenant domain and the service provider belonging tenant domain would be
+     * different.
+     *
+     * @param tenantDomain The tenant domain which the service provider app is belongs to.
+     * @return True if the request initiated by an internal process.
+     */
+    private boolean isInternalProcess(String tenantDomain) {
+
+        return !StringUtils.equals(IdentityTenantUtil.getTenantDomainFromContext(), tenantDomain);
+    }
+
+    /**
+     * Update the application names of fragment applications of the given main application.
+     *
+     * @param applicationId          The application id of the main application.
+     * @param tenantDomain           The tenant domain which the service provider app is belongs to.
+     * @param username               The username of the user who initiated the update.
+     * @param updatedApplicationName The updated application name.
+     */
+    private void handleApplicationNameUpdate(String applicationId, String tenantDomain, String username,
+                                             String updatedApplicationName) throws OrganizationManagementException {
+
+        String mainAppOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+        List<SharedApplicationDO>
+                sharedApplications = getOrgApplicationMgtDAO().getSharedApplications(mainAppOrgId, applicationId);
+        if (CollectionUtils.isEmpty(sharedApplications)) {
+            return;
+        }
+        for (SharedApplicationDO sharedApplication : sharedApplications) {
+            String sharedAppOrgId = sharedApplication.getOrganizationId();
+            CompletableFuture.runAsync(() -> {
+                try {
+                    updateFragmentApplication(sharedAppOrgId, sharedApplication.getFragmentApplicationId(),
+                            updatedApplicationName, username);
+                } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
+                    LOG.error(String.format("Error in updating application: %s in organization: %s",
+                            applicationId, sharedAppOrgId), e);
+                }
+            }, executorService);
+        }
+    }
+
+    private void updateFragmentApplication(String sharedAppOrgId, String fragmentApplicationId,
+                                           String updatedApplicationName, String username)
+            throws OrganizationManagementException, IdentityApplicationManagementException {
+
+        try {
+            String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedAppTenantDomain, true);
+            ServiceProvider fragmentApp = getApplicationMgtService().getApplicationByResourceId(
+                    fragmentApplicationId, sharedAppTenantDomain);
+            fragmentApp.setApplicationName(updatedApplicationName);
+            getApplicationMgtService().updateApplicationByResourceId(
+                    fragmentApplicationId, fragmentApp, sharedAppTenantDomain, username);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
     }
 }

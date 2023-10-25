@@ -706,7 +706,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         ServiceProvider delegatedApplication = new ServiceProvider();
         delegatedApplication.setApplicationName(oAuthConsumerApp.getApplicationName());
-        delegatedApplication.setDescription("Delegated access from: " + mainApplication.getApplicationName());
+        delegatedApplication.setDescription(mainApplication.getDescription());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
         appendFragmentAppProperties(delegatedApplication);
 
