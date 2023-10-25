@@ -50,7 +50,8 @@ public class OrganizationSharedUserUtil {
     public static Optional<String> getUserIdOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementException {
 
-        UserAssociation userAssociation = OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+        UserAssociation userAssociation = OrganizationUserSharingDataHolder.getInstance()
+                .getOrganizationUserSharingService()
                 .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
         if (userAssociation == null) {
             return Optional.empty();
