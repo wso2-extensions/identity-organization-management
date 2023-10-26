@@ -18,7 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -30,9 +32,11 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +44,6 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 
 /**
  * The event handler for sharing the organization creator to the child organization.
@@ -67,9 +70,11 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 }
 
                 String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-                // #TODO associatedUserOrgId should be retrieved from the carbon context. As of now, set SUPER_ORG_ID.
-                // Feature won't work for b2b enabled tenant.
-                userSharingService.shareOrganizationUser(orgId, associatedUserId, SUPER_ORG_ID);
+                String associatedOrgId = (String) IdentityUtil.threadLocalProperties.get().get("USER_RESIDENT_ORG");
+                if (StringUtils.isEmpty(associatedOrgId)) {
+                    associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
+                }
+                userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
                 String userId = userSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                                 .getUserId();
                 Role organizationCreatorRole = buildOrgCreatorRole(userId);
@@ -123,5 +128,10 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     private RoleManager getRoleManager() {
 
         return OrganizationUserSharingDataHolder.getInstance().getRoleManager();
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrganizationUserSharingDataHolder.getInstance().getOrganizationManager();
     }
 }
