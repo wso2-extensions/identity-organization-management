@@ -47,6 +47,10 @@ import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.event.IdentityEventClientException;
+import org.wso2.carbon.identity.event.IdentityEventException;
+import org.wso2.carbon.identity.event.event.Event;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
@@ -57,7 +61,9 @@ import org.wso2.carbon.identity.organization.management.application.listener.App
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -624,6 +630,32 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharedApplicationId, shareWithAllChildren);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
+        }
+
+        /*
+            If the sharing main application is Console, Create the shared admin user in shared organization
+            and assign the admin role.
+        */
+        if (mainApplication.getApplicationName().equals("Console")) {
+            fireOrganizationCreatorSharingEvent(sharedOrgId);
+        }
+    }
+
+    private void fireOrganizationCreatorSharingEvent(String organizationId) throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
+
+        IdentityEventService eventService = OrgApplicationMgtDataHolder.getInstance().getIdentityEventService();
+        try {
+            Event event = new Event("POST_SHARED_CONSOLE_APP", eventProperties);
+            eventService.handleEvent(event);
+        } catch (IdentityEventClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode(), e);
+        } catch (IdentityEventException e) {
+            throw new OrganizationManagementServerException(
+                    OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getMessage(),
+                    OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_FIRING_EVENTS.getCode(), e);
         }
     }
 
