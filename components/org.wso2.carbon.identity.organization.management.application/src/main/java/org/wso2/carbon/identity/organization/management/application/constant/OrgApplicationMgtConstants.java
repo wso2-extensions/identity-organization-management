@@ -37,6 +37,7 @@ public class OrgApplicationMgtConstants {
 
     public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
     public static final String APP_ROLES_CLAIM_URI = "http://wso2.org/claims/applicationRoles";
+    public static final String ROLES_CLAIM_URI = "http://wso2.org/claims/roles";
     public static final String USER_ORGANIZATION_CLAIM = "user_organization";
     public static final String OIDC_CLAIM_DIALECT_URI = "http://wso2.org/oidc/claim";
     public static final String RUNTIME_CLAIM_URI_PREFIX = "http://wso2.org/claims/runtime/";

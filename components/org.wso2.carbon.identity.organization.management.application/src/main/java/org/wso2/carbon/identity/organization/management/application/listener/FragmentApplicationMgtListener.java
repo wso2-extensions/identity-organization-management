@@ -22,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -243,6 +244,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         // Add application roles to the filtered claim mappings (if any
                         filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
                     }
+                    if (!CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
+                        // Add roles to the filtered claim mappings.
+                        filteredClaimMappings = addRolesClaimToFilteredClaimMappings(filteredClaimMappings);
+                    }
                     ClaimConfig claimConfig = new ClaimConfig();
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
@@ -277,6 +282,39 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
+    }
+
+    /**
+     * Add roles claim mapping to the filtered claim mappings.
+     *
+     * @param filteredClaimMappings ClaimMappings array be used to add roles claim mapping.
+     * @return ClaimMappings array with roles claim mapping.
+     */
+    private ClaimMapping[] addRolesClaimToFilteredClaimMappings(ClaimMapping[] filteredClaimMappings) {
+
+        if (filteredClaimMappings == null) {
+            return null;
+        }
+        for (ClaimMapping claimMapping : filteredClaimMappings) {
+            if (OrgApplicationMgtConstants.ROLES_CLAIM_URI.equals(claimMapping.getLocalClaim().getClaimUri())) {
+                // Return original array if the claim already exists.
+                return filteredClaimMappings;
+            }
+        }
+        ClaimMapping roleClaimMapping = new ClaimMapping();
+        Claim localRoleClaim = new Claim();
+        localRoleClaim.setClaimUri(OrgApplicationMgtConstants.ROLES_CLAIM_URI);
+        Claim fedRoleClaim = new Claim();
+        fedRoleClaim.setClaimUri(OrgApplicationMgtConstants.ROLES_CLAIM_URI);
+        roleClaimMapping.setLocalClaim(localRoleClaim);
+        roleClaimMapping.setRemoteClaim(fedRoleClaim);
+        roleClaimMapping.setRequested(true);
+
+        ClaimMapping[] claimMappings = new ClaimMapping[filteredClaimMappings.length + 1];
+        System.arraycopy(filteredClaimMappings, 0, claimMappings, 0, filteredClaimMappings.length);
+        claimMappings[filteredClaimMappings.length] = roleClaimMapping;
+        // Return the updated array.
+        return claimMappings;
     }
 
     private AssociatedRolesConfig getAssociatedRolesConfigForSharedApp(
