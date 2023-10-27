@@ -117,6 +117,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_GET_TENANT_FROM_ORG("10027",
                 "Unable to get the tenant domain.",
                 "Unable to get the tenant domain for the organization %s."),
+        ERROR_CODE_INVALID_USER("10028",
+                "Invalid user identification provided.",
+                "Authenticated user %s is not entitled for the invitation."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
