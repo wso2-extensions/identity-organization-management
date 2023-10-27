@@ -48,10 +48,22 @@ public class SQLConstants {
     public static final String DELETE_ORGANIZATION_DISCOVERY_ATTRIBUTES = "DELETE FROM UM_ORG_DISCOVERY WHERE " +
             "UM_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID + ";";
 
-    public static final String GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES = "SELECT UM_ORG_ID, UM_DISCOVERY_TYPE, " +
-            "UM_DISCOVERY_VALUE, UM_ORG_NAME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE ";
+    public static final String GET_DISCOVERY_ORGANIZATION_IDS = "SELECT DISTINCT UM_ORG_ID FROM UM_ORG_DISCOVERY " +
+            "JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE %s UM_ROOT_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + "; ORDER BY UM_ORG_ID LIMIT :" + SQLPlaceholders.DB_LIMIT +
+            "; OFFSET :" + SQLPlaceholders.DB_OFFSET + ";";
 
-    public static final String GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES_TAIL = "UM_ROOT_ORG_ID = :" +
+    public static final String GET_DISCOVERY_ORGANIZATION_IDS_MSSQL = "SELECT DISTINCT UM_ORG_ID FROM " +
+            "UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE %s UM_ROOT_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + "; ORDER BY UM_ORG_ID OFFSET :" +
+            SQLPlaceholders.DB_OFFSET + "; ROWS FETCH NEXT :" + SQLPlaceholders.DB_LIMIT + "; ROWS ONLY";
+
+    public static final String GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES = "SELECT UM_ORG_ID, UM_DISCOVERY_TYPE, " +
+            "UM_DISCOVERY_VALUE, UM_ORG_NAME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE " +
+            "UM_ORG_ID IN (" + SQLPlaceholders.ORGS_LIST_PLACEHOLDER + ")";
+
+    public static final String DISCOVERY_ORGANIZATIONS_TOTAL_COUNT = "SELECT COUNT(DISTINCT UM_ORG_ID) FROM " +
+            "UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE %s UM_ROOT_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + ";";
 
     public static final String GET_ORGANIZATION_ID_BY_DISCOVERY_ATTRIBUTE = "SELECT UM_ORG_ID FROM UM_ORG_DISCOVERY " +
@@ -68,5 +80,8 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_TYPE = "TYPE";
         public static final String DB_SCHEMA_COLUMN_NAME_VALUE = "VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_ROOT_ID = "ROOT_ID";
+        public static final String DB_LIMIT = "LIMIT";
+        public static final String DB_OFFSET = "OFFSET";
+        public static final String ORGS_LIST_PLACEHOLDER = "_ORGS_LIST_";
     }
 }

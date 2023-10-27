@@ -18,8 +18,8 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
-import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -106,12 +106,14 @@ public interface OrganizationDiscoveryManager {
     /**
      * List the discovery attributes of all the organizations under the root organization.
      *
+     * @param limit  The maximum number of records to be returned.
+     * @param offset The number of records to skip for pagination.
      * @param filter The filter to be applied.
      * @return The discovery attributes of the organizations.
      * @throws OrganizationManagementException The exception thrown when listing discovery attributes of the
      *                                         organizations.
      */
-    List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String filter)
+    DiscoveryOrganizationsResult getOrganizationsDiscoveryAttributes(Integer limit, Integer offset, String filter)
             throws OrganizationManagementException;
 
     /**
