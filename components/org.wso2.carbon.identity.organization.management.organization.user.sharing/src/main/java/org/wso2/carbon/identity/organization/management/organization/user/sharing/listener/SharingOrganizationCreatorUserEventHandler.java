@@ -96,7 +96,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                OrganizationUserSharingDataHolder.getInstance().getRoleManagementService().updateUserListOfRole(adminRoleId,
+                OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
+                        .updateUserListOfRole(adminRoleId,
                         Collections.singletonList(userId), Collections.emptyList(), tenantDomain);
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
