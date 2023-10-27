@@ -32,8 +32,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandler;
-import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -101,18 +101,18 @@ public class OrganizationUserSharingServiceComponent {
     }
 
     @Reference(
-            name = "RoleManager",
-            service = RoleManager.class,
+            name = "RoleManagementService",
+            service = RoleManagementService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetRoleManagerService")
-    protected void setRoleManagerService(RoleManager roleManagerService) {
+            unbind = "unsetRoleManagementService")
+    protected void setRoleManagementService(RoleManagementService roleManagementService) {
 
-        OrganizationUserSharingDataHolder.getInstance().setRoleManager(roleManagerService);
+        OrganizationUserSharingDataHolder.getInstance().setRoleManagementService(roleManagementService);
     }
 
-    protected void unsetRoleManagerService(RoleManager roleManagerService) {
+    protected void unsetRoleManagementService(RoleManagementService roleManagementService) {
 
-        OrganizationUserSharingDataHolder.getInstance().setRoleManager(null);
+        OrganizationUserSharingDataHolder.getInstance().setRoleManagementService(null);
     }
 }
