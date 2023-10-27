@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -41,16 +42,21 @@ import static org.wso2.carbon.identity.organization.discovery.service.constant.S
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.CHECK_DISCOVERY_ATTRIBUTE_EXIST_IN_HIERARCHY;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DELETE_ORGANIZATION_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DISCOVERY_ATTRIBUTE_VALUE_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DISCOVERY_ORGANIZATIONS_TOTAL_COUNT;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.EXCLUDE_CURRENT_ORGANIZATION_FROM_CHECK_DISCOVERY_ATTRIBUTE_EXIST;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES_TAIL;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS_MSSQL;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.INSERT_ORGANIZATION_DISCOVERY_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_LIMIT;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_OFFSET;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ID;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.SQLPlaceholders.ORGS_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.CO;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EQ;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.EW;
@@ -66,6 +72,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 
 /**
  * DAO implementation for organization discovery.
@@ -237,39 +244,39 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
     }
 
     @Override
-    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String rootOrganizationId,
-                                                                           List<ExpressionNode> expressionNodes)
+    public DiscoveryOrganizationsResult getOrganizationsDiscoveryAttributes(int limit, int offset,
+                                                                            String rootOrganizationId,
+                                                                            List<ExpressionNode> expressionNodes)
             throws OrganizationManagementServerException {
+
+        DiscoveryOrganizationsResult discoveryOrganizationsResult = new DiscoveryOrganizationsResult();
+        discoveryOrganizationsResult.setLimit(limit);
+        discoveryOrganizationsResult.setOffset(offset);
 
         FilterQueryBuilder filterQueryBuilder = new FilterQueryBuilder();
         appendFilterQuery(expressionNodes, filterQueryBuilder);
         Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String filterQuery = filterQueryBuilder.getFilterQuery();
 
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
-        List<OrganizationDiscoveryRowDataCollector> rowDataCollectors;
-        String sqlStmt = GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES + filterQueryBuilder.getFilterQuery() +
-                GET_ORGANIZATIONS_DISCOVERY_ATTRIBUTES_TAIL;
-        try {
-            rowDataCollectors = namedJdbcTemplate.executeQuery(sqlStmt,
-                    (resultSet, rowNumber) -> {
-                        OrganizationDiscoveryRowDataCollector collector = new OrganizationDiscoveryRowDataCollector();
-                        collector.setId(resultSet.getString(1));
-                        collector.setAttributeType(resultSet.getString(2));
-                        collector.setAttributeValue(resultSet.getString(3));
-                        collector.setOrganizationName(resultSet.getString(4));
-                        return collector;
-                    },
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROOT_ID, rootOrganizationId);
-                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
-                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
-                        }
-                    });
-        } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
-                    rootOrganizationId);
+        int totalCount = getDiscoveryOrganizationsTotalCount(rootOrganizationId, filterQuery, filterAttributeValue,
+                namedJdbcTemplate);
+        discoveryOrganizationsResult.setTotalResults(totalCount);
+
+        List<String> organizationIds = getDiscoveryOrganizationIds(limit, offset, filterQuery, rootOrganizationId,
+                filterAttributeValue, namedJdbcTemplate);
+
+        if (organizationIds.isEmpty()) {
+            discoveryOrganizationsResult.setOrganizations(new ArrayList<>());
+            return discoveryOrganizationsResult;
         }
-        return buildOrganizationsDiscoveryFromRawData(rowDataCollectors);
+
+        List<OrganizationDiscoveryRowDataCollector> rowDataCollectors = getDiscoveryAttributes(rootOrganizationId,
+                organizationIds, namedJdbcTemplate);
+        List<OrganizationDiscovery> discoveryList = buildOrganizationsDiscoveryFromRawData(rowDataCollectors);
+        discoveryOrganizationsResult.setOrganizations(discoveryList);
+
+        return discoveryOrganizationsResult;
     }
 
     @Override
@@ -439,5 +446,94 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
         String filterString = String.format(" like :%s%s; AND ", FILTER_PLACEHOLDER_PREFIX, count);
         filter.append(attributeName).append(filterString);
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, "%" + value + "%");
+    }
+
+    private Integer getDiscoveryOrganizationsTotalCount(String rootOrganizationId, String filterQuery,
+                                                        Map<String, String> filterAttributeValue,
+                                                        NamedJdbcTemplate namedJdbcTemplate)
+            throws OrganizationManagementServerException {
+
+        try {
+            String countQuery = String.format(DISCOVERY_ORGANIZATIONS_TOTAL_COUNT, filterQuery);
+            return namedJdbcTemplate.fetchSingleRecord(countQuery,
+                    (resultSet, rowNumber) -> resultSet.getInt(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROOT_ID, rootOrganizationId);
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
+                    rootOrganizationId);
+        }
+    }
+
+    private List<String> getDiscoveryOrganizationIds(int limit, int offset, String filterQuery,
+                                                     String rootOrganizationId,
+                                                     Map<String, String> filterAttributeValue,
+                                                     NamedJdbcTemplate namedJdbcTemplate)
+            throws OrganizationManagementServerException {
+
+        try {
+            String orgIdsQuery;
+            if (isMSSqlDB()) {
+                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_MSSQL, filterQuery);
+            } else {
+                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS, filterQuery);
+            }
+            return namedJdbcTemplate.executeQuery(orgIdsQuery,
+                    (resultSet, rowNumber) -> resultSet.getString(1),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_ROOT_ID, rootOrganizationId);
+                        namedPreparedStatement.setInt(DB_LIMIT, limit);
+                        namedPreparedStatement.setInt(DB_OFFSET, offset);
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            namedPreparedStatement.setString(entry.getKey(), entry.getValue());
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
+                    rootOrganizationId);
+        }
+    }
+
+    private List<OrganizationDiscoveryRowDataCollector> getDiscoveryAttributes(String rootOrganizationId,
+                                                                               List<String> organizationIds,
+                                                                               NamedJdbcTemplate namedJdbcTemplate)
+            throws OrganizationManagementServerException {
+
+        String organizationPlaceholder = "ORG_";
+        List<String> organizationPlaceholders = new ArrayList<>();
+
+        // Constructing the placeholders required to hold the organization IDs in the named prepared statement.
+        for (int i = 1; i <= organizationIds.size(); i++) {
+            organizationPlaceholders.add(":" + organizationPlaceholder + i + ";");
+        }
+
+        String discoveryAttributesQuery = GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES.replace(ORGS_LIST_PLACEHOLDER,
+                String.join(", ", organizationPlaceholders));
+        try {
+            return namedJdbcTemplate.executeQuery(discoveryAttributesQuery,
+                    (resultSet, rowNumber) -> {
+                        OrganizationDiscoveryRowDataCollector collector =
+                                new OrganizationDiscoveryRowDataCollector();
+                        collector.setId(resultSet.getString(1));
+                        collector.setAttributeType(resultSet.getString(2));
+                        collector.setAttributeValue(resultSet.getString(3));
+                        collector.setOrganizationName(resultSet.getString(4));
+                        return collector;
+                    },
+                    namedPreparedStatement -> {
+                        int index = 1;
+                        for (String organizationId : organizationIds) {
+                            namedPreparedStatement.setString(organizationPlaceholder + index, organizationId);
+                            index++;
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_LISTING_ORGANIZATIONS_DISCOVERY_ATTRIBUTES, e,
+                    rootOrganizationId);
+        }
     }
 }

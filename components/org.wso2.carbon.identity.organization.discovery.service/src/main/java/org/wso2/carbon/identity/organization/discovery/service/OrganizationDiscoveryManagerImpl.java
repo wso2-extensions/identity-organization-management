@@ -20,11 +20,12 @@ package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
+import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
-import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -52,6 +53,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMPTY_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_LIMIT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_OFFSET;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
@@ -147,11 +150,15 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     }
 
     @Override
-    public List<OrganizationDiscovery> getOrganizationsDiscoveryAttributes(String filter)
+    public DiscoveryOrganizationsResult getOrganizationsDiscoveryAttributes(Integer limit, Integer offset,
+                                                                            String filter)
             throws OrganizationManagementException {
 
+        limit = validateLimit(limit);
+        offset = validateOffset(offset);
         List<ExpressionNode> expressionNodes = getExpressionNodes(filter);
-        return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(getOrganizationId(), expressionNodes);
+        return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(limit,
+                offset, getOrganizationId(), expressionNodes);
     }
 
     @Override
@@ -276,5 +283,45 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     private boolean isFilteringAttributeSupported(String attributeValue) {
 
         return ORGANIZATION_NAME.equalsIgnoreCase(attributeValue);
+    }
+
+    /**
+     * Validate limit.
+     *
+     * @param limit The given limit value.
+     * @return Validated limit.
+     * @throws OrganizationManagementClientException Exception thrown for invalid limit.
+     */
+    private int validateLimit(Integer limit) throws OrganizationManagementClientException {
+
+        if (limit == null) {
+            limit = IdentityUtil.getDefaultItemsPerPage();
+        }
+        if (limit < 0) {
+            throw handleClientException(ERROR_CODE_INVALID_LIMIT);
+        }
+        int maximumItemsPerPage = IdentityUtil.getMaximumItemPerPage();
+        if (limit > maximumItemsPerPage) {
+            limit = maximumItemsPerPage;
+        }
+        return limit;
+    }
+
+    /**
+     * Validate offset.
+     *
+     * @param offset The given offset value.
+     * @return Validated offset value.
+     * @throws OrganizationManagementClientException Exception thrown for invalid offset.
+     */
+    private int validateOffset(Integer offset) throws OrganizationManagementClientException {
+
+        if (offset == null) {
+            offset = 0;
+        }
+        if (offset < 0) {
+            throw handleClientException(ERROR_CODE_INVALID_OFFSET);
+        }
+        return offset;
     }
 }
