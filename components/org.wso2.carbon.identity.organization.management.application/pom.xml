@@ -188,6 +188,7 @@
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*;
                             version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>
