@@ -67,10 +67,16 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 if (StringUtils.isEmpty(associatedOrgId)) {
                     associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
                 }
-                userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
-                String userId = userSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
-                        .getUserId();
-                assignUserToAdminRole(userId, orgId, tenantDomain);
+                try {
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                    userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
+                    String userId = userSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
+                            .getUserId();
+                    assignUserToAdminRole(userId, orgId, tenantDomain);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
             } catch (OrganizationManagementException e) {
                 throw new IdentityEventException("An error occurred while sharing the organization creator to the " +
                         "organization : " + orgId, e);
@@ -93,15 +99,9 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         try {
             String adminRoleId = OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
                     .getRoleIdByName(adminRoleName, RoleConstants.ORGANIZATION, organizationId, tenantDomain);
-            try {
-                PrivilegedCarbonContext.startTenantFlow();
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
-                        .updateUserListOfRole(adminRoleId,
-                        Collections.singletonList(userId), Collections.emptyList(), tenantDomain);
-            } finally {
-                PrivilegedCarbonContext.endTenantFlow();
-            }
+            OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
+                    .updateUserListOfRole(adminRoleId, Collections.singletonList(userId), Collections.emptyList(),
+                            tenantDomain);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityEventException("An error occurred while assigning the user to the administrator role", e);
         }
