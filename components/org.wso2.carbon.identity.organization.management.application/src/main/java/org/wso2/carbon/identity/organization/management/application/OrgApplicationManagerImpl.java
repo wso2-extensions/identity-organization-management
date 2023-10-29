@@ -452,7 +452,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 authSteps = defaultAuthenticationConfig.getAuthenticationSteps();
             }
             // Change the authType to flow, since we are adding organization login authenticator.
-            outboundAuthenticationConfig = new LocalAndOutboundAuthenticationConfig();
+            LocalAndOutboundAuthenticationConfig tempOutboundAuthenticationConfig =
+                    new LocalAndOutboundAuthenticationConfig();
+            tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
+            tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
+            outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
             outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
         }
 
