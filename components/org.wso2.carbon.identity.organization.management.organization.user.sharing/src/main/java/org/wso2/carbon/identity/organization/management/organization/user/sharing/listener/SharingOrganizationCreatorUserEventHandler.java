@@ -71,7 +71,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     PrivilegedCarbonContext.startTenantFlow();
                     PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
                     userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
-                    String userId = userSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
+                    String userId = userSharingService
+                            .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                             .getUserId();
                     assignUserToAdminRole(userId, orgId, tenantDomain);
                 } finally {
