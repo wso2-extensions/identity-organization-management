@@ -63,7 +63,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 }
 
                 String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-                String associatedOrgId = (String) IdentityUtil.threadLocalProperties.get().get("USER_RESIDENT_ORG");
+                String associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                        .getUserResidentOrganizationId();
                 if (StringUtils.isEmpty(associatedOrgId)) {
                     associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
                 }
