@@ -402,8 +402,17 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 IdentityUtil.threadLocalProperties.get().put(DELETE_MAIN_APPLICATION, true);
                 String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
                 for (SharedApplicationDO sharedApplicationDO: sharedApplications) {
-                    getApplicationMgtService().deleteApplication(application.getApplicationName(),
-                            sharedApplicationDO.getOrganizationId(), username);
+                    try {
+                        String sharedAppTenantDomain =
+                                getOrganizationManager().resolveTenantDomain(sharedApplicationDO.getOrganizationId());
+                        PrivilegedCarbonContext.startTenantFlow();
+                        PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                .setTenantDomain(sharedAppTenantDomain, true);
+                        getApplicationMgtService().deleteApplication(application.getApplicationName(),
+                                sharedAppTenantDomain, username);
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }
             }
         } catch (OrganizationManagementException e) {
