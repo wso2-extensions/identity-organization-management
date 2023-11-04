@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -28,7 +28,6 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
-import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
@@ -511,27 +510,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Enabling use of local subject id for provisioned users.
         rootApplication.getClaimConfig().setAlwaysSendMappedLocalSubjectId(true);
 
-        addUserOrganizationApplicationClaim(rootApplication);
         try {
             getApplicationManagementService().updateApplication(rootApplication, tenantDomain,
                     getAuthenticatedUsername());
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION, e,
                     rootApplication.getApplicationResourceId());
-        }
-    }
-
-    private void addUserOrganizationApplicationClaim(ServiceProvider application) {
-
-        ClaimMapping[] claimMappings = application.getClaimConfig().getClaimMappings();
-        Optional<ClaimMapping> optionalClaimMapping = stream(claimMappings)
-                .filter(claimMapping -> USER_ORGANIZATION_CLAIM_URI.equals(claimMapping.getLocalClaim().getClaimUri()))
-                .findAny();
-        if (!optionalClaimMapping.isPresent()) {
-            List<ClaimMapping> claimMappingList = new ArrayList<>(Arrays.asList(claimMappings));
-            claimMappingList.add(ClaimMapping.build(USER_ORGANIZATION_CLAIM_URI, USER_ORGANIZATION_CLAIM_URI,
-                    null, true));
-            application.getClaimConfig().setClaimMappings(claimMappingList.toArray(new ClaimMapping[0]));
         }
     }
 
