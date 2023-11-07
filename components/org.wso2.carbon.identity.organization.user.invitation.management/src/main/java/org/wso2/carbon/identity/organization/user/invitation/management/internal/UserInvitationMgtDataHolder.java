@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.user.invitation.management.interna
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -34,6 +35,7 @@ public class UserInvitationMgtDataHolder {
     private IdentityEventService identityEventService;
     private OrganizationManager organizationManager;
     private OrganizationUserSharingService organizationUserSharingService;
+    private RoleManagementService roleManagementService;
 
     public static UserInvitationMgtDataHolder getInstance() {
 
@@ -79,5 +81,25 @@ public class UserInvitationMgtDataHolder {
             OrganizationUserSharingService organizationUserSharingService) {
 
         this.organizationUserSharingService = organizationUserSharingService;
+    }
+
+    /**
+     * Get the Role manager service.
+     *
+     * @return Role manager service.
+     */
+    public RoleManagementService getRoleManagementService() {
+
+        return roleManagementService;
+    }
+
+    /**
+     * Set the Role manager service.
+     *
+     * @param roleManagementService Role manager service.
+     */
+    public void setRoleManagementService(RoleManagementService roleManagementService) {
+
+        this.roleManagementService = roleManagementService;
     }
 }

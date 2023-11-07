@@ -120,6 +120,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_INVALID_USER("10028",
                 "Invalid user identification provided.",
                 "Authenticated user %s is not entitled for the invitation."),
+        ERROR_CODE_INVALID_ROLE("10029",
+                "Invalid role identification provided.",
+                "Could not find a role with given roleId %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
@@ -178,7 +181,16 @@ public class UserInvitationMgtConstants {
                 "Unable to get the organization associations for the user %s."),
         ERROR_CODE_GET_ORG_ASSOCIATION_FOR_USER("10519",
                 "Unable to get the organization association.",
-                "Unable to get the organization association for the user %s.");
+                "Unable to get the organization association for the user %s."),
+        ERROR_CODE_GET_APP_ID("10520",
+                "Unable to retrieve the application id.",
+                "Could not retrieve the applicationId for the roleId %s."),
+        ERROR_CODE_GET_APPLICATION_ID("10522",
+                "Unable to retrieve the application id.",
+                "Could not retrieve the applicationId for the roleId %s."),
+        ERROR_CODE_GET_ROLE_ASSOCIATIONS("10523",
+                "Unable to retrieve the role assignments.",
+                "Could not retrieve the role assignments for the roleId %s.");
 
         private final String code;
         private final String message;
