@@ -62,6 +62,9 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
         String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        }
         return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
@@ -80,6 +83,10 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
         String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        // The below condition is not required once console is modeled as B2B app.
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
+        }
         return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
