@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandler;
+import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
@@ -114,5 +115,21 @@ public class OrganizationUserSharingServiceComponent {
     protected void unsetRoleManagementService(RoleManagementService roleManagementService) {
 
         OrganizationUserSharingDataHolder.getInstance().setRoleManagementService(null);
+    }
+
+    @Reference(
+            name = "RoleManager",
+            service = RoleManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRoleManagerService")
+    protected void setRoleManagerService(RoleManager roleManagerService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setRoleManager(roleManagerService);
+    }
+
+    protected void unsetRoleManagerService(RoleManager roleManagerService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setRoleManager(null);
     }
 }
