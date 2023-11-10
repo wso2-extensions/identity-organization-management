@@ -75,10 +75,23 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
                 userStoreManager.addUser(userName, generatePassword(), null, userClaims,
                         DEFAULT_PROFILE);
             } else {
+                // Wait for the user store manager to be available in the user realm.
                 UserStoreManager defaultUserStore = null;
+                int threadSleepTime = Integer.parseInt(
+                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
+                int waited = 0;
+                int waitIntervals = 500;
                 while (defaultUserStore == null) {
-                    Thread.sleep(500);
+                    if (waited > threadSleepTime) {
+                        break;
+                    }
+                    Thread.sleep(waitIntervals);
+                    waited += waitIntervals;
                     defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
+                }
+                if (defaultUserStore == null) {
+                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
+                            domain);
                 }
                 defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
             }
