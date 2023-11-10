@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -48,7 +49,8 @@ public class OrganizationSharedUserUtil {
                     .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
         } catch (UserStoreException e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("ManagedOrg claim is not available in the userstore dommain: " + userDomain);
+                String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                LOG.debug("ManagedOrg claim is not available in the tenant domain: " + tenantDomain);
             }
             return null;
         }
