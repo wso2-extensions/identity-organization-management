@@ -37,7 +37,7 @@ import static org.wso2.carbon.identity.governance.IdentityGovernanceUtil.getProp
  */
 public class OrganizationMgtGovernanceConnectorImp implements IdentityConnectorConfig {
 
-    public static final String ONBOARD_ADMIN_TO_SUBORGANIZATION = "Organization.SelfService.OnboardAdminToSubOrg";
+    public static final String ONBOARD_ADMIN_TO_SUBORGANIZATION = "Organization.SelfService.OnboardAdminToOrg";
     public static final String ENABLE_ADMIN_EMAIL_VERIFICATION = "Organization.SelfService.AdminEmailVerification";
     public static final String ENABLE_SELF_SERVICE = "Organization.SelfService.Enable";
 
@@ -81,9 +81,9 @@ public class OrganizationMgtGovernanceConnectorImp implements IdentityConnectorC
     public Map<String, String> getPropertyNameMapping() {
 
         Map<String, String> nameMapping = new HashMap<>();
-        nameMapping.put(ENABLE_SELF_SERVICE, "Enable suborganization self service");
+        nameMapping.put(ENABLE_SELF_SERVICE, "Enable organization self service");
         nameMapping.put(ENABLE_ADMIN_EMAIL_VERIFICATION, "Enable admin email verification");
-        nameMapping.put(ONBOARD_ADMIN_TO_SUBORGANIZATION, "Onboard admin to root organization");
+        nameMapping.put(ONBOARD_ADMIN_TO_SUBORGANIZATION, "Onboard admin to organization (root)");
         nameMapping.put(ENABLE_SELF_SERVICE_AUTO_LOGIN, "Auto login after self service");
         return nameMapping;
     }
@@ -93,11 +93,11 @@ public class OrganizationMgtGovernanceConnectorImp implements IdentityConnectorC
 
         Map<String, String> descriptionMapping = new HashMap<>();
         descriptionMapping.put(ENABLE_SELF_SERVICE,
-                "Allow user's to self service suborganization to the system.");
+                "Allow user's to self service organization to the system.");
         descriptionMapping.put(ENABLE_ADMIN_EMAIL_VERIFICATION,
-                "User gets email verification before proceeding with suborganization creation.");
+                "User gets email verification before proceeding with organization creation.");
         descriptionMapping.put(ONBOARD_ADMIN_TO_SUBORGANIZATION,
-                "User gets onboard as admin in suborganization");
+                "User gets onboard as admin in organization");
         descriptionMapping.put(ENABLE_SELF_SERVICE_AUTO_LOGIN,
                 "After self service admin auto login to organization");
         return descriptionMapping;
