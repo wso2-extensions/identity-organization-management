@@ -65,6 +65,10 @@
             <artifactId>org.wso2.carbon.user.core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.utils</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.event</artifactId>
         </dependency>
@@ -150,6 +154,7 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon;version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

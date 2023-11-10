@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
@@ -27,6 +28,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -38,6 +40,7 @@ import java.util.UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -65,12 +68,37 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
 
             int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
+            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
             userStoreManager = getAbstractUserStoreManager(tenantId);
-            userStoreManager.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
-            String userId = userStoreManager.getUserIDFromUserName(userName);
+
+            if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
+                userStoreManager.addUser(userName, generatePassword(), null, userClaims,
+                        DEFAULT_PROFILE);
+            } else {
+                // Wait for the user store manager to be available in the user realm.
+                UserStoreManager defaultUserStore = null;
+                int threadSleepTime = Integer.parseInt(
+                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
+                int waited = 0;
+                int waitIntervals = 500;
+                while (defaultUserStore == null) {
+                    if (waited > threadSleepTime) {
+                        break;
+                    }
+                    Thread.sleep(waitIntervals);
+                    waited += waitIntervals;
+                    defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
+                }
+                if (defaultUserStore == null) {
+                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
+                            domain);
+                }
+                defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
+            }
+            String userId = userStoreManager.getUserIDFromUserName(UserCoreUtil.addDomainToName(userName, domain));
             organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
                     associatedOrgId);
-        } catch (UserStoreException e) {
+        } catch (UserStoreException | InterruptedException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         }
     }
