@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -34,12 +36,22 @@ import static org.wso2.carbon.identity.organization.management.organization.user
  */
 public class OrganizationSharedUserUtil {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationSharedUserUtil.class);
+
     public static String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
             throws UserStoreException {
 
         String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
-        Map<String, String> claimsMap = userStoreManager
-                .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
+        Map<String, String> claimsMap;
+        try {
+            claimsMap = userStoreManager
+                    .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
+        } catch (UserStoreException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ManagedOrg claim is not available in the userstore dommain: " + userDomain);
+            }
+            return null;
+        }
         return claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
     }
 
