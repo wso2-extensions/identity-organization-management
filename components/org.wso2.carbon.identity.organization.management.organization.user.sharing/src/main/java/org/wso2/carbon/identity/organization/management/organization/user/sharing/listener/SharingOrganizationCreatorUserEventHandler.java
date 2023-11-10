@@ -99,8 +99,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             } else {
                 if ("POST_SHARED_CONSOLE_APP".equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
-                    TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
-                    orgId = organization.getId();
+                    orgId = (String) eventProperties.get("ORGANIZATION_ID");
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
                     if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
