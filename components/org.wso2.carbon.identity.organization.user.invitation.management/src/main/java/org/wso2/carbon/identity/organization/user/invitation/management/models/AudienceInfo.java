@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.organization.user.invitation.management.models;
 
 /**
- * Model that contains the invitation related details.
+ * Model that contains the invitation's audience related details.
  */
 public class AudienceInfo {
 

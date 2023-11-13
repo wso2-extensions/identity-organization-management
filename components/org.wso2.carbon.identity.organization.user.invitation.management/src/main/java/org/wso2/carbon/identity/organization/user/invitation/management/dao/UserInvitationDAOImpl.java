@@ -445,6 +445,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
         }
         return description;
     }
+
     private String getApplicationIdByRoleID(Connection connection, String roleID) throws UserInvitationMgtException {
 
         try (PreparedStatement appIdRetrievalPrepStat = connection.prepareStatement(GET_APP_ID_BY_ROLE_ID)) {
@@ -459,6 +460,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
         }
         return null;
     }
+
     private RoleAssignments getRoleAssignmentsByRoleID(Connection connection, String appId, String roleUUID)
             throws UserInvitationMgtServerException {
 
