@@ -150,8 +150,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                 for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
                     if (!roleManagementService.isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
-                        LOG.error("Role: " + roleAssignment.getRole() + " is not exists in the organization: "
-                                + organizationId);
                         throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
                                 ERROR_CODE_INVALID_ROLE.getMessage(),
                                 String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
