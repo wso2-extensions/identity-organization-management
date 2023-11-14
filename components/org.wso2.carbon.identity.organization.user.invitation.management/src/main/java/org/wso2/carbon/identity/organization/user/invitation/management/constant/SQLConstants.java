@@ -63,11 +63,6 @@ public class SQLConstants {
                 "USER_REDIRECT_URL FROM IDN_ORG_USER_INVITATION WHERE USER_NAME = ? AND DOMAIN_NAME = ? AND " +
                 "USER_ORG_ID = ? AND INVITED_ORG_ID = ? AND EXPIRED_AT > CURRENT_TIMESTAMP";
         public static final String GET_APP_ID_BY_ROLE_ID = "SELECT APP_ID FROM APP_ROLE_ASSOCIATION WHERE ROLE_ID = ?";
-        public static final String GET_ROLE_ASSIGNMENTS_BY_ROLE_ID = "SELECT UM_AUDIENCE, " +
-                "UM_AUDIENCE_ID, UM_ROLE_NAME, APP_NAME FROM UM_HYBRID_ROLE INNER JOIN UM_HYBRID_ROLE_AUDIENCE ON " +
-                "UM_HYBRID_ROLE.UM_AUDIENCE_REF_ID = UM_HYBRID_ROLE_AUDIENCE.UM_ID " +
-                "INNER JOIN SP_APP ON UM_HYBRID_ROLE_AUDIENCE.UM_AUDIENCE_ID = SP_APP.UUID " +
-                "WHERE UM_HYBRID_ROLE.UM_UUID = ?";
     }
 
     /**
@@ -88,9 +83,5 @@ public class SQLConstants {
         public static final String COLUMN_NAME_REDIRECT_URL = "USER_REDIRECT_URL";
         public static final String COLUMN_NAME_APP_ID = "APPLICATION_ID";
         public static final String COLUMN_NAME_ROLE_ID = "ROLE_ID";
-        public static final String COLUMN_UM_ROLE_NAME = "UM_ROLE_NAME";
-        public static final String COLUMN_UM_AUDIENCE = "UM_AUDIENCE";
-        public static final String COLUMN_UM_AUDIENCE_ID = "UM_AUDIENCE_ID";
-        public static final String COLUMN_APP_NAME = "APP_NAME";
     }
 }

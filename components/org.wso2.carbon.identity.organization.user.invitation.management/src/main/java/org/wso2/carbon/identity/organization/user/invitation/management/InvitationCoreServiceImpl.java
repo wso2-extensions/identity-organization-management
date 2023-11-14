@@ -39,10 +39,12 @@ import org.wso2.carbon.identity.organization.user.invitation.management.exceptio
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.AudienceInfo;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -76,6 +78,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CONSTRUCT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_TENANT_FROM_ORG;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_USER_STORE_MANAGER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_CONFIRMATION_CODE;
@@ -160,6 +163,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             invitation.setConfirmationCode(UUID.randomUUID().toString());
             userInvitationDAO.createInvitation(invitation);
             createdInvitation = userInvitationDAO.getInvitationByInvitationId(invitation.getInvitationId());
+            processingRoleAssignments(createdInvitation.getRoleAssignments(), invitedTenantDomain);
             // Trigger the event for invitation creation
             triggerInvitationAddNotification(createdInvitation);
         } catch (UserStoreException | OrganizationManagementException | IdentityRoleManagementException e) {
@@ -201,14 +205,14 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     String userId = getInvitedUserId(invitation);
                     getOrganizationUserSharingService().shareOrganizationUser(invitedOrganizationId, userId,
                             invitation.getUserOrganizationId());
+                    String associatedUserId = getOrganizationUserSharingService()
+                            .getUserAssociationOfAssociatedUserByOrgId(userId,
+                                    invitedOrganizationId).getUserId();
                     // Trigger event to add the role assignments if any available in the invitation.
                     if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                         for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
                             if (roleManagementService.isExistingRole(roleAssignments.getRoleId(),
                                     invitedTenantDomain)) {
-                                String associatedUserId = getOrganizationUserSharingService()
-                                        .getUserAssociationOfAssociatedUserByOrgId(userId,
-                                                invitedOrganizationId).getUserId();
                                 roleManagementService.updateUserListOfRole(roleAssignments.getRoleId(),
                                         Collections.singletonList(associatedUserId), Collections.emptyList(),
                                         invitedTenantDomain);
@@ -289,6 +293,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         String organizationId = Utils.getOrganizationId();
         List<Invitation> invitations = userInvitationDAO.getInvitationsByOrganization(organizationId, filterParam,
                 filterOperation, filterValue);
+        for (Invitation invitation : invitations) {
+            processingRoleAssignments(invitation.getRoleAssignments(), invitation.getInvitedOrganizationId());
+        }
         Instant currentTime = Instant.now();
         for (Invitation invitation : invitations) {
             invitation.setStatus(STATUS_PENDING);
@@ -489,5 +496,31 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     private OrganizationManager getOrganizationManager() {
 
         return UserInvitationMgtDataHolder.getInstance().getOrganizationManagerService();
+    }
+
+    private void processingRoleAssignments(RoleAssignments[] roleAssignments, String invitedTenantId)
+            throws UserInvitationMgtServerException {
+
+        RoleManagementService roleManagementService = UserInvitationMgtDataHolder.getInstance()
+                .getRoleManagementService();
+        Role roleInfo;
+        for (RoleAssignments roleAssignment : roleAssignments) {
+            try {
+                roleInfo =  roleManagementService.getRoleWithoutUsers(roleAssignment.getRoleId(),
+                        invitedTenantId);
+                AudienceInfo audienceInfo = new AudienceInfo();
+                audienceInfo.setApplicationType(roleInfo.getAudience());
+                audienceInfo.setApplicationId(roleInfo.getAudienceId());
+                audienceInfo.setApplicationName(roleInfo.getAudienceName());
+                roleAssignment.setAudience(audienceInfo);
+                roleAssignment.setRoleName(roleInfo.getName());
+            } catch (IdentityRoleManagementException e) {
+                throw new UserInvitationMgtServerException(ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getCode(),
+                        ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getMessage(),
+                        String.format(ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getDescription(),
+                                roleAssignment.getRoleId()), e);
+            }
+
+        }
     }
 }

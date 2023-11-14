@@ -182,13 +182,10 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_GET_ORG_ASSOCIATION_FOR_USER("10519",
                 "Unable to get the organization association.",
                 "Unable to get the organization association for the user %s."),
-        ERROR_CODE_GET_APP_ID("10520",
+        ERROR_CODE_GET_APPLICATION_ID("10520",
                 "Unable to retrieve the application id.",
                 "Could not retrieve the applicationId for the roleId %s."),
-        ERROR_CODE_GET_APPLICATION_ID("10522",
-                "Unable to retrieve the application id.",
-                "Could not retrieve the applicationId for the roleId %s."),
-        ERROR_CODE_GET_ROLE_ASSOCIATIONS("10523",
+        ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID("10521",
                 "Unable to retrieve the role assignments.",
                 "Could not retrieve the role assignments for the roleId %s.");
 
