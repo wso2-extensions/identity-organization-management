@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
@@ -33,6 +34,7 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
@@ -84,6 +86,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         if (!isEnable() || userStoreManager == null) {
             return true;
         }
+        blockClaimUpdatesForSharedUser((AbstractUserStoreManager) userStoreManager, userID);
         if (!claims.isEmpty() && claims.containsKey(CLAIM_MANAGED_ORGANIZATION)) {
             throw new UserStoreClientException(
                     String.format(ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED.getDescription(),
@@ -100,6 +103,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         if (!isEnable() || userStoreManager == null) {
             return true;
         }
+        blockClaimUpdatesForSharedUser((AbstractUserStoreManager) userStoreManager, userID);
         if (CLAIM_MANAGED_ORGANIZATION.equals(claimURI)) {
             throw new UserStoreClientException(
                     String.format(ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED.getDescription(),
@@ -107,5 +111,15 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED.getCode());
         }
         return true;
+    }
+
+    private void blockClaimUpdatesForSharedUser(AbstractUserStoreManager userStoreManager, String userID)
+            throws UserStoreException {
+
+        if (StringUtils.isEmpty(OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID))) {
+            return;
+        }
+        throw new UserStoreClientException(ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED.getMessage(),
+                ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED.getCode());
     }
 }
