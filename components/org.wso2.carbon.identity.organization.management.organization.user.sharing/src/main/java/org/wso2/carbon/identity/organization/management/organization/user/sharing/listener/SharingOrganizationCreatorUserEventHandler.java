@@ -73,23 +73,11 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                         return;
                     }
                     String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-                    String associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                            .getUserResidentOrganizationId();
-                    if (StringUtils.isEmpty(associatedOrgId)) {
-                        associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
-                    }
                     try {
                         PrivilegedCarbonContext.startTenantFlow();
                         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                        userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
-                        String userId = userSharingService
-                                .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
-                                .getUserId();
-                        // #TODO associatedUserOrgId should be retrieved from the carbon context.
-                        //  As of now, set SUPER_ORG_ID.
-                        // Feature won't work for b2b enabled tenant.
-                        Role organizationCreatorRole = buildOrgCreatorRole(userId);
-                        Role administratorRole = buildAdministratorRole(userId);
+                        Role organizationCreatorRole = buildOrgCreatorRole(associatedUserId);
+                        Role administratorRole = buildAdministratorRole(associatedUserId);
                         getRoleManager().createRole(orgId, organizationCreatorRole);
                         getRoleManager().createRole(orgId, administratorRole);
                     } finally {
