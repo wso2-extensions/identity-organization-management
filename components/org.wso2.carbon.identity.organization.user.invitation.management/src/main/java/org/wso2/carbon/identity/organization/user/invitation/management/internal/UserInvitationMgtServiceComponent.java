@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreService;
 import org.wso2.carbon.identity.organization.user.invitation.management.InvitationCoreServiceImpl;
 import org.wso2.carbon.identity.organization.user.invitation.management.handler.UserInvitationEventHandler;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -136,5 +137,21 @@ public class UserInvitationMgtServiceComponent {
 
         UserInvitationMgtDataHolder.getInstance().setOrganizationUserSharingService(null);
         LOG.debug("Unset organization user association Service.");
+    }
+
+    @Reference(
+            name = "RoleManagementService",
+            service = RoleManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRoleManagementService")
+    protected void setRoleManagementService(RoleManagementService roleManagementService) {
+
+        UserInvitationMgtDataHolder.getInstance().setRoleManagementService(roleManagementService);
+    }
+
+    protected void unsetRoleManagementService(RoleManagementService roleManagementService) {
+
+        UserInvitationMgtDataHolder.getInstance().setRoleManagementService(null);
     }
 }

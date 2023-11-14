@@ -24,8 +24,11 @@ package org.wso2.carbon.identity.organization.user.invitation.management.models;
 public class RoleAssignments {
 
     private String invitationId;
+    private AudienceInfo audience;
     private String applicationId;
     private String applicationName;
+    private String roleName;
+    private String roleId;
     private String[] roles;
     private String role;
 
@@ -80,5 +83,35 @@ public class RoleAssignments {
     public void setRole(String role) {
 
         this.role = role;
+    }
+
+    public String getRoleName() {
+
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+
+        this.roleName = roleName;
+    }
+
+    public String getRoleId() {
+
+        return roleId;
+    }
+
+    public void setRoleId(String roleId) {
+
+        this.roleId = roleId;
+    }
+
+    public AudienceInfo getAudience() {
+
+        return audience;
+    }
+
+    public void setAudience(AudienceInfo audience) {
+
+        this.audience = audience;
     }
 }

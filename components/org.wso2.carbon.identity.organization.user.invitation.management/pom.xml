@@ -64,6 +64,10 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.event</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -137,6 +141,9 @@
                             org.wso2.carbon.user.core.listener;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.util;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core.exception;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.organization.user.sharing;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.organization.user.sharing.models;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
