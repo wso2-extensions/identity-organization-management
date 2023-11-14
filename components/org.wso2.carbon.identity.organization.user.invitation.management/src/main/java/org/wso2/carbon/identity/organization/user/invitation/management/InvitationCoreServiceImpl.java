@@ -170,7 +170,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                         .resolveTenantDomain(invitedUserResidentOrg);
                 userStoreManager = getAbstractUserStoreManager(
                         IdentityTenantUtil.getTenantId(invitedUserResidentTenantDomain));
-                emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,CLAIM_EMAIL_ADDRESS, null);
+                emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName, CLAIM_EMAIL_ADDRESS, null);
             }
 
             invitation.setEmail(emailClaim);
