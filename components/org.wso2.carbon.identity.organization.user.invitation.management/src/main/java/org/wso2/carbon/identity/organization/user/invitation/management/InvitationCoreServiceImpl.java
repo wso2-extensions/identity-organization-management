@@ -22,6 +22,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -118,6 +119,20 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 .getRoleManagementService();
         Invitation createdInvitation;
         try {
+            String userDomainQualifiedUserName = UserCoreUtil
+                    .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
+            int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+            // Checking whether the user is already exists in the organization.
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+            if (userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
+                LOG.error("User: " + invitation.getUsername() + " is already exists in the organization: "
+                        + organizationId);
+                throw new UserInvitationMgtClientException(ERROR_CODE_USER_ALREADY_EXISTS.getCode(),
+                        ERROR_CODE_USER_ALREADY_EXISTS.getMessage(),
+                        String.format(ERROR_CODE_USER_ALREADY_EXISTS.getDescription(), invitation.getUsername(),
+                                organizationId));
+            }
+
             // Checking the parent organization id
             String parentOrgId = organizationManager.getParentOrganizationId(organizationId);
             // Picking the parent organization's tenant domain
@@ -135,18 +150,30 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             }
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
             String invitedTenantDomain = organizationManager.resolveTenantDomain(organizationId);
-            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
-            String userDomainQualifiedUserName = UserCoreUtil
-                    .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
+            userStoreManager = getAbstractUserStoreManager(parentTenantId);
             if (!userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
                 LOG.error("User: " + invitation.getUsername() + " is not exists in the organization: "
-                        + organizationId);
+                        + parentOrgId);
                 throw new UserInvitationMgtClientException(ERROR_CODE_USER_NOT_FOUND.getCode(),
                         ERROR_CODE_USER_NOT_FOUND.getMessage(),
                         String.format(ERROR_CODE_USER_NOT_FOUND.getDescription(), invitation.getUsername()));
             }
-            invitation.setEmail(userStoreManager.getUserClaimValue(userDomainQualifiedUserName,
-                    CLAIM_EMAIL_ADDRESS, null));
+            String emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,
+                    CLAIM_EMAIL_ADDRESS, null);
+            /* Try to fetch email claim from the user's resident organization if the user is a shared user in the parent
+             organization. */
+            if (StringUtils.isEmpty(emailClaim)) {
+                String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
+                String invitedUserResidentOrg = getOrganizationUserSharingService()
+                        .getUserAssociation(invitedUserId, parentOrgId).getUserResidentOrganizationId();
+                String invitedUserResidentTenantDomain = organizationManager
+                        .resolveTenantDomain(invitedUserResidentOrg);
+                userStoreManager = getAbstractUserStoreManager(
+                        IdentityTenantUtil.getTenantId(invitedUserResidentTenantDomain));
+                emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,CLAIM_EMAIL_ADDRESS, null);
+            }
+
+            invitation.setEmail(emailClaim);
             invitation.setUserOrganizationId(parentOrgId);
             invitation.setInvitedOrganizationId(organizationId);
             invitation.setStatus(STATUS_PENDING);
@@ -506,7 +533,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         Role roleInfo;
         for (RoleAssignments roleAssignment : roleAssignments) {
             try {
-                roleInfo =  roleManagementService.getRoleWithoutUsers(roleAssignment.getRoleId(),
+                roleInfo = roleManagementService.getRoleWithoutUsers(roleAssignment.getRoleId(),
                         invitedTenantId);
                 AudienceInfo audienceInfo = new AudienceInfo();
                 audienceInfo.setApplicationType(roleInfo.getAudience());
