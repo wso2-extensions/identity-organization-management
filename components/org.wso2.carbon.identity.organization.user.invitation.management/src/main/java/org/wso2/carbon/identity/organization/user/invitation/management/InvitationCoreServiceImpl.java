@@ -173,7 +173,8 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     String userResidentTenantDomain = organizationManager.resolveTenantDomain(managedOrganization);
                     userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
                             getTenantId(userResidentTenantDomain));
-                    emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName, CLAIM_EMAIL_ADDRESS, null);
+                    emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,
+                            CLAIM_EMAIL_ADDRESS, null);
                 }
                 if (StringUtils.isEmpty(emailClaim)) {
                     throw new UserInvitationMgtClientException(ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getCode(),
