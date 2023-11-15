@@ -27,8 +27,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_APP_SHARED;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 
 /**
  * This class provides utility functions for the Organization Application Management.
