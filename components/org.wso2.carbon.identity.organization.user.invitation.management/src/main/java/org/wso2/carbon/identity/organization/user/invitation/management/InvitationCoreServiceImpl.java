@@ -122,20 +122,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         try {
             String userDomainQualifiedUserName = UserCoreUtil
                     .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
-            int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
-            // Checking whether the user is already exists in the organization.
-            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
-            if (userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("User: " + invitation.getUsername() + " is already exists in the organization: "
-                            + invitation.getInvitedOrganizationId());
-                }
-                throw new UserInvitationMgtClientException(ERROR_CODE_USER_ALREADY_EXISTS.getCode(),
-                        ERROR_CODE_USER_ALREADY_EXISTS.getMessage(),
-                        String.format(ERROR_CODE_USER_ALREADY_EXISTS.getDescription(), invitation.getUsername(),
-                                invitation.getInvitedOrganizationId()));
-            }
-
+            checkUserExistenceAtInvitedOrganization(userDomainQualifiedUserName);
             // Checking the parent organization id
             String parentOrgId = organizationManager.getParentOrganizationId(invitation.getInvitedOrganizationId());
             // Picking the parent organization's tenant domain
@@ -153,35 +140,34 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             }
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
             String invitedTenantDomain = organizationManager.resolveTenantDomain(invitation.getInvitedOrganizationId());
-            userStoreManager = getAbstractUserStoreManager(parentTenantId);
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
             if (!userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
-                LOG.error("User: " + invitation.getUsername() + " is not exists in the organization: "
-                        + parentOrgId);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("User: " + invitation.getUsername() + " is not exists in the organization: "
+                            + parentOrgId);
+                }
                 throw new UserInvitationMgtClientException(ERROR_CODE_USER_NOT_FOUND.getCode(),
                         ERROR_CODE_USER_NOT_FOUND.getMessage(),
                         String.format(ERROR_CODE_USER_NOT_FOUND.getDescription(), invitation.getUsername()));
             }
+
+            String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
+            String managedOrganization = OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
+            /* If the invited user is a shared user, get the corresponding user store manager of the shared user managed
+             organization. */
+            if (StringUtils.isNotEmpty(managedOrganization)) {
+                String userResidentTenantDomain = organizationManager.resolveTenantDomain(managedOrganization);
+                userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
+                        getTenantId(userResidentTenantDomain));
+            }
             String emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,
                     CLAIM_EMAIL_ADDRESS, null);
-            /* Try to fetch email claim from the user's resident organization if the user is a shared user in the parent
-             organization. */
             if (StringUtils.isEmpty(emailClaim)) {
-                String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
-                String managedOrganization = OrganizationSharedUserUtil
-                        .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
-                if (StringUtils.isNotEmpty(managedOrganization)) {
-                    String userResidentTenantDomain = organizationManager.resolveTenantDomain(managedOrganization);
-                    userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
-                            getTenantId(userResidentTenantDomain));
-                    emailClaim = userStoreManager.getUserClaimValue(userDomainQualifiedUserName,
-                            CLAIM_EMAIL_ADDRESS, null);
-                }
-                if (StringUtils.isEmpty(emailClaim)) {
-                    throw new UserInvitationMgtClientException(ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getCode(),
-                            ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getMessage(),
-                            String.format(ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getDescription(),
-                                    invitation.getUsername()));
-                }
+                throw new UserInvitationMgtClientException(ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getCode(),
+                        ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getMessage(),
+                        String.format(ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND.getDescription(),
+                                invitation.getUsername()));
             }
 
             invitation.setEmail(emailClaim);
@@ -559,6 +545,22 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                                 roleAssignment.getRoleId()), e);
             }
 
+        }
+    }
+
+    private void checkUserExistenceAtInvitedOrganization(String domainQualifiedUserName)
+            throws UserInvitationMgtClientException, UserStoreException {
+
+        int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+        if (userStoreManager.isExistingUser(domainQualifiedUserName)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("User: " + domainQualifiedUserName + " is already exists in the organization.");
+            }
+            throw new UserInvitationMgtClientException(ERROR_CODE_USER_ALREADY_EXISTS.getCode(),
+                    ERROR_CODE_USER_ALREADY_EXISTS.getMessage(),
+                    String.format(ERROR_CODE_USER_ALREADY_EXISTS.getDescription(), domainQualifiedUserName,
+                            PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId()));
         }
     }
 }
