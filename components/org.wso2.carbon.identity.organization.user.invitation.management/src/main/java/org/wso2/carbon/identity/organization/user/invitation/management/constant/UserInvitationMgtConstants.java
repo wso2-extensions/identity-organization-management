@@ -123,6 +123,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_INVALID_ROLE("10029",
                 "Invalid role identification provided.",
                 "Could not find a role with given roleId %s."),
+        ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND("10030",
+                "Failed to resolve the email of the invited user.",
+                "Could not find the email of the invited user %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
