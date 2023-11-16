@@ -89,18 +89,18 @@ public class OrgApplicationManagerUtil {
                 .findFirst();
         if (appShared.isPresent()) {
             appShared.get().setValue(Boolean.toString(value));
-        } else {
-            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
-            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
-            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
-
-            ServiceProviderProperty isAppSharedProperty = new ServiceProviderProperty();
-            isAppSharedProperty.setName(IS_APP_SHARED);
-            isAppSharedProperty.setValue(Boolean.toString(value));
-            newSpProperties[spProperties.length] = isAppSharedProperty;
-
-            serviceProvider.setSpProperties(newSpProperties);
+            return;
         }
+        ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+        ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
+        System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
+
+        ServiceProviderProperty isAppSharedProperty = new ServiceProviderProperty();
+        isAppSharedProperty.setName(IS_APP_SHARED);
+        isAppSharedProperty.setValue(Boolean.toString(value));
+        newSpProperties[spProperties.length] = isAppSharedProperty;
+
+        serviceProvider.setSpProperties(newSpProperties);
     }
 
     /**
@@ -123,9 +123,6 @@ public class OrgApplicationManagerUtil {
      */
     public static List<String> getB2BApplicationIds() {
 
-        if (b2bApplicationIds.get() == null) {
-            return null;
-        }
         return b2bApplicationIds.get();
     }
 
