@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.ext;
 
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -53,7 +54,12 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
 
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
-        fireEvent(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
+        try {
+            IdentityUtil.threadLocalProperties.get().put(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION, true);
+            fireEvent(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION);
+        }
     }
 
     @Override
