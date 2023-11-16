@@ -65,7 +65,7 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
                         getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId());
             } catch (OrganizationManagementServerException e) {
                 throw new IdentityEventException(
-                        String.format("An error occurred while getting depth of the sub-organization with id: %s",
+                        String.format("An error occurred while getting depth of the organization with id: %s",
                                 organization.getId()), e);
             }
             if (isSubOrganization(organizationDepthInHierarchy)) {
@@ -89,7 +89,7 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
             identityGovernanceService.updateConfiguration(tenantDomain, configurationDetails);
         } catch (IdentityGovernanceException | OrganizationManagementException e) {
             throw new IdentityEventException(
-                    String.format("An error occurred while enabling password recovery for sub-organization with id: %s",
+                    String.format("An error occurred while enabling password recovery for organization with id: %s",
                             organization.getId()), e);
         }
     }
