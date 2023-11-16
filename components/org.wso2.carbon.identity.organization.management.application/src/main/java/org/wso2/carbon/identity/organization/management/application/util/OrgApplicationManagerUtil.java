@@ -22,10 +22,12 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
@@ -99,6 +101,19 @@ public class OrgApplicationManagerUtil {
 
             serviceProvider.setSpProperties(newSpProperties);
         }
+    }
+
+    /**
+     * Check whether the application is a system application.
+     *
+     * @param applicationName The name of the application
+     * @return True if the provided application is a system application.
+     */
+    public static boolean isSystemApplication(String applicationName) {
+
+        Set<String> systemApplications = OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService()
+                .getSystemApplications();
+        return systemApplications != null && systemApplications.stream().anyMatch(applicationName::equalsIgnoreCase);
     }
 
     /**

@@ -25,6 +25,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -153,9 +154,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                     getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
                             mainApplication, true);
                     if (updateIsAppSharedProperty) {
-                        setIsAppSharedProperty(mainApplication, true);
-                        getApplicationManagementService().updateApplication(mainApplication,
-                                mainApplication.getTenantDomain(), getAuthenticatedUsername());
+                        updateApplicationWithIsAppSharedProperty(true, mainApplication);
                     }
                 }
             }
@@ -212,15 +211,31 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 if (CollectionUtils.isEmpty(applicationSharedOrganizations)) {
                     ServiceProvider mainApplication = getApplicationManagementService()
                             .getApplicationByResourceId(mainAppId, rootTenantDomain);
-                    setIsAppSharedProperty(mainApplication, false);
-                    getApplicationManagementService().updateApplication(mainApplication, rootTenantDomain,
-                            getAuthenticatedUsername());
+                    updateApplicationWithIsAppSharedProperty(false, mainApplication);
                 }
             }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
+            OrgApplicationManagerUtil.clearB2BApplicationIds();
         }
-        OrgApplicationManagerUtil.clearB2BApplicationIds();
+    }
+
+    private void updateApplicationWithIsAppSharedProperty(boolean isAppShared, ServiceProvider mainApplication)
+            throws IdentityApplicationManagementException {
+
+        setIsAppSharedProperty(mainApplication, isAppShared);
+        boolean systemApplication = OrgApplicationManagerUtil.isSystemApplication(mainApplication.getApplicationName());
+        try {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.setAllowUpdateSystemApplicationThreadLocal(true);
+            }
+            getApplicationManagementService().updateApplication(mainApplication,
+                    mainApplication.getTenantDomain(), getAuthenticatedUsername());
+        } finally {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
+            }
+        }
     }
 
     private ApplicationManagementService getApplicationManagementService() {
