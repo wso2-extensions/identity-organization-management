@@ -18,12 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.application.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -33,16 +37,22 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 
@@ -69,6 +79,27 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         "organization", e);
             }
         }
+
+        if (Constants.EVENT_PRE_DELETE_ORGANIZATION.equals(eventName)) {
+            Map<String, Object> eventProperties = event.getEventProperties();
+            String organizationId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
+            try {
+                handleMainApplicationUpdateForPreDeleteOrganization(organizationId);
+            } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
+                throw new IdentityEventException("An error occurred while retrieving main applications of " +
+                        "fragment applications configured for organization with ID: " + organizationId, e);
+            }
+        }
+
+        if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {
+            try {
+                handleMainApplicationUpdateForPostDeleteOrganization();
+            } catch (OrganizationManagementException | IdentityApplicationManagementException e) {
+                throw new IdentityEventException("An error occurred while updating main application based " +
+                        "on the organizations that it is shared with during an organization deletion.", e);
+            }
+
+        }
     }
 
     private void addSharedApplicationsToOrganization(Organization organization)
@@ -83,7 +114,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
                 getOrganizationManager().resolveTenantDomain(parentOrgId), getAuthenticatedUsername());
 
-        for (ApplicationBasicInfo applicationBasicInfo: applicationBasicInfos) {
+        for (ApplicationBasicInfo applicationBasicInfo : applicationBasicInfos) {
             if (getOrgApplicationMgtDAO().isFragmentApplication(applicationBasicInfo.getApplicationId())) {
                 Optional<SharedApplicationDO> sharedApplicationDO;
                 sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(
@@ -112,13 +143,100 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
                         .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
                                 p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+                    String mainAppOrgId = getOrganizationManager().resolveOrganizationId(mainApplication
+                            .getTenantDomain());
+                    List<BasicOrganization> applicationSharedOrganizations = getOrgApplicationManager()
+                            .getApplicationSharedOrganizations(mainAppOrgId,
+                                    mainApplication.getApplicationResourceId());
+                    // Having an empty list implies that this is the first organization to which the application is
+                    // shared with.
+                    boolean updateIsAppSharedProperty = CollectionUtils.isEmpty(applicationSharedOrganizations);
                     getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
                             mainApplication, true);
+                    if (updateIsAppSharedProperty) {
+                        updateApplicationWithIsAppSharedProperty(true, mainApplication);
+                    }
                 }
             }
         }
     }
 
+    private void handleMainApplicationUpdateForPreDeleteOrganization(String organizationId)
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+
+        OrgApplicationManagerUtil.clearB2BApplicationIds();
+
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+        if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            return;
+        }
+        List<String> mainAppIds = new ArrayList<>();
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+            ApplicationBasicInfo[] applicationBasicInfos = getApplicationManagementService()
+                    .getAllApplicationBasicInfo(tenantDomain, getAuthenticatedUsername());
+            for (ApplicationBasicInfo applicationBasicInfo : applicationBasicInfos) {
+                ServiceProvider fragmentApplication = getApplicationManagementService().getServiceProvider(
+                        applicationBasicInfo.getApplicationId());
+                String mainAppId = getApplicationManagementService()
+                        .getMainAppId(fragmentApplication.getApplicationResourceId());
+                mainAppIds.add(mainAppId);
+            }
+            OrgApplicationManagerUtil.setB2BApplicationIds(mainAppIds);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private void handleMainApplicationUpdateForPostDeleteOrganization() throws IdentityApplicationManagementException,
+            OrganizationManagementException {
+
+        List<String> mainAppIds = OrgApplicationManagerUtil.getB2BApplicationIds();
+        if (CollectionUtils.isEmpty(mainAppIds)) {
+            return;
+        }
+        try {
+            // All the applications have the same tenant ID. Therefore, tenant ID of the first application is used.
+            int rootTenantId = getApplicationManagementService().getTenantIdByApp(mainAppIds.get(0));
+            String rootTenantDomain = IdentityTenantUtil.getTenantDomain(rootTenantId);
+            String rootOrganizationId = getOrganizationManager().resolveOrganizationId(rootTenantDomain);
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(rootTenantDomain, true);
+            for (String mainAppId : mainAppIds) {
+                List<BasicOrganization> applicationSharedOrganizations = getOrgApplicationManager()
+                        .getApplicationSharedOrganizations(rootOrganizationId, mainAppId);
+                // Since the application doesn't have any shared organizations, isAppShared service provider property
+                // should be set to false.
+                if (CollectionUtils.isEmpty(applicationSharedOrganizations)) {
+                    ServiceProvider mainApplication = getApplicationManagementService()
+                            .getApplicationByResourceId(mainAppId, rootTenantDomain);
+                    updateApplicationWithIsAppSharedProperty(false, mainApplication);
+                }
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+            OrgApplicationManagerUtil.clearB2BApplicationIds();
+        }
+    }
+
+    private void updateApplicationWithIsAppSharedProperty(boolean isAppShared, ServiceProvider mainApplication)
+            throws IdentityApplicationManagementException {
+
+        setIsAppSharedProperty(mainApplication, isAppShared);
+        boolean systemApplication = OrgApplicationManagerUtil.isSystemApplication(mainApplication.getApplicationName());
+        try {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.setAllowUpdateSystemApplicationThreadLocal(true);
+            }
+            getApplicationManagementService().updateApplication(mainApplication,
+                    mainApplication.getTenantDomain(), getAuthenticatedUsername());
+        } finally {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
+            }
+        }
+    }
 
     private ApplicationManagementService getApplicationManagementService() {
 

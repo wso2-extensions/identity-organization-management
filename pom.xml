@@ -507,7 +507,7 @@
         <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
-        <identity.organization.management.core.version>1.0.88</identity.organization.management.core.version>
+        <identity.organization.management.core.version>1.0.90</identity.organization.management.core.version>
         <org.wso2.identity.organization.mgt.core.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.core.imp.pkg.version.range>
 
@@ -515,7 +515,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>5.25.446</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.25.510</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 7.0.0)
         </carbon.identity.package.import.version.range>
 

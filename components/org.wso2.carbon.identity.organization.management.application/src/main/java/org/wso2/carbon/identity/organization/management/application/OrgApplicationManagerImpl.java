@@ -103,6 +103,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM_URI;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_BLOCK_SHARING_SHARED_APP;
@@ -187,6 +188,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (shareWithAllChildren || !filteredChildOrgs.isEmpty()) {
             // Adding federated_org custom oidc claim to the root application reside organization.
             addUserOrganizationClaim(ownerTenantDomain);
+            setIsAppSharedProperty(rootApplication, !filteredChildOrgs.isEmpty());
             // Adding Organization login IDP to the root application.
             modifyRootApplication(rootApplication, ownerTenantDomain);
         }
@@ -254,6 +256,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (Arrays.stream(serviceProvider.getSpProperties()).anyMatch(p ->
                     SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 setShareWithAllChildrenProperty(serviceProvider, false);
+                setIsAppSharedProperty(serviceProvider, false);
                 IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
                 try {
                     getApplicationManagementService().updateApplication(
@@ -275,6 +278,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
             if (sharedApplicationId.isPresent()) {
                 deleteSharedApplication(sharedOrganizationId, sharedApplicationId.get());
+                List<BasicOrganization> applicationSharedOrganizations =
+                        getApplicationSharedOrganizations(organizationId, serviceProvider.getApplicationResourceId());
+                if (CollectionUtils.isEmpty(applicationSharedOrganizations)) {
+                    setIsAppSharedProperty(serviceProvider, false);
+                    try {
+                        getApplicationManagementService().updateApplication(serviceProvider, getTenantDomain(),
+                                getAuthenticatedUsername());
+                    } catch (IdentityApplicationManagementException e) {
+                        throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, applicationId);
+                    }
+                }
                 getListener().postDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId,
                         sharedApplicationId.get());
             }
