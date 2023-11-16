@@ -54,9 +54,12 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
 
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
-        IdentityUtil.threadLocalProperties.get().put(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION, true);
-        fireEvent(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
-        IdentityUtil.threadLocalProperties.get().remove(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION);
+        try {
+            IdentityUtil.threadLocalProperties.get().put(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION, true);
+            fireEvent(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(Constants.IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION);
+        }
     }
 
     @Override
