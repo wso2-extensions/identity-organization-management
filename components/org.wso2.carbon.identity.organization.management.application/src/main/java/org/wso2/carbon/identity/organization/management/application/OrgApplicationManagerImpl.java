@@ -128,7 +128,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOrganizationQualifiedURLsSupported;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_FLAG;
 import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
@@ -689,10 +688,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
         ServiceURLBuilder commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH)
                 .setTenant(tenantDomain);
-        if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain) &&
-                isOrganizationQualifiedURLsSupported(ownerOrgId)) {
-            commonAuthServiceUrl.setOrganization(ownerOrgId);
-        }
         return commonAuthServiceUrl.build().getAbsolutePublicURL();
     }
 
