@@ -21,6 +21,9 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -39,8 +42,6 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
-import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -163,23 +164,20 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     private void assignUserToAdminRole(String userId, String organizationId, String tenantDomain)
             throws IdentityEventException {
 
-        String adminRoleName;
         try {
-            adminRoleName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration()
-                    .getAdminRoleName();
-            adminRoleName = UserCoreUtil.removeDomainFromName(adminRoleName);
-        } catch (UserStoreException e) {
-            throw new IdentityEventException("An error occurred while retrieving the admin role ", e);
-        }
-
-        try {
+            ServiceProvider serviceProvider = OrganizationUserSharingDataHolder.getInstance()
+                    .getApplicationManagementService().getApplicationExcludingFileBasedSPs(
+                            ApplicationConstants.CONSOLE_APPLICATION_NAME, tenantDomain);
             String adminRoleId = OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
-                    .getRoleIdByName(adminRoleName, RoleConstants.ORGANIZATION, organizationId, tenantDomain);
+                    .getRoleIdByName(RoleConstants.ADMINISTRATOR, RoleConstants.APPLICATION,
+                            serviceProvider.getApplicationResourceId(), tenantDomain);
             OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
                     .updateUserListOfRole(adminRoleId, Collections.singletonList(userId), Collections.emptyList(),
                             tenantDomain);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityEventException("An error occurred while assigning the user to the administrator role", e);
+        } catch (IdentityApplicationManagementException e) {
+            throw new IdentityEventException("Failed to retrieve application id of Console application.", e);
         }
     }
 
