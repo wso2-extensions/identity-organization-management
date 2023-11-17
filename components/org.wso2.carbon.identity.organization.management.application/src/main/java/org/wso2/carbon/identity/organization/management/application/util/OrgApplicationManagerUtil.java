@@ -19,18 +19,30 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
+import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
+import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
+import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_FLAG;
 
 /**
  * This class provides utility functions for the Organization Application Management.
@@ -143,5 +155,64 @@ public class OrgApplicationManagerUtil {
 
         b2bApplicationIds.remove();
     }
-}
 
+    /**
+     * Create a new identity provider for the organization SSO.
+     *
+     * @return The created identity provider.
+     */
+    public static IdentityProvider createOrganizationSSOIDP() {
+
+        FederatedAuthenticatorConfig authConfig = new FederatedAuthenticatorConfig();
+        authConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+        authConfig.setDisplayName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+        authConfig.setEnabled(true);
+
+        IdentityProvider idp = new IdentityProvider();
+        idp.setIdentityProviderName("SSO");
+        idp.setPrimary(false);
+        idp.setFederationHub(false);
+        idp.setIdentityProviderDescription("Identity provider for Organization SSO.");
+        idp.setHomeRealmId("OrganizationSSO");
+        idp.setDefaultAuthenticatorConfig(authConfig);
+        idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authConfig});
+        ClaimConfig claimConfig = new ClaimConfig();
+        claimConfig.setLocalClaimDialect(true);
+        idp.setClaimConfig(claimConfig);
+
+        // Add system reserved properties.
+        IdentityProviderProperty[] idpProperties = new IdentityProviderProperty[1];
+        IdentityProviderProperty property = new IdentityProviderProperty();
+        property.setName(IS_SYSTEM_RESERVED_IDP_FLAG);
+        property.setDisplayName(IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME);
+        property.setValue("true");
+        idpProperties[0] = property;
+        idp.setIdpProperties(idpProperties);
+
+        return idp;
+    }
+
+    /**
+     * Get the default authentication configuration of service provider.
+     *
+     * @return The default authentication configuration.
+     * @throws OrganizationManagementServerException Exception thrown when retrieving default service provider.
+     */
+    public static LocalAndOutboundAuthenticationConfig getDefaultAuthenticationConfig() throws
+            OrganizationManagementServerException {
+
+        ServiceProvider defaultSP = getDefaultServiceProvider();
+        return defaultSP != null ? defaultSP.getLocalAndOutBoundAuthenticationConfig() : null;
+    }
+
+    private static ServiceProvider getDefaultServiceProvider() throws OrganizationManagementServerException {
+
+        try {
+            return OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService()
+                    .getServiceProvider(IdentityApplicationConstants.DEFAULT_SP_CONFIG,
+                            MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+        } catch (IdentityApplicationManagementException e) {
+            throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
+        }
+    }
+}
