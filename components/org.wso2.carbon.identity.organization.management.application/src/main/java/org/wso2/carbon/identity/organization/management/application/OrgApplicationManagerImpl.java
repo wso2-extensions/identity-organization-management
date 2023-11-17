@@ -689,10 +689,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
         ServiceURLBuilder commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH)
                 .setTenant(tenantDomain);
-        if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain) &&
-                isOrganizationQualifiedURLsSupported(ownerOrgId)) {
-            commonAuthServiceUrl.setOrganization(ownerOrgId);
-        }
         return commonAuthServiceUrl.build().getAbsolutePublicURL();
     }
 
