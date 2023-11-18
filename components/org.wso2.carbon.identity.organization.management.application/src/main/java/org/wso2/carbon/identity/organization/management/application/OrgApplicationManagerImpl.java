@@ -120,7 +120,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_DELETE_SHARE_REQUEST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
@@ -142,9 +141,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                              List<String> sharedOrgs) throws OrganizationManagementException {
 
         String requestInvokingOrganizationId = getOrganizationId();
-        if (requestInvokingOrganizationId == null) {
-            requestInvokingOrganizationId = SUPER_ORG_ID;
-        }
         validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
@@ -573,6 +569,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                 () -> handleServerException(ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION,
                                         null, finalAdminUserId));
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(user.getDomainQualifiedUsername());
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);

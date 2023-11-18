@@ -177,7 +177,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     public boolean hasFragments(String applicationId) throws OrganizationManagementException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        String sharedAppId;
         try {
             int hasFragment = namedJdbcTemplate.fetchSingleRecord(HAS_FRAGMENT_APPS,
                     (resultSet, rowNumber) -> resultSet.getInt(1), namedPreparedStatement ->
