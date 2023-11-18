@@ -24,12 +24,7 @@ package org.wso2.carbon.identity.organization.management.application.constant;
 public class SQLConstants {
 
     public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (MAIN_APP_ID, OWNER_ORG_ID, " +
-            "SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN) VALUES (:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN + ";);";
+            "SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN) VALUES (?,?,?,?,?);";
 
     public static final String GET_SHARED_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE " +
             "OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND " +
@@ -62,10 +57,8 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME + "; AND `VALUE` = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE + ";";
 
-    public static final String UPDATE_SHARE_WITH_ALL_CHILDREN = "UPDATE SP_SHARED_APP SET SHARE_WITH_ALL_CHILDREN = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN + "; WHERE MAIN_APP_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :"
-            + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";";
+    public static final String UPDATE_SHARE_WITH_ALL_CHILDREN = "UPDATE SP_SHARED_APP SET SHARE_WITH_ALL_CHILDREN = " +
+            "? WHERE MAIN_APP_ID = ? AND OWNER_ORG_ID = ?";
 
     private SQLConstants() {
 
