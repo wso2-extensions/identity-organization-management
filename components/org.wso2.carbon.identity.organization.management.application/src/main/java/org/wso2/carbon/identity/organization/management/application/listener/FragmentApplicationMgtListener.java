@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,9 +28,12 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
+import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -49,10 +53,15 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
+import org.wso2.carbon.idp.mgt.IdpManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -63,15 +72,26 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Arrays.stream;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.createOrganizationSSOIDP;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getDefaultAuthenticationConfig;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isB2BApplicationRoleSupportEnabled;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 
@@ -186,6 +206,25 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             shareWithAllChildren.ifPresent(serviceProviderProperty ->
                     setShareWithAllChildrenProperty(serviceProvider,
                             Boolean.parseBoolean(serviceProviderProperty.getValue())));
+        }
+
+        try {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                Optional<ServiceProviderProperty> appShared = Arrays.stream(serviceProvider.getSpProperties())
+                        .filter(p -> IS_APP_SHARED.equals(p.getName())).findFirst();
+                boolean authenticatorConfigured = isOrganizationSSOAuthenticatorConfigured(serviceProvider);
+                if (appShared.isPresent() && !Boolean.parseBoolean(appShared.get().getValue()) &&
+                        authenticatorConfigured) {
+                    removeOrganizationSSOAuthenticator(serviceProvider);
+                } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue()) &&
+                        !authenticatorConfigured) {
+                    addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
+                }
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementException(String.format("Error while resolving the organization " +
+                            "SSO authenticator configuration for service provider with ID: %s in tenant:  %s .",
+                    serviceProvider.getApplicationResourceId(), tenantDomain), e);
         }
 
         return super.doPreUpdateApplication(serviceProvider, tenantDomain, userName);
@@ -401,7 +440,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         organizationId, application.getApplicationResourceId());
                 IdentityUtil.threadLocalProperties.get().put(DELETE_MAIN_APPLICATION, true);
                 String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                for (SharedApplicationDO sharedApplicationDO: sharedApplications) {
+                for (SharedApplicationDO sharedApplicationDO : sharedApplications) {
                     try {
                         String sharedAppTenantDomain =
                                 getOrganizationManager().resolveTenantDomain(sharedApplicationDO.getOrganizationId());
@@ -565,5 +604,132 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
+    }
+
+    private void removeOrganizationSSOAuthenticator(ServiceProvider rootApplication) {
+
+        LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
+                rootApplication.getLocalAndOutBoundAuthenticationConfig();
+        AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
+
+        AuthenticationStep first = new AuthenticationStep();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            first.setStepOrder(exist.getStepOrder());
+            first.setSubjectStep(exist.isSubjectStep());
+            first.setAttributeStep(exist.isAttributeStep());
+            first.setFederatedIdentityProviders(exist.getFederatedIdentityProviders());
+            first.setLocalAuthenticatorConfigs(exist.getLocalAuthenticatorConfigs());
+        }
+
+        AuthenticationStep[] newAuthSteps = ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() :
+                new AuthenticationStep[1];
+        List<IdentityProvider> identityProviderList = new ArrayList<>();
+        for (IdentityProvider identityProvider : first.getFederatedIdentityProviders()) {
+            FederatedAuthenticatorConfig federatedAuthenticatorConfig =
+                    identityProvider.getDefaultAuthenticatorConfig();
+            if (!ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfig.getName())) {
+                identityProviderList.add(identityProvider);
+            }
+        }
+        IdentityProvider[] identityProviders = identityProviderList.toArray(new IdentityProvider[0]);
+
+        first.setFederatedIdentityProviders(identityProviders);
+        newAuthSteps[0] = first;
+        outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
+        rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
+    }
+
+    private void addOrganizationSSOAuthenticator(ServiceProvider rootApplication, String tenantDomain)
+            throws OrganizationManagementServerException, OrganizationManagementClientException {
+
+        LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
+                rootApplication.getLocalAndOutBoundAuthenticationConfig();
+        AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
+
+        if (StringUtils.equalsIgnoreCase(outboundAuthenticationConfig.getAuthenticationType(), AUTH_TYPE_DEFAULT)) {
+            LocalAndOutboundAuthenticationConfig defaultAuthenticationConfig = getDefaultAuthenticationConfig();
+            if (defaultAuthenticationConfig != null) {
+                authSteps = defaultAuthenticationConfig.getAuthenticationSteps();
+            }
+            // Change the authType to flow, since we are adding organization login authenticator.
+            LocalAndOutboundAuthenticationConfig tempOutboundAuthenticationConfig =
+                    new LocalAndOutboundAuthenticationConfig();
+            tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
+            tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
+            outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
+            outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
+        }
+
+        AuthenticationStep first = new AuthenticationStep();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            first.setStepOrder(exist.getStepOrder());
+            first.setSubjectStep(exist.isSubjectStep());
+            first.setAttributeStep(exist.isAttributeStep());
+            first.setFederatedIdentityProviders(exist.getFederatedIdentityProviders());
+            first.setLocalAuthenticatorConfigs(exist.getLocalAuthenticatorConfigs());
+        }
+
+        AuthenticationStep[] newAuthSteps =
+                ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() : new AuthenticationStep[1];
+
+        IdentityProvider[] idps;
+        try {
+            idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e, getOrganizationId());
+        }
+        Optional<IdentityProvider> maybeOrganizationIDP = stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
+        IdentityProvider identityProvider;
+        try {
+            identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
+                    getIdentityProviderManager().addIdPWithResourceId
+                            (createOrganizationSSOIDP(), tenantDomain);
+        } catch (IdentityProviderManagementClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
+        } catch (IdentityProviderManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
+        }
+
+        first.setFederatedIdentityProviders((IdentityProvider[]) ArrayUtils.addAll(first
+                .getFederatedIdentityProviders(), new IdentityProvider[]{identityProvider}));
+        newAuthSteps[0] = first;
+        outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
+        rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
+    }
+
+    private boolean isOrganizationSSOAuthenticatorConfigured(ServiceProvider rootApplication) {
+
+        AuthenticationStep[] authSteps = rootApplication.getLocalAndOutBoundAuthenticationConfig()
+                .getAuthenticationSteps();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            return exist != null && exist.getFederatedIdentityProviders() != null &&
+                    stream(exist.getFederatedIdentityProviders()).map(IdentityProvider::getDefaultAuthenticatorConfig)
+                            .anyMatch(auth -> auth != null && ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
+        }
+        return false;
+    }
+
+    private IdpManager getIdentityProviderManager() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getIdpManager();
+    }
+
+    private ApplicationManagementService getApplicationManagementService() {
+
+        return OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private boolean isOrganizationLoginIDP(IdentityProvider idp) {
+
+        FederatedAuthenticatorConfig[] federatedAuthenticatorConfigs = idp.getFederatedAuthenticatorConfigs();
+        return ArrayUtils.isNotEmpty(federatedAuthenticatorConfigs) &&
+                ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfigs[0].getName());
     }
 }
