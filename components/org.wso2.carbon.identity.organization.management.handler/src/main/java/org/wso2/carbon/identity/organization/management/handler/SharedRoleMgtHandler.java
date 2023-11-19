@@ -202,10 +202,14 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                 String sharedOrganizationId = sharedApplications.get(taskId).getOrganizationId();
                                 String shareAppTenantDomain =
                                         getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+                                String associatedUserName =
+                                        PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
                                 try {
                                     PrivilegedCarbonContext.startTenantFlow();
                                     PrivilegedCarbonContext.getThreadLocalCarbonContext()
                                             .setTenantDomain(shareAppTenantDomain, true);
+                                    PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                            .setUsername(associatedUserName);
                                     RoleBasicInfo sharedRoleInfo =
                                         getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
                                                 Collections.emptyList(),
