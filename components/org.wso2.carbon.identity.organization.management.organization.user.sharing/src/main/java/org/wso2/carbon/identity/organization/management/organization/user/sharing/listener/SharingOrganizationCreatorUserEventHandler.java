@@ -74,9 +74,11 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                         return;
                     }
                     String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+                    String associatedUserName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
                     try {
                         PrivilegedCarbonContext.startTenantFlow();
                         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
                         Role organizationCreatorRole = buildOrgCreatorRole(associatedUserId);
                         Role administratorRole = buildAdministratorRole(associatedUserId);
                         getRoleManager().createRole(orgId, organizationCreatorRole);
@@ -94,6 +96,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                         return;
                     }
+                    String associatedUserName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
                     String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
                     String associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
                             .getUserResidentOrganizationId();
@@ -103,6 +106,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     try {
                         PrivilegedCarbonContext.startTenantFlow();
                         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
                         userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
                         String userId = userSharingService
                                 .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
