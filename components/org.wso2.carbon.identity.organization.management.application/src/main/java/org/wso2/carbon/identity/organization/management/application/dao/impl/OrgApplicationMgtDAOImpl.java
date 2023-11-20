@@ -71,15 +71,14 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            String shareWithAllChildrenValue = getShareWithAllChildrenValue(shareWithAllChildren);
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_SHARED_APP, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainAppId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrgId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID, sharedAppId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
-                            shareWithAllChildrenValue);
+                    namedPreparedStatement.setBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
+                            shareWithAllChildren);
                 }, null, false);
                 return null;
             });
@@ -212,13 +211,12 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                                            boolean shareWithAllChildren) throws OrganizationManagementException {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            String shareWithAllChildrenValue = getShareWithAllChildrenValue(shareWithAllChildren);
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(UPDATE_SHARE_WITH_ALL_CHILDREN, namedPreparedStatement -> {
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainApplicationId);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrganizationId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
-                            shareWithAllChildrenValue);
+                    namedPreparedStatement.setBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN,
+                            shareWithAllChildren);
                 }, null, false);
                 return null;
             });
