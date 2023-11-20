@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
+import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.ENABLE_EMAIL_VERIFICATION;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.EXPIRY_TIME;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_BASED_PW_RECOVERY;
 import static org.wso2.carbon.identity.recovery.IdentityRecoveryConstants.ConnectorConfig.NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS;
@@ -50,6 +51,7 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
     private static final String EXPIRY_TIME_VALUE = "1440";
     private static final String NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE = String.valueOf(true);
     private static final String NOTIFICATION_BASED_PW_RECOVERY_VALUE = String.valueOf(true);
+    private static final String EMAIL_VERIFICATION_VALUE = String.valueOf(true);
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -86,6 +88,7 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
             configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
                     NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS_VALUE);
             configurationDetails.put(NOTIFICATION_BASED_PW_RECOVERY, NOTIFICATION_BASED_PW_RECOVERY_VALUE);
+            configurationDetails.put(ENABLE_EMAIL_VERIFICATION, EMAIL_VERIFICATION_VALUE);
             identityGovernanceService.updateConfiguration(tenantDomain, configurationDetails);
         } catch (IdentityGovernanceException | OrganizationManagementException e) {
             throw new IdentityEventException(
