@@ -89,6 +89,15 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             case IdentityEventConstants.Event.POST_ADD_EXTERNAL_CLAIM:
                 handleAddExternalClaim(event);
                 break;
+            case IdentityEventConstants.Event.POST_ADD_CLAIM_DIALECT:
+                handleAddClaimDialect(event);
+                break;
+            case IdentityEventConstants.Event.POST_UPDATE_CLAIM_DIALECT:
+                handleUpdateClaimDialect(event);
+                break;
+            case IdentityEventConstants.Event.POST_DELETE_CLAIM_DIALECT:
+                handleDeleteClaimDialect(event);
+                break;
             default:
                 break;
         }
@@ -355,6 +364,105 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             throw new IdentityEventException("An error occurred while adding the external claim " + claimURI, e);
         } catch (ClaimMetadataException e) {
             throw new IdentityEventException("An error occurred while adding the external claim " + claimURI, e);
+        }
+    }
+
+    private void handleAddClaimDialect(Event event) throws IdentityEventException {
+
+        Map<String, Object> eventProperties = event.getEventProperties();
+        int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        String claimDialectURI =
+                (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
+        try {
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            List<BasicOrganization> childOrganizations = getOrganizationManager().
+                    getChildOrganizations(organizationId, true);
+            for (BasicOrganization organization : childOrganizations) {
+                String sharedOrganizationTenantDomain = getOrganizationManager().
+                        resolveTenantDomain(organization.getId());
+                getClaimMetadataManagementService().addClaimDialect(
+                        new ClaimDialect(claimDialectURI), sharedOrganizationTenantDomain);
+            }
+        } catch (OrganizationManagementException e) {
+            // This is to handle the scenario where the tenant is not modeled as an organization.
+            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + tenantDomain);
+                }
+                return;
+            }
+            throw new IdentityEventException("An error occurred while adding the claim dialect " + claimDialectURI, e);
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException("An error occurred while adding the claim dialect " + claimDialectURI, e);
+        }
+    }
+
+    private void handleUpdateClaimDialect(Event event) throws IdentityEventException {
+
+        Map<String, Object> eventProperties = event.getEventProperties();
+        int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        String oldClaimDialectURI =
+                (String) eventProperties.get(IdentityEventConstants.EventProperty.OLD_CLAIM_DIALECT_URI);
+        String newClaimDialectURI =
+                (String) eventProperties.get(IdentityEventConstants.EventProperty.NEW_CLAIM_DIALECT_URI);
+        try {
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            List<BasicOrganization> childOrganizations = getOrganizationManager().
+                    getChildOrganizations(organizationId, true);
+            for (BasicOrganization organization : childOrganizations) {
+                String sharedOrganizationTenantDomain = getOrganizationManager().
+                        resolveTenantDomain(organization.getId());
+                getClaimMetadataManagementService().renameClaimDialect(new ClaimDialect(oldClaimDialectURI),
+                        new ClaimDialect(newClaimDialectURI), sharedOrganizationTenantDomain);
+            }
+        } catch (OrganizationManagementException e) {
+            // This is to handle the scenario where the tenant is not modeled as an organization.
+            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + tenantDomain);
+                }
+                return;
+            }
+            throw new IdentityEventException(
+                    "An error occurred while updating the claim dialect " + oldClaimDialectURI, e);
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException(
+                    "An error occurred while updating the claim dialect " + oldClaimDialectURI, e);
+        }
+    }
+
+    private void handleDeleteClaimDialect(Event event) throws IdentityEventException {
+
+        Map<String, Object> eventProperties = event.getEventProperties();
+        int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        String claimDialectURI =
+                (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
+        try {
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            List<BasicOrganization> childOrganizations = getOrganizationManager().
+                    getChildOrganizations(organizationId, true);
+            for (BasicOrganization organization : childOrganizations) {
+                String sharedOrganizationTenantDomain = getOrganizationManager().
+                        resolveTenantDomain(organization.getId());
+                getClaimMetadataManagementService().removeClaimDialect(
+                        new ClaimDialect(claimDialectURI), sharedOrganizationTenantDomain);
+            }
+        } catch (OrganizationManagementException e) {
+            // This is to handle the scenario where the tenant is not modeled as an organization.
+            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + tenantDomain);
+                }
+                return;
+            }
+            throw new IdentityEventException(
+                    "An error occurred while deleting the claim dialect " + claimDialectURI, e);
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException(
+                    "An error occurred while deleting the claim dialect " + claimDialectURI, e);
         }
     }
 
