@@ -89,6 +89,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             case IdentityEventConstants.Event.POST_ADD_EXTERNAL_CLAIM:
                 handleAddExternalClaim(event);
                 break;
+            case IdentityEventConstants.Event.POST_ADD_CLAIM_DIALECT:
+                handleAddClaimDialect(event);
+                break;
             default:
                 break;
         }
@@ -355,6 +358,37 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             throw new IdentityEventException("An error occurred while adding the external claim " + claimURI, e);
         } catch (ClaimMetadataException e) {
             throw new IdentityEventException("An error occurred while adding the external claim " + claimURI, e);
+        }
+    }
+
+    private void handleAddClaimDialect(Event event) throws IdentityEventException {
+
+        Map<String, Object> eventProperties = event.getEventProperties();
+        int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        String claimDialectURI =
+                (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
+        try {
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            List<BasicOrganization> childOrganizations = getOrganizationManager().
+                    getChildOrganizations(organizationId, true);
+            for (BasicOrganization organization : childOrganizations) {
+                String sharedOrganizationTenantDomain = getOrganizationManager().
+                        resolveTenantDomain(organization.getId());
+                getClaimMetadataManagementService().addClaimDialect(
+                        new ClaimDialect(claimDialectURI), sharedOrganizationTenantDomain);
+            }
+        } catch (OrganizationManagementException e) {
+            // This is to handle the scenario where the tenant is not modeled as an organization.
+            if (ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + tenantDomain);
+                }
+                return;
+            }
+            throw new IdentityEventException("An error occurred while adding the claim dialect " + claimDialectURI, e);
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException("An error occurred while adding the claim dialect " + claimDialectURI, e);
         }
     }
 
