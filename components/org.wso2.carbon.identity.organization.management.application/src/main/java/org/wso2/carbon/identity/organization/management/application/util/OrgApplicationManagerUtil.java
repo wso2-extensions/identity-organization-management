@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_SSO_IDP_IMAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
@@ -170,6 +171,7 @@ public class OrgApplicationManagerUtil {
 
         IdentityProvider idp = new IdentityProvider();
         idp.setIdentityProviderName("SSO");
+        idp.setImageUrl(ORGANIZATION_SSO_IDP_IMAGE_URL);
         idp.setPrimary(false);
         idp.setFederationHub(false);
         idp.setIdentityProviderDescription("Identity provider for Organization SSO.");

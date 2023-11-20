@@ -34,6 +34,7 @@ public class OrgApplicationMgtConstants {
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
     public static final String USER_CUSTOM_ATTRIBUTE_PROPERTY = "USER_CUSTOM_ATTRIBUTE";
+    public static final String ORGANIZATION_SSO_IDP_IMAGE_URL = "assets/images/logos/sso.svg";
 
     public static final String USER_ORGANIZATION_CLAIM_URI = "http://wso2.org/claims/runtime/user_organization";
     public static final String APP_ROLES_CLAIM_URI = "http://wso2.org/claims/applicationRoles";
