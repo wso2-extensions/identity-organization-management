@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
@@ -209,7 +210,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            /* Add or remove the organization SSO authenticator based on the app sharing status. Except for the
+             Console app. */
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain) && !serviceProvider.getApplicationName()
+                    .equals(FrameworkConstants.Application.CONSOLE_APP)) {
                 Optional<ServiceProviderProperty> appShared = Arrays.stream(serviceProvider.getSpProperties())
                         .filter(p -> IS_APP_SHARED.equals(p.getName())).findFirst();
                 boolean authenticatorConfigured = isOrganizationSSOAuthenticatorConfigured(serviceProvider);

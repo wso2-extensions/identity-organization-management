@@ -452,6 +452,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private void modifyRootApplication(ServiceProvider rootApplication, String tenantDomain)
             throws OrganizationManagementServerException, OrganizationManagementClientException {
 
+        // Organization SSO IDP is not allowed to add for console application while application sharing.
+        if (rootApplication.getApplicationName().equals(FrameworkConstants.Application.CONSOLE_APP)) {
+            return;
+        }
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
                 rootApplication.getLocalAndOutBoundAuthenticationConfig();
         AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
