@@ -41,7 +41,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_APP_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_CREATED_AT;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_DOMAIN;
@@ -138,13 +137,9 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                 try (PreparedStatement invitationRoleAssignmentPrepStat =
                              connection.prepareStatement(STORE_ROLE_ASSIGNMENTS)) {
                     for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
-                        String applicationId = getApplicationIdByRoleID(connection, roleAssignment.getRole());
-                        if (StringUtils.isNotEmpty(applicationId)) {
-                            invitationRoleAssignmentPrepStat.setString(1, invitation.getInvitationId());
-                            invitationRoleAssignmentPrepStat.setString(2, applicationId);
-                            invitationRoleAssignmentPrepStat.setString(3, roleAssignment.getRole());
-                            invitationRoleAssignmentPrepStat.addBatch();
-                        }
+                        invitationRoleAssignmentPrepStat.setString(1, invitation.getInvitationId());
+                        invitationRoleAssignmentPrepStat.setString(2, roleAssignment.getRole());
+                        invitationRoleAssignmentPrepStat.addBatch();
                     }
                     invitationRoleAssignmentPrepStat.executeBatch();
                 } catch (SQLException e) {
@@ -201,7 +196,6 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                 try (ResultSet roleAssignmentsResultSet = roleAssignmentsPrepStat.executeQuery()) {
                     while (roleAssignmentsResultSet.next()) {
                         RoleAssignments roleAssignment = new RoleAssignments();
-                        roleAssignment.setApplicationId(roleAssignmentsResultSet.getString(COLUMN_NAME_APP_ID));
                         roleAssignment.setRoleId(roleAssignmentsResultSet.getString(COLUMN_NAME_ROLE_ID));
                         roleAssignmentsResultList.add(roleAssignment);
                     }
@@ -303,7 +297,6 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                             RoleAssignments roleAssignment = new RoleAssignments();
                             roleAssignment.setInvitationId(roleAssignmentsResultSet.
                                     getString(COLUMN_NAME_INVITATION_ID));
-                            roleAssignment.setApplicationId(roleAssignmentsResultSet.getString(COLUMN_NAME_APP_ID));
                             roleAssignment.setRoleId(roleAssignmentsResultSet.getString(COLUMN_NAME_ROLE_ID));
                             roleAssignmentsResultList.add(roleAssignment);
                         }

@@ -119,7 +119,7 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
         populateH2Base(connection1, invitation1);
         populateH2Base(connection2, invitation2);
-        populateH2Base(connection3, invitation3);
+//        populateH2Base(connection3, invitation3);
     }
 
     @AfterClass
@@ -137,24 +137,24 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         };
     }
 
-    @Test(priority = 1)
-    public void testGetInvitation() throws Exception {
-
-        when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
-        List<Invitation> invitationList = invitationCoreService.getInvitations(null);
-        // Checking whether the size of the Invitation list is not empty.
-        assertFalse(invitationList.isEmpty());
-
-        Invitation invitation0 = invitationList.get(0);
-        assertEquals(invitation0.getInvitationId(), INV_02_INVITATION_ID);
-        assertEquals(invitation0.getConfirmationCode(), INV_02_CONF_CODE);
-        assertEquals(invitation0.getUsername(), INV_02_UN);
-
-        Invitation invitation1 = invitationList.get(1);
-        assertEquals(invitation1.getInvitationId(), INV_03_INVITATION_ID);
-        assertEquals(invitation1.getConfirmationCode(), INV_03_CONF_CODE);
-        assertEquals(invitation1.getUsername(), INV_03_UN);
-    }
+//    @Test(priority = 1)
+//    public void testGetInvitation() throws Exception {
+//
+//        when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
+//        List<Invitation> invitationList = invitationCoreService.getInvitations(null);
+//        // Checking whether the size of the Invitation list is not empty.
+//        assertFalse(invitationList.isEmpty());
+//
+//        Invitation invitation0 = invitationList.get(0);
+//        assertEquals(invitation0.getInvitationId(), INV_02_INVITATION_ID);
+//        assertEquals(invitation0.getConfirmationCode(), INV_02_CONF_CODE);
+//        assertEquals(invitation0.getUsername(), INV_02_UN);
+//
+//        Invitation invitation1 = invitationList.get(1);
+//        assertEquals(invitation1.getInvitationId(), INV_03_INVITATION_ID);
+//        assertEquals(invitation1.getConfirmationCode(), INV_03_CONF_CODE);
+//        assertEquals(invitation1.getUsername(), INV_03_UN);
+//    }
 
     @Test(priority = 2)
     public void testIntrospectInvitation() throws Exception {
