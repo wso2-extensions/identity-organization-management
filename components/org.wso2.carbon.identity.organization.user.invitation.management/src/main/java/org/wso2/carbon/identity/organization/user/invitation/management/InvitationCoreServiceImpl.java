@@ -57,7 +57,6 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -112,8 +111,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
 
     private static final Log LOG = LogFactory.getLog(InvitationCoreServiceImpl.class);
     private static final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
-    private RoleManagementService roleManagementService = UserInvitationMgtDataHolder.getInstance()
-            .getRoleManagementService();
 
     @Override
     public Invitation createInvitation(Invitation invitation) throws UserInvitationMgtException {
@@ -177,7 +174,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             invitation.setEmail(emailClaim);
             invitation.setUserOrganizationId(parentOrgId);
             invitation.setStatus(STATUS_PENDING);
-            validateRoleAssignments(invitation, invitedUserId, invitedTenantDomain, parentTenantDomain);
+            if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
+                validateRoleAssignments(invitation, invitedUserId, invitedTenantDomain, parentTenantDomain);
+            }
             invitation.setInvitationId(UUID.randomUUID().toString());
             invitation.setConfirmationCode(UUID.randomUUID().toString());
             userInvitationDAO.createInvitation(invitation);
@@ -228,9 +227,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     // Trigger event to add the role assignments if any available in the invitation.
                     if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                         for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
-                            if (roleManagementService.isExistingRole(roleAssignments.getRoleId(),
+                            if (getRoleManagementService().isExistingRole(roleAssignments.getRoleId(),
                                     invitedTenantDomain)) {
-                                roleManagementService.updateUserListOfRole(roleAssignments.getRoleId(),
+                                getRoleManagementService().updateUserListOfRole(roleAssignments.getRoleId(),
                                         Collections.singletonList(associatedUserId), Collections.emptyList(),
                                         invitedTenantDomain);
                             } else {
@@ -516,13 +515,18 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return UserInvitationMgtDataHolder.getInstance().getOrganizationManagerService();
     }
 
+    private RoleManagementService getRoleManagementService() {
+
+        return UserInvitationMgtDataHolder.getInstance().getRoleManagementService();
+    }
+
     private void processingRoleAssignments(RoleAssignments[] roleAssignments, String invitedTenantId)
             throws UserInvitationMgtServerException {
 
         Role roleInfo;
         for (RoleAssignments roleAssignment : roleAssignments) {
             try {
-                roleInfo = roleManagementService.getRoleWithoutUsers(roleAssignment.getRoleId(),
+                roleInfo = getRoleManagementService().getRoleWithoutUsers(roleAssignment.getRoleId(),
                         invitedTenantId);
                 AudienceInfo audienceInfo = new AudienceInfo();
                 audienceInfo.setApplicationType(roleInfo.getAudience());
@@ -556,60 +560,47 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
     }
 
-    private String getAudienceName(String roleId, String invitedTenantId) throws UserInvitationMgtServerException {
+    private boolean isConsoleAudienceAvailableInRole(Invitation invitation, String invitedTenantDomain)
+            throws IdentityRoleManagementException {
 
-        try {
-            Role roleInfo = roleManagementService.getRoleWithoutUsers(roleId, invitedTenantId);
-            if (roleInfo != null) {
-                return roleInfo.getAudienceName();
+        for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
+            Role roleInfo = getRoleManagementService()
+                    .getRoleWithoutUsers(roleAssignments.getRole(), invitedTenantDomain);
+            if (roleInfo != null
+                    && FrameworkConstants.Application.CONSOLE_APP.equals(roleInfo.getAudienceName())) {
+                return true;
             }
-        } catch (IdentityRoleManagementException e) {
-            throw new UserInvitationMgtServerException(ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getCode(),
-                    ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getMessage(),
-                    String.format(ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID.getDescription(), roleId), e);
         }
-        return null;
+        return false;
     }
 
     private void validateRoleAssignments(Invitation invitation, String userId, String invitedTenantDomain,
                                          String parentTenantDomain)
             throws UserInvitationMgtException, IdentityRoleManagementException {
 
-        List<String> audienceNameList = new ArrayList<>();
-
-        if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
-            for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
-                if (!roleManagementService.isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
-                    throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
-                            ERROR_CODE_INVALID_ROLE.getMessage(),
-                            String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
-                } else {
-                    String audienceName =
-                            getAudienceName(roleAssignment.getRole(), invitedTenantDomain);
-                    if (StringUtils.isNotEmpty(audienceName)) {
-                        audienceNameList.add(audienceName);
-                    }
-                }
+        for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
+            if (!getRoleManagementService().isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
+                throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
+                        ERROR_CODE_INVALID_ROLE.getMessage(),
+                        String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
             }
         }
-        if (ArrayUtils.isNotEmpty(audienceNameList.toArray())
-                && audienceNameList.contains(FrameworkConstants.Application.CONSOLE_APP)) {
-            if (!isInvitedUserHasConsoleAccess(userId, parentTenantDomain)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("The given role list for User: " + invitation.getUsername() + " doesn't contain" +
-                            " the console access.");
-                }
-                throw new UserInvitationMgtClientException(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getCode(),
-                        ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getMessage(),
-                        String.format(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getDescription()));
+        if (!isConsoleAudienceAvailableInRole(invitation, invitedTenantDomain) &&
+                !isInvitedUserHasConsoleAccess(userId, parentTenantDomain)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("The user: " + invitation.getUsername() + " is not having" +
+                        " the console access.");
             }
+            throw new UserInvitationMgtClientException(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getCode(),
+                    ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getMessage(),
+                    String.format(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getDescription()));
         }
     }
 
     private boolean isInvitedUserHasConsoleAccess(String userId, String tenantDomain)
             throws IdentityRoleManagementException {
 
-        List<RoleBasicInfo> roleList = roleManagementService.getRoleListOfUser(userId, tenantDomain);
+        List<RoleBasicInfo> roleList = getRoleManagementService().getRoleListOfUser(userId, tenantDomain);
         return roleList.stream().anyMatch(p ->
                 FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
     }

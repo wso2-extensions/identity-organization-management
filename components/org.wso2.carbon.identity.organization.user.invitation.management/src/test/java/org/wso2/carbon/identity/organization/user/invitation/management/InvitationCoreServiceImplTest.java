@@ -38,6 +38,8 @@ import org.wso2.carbon.identity.organization.user.invitation.management.internal
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -79,6 +81,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
 import static org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils.getConnection;
 
 @PrepareForTest({PrivilegedCarbonContext.class,
+        RoleManagementService.class,
         IdentityDatabaseUtil.class,
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
@@ -88,7 +91,7 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
     private InvitationCoreServiceImpl invitationCoreService;
-
+    private final String [] roleList = {"1224", "12345"};
     @BeforeClass
     public void setUp() throws Exception {
 
@@ -110,16 +113,24 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN, "DEFAULT",
                 INV_02_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
                 INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, "PENDING");
-
-        RoleAssignments roleAssignments2 = buildRoleAssignments("1e174bbd-19fa-4449-b8e7-5fabe6f3dab7",
-                new String[]{"1224", "12345"});
+        RoleAssignments roleAssignments2 = buildRoleAssignments(roleList);
         Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, INV_03_UN,
                 "DEFAULT", INV_03_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
                 INV_03_USER_ORG_ID, INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
 
         populateH2Base(connection1, invitation1);
         populateH2Base(connection2, invitation2);
-//        populateH2Base(connection3, invitation3);
+        populateH2Base(connection3, invitation3);
+    }
+
+    private Role buildRoleInfo() {
+
+        Role roleInfo = new Role();
+        roleInfo.setAudience("application");
+        roleInfo.setAudienceId("98765");
+        roleInfo.setAudienceName("Console");
+        roleInfo.setName("testApp");
+        return roleInfo;
     }
 
     @AfterClass
@@ -137,24 +148,27 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         };
     }
 
-//    @Test(priority = 1)
-//    public void testGetInvitation() throws Exception {
-//
-//        when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
-//        List<Invitation> invitationList = invitationCoreService.getInvitations(null);
-//        // Checking whether the size of the Invitation list is not empty.
-//        assertFalse(invitationList.isEmpty());
-//
-//        Invitation invitation0 = invitationList.get(0);
-//        assertEquals(invitation0.getInvitationId(), INV_02_INVITATION_ID);
-//        assertEquals(invitation0.getConfirmationCode(), INV_02_CONF_CODE);
-//        assertEquals(invitation0.getUsername(), INV_02_UN);
-//
-//        Invitation invitation1 = invitationList.get(1);
-//        assertEquals(invitation1.getInvitationId(), INV_03_INVITATION_ID);
-//        assertEquals(invitation1.getConfirmationCode(), INV_03_CONF_CODE);
-//        assertEquals(invitation1.getUsername(), INV_03_UN);
-//    }
+    @Test(priority = 1)
+    public void testGetInvitation() throws Exception {
+
+        when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
+        RoleManagementService roleManagementService = mock(RoleManagementService.class);
+        UserInvitationMgtDataHolder.getInstance().setRoleManagementService(roleManagementService);
+        when(roleManagementService.getRoleWithoutUsers(anyString(), anyString())).thenReturn(buildRoleInfo());
+        List<Invitation> invitationList = invitationCoreService.getInvitations(null);
+        // Checking whether the size of the Invitation list is not empty.
+        assertFalse(invitationList.isEmpty());
+
+        Invitation invitation0 = invitationList.get(0);
+        assertEquals(invitation0.getInvitationId(), INV_02_INVITATION_ID);
+        assertEquals(invitation0.getConfirmationCode(), INV_02_CONF_CODE);
+        assertEquals(invitation0.getUsername(), INV_02_UN);
+
+        Invitation invitation1 = invitationList.get(1);
+        assertEquals(invitation1.getInvitationId(), INV_03_INVITATION_ID);
+        assertEquals(invitation1.getConfirmationCode(), INV_03_CONF_CODE);
+        assertEquals(invitation1.getUsername(), INV_03_UN);
+    }
 
     @Test(priority = 2)
     public void testIntrospectInvitation() throws Exception {
@@ -278,6 +292,13 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
         when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(connection);
         when(IdentityUtil.getProperty(anyString())).thenReturn("1440");
+        if (invitation.getRoleAssignments() != null) {
+            for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
+                for (String role : roleList) {
+                    roleAssignments.setRole(role);
+                }
+            }
+        }
         userInvitationDAO.createInvitation(invitation);
     }
 
@@ -310,10 +331,9 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         return invitation;
     }
 
-    private RoleAssignments buildRoleAssignments(String applicationId, String[] roles) {
+    private RoleAssignments buildRoleAssignments(String[] roles) {
 
         RoleAssignments roleAssignments = new RoleAssignments();
-        roleAssignments.setApplicationId(applicationId);
         roleAssignments.setRoles(roles);
         return roleAssignments;
     }
