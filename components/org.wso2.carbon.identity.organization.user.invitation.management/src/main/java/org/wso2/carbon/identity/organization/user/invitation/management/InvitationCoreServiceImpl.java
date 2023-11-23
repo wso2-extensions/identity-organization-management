@@ -585,7 +585,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                         String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
             }
         }
-        if (!isConsoleAudienceAvailableInRole(invitation, invitedTenantDomain) &&
+        if (isConsoleAudienceAvailableInRole(invitation, invitedTenantDomain) &&
                 !isInvitedUserHasConsoleAccess(userId, parentTenantDomain)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("The user: " + invitation.getUsername() + " is not having" +

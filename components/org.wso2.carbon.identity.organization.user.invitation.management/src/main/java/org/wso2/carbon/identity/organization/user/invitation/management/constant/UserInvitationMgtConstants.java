@@ -127,7 +127,7 @@ public class UserInvitationMgtConstants {
                 "Failed to resolve the email of the invited user.",
                 "Could not find the email of the invited user %s."),
         ERROR_CODE_CONSOLE_ACCESS_RESTRICTED("10031",
-                "The console access is restricted to the user.",
+                "Invited user doesn't have console access.",
                 "Could not find any role with a console access to create an invitation."),
 
         // DAO layer errors
