@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -46,6 +47,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.R
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -76,6 +78,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_USER_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACCEPT_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACTIVE_INVITATION_EXISTS;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CONSOLE_ACCESS_RESTRICTED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CONSTRUCT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
@@ -116,8 +119,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         validateInvitationPayload(invitation);
         OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
                 .getOrganizationManagerService();
-        RoleManagementService roleManagementService = UserInvitationMgtDataHolder.getInstance()
-                .getRoleManagementService();
         Invitation createdInvitation;
         try {
             String userDomainQualifiedUserName = UserCoreUtil
@@ -174,13 +175,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             invitation.setUserOrganizationId(parentOrgId);
             invitation.setStatus(STATUS_PENDING);
             if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
-                for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
-                    if (!roleManagementService.isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
-                        throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
-                                ERROR_CODE_INVALID_ROLE.getMessage(),
-                                String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
-                    }
-                }
+                validateRoleAssignments(invitation, invitedUserId, invitedTenantDomain, parentTenantDomain);
             }
             invitation.setInvitationId(UUID.randomUUID().toString());
             invitation.setConfirmationCode(UUID.randomUUID().toString());
@@ -206,8 +201,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 try {
                     OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
                             .getOrganizationManagerService();
-                    RoleManagementService roleManagementService = UserInvitationMgtDataHolder.getInstance()
-                            .getRoleManagementService();
                     String invitedOrganizationId = invitation.getInvitedOrganizationId();
                     String invitedTenantDomain = organizationManager.resolveTenantDomain(invitedOrganizationId);
                     int invitedTenantId = IdentityTenantUtil.getTenantId(invitedTenantDomain);
@@ -234,9 +227,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     // Trigger event to add the role assignments if any available in the invitation.
                     if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                         for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
-                            if (roleManagementService.isExistingRole(roleAssignments.getRoleId(),
+                            if (getRoleManagementService().isExistingRole(roleAssignments.getRoleId(),
                                     invitedTenantDomain)) {
-                                roleManagementService.updateUserListOfRole(roleAssignments.getRoleId(),
+                                getRoleManagementService().updateUserListOfRole(roleAssignments.getRoleId(),
                                         Collections.singletonList(associatedUserId), Collections.emptyList(),
                                         invitedTenantDomain);
                             } else {
@@ -522,15 +515,18 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return UserInvitationMgtDataHolder.getInstance().getOrganizationManagerService();
     }
 
+    private RoleManagementService getRoleManagementService() {
+
+        return UserInvitationMgtDataHolder.getInstance().getRoleManagementService();
+    }
+
     private void processingRoleAssignments(RoleAssignments[] roleAssignments, String invitedTenantId)
             throws UserInvitationMgtServerException {
 
-        RoleManagementService roleManagementService = UserInvitationMgtDataHolder.getInstance()
-                .getRoleManagementService();
         Role roleInfo;
         for (RoleAssignments roleAssignment : roleAssignments) {
             try {
-                roleInfo = roleManagementService.getRoleWithoutUsers(roleAssignment.getRoleId(),
+                roleInfo = getRoleManagementService().getRoleWithoutUsers(roleAssignment.getRoleId(),
                         invitedTenantId);
                 AudienceInfo audienceInfo = new AudienceInfo();
                 audienceInfo.setApplicationType(roleInfo.getAudience());
@@ -562,5 +558,50 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     String.format(ERROR_CODE_USER_ALREADY_EXISTS.getDescription(), domainQualifiedUserName,
                             PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId()));
         }
+    }
+
+    private boolean isConsoleAudienceAvailableInRole(Invitation invitation, String invitedTenantDomain)
+            throws IdentityRoleManagementException {
+
+        for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
+            Role roleInfo = getRoleManagementService()
+                    .getRoleWithoutUsers(roleAssignments.getRole(), invitedTenantDomain);
+            if (roleInfo != null
+                    && FrameworkConstants.Application.CONSOLE_APP.equals(roleInfo.getAudienceName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validateRoleAssignments(Invitation invitation, String userId, String invitedTenantDomain,
+                                         String parentTenantDomain)
+            throws UserInvitationMgtException, IdentityRoleManagementException {
+
+        for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
+            if (!getRoleManagementService().isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
+                throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
+                        ERROR_CODE_INVALID_ROLE.getMessage(),
+                        String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
+            }
+        }
+        if (isConsoleAudienceAvailableInRole(invitation, invitedTenantDomain) &&
+                !isInvitedUserHasConsoleAccess(userId, parentTenantDomain)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("The user: " + invitation.getUsername() + " is not having" +
+                        " the console access.");
+            }
+            throw new UserInvitationMgtClientException(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getCode(),
+                    ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getMessage(),
+                    String.format(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED.getDescription()));
+        }
+    }
+
+    private boolean isInvitedUserHasConsoleAccess(String userId, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        List<RoleBasicInfo> roleList = getRoleManagementService().getRoleListOfUser(userId, tenantDomain);
+        return roleList.stream().anyMatch(p ->
+                FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
     }
 }
