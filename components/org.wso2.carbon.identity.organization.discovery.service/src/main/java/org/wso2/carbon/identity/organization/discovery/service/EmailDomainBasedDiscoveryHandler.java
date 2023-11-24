@@ -19,12 +19,14 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.Collections;
@@ -35,7 +37,6 @@ import java.util.regex.Pattern;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
@@ -59,8 +60,10 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     public boolean isDiscoveryConfigurationEnabled(String organizationId) throws OrganizationManagementException {
 
         try {
-            List<ConfigProperty> configProperties = organizationConfigManager.getDiscoveryConfiguration()
-                    .getConfigProperties();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            List<ConfigProperty> configProperties = organizationConfigManager
+                    .getDiscoveryConfigurationByTenantId(tenantId).getConfigProperties();
             return Optional.ofNullable(configProperties).orElse(Collections.emptyList()).stream()
                     .filter(prop -> EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(prop.getKey()))
                     .findAny().map(prop -> Boolean.valueOf(prop.getValue())).orElse(false);
@@ -68,7 +71,7 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
             if (e instanceof OrganizationConfigClientException) {
                 if (StringUtils.equals(e.getErrorCode(),
                         OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST.getCode())) {
-                    throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
+                    throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED);
                 }
             }
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIGURATION, e, organizationId);
@@ -95,5 +98,10 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     public boolean areAttributeValuesInValidFormat(List<String> attributeValues) {
 
         return attributeValues.stream().allMatch(emailDomain -> EMAIL_DOMAIN_PATTERN.matcher(emailDomain).matches());
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
     }
 }

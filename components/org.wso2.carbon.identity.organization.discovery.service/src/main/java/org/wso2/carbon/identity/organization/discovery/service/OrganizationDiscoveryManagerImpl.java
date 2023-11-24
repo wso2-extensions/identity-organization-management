@@ -46,6 +46,8 @@ import java.util.stream.Collectors;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ORGANIZATION_NAME;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.SUPPORTED_OPERATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_CANNOT_LIST_DISCOVERY_ATTRIBUTES_IN_THE_HIERARCHY;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_CANNOT_VIEW_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_ATTRIBUTE_ALREADY_ADDED_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_DISABLED;
@@ -77,12 +79,16 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     public List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId,
                                                                           List<OrgDiscoveryAttribute>
                                                                                   discoveryAttributes,
-                                                                          boolean validateRootOrgAccess)
+                                                                          boolean validateParentOrgAccess)
             throws OrganizationManagementException {
 
         String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
-        if (validateRootOrgAccess) {
-            validateRootOrganization(rootOrganizationId, organizationId);
+        // Not having a root organization implies that the organization is not a valid organization.
+        if (StringUtils.isBlank(rootOrganizationId)) {
+            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        }
+        if (validateParentOrgAccess) {
+            validateParentOrganization(organizationId);
         }
 
         if (organizationDiscoveryDAO.isDiscoveryAttributeAddedToOrganization(organizationId)) {
@@ -91,28 +97,33 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
 
         validateOrganizationDiscoveryAttributes(false, rootOrganizationId, null, discoveryAttributes);
 
-        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
+        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(organizationId, rootOrganizationId,
+                discoveryAttributes);
         return discoveryAttributes;
     }
 
     @Override
     public List<OrgDiscoveryAttribute> getOrganizationDiscoveryAttributes(String organizationId, boolean
-            validateRootOrgAccess) throws OrganizationManagementException {
+            validateAncestorOrgAccess) throws OrganizationManagementException {
 
-        if (validateRootOrgAccess) {
-            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
-            validateRootOrganization(rootOrganizationId, organizationId);
+        if (!organizationManager.isOrganizationExistById(organizationId)) {
+            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        }
+        if (validateAncestorOrgAccess) {
+            validateAncestorOrganization(organizationId);
         }
         return organizationDiscoveryDAO.getOrganizationDiscoveryAttributes(organizationId);
     }
 
     @Override
-    public void deleteOrganizationDiscoveryAttributes(String organizationId, boolean validateRootOrgAccess) throws
+    public void deleteOrganizationDiscoveryAttributes(String organizationId, boolean validateParentOrgAccess) throws
             OrganizationManagementException {
 
-        if (validateRootOrgAccess) {
-            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
-            validateRootOrganization(rootOrganizationId, organizationId);
+        if (!organizationManager.isOrganizationExistById(organizationId)) {
+            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        }
+        if (validateParentOrgAccess) {
+            validateParentOrganization(organizationId);
         }
         organizationDiscoveryDAO.deleteOrganizationDiscoveryAttributes(organizationId);
     }
@@ -121,15 +132,20 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     public List<OrgDiscoveryAttribute> updateOrganizationDiscoveryAttributes(String organizationId,
                                                                              List<OrgDiscoveryAttribute>
                                                                                      discoveryAttributes,
-                                                                             boolean validateRootOrgAccess)
+                                                                             boolean validateParentOrgAccess)
             throws OrganizationManagementException {
 
         String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
-        if (validateRootOrgAccess) {
-            validateRootOrganization(rootOrganizationId, organizationId);
+        // Not having a root organization implies that the organization is not a valid organization.
+        if (StringUtils.isBlank(rootOrganizationId)) {
+            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        }
+        if (validateParentOrgAccess) {
+            validateParentOrganization(organizationId);
         }
         validateOrganizationDiscoveryAttributes(true, rootOrganizationId, organizationId, discoveryAttributes);
-        organizationDiscoveryDAO.updateOrganizationDiscoveryAttributes(organizationId, discoveryAttributes);
+        organizationDiscoveryDAO.updateOrganizationDiscoveryAttributes(organizationId, rootOrganizationId,
+                discoveryAttributes);
         return discoveryAttributes;
     }
 
@@ -137,7 +153,8 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     public boolean isDiscoveryAttributeValueAvailable(String type, String value) throws
             OrganizationManagementException {
 
-        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, getOrganizationId(),
+        String primaryOrganization = organizationManager.getPrimaryOrganizationId(getOrganizationId());
+        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, primaryOrganization,
                 null, type, Collections.singletonList(value));
     }
 
@@ -154,11 +171,15 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                             String filter)
             throws OrganizationManagementException {
 
+        String organizationId = getOrganizationId();
+        if (!organizationManager.isPrimaryOrganization(organizationId)) {
+            throw handleClientException(ERROR_CODE_CANNOT_LIST_DISCOVERY_ATTRIBUTES_IN_THE_HIERARCHY, organizationId);
+        }
         limit = validateLimit(limit);
         offset = validateOffset(offset);
         List<ExpressionNode> expressionNodes = getExpressionNodes(filter);
-        return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(limit,
-                offset, getOrganizationId(), expressionNodes);
+        return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(limit, offset, organizationId,
+                expressionNodes);
     }
 
     @Override
@@ -182,16 +203,23 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         return null;
     }
 
-    private void validateRootOrganization(String rootOrganizationId, String organizationId)
-            throws OrganizationManagementClientException {
+    private void validateAncestorOrganization(String organizationId) throws OrganizationManagementException {
 
-        // Not having a root organization implies that the organization is not a valid organization.
-        if (StringUtils.isBlank(rootOrganizationId)) {
-            throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, organizationId);
+        List<String> ancestorOrganizationIds = organizationManager.getAncestorOrganizationIds(organizationId);
+        // Checks if the organization ID present in the context is an ancestor organization of the given
+        // organization.
+        if (!ancestorOrganizationIds.contains(getOrganizationId())) {
+            throw handleClientException(ERROR_CODE_CANNOT_VIEW_DISCOVERY_ATTRIBUTES, organizationId);
         }
-        // Checks if the organization ID present in the context as the root organization of the given organization.
-        if (!StringUtils.equals(getOrganizationId(), rootOrganizationId)) {
-            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT, organizationId);
+    }
+
+    private void validateParentOrganization(String organizationId) throws OrganizationManagementException {
+
+        String parentOrganizationId = organizationManager.getParentOrganizationId(organizationId);
+        // Checks if the organization ID present in the context is the parent organization of the given organization.
+        if (!StringUtils.equals(getOrganizationId(), parentOrganizationId)) {
+            throw handleClientException(ERROR_CODE_UNAUTHORIZED_ORG_FOR_DISCOVERY_ATTRIBUTE_MANAGEMENT,
+                    organizationId);
         }
     }
 
@@ -218,7 +246,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                     .getInstance().getAttributeBasedOrganizationDiscoveryHandler(attributeType);
 
             if (!discoveryHandler.isDiscoveryConfigurationEnabled(rootOrganizationId)) {
-                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED, getOrganizationId());
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_DISABLED);
             }
 
             attribute.setValues(attribute.getValues().stream().distinct().collect(Collectors.toList()));

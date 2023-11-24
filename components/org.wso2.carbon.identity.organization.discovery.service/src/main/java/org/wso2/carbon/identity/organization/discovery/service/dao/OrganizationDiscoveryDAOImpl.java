@@ -70,7 +70,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.FILTER_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 
@@ -80,11 +79,10 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
 
     @Override
-    public void addOrganizationDiscoveryAttributes(String organizationId,
+    public void addOrganizationDiscoveryAttributes(String organizationId, String rootOrganizationId,
                                                    List<OrgDiscoveryAttribute> discoveryAttributes)
             throws OrganizationManagementServerException {
 
-        String rootOrganizationId = getOrganizationId();
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
@@ -215,11 +213,10 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
     }
 
     @Override
-    public void updateOrganizationDiscoveryAttributes(String organizationId,
+    public void updateOrganizationDiscoveryAttributes(String organizationId, String rootOrganizationId,
                                                       List<OrgDiscoveryAttribute> discoveryAttributes)
             throws OrganizationManagementServerException {
 
-        String rootOrganizationId = getOrganizationId();
         NamedJdbcTemplate namedJdbcTemplate = Utils.getNewTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {

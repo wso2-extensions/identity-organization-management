@@ -34,11 +34,13 @@ public interface OrganizationDiscoveryDAO {
      * Add the organization discovery attributes of the given organization.
      *
      * @param organizationId      The organization ID.
+     * @param rootOrganizationId  The root organization ID.
      * @param discoveryAttributes The organization discovery attributes.
      * @throws OrganizationManagementServerException The server exception thrown when adding organization discovery
      *                                               attributes.
      */
-    void addOrganizationDiscoveryAttributes(String organizationId, List<OrgDiscoveryAttribute> discoveryAttributes)
+    void addOrganizationDiscoveryAttributes(String organizationId, String rootOrganizationId,
+                                            List<OrgDiscoveryAttribute> discoveryAttributes)
             throws OrganizationManagementServerException;
 
     /**
@@ -92,11 +94,13 @@ public interface OrganizationDiscoveryDAO {
      * Update the discovery attributes of the given organization.
      *
      * @param organizationId      The organization ID.
+     * @param rootOrganizationId  The root organization ID.
      * @param discoveryAttributes The organization discovery attributes.
      * @throws OrganizationManagementServerException The server exception thrown when updating discovery attributes of
      *                                               the organization.
      */
-    void updateOrganizationDiscoveryAttributes(String organizationId, List<OrgDiscoveryAttribute> discoveryAttributes)
+    void updateOrganizationDiscoveryAttributes(String organizationId, String rootOrganizationId,
+                                               List<OrgDiscoveryAttribute> discoveryAttributes)
             throws OrganizationManagementServerException;
 
     /**

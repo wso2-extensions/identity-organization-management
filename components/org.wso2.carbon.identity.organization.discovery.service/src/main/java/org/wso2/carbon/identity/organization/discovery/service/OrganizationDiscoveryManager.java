@@ -33,50 +33,51 @@ public interface OrganizationDiscoveryManager {
     /**
      * Add the organization discovery attributes of the given organization.
      *
-     * @param organizationId        The organization ID.
-     * @param discoveryAttributes   The organization discovery attributes.
-     * @param validateRootOrgAccess Determines whether validation is required for root organization access.
+     * @param organizationId          The organization ID.
+     * @param discoveryAttributes     The organization discovery attributes.
+     * @param validateParentOrgAccess Determines whether validation is required for parent organization access.
      * @return The added organization discovery attributes.
      * @throws OrganizationManagementException The exception thrown when adding organization discovery attributes.
      */
     List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId, List<OrgDiscoveryAttribute>
-            discoveryAttributes, boolean validateRootOrgAccess) throws OrganizationManagementException;
+            discoveryAttributes, boolean validateParentOrgAccess) throws OrganizationManagementException;
 
     /**
      * Fetch the discovery attributes of the organization.
      *
-     * @param organizationId        The organization ID.
-     * @param validateRootOrgAccess Determines whether validation is required for root organization access.
+     * @param organizationId            The organization ID.
+     * @param validateAncestorOrgAccess Determines whether validation is required for ancestor organization access.
      * @return The discovery attributes of the organization.
      * @throws OrganizationManagementException The exception thrown when retrieving discovery attributes of the
      *                                         organization.
      */
-    List<OrgDiscoveryAttribute> getOrganizationDiscoveryAttributes(String organizationId, boolean validateRootOrgAccess)
+    List<OrgDiscoveryAttribute> getOrganizationDiscoveryAttributes(String organizationId,
+                                                                   boolean validateAncestorOrgAccess)
             throws OrganizationManagementException;
 
     /**
      * Delete the discovery attributes of the given organization.
      *
-     * @param organizationId        The organization ID.
-     * @param validateRootOrgAccess Determines whether validation is required for root organization access.
+     * @param organizationId          The organization ID.
+     * @param validateParentOrgAccess Determines whether validation is required for parent organization access.
      * @throws OrganizationManagementException The exception thrown when deleting discovery attributes of the
      *                                         organization.
      */
-    void deleteOrganizationDiscoveryAttributes(String organizationId, boolean validateRootOrgAccess)
+    void deleteOrganizationDiscoveryAttributes(String organizationId, boolean validateParentOrgAccess)
             throws OrganizationManagementException;
 
     /**
      * Update the discovery attributes of the given organization.
      *
-     * @param organizationId        The organization ID.
-     * @param discoveryAttributes   The organization discovery attributes.
-     * @param validateRootOrgAccess Determines whether validation is required for root organization access.
+     * @param organizationId          The organization ID.
+     * @param discoveryAttributes     The organization discovery attributes.
+     * @param validateParentOrgAccess Determines whether validation is required for parent organization access.
      * @return The updated organization discovery attributes.
      * @throws OrganizationManagementException The exception thrown when updating discovery attributes of the
      *                                         organization.
      */
     List<OrgDiscoveryAttribute> updateOrganizationDiscoveryAttributes(String organizationId, List<OrgDiscoveryAttribute>
-            discoveryAttributes, boolean validateRootOrgAccess) throws OrganizationManagementException;
+            discoveryAttributes, boolean validateParentOrgAccess) throws OrganizationManagementException;
 
     /**
      * Check if the given discovery attribute is already mapped to an organization within the hierarchy.
