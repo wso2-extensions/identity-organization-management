@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -123,6 +124,21 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 addClaimsToSubOrganization(parentOrgCustomLocalClaims, sharedOrganizationTenantDomain,
                         missingClaims, parentTenantDomain);
             }
+            // Add the custom claim dialects to the organization.
+            List<String> claimDialectURIListInOrg = getClaimMetadataManagementService()
+                    .getClaimDialects(sharedOrganizationTenantDomain).stream().map(ClaimDialect::getClaimDialectURI)
+                    .collect(Collectors.toList());
+            getClaimMetadataManagementService().getClaimDialects(parentTenantDomain).stream()
+                    .filter(claimDialect -> !claimDialectURIListInOrg.contains(claimDialect.getClaimDialectURI()))
+                    .forEach(claimDialect -> {
+                        try {
+                            getClaimMetadataManagementService()
+                                    .addClaimDialect(claimDialect, sharedOrganizationTenantDomain);
+                        } catch (ClaimMetadataException e) {
+                            LOG.error("Error while adding claim dialect " + claimDialect.getClaimDialectURI() +
+                                    " to organization " + sharedOrganizationTenantDomain, e);
+                        }
+                    });
         } catch (OrganizationManagementException | ClaimMetadataException e) {
             throw new IdentityEventException("An error occurred  while adding the claims.", e);
         }
