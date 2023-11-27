@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,8 +24,10 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.internal.OrganizationManagementTomcatDataHolder;
 import org.wso2.carbon.tomcat.ext.utils.URLMappingHolder;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATH_SEPARATOR;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomain;
 import static org.wso2.carbon.identity.organization.management.tomcat.ext.tenant.resolver.util.Util.getTenantDomainFromURLMapping;
 import static org.wso2.carbon.tomcat.ext.constants.Constants.TENANT_DOMAIN_FROM_REQUEST_PATH;
@@ -60,7 +62,11 @@ public class CarbonContextCreatorValve extends org.wso2.carbon.tomcat.ext.valves
             request.setAttribute(TENANT_DOMAIN_FROM_REQUEST_PATH, tenantDomain);
             super.setValuesToCarbonContext(carbonContext, tenantDomain, appName);
             super.setMDCValues(carbonContext.getTenantId(), tenantDomain, appName);
-            setOrganizationIdToCarbonContext(carbonContext, requestURI);
+            if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+                carbonContext.setOrganizationId(SUPER_ORG_ID);
+            } else {
+                setOrganizationIdToCarbonContext(carbonContext, requestURI);
+            }
         } else {
             super.initCarbonContext(request);
         }
