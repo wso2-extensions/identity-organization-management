@@ -35,7 +35,7 @@ public interface InvitationCoreService {
      * @return The created invitation.
      * @throws UserInvitationMgtException If an error occurs while creating the invitation.
      */
-    Invitation createInvitation(Invitation invitation) throws UserInvitationMgtException;
+    List<Invitation> createInvitation(Invitation invitation) throws UserInvitationMgtException;
 
     /**
      * Accepts the invitation with the given confirmation code.

@@ -129,6 +129,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_CONSOLE_ACCESS_RESTRICTED("10031",
                 "Invited user doesn't have console access.",
                 "Could not find any role with a console access to create an invitation."),
+        ERROR_CODE_ROLE_EXISTENCE("10032",
+                "Error while checking the role existence.",
+                "Could not resolve the role existence from the given list."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",

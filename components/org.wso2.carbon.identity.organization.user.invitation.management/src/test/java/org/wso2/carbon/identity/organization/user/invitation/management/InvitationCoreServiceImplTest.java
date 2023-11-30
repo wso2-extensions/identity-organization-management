@@ -29,6 +29,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
@@ -47,6 +48,8 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -86,12 +89,15 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
         UserInvitationMgtDataHolder.class,
-        IdentityUtil.class})
+        IdentityUtil.class, OrganizationSharedUserUtil.class})
 public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
     private InvitationCoreServiceImpl invitationCoreService;
     private final String [] roleList = {"1224", "12345"};
+    String[] username1 = {INV_01_UN};
+    String[] username2 = {INV_02_UN};
+    String[] username3 = {INV_03_UN};
     @BeforeClass
     public void setUp() throws Exception {
 
@@ -102,21 +108,25 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         mockStatic(IdentityTenantUtil.class);
         mockStatic(IdentityDatabaseUtil.class);
         mockStatic(IdentityUtil.class);
+        mockStatic(OrganizationSharedUserUtil.class);
 
         Connection connection1 = getConnection();
         Connection connection2 = getConnection();
         Connection connection3 = getConnection();
 
-        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN, "DEFAULT",
-                INV_01_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
+        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, Arrays.asList(username1),
+                "DEFAULT", INV_01_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
                 INV_01_INV_ORG_ID, null, "PENDING");
-        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN, "DEFAULT",
-                INV_02_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
+        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, Arrays.asList(username2),
+                "DEFAULT", INV_02_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept",
                 INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, "PENDING");
         RoleAssignments roleAssignments2 = buildRoleAssignments(roleList);
-        Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, INV_03_UN,
-                "DEFAULT", INV_03_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
-                INV_03_USER_ORG_ID, INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
+        Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, Arrays.asList(username3),
+                "DEFAULT", INV_03_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept", INV_03_USER_ORG_ID,
+                INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
 
         populateH2Base(connection1, invitation1);
         populateH2Base(connection2, invitation2);
@@ -241,12 +251,11 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(connection1);
         assertTrue(invitationCoreService.deleteInvitation("1234"));
     }
-
-    @Test(priority = 9, expectedExceptions = UserInvitationMgtClientException.class)
+    @Test(priority = 9)
     public void testCreateInvitationWithNonExistingUserInParent() throws Exception {
 
         Invitation invitation1 = buildInvitation(null,
-                null, "samson", "DEFAULT",
+                null, Collections.singletonList("samson"), "DEFAULT",
                 null, "https://localhost:8080/travel-manager-001/invitations/accept",
                 null, null,
                 null, null);
@@ -292,13 +301,19 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
         when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(connection);
         when(IdentityUtil.getProperty(anyString())).thenReturn("1440");
-        if (invitation.getRoleAssignments() != null) {
-            for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
-                for (String role : roleList) {
-                    roleAssignments.setRole(role);
+        if (invitation.getUsernamesList() != null) {
+            for (String username : invitation.getUsernamesList()) {
+                invitation.setUsername(username);
+            }
+            if (invitation.getRoleAssignments() != null) {
+                for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
+                    for (String role : roleList) {
+                        roleAssignments.setRole(role);
+                    }
                 }
             }
         }
+
         userInvitationDAO.createInvitation(invitation);
     }
 
@@ -311,14 +326,14 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
                 thenReturn("dc828181-e1a8-4f5e-8936-f154f4aefa75");
     }
 
-    private Invitation buildInvitation(String invitationId, String confirmationCode, String username,
+    private Invitation buildInvitation(String invitationId, String confirmationCode, List<String> username,
                                        String userDomain, String email, String userRedirectUrl, String userOrgId,
                                        String invitedOrgId, RoleAssignments[] roleAssignments, String status) {
 
         Invitation invitation = new Invitation();
         invitation.setInvitationId(invitationId);
         invitation.setConfirmationCode(confirmationCode);
-        invitation.setUsername(username);
+        invitation.setUsernamesList(username);
         invitation.setUserDomain(userDomain);
         invitation.setEmail(email);
         invitation.setUserRedirectUrl(userRedirectUrl);
