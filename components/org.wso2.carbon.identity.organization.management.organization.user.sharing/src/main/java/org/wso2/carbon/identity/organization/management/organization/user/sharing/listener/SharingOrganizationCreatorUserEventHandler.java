@@ -24,6 +24,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -42,11 +43,14 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.user.api.RealmConfiguration;
+import org.wso2.carbon.user.api.UserStoreException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_ADMINISTRATOR_ROLE;
 import static org.wso2.carbon.identity.organization.management.role.management.service.constant.RoleManagementConstants.ORG_CREATOR_ROLE;
 
@@ -90,14 +94,17 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             } else {
                 if ("POST_SHARED_CONSOLE_APP".equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
-                    orgId = (String) eventProperties.get("ORGANIZATION_ID");
+                    orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
                     if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                         return;
                     }
-                    String associatedUserName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                    String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+                    RealmConfiguration realmConfiguration = OrganizationUserSharingDataHolder.getInstance()
+                            .getRealmService().getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain))
+                            .getRealmConfiguration();
+                    String associatedUserName = realmConfiguration.getAdminUserName();
+                    String associatedUserId = realmConfiguration.getAdminUserId();
                     String associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
                             .getUserResidentOrganizationId();
                     if (StringUtils.isEmpty(associatedOrgId)) {
@@ -117,7 +124,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     }
                 }
             }
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementException | UserStoreException e) {
             throw new IdentityEventException("An error occurred while sharing the organization creator to the " +
                     "organization : " + orgId, e);
         }
