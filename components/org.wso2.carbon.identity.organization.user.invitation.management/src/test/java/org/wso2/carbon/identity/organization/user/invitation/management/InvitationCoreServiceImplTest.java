@@ -36,7 +36,9 @@ import org.wso2.carbon.identity.organization.user.invitation.management.dao.User
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtClientException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.CreatedInvitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
@@ -48,7 +50,6 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +61,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_CONF_CODE;
@@ -95,9 +97,6 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
     private InvitationCoreServiceImpl invitationCoreService;
     private final String [] roleList = {"1224", "12345"};
-    String[] username1 = {INV_01_UN};
-    String[] username2 = {INV_02_UN};
-    String[] username3 = {INV_03_UN};
     @BeforeClass
     public void setUp() throws Exception {
 
@@ -114,16 +113,16 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         Connection connection2 = getConnection();
         Connection connection3 = getConnection();
 
-        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, Arrays.asList(username1),
+        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN,
                 "DEFAULT", INV_01_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
                 INV_01_INV_ORG_ID, null, "PENDING");
-        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, Arrays.asList(username2),
+        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN,
                 "DEFAULT", INV_02_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept",
                 INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, "PENDING");
         RoleAssignments roleAssignments2 = buildRoleAssignments(roleList);
-        Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, Arrays.asList(username3),
+        Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, INV_03_UN,
                 "DEFAULT", INV_03_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept", INV_03_USER_ORG_ID,
                 INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
@@ -254,11 +253,11 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
     @Test(priority = 9)
     public void testCreateInvitationWithNonExistingUserInParent() throws Exception {
 
-        Invitation invitation1 = buildInvitation(null,
-                null, Collections.singletonList("samson"), "DEFAULT",
-                null, "https://localhost:8080/travel-manager-001/invitations/accept",
-                null, null,
-                null, null);
+        InvitationDO invitation1 = new InvitationDO();
+        invitation1.setUsernamesList(Collections.singletonList("samson"));
+        invitation1.setUserDomain("DEFAULT");
+        invitation1.setRoleAssignments(null);
+        invitation1.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
 
         OrganizationManager organizationManager = mock(OrganizationManager.class);
         RealmService realmService = mock(RealmService.class);
@@ -280,7 +279,9 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(getConnection());
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
         mockIdentityTenantUtil();
-        invitationCoreService.createInvitation(invitation1);
+        List<CreatedInvitation> createdInvitation = invitationCoreService.createInvitations(invitation1);
+        assertNotNull(createdInvitation);
+        assertEquals(createdInvitation.get(0).getResult().getStatus(), "Fail");
     }
 
 
@@ -301,19 +302,13 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
         when(IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(connection);
         when(IdentityUtil.getProperty(anyString())).thenReturn("1440");
-        if (invitation.getUsernamesList() != null) {
-            for (String username : invitation.getUsernamesList()) {
-                invitation.setUsername(username);
-            }
-            if (invitation.getRoleAssignments() != null) {
-                for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
-                    for (String role : roleList) {
-                        roleAssignments.setRole(role);
-                    }
+        if (invitation.getRoleAssignments() != null) {
+            for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
+                for (String role : roleList) {
+                    roleAssignments.setRole(role);
                 }
             }
         }
-
         userInvitationDAO.createInvitation(invitation);
     }
 
@@ -326,14 +321,14 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
                 thenReturn("dc828181-e1a8-4f5e-8936-f154f4aefa75");
     }
 
-    private Invitation buildInvitation(String invitationId, String confirmationCode, List<String> username,
+    private Invitation buildInvitation(String invitationId, String confirmationCode, String username,
                                        String userDomain, String email, String userRedirectUrl, String userOrgId,
                                        String invitedOrgId, RoleAssignments[] roleAssignments, String status) {
 
         Invitation invitation = new Invitation();
         invitation.setInvitationId(invitationId);
         invitation.setConfirmationCode(confirmationCode);
-        invitation.setUsernamesList(username);
+        invitation.setUsername(username);
         invitation.setUserDomain(userDomain);
         invitation.setEmail(email);
         invitation.setUserRedirectUrl(userRedirectUrl);

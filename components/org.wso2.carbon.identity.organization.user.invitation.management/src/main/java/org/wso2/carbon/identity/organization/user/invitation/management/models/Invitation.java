@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.user.invitation.management.models;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 /**
  * Model that contains the invitation related details.
@@ -29,7 +28,6 @@ public class Invitation {
     private String invitationId;
     private String confirmationCode;
     private String username;
-    private List<String> usernamesList;
     private String userDomain;
     private String email;
     private String userOrganizationId;
@@ -41,7 +39,6 @@ public class Invitation {
     private Timestamp expiredAt;
     private String userRedirectUrl;
     private RoleAssignments[] roleAssignments;
-    private List<String> skippedUsersList;
 
     public String getInvitationId() {
 
@@ -71,16 +68,6 @@ public class Invitation {
     public void setUsername(String username) {
 
         this.username = username;
-    }
-
-    public List<String> getUsernamesList() {
-
-        return usernamesList;
-    }
-
-    public void setUsernamesList(List<String> usernames) {
-
-        this.usernamesList = usernames;
     }
 
     public String getUserDomain() {
@@ -194,15 +181,5 @@ public class Invitation {
     public void setRoleAssignments(RoleAssignments[] roleAssignments) {
 
         this.roleAssignments = roleAssignments != null ? roleAssignments.clone() : null;
-    }
-
-    public List<String> getSkippedUsersList() {
-
-        return skippedUsersList;
-    }
-
-    public void setSkippedUsersList(List<String> usernames) {
-
-        this.skippedUsersList = usernames;
     }
 }
