@@ -308,10 +308,15 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             CompletableFuture.runAsync(() -> {
                 String sharedAppOrgId = sharedApplication.getOrganizationId();
                 try {
+                    String shareAppTenantDomain = organizationManager.resolveTenantDomain(sharedAppOrgId);
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(shareAppTenantDomain, true);
                     createSharedRolesWithOrgAudience(addedOrgRolesList, tenantDomain, sharedAppOrgId);
                 } catch (IdentityRoleManagementException | OrganizationManagementException e) {
                     LOG.error(String.format("Exception occurred while adding shared roles to organization: %s",
                             sharedApplication.getOrganizationId()), e);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
                 }
             }, executorService).exceptionally(throwable -> {
                 LOG.error(String.format("Exception occurred while adding shared roles to organization: %s",
