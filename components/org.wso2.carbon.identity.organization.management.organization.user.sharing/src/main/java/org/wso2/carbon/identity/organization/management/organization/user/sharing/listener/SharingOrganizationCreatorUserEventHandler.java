@@ -102,7 +102,11 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
-                    if (!OrganizationManagementUtil.isOrganization(tenantDomain) || isOrgOnboardWithOwnerId(orgId)) {
+                    if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                        return;
+                    }
+                    // User sharing is not allowed for self org on-boarding with owner resides in created org.
+                    if (isSelfOrgOnboardWithOwnerResidesInCreatedOrg(orgId)) {
                         return;
                     }
                     RealmConfiguration realmConfiguration = OrganizationUserSharingDataHolder.getInstance()
@@ -144,20 +148,23 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
     }
 
-    private boolean isOrgOnboardWithOwnerId(String organizationID) throws IdentityEventException {
+    private boolean isSelfOrgOnboardWithOwnerResidesInCreatedOrg(String organizationID) throws IdentityEventException {
 
+        if (isAuthenticatedFromConsoleApp()) {
+            return false;
+        }
         try {
             Organization organization = getOrganizationManager().getOrganization(organizationID, false, false);
             for (OrganizationAttribute attribute : organization.getAttributes()) {
                 if (OrganizationManagementConstants.CREATOR_ID.equals(attribute.getKey())) {
-                    return true;
+                    return false;
                 }
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityEventException("An error occurred while fetching the organization by ID: " +
                     organizationID, e);
         }
-        return false;
+        return true;
     }
 
     private Role buildOrgCreatorRole(String adminUUID) {
