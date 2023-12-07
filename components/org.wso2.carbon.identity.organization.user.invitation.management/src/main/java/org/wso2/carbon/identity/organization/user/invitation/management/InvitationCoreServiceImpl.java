@@ -136,7 +136,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             createdInvitation.setUsername(username);
             InvitationResult validationResult = userValidationResult(invitationDO, username, orgId);
             try {
-                if ((SUCCESS_STATUS).equals(validationResult.getStatus())) {
+                if (SUCCESS_STATUS.equals(validationResult.getStatus())) {
                     // Checking the parent organization id
                     String parentOrgId = organizationManager.getParentOrganizationId(orgId);
                     String userDomainQualifiedUserName = UserCoreUtil
@@ -554,23 +554,19 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
 
     private void validateRoleAssignments(InvitationDO invitation, String orgId) throws UserInvitationMgtException {
 
-        OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
-                .getOrganizationManagerService();
-        RoleManagementService roleManagementService = getRoleManagementService();
         try {
-            String invitedTenantDomain = organizationManager.resolveTenantDomain(orgId);
             if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
+                String invitedTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
                 for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
-                    if (!roleManagementService.isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
+                    if (!getRoleManagementService().isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
                         throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
                                 ERROR_CODE_INVALID_ROLE.getMessage(),
                                 String.format(ERROR_CODE_INVALID_ROLE.getDescription(), roleAssignment.getRole()));
                     }
                 }
             }
-        } catch (OrganizationManagementException | UserInvitationMgtClientException |
-                 IdentityRoleManagementException e) {
-            throw new UserInvitationMgtException(ERROR_CODE_ROLE_EXISTENCE.getCode(),
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_ROLE_EXISTENCE.getCode(),
                     ERROR_CODE_ROLE_EXISTENCE.getMessage(),
                     String.format(ERROR_CODE_ROLE_EXISTENCE.getDescription()));
         }
@@ -589,30 +585,24 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
 
         InvitationResult result = new InvitationResult();
         try {
-            OrganizationManager organizationManager = UserInvitationMgtDataHolder.getInstance()
-                    .getOrganizationManagerService();
-            // Checking the parent organization id
-            String parentOrgId = organizationManager.getParentOrganizationId(invitedOrgId);
-            // Picking the parent organization's tenant domain
-            String parentTenantDomain = organizationManager.resolveTenantDomain(parentOrgId);
+            String userDomainQualifiedUserName = UserCoreUtil.addDomainToName(username, invitation.getUserDomain());
+            String invitedTenantDomain = getOrganizationManager().resolveTenantDomain(invitedOrgId);
+            String parentOrgId = getOrganizationManager().getParentOrganizationId(invitedOrgId);
+            String parentTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrgId);
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
-            String invitedTenantDomain = organizationManager
-                    .resolveTenantDomain(invitedOrgId);
-            boolean isActiveInvitationAvailable = isActiveInvitationAvailable(username,
-                    invitation.getUserDomain(), parentOrgId, invitedOrgId);
-            String userDomainQualifiedUserName = UserCoreUtil
-                    .addDomainToName(username, invitation.getUserDomain());
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
             String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
             if (isUserExistAtInvitedOrganization(userDomainQualifiedUserName)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("User " + username + " is already exists in the organization "
+                    LOG.debug("User " + invitedUserId + " is already exists in the organization "
                             + invitedOrgId);
                 }
                 result.setStatus(FAIL_STATUS);
                 result.setErrorMsg(ERROR_CODE_USER_ALREADY_EXISTS_INVITED_ORGANIZATION);
                 return result;
             }
+            boolean isActiveInvitationAvailable = isActiveInvitationAvailable(username,
+                    invitation.getUserDomain(), parentOrgId, invitedOrgId);
             if (isActiveInvitationAvailable) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Active invitation is already available for the user: " + username
@@ -624,7 +614,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             }
             if (!userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("User: " + username + " is not exists in the organization: "
+                    LOG.debug("User: " + invitedUserId + " is not exists in the organization: "
                             + parentOrgId);
                 }
                 result.setStatus(FAIL_STATUS);
@@ -644,7 +634,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             if (isConsoleAudienceAvailableInRole(invitation, invitedTenantDomain) &&
                     !isInvitedUserHasConsoleAccess(invitedUserId, parentTenantDomain)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("The user: " + username + " is not having" +
+                    LOG.debug("The user: " + invitedUserId + " is not having" +
                             " the console access.");
                 }
                 result.setStatus(FAIL_STATUS);

@@ -34,7 +34,7 @@ public interface InvitationCoreService {
      * Creates an invitation with the details coming from the user.
      *
      * @param invitation Contains the details that are required to create an invitation.
-     * @return The created invitation.
+     * @return The list of created invitations.
      * @throws UserInvitationMgtException If an error occurs while creating the invitation.
      */
     List<CreatedInvitation> createInvitations(InvitationDO invitation) throws UserInvitationMgtException;
