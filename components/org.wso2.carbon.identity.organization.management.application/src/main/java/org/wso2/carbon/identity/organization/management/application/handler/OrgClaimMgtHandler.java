@@ -123,6 +123,21 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 addClaimsToSubOrganization(parentOrgCustomLocalClaims, sharedOrganizationTenantDomain,
                         missingClaims, parentTenantDomain);
             }
+            // Add the custom claim dialects to the organization.
+            List<String> claimDialectURIListInOrg = getClaimMetadataManagementService()
+                    .getClaimDialects(sharedOrganizationTenantDomain).stream().map(ClaimDialect::getClaimDialectURI)
+                    .collect(Collectors.toList());
+            getClaimMetadataManagementService().getClaimDialects(parentTenantDomain).stream()
+                    .filter(claimDialect -> !claimDialectURIListInOrg.contains(claimDialect.getClaimDialectURI()))
+                    .forEach(claimDialect -> {
+                        try {
+                            getClaimMetadataManagementService()
+                                    .addClaimDialect(claimDialect, sharedOrganizationTenantDomain);
+                        } catch (ClaimMetadataException e) {
+                            LOG.error("Error while adding claim dialect " + claimDialect.getClaimDialectURI() +
+                                    " to organization " + sharedOrganizationTenantDomain, e);
+                        }
+                    });
         } catch (OrganizationManagementException | ClaimMetadataException e) {
             throw new IdentityEventException("An error occurred  while adding the claims.", e);
         }
