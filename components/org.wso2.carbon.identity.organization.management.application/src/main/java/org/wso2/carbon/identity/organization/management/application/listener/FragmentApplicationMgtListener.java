@@ -25,7 +25,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
@@ -210,20 +209,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
 
         try {
-            /* Add or remove the organization SSO authenticator based on the app sharing status. Except for the
-             Console app. */
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain) && !serviceProvider.getApplicationName()
-                    .equals(FrameworkConstants.Application.CONSOLE_APP)) {
-                Optional<ServiceProviderProperty> appShared = Arrays.stream(serviceProvider.getSpProperties())
-                        .filter(p -> IS_APP_SHARED.equals(p.getName())).findFirst();
-                boolean authenticatorConfigured = isOrganizationSSOAuthenticatorConfigured(serviceProvider);
-                if (appShared.isPresent() && !Boolean.parseBoolean(appShared.get().getValue()) &&
-                        authenticatorConfigured) {
-                    removeOrganizationSSOAuthenticator(serviceProvider);
-                } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue()) &&
-                        !authenticatorConfigured) {
-                    addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
-                }
+            Optional<ServiceProviderProperty> appShared = Arrays.stream(serviceProvider.getSpProperties())
+                    .filter(p -> IS_APP_SHARED.equals(p.getName())).findFirst();
+            boolean authenticatorConfigured = isOrganizationSSOAuthenticatorConfigured(serviceProvider);
+            if (appShared.isPresent() && !Boolean.parseBoolean(appShared.get().getValue()) &&
+                    authenticatorConfigured) {
+                removeOrganizationSSOAuthenticator(serviceProvider);
+            } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue()) &&
+                    !authenticatorConfigured) {
+                addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException(String.format("Error while resolving the organization " +
