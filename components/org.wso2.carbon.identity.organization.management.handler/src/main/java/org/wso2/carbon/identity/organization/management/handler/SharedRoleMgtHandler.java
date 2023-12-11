@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.Collections;
@@ -158,9 +159,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
         // Get parent organization's roles which has application audience.
         String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + mainAppId;
-        List<RoleBasicInfo> parentOrgRoles =
-                getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainAppTenantDomain);
-        for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
+        List<Role> parentOrgRoles =
+                getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainAppTenantDomain, null);
+        for (Role parentOrgRole : parentOrgRoles) {
             String parentOrgRoleName = parentOrgRole.getName();
             // Create the role in the shared org.
             RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
