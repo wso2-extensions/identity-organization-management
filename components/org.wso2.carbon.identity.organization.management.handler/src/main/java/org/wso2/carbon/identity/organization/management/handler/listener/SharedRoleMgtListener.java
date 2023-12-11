@@ -42,6 +42,8 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -466,7 +468,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         if (mainApplicationOrgId == null) {
             mainApplicationOrgId = SUPER_ORG_ID;
         }
-        List<String> sharedRoleDeletionExcludeList = new ArrayList<>(Arrays.asList(RoleConstants.SYSTEM, "everyone"));
+        List<String> sharedRoleDeletionExcludeList = new ArrayList<>(Arrays.asList(RoleConstants.SYSTEM,
+                resolveEveryoneOrganizationRole(mainApplicationTenantDomain)));
         rolesList = rolesList.stream().filter(role -> !sharedRoleDeletionExcludeList.contains(role.getName()))
                 .collect(Collectors.toList());
         String sharedAppTenantDomain = organizationManager.resolveTenantDomain(sharedAppOrgId);
@@ -601,5 +604,18 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
         return true;
 
+    }
+
+    private String resolveEveryoneOrganizationRole(String tenantDomain) throws IdentityRoleManagementException {
+
+        try {
+            String internalEveryoneRole = OrganizationManagementHandlerDataHolder.getInstance().getRealmService()
+                    .getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain)).getRealmConfiguration()
+                    .getEveryOneRoleName();
+            return UserCoreUtil.removeDomainFromName(internalEveryoneRole);
+        } catch (UserStoreException e) {
+            throw new IdentityRoleManagementException(String.format(
+                    "Error while fetching the internal everyone role of the tenant with: %s.", tenantDomain), e);
+        }
     }
 }
