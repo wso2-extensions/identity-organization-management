@@ -30,8 +30,8 @@ public class UserInvitationMgtConstants {
     public static final String DEFAULT_USER_STORE_DOMAIN = "DEFAULT";
     public static final String DEFAULT_PROFILE = "default";
     public static final String INVITED_USER_GROUP_NAME_PREFIX = "invitedOrgUserGroup-";
-    public static final String SUCCESS_STATUS = "Success";
-    public static final String FAIL_STATUS = "Fail";
+    public static final String SUCCESS_STATUS = "Successful";
+    public static final String FAIL_STATUS = "Failed";
 
     // Filter Constants
     public static final String STATUS_PENDING = "PENDING";
@@ -73,7 +73,7 @@ public class UserInvitationMgtConstants {
                 "Could not find an user with given username."),
         ERROR_CODE_CREATE_INVITATION("10012",
                 "Unable to create the invitation.",
-                "Could not create the invitation to the user %s."),
+                "Could not create the invitation to the given user's list %s."),
         ERROR_CODE_INVALID_CONFIRMATION_CODE("10013",
                 "Invalid confirmation code.",
                 "Could not validate the confirmation code %s."),
@@ -134,7 +134,7 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_USER_ALREADY_EXISTS_INVITED_ORGANIZATION("10032",
                 "Couldn't create the invitation.",
                 "User is already exists in the invited organization"),
-        ERROR_CODE_ROLE_EXISTENCE("10032",
+        ERROR_CODE_ROLE_EXISTENCE("10033",
                 "Error while checking the role existence.",
                 "Could not resolve the role existence from the given list."),
 

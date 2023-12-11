@@ -21,10 +21,11 @@ package org.wso2.carbon.identity.organization.user.invitation.management.models;
 import org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants;
 
 /**
- * Model that contains the created invitation result details.
+ * Model that contains the created invitation status details.
  */
 public class InvitationResult {
 
+    private String username;
     private UserInvitationMgtConstants.ErrorMessage errorMsg;
     private String status;
 
@@ -46,5 +47,15 @@ public class InvitationResult {
     public void setStatus(String status) {
 
         this.status = status;
+    }
+
+    public String getUsername() {
+
+        return username;
+    }
+
+    public void setUsername(String username) {
+
+        this.username = username;
     }
 }

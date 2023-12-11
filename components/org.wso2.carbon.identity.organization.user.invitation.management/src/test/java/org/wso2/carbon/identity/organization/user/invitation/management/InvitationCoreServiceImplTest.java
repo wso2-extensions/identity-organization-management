@@ -36,9 +36,9 @@ import org.wso2.carbon.identity.organization.user.invitation.management.dao.User
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtClientException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
-import org.wso2.carbon.identity.organization.user.invitation.management.models.CreatedInvitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
@@ -279,9 +279,9 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(getConnection());
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
         mockIdentityTenantUtil();
-        List<CreatedInvitation> createdInvitation = invitationCoreService.createInvitations(invitation1);
+        List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation1);
         assertNotNull(createdInvitation);
-        assertEquals(createdInvitation.get(0).getResult().getStatus(), "Fail");
+        assertEquals(createdInvitation.get(0).getStatus(), "Failed");
     }
 
 
