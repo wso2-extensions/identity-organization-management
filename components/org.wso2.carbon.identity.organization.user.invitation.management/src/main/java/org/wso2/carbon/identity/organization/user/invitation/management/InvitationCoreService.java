@@ -20,6 +20,8 @@ package org.wso2.carbon.identity.organization.user.invitation.management;
 
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
 
 import java.util.List;
 
@@ -32,10 +34,10 @@ public interface InvitationCoreService {
      * Creates an invitation with the details coming from the user.
      *
      * @param invitation Contains the details that are required to create an invitation.
-     * @return The created invitation.
+     * @return The list of created invitations.
      * @throws UserInvitationMgtException If an error occurs while creating the invitation.
      */
-    Invitation createInvitation(Invitation invitation) throws UserInvitationMgtException;
+    List<InvitationResult> createInvitations(InvitationDO invitation) throws UserInvitationMgtException;
 
     /**
      * Accepts the invitation with the given confirmation code.

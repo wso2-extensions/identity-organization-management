@@ -29,6 +29,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
@@ -36,6 +37,8 @@ import org.wso2.carbon.identity.organization.user.invitation.management.exceptio
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
@@ -47,6 +50,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -57,6 +61,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_CONF_CODE;
@@ -86,7 +91,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
         UserInvitationMgtDataHolder.class,
-        IdentityUtil.class})
+        IdentityUtil.class, OrganizationSharedUserUtil.class})
 public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
@@ -102,21 +107,25 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         mockStatic(IdentityTenantUtil.class);
         mockStatic(IdentityDatabaseUtil.class);
         mockStatic(IdentityUtil.class);
+        mockStatic(OrganizationSharedUserUtil.class);
 
         Connection connection1 = getConnection();
         Connection connection2 = getConnection();
         Connection connection3 = getConnection();
 
-        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN, "DEFAULT",
-                INV_01_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
+        Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN,
+                "DEFAULT", INV_01_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
                 INV_01_INV_ORG_ID, null, "PENDING");
-        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN, "DEFAULT",
-                INV_02_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
+        Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN,
+                "DEFAULT", INV_02_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept",
                 INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, "PENDING");
         RoleAssignments roleAssignments2 = buildRoleAssignments(roleList);
         Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, INV_03_UN,
-                "DEFAULT", INV_03_EMAIL, "https://localhost:8080/travel-manager-001/invitations/accept",
-                INV_03_USER_ORG_ID, INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
+                "DEFAULT", INV_03_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept", INV_03_USER_ORG_ID,
+                INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
 
         populateH2Base(connection1, invitation1);
         populateH2Base(connection2, invitation2);
@@ -241,15 +250,14 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(connection1);
         assertTrue(invitationCoreService.deleteInvitation("1234"));
     }
-
-    @Test(priority = 9, expectedExceptions = UserInvitationMgtClientException.class)
+    @Test(priority = 9)
     public void testCreateInvitationWithNonExistingUserInParent() throws Exception {
 
-        Invitation invitation1 = buildInvitation(null,
-                null, "samson", "DEFAULT",
-                null, "https://localhost:8080/travel-manager-001/invitations/accept",
-                null, null,
-                null, null);
+        InvitationDO invitation1 = new InvitationDO();
+        invitation1.setUsernamesList(Collections.singletonList("samson"));
+        invitation1.setUserDomain("DEFAULT");
+        invitation1.setRoleAssignments(null);
+        invitation1.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
 
         OrganizationManager organizationManager = mock(OrganizationManager.class);
         RealmService realmService = mock(RealmService.class);
@@ -271,7 +279,9 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(getConnection());
         when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
         mockIdentityTenantUtil();
-        invitationCoreService.createInvitation(invitation1);
+        List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation1);
+        assertNotNull(createdInvitation);
+        assertEquals(createdInvitation.get(0).getStatus(), "Failed");
     }
 
 

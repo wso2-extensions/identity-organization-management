@@ -30,6 +30,8 @@ public class UserInvitationMgtConstants {
     public static final String DEFAULT_USER_STORE_DOMAIN = "DEFAULT";
     public static final String DEFAULT_PROFILE = "default";
     public static final String INVITED_USER_GROUP_NAME_PREFIX = "invitedOrgUserGroup-";
+    public static final String SUCCESS_STATUS = "Successful";
+    public static final String FAIL_STATUS = "Failed";
 
     // Filter Constants
     public static final String STATUS_PENDING = "PENDING";
@@ -68,10 +70,10 @@ public class UserInvitationMgtConstants {
         // Service layer errors
         ERROR_CODE_USER_NOT_FOUND("10011",
                 "Invalid user identification provided.",
-                "Could not find an user with given username %s."),
+                "Could not find an user with given username."),
         ERROR_CODE_CREATE_INVITATION("10012",
                 "Unable to create the invitation.",
-                "Could not create the invitation to the user %s."),
+                "Could not create the invitation to the given user's list %s."),
         ERROR_CODE_INVALID_CONFIRMATION_CODE("10013",
                 "Invalid confirmation code.",
                 "Could not validate the confirmation code %s."),
@@ -89,7 +91,7 @@ public class UserInvitationMgtConstants {
                 "The filter attribute '%s' is not supported."),
         ERROR_CODE_ACTIVE_INVITATION_EXISTS("10018",
                 "Invitation already exists.",
-                "An active invitation already exists for the user %s."),
+                "An active invitation already exists for the user."),
         ERROR_CODE_INVITATION_EXPIRED("10019",
                 "Invitation expired.",
                 "The invitation for the user %s has expired."),
@@ -125,10 +127,16 @@ public class UserInvitationMgtConstants {
                 "Could not find a role with given roleId %s."),
         ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND("10030",
                 "Failed to resolve the email of the invited user.",
-                "Could not find the email of the invited user %s."),
+                "Could not find the email of the invited user."),
         ERROR_CODE_CONSOLE_ACCESS_RESTRICTED("10031",
                 "Invited user doesn't have console access.",
                 "Could not find any role with a console access to create an invitation."),
+        ERROR_CODE_USER_ALREADY_EXISTS_INVITED_ORGANIZATION("10032",
+                "Couldn't create the invitation.",
+                "User is already exists in the invited organization"),
+        ERROR_CODE_ROLE_EXISTENCE("10033",
+                "Error while checking the role existence.",
+                "Could not resolve the role existence from the given list."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
