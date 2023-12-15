@@ -137,7 +137,8 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     public boolean isDiscoveryAttributeValueAvailable(String type, String value) throws
             OrganizationManagementException {
 
-        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, getOrganizationId(),
+        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(getOrganizationId());
+        return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, rootOrganizationId,
                 null, type, Collections.singletonList(value));
     }
 
