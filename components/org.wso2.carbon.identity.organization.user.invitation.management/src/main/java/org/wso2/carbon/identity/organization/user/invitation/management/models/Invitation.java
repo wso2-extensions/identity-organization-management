@@ -186,10 +186,7 @@ public class Invitation {
 
     public GroupAssignments[] getGroupAssignments() {
 
-        if (groupAssignments == null) {
-            return null;
-        }
-        return groupAssignments.clone();
+        return (groupAssignments != null) ? groupAssignments.clone() : null;
     }
 
     public void setGroupAssignments(GroupAssignments[] groupAssignments) {

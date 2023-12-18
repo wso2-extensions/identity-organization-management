@@ -36,9 +36,18 @@ public class InvitationTestConstants {
     public static final String INV_02_USER_ORG_ID = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
     public static final String INV_02_INV_ORG_ID = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
     public static final String INV_03_INVITATION_ID = "a26be854-e3ec-496d-b56a-959f634fbe91";
+    public static final String INV_04_INVITATION_ID = "b26bbd89-t56r-496d-hy78-j864g789fv9k";
+
     public static final String INV_03_CONF_CODE = "b64cd36a-5e65-4881-ab56-3a85030f9016";
+    public static final String INV_04_CONF_CODE = "ns8dsw22-hs65-7983-j856-y673f35f366p";
+
     public static final String INV_03_UN = "tom@gmail.com";
+    public static final String INV_04_UN = "alex@gmail.com";
+
     public static final String INV_03_EMAIL = "tom@gmail.com";
+    public static final String INV_04_EMAIL = "alex@gmail.com";
     public static final String INV_03_USER_ORG_ID = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
     public static final String INV_03_INV_ORG_ID = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
+    public static final String INV_04_USER_ORG_ID = "7388393-031f-4719-8713-73j8ddd76h33";
+    public static final String INV_04_INV_ORG_ID = "6ty62311-7yt5-h543-8976-h1yh6424hhh9";
 }

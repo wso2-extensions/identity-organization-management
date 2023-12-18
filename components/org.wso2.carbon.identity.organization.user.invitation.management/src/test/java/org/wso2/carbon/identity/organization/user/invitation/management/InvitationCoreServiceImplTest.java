@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.dao.User
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtClientException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.GroupAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
@@ -82,6 +83,12 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_03_INV_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_03_UN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_03_USER_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_CONF_CODE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_EMAIL;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_INVITATION_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_INV_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_UN;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_USER_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils.closeH2Base;
 import static org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils.getConnection;
 
@@ -97,6 +104,8 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
     private InvitationCoreServiceImpl invitationCoreService;
     private final String [] roleList = {"1224", "12345"};
+
+    private final String [] groupList = {"4321", "54321"};
     @BeforeClass
     public void setUp() throws Exception {
 
@@ -112,24 +121,32 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         Connection connection1 = getConnection();
         Connection connection2 = getConnection();
         Connection connection3 = getConnection();
+        Connection connection4 = getConnection();
 
         Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN,
                 "DEFAULT", INV_01_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept", INV_01_USER_ORG_ID,
-                INV_01_INV_ORG_ID, null, "PENDING");
+                INV_01_INV_ORG_ID, null,  null, "PENDING");
         Invitation invitation2 = buildInvitation(INV_02_INVITATION_ID, INV_02_CONF_CODE, INV_02_UN,
                 "DEFAULT", INV_02_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept",
-                INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, "PENDING");
+                INV_02_USER_ORG_ID, INV_02_INV_ORG_ID, null, null, "PENDING");
         RoleAssignments roleAssignments2 = buildRoleAssignments(roleList);
+        GroupAssignments groupAssignments = buildGroupAssignments(groupList);
         Invitation invitation3 = buildInvitation(INV_03_INVITATION_ID, INV_03_CONF_CODE, INV_03_UN,
                 "DEFAULT", INV_03_EMAIL,
                 "https://localhost:8080/travel-manager-001/invitations/accept", INV_03_USER_ORG_ID,
-                INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, "PENDING");
+                INV_03_INV_ORG_ID, new RoleAssignments[]{roleAssignments2},  null, "PENDING");
+        Invitation invitation4 = buildInvitation(INV_04_INVITATION_ID, INV_04_CONF_CODE, INV_04_UN,
+                "DEFAULT", INV_04_EMAIL,
+                "https://localhost:8080/travel-manager-001/invitations/accept", INV_04_USER_ORG_ID,
+                INV_04_INV_ORG_ID, new RoleAssignments[]{roleAssignments2}, new GroupAssignments[]{groupAssignments},
+                "PENDING");
 
         populateH2Base(connection1, invitation1);
         populateH2Base(connection2, invitation2);
         populateH2Base(connection3, invitation3);
+        populateH2Base(connection4, invitation4);
     }
 
     private Role buildRoleInfo() {
@@ -164,6 +181,17 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         RoleManagementService roleManagementService = mock(RoleManagementService.class);
         UserInvitationMgtDataHolder.getInstance().setRoleManagementService(roleManagementService);
         when(roleManagementService.getRoleWithoutUsers(anyString(), anyString())).thenReturn(buildRoleInfo());
+        OrganizationManager organizationManager = mock(OrganizationManager.class);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
+        when(organizationManager.resolveTenantDomain(anyString())).thenReturn("carbon.super");
+
+        RealmService realmService = mock(RealmService.class);
+        UserInvitationMgtDataHolder.getInstance().setRealmService(realmService);
+        UserRealm userRealm = mock(UserRealm.class);
+        AbstractUserStoreManager userStoreManager = mock(AbstractUserStoreManager.class);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
+
         List<Invitation> invitationList = invitationCoreService.getInvitations(null);
         // Checking whether the size of the Invitation list is not empty.
         assertFalse(invitationList.isEmpty());
@@ -323,7 +351,8 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private Invitation buildInvitation(String invitationId, String confirmationCode, String username,
                                        String userDomain, String email, String userRedirectUrl, String userOrgId,
-                                       String invitedOrgId, RoleAssignments[] roleAssignments, String status) {
+                                       String invitedOrgId, RoleAssignments[] roleAssignments,
+                                       GroupAssignments[] groupAssignments, String status) {
 
         Invitation invitation = new Invitation();
         invitation.setInvitationId(invitationId);
@@ -334,6 +363,9 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         invitation.setUserRedirectUrl(userRedirectUrl);
         if (roleAssignments != null) {
             invitation.setRoleAssignments(roleAssignments);
+        }
+        if (groupAssignments != null) {
+            invitation.setGroupAssignments(groupAssignments);
         }
         invitation.setInvitedOrganizationId(invitedOrgId);
         invitation.setUserOrganizationId(userOrgId);
@@ -346,5 +378,14 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         RoleAssignments roleAssignments = new RoleAssignments();
         roleAssignments.setRoles(roles);
         return roleAssignments;
+    }
+
+    private GroupAssignments buildGroupAssignments(String[] groups) {
+
+        GroupAssignments groupAssignments = new GroupAssignments();
+        for (String group : groups) {
+            groupAssignments.setGroupId(group);
+        }
+        return groupAssignments;
     }
 }
