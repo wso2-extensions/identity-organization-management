@@ -39,10 +39,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.TenantTypeOrganization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
@@ -105,11 +102,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                         return;
                     }
-                    /* User sharing is not required when on-boarding organizations from a B2B app than Console app
-                       without owner information in the organization creation request. */
-                    if (!isAuthenticatedFromConsoleApp() && !isOrgOnboardWithOwnerInformation(orgId)) {
-                        return;
-                    }
+
                     RealmConfiguration realmConfiguration = OrganizationUserSharingDataHolder.getInstance()
                             .getRealmService().getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain))
                             .getRealmConfiguration();
@@ -147,22 +140,6 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         String authenticatedApp = (String) IdentityUtil.threadLocalProperties.get()
                 .get(FrameworkConstants.SERVICE_PROVIDER);
         return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
-    }
-
-    private boolean isOrgOnboardWithOwnerInformation(String organizationID) throws IdentityEventException {
-
-        try {
-            Organization organization = getOrganizationManager().getOrganization(organizationID, false, false);
-            for (OrganizationAttribute attribute : organization.getAttributes()) {
-                if (OrganizationManagementConstants.CREATOR_ID.equals(attribute.getKey())) {
-                    return true;
-                }
-            }
-        } catch (OrganizationManagementException e) {
-            throw new IdentityEventException("An error occurred while fetching the organization by ID: " +
-                    organizationID, e);
-        }
-        return false;
     }
 
     private Role buildOrgCreatorRole(String adminUUID) {
