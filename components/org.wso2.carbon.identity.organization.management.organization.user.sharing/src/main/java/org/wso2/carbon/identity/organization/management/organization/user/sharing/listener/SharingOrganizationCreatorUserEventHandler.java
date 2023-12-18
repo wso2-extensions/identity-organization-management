@@ -137,8 +137,12 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
 
     private boolean isAuthenticatedFromConsoleApp() {
 
-        String authenticatedApp = (String) IdentityUtil.threadLocalProperties.get()
+        Object authenticatedAppFromThreadLocal = IdentityUtil.threadLocalProperties.get()
                 .get(FrameworkConstants.SERVICE_PROVIDER);
+        if (!(authenticatedAppFromThreadLocal instanceof String)) {
+            return false;
+        }
+        String authenticatedApp = (String) authenticatedAppFromThreadLocal;
         return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
     }
 
