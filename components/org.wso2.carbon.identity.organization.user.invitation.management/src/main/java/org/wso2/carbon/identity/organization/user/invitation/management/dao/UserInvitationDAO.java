@@ -48,13 +48,13 @@ public interface UserInvitationDAO {
             throws UserInvitationMgtServerException;
 
     /**
-     * Get the invitation details with role assignments by using the confirmation code of the invitation.
+     * Get the invitation details with assignments by using the confirmation code of the invitation.
      *
      * @param confirmationCode The confirmation code of the invitation.
-     * @return The invitation details with the role assignment for the confirmation code.
+     * @return The invitation details with the assignment for the confirmation code.
      * @throws UserInvitationMgtServerException If an error occurs while retrieving the invitation.
      */
-    Invitation getInvitationWithRolesByConfirmationCode(String confirmationCode)
+    Invitation getInvitationWithAssignmentsByConfirmationCode(String confirmationCode)
             throws UserInvitationMgtServerException;
 
     /**

@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.exceptio
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
 import org.wso2.carbon.identity.organization.user.invitation.management.internal.UserInvitationMgtDataHolder;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.AudienceInfo;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.GroupAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
@@ -53,6 +54,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
@@ -85,11 +87,13 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CONSTRUCT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_CREATE_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_EVENT_HANDLE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_GROUP_ASSIGNMENTS_BY_GROUP_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_TENANT_FROM_ORG;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_USER_STORE_MANAGER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_FILTER;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_GROUP;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_ROLE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVITATION_EXPIRED;
@@ -127,6 +131,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         String orgId = Utils.getOrganizationId();
         validateInvitationPayload(invitationDO, orgId);
         validateRoleAssignments(invitationDO, orgId);
+        validateGroupAssignments(invitationDO, orgId);
         invitation.setInvitedOrganizationId(orgId);
         try {
             String parentOrgId = getOrganizationManager().getParentOrganizationId(orgId);
@@ -157,6 +162,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     invitation.setUserDomain(invitationDO.getUserDomain());
                     invitation.setUserRedirectUrl(invitationDO.getUserRedirectUrl());
                     invitation.setRoleAssignments(invitationDO.getRoleAssignments());
+                    invitation.setGroupAssignments(invitationDO.getGroupAssignments());
                     invitation.setUserOrganizationId(parentOrgId);
                     invitation.setStatus(STATUS_PENDING);
                     invitation.setInvitationId(UUID.randomUUID().toString());
@@ -180,7 +186,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     @Override
     public boolean acceptInvitation(String confirmationCode) throws UserInvitationMgtException {
 
-        Invitation invitation = userInvitationDAO.getInvitationWithRolesByConfirmationCode(confirmationCode);
+        Invitation invitation = userInvitationDAO.getInvitationWithAssignmentsByConfirmationCode(confirmationCode);
         if (invitation != null) {
             if (invitation.getExpiredAt().getTime() > Instant.now().toEpochMilli()) {
                 try {
@@ -220,6 +226,21 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                             } else {
                                 if (LOG.isDebugEnabled()) {
                                     LOG.debug("Role: " + roleAssignments.getRoleId()
+                                            + " is not exist in the invitedTenantDomain : " + invitedTenantDomain);
+                                }
+                            }
+                        }
+                    }
+                    if (ArrayUtils.isNotEmpty(invitation.getGroupAssignments())) {
+                        for (GroupAssignments groupAssignments : invitation.getGroupAssignments()) {
+                            if (userStoreManager.isGroupExist(groupAssignments.getGroupId())) {
+                                String groupName =
+                                        userStoreManager.getGroupNameByGroupId(groupAssignments.getGroupId());
+                                userStoreManager.updateUserListOfRoleWithID(groupName, new String[0],
+                                        new String[]{associatedUserId});
+                            } else {
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Group: " + groupAssignments.getGroupId()
                                             + " is not exist in the invitedTenantDomain : " + invitedTenantDomain);
                                 }
                             }
@@ -296,6 +317,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 filterOperation, filterValue);
         for (Invitation invitation : invitations) {
             processingRoleAssignments(invitation.getRoleAssignments(), invitation.getInvitedOrganizationId());
+            processingGroupAssignments(invitation.getGroupAssignments(), invitation.getInvitedOrganizationId());
         }
         Instant currentTime = Instant.now();
         for (Invitation invitation : invitations) {
@@ -530,6 +552,37 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
     }
 
+    private void processingGroupAssignments(GroupAssignments[] groupAssignments, String invitedOrgId)
+            throws UserInvitationMgtServerException {
+
+        Group group;
+        try {
+            String invitedTenantDomain = getOrganizationManager().resolveTenantDomain(invitedOrgId);
+            AbstractUserStoreManager userStoreManager =
+                    getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(invitedTenantDomain));
+            for (GroupAssignments groupAssignment : groupAssignments) {
+                try {
+                    group = userStoreManager.getGroup(groupAssignment.getGroupId(), Arrays.asList("displayName"));
+                    groupAssignment.setGroupId(group.getGroupID());
+                    groupAssignment.setDisplayName(group.getDisplayName());
+                } catch (org.wso2.carbon.user.core.UserStoreException e) {
+                    throw new UserInvitationMgtServerException(ERROR_CODE_GET_GROUP_ASSIGNMENTS_BY_GROUP_ID.getCode(),
+                            ERROR_CODE_GET_GROUP_ASSIGNMENTS_BY_GROUP_ID.getMessage(),
+                            String.format(ERROR_CODE_GET_GROUP_ASSIGNMENTS_BY_GROUP_ID.getDescription(),
+                                    groupAssignment.getGroupId()), e);
+                }
+            }
+        } catch (UserStoreException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_GET_USER_STORE_MANAGER.getCode(),
+                    ERROR_CODE_GET_USER_STORE_MANAGER.getMessage(), ERROR_CODE_GET_USER_STORE_MANAGER.
+                    getDescription(), e);
+        } catch (OrganizationManagementException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_GET_TENANT_FROM_ORG.getCode(),
+                    ERROR_CODE_GET_TENANT_FROM_ORG.getMessage(),
+                    String.format(ERROR_CODE_GET_TENANT_FROM_ORG.getDescription(), invitedOrgId), e);
+        }
+    }
+
     private boolean isUserExistAtInvitedOrganization(String domainQualifiedUserName)
             throws UserStoreException {
 
@@ -574,6 +627,28 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 }
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            throw new UserInvitationMgtServerException(ERROR_CODE_ROLE_EXISTENCE.getCode(),
+                    ERROR_CODE_ROLE_EXISTENCE.getMessage(), ERROR_CODE_ROLE_EXISTENCE.getDescription());
+        }
+    }
+
+    private void validateGroupAssignments(InvitationDO invitation, String orgId) throws UserInvitationMgtException {
+
+        try {
+            if (ArrayUtils.isNotEmpty(invitation.getGroupAssignments())) {
+                String invitedTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+                AbstractUserStoreManager userStoreManager =
+                        getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(invitedTenantDomain));
+                for (GroupAssignments groupAssignments : invitation.getGroupAssignments()) {
+                    if (!userStoreManager.isGroupExist(groupAssignments.getGroupId())) {
+                        throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_GROUP.getCode(),
+                                ERROR_CODE_INVALID_GROUP.getMessage(),
+                                String.format(ERROR_CODE_INVALID_GROUP.getDescription(),
+                                        groupAssignments.getGroupId()));
+                    }
+                }
+            }
+        } catch (OrganizationManagementException | UserStoreException e) {
             throw new UserInvitationMgtServerException(ERROR_CODE_ROLE_EXISTENCE.getCode(),
                     ERROR_CODE_ROLE_EXISTENCE.getMessage(), ERROR_CODE_ROLE_EXISTENCE.getDescription());
         }

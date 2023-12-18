@@ -63,6 +63,14 @@ public class UserInvitationMgtConstants {
             "OrganizationUserInvitation.DefaultAcceptURL";
 
     /**
+     * Enum for assignmentType.
+     */
+    public enum AssignmentType {
+        ROLE,
+        GROUP
+    }
+
+    /**
      * Error messages for organization user invitation management related errors.
      */
     public enum ErrorMessage {
@@ -138,13 +146,20 @@ public class UserInvitationMgtConstants {
                 "Error while checking the role existence.",
                 "Could not resolve the role existence from the given list."),
 
+        ERROR_CODE_INVALID_GROUP("10034",
+                "Invalid group identification provided.",
+                "Could not find a group with given groupId %s."),
+        ERROR_CODE_GROUP_EXISTENCE("10035",
+                "Error while checking the group existence.",
+                "Could not resolve the group existence from the given list."),
+
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
                 "Unable to store the invitation.",
                 "Could not store the invitation details for user %s."),
-        ERROR_CODE_STORE_ROLE_ASSIGNMENTS("10502",
-                "Unable to store the role assignments of the invitation.",
-                "Could not store the role assignment details for user %s."),
+        ERROR_CODE_STORE_ASSIGNMENTS("10502",
+                "Unable to store the assignments of the invitation.",
+                "Could not store the assignment details for user %s."),
         ERROR_CODE_COMMIT_INVITATION("10503",
                 "Unable to store the invitation.",
                 "Could not store the invitation details."),
@@ -160,15 +175,15 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_RETRIEVE_INVITATION_BY_ORG_ID("10507",
                 "Unable to retrieve invitations.",
                 "Could not retrieve the invitations details for organization id %s."),
-        ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID("10508",
-                "Unable to retrieve role assignments.",
-                "Could not retrieve the role assignments details for invitation belongs to organization id %s."),
+        ERROR_CODE_RETRIEVE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID("10508",
+                "Unable to retrieve assignments.",
+                "Could not retrieve the assignments details for invitation belongs to organization id %s."),
         ERROR_CODE_RETRIEVE_INVITATIONS_FOR_ORG_ID("10509",
                 "Unable to retrieve invitations for organization.",
                 "Could not retrieve the invitations for organization id %s."),
-        ERROR_CODE_DELETE_ROLE_ASSIGNMENTS_BY_INVITATION("10510",
-                "Unable to delete role assignments.",
-                "Could not delete role assignments for invitation id %s."),
+        ERROR_CODE_DELETE_ASSIGNMENTS_BY_INVITATION("10510",
+                "Unable to delete assignments.",
+                "Could not delete assignments for invitation id %s."),
         ERROR_CODE_DELETE_INVITATION_DETAILS("10511",
                 "Unable to delete invitation details.",
                 "Could not delete invitation details for invitation id %s."),
@@ -187,9 +202,6 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_GET_INVITATION_BY_CONF_CODE("10516",
                 "Unable to get the invitation.",
                 "Could not get the invitation with role assignments for confirmation code %s."),
-        ERROR_CODE_STORE_ROLES_APP_ID_INVALID("10517",
-                "Unable to store the role assignments.",
-                "Provided application/s is/are not valid."),
         ERROR_CODE_GET_ORG_ASSOCIATIONS_FOR_USER("10518",
                 "Unable to get the organization associations.",
                 "Unable to get the organization associations for the user %s."),
@@ -201,7 +213,9 @@ public class UserInvitationMgtConstants {
                 "Could not retrieve the applicationId for the roleId %s."),
         ERROR_CODE_GET_ROLE_ASSIGNMENTS_BY_ROLE_ID("10521",
                 "Unable to retrieve the role assignments.",
-                "Could not retrieve the role assignments for the roleId %s.");
+                "Could not retrieve the role assignments for the roleId %s."),
+        ERROR_CODE_GET_GROUP_ASSIGNMENTS_BY_GROUP_ID("10522", "Unable to retrieve the group assignments.",
+                "Could not retrieve the group assignments for the groupId %s.");
 
         private final String code;
         private final String message;

@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.constant
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtClientException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtException;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtServerException;
+import org.wso2.carbon.identity.organization.user.invitation.management.models.GroupAssignments;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.Invitation;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
 
@@ -41,6 +42,8 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSIGNMENT_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSIGNMENT_TYPE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_CREATED_AT;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_DOMAIN;
@@ -49,44 +52,41 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_INVITED_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_REDIRECT_URL;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ROLE_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_INVITATION_BY_INVITATION_ID;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.DELETE_ROLE_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ACTIVE_INVITATION_BY_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_APP_ID_BY_ROLE_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ASSIGNMENTS_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATIONS_BY_INVITED_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATIONS_BY_INVITED_ORG_ID_WITH_STATUS_FILTER_EXPIRED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATIONS_BY_INVITED_ORG_ID_WITH_STATUS_FILTER_PENDING;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_BY_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_FROM_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_INVITATION_ID_FROM_CONFIRMATION_CODE;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.GET_ROLE_ASSIGNMENTS_BY_INVITATION_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.STORE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.STORE_INVITATION;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.SQLConstants.SQLQueries.STORE_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_COMMIT_INVITATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_ASSIGNMENTS_BY_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITATION_BY_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_INVITATION_DETAILS;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_DELETE_ROLE_ASSIGNMENTS_BY_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_APPLICATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION_BY_CONF_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_GET_INVITATION_BY_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_MULTIPLE_INVITATIONS_FOR_USER;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_INVITATIONS_FOR_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_INVITATION_BY_CONFIRMATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_INVITATION_BY_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_INVITATION_DETAILS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_INVITATION;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_ROLES_APP_ID_INVALID;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_STORE_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FILTER_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.OPERATION_EQ;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_PENDING;
 
 /**
@@ -133,22 +133,31 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             } catch (SQLException e) {
                 throw handleServerException(ERROR_CODE_STORE_INVITATION, invitation.getUsername(), e);
             }
-            if (invitation.getRoleAssignments() != null) {
-                try (PreparedStatement invitationRoleAssignmentPrepStat =
-                             connection.prepareStatement(STORE_ROLE_ASSIGNMENTS)) {
-                    for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
-                        invitationRoleAssignmentPrepStat.setString(1, invitation.getInvitationId());
-                        invitationRoleAssignmentPrepStat.setString(2, roleAssignment.getRole());
-                        invitationRoleAssignmentPrepStat.addBatch();
+            if (invitation.getRoleAssignments() != null || invitation.getGroupAssignments() != null) {
+                try (PreparedStatement invitationAssignmentPrepStat =
+                             connection.prepareStatement(STORE_ASSIGNMENTS)) {
+                    if (invitation.getRoleAssignments() != null) {
+                        for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
+                            invitationAssignmentPrepStat.setString(1, invitation.getInvitationId());
+                            invitationAssignmentPrepStat.setString(2, roleAssignment.getRole());
+                            invitationAssignmentPrepStat.setString(3,
+                                    String.valueOf(UserInvitationMgtConstants.AssignmentType.ROLE));
+                            invitationAssignmentPrepStat.addBatch();
+                        }
                     }
-                    invitationRoleAssignmentPrepStat.executeBatch();
+                    if (invitation.getGroupAssignments() != null) {
+                        for (GroupAssignments groupAssignment : invitation.getGroupAssignments()) {
+                            invitationAssignmentPrepStat.setString(1, invitation.getInvitationId());
+                            invitationAssignmentPrepStat.setString(2, groupAssignment.getGroupId());
+                            invitationAssignmentPrepStat.setString(3,
+                                    String.valueOf(UserInvitationMgtConstants.AssignmentType.GROUP));
+                            invitationAssignmentPrepStat.addBatch();
+                        }
+                    }
+                    invitationAssignmentPrepStat.executeBatch();
                 } catch (SQLException e) {
                     IdentityDatabaseUtil.rollbackTransaction(connection);
-                    if (SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE == e.getErrorCode() &&
-                            StringUtils.containsIgnoreCase(e.getMessage(), "FK_ORG_USER_ROLE_SP_APP")) {
-                        throw handleClientException(ERROR_CODE_STORE_ROLES_APP_ID_INVALID, StringUtils.EMPTY, e);
-                    }
-                    throw handleServerException(ERROR_CODE_STORE_ROLE_ASSIGNMENTS, invitation.getUsername(), e);
+                    throw handleServerException(ERROR_CODE_STORE_ASSIGNMENTS, invitation.getUsername(), e);
                 }
             }
             connection.commit();
@@ -190,20 +199,31 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                 throw handleServerException(ERROR_CODE_RETRIEVE_INVITATION_DETAILS, invitationId, e);
             }
             List<RoleAssignments> roleAssignmentsResultList = new ArrayList<>();
-            try (PreparedStatement roleAssignmentsPrepStat =
-                         connection.prepareStatement(GET_ROLE_ASSIGNMENTS_BY_INVITATION_ID)) {
-                roleAssignmentsPrepStat.setString(1, invitation.getInvitationId());
-                try (ResultSet roleAssignmentsResultSet = roleAssignmentsPrepStat.executeQuery()) {
-                    while (roleAssignmentsResultSet.next()) {
-                        RoleAssignments roleAssignment = new RoleAssignments();
-                        roleAssignment.setRoleId(roleAssignmentsResultSet.getString(COLUMN_NAME_ROLE_ID));
-                        roleAssignmentsResultList.add(roleAssignment);
+            List<GroupAssignments> groupAssignmentsResultList = new ArrayList<>();
+
+            try (PreparedStatement assignmentsPrepStat =
+                         connection.prepareStatement(GET_ASSIGNMENTS_BY_INVITATION_ID)) {
+                assignmentsPrepStat.setString(1, invitation.getInvitationId());
+                try (ResultSet assignmentsResultSet = assignmentsPrepStat.executeQuery()) {
+                    while (assignmentsResultSet.next()) {
+                        if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
+                                UserInvitationMgtConstants.AssignmentType.ROLE.toString())) {
+                            RoleAssignments roleAssignment = new RoleAssignments();
+                            roleAssignment.setRoleId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                            roleAssignmentsResultList.add(roleAssignment);
+                        } else if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
+                                UserInvitationMgtConstants.AssignmentType.GROUP.toString())) {
+                            GroupAssignments groupAssignment = new GroupAssignments();
+                            groupAssignment.setGroupId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                            groupAssignmentsResultList.add(groupAssignment);
+                        }
                     }
                 }
             } catch (SQLException e) {
                 throw handleServerException(ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS, invitationId, e);
             }
             invitation.setRoleAssignments(roleAssignmentsResultList.toArray(new RoleAssignments[0]));
+            invitation.setGroupAssignments(groupAssignmentsResultList.toArray(new GroupAssignments[0]));
         } catch (SQLException e) {
             throw handleServerException(ERROR_CODE_GET_INVITATION, invitationId, e);
         }
@@ -239,7 +259,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     }
 
     @Override
-    public Invitation getInvitationWithRolesByConfirmationCode(String confirmationCode)
+    public Invitation getInvitationWithAssignmentsByConfirmationCode(String confirmationCode)
             throws UserInvitationMgtServerException {
 
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false);
@@ -287,24 +307,32 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             } catch (SQLException e) {
                 throw handleServerException(ERROR_CODE_RETRIEVE_INVITATION_BY_ORG_ID, organizationId, e);
             }
-            try (PreparedStatement roleAssignmentsPrepStat =
-                         connection.prepareStatement(GET_ROLE_ASSIGNMENTS_BY_INVITATION_ID)) {
+            try (PreparedStatement assignmentsPrepStat =
+                         connection.prepareStatement(GET_ASSIGNMENTS_BY_INVITATION_ID)) {
                 for (Invitation invitation : invitationsList) {
                     List<RoleAssignments> roleAssignmentsResultList = new ArrayList<>();
-                    roleAssignmentsPrepStat.setString(1, invitation.getInvitationId());
-                    try (ResultSet roleAssignmentsResultSet = roleAssignmentsPrepStat.executeQuery()) {
-                        while (roleAssignmentsResultSet.next()) {
-                            RoleAssignments roleAssignment = new RoleAssignments();
-                            roleAssignment.setInvitationId(roleAssignmentsResultSet.
-                                    getString(COLUMN_NAME_INVITATION_ID));
-                            roleAssignment.setRoleId(roleAssignmentsResultSet.getString(COLUMN_NAME_ROLE_ID));
-                            roleAssignmentsResultList.add(roleAssignment);
+                    List<GroupAssignments> groupAssignmentsResultList = new ArrayList<>();
+                    assignmentsPrepStat.setString(1, invitation.getInvitationId());
+                    try (ResultSet assignmentsResultSet = assignmentsPrepStat.executeQuery()) {
+                        while (assignmentsResultSet.next()) {
+                            if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
+                                    UserInvitationMgtConstants.AssignmentType.ROLE.toString())) {
+                                RoleAssignments roleAssignment = new RoleAssignments();
+                                roleAssignment.setRoleId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                                roleAssignmentsResultList.add(roleAssignment);
+                            } else if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
+                                    UserInvitationMgtConstants.AssignmentType.GROUP.toString())) {
+                                GroupAssignments groupAssignment = new GroupAssignments();
+                                groupAssignment.setGroupId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                                groupAssignmentsResultList.add(groupAssignment);
+                            }
                         }
                     }
                     invitation.setRoleAssignments(roleAssignmentsResultList.toArray(new RoleAssignments[0]));
+                    invitation.setGroupAssignments(groupAssignmentsResultList.toArray(new GroupAssignments[0]));
                 }
             } catch (SQLException e) {
-                throw handleServerException(ERROR_CODE_RETRIEVE_ROLE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID,
+                throw handleServerException(ERROR_CODE_RETRIEVE_ASSIGNMENTS_FOR_INVITATION_BY_ORG_ID,
                         organizationId, e);
             }
         } catch (SQLException e) {
@@ -318,11 +346,11 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
 
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(true)) {
             try (PreparedStatement invitationDeletePrepStat =
-                         connection.prepareStatement(DELETE_ROLE_ASSIGNMENTS_BY_INVITATION_ID)) {
+                         connection.prepareStatement(DELETE_ASSIGNMENTS_BY_INVITATION_ID)) {
                 invitationDeletePrepStat.setString(1, invitationId);
                 invitationDeletePrepStat.executeUpdate();
             } catch (SQLException e) {
-                throw handleServerException(ERROR_CODE_DELETE_ROLE_ASSIGNMENTS_BY_INVITATION, invitationId, e);
+                throw handleServerException(ERROR_CODE_DELETE_ASSIGNMENTS_BY_INVITATION, invitationId, e);
             }
             try (PreparedStatement invitationDeletePrepStat =
                          connection.prepareStatement(DELETE_INVITATION_BY_INVITATION_ID)) {

@@ -39,6 +39,7 @@ public class Invitation {
     private Timestamp expiredAt;
     private String userRedirectUrl;
     private RoleAssignments[] roleAssignments;
+    private GroupAssignments[] groupAssignments;
 
     public String getInvitationId() {
 
@@ -181,5 +182,18 @@ public class Invitation {
     public void setRoleAssignments(RoleAssignments[] roleAssignments) {
 
         this.roleAssignments = roleAssignments != null ? roleAssignments.clone() : null;
+    }
+
+    public GroupAssignments[] getGroupAssignments() {
+
+        if (groupAssignments == null) {
+            return null;
+        }
+        return groupAssignments.clone();
+    }
+
+    public void setGroupAssignments(GroupAssignments[] groupAssignments) {
+
+        this.groupAssignments = groupAssignments != null ? groupAssignments.clone() : null;
     }
 }
