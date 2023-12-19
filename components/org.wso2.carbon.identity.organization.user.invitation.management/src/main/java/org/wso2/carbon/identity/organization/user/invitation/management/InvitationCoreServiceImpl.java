@@ -137,8 +137,11 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 String userDomainQualifiedUserName = UserCoreUtil
                         .addDomainToName(username, invitationDO.getUserDomain());
                 String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
-                String managedOrganization = OrganizationSharedUserUtil
-                        .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
+                String managedOrganization = null;
+                if (StringUtils.isNotBlank(invitedUserId)) {
+                    managedOrganization = OrganizationSharedUserUtil
+                            .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
+                }
                     /* If the invited user is a shared user, get the corresponding user store manager of the shared user
                     managed organization. */
                 if (StringUtils.isNotEmpty(managedOrganization)) {
