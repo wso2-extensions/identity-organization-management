@@ -137,20 +137,10 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 String userDomainQualifiedUserName = UserCoreUtil
                         .addDomainToName(username, invitationDO.getUserDomain());
                 String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
-                String managedOrganization = OrganizationSharedUserUtil
-                        .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
-                    /* If the invited user is a shared user, get the corresponding user store manager of the shared user
-                    managed organization. */
-                if (StringUtils.isNotEmpty(managedOrganization)) {
-                    String userResidentTenantDomain = getOrganizationManager()
-                            .resolveTenantDomain(managedOrganization);
-                    userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
-                            getTenantId(userResidentTenantDomain));
-                }
                 InvitationResult validationResult = userValidationResult(invitationDO, userStoreManager,
                         userDomainQualifiedUserName, invitedUserId, username, parentOrgId, orgId, parentTenantDomain);
                 if (SUCCESS_STATUS.equals(validationResult.getStatus())) {
-                    String emailClaim = userStoreManager
+                    String emailClaim = getUserStoreManagerOfSharedUser(userStoreManager, invitedUserId)
                             .getUserClaimValue(userDomainQualifiedUserName, CLAIM_EMAIL_ADDRESS, null);
                     invitation.setUsername(username);
                     invitation.setEmail(emailClaim);
@@ -616,6 +606,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 result.setErrorMsg(ERROR_CODE_ACTIVE_INVITATION_EXISTS);
                 return result;
             }
+            userStoreManager = getUserStoreManagerOfSharedUser(userStoreManager, invitedUserId);
             if (!userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("User: " + invitedUserId + " is not exists in the organization: "
@@ -652,5 +643,22 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
         result.setStatus(SUCCESS_STATUS);
         return result;
+    }
+
+    private AbstractUserStoreManager getUserStoreManagerOfSharedUser(AbstractUserStoreManager userStoreManager,
+                                                                     String invitedUserId)
+            throws OrganizationManagementException, UserStoreException {
+
+        String managedOrganization = OrganizationSharedUserUtil
+                .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
+        /* If the invited user is a shared user, get the corresponding user store manager of the shared user
+         managed organization. */
+        if (StringUtils.isNotEmpty(managedOrganization)) {
+            String userResidentTenantDomain = getOrganizationManager()
+                    .resolveTenantDomain(managedOrganization);
+            userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
+                    getTenantId(userResidentTenantDomain));
+        }
+        return userStoreManager;
     }
 }
