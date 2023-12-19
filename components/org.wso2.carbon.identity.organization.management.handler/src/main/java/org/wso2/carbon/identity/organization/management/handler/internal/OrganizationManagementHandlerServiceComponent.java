@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHan
 import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * Organization management handler service component.
@@ -171,5 +172,23 @@ public class OrganizationManagementHandlerServiceComponent {
 
         OrganizationManagementHandlerDataHolder.getInstance().setApplicationManagementService(null);
         LOG.debug("Application management service unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    @Reference(
+            name = "realm.service",
+            service = RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService")
+    protected void setRealmService(RealmService realmService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setRealmService(realmService);
+        LOG.debug("Realm service set in OrganizationManagementHandlerService bundle.");
+    }
+
+    protected void unsetRealmService(RealmService realmService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setRealmService(null);
+        LOG.debug("Realm service unset in OrganizationManagementHandlerService bundle.");
     }
 }

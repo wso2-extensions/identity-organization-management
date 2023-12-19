@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * Organization management handler data holder.
@@ -39,6 +40,7 @@ public class OrganizationManagementHandlerDataHolder {
     private RoleManagementService roleManagementServiceV2;
     private OrgApplicationManager orgApplicationManager;
     private ApplicationManagementService applicationManagementService;
+    private RealmService realmService;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -164,6 +166,26 @@ public class OrganizationManagementHandlerDataHolder {
             ApplicationManagementService applicationManagementService) {
 
         this.applicationManagementService = applicationManagementService;
+    }
+
+    /**
+     * Get {@link RealmService}.
+     *
+     * @return Realm service {@link RealmService}.
+     */
+    public RealmService getRealmService() {
+
+        return realmService;
+    }
+
+    /**
+     * Set {@link RealmService}.
+     *
+     * @param realmService Instance of {@link RealmService}.
+     */
+    public void setRealmService(RealmService realmService) {
+
+        this.realmService = realmService;
     }
 }
 
