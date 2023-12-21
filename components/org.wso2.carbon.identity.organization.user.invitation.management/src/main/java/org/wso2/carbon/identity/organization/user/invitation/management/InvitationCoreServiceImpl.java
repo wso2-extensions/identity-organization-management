@@ -140,15 +140,28 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             String parentOrgId = getOrganizationManager().getParentOrganizationId(orgId);
             String parentTenantDomain = resolveTenantDomain(parentOrgId);
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
-            AbstractUserStoreManager parentUserStoreManager = getAbstractUserStoreManager(parentTenantId);
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
             for (String username : invitationDO.getUsernamesList()) {
                 String userDomainQualifiedUserName = UserCoreUtil
                         .addDomainToName(username, invitationDO.getUserDomain());
-                String invitedUserId = parentUserStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
-                InvitationResult validationResult = userValidationResult(invitationDO, parentUserStoreManager,
+                String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
+                String managedOrganization = null;
+                if (StringUtils.isNotBlank(invitedUserId)) {
+                    managedOrganization = OrganizationSharedUserUtil
+                            .getUserManagedOrganizationClaim(userStoreManager, invitedUserId);
+                }
+                    /* If the invited user is a shared user, get the corresponding user store manager of the shared user
+                    managed organization. */
+                if (StringUtils.isNotEmpty(managedOrganization)) {
+                    String userResidentTenantDomain = getOrganizationManager()
+                            .resolveTenantDomain(managedOrganization);
+                    userStoreManager = getAbstractUserStoreManager(IdentityTenantUtil.
+                            getTenantId(userResidentTenantDomain));
+                }
+                InvitationResult validationResult = userValidationResult(invitationDO, userStoreManager,
                         userDomainQualifiedUserName, invitedUserId, username, parentOrgId, orgId, parentTenantDomain);
                 if (SUCCESS_STATUS.equals(validationResult.getStatus())) {
-                    String emailClaim = getUserStoreManagerOfSharedUser(parentUserStoreManager, invitedUserId)
+                    String emailClaim = userStoreManager
                             .getUserClaimValue(userDomainQualifiedUserName, CLAIM_EMAIL_ADDRESS, null);
                     invitation.setUsername(username);
                     invitation.setEmail(emailClaim);
@@ -696,8 +709,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
     }
 
-    private InvitationResult userValidationResult(InvitationDO invitation,
-                                                  AbstractUserStoreManager parentUserStoreManager,
+    private InvitationResult userValidationResult(InvitationDO invitation, AbstractUserStoreManager userStoreManager,
                                                   String userDomainQualifiedUserName, String invitedUserId,
                                                   String username, String parentOrgId, String invitedOrgId,
                                                   String parentTenantDomain)
@@ -726,8 +738,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 result.setErrorMsg(ERROR_CODE_ACTIVE_INVITATION_EXISTS);
                 return result;
             }
-            AbstractUserStoreManager userStoreManager = getUserStoreManagerOfSharedUser
-                    (parentUserStoreManager, invitedUserId);
             if (!userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("User: " + invitedUserId + " is not exists in the organization: "
@@ -764,22 +774,5 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
         result.setStatus(SUCCESS_STATUS);
         return result;
-    }
-
-    private AbstractUserStoreManager getUserStoreManagerOfSharedUser(AbstractUserStoreManager parentUserStoreManager,
-                                                                     String invitedUserId)
-            throws OrganizationManagementException, UserStoreException {
-
-        String managedOrganization = OrganizationSharedUserUtil
-                .getUserManagedOrganizationClaim(parentUserStoreManager, invitedUserId);
-        /* If the invited user is a shared user, get the corresponding user store manager of the shared user
-         managed organization. */
-        if (StringUtils.isNotEmpty(managedOrganization)) {
-            String userResidentTenantDomain = getOrganizationManager()
-                    .resolveTenantDomain(managedOrganization);
-            return getAbstractUserStoreManager(IdentityTenantUtil.
-                     getTenantId(userResidentTenantDomain));
-        }
-        return parentUserStoreManager;
     }
 }
