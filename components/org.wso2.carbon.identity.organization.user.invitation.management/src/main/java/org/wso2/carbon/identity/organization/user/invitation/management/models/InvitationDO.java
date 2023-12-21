@@ -28,6 +28,7 @@ public class InvitationDO {
     private List<String> usernamesList;
     private String userDomain;
     private RoleAssignments[] roleAssignments;
+    private GroupAssignments[] groupAssignments;
     private String userRedirectUrl;
 
     public String getUserRedirectUrl() {
@@ -71,5 +72,15 @@ public class InvitationDO {
     public void setRoleAssignments(RoleAssignments[] roleAssignments) {
 
         this.roleAssignments = roleAssignments != null ? roleAssignments.clone() : null;
+    }
+
+    public GroupAssignments[] getGroupAssignments() {
+
+        return (groupAssignments != null) ? groupAssignments.clone() : null;
+    }
+
+    public void setGroupAssignments(GroupAssignments[] groupAssignments) {
+
+        this.groupAssignments = groupAssignments != null ? groupAssignments.clone() : null;
     }
 }
