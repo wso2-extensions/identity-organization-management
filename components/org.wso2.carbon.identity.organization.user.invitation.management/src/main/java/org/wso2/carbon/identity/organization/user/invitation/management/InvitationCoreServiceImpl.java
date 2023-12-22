@@ -767,7 +767,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 result.setErrorMsg(ERROR_CODE_CONSOLE_ACCESS_RESTRICTED);
                 return result;
             }
-        } catch (UserStoreException | OrganizationManagementException | IdentityRoleManagementException e) {
+        } catch (UserStoreException | IdentityRoleManagementException e) {
             throw new UserInvitationMgtServerException(ERROR_CODE_CREATE_INVITATION.getCode(),
                     ERROR_CODE_CREATE_INVITATION.getMessage(),
                     String.format(ERROR_CODE_CREATE_INVITATION.getDescription(), username), e);
