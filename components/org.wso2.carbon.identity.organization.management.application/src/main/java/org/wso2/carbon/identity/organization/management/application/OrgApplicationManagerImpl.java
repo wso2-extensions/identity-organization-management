@@ -96,6 +96,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.USER_ORGANIZATION_CLAIM_URI;
@@ -659,9 +660,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private String resolveCallbackURL(String ownerOrgId) throws URLBuilderException, OrganizationManagementException {
 
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
-        ServiceURLBuilder commonAuthServiceUrl = ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH)
-                .setTenant(tenantDomain);
-        return commonAuthServiceUrl.build().getAbsolutePublicURL();
+        String context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" +
+                FrameworkConstants.COMMONAUTH;
+        return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
     }
 
     private void removeOAuthApplication(OAuthConsumerAppDTO oauthApp)

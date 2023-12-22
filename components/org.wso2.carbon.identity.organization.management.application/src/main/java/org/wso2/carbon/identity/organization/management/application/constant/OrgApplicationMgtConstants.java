@@ -64,4 +64,5 @@ public class OrgApplicationMgtConstants {
             "POST_GET_APPLICATION_SHARED_ORGANIZATIONS";
     public static final String EVENT_PRE_GET_SHARED_APPLICATIONS = "PRE_GET_SHARED_APPLICATIONS";
     public static final String EVENT_POST_GET_SHARED_APPLICATIONS = "POST_GET_SHARED_APPLICATIONS";
+    public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
 }
