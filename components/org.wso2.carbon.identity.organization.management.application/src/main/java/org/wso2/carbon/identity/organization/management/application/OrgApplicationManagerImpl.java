@@ -71,6 +71,7 @@ import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -660,8 +661,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private String resolveCallbackURL(String ownerOrgId) throws URLBuilderException, OrganizationManagementException {
 
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
-        String context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" +
-                FrameworkConstants.COMMONAUTH;
+        String context;
+        if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            context = FrameworkConstants.COMMONAUTH;
+        } else {
+            context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" +
+                    FrameworkConstants.COMMONAUTH;
+        }
         return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
     }
 
