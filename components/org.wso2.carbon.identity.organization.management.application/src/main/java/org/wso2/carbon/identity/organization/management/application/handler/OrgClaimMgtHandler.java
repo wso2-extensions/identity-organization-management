@@ -41,8 +41,11 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserCoreConstants;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -282,8 +285,19 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 String sharedOrganizationTenantDomain = getOrganizationManager().
                         resolveTenantDomain(organization.getId());
                 if (isExistingLocalClaimURI(localClaimURI, sharedOrganizationTenantDomain)) {
-                    getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
-                            mappedAttributes, localClaimProperties), sharedOrganizationTenantDomain);
+                    String primaryUserStoreDomain = getPrimaryUserStoreDomain(tenantDomain);
+                    Iterator<AttributeMapping> iterator = mappedAttributes.iterator();
+                    while (iterator.hasNext()) {
+                        AttributeMapping attributeMapping = iterator.next();
+                        if (!primaryUserStoreDomain.equals(attributeMapping.getUserStoreDomain())) {
+                            iterator.remove();
+                        }
+                    }
+                    if (!mappedAttributes.isEmpty()) {
+                        getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
+                                mappedAttributes, localClaimProperties), sharedOrganizationTenantDomain);
+                    }
+
                 }
             }
         } catch (OrganizationManagementException e) {
@@ -295,7 +309,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 return;
             }
             throw new IdentityEventException("An error occurred while updating the local claim " + localClaimURI, e);
-        } catch (ClaimMetadataException e) {
+        } catch (ClaimMetadataException | UserStoreException e) {
             throw new IdentityEventException("An error occurred while updating the local claim " + localClaimURI, e);
         }
     }
@@ -576,5 +590,16 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         List<ClaimDialect> claimDialectList = getClaimMetadataManagementService().getClaimDialects(tenantDomain);
         return claimDialectList.stream()
                 .anyMatch(dialect -> StringUtils.equals(dialect.getClaimDialectURI(), dialectURI));
+    }
+
+    private String getPrimaryUserStoreDomain(String tenantDomain) throws UserStoreException {
+
+        String primaryUserStoreDomain = OrgApplicationMgtDataHolder.getInstance().getRealmService()
+                .getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain)).getRealmConfiguration()
+                .getUserStoreProperty(UserCoreConstants.RealmConfig.PROPERTY_DOMAIN_NAME);
+        if (StringUtils.isEmpty(primaryUserStoreDomain)) {
+            primaryUserStoreDomain = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
+        }
+        return primaryUserStoreDomain;
     }
 }
