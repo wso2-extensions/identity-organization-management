@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthent
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.AttributeMapping;
@@ -90,6 +91,7 @@ import static java.util.Arrays.stream;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
+import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
@@ -591,8 +593,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 String callbackUrl = resolveCallbackURL(ownerOrgId);
                 createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
-                throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
-                        mainApplication.getApplicationResourceId(), sharedOrgId);
+                if (isOAuthClientExistsError(e)) {
+                    createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
+                } else {
+                    throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
+                            mainApplication.getApplicationResourceId(), sharedOrgId);
+                }
             }
             String sharedApplicationId;
             try {
@@ -618,6 +624,57 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         */
         if (mainApplication.getApplicationName().equals("Console")) {
             fireOrganizationCreatorSharingEvent(sharedOrgId);
+        }
+    }
+
+    private boolean isOAuthClientExistsError(IdentityException e) {
+
+        return e.getErrorCode().equals(DUPLICATE_OAUTH_CLIENT.getErrorCode());
+    }
+
+    /**
+     * This method is to handle the exception due to an app already existing during the Oauth app creation process.
+     * It is possible that the error is due to stale data, hence a retry mechanism is implemented to check
+     * whether it is a stale app and if so, delete the stale app and retry the oauth app creation.
+     * @param ownerOrgId        ID of the owner organization.
+     * @param sharedOrgId       ID of the shared sub organization.
+     * @param mainApplication   The application that is being shared.
+     * @return                  OAuth app that is created.
+     * @throws OrganizationManagementException Throws exception if there are any exceptions in the retry mechanism.
+     */
+    private OAuthConsumerAppDTO handleOAuthClientExistsError(
+            String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication)
+            throws OrganizationManagementException {
+
+        try {
+            // Retrieve oauth app of sub organization using app name.
+            OAuthConsumerAppDTO existingOAuthApp = getOAuthAdminService()
+                    .getOAuthApplicationDataByAppName(mainApplication.getApplicationName());
+
+            // Check if the SP exists for the app name. If it does not exist, then it's a stale oauth app.
+            String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
+            ServiceProvider application = getApplicationManagementService()
+                    .getServiceProvider(mainApplication.getApplicationName(), sharedTenantDomain);
+            if (application != null) {
+                throw new IdentityOAuthAdminException(String.format("OAuth app and SP with name %s already exists " +
+                        "in sub organization with id %s.", mainApplication.getApplicationName(), sharedOrgId));
+            }
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("OAuth app with name %s already exists in sub organization with id %s due to " +
+                                "stale data. Attempting retry after deleting the application.",
+                        mainApplication.getApplicationName(), sharedOrgId));
+            }
+
+            // Delete the existing app.
+            removeOAuthApplication(existingOAuthApp);
+
+            // Retry the app creation.
+            String callbackUrl = resolveCallbackURL(ownerOrgId);
+            return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+        } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
+                    mainApplication.getApplicationResourceId(), sharedOrgId);
         }
     }
 
