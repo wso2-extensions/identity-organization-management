@@ -629,13 +629,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private boolean isOAuthClientExistsError(IdentityException e) {
 
-        return e.getErrorCode().equals(DUPLICATE_OAUTH_CLIENT.getErrorCode());
+        return DUPLICATE_OAUTH_CLIENT.getErrorCode().equals(e.getErrorCode());
     }
 
     /**
      * This method is to handle the exception due to an app already existing during the Oauth app creation process.
      * It is possible that the error is due to stale data, hence a retry mechanism is implemented to check
      * whether it is a stale app and if so, delete the stale app and retry the oauth app creation.
+     *
      * @param ownerOrgId        ID of the owner organization.
      * @param sharedOrgId       ID of the shared sub organization.
      * @param mainApplication   The application that is being shared.
