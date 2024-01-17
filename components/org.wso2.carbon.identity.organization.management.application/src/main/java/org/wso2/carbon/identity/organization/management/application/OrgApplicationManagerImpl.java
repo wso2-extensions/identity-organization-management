@@ -719,13 +719,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private String resolveCallbackURL(String ownerOrgId) throws URLBuilderException, OrganizationManagementException {
 
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
-        String context;
         if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-            context = FrameworkConstants.COMMONAUTH;
-        } else {
-            context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" +
-                    FrameworkConstants.COMMONAUTH;
+            return ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).setTenant(tenantDomain).build()
+                    .getAbsolutePublicURL();
         }
+        String context =
+                String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
         return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
     }
 
