@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthent
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
@@ -88,6 +89,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_CONTEXT_PREFIX;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
@@ -602,7 +605,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
             String sharedApplicationId;
             try {
-                ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
+                ServiceProvider delegatedApplication =
+                        prepareSharedApplication(mainApplication, createdOAuthApp, sharedOrgId);
                 sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
                         sharedTenantDomain, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
@@ -740,7 +744,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     private ServiceProvider prepareSharedApplication(ServiceProvider mainApplication,
-                                                     OAuthConsumerAppDTO oAuthConsumerApp) {
+                                                     OAuthConsumerAppDTO oAuthConsumerApp, String sharedOrgId)
+            throws OrganizationManagementException {
 
         // Obtain oauth consumer app configs.
         InboundAuthenticationRequestConfig inboundAuthenticationRequestConfig =
@@ -755,9 +760,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         delegatedApplication.setApplicationName(oAuthConsumerApp.getApplicationName());
         delegatedApplication.setDescription(mainApplication.getDescription());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
+        if (ApplicationMgtUtil.isConsole(mainApplication.getApplicationName())) {
+            delegatedApplication.setAccessUrl(resolveAccessURL(mainApplication.getTenantDomain(), sharedOrgId,
+                    FrameworkConstants.Application.CONSOLE_APP_PATH));
+        } else if (ApplicationMgtUtil.isMyAccount(mainApplication.getApplicationName())) {
+            delegatedApplication.setAccessUrl(resolveAccessURL(mainApplication.getTenantDomain(), sharedOrgId,
+                    FrameworkConstants.Application.MY_ACCOUNT_APP_PATH));
+        }
         appendFragmentAppProperties(delegatedApplication);
 
         return delegatedApplication;
+    }
+
+    private String resolveAccessURL(String ownerTenantDomain, String sharedOrgId, String appPath) {
+
+        String accessUrl = IdentityUtil.getServerURL(appPath, true, true);
+        accessUrl = accessUrl.replace(appPath, TENANT_CONTEXT_PREFIX + ownerTenantDomain +
+                ORGANIZATION_CONTEXT_PREFIX + sharedOrgId + appPath);
+        return accessUrl;
     }
 
     private void appendFragmentAppProperties(ServiceProvider serviceProvider) {
