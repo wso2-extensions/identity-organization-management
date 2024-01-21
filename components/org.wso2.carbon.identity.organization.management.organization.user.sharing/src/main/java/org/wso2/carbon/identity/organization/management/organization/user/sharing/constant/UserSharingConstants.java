@@ -50,6 +50,8 @@ public class UserSharingConstants {
     public static final String USER_MGT_CREATE_PERMISSION = "/permission/admin/manage/identity/usermgt/create";
     public static final String ADMINISTRATOR_ROLE_PERMISSION = "/permission";
     public static final String PRIMARY_DOMAIN = "PRIMARY";
+    public static final String AUTHENTICATION_TYPE = "authenticationType";
+    public static final String APPLICATION_AUTHENTICATION_TYPE = "APPLICATION";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
