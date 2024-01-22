@@ -68,6 +68,14 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
 
         String eventName = event.getEventName();
         String orgId = null;
+
+        String authenticationType =
+                (String) IdentityUtil.threadLocalProperties.get().get(UserSharingConstants.AUTHENTICATION_TYPE);
+        if (StringUtils.isNotEmpty(authenticationType) &&
+                UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
+            return;
+        }
+
         try {
             if (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
                 if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
