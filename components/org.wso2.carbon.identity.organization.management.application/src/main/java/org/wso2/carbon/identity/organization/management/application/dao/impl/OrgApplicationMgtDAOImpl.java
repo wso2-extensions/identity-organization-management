@@ -119,8 +119,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
                             resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN)),
                     namedPreparedStatement -> {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SP_APP_ID,
-                                Integer.toString(sharedAppId));
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SP_APP_ID, sharedAppId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
                     });
             return Optional.ofNullable(sharedApplicationDO);
