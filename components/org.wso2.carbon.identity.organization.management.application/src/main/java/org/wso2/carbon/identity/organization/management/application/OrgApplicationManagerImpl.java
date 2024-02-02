@@ -52,6 +52,7 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth.dto.OAuthAppRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
@@ -89,6 +90,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OAUTH2;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
@@ -120,6 +122,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REVOKING_SHARED_APP_TOKENS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
@@ -258,6 +261,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId,
                                 sharedApplicationDO.getOrganizationId());
                 if (sharedApplicationId.isPresent()) {
+                    revokeSharedAppAccessTokens(organizationId, applicationId,
+                            sharedApplicationDO.getOrganizationId());
                     deleteSharedApplication(sharedApplicationDO.getOrganizationId(), sharedApplicationId.get());
                 }
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
@@ -287,6 +292,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             Optional<String> sharedApplicationId =
                     resolveSharedApp(serviceProvider.getApplicationResourceId(), organizationId, sharedOrganizationId);
             if (sharedApplicationId.isPresent()) {
+                revokeSharedAppAccessTokens(organizationId, applicationId, sharedOrganizationId);
                 deleteSharedApplication(sharedOrganizationId, sharedApplicationId.get());
                 List<BasicOrganization> applicationSharedOrganizations =
                         getApplicationSharedOrganizations(organizationId, serviceProvider.getApplicationResourceId());
@@ -301,6 +307,40 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 }
                 getListener().postDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId,
                         sharedApplicationId.get());
+            }
+        }
+    }
+
+    private void revokeSharedAppAccessTokens(String rootOrganizationId, String rootApplicationId,
+                                             String sharedOrganizationId) throws OrganizationManagementException {
+
+        String rootTenantDomain = getOrganizationManager().resolveTenantDomain(rootOrganizationId);
+        ServiceProvider rootApplication = getOrgApplication(rootApplicationId, rootTenantDomain);
+        revokeTokensForAppInOrg(rootApplication, sharedOrganizationId);
+    }
+
+    private void revokeTokensForAppInOrg(ServiceProvider serviceProvider, String sharedOrganizationId)
+            throws OrganizationManagementException {
+
+        String consumerKey = null;
+        if (serviceProvider.getInboundAuthenticationConfig().getInboundAuthenticationRequestConfigs() != null) {
+            for (InboundAuthenticationRequestConfig oauth2config :
+                    serviceProvider.getInboundAuthenticationConfig().getInboundAuthenticationRequestConfigs()) {
+                if (oauth2config.getInboundAuthType().equals(OAUTH2)) {
+                    consumerKey = oauth2config.getInboundAuthKey();
+                    break;
+                }
+            }
+        }
+        if (StringUtils.isNotBlank(consumerKey)) {
+            OAuthAppRevocationRequestDTO applicationDTO = new OAuthAppRevocationRequestDTO();
+            applicationDTO.setConsumerKey(consumerKey);
+            try {
+                OrgApplicationMgtDataHolder.getInstance().getOAuthAdminService()
+                        .revokeIssuedTokensForOrganizationByApplication(applicationDTO, sharedOrganizationId);
+            } catch (IdentityOAuthAdminException e) {
+                throw handleServerException(ERROR_CODE_ERROR_REVOKING_SHARED_APP_TOKENS, e,
+                        serviceProvider.getApplicationResourceId(), sharedOrganizationId);
             }
         }
     }
