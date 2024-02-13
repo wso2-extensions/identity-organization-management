@@ -78,7 +78,6 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,6 +150,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, boolean shareWithAllChildren,
                                              List<String> sharedOrgs) throws OrganizationManagementException {
 
+        if (!shareWithAllChildren && CollectionUtils.isEmpty(sharedOrgs)) {
+            return;
+        }
         String requestInvokingOrganizationId = getOrganizationId();
         if (requestInvokingOrganizationId == null) {
             requestInvokingOrganizationId = SUPER_ORG_ID;
@@ -165,12 +167,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(ownerOrgId, true);
         // Filter the child organization in case user send a list of organizations to share the original application.
-        List<BasicOrganization> filteredChildOrgs = shareWithAllChildren ?
-                childOrganizations :
-                (CollectionUtils.isNotEmpty(sharedOrgs) ?
-                        childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId())).
-                                collect(Collectors.toList()) :
-                        Collections.emptyList());
+        List<BasicOrganization> filteredChildOrgs = shareWithAllChildren
+                ? childOrganizations
+                : childOrganizations.stream().filter(o -> sharedOrgs.contains(o.getId())).collect(Collectors.toList());
 
         // check if share with all children property needs to be updated.
         boolean updateShareWithAllChildren = shouldUpdateShareWithAllChildren(shareWithAllChildren, rootApplication);
