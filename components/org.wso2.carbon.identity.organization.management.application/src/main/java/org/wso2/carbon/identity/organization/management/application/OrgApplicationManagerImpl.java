@@ -75,6 +75,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,7 +114,6 @@ import static org.wso2.carbon.identity.organization.management.application.util.
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_BLOCK_SHARING_SHARED_APP;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_OAUTH_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REMOVING_FRAGMENT_APP;
@@ -615,14 +615,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     adminUserId = getRealmService().getTenantUserRealm(tenantId)
                             .getRealmConfiguration().getAdminUserName();
                 }
-                String finalAdminUserId = adminUserId;
-                User user = OrgApplicationMgtDataHolder.getInstance()
+                String domainQualifiedUserName = OrgApplicationMgtDataHolder.getInstance()
                         .getOrganizationUserResidentResolverService()
                         .resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId)
-                        .orElseThrow(
-                                () -> handleServerException(ERROR_CODE_ERROR_ADMIN_USER_NOT_FOUND_FOR_ORGANIZATION,
-                                        null, finalAdminUserId));
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(user.getDomainQualifiedUsername());
+                        .map(User::getDomainQualifiedUsername)
+                        .orElse(MultitenantUtils.getTenantAwareUsername(mainApplication.getOwner()
+                                .toFullQualifiedUsername()));
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(domainQualifiedUserName);
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
