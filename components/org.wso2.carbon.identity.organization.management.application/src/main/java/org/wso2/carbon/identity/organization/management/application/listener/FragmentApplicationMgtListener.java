@@ -73,6 +73,8 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
+
+import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
@@ -312,6 +314,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                 getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp, tenantDomain);
                         serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
                     }
+                    // Inherit API based authentication enabled property from the main application.
+                    inheritAPIBasedAuthenticationEnabledProperty(mainApplication, serviceProvider);
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
@@ -319,6 +323,46 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
+    }
+
+    private void inheritAPIBasedAuthenticationEnabledProperty(ServiceProvider mainApplication,
+                                                              ServiceProvider sharedApplication) {
+
+        /*
+         If the main application's IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME property is set to true,
+         shared app inherit the value.
+         */
+        if (!Arrays.stream(mainApplication.getSpProperties())
+                .anyMatch(p -> IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME.equalsIgnoreCase(
+                        p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+            return;
+        }
+        ServiceProviderProperty[] properties = sharedApplication.getSpProperties();
+        // Check if there is any property with the name "isAPIBasedAuthenticationEnabled".
+        boolean isPropertyFound = Arrays.stream(properties)
+                .anyMatch(p -> IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME.equalsIgnoreCase(
+                        p.getName()));
+
+        if (!isPropertyFound) {
+            // If there is no such property, add a new one and set it to true.
+            ServiceProviderProperty newProperty = new ServiceProviderProperty();
+            newProperty.setName(IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME);
+            newProperty.setValue("true");
+
+            ServiceProviderProperty[] updatedProperties =
+                    Arrays.copyOf(properties, properties.length + 1);
+            updatedProperties[properties.length] = newProperty;
+            sharedApplication.setSpProperties(updatedProperties);
+        } else {
+            // If the property exists, find it and update its value to true.
+            for (ServiceProviderProperty p : properties) {
+                if (IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME.equalsIgnoreCase(p.getName())) {
+                    p.setValue("true");
+                    break;
+                }
+            }
+            sharedApplication.setSpProperties(properties);
+        }
     }
 
     /**
