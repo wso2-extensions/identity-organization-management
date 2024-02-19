@@ -70,8 +70,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryManager {
 
     private static final OrganizationDiscoveryDAO organizationDiscoveryDAO = new OrganizationDiscoveryDAOImpl();
-    private static final OrganizationManager organizationManager = OrganizationDiscoveryServiceHolder.getInstance()
-            .getOrganizationManager();
 
     @Override
     public List<OrgDiscoveryAttribute> addOrganizationDiscoveryAttributes(String organizationId,
@@ -80,7 +78,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                           boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
-        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
+        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         if (validateRootOrgAccess) {
             validateRootOrganization(rootOrganizationId, organizationId);
         }
@@ -100,7 +98,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             validateRootOrgAccess) throws OrganizationManagementException {
 
         if (validateRootOrgAccess) {
-            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
+            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
             validateRootOrganization(rootOrganizationId, organizationId);
         }
         return organizationDiscoveryDAO.getOrganizationDiscoveryAttributes(organizationId);
@@ -111,7 +109,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             OrganizationManagementException {
 
         if (validateRootOrgAccess) {
-            String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
+            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
             validateRootOrganization(rootOrganizationId, organizationId);
         }
         organizationDiscoveryDAO.deleteOrganizationDiscoveryAttributes(organizationId);
@@ -124,7 +122,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
                                                                              boolean validateRootOrgAccess)
             throws OrganizationManagementException {
 
-        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(organizationId);
+        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         if (validateRootOrgAccess) {
             validateRootOrganization(rootOrganizationId, organizationId);
         }
@@ -137,7 +135,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
     public boolean isDiscoveryAttributeValueAvailable(String type, String value) throws
             OrganizationManagementException {
 
-        String rootOrganizationId = organizationManager.getPrimaryOrganizationId(getOrganizationId());
+        String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(getOrganizationId());
         return !organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy(false, rootOrganizationId,
                 null, type, Collections.singletonList(value));
     }
@@ -324,5 +322,10 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             throw handleClientException(ERROR_CODE_INVALID_OFFSET);
         }
         return offset;
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
     }
 }
