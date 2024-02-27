@@ -145,6 +145,13 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         return organizationUserSharingDAO.getUserAssociation(sharedUserId, sharedOrganizationId);
     }
 
+    @Override
+    public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(associatedUserId, associatedOrgId);
+    }
+
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();

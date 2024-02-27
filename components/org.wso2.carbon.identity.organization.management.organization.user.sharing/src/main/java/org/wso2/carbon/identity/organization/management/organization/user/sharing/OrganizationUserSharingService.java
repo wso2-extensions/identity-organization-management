@@ -21,6 +21,8 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.util.List;
+
 /**
  * Service that manages the organization user sharing.
  */
@@ -78,4 +80,18 @@ public interface OrganizationUserSharingService {
      * @throws OrganizationManagementException If an error occurs while retrieving the user association.
      */
     UserAssociation getUserAssociation(String userId, String orgId) throws OrganizationManagementException;
+
+    /**
+     * Get all the user associations for a given user.
+     *
+     * @param associatedUserId Actual user ID of the user.
+     * @param associatedOrgId  The organization ID where is the user is managed.
+     * @return the list of {@link UserAssociation}s.
+     * @throws OrganizationManagementException If an error occurs while fetching user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementException {
+
+        return null;
+    }
 }
