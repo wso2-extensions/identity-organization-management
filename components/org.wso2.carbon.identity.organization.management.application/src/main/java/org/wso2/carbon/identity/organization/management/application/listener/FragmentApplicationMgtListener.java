@@ -291,20 +291,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
                             mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
                     serviceProvider.setClaimConfig(claimConfig);
-                    if (serviceProvider.getLocalAndOutBoundAuthenticationConfig() != null
-                            && mainApplication.getLocalAndOutBoundAuthenticationConfig() != null) {
-                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
-                                .setUseTenantDomainInLocalSubjectIdentifier(mainApplication
-                                        .getLocalAndOutBoundAuthenticationConfig()
-                                        .isUseTenantDomainInLocalSubjectIdentifier());
-                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
-                                .setUseUserstoreDomainInLocalSubjectIdentifier(mainApplication
-                                        .getLocalAndOutBoundAuthenticationConfig()
-                                        .isUseUserstoreDomainInLocalSubjectIdentifier());
-                        serviceProvider.getLocalAndOutBoundAuthenticationConfig()
-                                .setUseUserstoreDomainInRoles(mainApplication
-                                        .getLocalAndOutBoundAuthenticationConfig().isUseUserstoreDomainInRoles());
-                    }
 
                     // Set application's associated roles.
                     AssociatedRolesConfig associatedRolesConfigOfMainApp = mainApplication.getAssociatedRolesConfig();
