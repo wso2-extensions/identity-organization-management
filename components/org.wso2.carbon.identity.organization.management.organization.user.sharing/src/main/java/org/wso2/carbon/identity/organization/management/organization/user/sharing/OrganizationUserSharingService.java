@@ -84,12 +84,12 @@ public interface OrganizationUserSharingService {
     /**
      * Get all the user associations for a given user.
      *
-     * @param associatedUserId Actual user ID of the user.
-     * @param associatedOrgId  The organization ID where is the user is managed.
+     * @param actualUserId  Actual user ID of the user.
+     * @param residentOrgId The organization ID where is the user is managed.
      * @return the list of {@link UserAssociation}s.
      * @throws OrganizationManagementException If an error occurs while fetching user associations.
      */
-    default List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
+    default List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId)
             throws OrganizationManagementException {
 
         return null;
