@@ -49,7 +49,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     @Override
     public int getExecutionOrderId() {
 
-        return 8;
+        return 128;
     }
 
     @Override
