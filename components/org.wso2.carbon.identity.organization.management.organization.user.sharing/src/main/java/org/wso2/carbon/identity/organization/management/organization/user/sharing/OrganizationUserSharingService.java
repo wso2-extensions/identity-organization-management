@@ -38,6 +38,21 @@ public interface OrganizationUserSharingService {
             throws OrganizationManagementException;
 
     /**
+     * Creates the association between the shared user and the actual user in the organization.
+     *
+     * @param orgId            Organization ID of the user is shared.
+     * @param associatedUserId Actual user who is associated for a shared user.
+     * @param associatedOrgId  The organization ID associated user.
+     * @param userName         The username of the shared user.
+     * @throws OrganizationManagementException If an error occurs while creating the organization user association.
+     */
+    default void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId, String userName)
+            throws OrganizationManagementException {
+
+        throw new OrganizationManagementException("Not implemented");
+    }
+
+    /**
      * Unshare all the shared users for the given user.
      *
      * @param associatedUserId The ID of the associated user.
@@ -78,4 +93,15 @@ public interface OrganizationUserSharingService {
      * @throws OrganizationManagementException If an error occurs while retrieving the user association.
      */
     UserAssociation getUserAssociation(String userId, String orgId) throws OrganizationManagementException;
+
+    /**
+     *
+     * @param userId
+     * @param orgId
+     * @param associatedUserId
+     * @param associatedOrgId
+     * @throws OrganizationManagementException
+     */
+    void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementException;
 }

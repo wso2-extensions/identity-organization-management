@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -48,6 +49,7 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
+import org.wso2.carbon.identity.oauth.IdentityOAuthClientException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
@@ -258,7 +260,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
             }
             getListener().postDeleteAllSharedApplications(organizationId, applicationId, sharedApplicationDOList);
-            if (Arrays.stream(serviceProvider.getSpProperties()).anyMatch(p ->
+            if (stream(serviceProvider.getSpProperties()).anyMatch(p ->
                     SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 setShareWithAllChildrenProperty(serviceProvider, false);
                 setIsAppSharedProperty(serviceProvider, false);
@@ -274,7 +276,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         } else {
             getListener().preDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId);
-            if (Arrays.stream(serviceProvider.getSpProperties())
+            if (stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 throw handleClientException(ERROR_CODE_INVALID_DELETE_SHARE_REQUEST,
                         serviceProvider.getApplicationResourceId(), sharedOrganizationId);
@@ -586,19 +588,43 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 return;
             }
             // Create Oauth consumer app to redirect login to shared (fragment) application.
-            OAuthConsumerAppDTO createdOAuthApp;
+            OAuthConsumerAppDTO createdOAuthApp = null;
             try {
                 String callbackUrl = resolveCallbackURL(ownerOrgId);
-                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+                try {
+                    if (mainApplication.getApplicationName().equals("Console") || mainApplication.getApplicationName()
+                            .equals("My Account")) {
+                        createdOAuthApp = OrgApplicationMgtDataHolder.getInstance()
+                                .getOAuthAdminService()
+                                .getOAuthApplicationDataByAppName(mainApplication.getApplicationName());
+                    }
+                } catch (IdentityOAuthClientException e) {
+                    // Do nothing
+                }
+                if (createdOAuthApp == null) {
+                    createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+                }
+
+
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
+            ApplicationBasicInfo basicSharedApplication;
             String sharedApplicationId;
             try {
                 ServiceProvider delegatedApplication = prepareSharedApplication(mainApplication, createdOAuthApp);
-                sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
-                        sharedTenantDomain, getAuthenticatedUsername());
+
+                basicSharedApplication = getApplicationManagementService().getApplicationBasicInfoByName(
+                        delegatedApplication.getApplicationName(), sharedTenantDomain);
+                if (basicSharedApplication == null) {
+                    sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
+                            sharedTenantDomain, getAuthenticatedUsername());
+                } else {
+                    sharedApplicationId = basicSharedApplication.getApplicationResourceId();
+                }
+//                sharedApplicationId = getApplicationManagementService().createApplication(delegatedApplication,
+//                        sharedTenantDomain, getAuthenticatedUsername());
                 getOrgApplicationMgtDAO().addSharedApplication(mainApplication.getApplicationResourceId(), ownerOrgId,
                         sharedApplicationId, sharedOrgId, shareWithAllChildren);
             } catch (IdentityApplicationManagementException e) {

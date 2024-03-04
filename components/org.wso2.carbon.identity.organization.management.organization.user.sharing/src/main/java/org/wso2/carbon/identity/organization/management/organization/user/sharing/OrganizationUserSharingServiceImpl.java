@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
@@ -56,12 +57,20 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
+        shareOrganizationUser(orgId, associatedUserId, associatedOrgId, null);
+    }
+
+    @Override
+    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId, String userName)
+            throws OrganizationManagementException {
+
         try {
             int associatedUserTenantId =
                     IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
-            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
-
+            if (StringUtils.isBlank(userName)) {
+                userName = userStoreManager.getUser(associatedUserId, null).getUsername();
+            }
             HashMap<String, String> userClaims = new HashMap<>();
             userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
             userClaims.put(ID_CLAIM_READ_ONLY, "true");
@@ -101,6 +110,14 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         } catch (UserStoreException | InterruptedException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         }
+    }
+
+    @Override
+    public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
+                                                  String associatedOrgId)
+            throws OrganizationManagementException {
+
+        organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId, associatedOrgId);
     }
 
     @Override
