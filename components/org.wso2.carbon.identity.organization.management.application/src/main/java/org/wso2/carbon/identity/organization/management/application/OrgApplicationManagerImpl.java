@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -809,6 +810,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     FrameworkConstants.Application.MY_ACCOUNT_APP_PATH));
         }
         appendFragmentAppProperties(delegatedApplication);
+        delegatedApplication.setAssociatedRolesConfig(new AssociatedRolesConfig());
+        delegatedApplication.getAssociatedRolesConfig()
+                .setAllowedAudience(mainApplication.getAssociatedRolesConfig().getAllowedAudience());
 
         return delegatedApplication;
     }
