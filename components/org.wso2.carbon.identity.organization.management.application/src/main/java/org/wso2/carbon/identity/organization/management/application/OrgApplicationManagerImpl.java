@@ -673,6 +673,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
+    /**
+     * This method checks whether the exception is thrown due to the OAuth client already existing.
+     * @param e The IdentityException thrown upon OAuth app creation failure.
+     * @return  Boolean indicating whether the exception is thrown due to the OAuth client already existing.
+     */
     private boolean isOAuthClientExistsError(IdentityException e) {
 
         return DUPLICATE_OAUTH_CLIENT.getErrorCode().equals(e.getErrorCode());
