@@ -507,22 +507,34 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             if (matchingClaim.isPresent()) {
                 LocalClaim claim = matchingClaim.get();
                 try {
-                    getClaimMetadataManagementService().addLocalClaim(claim, sharedOrganizationTenantDomain);
-
-                    List<Claim> externalClaimMappingsInParentOrg =
-                            getMappedExternalClaims(claimURI, parentTenantDomain);
-                    if (!externalClaimMappingsInParentOrg.isEmpty()) {
-                        for (Claim externalClaim : externalClaimMappingsInParentOrg) {
-                            if (!isDialectExists(externalClaim.getClaimDialectURI(), sharedOrganizationTenantDomain)) {
-                                getClaimMetadataManagementService().addClaimDialect(new ClaimDialect(
-                                        externalClaim.getClaimDialectURI()), sharedOrganizationTenantDomain);
-                            }
-                            getClaimMetadataManagementService().addExternalClaim((new ExternalClaim(
-                                            externalClaim.getClaimDialectURI(), externalClaim.getClaimURI(), claimURI)),
-                                    sharedOrganizationTenantDomain);
+                    String primaryUserStoreDomain = getPrimaryUserStoreDomain(parentTenantDomain);
+                    List<AttributeMapping> mappedAttributes = claim.getMappedAttributes();
+                    Iterator<AttributeMapping> iterator = mappedAttributes.iterator();
+                    while (iterator.hasNext()) {
+                        AttributeMapping attributeMapping = iterator.next();
+                        if (!primaryUserStoreDomain.equals(attributeMapping.getUserStoreDomain())) {
+                            iterator.remove();
                         }
                     }
-                } catch (ClaimMetadataException e) {
+                    if (!mappedAttributes.isEmpty()) {
+                        getClaimMetadataManagementService().addLocalClaim(claim, sharedOrganizationTenantDomain);
+                        List<Claim> externalClaimMappingsInParentOrg =
+                                getMappedExternalClaims(claimURI, parentTenantDomain);
+                        if (!externalClaimMappingsInParentOrg.isEmpty()) {
+                            for (Claim externalClaim : externalClaimMappingsInParentOrg) {
+                                if (!isDialectExists(externalClaim.getClaimDialectURI(),
+                                        sharedOrganizationTenantDomain)) {
+                                    getClaimMetadataManagementService().addClaimDialect(new ClaimDialect(
+                                            externalClaim.getClaimDialectURI()), sharedOrganizationTenantDomain);
+                                }
+                                getClaimMetadataManagementService().addExternalClaim(
+                                        (new ExternalClaim(externalClaim.getClaimDialectURI(),
+                                                externalClaim.getClaimURI(), claimURI)),
+                                        sharedOrganizationTenantDomain);
+                            }
+                        }
+                    }
+                } catch (ClaimMetadataException | UserStoreException e) {
                     throw new IdentityEventException("An error occurred while adding claims to the sub-organization",
                             e);
                 }
