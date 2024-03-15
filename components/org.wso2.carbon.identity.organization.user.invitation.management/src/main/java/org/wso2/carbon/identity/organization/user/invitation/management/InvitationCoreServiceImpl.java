@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
@@ -47,6 +48,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.I
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
+import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
@@ -172,12 +174,18 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     invitation.setUserOrganizationId(parentOrgId);
                     invitation.setStatus(STATUS_PENDING);
                     invitation.setInvitationId(UUID.randomUUID().toString());
-                    invitation.setConfirmationCode(UUID.randomUUID().toString());
+                    String confirmationCode = UUID.randomUUID().toString();
+                    invitation.setConfirmationCode(confirmationCode);
                     userInvitationDAO.createInvitation(invitation);
                     Invitation createdInvitationInfo = userInvitationDAO
                             .getInvitationByInvitationId(invitation.getInvitationId());
-                    // Trigger the event for invitation creation
-                    triggerInvitationAddNotification(createdInvitationInfo);
+                    if (isNotificationsInternallyManaged(orgId)) {
+                        // Trigger the event for invitation creation to send notification internally.
+                        triggerInvitationAddNotification(createdInvitationInfo);
+                    } else {
+                        // Send the confirmation code via the response to manage notification externally.
+                        validationResult.setConfirmationCode(confirmationCode);
+                    }
                 }
                 createdInvitationsList.add(validationResult);
             }
@@ -774,5 +782,28 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
         result.setStatus(SUCCESS_STATUS);
         return result;
+    }
+
+    private boolean isNotificationsInternallyManaged(String organizationId) throws UserInvitationMgtServerException {
+
+        try {
+            // Get root organization of the given org.
+            String primaryOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            String rootOrgTenantDomain = resolveTenantDomain(primaryOrganizationId);
+            boolean manageNotificationsInternally = Boolean.parseBoolean(org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig
+                    (IdentityRecoveryConstants.ConnectorConfig.EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE, rootOrgTenantDomain));
+            if (LOG.isDebugEnabled()) {
+                if (manageNotificationsInternally) {
+                    LOG.debug("Notification will be managed internally");
+                } else {
+                    LOG.debug("Notification will be managed externally");
+                }
+            }
+            return manageNotificationsInternally;
+        } catch (OrganizationManagementServerException e) {
+            throw new UserInvitationMgtServerException("Error occurred while resolving the root organization.");
+        } catch (IdentityEventException e) {
+            throw new UserInvitationMgtServerException("Error occurred while retrieving the notification management configurations.");
+        }
     }
 }

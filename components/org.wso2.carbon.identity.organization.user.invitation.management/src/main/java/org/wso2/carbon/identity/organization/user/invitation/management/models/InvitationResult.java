@@ -28,6 +28,7 @@ public class InvitationResult {
     private String username;
     private UserInvitationMgtConstants.ErrorMessage errorMsg;
     private String status;
+    private String confirmationCode;
 
     public UserInvitationMgtConstants.ErrorMessage getErrorMsg() {
 
@@ -57,5 +58,15 @@ public class InvitationResult {
     public void setUsername(String username) {
 
         this.username = username;
+    }
+
+    public String getConfirmationCode() {
+
+        return confirmationCode;
+    }
+
+    public void setConfirmationCode(String confirmationCode) {
+
+        this.confirmationCode = confirmationCode;
     }
 }
