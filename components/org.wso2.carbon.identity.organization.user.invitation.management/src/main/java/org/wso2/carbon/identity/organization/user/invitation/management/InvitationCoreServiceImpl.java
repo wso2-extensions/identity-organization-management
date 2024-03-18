@@ -806,7 +806,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 if (manageNotificationsInternally) {
                     LOG.debug("Notification will be managed internally for the organization: " + organizationId);
                 } else {
-                    LOG.debug("Notification will be managed externally  for the organization: " + organizationId);
+                    LOG.debug("Notification will be managed externally for the organization: " + organizationId);
                 }
             }
             return manageNotificationsInternally;
