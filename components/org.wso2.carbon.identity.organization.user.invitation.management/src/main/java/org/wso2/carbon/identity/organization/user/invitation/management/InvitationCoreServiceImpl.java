@@ -810,10 +810,8 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 }
             }
             return manageNotificationsInternally;
-        } catch (OrganizationManagementServerException e) {
-            throw new UserInvitationMgtServerException(e.getErrorCode(), e.getMessage(), e);
-        } catch (IdentityEventException e) {
-            throw new UserInvitationMgtServerException(e.getErrorCode(), e.getMessage(), e);
+        } catch (OrganizationManagementServerException | IdentityEventException e) {
+            throw new UserInvitationMgtServerException(e.getMessage());
         }
     }
 }
