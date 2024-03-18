@@ -798,10 +798,10 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             // Get root organization of the given org.
             String primaryOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
             String rootOrgTenantDomain = resolveTenantDomain(primaryOrganizationId);
-            boolean manageNotificationsInternally =
-                    Boolean.parseBoolean(org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig
-                            (IdentityRecoveryConstants.ConnectorConfig.EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
-                                    rootOrgTenantDomain));
+            boolean manageNotificationsInternally = Boolean.parseBoolean(
+                    org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig(
+                            IdentityRecoveryConstants.ConnectorConfig.EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
+                            rootOrgTenantDomain));
             if (LOG.isDebugEnabled()) {
                 if (manageNotificationsInternally) {
                     LOG.debug("Notification will be managed internally for the organization: " + organizationId);
