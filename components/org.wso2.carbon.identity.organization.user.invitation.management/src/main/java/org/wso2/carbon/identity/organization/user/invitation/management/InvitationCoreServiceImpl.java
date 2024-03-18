@@ -377,8 +377,10 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             if (invitation != null) {
                 Timestamp currentTime = new Timestamp(new Date().getTime());
                 if (invitation.getExpiredAt().after(currentTime)) {
-                    // Trigger the event for invitation resend
-                    triggerInvitationAddNotification(invitation);
+                    if (isNotificationsInternallyManaged(organizationId)) {
+                        // Trigger the event for invitation resend.
+                        triggerInvitationAddNotification(invitation);
+                    }
                     return invitation;
                 }
                 throw new UserInvitationMgtClientException(ERROR_CODE_INVITATION_EXPIRED.getCode(),
