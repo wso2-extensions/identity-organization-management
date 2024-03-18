@@ -784,26 +784,36 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return result;
     }
 
+    /**
+     * Check whether the notifications are managed internally for the given organization.
+     * Always the configuration is read from the root organization.
+     *
+     * @param organizationId Organization ID.
+     * @return True if the notifications are managed internally. False otherwise.
+     * @throws UserInvitationMgtServerException Error while checking the notification management configuration.
+     */
     private boolean isNotificationsInternallyManaged(String organizationId) throws UserInvitationMgtServerException {
 
         try {
             // Get root organization of the given org.
             String primaryOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
             String rootOrgTenantDomain = resolveTenantDomain(primaryOrganizationId);
-            boolean manageNotificationsInternally = Boolean.parseBoolean(org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig
-                    (IdentityRecoveryConstants.ConnectorConfig.EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE, rootOrgTenantDomain));
+            boolean manageNotificationsInternally =
+                    Boolean.parseBoolean(org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig
+                            (IdentityRecoveryConstants.ConnectorConfig.EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
+                                    rootOrgTenantDomain));
             if (LOG.isDebugEnabled()) {
                 if (manageNotificationsInternally) {
-                    LOG.debug("Notification will be managed internally");
+                    LOG.debug("Notification will be managed internally for the organization: " + organizationId);
                 } else {
-                    LOG.debug("Notification will be managed externally");
+                    LOG.debug("Notification will be managed externally  for the organization: " + organizationId);
                 }
             }
             return manageNotificationsInternally;
         } catch (OrganizationManagementServerException e) {
-            throw new UserInvitationMgtServerException("Error occurred while resolving the root organization.");
+            throw new UserInvitationMgtServerException(e.getErrorCode(), e.getMessage(), e);
         } catch (IdentityEventException e) {
-            throw new UserInvitationMgtServerException("Error occurred while retrieving the notification management configurations.");
+            throw new UserInvitationMgtServerException(e.getErrorCode(), e.getMessage(), e);
         }
     }
 }
