@@ -39,7 +39,8 @@ public class OrganizationSharedUserUtil {
 
     private static final Log LOG = LogFactory.getLog(OrganizationSharedUserUtil.class);
 
-    public static String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId) {
+    public static String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
+            throws UserStoreException {
 
         Map<String, String> claimsMap;
         try {
