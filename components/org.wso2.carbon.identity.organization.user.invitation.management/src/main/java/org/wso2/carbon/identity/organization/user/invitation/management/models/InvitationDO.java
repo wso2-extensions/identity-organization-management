@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +18,9 @@
 
 package org.wso2.carbon.identity.organization.user.invitation.management.models;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Model that contains the invitation data object.
@@ -30,6 +32,7 @@ public class InvitationDO {
     private RoleAssignments[] roleAssignments;
     private GroupAssignments[] groupAssignments;
     private String userRedirectUrl;
+    private Map<String, String> invitationProperties = new HashMap();
 
     public String getUserRedirectUrl() {
 
@@ -82,5 +85,15 @@ public class InvitationDO {
     public void setGroupAssignments(GroupAssignments[] groupAssignments) {
 
         this.groupAssignments = groupAssignments != null ? groupAssignments.clone() : null;
+    }
+
+    public Map<String, String> getInvitationProperties() {
+
+        return invitationProperties;
+    }
+
+    public void setInvitationProperties(Map<String, String> invitationProperties) {
+
+        this.invitationProperties = invitationProperties;
     }
 }

@@ -42,11 +42,11 @@ public class OrganizationSharedUserUtil {
     public static String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
             throws UserStoreException {
 
-        String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
+        //String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
         Map<String, String> claimsMap;
         try {
             claimsMap = userStoreManager
-                    .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
+                    .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, null);
         } catch (UserStoreException e) {
             if (LOG.isDebugEnabled()) {
                 String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
