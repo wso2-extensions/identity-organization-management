@@ -60,11 +60,21 @@ public class InvitationResult {
         this.username = username;
     }
 
+    /**
+     * Get the confirmation code.
+     *
+     * @return Confirmation code.
+     */
     public String getConfirmationCode() {
 
         return confirmationCode;
     }
 
+    /**
+     * Set the confirmation code.
+     *
+     * @param confirmationCode Confirmation code.
+     */
     public void setConfirmationCode(String confirmationCode) {
 
         this.confirmationCode = confirmationCode;
