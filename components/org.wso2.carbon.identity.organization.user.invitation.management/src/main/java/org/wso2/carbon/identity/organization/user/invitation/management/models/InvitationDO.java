@@ -87,11 +87,21 @@ public class InvitationDO {
         this.groupAssignments = groupAssignments != null ? groupAssignments.clone() : null;
     }
 
+    /**
+     * Get the invitation properties.
+     *
+     * @return Invitation properties.
+     */
     public Map<String, String> getInvitationProperties() {
 
         return invitationProperties;
     }
 
+    /**
+     * Set the invitation properties.
+     *
+     * @param invitationProperties Invitation properties.
+     */
     public void setInvitationProperties(Map<String, String> invitationProperties) {
 
         this.invitationProperties = invitationProperties;
