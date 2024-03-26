@@ -799,7 +799,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
      * named 'manageNotificationsInternally'. If not check on the server configuration.
      * Always the configuration is read from the root organization.
      *
-     * @param organizationId Organization ID.
+     * @param organizationId       Organization ID.
      * @param invitationProperties key value pairs of invitation properties.
      * @return True if the notifications are managed internally. False otherwise.
      * @throws UserInvitationMgtServerException Error while checking the notification management configuration.
