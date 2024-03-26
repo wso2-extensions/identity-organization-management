@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -46,6 +46,7 @@ public class UserInvitationMgtConstants {
     public static final String EVENT_PROP_CONFIRMATION_CODE = "confirmation-code";
     public static final String EVENT_PROP_TENANT_DOMAIN = "tenant-domain";
     public static final String EVENT_PROP_REDIRECT_URL = "redirect-url";
+    public static final String EVENT_PROP_PROPERTIES = "invitation-properties";
     public static final String EVENT_PROP_SEND_TO = "send-to";
     public static final String EVENT_PROP_TEMPLATE_TYPE = "TEMPLATE_TYPE";
     public static final String ORGANIZATION_USER_INVITATION_EMAIL_TEMPLATE_TYPE = "OrganizationUserInvitation";

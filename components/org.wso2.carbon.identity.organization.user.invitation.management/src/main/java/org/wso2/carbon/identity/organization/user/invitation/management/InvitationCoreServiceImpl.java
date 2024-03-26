@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.user.invitation.management;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -34,6 +35,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
@@ -47,6 +49,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.I
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationDO;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.InvitationResult;
 import org.wso2.carbon.identity.organization.user.invitation.management.models.RoleAssignments;
+import org.wso2.carbon.identity.recovery.IdentityRecoveryConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
@@ -68,6 +71,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
@@ -78,6 +82,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_EMAIL_ADDRESS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_GROUP_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_PROPERTIES;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_TENANT_DOMAIN;
@@ -172,12 +177,20 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     invitation.setUserOrganizationId(parentOrgId);
                     invitation.setStatus(STATUS_PENDING);
                     invitation.setInvitationId(UUID.randomUUID().toString());
-                    invitation.setConfirmationCode(UUID.randomUUID().toString());
+                    String confirmationCode = UUID.randomUUID().toString();
+                    invitation.setConfirmationCode(confirmationCode);
+                    Map<String, String> invitationProperties = invitationDO.getInvitationProperties();
+                    invitation.setInvitationProperties(invitationProperties);
                     userInvitationDAO.createInvitation(invitation);
-                    Invitation createdInvitationInfo = userInvitationDAO
-                            .getInvitationByInvitationId(invitation.getInvitationId());
-                    // Trigger the event for invitation creation
-                    triggerInvitationAddNotification(createdInvitationInfo);
+                    Invitation createdInvitationInfo =
+                            userInvitationDAO.getInvitationByInvitationId(invitation.getInvitationId());
+                    if (isNotificationsInternallyManaged(orgId, invitationProperties)) {
+                        // Trigger the event for invitation creation to send notification internally.
+                        triggerInvitationAddNotification(createdInvitationInfo);
+                    } else {
+                        // Send the confirmation code via the response to manage notification externally.
+                        validationResult.setConfirmationCode(confirmationCode);
+                    }
                 }
                 createdInvitationsList.add(validationResult);
             }
@@ -369,8 +382,11 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             if (invitation != null) {
                 Timestamp currentTime = new Timestamp(new Date().getTime());
                 if (invitation.getExpiredAt().after(currentTime)) {
-                    // Trigger the event for invitation resend
-                    triggerInvitationAddNotification(invitation);
+                    Map<String, String> invitationProperties = invitation.getInvitationProperties();
+                    if (isNotificationsInternallyManaged(organizationId, invitationProperties)) {
+                        // Trigger the event for invitation resend.
+                        triggerInvitationAddNotification(invitation);
+                    }
                     return invitation;
                 }
                 throw new UserInvitationMgtClientException(ERROR_CODE_INVITATION_EXPIRED.getCode(),
@@ -455,6 +471,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         properties.put(EVENT_PROP_CONFIRMATION_CODE, invitation.getConfirmationCode());
         properties.put(EVENT_PROP_TENANT_DOMAIN, invitation.getInvitedOrganizationId());
         properties.put(EVENT_PROP_REDIRECT_URL, invitation.getUserRedirectUrl());
+        properties.put(EVENT_PROP_PROPERTIES, invitation.getInvitationProperties());
 
         Event invitationEvent = new Event(EVENT_NAME_POST_ADD_INVITATION, properties);
         try {
@@ -774,5 +791,62 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         }
         result.setStatus(SUCCESS_STATUS);
         return result;
+    }
+
+    /**
+     * Check whether the notifications are managed internally for the given organization.
+     * First check whether the invitation itself has mentioned the notification handling mechanism through the property
+     * named 'manageNotificationsInternally'. If not check on the server configuration.
+     * Always the configuration is read from the root organization.
+     *
+     * @param organizationId       Organization ID.
+     * @param invitationProperties key value pairs of invitation properties.
+     * @return True if the notifications are managed internally. False otherwise.
+     * @throws UserInvitationMgtServerException Error while checking the notification management configuration.
+     */
+    private boolean isNotificationsInternallyManaged(String organizationId, Map<String, String> invitationProperties)
+            throws UserInvitationMgtServerException {
+
+        if (MapUtils.isEmpty(invitationProperties)) {
+            return isNotificationsInternallyManagedForOrganization(organizationId);
+        }
+        // Check whether notification management mechanism is mentioned in the invitation properties.
+        String manageNotificationsInternallyProperty =
+                invitationProperties.get(IdentityRecoveryConstants.MANAGE_NOTIFICATIONS_INTERNALLY_PROPERTY_KEY);
+        if (StringUtils.isNotEmpty(manageNotificationsInternallyProperty)) {
+            return Boolean.parseBoolean(manageNotificationsInternallyProperty);
+        }
+        return isNotificationsInternallyManagedForOrganization(organizationId);
+    }
+
+    /**
+     * Check whether the notifications are managed internally for the given organization, by server configuration.
+     *
+     * @param organizationId Organization ID.
+     * @return True if the notifications are managed internally. False otherwise.
+     * @throws UserInvitationMgtServerException Error while checking the notification management configuration.
+     */
+    private boolean isNotificationsInternallyManagedForOrganization(String organizationId)
+            throws UserInvitationMgtServerException {
+
+        try {
+            // Get root organization of the given org.
+            String rootOrganizationId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
+            String rootOrgTenantDomain = resolveTenantDomain(rootOrganizationId);
+            boolean manageNotificationsInternally = Boolean.parseBoolean(
+                    org.wso2.carbon.identity.recovery.util.Utils.getConnectorConfig(
+                            IdentityRecoveryConstants.ConnectorConfig.
+                                    EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE, rootOrgTenantDomain));
+            if (LOG.isDebugEnabled()) {
+                if (manageNotificationsInternally) {
+                    LOG.debug("Notification will be managed internally for the organization: " + organizationId);
+                } else {
+                    LOG.debug("Notification will be managed externally for the organization: " + organizationId);
+                }
+            }
+            return manageNotificationsInternally;
+        } catch (OrganizationManagementServerException | IdentityEventException e) {
+            throw new UserInvitationMgtServerException(e.getMessage());
+        }
     }
 }

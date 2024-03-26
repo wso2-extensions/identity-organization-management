@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -42,11 +42,10 @@ public class OrganizationSharedUserUtil {
     public static String getUserManagedOrganizationClaim(AbstractUserStoreManager userStoreManager, String userId)
             throws UserStoreException {
 
-        String userDomain = userStoreManager.getUser(userId, null).getUserStoreDomain();
         Map<String, String> claimsMap;
         try {
             claimsMap = userStoreManager
-                    .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, userDomain);
+                    .getUserClaimValuesWithID(userId, new String[]{CLAIM_MANAGED_ORGANIZATION}, null);
         } catch (UserStoreException e) {
             if (LOG.isDebugEnabled()) {
                 String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();

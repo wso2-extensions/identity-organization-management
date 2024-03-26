@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -28,6 +28,7 @@ public class InvitationResult {
     private String username;
     private UserInvitationMgtConstants.ErrorMessage errorMsg;
     private String status;
+    private String confirmationCode;
 
     public UserInvitationMgtConstants.ErrorMessage getErrorMsg() {
 
@@ -57,5 +58,25 @@ public class InvitationResult {
     public void setUsername(String username) {
 
         this.username = username;
+    }
+
+    /**
+     * Get the confirmation code.
+     *
+     * @return Confirmation code.
+     */
+    public String getConfirmationCode() {
+
+        return confirmationCode;
+    }
+
+    /**
+     * Set the confirmation code.
+     *
+     * @param confirmationCode Confirmation code.
+     */
+    public void setConfirmationCode(String confirmationCode) {
+
+        this.confirmationCode = confirmationCode;
     }
 }
