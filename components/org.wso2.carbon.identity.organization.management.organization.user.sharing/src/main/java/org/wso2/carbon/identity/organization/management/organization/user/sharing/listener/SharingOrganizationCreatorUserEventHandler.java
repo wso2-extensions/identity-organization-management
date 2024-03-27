@@ -107,9 +107,6 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
-                    if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
-                        return;
-                    }
 
                     RealmConfiguration realmConfiguration = OrganizationUserSharingDataHolder.getInstance()
                             .getRealmService().getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain))
@@ -129,7 +126,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                         String userId = userSharingService
                                 .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                                 .getUserId();
-                        if (isAuthenticatedFromConsoleApp()) {
+                        if (!isAuthenticatedFromB2BApp()) {
                             assignUserToConsoleAppAdminRole(userId, tenantDomain);
                         }
                     } finally {
@@ -143,7 +140,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         }
     }
 
-    private boolean isAuthenticatedFromConsoleApp() {
+    private boolean isAuthenticatedFromB2BApp() {
 
         Object authenticatedAppFromThreadLocal = IdentityUtil.threadLocalProperties.get()
                 .get(FrameworkConstants.SERVICE_PROVIDER);
@@ -151,7 +148,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             return false;
         }
         String authenticatedApp = (String) authenticatedAppFromThreadLocal;
-        return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
+        return !FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
     }
 
     private Role buildOrgCreatorRole(String adminUUID) {
