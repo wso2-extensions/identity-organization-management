@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -39,7 +40,9 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.role.management.service.models.Role;
 import org.wso2.carbon.identity.organization.management.role.management.service.models.User;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.TenantTypeOrganization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
@@ -68,13 +71,6 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
 
         String eventName = event.getEventName();
         String orgId = null;
-
-        String authenticationType =
-                (String) IdentityUtil.threadLocalProperties.get().get(UserSharingConstants.AUTHENTICATION_TYPE);
-        if (StringUtils.isNotEmpty(authenticationType) &&
-                UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
-            return;
-        }
 
         try {
             if (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
@@ -105,6 +101,15 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 if ("POST_SHARED_CONSOLE_APP".equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
                     orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
+                    TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
+                    boolean orgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
+                    String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
+                            .get(UserSharingConstants.AUTHENTICATION_TYPE);
+                    if (!orgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+                            UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
+                        return;
+                    }
+
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
                     if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
@@ -219,5 +224,14 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationUserSharingDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private boolean checkOrgCreatorSetInOrgAttributes(Organization organization) {
+
+        if (CollectionUtils.isEmpty(organization.getAttributes())) {
+            return false;
+        }
+        return organization.getAttributes().stream()
+                .anyMatch(x->x.getKey().equals(OrganizationManagementConstants.CREATOR_ID));
     }
 }
