@@ -77,6 +77,13 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
                     TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
+                    boolean orgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
+                    String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
+                            .get(UserSharingConstants.AUTHENTICATION_TYPE);
+                    if (!orgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+                            UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
+                        return;
+                    }
                     orgId = organization.getId();
                     String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                             .resolveTenantDomain(orgId);
