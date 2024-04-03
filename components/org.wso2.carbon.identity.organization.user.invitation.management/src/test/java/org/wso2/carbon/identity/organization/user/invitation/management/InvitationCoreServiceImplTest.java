@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAO;
 import org.wso2.carbon.identity.organization.user.invitation.management.dao.UserInvitationDAOImpl;
 import org.wso2.carbon.identity.organization.user.invitation.management.exception.UserInvitationMgtClientException;
@@ -45,6 +46,7 @@ import org.wso2.carbon.identity.organization.user.invitation.management.util.Tes
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -60,11 +62,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.support.membermodification.MemberMatcher.method;
+import static org.powermock.api.support.membermodification.MemberModifier.stub;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_CONF_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_EMAIL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_INVITATION_ID;
@@ -98,7 +103,8 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
         UserInvitationMgtDataHolder.class,
-        IdentityUtil.class, OrganizationSharedUserUtil.class})
+        IdentityUtil.class, OrganizationSharedUserUtil.class,
+        InvitationCoreServiceImpl.class})
 public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
     private final UserInvitationDAO userInvitationDAO = new UserInvitationDAOImpl();
@@ -312,6 +318,136 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         assertEquals(createdInvitation.get(0).getStatus(), "Failed");
     }
 
+    @DataProvider(name = "testConfirmationCodeReturnOnInviteCreationDataProvider")
+    public Object[][] inviteNotificationManagingData() {
+
+        return new Object[][]{
+                {
+                        true, "false", true, true
+                },
+                {
+                        true, "false", false, true
+                },
+                {
+                        true, "true", true, false
+                },
+                {
+                        true, "true", false, false
+                },
+                {
+                        false, null, false, true
+                },
+                {
+                        false, null, true, false
+                }
+        };
+    }
+
+    @Test(priority = 10, dataProvider = "testConfirmationCodeReturnOnInviteCreationDataProvider")
+    public void testConfirmationCodeReturnOnInviteCreation(boolean setNotificationManagingProperty,
+                                                           String propertyValue,
+                                                           boolean isNotificationManagedInternallyForOrg,
+                                                           boolean isConfirmationCodeReturnInResponse)
+            throws Exception {
+
+        String username = "alex";
+        String userStoreDomain = "DEFAULT";
+        String userStoreQualifiedUsername = userStoreDomain + "/" + username;
+        String userId = "de828181-e1a8-4f5e-8936-f154f4ae1234";
+        String subOrgId = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
+        String parentOrgId = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
+        String tenantDomainOfSubOrg = "subOrg";
+        String tenantDomainOfParentOrg = "parentOrg";
+
+        InvitationDO invitation = new InvitationDO();
+        invitation.setUsernamesList(Collections.singletonList(username));
+        invitation.setUserDomain(userStoreDomain);
+        invitation.setRoleAssignments(null);
+        invitation.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
+        if (setNotificationManagingProperty) {
+            invitation.setInvitationProperties(
+                    Collections.singletonMap("manageNotificationsInternally", propertyValue));
+        }
+
+        OrganizationManager organizationManager = mock(OrganizationManager.class);
+        RealmService realmService = mock(RealmService.class);
+
+        UserRealm userRealmSubOrg = mock(UserRealm.class);
+        AbstractUserStoreManager userStoreManagerSubOrg = mock(AbstractUserStoreManager.class);
+        mockSubOrgDetails(userStoreManagerSubOrg, userStoreQualifiedUsername, userRealmSubOrg, realmService,
+                tenantDomainOfSubOrg, organizationManager, subOrgId);
+
+        UserRealm userRealmParentOrg = mock(UserRealm.class);
+        AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+        mockParentOrgDetails(userStoreManagerParentOrg, userStoreQualifiedUsername, userId, userRealmParentOrg,
+                realmService, tenantDomainOfParentOrg, organizationManager, parentOrgId);
+
+        OrganizationSharedUserUtil organizationSharedUserUtil = mock(OrganizationSharedUserUtil.class);
+        when(organizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManagerSubOrg, userId)).thenReturn(
+                parentOrgId);
+
+        UserInvitationMgtDataHolder.getInstance().setRealmService(realmService);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
+        List<String> ancestors = new ArrayList<>();
+        ancestors.add(subOrgId);
+        ancestors.add(parentOrgId);
+
+        when(organizationManager.getAncestorOrganizationIds(anyString())).thenReturn(ancestors);
+        when(organizationManager.getParentOrganizationId(subOrgId)).thenReturn(parentOrgId);
+
+        stub(method(InvitationCoreServiceImpl.class, "isActiveInvitationAvailable",
+                String.class, String.class, String.class, String.class)).toReturn(false);
+        stub(method(InvitationCoreServiceImpl.class, "isUserExistAtInvitedOrganization",
+                String.class)).toReturn(false);
+        stub(method(InvitationCoreServiceImpl.class, "triggerInvitationAddNotification", Invitation.class))
+                .toReturn(true);
+        stub(method(InvitationCoreServiceImpl.class, "isNotificationsInternallyManagedForOrganization",
+                String.class)).toReturn(isNotificationManagedInternallyForOrg);
+
+        when(IdentityDatabaseUtil.getDBConnection(true)).thenReturn(getConnection());
+        when(IdentityDatabaseUtil.getDBConnection(false)).thenReturn(getConnection());
+
+        List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation);
+        assertNotNull(createdInvitation);
+        assertEquals(createdInvitation.get(0).getStatus(), "Successful");
+        if (isConfirmationCodeReturnInResponse) {
+            assertNotNull(createdInvitation.get(0).getConfirmationCode());
+        }
+    }
+
+    private static void mockParentOrgDetails(AbstractUserStoreManager userStoreManagerParentOrg,
+                                             String userStoreQualifiedUsername,
+                                             String userId, UserRealm userRealmParentOrg, RealmService realmService,
+                                             String tenantDomainOfParentOrg, OrganizationManager organizationManager,
+                                             String parentOrgId)
+            throws UserStoreException, OrganizationManagementException {
+
+        when(userStoreManagerParentOrg.isExistingUser(userStoreQualifiedUsername)).thenReturn(true);
+        when(userStoreManagerParentOrg.getUserIDFromUserName(userStoreQualifiedUsername)).thenReturn(userId);
+        when(userStoreManagerParentOrg.getUserClaimValue(userStoreQualifiedUsername, CLAIM_EMAIL_ADDRESS,
+                null)).thenReturn(
+                "alex@gmail.com");
+        when(userRealmParentOrg.getUserStoreManager()).thenReturn(userStoreManagerParentOrg);
+        when(realmService.getTenantUserRealm(1)).thenReturn(userRealmParentOrg);
+        when(IdentityTenantUtil.getTenantId(tenantDomainOfParentOrg)).thenReturn(1);
+        when(IdentityTenantUtil.getTenantDomain(1)).thenReturn(tenantDomainOfParentOrg);
+        when(organizationManager.resolveTenantDomain(parentOrgId)).thenReturn(tenantDomainOfParentOrg);
+    }
+
+    private static void mockSubOrgDetails(AbstractUserStoreManager userStoreManagerSubOrg,
+                                          String userStoreQualifiedUsername,
+                                          UserRealm userRealmSubOrg, RealmService realmService,
+                                          String tenantDomainOfSubOrg,
+                                          OrganizationManager organizationManager, String subOrgId)
+            throws UserStoreException, OrganizationManagementException {
+
+        when(userStoreManagerSubOrg.isExistingUser(userStoreQualifiedUsername)).thenReturn(false);
+        when(userRealmSubOrg.getUserStoreManager()).thenReturn(userStoreManagerSubOrg);
+        when(realmService.getTenantUserRealm(2)).thenReturn(userRealmSubOrg);
+        when(IdentityTenantUtil.getTenantId(tenantDomainOfSubOrg)).thenReturn(2);
+        when(IdentityTenantUtil.getTenantDomain(2)).thenReturn(tenantDomainOfSubOrg);
+        when(organizationManager.resolveTenantDomain(subOrgId)).thenReturn(tenantDomainOfSubOrg);
+    }
 
     private static void setUpCarbonHome() {
 
