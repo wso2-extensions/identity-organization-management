@@ -45,8 +45,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizationDiscoveryHandler {
 
     private static final String EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG = "emailDomain.enable";
-    private static final OrganizationConfigManager organizationConfigManager = OrganizationDiscoveryServiceHolder
-            .getInstance().getOrganizationConfigManager();
     private static final Pattern EMAIL_DOMAIN_PATTERN = Pattern.compile("^[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     @Override
@@ -59,7 +57,7 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     public boolean isDiscoveryConfigurationEnabled(String organizationId) throws OrganizationManagementException {
 
         try {
-            List<ConfigProperty> configProperties = organizationConfigManager.getDiscoveryConfiguration()
+            List<ConfigProperty> configProperties = getOrganizationConfigManager().getDiscoveryConfiguration()
                     .getConfigProperties();
             return Optional.ofNullable(configProperties).orElse(Collections.emptyList()).stream()
                     .filter(prop -> EMAIL_DOMAIN_DISCOVERY_ENABLE_CONFIG.equals(prop.getKey()))
@@ -95,5 +93,10 @@ public class EmailDomainBasedDiscoveryHandler implements AttributeBasedOrganizat
     public boolean areAttributeValuesInValidFormat(List<String> attributeValues) {
 
         return attributeValues.stream().allMatch(emailDomain -> EMAIL_DOMAIN_PATTERN.matcher(emailDomain).matches());
+    }
+
+    private OrganizationConfigManager getOrganizationConfigManager() {
+
+        return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationConfigManager();
     }
 }
