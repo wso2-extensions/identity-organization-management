@@ -77,10 +77,10 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
                     TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
-                    boolean orgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
+                    boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
                     String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
                             .get(UserSharingConstants.AUTHENTICATION_TYPE);
-                    if (!orgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+                    if (!isOrgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
                             UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
                         return;
                     }
@@ -109,10 +109,10 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     Map<String, Object> eventProperties = event.getEventProperties();
                     orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
                     TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
-                    boolean orgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
+                    boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
                     String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
                             .get(UserSharingConstants.AUTHENTICATION_TYPE);
-                    if (!orgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+                    if (!isOrgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
                             UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
                         return;
                     }
