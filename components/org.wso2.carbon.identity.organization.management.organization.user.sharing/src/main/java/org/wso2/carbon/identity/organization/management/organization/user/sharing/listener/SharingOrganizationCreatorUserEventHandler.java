@@ -108,7 +108,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 if ("POST_SHARED_CONSOLE_APP".equals(eventName)) {
                     Map<String, Object> eventProperties = event.getEventProperties();
                     orgId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
-                    TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
+                    Organization organization = OrganizationUserSharingDataHolder.getInstance()
+                            .getOrganizationManager().getOrganization(orgId, false, false);
                     boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
                     String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
                             .get(UserSharingConstants.AUTHENTICATION_TYPE);
