@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
@@ -35,12 +36,14 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,7 @@ import java.util.concurrent.Executors;
 public class SharedRoleMgtHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(SharedRoleMgtHandler.class);
+    private static final String ALLOWED_AUDIENCE_FOR_ASSOCIATED_ROLES = "allowedAudienceForAssociatedRoles";
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Override
@@ -234,16 +238,53 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     }
                     break;
                 case RoleConstants.ORGANIZATION:
-                    /*
-                    Organization audience roles can't be attached to an application at the same time of role creation.
-                    Organization audience role get shared to other application only if that role is associated with any
-                    shared application in the organization. So nothing do in this case.
-                     */
+                    ApplicationBasicInfo[] applicationBasicInfo =
+                            getApplicationMgtService().getApplicationBasicInfoBySPProperty(roleTenantDomain,
+                                    PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername(),
+                                    ALLOWED_AUDIENCE_FOR_ASSOCIATED_ROLES, RoleConstants.ORGANIZATION);
+                    List<String> applicationIdList = new ArrayList<>();
+                    for (ApplicationBasicInfo basicInfo : applicationBasicInfo) {
+                        applicationIdList.add(basicInfo.getUuid());
+                    }
+
+                    List<BasicOrganization> applicationSharedOrganizations = new ArrayList<>();
+                    for (String applicationId : applicationIdList) {
+                        List<BasicOrganization> applicationSharedOrganizationsCopy = getOrgApplicationManager().
+                                getApplicationSharedOrganizations(roleOrgId, applicationId);
+
+                        for (BasicOrganization organizationCopy : applicationSharedOrganizationsCopy) {
+                            boolean found = false;
+                            for (BasicOrganization organization : applicationSharedOrganizations) {
+                                if (organization.getId().equals(organizationCopy.getId())) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                applicationSharedOrganizations.add(organizationCopy);
+                            }
+                        }
+
+                    }
+
+                    // Iterate through the list of organizations
+                    for (BasicOrganization organization : applicationSharedOrganizations) {
+                        String shareAppTenantDomain =
+                                getOrganizationManager().resolveTenantDomain(organization.getId());
+                        RoleBasicInfo sharedRoleInfo = getRoleManagementServiceV2().addRole(mainRoleName,
+                                Collections.emptyList(),
+                                Collections.emptyList(),
+                                Collections.emptyList(), RoleConstants.ORGANIZATION, organization.getId(),
+                                shareAppTenantDomain);
+                        getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
+                                sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                    }
                     break;
                 default:
                     LOG.error("Unsupported audience type: " + roleAudienceType);
             }
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementException | IdentityApplicationManagementException |
+                 IdentityRoleManagementException e) {
             throw new IdentityEventException("Error occurred while retrieving shared applications.", e);
         }
     }
