@@ -301,6 +301,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     }
                     // Inherit API based authentication enabled property from the main application.
                     inheritAPIBasedAuthenticationEnabledProperty(mainApplication, serviceProvider);
+
+                    /*
+                    If the shared application doesn't have a configured access URL,
+                    inherit it from the main application.
+                     */
+                    if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
+                        serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
+                    }
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
