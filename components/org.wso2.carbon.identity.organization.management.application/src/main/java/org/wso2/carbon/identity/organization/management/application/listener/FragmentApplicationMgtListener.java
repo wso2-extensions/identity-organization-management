@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -301,6 +301,14 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     }
                     // Inherit API based authentication enabled property from the main application.
                     inheritAPIBasedAuthenticationEnabledProperty(mainApplication, serviceProvider);
+
+                    /*
+                    If the shared application doesn't have a configured access URL,
+                    inherit it from the main application.
+                     */
+                    if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
+                        serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
+                    }
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
