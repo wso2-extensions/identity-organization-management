@@ -172,8 +172,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
         List<String> mainAppIds = new ArrayList<>();
         try {
+            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
             ApplicationBasicInfo[] applicationBasicInfos = getApplicationManagementService()
                     .getAllApplicationBasicInfo(tenantDomain, getAuthenticatedUsername());
             for (ApplicationBasicInfo applicationBasicInfo : applicationBasicInfos) {
@@ -201,8 +203,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             int rootTenantId = getApplicationManagementService().getTenantIdByApp(mainAppIds.get(0));
             String rootTenantDomain = IdentityTenantUtil.getTenantDomain(rootTenantId);
             String rootOrganizationId = getOrganizationManager().resolveOrganizationId(rootTenantDomain);
+            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(rootTenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
             for (String mainAppId : mainAppIds) {
                 List<BasicOrganization> applicationSharedOrganizations = getOrgApplicationManager()
                         .getApplicationSharedOrganizations(rootOrganizationId, mainAppId);
