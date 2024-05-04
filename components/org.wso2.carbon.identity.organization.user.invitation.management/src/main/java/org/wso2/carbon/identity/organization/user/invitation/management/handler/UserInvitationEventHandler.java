@@ -61,7 +61,7 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
     public boolean canHandle(MessageContext messageContext) throws IdentityRuntimeException {
 
         if (!isUserInvitationEventHandlerEnabled()) {
-            LOG.debug("Organization User Invitation Event Handler is not enabled");
+            LOG.info("[INVITATION_LOG] Organization User Invitation Event Handler is not enabled");
             return false;
         }
         String eventName = ((IdentityEventMessageContext) messageContext).getEvent().getEventName();
