@@ -69,6 +69,7 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("canHandle() returning True for the event: " + eventName);
             }
+            LOG.info("[INVITATION_LOG] Can handle the invitation event: " + eventName);
             return true;
         }
         return false;
@@ -78,12 +79,13 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
     public void handleEvent(Event event) throws IdentityEventException {
 
         String eventName = event.getEventName();
-
+        LOG.info("[INVITATION_LOG] Handling event: " + eventName);
         if (EVENT_NAME_POST_ADD_INVITATION.equals(eventName)) {
             // Trigger the email notification
             String redirectUrl = event.getEventProperties().get(EVENT_PROP_REDIRECT_URL) + "?code=" +
                     event.getEventProperties().get(EVENT_PROP_CONFIRMATION_CODE);
             event.getEventProperties().put(EVENT_PROP_REDIRECT_URL, redirectUrl);
+            LOG.info("[INVITATION_LOG] Triggering email notification for the event: " + eventName);
             triggerEmailNotification(event);
         }
     }
@@ -104,12 +106,13 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(EVENT_PROP_SEND_TO, event.getEventProperties().get(EVENT_PROP_EMAIL_ADDRESS));
         properties.put(EVENT_PROP_TEMPLATE_TYPE, ORGANIZATION_USER_INVITATION_EMAIL_TEMPLATE_TYPE);
-
+        LOG.info("[INVITATION_LOG] Invite event properties: " + event.getEventProperties());
         if (CollectionUtils.size(event.getEventProperties()) > 0) {
             properties.putAll(event.getEventProperties());
         }
         Event identityMgtEvent = new Event(IdentityEventConstants.Event.TRIGGER_NOTIFICATION, properties);
         try {
+            LOG.info("[INVITATION_LOG] Triggering the notification for invite event : " + event.getEventProperties());
             UserInvitationMgtDataHolder.getInstance().getIdentityEventService().handleEvent(identityMgtEvent);
         } catch (IdentityEventException e) {
             throw new IdentityEventException("Error while sending notification for user", e);

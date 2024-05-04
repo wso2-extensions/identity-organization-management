@@ -133,6 +133,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     @Override
     public List<InvitationResult> createInvitations(InvitationDO invitationDO) throws UserInvitationMgtException {
 
+        LOG.info("[INVITATION_LOG] Creating invitations for the users: " + invitationDO.getUsernamesList());
         List<InvitationResult> createdInvitationsList = new ArrayList<>();
         Invitation invitation = new Invitation();
         String orgId = Utils.getOrganizationId();
@@ -147,6 +148,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
             for (String username : invitationDO.getUsernamesList()) {
+                LOG.info("[INVITATION_LOG] Creating invitation for the user: " + username);
                 String userDomainQualifiedUserName = UserCoreUtil
                         .addDomainToName(username, invitationDO.getUserDomain());
                 String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
@@ -181,14 +183,21 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     invitation.setConfirmationCode(confirmationCode);
                     Map<String, String> invitationProperties = invitationDO.getInvitationProperties();
                     invitation.setInvitationProperties(invitationProperties);
+                    LOG.info("[INVITATION_LOG] Storing the invitation for the user: " + username);
                     userInvitationDAO.createInvitation(invitation);
                     Invitation createdInvitationInfo =
                             userInvitationDAO.getInvitationByInvitationId(invitation.getInvitationId());
+                    LOG.info("[INVITATION_LOG] Invitation created for user: " + username + " with the invitation id: " +
+                            invitation.getInvitationId());
                     if (isNotificationsInternallyManaged(orgId, invitationProperties)) {
                         // Trigger the event for invitation creation to send notification internally.
+                        LOG.info("[INVITATION_LOG] Triggering the event for invitation creation for the user: "
+                                + username);
                         triggerInvitationAddNotification(createdInvitationInfo);
                     } else {
                         // Send the confirmation code via the response to manage notification externally.
+                        LOG.info("[INVITATION_LOG] Sending the confirmation code in the response for the user: "
+                                + username);
                         validationResult.setConfirmationCode(confirmationCode);
                     }
                 }
@@ -472,9 +481,13 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         properties.put(EVENT_PROP_TENANT_DOMAIN, invitation.getInvitedOrganizationId());
         properties.put(EVENT_PROP_REDIRECT_URL, invitation.getUserRedirectUrl());
         properties.put(EVENT_PROP_PROPERTIES, invitation.getInvitationProperties());
-
+        LOG.info("[INVITATION_LOG] Triggering the event for invitation creation for the user: "
+                + invitation.getUsername());
+        LOG.info("[INVITATION_LOG] Invitation properties: " + properties);
         Event invitationEvent = new Event(EVENT_NAME_POST_ADD_INVITATION, properties);
         try {
+            LOG.info("[INVITATION_LOG] Handling the event for invitation creation for the user: "
+                    + invitation.getUsername());
             UserInvitationMgtDataHolder.getInstance().getIdentityEventService().handleEvent(invitationEvent);
         } catch (IdentityEventException e) {
             throw new UserInvitationMgtServerException(ERROR_CODE_EVENT_HANDLE.getCode(),
