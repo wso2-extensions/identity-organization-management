@@ -142,7 +142,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                         String userId = userSharingService
                                 .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                                 .getUserId();
-                        if (isAuthenticatedFromConsoleApp()) {
+                        if (allowAssignConsoleAdministratorRole()) {
                             assignUserToConsoleAppAdminRole(userId, tenantDomain);
                         }
                     } finally {
@@ -156,12 +156,19 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         }
     }
 
-    private boolean isAuthenticatedFromConsoleApp() {
+    /**
+     * The users authenticated via either console application or API invoked with basic auth option is allowed to be
+     * assigned the shared console Administrator role.
+     *
+     * @return Whether console role is allowed to be assigned.
+     */
+    private boolean allowAssignConsoleAdministratorRole() {
 
         Object authenticatedAppFromThreadLocal = IdentityUtil.threadLocalProperties.get()
                 .get(FrameworkConstants.SERVICE_PROVIDER);
         if (!(authenticatedAppFromThreadLocal instanceof String)) {
-            return false;
+            // When organization creation is initiated via basic auth, SP is not set in the thread local.
+            return true;
         }
         String authenticatedApp = (String) authenticatedAppFromThreadLocal;
         return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
