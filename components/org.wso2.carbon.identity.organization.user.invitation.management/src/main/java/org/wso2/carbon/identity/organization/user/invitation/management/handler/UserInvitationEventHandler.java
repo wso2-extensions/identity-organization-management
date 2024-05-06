@@ -93,11 +93,15 @@ public class UserInvitationEventHandler extends AbstractEventHandler {
     private boolean isUserInvitationEventHandlerEnabled() {
 
         if (this.configs == null) {
+            LOG.info("[INVITATION_LOG] Module configurations are not available. " +
+                    "Hence returning false.");
             return false;
         }
 
         String handlerEnabled = this.configs.getModuleProperties()
                 .getProperty(INVITATION_EVENT_HANDLER_ENABLED);
+        LOG.info("[INVITATION_LOG] Is User Invitation Event Handler enabled: " +
+                Boolean.parseBoolean(handlerEnabled));
         return Boolean.parseBoolean(handlerEnabled);
     }
 
