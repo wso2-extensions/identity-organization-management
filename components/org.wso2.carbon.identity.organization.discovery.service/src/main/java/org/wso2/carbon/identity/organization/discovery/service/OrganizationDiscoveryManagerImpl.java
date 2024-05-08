@@ -224,9 +224,12 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
             if (!discoveryHandler.areAttributeValuesInValidFormat(attribute.getValues())) {
                 throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUE, attributeType);
             }
-            boolean discoveryAttributeTaken = organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy
-                    (excludeCurrentOrganization, rootOrganizationId, organizationId, attributeType,
-                            attribute.getValues());
+            boolean discoveryAttributeTaken = false;
+            if (!attribute.getValues().isEmpty()) {
+                discoveryAttributeTaken = organizationDiscoveryDAO.isDiscoveryAttributeExistInHierarchy
+                        (excludeCurrentOrganization, rootOrganizationId, organizationId, attributeType,
+                                attribute.getValues());
+            }
             if (discoveryAttributeTaken) {
                 throw handleClientException(ERROR_CODE_DISCOVERY_ATTRIBUTE_TAKEN, attributeType);
             }
