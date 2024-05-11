@@ -179,7 +179,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                         IdentityUtil.threadLocalProperties.get()
                                 .put(REMOVED_APPLICATION_AUDIENCE_ROLES, removedApplicationAudienceRoles);
                         return true;
-                    default:
+                    case RoleConstants.ORGANIZATION:
                         if (existingAssociatedRolesList.equals(finalUpdatedAssociatedRolesList)) {
                             // Nothing to change in shared applications' organizations.
                             return true;
