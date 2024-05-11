@@ -140,7 +140,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                             List<String> roleIds = allRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.
                                     toList());
                             for (String roleId : roleIds) {
-                                //get all role details for each role id and create a RoleV2 object
+                                // Get all role details for each role id and create a RoleV2 object.
                                 Role roleBasicInfo = roleManagementService.getRole(roleId, tenantDomain);
                                 if (roleBasicInfo != null) {
                                     updatedAssociatedRolesList.add(new RoleV2(roleBasicInfo.getId(),
