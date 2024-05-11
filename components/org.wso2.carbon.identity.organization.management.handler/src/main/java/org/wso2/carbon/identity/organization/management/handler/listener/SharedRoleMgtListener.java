@@ -235,7 +235,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                             serviceProvider.getApplicationID()), e);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityApplicationManagementException(
-                    String.format("Error while retrieving associated roles for organization to be updated related " +
+                    String.format("Error while retrieving organization roles to be updated related " +
                             "to application %s update.", serviceProvider.getApplicationID()), e);
 
         }
