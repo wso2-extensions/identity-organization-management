@@ -73,36 +73,34 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         String orgId = null;
 
         try {
-            if (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
-                if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
-                    Map<String, Object> eventProperties = event.getEventProperties();
-                    TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
-                    boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
-                    String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
-                            .get(UserSharingConstants.AUTHENTICATION_TYPE);
-                    if (!isOrgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
-                            UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
-                        return;
-                    }
-                    orgId = organization.getId();
-                    String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                            .resolveTenantDomain(orgId);
-                    if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
-                        return;
-                    }
-                    String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-                    String associatedUserName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                    try {
-                        PrivilegedCarbonContext.startTenantFlow();
-                        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
-                        Role organizationCreatorRole = buildOrgCreatorRole(associatedUserId);
-                        Role administratorRole = buildAdministratorRole(associatedUserId);
-                        getRoleManager().createRole(orgId, organizationCreatorRole);
-                        getRoleManager().createRole(orgId, administratorRole);
-                    } finally {
-                        PrivilegedCarbonContext.endTenantFlow();
-                    }
+            if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
+                Map<String, Object> eventProperties = event.getEventProperties();
+                TenantTypeOrganization organization = (TenantTypeOrganization) eventProperties.get("ORGANIZATION");
+                boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
+                String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
+                        .get(UserSharingConstants.AUTHENTICATION_TYPE);
+                if (!isOrgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+                        UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
+                    return;
+                }
+                orgId = organization.getId();
+                String tenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveTenantDomain(orgId);
+                if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                    return;
+                }
+                String associatedUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+                String associatedUserName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                try {
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
+                    Role organizationCreatorRole = buildOrgCreatorRole(associatedUserId);
+                    Role administratorRole = buildAdministratorRole(associatedUserId);
+                    getRoleManager().createRole(orgId, organizationCreatorRole);
+                    getRoleManager().createRole(orgId, administratorRole);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
                 }
             } else {
                 if ("POST_SHARED_CONSOLE_APP".equals(eventName)) {
