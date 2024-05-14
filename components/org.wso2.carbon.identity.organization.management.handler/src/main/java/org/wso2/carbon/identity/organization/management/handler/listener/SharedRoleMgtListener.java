@@ -109,6 +109,11 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                     RoleConstants.ORGANIZATION : RoleConstants.APPLICATION) : serviceProvider
                     .getAssociatedRolesConfig().getAllowedAudience();
 
+            // If the existing and updated audiences are same, no need to update the roles.
+            if (updatedAllowedAudienceForRoleAssociation.equalsIgnoreCase(existingAllowedAudienceForRoleAssociation)) {
+                return true;
+            }
+
             List<RoleV2> updatedAssociatedRolesList = new ArrayList<>();
             if (serviceProvider.getAssociatedRolesConfig() != null &&
                     serviceProvider.getAssociatedRolesConfig().getRoles() != null) {
