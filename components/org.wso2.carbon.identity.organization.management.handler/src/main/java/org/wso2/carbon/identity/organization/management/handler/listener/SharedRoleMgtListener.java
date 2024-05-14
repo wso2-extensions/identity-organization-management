@@ -127,7 +127,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                         RoleManagementService roleManagementService = OrganizationManagementHandlerDataHolder
                                 .getInstance().getRoleManagementServiceV2();
                         List<RoleBasicInfo> chunkOfRoles;
-                        int offset = 0;
+                        int offset = 1;
                         int maximumPage = IdentityUtil.getMaximumItemPerPage();
                         List<RoleBasicInfo> allRoles = new ArrayList<>();
                         if (roleManagementService != null) {
@@ -140,7 +140,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                                     allRoles.addAll(chunkOfRoles);
                                     offset += chunkOfRoles.size(); // Move to the next chunk
                                 }
-                            } while (!chunkOfRoles.isEmpty());
+                            } while (chunkOfRoles.size() == maximumPage);
 
                             List<String> roleIds = allRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.
                                     toList());
