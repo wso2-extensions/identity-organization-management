@@ -21,7 +21,9 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -115,6 +117,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 getOrganizationManager().resolveTenantDomain(parentOrgId), getAuthenticatedUsername());
 
         for (ApplicationBasicInfo applicationBasicInfo : applicationBasicInfos) {
+            if (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME &&
+                    (FrameworkConstants.Application.CONSOLE_APP.equals(applicationBasicInfo.getApplicationName()) ||
+                    FrameworkConstants.Application.MY_ACCOUNT_APP.equals(applicationBasicInfo.getApplicationName()))) {
+                continue;
+            }
             if (getOrgApplicationMgtDAO().isFragmentApplication(applicationBasicInfo.getApplicationId())) {
                 Optional<SharedApplicationDO> sharedApplicationDO;
                 sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(
