@@ -531,7 +531,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                 if (!isRoleUsedByAnotherSharedApp) {
                     // Delete the role in org.
                     roleManagementService.deleteRole(sharedRoleId, sharedAppTenantDomain);
-                    break;
                 }
             }
         }
