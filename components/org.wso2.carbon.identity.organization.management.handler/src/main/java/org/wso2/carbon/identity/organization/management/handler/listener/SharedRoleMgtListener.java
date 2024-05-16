@@ -474,10 +474,10 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             mainApplicationOrgId = SUPER_ORG_ID;
         }
         List<String> sharedRoleDeletionExcludeList = new ArrayList<>();
-        sharedRoleDeletionExcludeList.add(resolveEveryoneOrganizationRole(mainApplicationTenantDomain));
 
         if (!OrganizationManagementUtil.isOrganization(sharedAppOrgId)) {
             sharedRoleDeletionExcludeList.add(RoleConstants.SYSTEM);
+            sharedRoleDeletionExcludeList.add(resolveEveryoneOrganizationRole(mainApplicationTenantDomain));
         }
         rolesList = rolesList.stream().filter(role -> !sharedRoleDeletionExcludeList.contains(role.getName()))
                 .collect(Collectors.toList());
