@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.APPLICATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.DEFAULT_USER_STORE_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_NAME_POST_ADD_INVITATION;
@@ -115,6 +116,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_USER_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FAIL_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FILTER_STATUS_EQ;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.INTERNAL_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.INVITED_USER_GROUP_NAME_PREFIX;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORG_USER_INVITATION_DEFAULT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORG_USER_INVITATION_USER_DOMAIN;
@@ -720,11 +722,45 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     }
 
     private boolean isInvitedUserHasConsoleAccess(String userId, String tenantDomain)
-            throws IdentityRoleManagementException {
+            throws IdentityRoleManagementException, UserStoreException {
 
         List<RoleBasicInfo> roleList = getRoleManagementService().getRoleListOfUser(userId, tenantDomain);
+        List<String> groupList = getUserGroups(userId, tenantDomain);
+        List<RoleBasicInfo> roleListFromUserGroups =
+                getRoleManagementService().getRoleListOfGroups(groupList, tenantDomain);
+
+        if (!roleListFromUserGroups.isEmpty()) {
+            roleList.addAll(roleListFromUserGroups);
+        }
+
         return roleList.stream().anyMatch(p ->
                 FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
+    }
+
+    /**
+     * Get the groups of the user.
+     *
+     * @param userId        User id.
+     * @param tenantDomain  Tenant domain.
+     * @return              List of user groups.
+     * @throws UserStoreException Error while retrieving from the user store.
+     */
+    private List<String> getUserGroups(String userId, String tenantDomain) throws UserStoreException {
+
+        List<String> userGroups = new ArrayList<>();
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+        List<Group> groups = userStoreManager.getGroupListOfUser(userId, null, null);
+
+        for (Group group : groups) {
+            String groupName = group.getGroupName();
+            String groupDomainName = UserCoreUtil.extractDomainFromName(groupName);
+            if (!INTERNAL_DOMAIN.equalsIgnoreCase(groupDomainName) &&
+                    !APPLICATION_DOMAIN.equalsIgnoreCase(groupDomainName)) {
+                userGroups.add(group.getGroupID());
+            }
+        }
+        return userGroups;
     }
 
     private InvitationResult userValidationResult(InvitationDO invitation, AbstractUserStoreManager userStoreManager,

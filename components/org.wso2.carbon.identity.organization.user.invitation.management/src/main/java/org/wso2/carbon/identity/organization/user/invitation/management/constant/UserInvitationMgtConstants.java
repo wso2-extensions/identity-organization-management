@@ -57,6 +57,8 @@ public class UserInvitationMgtConstants {
     public static final String EVENT_POST_ADD_INVITED_ORG_USER = "POST_ADD_INVITED_ORG_USER";
     public static final int SQL_FK_CONSTRAINT_VIOLATION_ERROR_CODE = 547;
     public static final String INVITATION_EVENT_HANDLER_ENABLED = "UserInvitationEventHandler.enable";
+    public static final String INTERNAL_DOMAIN = "Internal";
+    public static final String APPLICATION_DOMAIN = "Application";
 
     // Configurations
     public static final String ORG_USER_INVITATION_USER_DOMAIN = "OrganizationUserInvitation.PrimaryUserDomain";
