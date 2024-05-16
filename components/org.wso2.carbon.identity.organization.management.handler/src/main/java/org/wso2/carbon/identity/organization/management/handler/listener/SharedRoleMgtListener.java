@@ -104,10 +104,10 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             List<RoleV2> existingAssociatedRolesList =
                     applicationManagementService.getAssociatedRolesOfApplication(applicationResourceId, tenantDomain);
 
-            String updatedAllowedAudienceForRoleAssociation =
-                    serviceProvider.getAssociatedRolesConfig() == null ? (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME ?
-                    RoleConstants.ORGANIZATION : RoleConstants.APPLICATION) : serviceProvider
-                    .getAssociatedRolesConfig().getAllowedAudience();
+            String updatedAllowedAudienceForRoleAssociation = ((serviceProvider.getAssociatedRolesConfig() == null) ||
+                    (serviceProvider.getAssociatedRolesConfig().getAllowedAudience() == null)) ?
+                    (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME ? RoleConstants.ORGANIZATION :
+                    RoleConstants.APPLICATION) : serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
 
             // If the existing and updated audiences are both organization, no need to update the roles.
             if (RoleConstants.ORGANIZATION.equalsIgnoreCase(existingAllowedAudienceForRoleAssociation) &&
