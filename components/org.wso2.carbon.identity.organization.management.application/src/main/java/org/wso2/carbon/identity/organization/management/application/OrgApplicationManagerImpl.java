@@ -167,9 +167,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(ownerOrgId, true);
-        if (childOrganizations.isEmpty()) {
-            return;
-        }
         // Filter the child organization in case user send a list of organizations to share the original application.
         List<BasicOrganization> filteredChildOrgs = shareWithAllChildren
                 ? childOrganizations
@@ -191,6 +188,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             } finally {
                 IdentityUtil.threadLocalProperties.get().remove(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN);
             }
+        }
+
+        // Skip adding the SSO if there are no sub orgs.
+        if (childOrganizations.isEmpty()) {
+            return;
         }
 
         if (shareWithAllChildren || !filteredChildOrgs.isEmpty()) {
