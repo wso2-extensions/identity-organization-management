@@ -779,7 +779,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
         String context =
                 String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
-        return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
+        return ServiceURLBuilder.create().addPath(context).setTenant(tenantDomain).build().getAbsolutePublicURL();
     }
 
     private void removeOAuthApplication(OAuthConsumerAppDTO oauthApp)
