@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -69,7 +70,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
     private static final String ADDED_APPLICATION_AUDIENCE_ROLES = "addedApplicationAudienceRoles";
     private static final String REMOVED_ORGANIZATION_AUDIENCE_ROLES = "removedOrganizationAudienceRoles";
     private static final String ADDED_ORGANIZATION_AUDIENCE_ROLES = "addedOrganizationAudienceRoles";
-
+    private static final String SPACE = " ";
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     ApplicationManagementService applicationManagementService =
             OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService();
     OrganizationManager organizationManager =
@@ -78,7 +80,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             OrganizationManagementHandlerDataHolder.getInstance().getOrgApplicationManager();
     RoleManagementService roleManagementService =
             OrganizationManagementHandlerDataHolder.getInstance().getRoleManagementServiceV2();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Override
     public int getDefaultOrderId() {
@@ -103,16 +104,58 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             List<RoleV2> existingAssociatedRolesList =
                     applicationManagementService.getAssociatedRolesOfApplication(applicationResourceId, tenantDomain);
 
-            String updatedAllowedAudienceForRoleAssociation =
-                    serviceProvider.getAssociatedRolesConfig() == null ? RoleConstants.ORGANIZATION :
-                            serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
+            String updatedAllowedAudienceForRoleAssociation = ((serviceProvider.getAssociatedRolesConfig() == null) ||
+                    (serviceProvider.getAssociatedRolesConfig().getAllowedAudience() == null)) ?
+                    (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME ? RoleConstants.ORGANIZATION :
+                    RoleConstants.APPLICATION) : serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
 
-            List<RoleV2> updatedAssociatedRolesList;
+            // If the existing and updated audiences are both organization, no need to update the roles.
+            if (RoleConstants.ORGANIZATION.equalsIgnoreCase(existingAllowedAudienceForRoleAssociation) &&
+                    RoleConstants.ORGANIZATION.equalsIgnoreCase(updatedAllowedAudienceForRoleAssociation)) {
+                return true;
+            }
+
+            List<RoleV2> updatedAssociatedRolesList = new ArrayList<>();
             if (serviceProvider.getAssociatedRolesConfig() != null &&
                     serviceProvider.getAssociatedRolesConfig().getRoles() != null) {
-                updatedAssociatedRolesList = Arrays.asList(serviceProvider.getAssociatedRolesConfig().getRoles());
-            } else {
-                updatedAssociatedRolesList = new ArrayList<>();
+
+                switch (updatedAllowedAudienceForRoleAssociation.toLowerCase()) {
+                    case RoleConstants.APPLICATION:
+                        updatedAssociatedRolesList =
+                                Arrays.asList(serviceProvider.getAssociatedRolesConfig().getRoles());
+                        break;
+                    case RoleConstants.ORGANIZATION:
+                        RoleManagementService roleManagementService = OrganizationManagementHandlerDataHolder
+                                .getInstance().getRoleManagementServiceV2();
+                        List<RoleBasicInfo> chunkOfRoles;
+                        int offset = 1;
+                        int maximumPage = IdentityUtil.getMaximumItemPerPage();
+                        List<RoleBasicInfo> allRoles = new ArrayList<>();
+                        if (roleManagementService != null) {
+                            do {
+                                chunkOfRoles = roleManagementService.
+                                        getRoles(RoleConstants.AUDIENCE + SPACE + RoleConstants.EQ + SPACE +
+                                                        RoleConstants.ORGANIZATION, maximumPage, offset, null, null,
+                                                tenantDomain);
+                                if (!chunkOfRoles.isEmpty()) {
+                                    allRoles.addAll(chunkOfRoles);
+                                    offset += chunkOfRoles.size(); // Move to the next chunk
+                                }
+                            } while (chunkOfRoles.size() == maximumPage);
+
+                            List<String> roleIds = allRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.
+                                    toList());
+                            for (String roleId : roleIds) {
+                                // Get all role details for each role id and create a RoleV2 object.
+                                Role roleBasicInfo = roleManagementService.getRole(roleId, tenantDomain);
+                                if (roleBasicInfo != null) {
+                                    updatedAssociatedRolesList.add(new RoleV2(roleBasicInfo.getId(),
+                                            roleBasicInfo.getName()));
+                                }
+                            }
+                        }
+                        break;
+                }
             }
 
             if (CollectionUtils.isEmpty(existingAssociatedRolesList) &&
@@ -121,18 +164,20 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                 return true;
             }
 
+            // Creating a copy of the list to avoid concurrent modification to facilitate lambda operations.
+            List<RoleV2> finalUpdatedAssociatedRolesList = updatedAssociatedRolesList;
             /*
             if old and new audiences are equals, need to handle the role diff.
              */
             if (existingAllowedAudienceForRoleAssociation.equalsIgnoreCase(updatedAllowedAudienceForRoleAssociation)) {
                 switch (updatedAllowedAudienceForRoleAssociation.toLowerCase()) {
                     case RoleConstants.APPLICATION:
-                        List<RoleV2> addedApplicationAudienceRoles = updatedAssociatedRolesList.stream()
+                        List<RoleV2> addedApplicationAudienceRoles = finalUpdatedAssociatedRolesList.stream()
                                 .filter(updatedRole -> !existingAssociatedRolesList.contains(updatedRole))
                                 .collect(Collectors.toList());
 
                         List<RoleV2> removedApplicationAudienceRoles = existingAssociatedRolesList.stream()
-                                .filter(existingRole -> !updatedAssociatedRolesList.contains(existingRole))
+                                .filter(existingRole -> !finalUpdatedAssociatedRolesList.contains(existingRole))
                                 .collect(Collectors.toList());
                         // Add to threadLocal.
                         IdentityUtil.threadLocalProperties.get()
@@ -140,18 +185,18 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                         IdentityUtil.threadLocalProperties.get()
                                 .put(REMOVED_APPLICATION_AUDIENCE_ROLES, removedApplicationAudienceRoles);
                         return true;
-                    default:
-                        if (existingAssociatedRolesList.equals(updatedAssociatedRolesList)) {
+                    case RoleConstants.ORGANIZATION:
+                        if (existingAssociatedRolesList.equals(finalUpdatedAssociatedRolesList)) {
                             // Nothing to change in shared applications' organizations.
                             return true;
                         }
                         // Get the added roles and removed roles.
-                        List<RoleV2> addedOrganizationAudienceRoles = updatedAssociatedRolesList.stream()
+                        List<RoleV2> addedOrganizationAudienceRoles = finalUpdatedAssociatedRolesList.stream()
                                 .filter(updatedRole -> !existingAssociatedRolesList.contains(updatedRole))
                                 .collect(Collectors.toList());
 
                         List<RoleV2> removedOrganizationAudienceRoles = existingAssociatedRolesList.stream()
-                                .filter(existingRole -> !updatedAssociatedRolesList.contains(existingRole))
+                                .filter(existingRole -> !finalUpdatedAssociatedRolesList.contains(existingRole))
                                 .collect(Collectors.toList());
                         // Add to threadLocal.
                         IdentityUtil.threadLocalProperties.get()
@@ -173,7 +218,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                 IdentityUtil.threadLocalProperties.get()
                         .put(REMOVED_APPLICATION_AUDIENCE_ROLES, existingAssociatedRolesList);
                 IdentityUtil.threadLocalProperties.get()
-                        .put(ADDED_ORGANIZATION_AUDIENCE_ROLES, updatedAssociatedRolesList);
+                        .put(ADDED_ORGANIZATION_AUDIENCE_ROLES, finalUpdatedAssociatedRolesList);
                 return true;
             }
 
@@ -194,6 +239,11 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throw new IdentityApplicationManagementException(
                     String.format("Error while checking shared roles to be updated related to application %s update.",
                             serviceProvider.getApplicationID()), e);
+        } catch (IdentityRoleManagementException e) {
+            throw new IdentityApplicationManagementException(
+                    String.format("Error while retrieving organization roles to be updated related " +
+                            "to application %s update.", serviceProvider.getApplicationID()), e);
+
         }
         return true;
     }
