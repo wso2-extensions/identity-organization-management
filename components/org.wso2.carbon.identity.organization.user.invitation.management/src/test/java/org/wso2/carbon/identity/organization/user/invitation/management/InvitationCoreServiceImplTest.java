@@ -20,12 +20,14 @@ package org.wso2.carbon.identity.organization.user.invitation.management;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
+import org.powermock.reflect.Whitebox;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -45,14 +47,18 @@ import org.wso2.carbon.identity.organization.user.invitation.management.models.R
 import org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -94,8 +100,12 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_INV_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_UN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_04_USER_ORG_ID;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.USER_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils.closeH2Base;
 import static org.wso2.carbon.identity.organization.user.invitation.management.util.TestUtils.getConnection;
+import static org.wso2.carbon.user.core.UserCoreConstants.APPLICATION_DOMAIN;
+import static org.wso2.carbon.user.core.UserCoreConstants.INTERNAL_DOMAIN;
+import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
 
 @PrepareForTest({PrivilegedCarbonContext.class,
         RoleManagementService.class,
@@ -103,7 +113,9 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.u
         UserInvitationMgtDataHolder.class,
         IdentityTenantUtil.class,
         UserInvitationMgtDataHolder.class,
-        IdentityUtil.class, OrganizationSharedUserUtil.class,
+        IdentityUtil.class,
+        OrganizationSharedUserUtil.class,
+        UserCoreUtil.class,
         InvitationCoreServiceImpl.class})
 public class InvitationCoreServiceImplTest extends PowerMockTestCase {
 
@@ -413,6 +425,103 @@ public class InvitationCoreServiceImplTest extends PowerMockTestCase {
         if (isConfirmationCodeReturnInResponse) {
             assertNotNull(createdInvitation.get(0).getConfirmationCode());
         }
+    }
+
+    @Test(priority = 11)
+    public void testGetUserGroups() throws Exception {
+
+        // Mocking IdentityTenantUtil.getTenantId static method
+        when(IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
+
+        // Mocking the getAbstractUserStoreManager method
+        AbstractUserStoreManager userStoreManager = mock(AbstractUserStoreManager.class);
+        stub(method(InvitationCoreServiceImpl.class, "getAbstractUserStoreManager", int.class))
+                .toReturn(userStoreManager);
+
+        // Mocking the userStoreManager.getGroupListOfUser method
+        Group group1 = mock(Group.class);
+        Group group2 = mock(Group.class);
+        Group group3 = mock(Group.class);
+        when(group1.getGroupName()).thenReturn("Application/group1");
+        when(group2.getGroupName()).thenReturn("Internal/group2");
+        when(group3.getGroupName()).thenReturn("Primary/group3");
+        when(group1.getGroupID()).thenReturn("1");
+        when(group2.getGroupID()).thenReturn("2");
+        when(group3.getGroupID()).thenReturn("3");
+        List<Group> groups = Arrays.asList(group1, group2, group3);
+        when(userStoreManager.getGroupListOfUser(USER_ID, null, null)).thenReturn(groups);
+
+        // Mocking UserCoreUtil.extractDomainFromName
+        mockStatic(UserCoreUtil.class);
+        when(UserCoreUtil.extractDomainFromName("Application/group1")).thenReturn(APPLICATION_DOMAIN);
+        when(UserCoreUtil.extractDomainFromName("Internal/group2")).thenReturn(INTERNAL_DOMAIN);
+        when(UserCoreUtil.extractDomainFromName("Primary/group3"))
+                .thenReturn(PRIMARY_DEFAULT_DOMAIN_NAME);
+
+        // Invoking the method
+        List<String> resultUserGroups = Whitebox.invokeMethod(
+                invitationCoreService, "getUserGroups", USER_ID, CarbonBaseConstants.CARBON_HOME);
+
+        // Assertion
+        List<String> expectedUserGroups = Collections.singletonList("3");
+        assertEquals(resultUserGroups, expectedUserGroups);
+    }
+
+    @Test(priority = 12)
+    public void testIsInvitedUserHasConsoleAccess() throws Exception {
+
+        // Mocking Role List
+        RoleBasicInfo role1 = new RoleBasicInfo("1", "Role1");
+        RoleBasicInfo role2 = new RoleBasicInfo("2", "Role2");
+        RoleBasicInfo role3 = new RoleBasicInfo("3", "Role3");
+        RoleBasicInfo role4 = new RoleBasicInfo("4", "Role4");
+        role2.setAudienceName(FrameworkConstants.Application.CONSOLE_APP);
+        List<RoleBasicInfo> roleList = new ArrayList<>(Arrays.asList(role1, role2));
+
+        // Mocking Group List
+        List<String> groupList = Arrays.asList("groupID1", "groupID2");
+
+        // Mocking RoleManagementService getRoleListOfUser
+        RoleManagementService roleManagementService = mock(RoleManagementService.class);
+        stub(method(InvitationCoreServiceImpl.class, "getRoleManagementService"))
+                .toReturn(roleManagementService);
+        when(roleManagementService.getRoleListOfUser(USER_ID, CarbonBaseConstants.CARBON_HOME)).thenReturn(roleList);
+
+        // Stubbing getUserGroups Method
+        stub(method(InvitationCoreServiceImpl.class, "getUserGroups")).toReturn(groupList);
+
+        // Mocking RoleManagementService getRoleListOfGroups
+        List<RoleBasicInfo> roleListFromUserGroups = Arrays.asList(role3, role4);
+        when(roleManagementService.getRoleListOfGroups(groupList, CarbonBaseConstants.CARBON_HOME))
+                .thenReturn(roleListFromUserGroups);
+
+        // Invoke the method under test
+        boolean resultWithDirectConsoleAccess = Whitebox.invokeMethod(invitationCoreService,
+                "isInvitedUserHasConsoleAccess", USER_ID, CarbonBaseConstants.CARBON_HOME);
+
+        // Assertion
+        assertTrue(resultWithDirectConsoleAccess);
+
+        // Test case where user does inherit have console access via a group role
+        role2.setAudienceName("App1");
+        role4.setAudienceName(FrameworkConstants.Application.CONSOLE_APP);
+
+        // Re-invoke the method under test
+        Boolean resultWithConsoleAccessViaGroup = Whitebox.invokeMethod(invitationCoreService,
+                "isInvitedUserHasConsoleAccess", USER_ID, CarbonBaseConstants.CARBON_HOME);
+
+        // Assertion
+        assertTrue(resultWithConsoleAccessViaGroup);
+
+        // Test case where user does not have console access
+        role4.setAudienceName("App1");
+
+        // Re-invoke the method under test
+        Boolean resultWithoutConsoleAccess = Whitebox.invokeMethod(invitationCoreService,
+                "isInvitedUserHasConsoleAccess", USER_ID, CarbonBaseConstants.CARBON_HOME);
+
+        // Assertion
+        assertFalse(resultWithoutConsoleAccess);
     }
 
     private static void mockParentOrgDetails(AbstractUserStoreManager userStoreManagerParentOrg,

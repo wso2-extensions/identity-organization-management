@@ -50,4 +50,6 @@ public class InvitationTestConstants {
     public static final String INV_03_INV_ORG_ID = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
     public static final String INV_04_USER_ORG_ID = "7388393-031f-4719-8713-73j8ddd76h33";
     public static final String INV_04_INV_ORG_ID = "6ty62311-7yt5-h543-8976-h1yh6424hhh9";
+
+    public static final String USER_ID = "de828181-e1a8-4f5e-8936-f154f4ae1234";
 }

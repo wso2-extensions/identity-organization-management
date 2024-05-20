@@ -121,6 +121,8 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_EXPIRED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_PENDING;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.SUCCESS_STATUS;
+import static org.wso2.carbon.user.core.UserCoreConstants.APPLICATION_DOMAIN;
+import static org.wso2.carbon.user.core.UserCoreConstants.INTERNAL_DOMAIN;
 
 /**
  * Implementation of the invitation core service which manages the invitations of the organization users.
@@ -720,11 +722,45 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     }
 
     private boolean isInvitedUserHasConsoleAccess(String userId, String tenantDomain)
-            throws IdentityRoleManagementException {
+            throws IdentityRoleManagementException, UserStoreException {
 
         List<RoleBasicInfo> roleList = getRoleManagementService().getRoleListOfUser(userId, tenantDomain);
+        List<String> groupList = getUserGroups(userId, tenantDomain);
+        List<RoleBasicInfo> roleListFromUserGroups =
+                getRoleManagementService().getRoleListOfGroups(groupList, tenantDomain);
+
+        if (!roleListFromUserGroups.isEmpty()) {
+            roleList.addAll(roleListFromUserGroups);
+        }
+
         return roleList.stream().anyMatch(p ->
                 FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
+    }
+
+    /**
+     * Get the groups of the user.
+     *
+     * @param userId        User id.
+     * @param tenantDomain  Tenant domain.
+     * @return              List of user groups.
+     * @throws UserStoreException Error while retrieving from the user store.
+     */
+    private List<String> getUserGroups(String userId, String tenantDomain) throws UserStoreException {
+
+        List<String> userGroups = new ArrayList<>();
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+        List<Group> groups = userStoreManager.getGroupListOfUser(userId, null, null);
+
+        for (Group group : groups) {
+            String groupName = group.getGroupName();
+            String groupDomainName = UserCoreUtil.extractDomainFromName(groupName);
+            if (!INTERNAL_DOMAIN.equalsIgnoreCase(groupDomainName) &&
+                    !APPLICATION_DOMAIN.equalsIgnoreCase(groupDomainName)) {
+                userGroups.add(group.getGroupID());
+            }
+        }
+        return userGroups;
     }
 
     private InvitationResult userValidationResult(InvitationDO invitation, AbstractUserStoreManager userStoreManager,
