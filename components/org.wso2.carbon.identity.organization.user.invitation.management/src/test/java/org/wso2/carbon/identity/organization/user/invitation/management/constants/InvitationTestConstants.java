@@ -52,10 +52,4 @@ public class InvitationTestConstants {
     public static final String INV_04_INV_ORG_ID = "6ty62311-7yt5-h543-8976-h1yh6424hhh9";
 
     public static final String USER_ID = "de828181-e1a8-4f5e-8936-f154f4ae1234";
-    public static final String TENANT_DOMAIN = "carbon.super";
-    public static final Integer TENANT_ID = 1;
-    public static final String CONSOLE_DOMAIN = "Console";
-    public static final String APPLICATION_DOMAIN = "Application";
-    public static final String INTERNAL_DOMAIN = "Internal";
-    public static final String PRIMARY_DOMAIN = "Primary";
 }
