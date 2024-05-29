@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
@@ -170,12 +171,12 @@ public class OrgApplicationManagerUtil {
         authConfig.setEnabled(true);
 
         IdentityProvider idp = new IdentityProvider();
-        idp.setIdentityProviderName("SSO");
+        idp.setIdentityProviderName(FrameworkConstants.ORGANIZATION_LOGIN_IDP_NAME);
         idp.setImageUrl(ORGANIZATION_SSO_IDP_IMAGE_URL);
         idp.setPrimary(false);
         idp.setFederationHub(false);
         idp.setIdentityProviderDescription("Identity provider for Organization SSO.");
-        idp.setHomeRealmId("OrganizationSSO");
+        idp.setHomeRealmId(FrameworkConstants.ORGANIZATION_LOGIN_HOME_REALM_IDENTIFIER);
         idp.setDefaultAuthenticatorConfig(authConfig);
         idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authConfig});
         ClaimConfig claimConfig = new ClaimConfig();
