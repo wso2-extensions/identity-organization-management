@@ -4,7 +4,7 @@
     <parent>
         <artifactId>identity-organization-management</artifactId>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
-        <version>1.4.33-SNAPSHOT</version>
+        <version>1.4.33</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
