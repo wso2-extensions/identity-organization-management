@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -332,6 +332,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     getApplicationManagementService().getApplicationByResourceId(sharedApplicationId,
                             sharedTenantDomain);
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+            String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
 
             // Setting the thread local property to allow deleting fragment application. Otherwise
             // FragmentApplicationMgtListener will reject application deletion.
@@ -342,6 +343,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
+
+                // Set the request initiated user information, which will be used for the auditing purposes.
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(userID);
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
+
                 getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
                         sharedTenantDomain, username);
             } finally {
