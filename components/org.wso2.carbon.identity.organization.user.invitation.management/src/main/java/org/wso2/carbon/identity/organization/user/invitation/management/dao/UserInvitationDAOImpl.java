@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.user.invitation.management.dao;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants;
@@ -94,6 +96,8 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
  */
 public class UserInvitationDAOImpl implements UserInvitationDAO {
 
+    private static final Log LOG = LogFactory.getLog(UserInvitationDAOImpl.class);
+
     private static String getInvitationsByOrganizationQuery(String filterParam, String filterOp, String filterValue) {
 
         String getInvitationsByOrganizationIdQuery = GET_INVITATIONS_BY_INVITED_ORG_ID;
@@ -109,6 +113,9 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     @Override
     public void createInvitation(Invitation invitation) throws UserInvitationMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Storing invitation for user: " + invitation.getUsername());
+        }
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(true)) {
             try (PreparedStatement invitationCreatePrepStat = connection.prepareStatement(STORE_INVITATION)) {
                 invitationCreatePrepStat.setString(1, invitation.getInvitationId());
@@ -129,6 +136,12 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                 invitationCreatePrepStat.setTimestamp(10, expiryTimestamp,
                         Calendar.getInstance(TimeZone.getTimeZone(UTC)));
                 invitationCreatePrepStat.setString(11, invitation.getUserRedirectUrl());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Storing invitation for user: " + invitation.getUsername() + " with invitation id: " +
+                            invitation.getInvitationId() + " and confirmation code: " +
+                            invitation.getConfirmationCode() + " and status: " + invitation.getStatus() +
+                            " and created at: " + currentTimestamp + " and expired at: " + expiryTimestamp);
+                }
                 invitationCreatePrepStat.executeUpdate();
             } catch (SQLException e) {
                 throw handleServerException(ERROR_CODE_STORE_INVITATION, invitation.getUsername(), e);
@@ -138,6 +151,10 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                              connection.prepareStatement(STORE_ASSIGNMENTS)) {
                     if (invitation.getRoleAssignments() != null) {
                         for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Preparing to store role assignment for user: " + invitation.getUsername() +
+                                        " with role: " + roleAssignment.getRole());
+                            }
                             invitationAssignmentPrepStat.setString(1, invitation.getInvitationId());
                             invitationAssignmentPrepStat.setString(2, roleAssignment.getRole());
                             invitationAssignmentPrepStat.setString(3,
@@ -147,6 +164,10 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                     }
                     if (invitation.getGroupAssignments() != null) {
                         for (GroupAssignments groupAssignment : invitation.getGroupAssignments()) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Preparing to store group assignment for user: " + invitation.getUsername() +
+                                        " with role: " + groupAssignment.getGroupId());
+                            }
                             invitationAssignmentPrepStat.setString(1, invitation.getInvitationId());
                             invitationAssignmentPrepStat.setString(2, groupAssignment.getGroupId());
                             invitationAssignmentPrepStat.setString(3,
@@ -154,6 +175,7 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                             invitationAssignmentPrepStat.addBatch();
                         }
                     }
+                    LOG.debug("Executing batch to store assignments for user");
                     invitationAssignmentPrepStat.executeBatch();
                 } catch (SQLException e) {
                     IdentityDatabaseUtil.rollbackTransaction(connection);
@@ -170,11 +192,15 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
     public Invitation getInvitationByInvitationId(String invitationId)
             throws UserInvitationMgtServerException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Retrieving invitation by invitation id.");
+        }
         Invitation invitation = new Invitation();
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
             try (PreparedStatement invitationGetPrepStat =
                          connection.prepareStatement(GET_INVITATION_BY_INVITATION_ID)) {
                 invitationGetPrepStat.setString(1, invitationId);
+                LOG.debug("Retrieving invitation details.");
                 try (ResultSet invitationsResultSet = invitationGetPrepStat.executeQuery()) {
                     if (!invitationsResultSet.next()) {
                         return null;
@@ -193,6 +219,11 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
                         invitation.setCreatedAt(invitationsResultSet.getTimestamp(COLUMN_NAME_CREATED_AT));
                         invitation.setExpiredAt(invitationsResultSet.getTimestamp(COLUMN_NAME_EXPIRED_AT));
                         invitation.setUserRedirectUrl(invitationsResultSet.getString(COLUMN_NAME_REDIRECT_URL));
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Retrieved invitation for user: " + invitation.getUsername() +
+                                    " and status: " + invitation.getStatus() + " and created at: " +
+                                    invitation.getCreatedAt() + " and expired at: " + invitation.getExpiredAt());
+                        }
                     } while (invitationsResultSet.next());
                 }
             } catch (SQLException e) {
@@ -204,17 +235,26 @@ public class UserInvitationDAOImpl implements UserInvitationDAO {
             try (PreparedStatement assignmentsPrepStat =
                          connection.prepareStatement(GET_ASSIGNMENTS_BY_INVITATION_ID)) {
                 assignmentsPrepStat.setString(1, invitation.getInvitationId());
+                LOG.debug("Retrieving assignments details for the invitation.");
                 try (ResultSet assignmentsResultSet = assignmentsPrepStat.executeQuery()) {
                     while (assignmentsResultSet.next()) {
                         if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
                                 UserInvitationMgtConstants.AssignmentType.ROLE.toString())) {
                             RoleAssignments roleAssignment = new RoleAssignments();
                             roleAssignment.setRoleId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Retrieved role assignment for user: " + invitation.getUsername() +
+                                        " with role: " + roleAssignment.getRoleId());
+                            }
                             roleAssignmentsResultList.add(roleAssignment);
                         } else if (assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_TYPE).equals(
                                 UserInvitationMgtConstants.AssignmentType.GROUP.toString())) {
                             GroupAssignments groupAssignment = new GroupAssignments();
                             groupAssignment.setGroupId(assignmentsResultSet.getString(COLUMN_NAME_ASSIGNMENT_ID));
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Retrieved group assignment for user: " + invitation.getUsername() +
+                                        " with role: " + groupAssignment.getGroupId());
+                            }
                             groupAssignmentsResultList.add(groupAssignment);
                         }
                     }

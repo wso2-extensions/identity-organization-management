@@ -135,6 +135,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     @Override
     public List<InvitationResult> createInvitations(InvitationDO invitationDO) throws UserInvitationMgtException {
 
+        LOG.debug("Creating invitations for the parent organization users.");
         List<InvitationResult> createdInvitationsList = new ArrayList<>();
         Invitation invitation = new Invitation();
         String orgId = Utils.getOrganizationId();
@@ -149,6 +150,10 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
             for (String username : invitationDO.getUsernamesList()) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Creating invitation for the user: " + username + " in the organization: " +
+                            parentTenantDomain);
+                }
                 String userDomainQualifiedUserName = UserCoreUtil
                         .addDomainToName(username, invitationDO.getUserDomain());
                 String invitedUserId = userStoreManager.getUserIDFromUserName(userDomainQualifiedUserName);
@@ -170,6 +175,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                 InvitationResult validationResult = userValidationResult(invitationDO, userStoreManager,
                         userDomainQualifiedUserName, invitedUserId, username, parentOrgId, orgId, parentTenantDomain);
                 if (SUCCESS_STATUS.equals(validationResult.getStatus())) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Setting invitation creation details for the user: " + username);
+                    }
                     String emailClaim = userStoreManager
                             .getUserClaimValue(userDomainQualifiedUserName, CLAIM_EMAIL_ADDRESS, null);
                     invitation.setUsername(username);
@@ -193,6 +201,8 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                         triggerInvitationAddNotification(createdInvitationInfo);
                     } else {
                         // Send the confirmation code via the response to manage notification externally.
+                        LOG.debug("Sending confirmation code in the response since the notifications are " +
+                                "managed externally.");
                         validationResult.setConfirmationCode(confirmationCode);
                     }
                 }
@@ -410,6 +420,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     private void validateInvitationPayload(InvitationDO invitation, String invitedOrgId)
             throws UserInvitationMgtServerException {
 
+        LOG.debug("Validating the invitation payload.");
         if (StringUtils.isEmpty(invitation.getUserDomain())) {
             invitation.setUserDomain(IdentityUtil.getProperty(ORG_USER_INVITATION_USER_DOMAIN));
         }
@@ -469,6 +480,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     private void triggerInvitationAddNotification(Invitation invitation)
             throws UserInvitationMgtServerException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Triggering the event for invitation creation for the user: " + invitation.getUsername());
+        }
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(EVENT_PROP_USER_NAME, invitation.getUsername());
         properties.put(EVENT_PROP_EMAIL_ADDRESS, invitation.getEmail());
@@ -672,9 +686,13 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     private void validateRoleAssignments(InvitationDO invitation, String invitedTenantDomain)
             throws UserInvitationMgtException {
 
+        LOG.debug("Validating the role assignments in the invitation.");
         try {
             if (ArrayUtils.isNotEmpty(invitation.getRoleAssignments())) {
                 for (RoleAssignments roleAssignment : invitation.getRoleAssignments()) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Validating the role: " + roleAssignment.getRole() + " in the invitation.");
+                    }
                     if (!getRoleManagementService().isExistingRole(roleAssignment.getRole(), invitedTenantDomain)) {
                         throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_ROLE.getCode(),
                                 ERROR_CODE_INVALID_ROLE.getMessage(),
@@ -691,11 +709,15 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
     private void validateGroupAssignments(InvitationDO invitation, String invitedTenantDomain)
             throws UserInvitationMgtException {
 
+        LOG.debug("Validating the group assignments in the invitation.");
         try {
             if (ArrayUtils.isNotEmpty(invitation.getGroupAssignments())) {
                 AbstractUserStoreManager userStoreManager =
                         getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(invitedTenantDomain));
                 for (GroupAssignments groupAssignments : invitation.getGroupAssignments()) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Validating the group: " + groupAssignments.getGroupId() + " in the invitation.");
+                    }
                     if (!userStoreManager.isGroupExist(groupAssignments.getGroupId())) {
                         throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_GROUP.getCode(),
                                 ERROR_CODE_INVALID_GROUP.getMessage(),
