@@ -91,6 +91,7 @@ import static org.wso2.carbon.identity.application.authentication.framework.util
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.MYACCOUNT_PORTAL_PATH;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
@@ -791,8 +792,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             delegatedApplication.setAccessUrl(resolveAccessURL(mainApplication.getTenantDomain(), sharedOrgId,
                     FrameworkConstants.Application.CONSOLE_APP_PATH));
         } else if (ApplicationMgtUtil.isMyAccount(mainApplication.getApplicationName())) {
+            String portalPath = IdentityUtil.getProperty(MYACCOUNT_PORTAL_PATH);
+            if (StringUtils.isEmpty(portalPath)) {
+                portalPath = FrameworkConstants.Application.MY_ACCOUNT_APP_PATH;
+            }
             delegatedApplication.setAccessUrl(resolveAccessURL(mainApplication.getTenantDomain(), sharedOrgId,
-                    FrameworkConstants.Application.MY_ACCOUNT_APP_PATH));
+                    portalPath));
         }
         appendFragmentAppProperties(delegatedApplication);
 
