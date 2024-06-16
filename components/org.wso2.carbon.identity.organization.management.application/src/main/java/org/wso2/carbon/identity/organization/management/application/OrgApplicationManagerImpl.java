@@ -88,7 +88,6 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OAUTH2;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_CONTEXT_PREFIX;
-import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_LOGIN_HOME_REALM_IDENTIFIER;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
@@ -571,9 +570,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private boolean isOrganizationLoginIDP(IdentityProvider idp) {
 
-        if (!ORGANIZATION_LOGIN_HOME_REALM_IDENTIFIER.equals(idp.getHomeRealmId())) {
-            return false;
-        }
         FederatedAuthenticatorConfig[] federatedAuthenticatorConfigs = idp.getFederatedAuthenticatorConfigs();
         return ArrayUtils.isNotEmpty(federatedAuthenticatorConfigs) &&
                 ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfigs[0].getName());
