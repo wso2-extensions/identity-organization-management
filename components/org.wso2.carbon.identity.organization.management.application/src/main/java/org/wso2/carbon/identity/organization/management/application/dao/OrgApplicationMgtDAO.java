@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application.dao;
 
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -118,4 +119,19 @@ public interface OrgApplicationMgtDAO {
      */
     void updateShareWithAllChildren(String mainApplicationId, String ownerOrganizationId, boolean shareWithAllChildren)
             throws OrganizationManagementException;
+
+    /**
+     * Returns the unique identifier of the shared parent application.
+     *
+     * @param mainAppId   The app ID of the main application.
+     * @param ownerOrgId  The organization ID of the owner.
+     * @param parentOrgId The organization ID of the parent.
+     * @throws OrganizationManagementException The server exception is thrown in a failure
+     *                                         when retrieving the parent app ID.
+     */
+    default String getParentAppId(String mainAppId, String ownerOrgId, String parentOrgId)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException("getParentAppId method is not implemented in " + this.getClass().getName());
+    }
 }

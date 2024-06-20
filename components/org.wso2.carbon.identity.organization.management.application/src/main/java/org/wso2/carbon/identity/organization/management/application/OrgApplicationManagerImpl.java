@@ -75,6 +75,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -655,6 +656,62 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
+    @Override
+    public String getParentAppId(String childAppId, String childOrgId, String parentOrgId)
+            throws OrganizationManagementException {
+
+        Optional<MainApplicationDO> mainApplicationDO =
+                getOrgApplicationMgtDAO().getMainApplication(childAppId, childOrgId);
+        if (mainApplicationDO.isPresent()) {
+            String rootOrgId = mainApplicationDO.get().getOrganizationId();
+            if (rootOrgId.equals(parentOrgId)) {
+                return mainApplicationDO.get().getMainApplicationId();
+            }
+            return getOrgApplicationMgtDAO().getParentAppId(mainApplicationDO.get().getMainApplicationId(), rootOrgId,
+                    parentOrgId);
+        }
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getChildAppIds(String parentAppId, String parentOrgId, List<String> childOrgIds)
+            throws OrganizationManagementException {
+
+        if (childOrgIds == null || childOrgIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        OrganizationManager organizationManager = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+        String parentTenantDomain = organizationManager.resolveTenantDomain(parentOrgId);
+
+        ApplicationManagementService applicationManagementService =
+                OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
+        ServiceProvider serviceProvider;
+        try {
+            serviceProvider = applicationManagementService.getApplicationByResourceId(parentAppId, parentTenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, parentAppId);
+        }
+
+        if (serviceProvider != null) {
+            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
+                    .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                            Boolean.parseBoolean(property.getValue()));
+            if (!isFragmentApp) {
+                // Parent app is the main application
+                return filterSharedApplications(parentAppId, parentOrgId, childOrgIds);
+            }
+        }
+
+        Optional<MainApplicationDO> mainApplicationDO =
+                getOrgApplicationMgtDAO().getMainApplication(parentAppId, parentOrgId);
+        if (mainApplicationDO.isPresent()) {
+            return filterSharedApplications(mainApplicationDO.get().getMainApplicationId(),
+                    mainApplicationDO.get().getOrganizationId(), childOrgIds);
+        }
+        return Collections.emptyMap();
+    }
+
     /**
      * This method checks whether the exception is thrown due to the OAuth client already existing.
      * @param e The IdentityException thrown upon OAuth app creation failure.
@@ -900,6 +957,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         return false;
+    }
+
+    /**
+     * Filter and return shared applications of the given main application for the given child organization IDs.
+     *
+     * @param mainAppId Application ID of the main application.
+     * @param mainOrgId Organization ID of the main application.
+     * @return The map containing organization ID and application ID of the filtered shared applications.
+     */
+    private Map<String, String> filterSharedApplications(String mainAppId, String mainOrgId, List<String> childOrgIds)
+            throws OrganizationManagementException {
+
+        List<SharedApplicationDO> sharedApplications =
+                getOrgApplicationMgtDAO().getSharedApplications(mainOrgId, mainAppId);
+        return sharedApplications.stream()
+                .filter(app -> childOrgIds.contains(app.getOrganizationId()))
+                .collect(Collectors.toMap(SharedApplicationDO::getOrganizationId,
+                        SharedApplicationDO::getFragmentApplicationId));
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
