@@ -603,6 +603,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         .orElse(MultitenantUtils.getTenantAwareUsername(mainApplication.getOwner()
                                 .toFullQualifiedUsername()));
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(domainQualifiedUserName);
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
