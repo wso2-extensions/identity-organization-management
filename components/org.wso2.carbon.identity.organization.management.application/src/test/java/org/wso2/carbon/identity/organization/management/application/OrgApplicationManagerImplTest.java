@@ -202,7 +202,7 @@ public class OrgApplicationManagerImplTest {
     }
 
     @Test
-    public void testGetChildAppIdsWithInvalidChildAppIds() throws Exception {
+    public void testGetChildAppIdsWithInvalidParentAppId() throws Exception {
 
         String invalidParentAppId = "invalid-parent-app-id";
         when(organizationManager.resolveTenantDomain(PARENT_ORG_ID)).thenReturn(PARENT_TENANT_DOMAIN);
