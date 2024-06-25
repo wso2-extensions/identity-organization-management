@@ -186,13 +186,9 @@ public class OrgApplicationManagerImplTest {
                 })
                 .collect(Collectors.toList());
 
-        if (isFragmentApp) {
-            MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
-            when(orgApplicationMgtDAO.getMainApplication(parentAppId, parentOrgId)).thenReturn(Optional.of(mainApp));
-            when(orgApplicationMgtDAO.getSharedApplications(rootOrgId, rootAppId)).thenReturn(sharedApplications);
-        } else {
-            when(orgApplicationMgtDAO.getSharedApplications(parentOrgId, parentAppId)).thenReturn(sharedApplications);
-        }
+        MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
+        when(orgApplicationMgtDAO.getMainApplication(parentAppId, parentOrgId)).thenReturn(Optional.of(mainApp));
+        when(orgApplicationMgtDAO.getSharedApplications(rootOrgId, rootAppId)).thenReturn(sharedApplications);
 
         OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
         Map<String, String> resolvedChildAppIdMap =
