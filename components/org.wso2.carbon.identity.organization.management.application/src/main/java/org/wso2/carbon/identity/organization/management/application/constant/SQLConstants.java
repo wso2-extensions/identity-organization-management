@@ -67,9 +67,9 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :"
             + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";";
 
-    public static final String GET_PARENT_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE MAIN_APP_ID = " +
-            ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "AND OWNER_ORG_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + " AND SHARED_ORG_ID = :" +
+    public static final String GET_PARENT_APP_ID = "SELECT SHARED_APP_ID FROM SP_SHARED_APP WHERE MAIN_APP_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND SHARED_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
 
     private SQLConstants() {
