@@ -119,9 +119,9 @@ public class OrgApplicationManagerImplTest {
     }
 
     @Test
-    public void testGetParentAppIdWithInvalidChildAppIds() throws Exception {
+    public void testGetParentAppIdWithInvalidChildAppId() throws Exception {
 
-        String invalidChildAppId = "invalid-child-app-id";
+        String invalidChildAppId = "6t9ef3df-f966-5839-9123-8ki61dda7c88";
         when(orgApplicationMgtDAO.getMainApplication(invalidChildAppId, CHILD_ORG_ID)).thenReturn(Optional.empty());
 
         OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
@@ -204,7 +204,7 @@ public class OrgApplicationManagerImplTest {
     @Test
     public void testGetChildAppIdsWithInvalidParentAppId() throws Exception {
 
-        String invalidParentAppId = "invalid-parent-app-id";
+        String invalidParentAppId = "5y9ef3df-f966-5839-9693-8ki61dda7c77";
         when(organizationManager.resolveTenantDomain(PARENT_ORG_ID)).thenReturn(PARENT_TENANT_DOMAIN);
         when(applicationManagementService.getApplicationByResourceId(invalidParentAppId,
                 PARENT_TENANT_DOMAIN)).thenReturn(null);
