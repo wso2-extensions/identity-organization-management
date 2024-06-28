@@ -39,6 +39,9 @@ import javax.sql.DataSource;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for OrgApplicationMgtDAOImpl..
+ */
 public class OrgApplicationMgtDAOImplTest {
 
     private static final String DB_NAME = "testOrgAppMgtDB";

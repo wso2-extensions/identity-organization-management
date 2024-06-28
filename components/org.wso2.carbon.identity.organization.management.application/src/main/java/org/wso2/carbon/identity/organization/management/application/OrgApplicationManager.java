@@ -148,15 +148,14 @@ public interface OrgApplicationManager {
                           boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
-     * Get the shared parent application ID for the given chile application ID and parent organization ID.
+     * Get the shared parent application ID for the given child application ID of the given child organization.
      *
      * @param childAppId  The unique ID of the shared child application.
-     * @param parentOrgId The organization ID of the parent.
      * @param childOrgId  The organization ID of the child.
      * @return The unique identifier of the shared parent application.
      * @throws OrganizationManagementException If errors occurred when retrieving the parent application ID.
      */
-    default String getParentAppId(String childAppId, String childOrgId, String parentOrgId)
+    default String getParentAppId(String childAppId, String childOrgId)
             throws OrganizationManagementException {
 
         throw new NotImplementedException("getParentAppId method is not implemented in " + this.getClass().getName());

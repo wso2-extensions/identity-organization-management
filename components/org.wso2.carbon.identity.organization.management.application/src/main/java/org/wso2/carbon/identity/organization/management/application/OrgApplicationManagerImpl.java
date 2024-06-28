@@ -657,14 +657,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public String getParentAppId(String childAppId, String childOrgId, String parentOrgId)
+    public String getParentAppId(String childAppId, String childOrgId)
             throws OrganizationManagementException {
 
         Optional<MainApplicationDO> mainApplicationDO =
                 getOrgApplicationMgtDAO().getMainApplication(childAppId, childOrgId);
-        if (mainApplicationDO.isPresent()) {
+        if (!mainApplicationDO.isPresent()) {
+            return null;
+        }
+
+        List<String> ancestorOrganizationIds = getOrganizationManager().getAncestorOrganizationIds(childOrgId);
+        if (!ancestorOrganizationIds.isEmpty() && ancestorOrganizationIds.size() > 1) {
+            String parentOrgId = ancestorOrganizationIds.get(1);
             String rootOrgId = mainApplicationDO.get().getOrganizationId();
-            if (rootOrgId.equals(parentOrgId)) {
+            if (parentOrgId.equals(rootOrgId)) {
                 return mainApplicationDO.get().getMainApplicationId();
             }
             return getOrgApplicationMgtDAO().getParentAppId(mainApplicationDO.get().getMainApplicationId(), rootOrgId,

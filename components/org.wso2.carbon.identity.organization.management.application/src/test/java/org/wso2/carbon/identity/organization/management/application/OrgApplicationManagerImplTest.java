@@ -45,6 +45,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
+/**
+ * Unit tests for OrgApplicationManagerImpl..
+ */
 public class OrgApplicationManagerImplTest {
 
     @Mock
@@ -101,6 +104,11 @@ public class OrgApplicationManagerImplTest {
                                    boolean isAppSharedWithParent, String expectedParentAppId)
             throws Exception {
 
+        List<String> ancestorOrganizationIds = new ArrayList<>();
+        ancestorOrganizationIds.add(childOrgId);
+        ancestorOrganizationIds.add(parentOrgId);
+        when(organizationManager.getAncestorOrganizationIds(childOrgId)).thenReturn(ancestorOrganizationIds);
+
         MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
         if (parentAppId != null) {
             when(orgApplicationMgtDAO.getMainApplication(childAppId, childOrgId)).thenReturn(Optional.of(mainApp));
@@ -113,7 +121,7 @@ public class OrgApplicationManagerImplTest {
         }
 
         OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
-        String resolvedParentAppId = orgApplicationManager.getParentAppId(childAppId, childOrgId, parentOrgId);
+        String resolvedParentAppId = orgApplicationManager.getParentAppId(childAppId, childOrgId);
 
         Assert.assertEquals(resolvedParentAppId, expectedParentAppId);
     }
@@ -125,8 +133,7 @@ public class OrgApplicationManagerImplTest {
         when(orgApplicationMgtDAO.getMainApplication(invalidChildAppId, CHILD_ORG_ID)).thenReturn(Optional.empty());
 
         OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
-        String resolvedParentAppId = orgApplicationManager.getParentAppId(invalidChildAppId, CHILD_ORG_ID,
-                PARENT_ORG_ID);
+        String resolvedParentAppId = orgApplicationManager.getParentAppId(invalidChildAppId, CHILD_ORG_ID);
 
         Assert.assertNull(resolvedParentAppId);
     }
