@@ -23,7 +23,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -282,10 +281,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         // Add application roles to the filtered claim mappings (if any
                         filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
                     }
-                    if (!CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
-                        // Add roles to the filtered claim mappings.
-                        filteredClaimMappings = addRolesClaimToFilteredClaimMappings(filteredClaimMappings);
-                    }
+                    // Add roles to the filtered claim mappings.
+                    filteredClaimMappings = addRolesClaimToFilteredClaimMappings(filteredClaimMappings);
                     ClaimConfig claimConfig = new ClaimConfig();
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(

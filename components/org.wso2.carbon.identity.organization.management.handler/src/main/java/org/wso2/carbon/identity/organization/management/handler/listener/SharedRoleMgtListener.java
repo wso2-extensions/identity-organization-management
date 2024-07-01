@@ -23,7 +23,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
@@ -106,8 +105,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
 
             String updatedAllowedAudienceForRoleAssociation = ((serviceProvider.getAssociatedRolesConfig() == null) ||
                     (serviceProvider.getAssociatedRolesConfig().getAllowedAudience() == null)) ?
-                    (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME ? RoleConstants.ORGANIZATION :
-                    RoleConstants.APPLICATION) : serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
+                    RoleConstants.APPLICATION : serviceProvider.getAssociatedRolesConfig().getAllowedAudience();
 
             // If the existing and updated audiences are both organization, no need to update the roles.
             if (RoleConstants.ORGANIZATION.equalsIgnoreCase(existingAllowedAudienceForRoleAssociation) &&
@@ -515,10 +513,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                                                                String sharedAppOrgId)
             throws IdentityRoleManagementException, OrganizationManagementException {
 
-        // Avoid the execution for legacy runtime.
-        if (CarbonConstants.ENABLE_LEGACY_AUTHZ_RUNTIME) {
-            return;
-        }
         String mainApplicationOrgId = organizationManager.resolveOrganizationId(mainApplicationTenantDomain);
         if (mainApplicationOrgId == null) {
             mainApplicationOrgId = SUPER_ORG_ID;
