@@ -666,15 +666,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return Collections.emptyMap();
         }
 
-        String rootOrgId = mainApplicationDO.get().getOrganizationId();
-        String rootAppId = mainApplicationDO.get().getMainApplicationId();
+        String ownerOrgId = mainApplicationDO.get().getOrganizationId();
+        String mainAppId = mainApplicationDO.get().getMainApplicationId();
         List<String> ancestorOrganizationIds = getOrganizationManager().getAncestorOrganizationIds(childOrgId);
         Map<String, String> ancestorAppIds = new HashMap<>();
-       // Add root app to the map.
-        ancestorAppIds.put(rootOrgId, rootAppId);
+       // Add main app to the map.
+        ancestorAppIds.put(ownerOrgId, mainAppId);
         if (CollectionUtils.isNotEmpty(ancestorOrganizationIds) && ancestorOrganizationIds.size() > 2) {
             List<SharedApplicationDO> ancestorApplications =
-                    getOrgApplicationMgtDAO().getSharedApplications(rootAppId, rootOrgId,
+                    getOrgApplicationMgtDAO().getSharedApplications(mainAppId, ownerOrgId,
                             ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1));
             ancestorApplications.forEach(ancestorApplication -> ancestorAppIds.put(
                     ancestorApplication.getOrganizationId(), ancestorApplication.getFragmentApplicationId()));
@@ -707,7 +707,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                             Boolean.parseBoolean(property.getValue()));
             if (!isFragmentApp) {
-                // Parent app is the main application
+                // Parent app is the main application.
                 return getFilteredChildApplications(parentAppId, parentOrgId, childOrgIds);
             }
         }
