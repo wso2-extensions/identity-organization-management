@@ -121,17 +121,20 @@ public interface OrgApplicationMgtDAO {
             throws OrganizationManagementException;
 
     /**
-     * Returns the unique identifier of the shared parent application.
+     * Returns the unique identifiers of shared applications associated with the given main application
+     * within the given shared organizations.
      *
-     * @param mainAppId   The app ID of the main application.
-     * @param ownerOrgId  The organization ID of the owner.
-     * @param parentOrgId The organization ID of the parent.
+     * @param mainAppId    The app ID of the main application.
+     * @param ownerOrgId   The organization ID of the owner.
+     * @param sharedOrgIds The list of app shared organization IDs.
      * @throws OrganizationManagementException The server exception is thrown in a failure
-     *                                         when retrieving the parent app ID.
+     *                                         when retrieving the shared apps.
      */
-    default String getParentAppId(String mainAppId, String ownerOrgId, String parentOrgId)
+    default List<SharedApplicationDO> getSharedApplications(String mainAppId, String ownerOrgId,
+                                                            List<String> sharedOrgIds)
             throws OrganizationManagementException {
 
-        throw new NotImplementedException("getParentAppId method is not implemented in " + this.getClass().getName());
+        throw new NotImplementedException(
+                "getSharedApplications method is not implemented in " + this.getClass().getName());
     }
 }

@@ -657,33 +657,35 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public String getParentAppId(String childAppId, String childOrgId)
+    public Map<String, String> getAncestorAppIds(String childAppId, String childOrgId)
             throws OrganizationManagementException {
 
         Optional<MainApplicationDO> mainApplicationDO =
                 getOrgApplicationMgtDAO().getMainApplication(childAppId, childOrgId);
         if (!mainApplicationDO.isPresent()) {
-            return null;
+            return Collections.emptyMap();
         }
 
+        String rootOrgId = mainApplicationDO.get().getOrganizationId();
+        String rootAppId = mainApplicationDO.get().getMainApplicationId();
         List<String> ancestorOrganizationIds = getOrganizationManager().getAncestorOrganizationIds(childOrgId);
-        if (!ancestorOrganizationIds.isEmpty() && ancestorOrganizationIds.size() > 1) {
-            String parentOrgId = ancestorOrganizationIds.get(1);
-            String rootOrgId = mainApplicationDO.get().getOrganizationId();
-            if (parentOrgId.equals(rootOrgId)) {
-                return mainApplicationDO.get().getMainApplicationId();
-            }
-            return getOrgApplicationMgtDAO().getParentAppId(mainApplicationDO.get().getMainApplicationId(), rootOrgId,
-                    parentOrgId);
+        Map<String, String> ancestorAppIds = new HashMap<>();
+       // Add root app to the map.
+        ancestorAppIds.put(rootOrgId, rootAppId);
+        if (!ancestorOrganizationIds.isEmpty() && ancestorOrganizationIds.size() > 2) {
+            getOrgApplicationMgtDAO().getSharedApplications(rootAppId, rootOrgId,
+                    ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1)).forEach(
+                    sharedApplication -> ancestorAppIds.put(sharedApplication.getOrganizationId(),
+                            sharedApplication.getFragmentApplicationId()));
         }
-        return null;
+        return ancestorAppIds;
     }
 
     @Override
     public Map<String, String> getChildAppIds(String parentAppId, String parentOrgId, List<String> childOrgIds)
             throws OrganizationManagementException {
 
-        if (childOrgIds == null || childOrgIds.isEmpty()) {
+        if (CollectionUtils.isEmpty(childOrgIds)) {
             return Collections.emptyMap();
         }
 
@@ -705,14 +707,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                             Boolean.parseBoolean(property.getValue()));
             if (!isFragmentApp) {
                 // Parent app is the main application
-                return filterSharedApplications(parentAppId, parentOrgId, childOrgIds);
+                return getFilteredChildApplications(parentAppId, parentOrgId, childOrgIds);
             }
         }
 
         Optional<MainApplicationDO> mainApplicationDO =
                 getOrgApplicationMgtDAO().getMainApplication(parentAppId, parentOrgId);
         if (mainApplicationDO.isPresent()) {
-            return filterSharedApplications(mainApplicationDO.get().getMainApplicationId(),
+            return getFilteredChildApplications(mainApplicationDO.get().getMainApplicationId(),
                     mainApplicationDO.get().getOrganizationId(), childOrgIds);
         }
         return Collections.emptyMap();
@@ -966,21 +968,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     /**
-     * Filter and return shared applications of the given main application for the given child organization IDs.
+     * Filter and return shared child applications of the given main application for the given child organization IDs.
      *
      * @param mainAppId Application ID of the main application.
      * @param mainOrgId Organization ID of the main application.
      * @return The map containing organization ID and application ID of the filtered shared applications.
      */
-    private Map<String, String> filterSharedApplications(String mainAppId, String mainOrgId, List<String> childOrgIds)
+    private Map<String, String> getFilteredChildApplications(String mainAppId, String mainOrgId,
+                                                             List<String> childOrgIds)
             throws OrganizationManagementException {
 
         List<SharedApplicationDO> sharedApplications =
-                getOrgApplicationMgtDAO().getSharedApplications(mainOrgId, mainAppId);
-        return sharedApplications.stream()
-                .filter(app -> childOrgIds.contains(app.getOrganizationId()))
-                .collect(Collectors.toMap(SharedApplicationDO::getOrganizationId,
-                        SharedApplicationDO::getFragmentApplicationId));
+                getOrgApplicationMgtDAO().getSharedApplications(mainAppId, mainOrgId, childOrgIds);
+        return sharedApplications.stream().collect(Collectors.toMap(SharedApplicationDO::getOrganizationId,
+                SharedApplicationDO::getFragmentApplicationId));
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {

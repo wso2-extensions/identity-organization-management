@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
@@ -52,15 +54,15 @@ public class OrgApplicationManagerImplTest {
 
     @Mock
     private OrgApplicationMgtDAO orgApplicationMgtDAO;
-
     @Mock
     private OrganizationManager organizationManager;
-
     @Mock
     private ApplicationManagementService applicationManagementService;
 
+    private OrgApplicationManager orgApplicationManager;
+
     private static final Map<String, String> childAppIdMap = new HashMap<String, String>() {{
-        put("30b701c6-e309-4241-b047-0c299c45d1a0", "42ef1d92-add6-449b-8a3c-fc308d2a4eac");
+        put("99b701c6-e309-4241-b047-0c299c45d1a0", "56ef1d92-add6-449b-8a3c-fc308d2a4eac");
         put("5b65d2f9-1b0c-4e66-9f2c-3aa57dcd1ef7", "ede1f19f-c8b4-4f3c-a19d-18aab939ad3f");
         put("8o65d2l6-1u0c-4e76-9f2c-4aa67trt1ef8", "udt1f16f-c8y4-4r3c-a20d-58hhg969ad6p");
     }};
@@ -72,6 +74,8 @@ public class OrgApplicationManagerImplTest {
     private static final String ROOT_APP_ID = "fa9b9ac5-a429-49e2-9c51-4259c7ebe45e";
     private static final String ROOT_ORG_ID = "72b81cba-51c7-4dc1-91be-b267e177c17a";
     private static final String ROOT_TENANT_DOMAIN = "root-organization";
+    private static final String INVALID_CHILD_APP_ID = "6t9ef3df-f966-5839-9123-8ki61dda7c88";
+    private static final String INVALID_PARENT_APP_ID = "5y9ef3df-f966-5839-9693-8ki61dda7c77";
 
     @BeforeMethod
     public void setUp() {
@@ -80,6 +84,8 @@ public class OrgApplicationManagerImplTest {
         OrgApplicationMgtDataHolder.getInstance().setOrgApplicationMgtDAO(orgApplicationMgtDAO);
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
         OrgApplicationMgtDataHolder.getInstance().setApplicationManagementService(applicationManagementService);
+
+        orgApplicationManager = new OrgApplicationManagerImpl();
     }
 
     @DataProvider(name = "parentAppIdRetrievalTestData")
@@ -98,44 +104,75 @@ public class OrgApplicationManagerImplTest {
         };
     }
 
-    @Test(dataProvider = "parentAppIdRetrievalTestData")
-    public void testGetParentAppId(String childAppId, String childOrgId, String parentAppId,
-                                   String parentOrgId, String rootAppId, String rootOrgId,
-                                   boolean isAppSharedWithParent, String expectedParentAppId)
-            throws Exception {
+    @Test
+    public void testGetAncestorAppIdsOfChildApp() throws Exception {
 
         List<String> ancestorOrganizationIds = new ArrayList<>();
-        ancestorOrganizationIds.add(childOrgId);
-        ancestorOrganizationIds.add(parentOrgId);
-        when(organizationManager.getAncestorOrganizationIds(childOrgId)).thenReturn(ancestorOrganizationIds);
+        ancestorOrganizationIds.add(CHILD_ORG_ID);
+        ancestorOrganizationIds.add(PARENT_ORG_ID);
+        ancestorOrganizationIds.add(ROOT_ORG_ID);
+        when(organizationManager.getAncestorOrganizationIds(CHILD_ORG_ID)).thenReturn(ancestorOrganizationIds);
 
-        MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
-        if (parentAppId != null) {
-            when(orgApplicationMgtDAO.getMainApplication(childAppId, childOrgId)).thenReturn(Optional.of(mainApp));
-            when(orgApplicationMgtDAO.getParentAppId(rootAppId, rootOrgId, parentOrgId)).thenReturn(parentAppId);
-        } else if (isAppSharedWithParent) {
-            when(orgApplicationMgtDAO.getMainApplication(childAppId, childOrgId)).thenReturn(Optional.empty());
-        } else {
-            when(orgApplicationMgtDAO.getMainApplication(childAppId, childOrgId)).thenReturn(Optional.of(mainApp));
-            when(orgApplicationMgtDAO.getParentAppId(rootAppId, rootOrgId, parentOrgId)).thenReturn(null);
-        }
+        List<SharedApplicationDO> ancestorApplications = new ArrayList<>();
+        SharedApplicationDO parentApplicationDO = new SharedApplicationDO(PARENT_ORG_ID, PARENT_APP_ID);
+        ancestorApplications.add(parentApplicationDO);
 
-        OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
-        String resolvedParentAppId = orgApplicationManager.getParentAppId(childAppId, childOrgId);
+        MainApplicationDO mainApp = new MainApplicationDO(ROOT_ORG_ID, ROOT_APP_ID);
+        when(orgApplicationMgtDAO.getMainApplication(CHILD_APP_ID, CHILD_ORG_ID)).thenReturn(Optional.of(mainApp));
+        when(orgApplicationMgtDAO.getSharedApplications(eq(ROOT_APP_ID), eq(ROOT_ORG_ID), anyList()))
+                .thenReturn(ancestorApplications);
 
-        Assert.assertEquals(resolvedParentAppId, expectedParentAppId);
+        Map<String, String> resolvedAncestorAppIds =
+                orgApplicationManager.getAncestorAppIds(CHILD_APP_ID, CHILD_ORG_ID);
+
+        Assert.assertNotNull(resolvedAncestorAppIds);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 2);
+        Assert.assertEquals(resolvedAncestorAppIds.get(PARENT_ORG_ID), PARENT_APP_ID);
+        Assert.assertEquals(resolvedAncestorAppIds.get(ROOT_ORG_ID), ROOT_APP_ID);
     }
 
     @Test
-    public void testGetParentAppIdWithInvalidChildAppId() throws Exception {
+    public void testGetAncestorAppIdsOfParentApp() throws Exception {
 
-        String invalidChildAppId = "6t9ef3df-f966-5839-9123-8ki61dda7c88";
-        when(orgApplicationMgtDAO.getMainApplication(invalidChildAppId, CHILD_ORG_ID)).thenReturn(Optional.empty());
+        List<String> ancestorOrganizationIds = new ArrayList<>();
+        ancestorOrganizationIds.add(PARENT_ORG_ID);
+        ancestorOrganizationIds.add(ROOT_ORG_ID);
+        when(organizationManager.getAncestorOrganizationIds(PARENT_ORG_ID)).thenReturn(ancestorOrganizationIds);
 
-        OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
-        String resolvedParentAppId = orgApplicationManager.getParentAppId(invalidChildAppId, CHILD_ORG_ID);
+        MainApplicationDO mainApp = new MainApplicationDO(ROOT_ORG_ID, ROOT_APP_ID);
+        when(orgApplicationMgtDAO.getMainApplication(PARENT_APP_ID, PARENT_ORG_ID)).thenReturn(Optional.of(mainApp));
+        when(orgApplicationMgtDAO.getSharedApplications(eq(ROOT_APP_ID), eq(ROOT_ORG_ID), anyList()))
+                .thenReturn(Collections.emptyList());
 
-        Assert.assertNull(resolvedParentAppId);
+        Map<String, String> resolvedAncestorAppIds =
+                orgApplicationManager.getAncestorAppIds(PARENT_APP_ID, PARENT_ORG_ID);
+
+        Assert.assertNotNull(resolvedAncestorAppIds);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 1);
+        Assert.assertEquals(resolvedAncestorAppIds.get(ROOT_ORG_ID), ROOT_APP_ID);
+    }
+
+    @Test
+    public void testGetAncestorAppIdsOfRootApp() throws Exception {
+
+        when(orgApplicationMgtDAO.getMainApplication(ROOT_APP_ID, ROOT_ORG_ID)).thenReturn(Optional.empty());
+
+        Map<String, String> resolvedAncestorAppIds =
+                orgApplicationManager.getAncestorAppIds(ROOT_APP_ID, ROOT_ORG_ID);
+
+        Assert.assertNotNull(resolvedAncestorAppIds);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 0);
+    }
+
+    @Test
+    public void testGetAncestorAppIdsWithInvalidChildAppId() throws Exception {
+
+        when(orgApplicationMgtDAO.getMainApplication(INVALID_CHILD_APP_ID, CHILD_ORG_ID)).thenReturn(Optional.empty());
+
+        Map<String, String> resolvedAncestorAppIds =
+                orgApplicationManager.getAncestorAppIds(INVALID_CHILD_APP_ID, CHILD_ORG_ID);
+
+        Assert.assertEquals(resolvedAncestorAppIds, Collections.emptyMap());
     }
 
     @DataProvider(name = "childAppIdsRetrievalTestData")
@@ -195,9 +232,9 @@ public class OrgApplicationManagerImplTest {
 
         MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
         when(orgApplicationMgtDAO.getMainApplication(parentAppId, parentOrgId)).thenReturn(Optional.of(mainApp));
-        when(orgApplicationMgtDAO.getSharedApplications(rootOrgId, rootAppId)).thenReturn(sharedApplications);
+        when(orgApplicationMgtDAO.getSharedApplications(rootAppId, rootOrgId, childOrgIds))
+                .thenReturn(sharedApplications);
 
-        OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
         Map<String, String> resolvedChildAppIdMap =
                 orgApplicationManager.getChildAppIds(parentAppId, parentOrgId, childOrgIds);
 
@@ -207,15 +244,14 @@ public class OrgApplicationManagerImplTest {
     @Test
     public void testGetChildAppIdsWithInvalidParentAppId() throws Exception {
 
-        String invalidParentAppId = "5y9ef3df-f966-5839-9693-8ki61dda7c77";
         when(organizationManager.resolveTenantDomain(PARENT_ORG_ID)).thenReturn(PARENT_TENANT_DOMAIN);
-        when(applicationManagementService.getApplicationByResourceId(invalidParentAppId,
+        when(applicationManagementService.getApplicationByResourceId(INVALID_PARENT_APP_ID,
                 PARENT_TENANT_DOMAIN)).thenReturn(null);
-        when(orgApplicationMgtDAO.getMainApplication(invalidParentAppId, PARENT_ORG_ID)).thenReturn(Optional.empty());
+        when(orgApplicationMgtDAO.getMainApplication(INVALID_PARENT_APP_ID, PARENT_ORG_ID)).thenReturn(
+                Optional.empty());
 
-        OrgApplicationManager orgApplicationManager = new OrgApplicationManagerImpl();
         Map<String, String> resolvedChildAppIdMap =
-                orgApplicationManager.getChildAppIds(invalidParentAppId, PARENT_ORG_ID,
+                orgApplicationManager.getChildAppIds(INVALID_PARENT_APP_ID, PARENT_ORG_ID,
                         new ArrayList<>(childAppIdMap.keySet()));
 
         Assert.assertEquals(resolvedChildAppIdMap, Collections.emptyMap());
