@@ -974,6 +974,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * @param mainAppId Application ID of the main application.
      * @param mainOrgId Organization ID of the main application.
      * @return The map containing organization ID and application ID of the filtered shared applications.
+     * @throws OrganizationManagementException If an error occurs while retrieving child applications.
      */
     private Map<String, String> getFilteredChildApplications(String mainAppId, String mainOrgId,
                                                              List<String> childOrgIds)

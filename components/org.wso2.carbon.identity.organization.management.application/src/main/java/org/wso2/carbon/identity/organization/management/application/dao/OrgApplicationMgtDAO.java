@@ -127,6 +127,7 @@ public interface OrgApplicationMgtDAO {
      * @param mainAppId    The app ID of the main application.
      * @param ownerOrgId   The organization ID of the owner.
      * @param sharedOrgIds The list of app shared organization IDs.
+     * @return The list of shared application IDs within the given shared organizations.
      * @throws OrganizationManagementException The server exception is thrown in a failure
      *                                         when retrieving the shared apps.
      */

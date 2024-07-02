@@ -44,7 +44,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for OrgApplicationMgtDAOImpl..
+ * Unit tests for OrgApplicationMgtDAOImpl.
  */
 public class OrgApplicationMgtDAOImplTest {
 
@@ -74,9 +74,9 @@ public class OrgApplicationMgtDAOImplTest {
     private static final String SHARE_APPLICATION_SQL_STATEMENT = "INSERT INTO SP_SHARED_APP " +
             "(MAIN_APP_ID, OWNER_ORG_ID, SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN) " +
             "VALUES (?, ?, ?, ?, ?);";
-    private static final String DELETE_APPLICATION_SQL_STATEMENT = "DELETE  FROM SP_APP " +
+    private static final String DELETE_APPLICATION_SQL_STATEMENT = "DELETE FROM SP_APP " +
             "WHERE UUID = ?;";
-    private static final String DELETE_SHARED_APPLICATION_SQL_STATEMENT = "DELETE  FROM SP_SHARED_APP " +
+    private static final String DELETE_SHARED_APPLICATION_SQL_STATEMENT = "DELETE FROM SP_SHARED_APP " +
             "WHERE SHARED_APP_ID = ?;";
 
     @BeforeClass
