@@ -673,10 +673,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
        // Add root app to the map.
         ancestorAppIds.put(rootOrgId, rootAppId);
         if (!ancestorOrganizationIds.isEmpty() && ancestorOrganizationIds.size() > 2) {
-            getOrgApplicationMgtDAO().getSharedApplications(rootAppId, rootOrgId,
-                    ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1)).forEach(
-                    sharedApplication -> ancestorAppIds.put(sharedApplication.getOrganizationId(),
-                            sharedApplication.getFragmentApplicationId()));
+            List<SharedApplicationDO> ancestorApplications =
+                    getOrgApplicationMgtDAO().getSharedApplications(rootAppId, rootOrgId,
+                            ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1));
+            ancestorApplications.forEach(ancestorApplication -> ancestorAppIds.put(
+                    ancestorApplication.getOrganizationId(), ancestorApplication.getFragmentApplicationId()));
         }
         return ancestorAppIds;
     }
@@ -978,10 +979,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                                              List<String> childOrgIds)
             throws OrganizationManagementException {
 
-        List<SharedApplicationDO> sharedApplications =
+        List<SharedApplicationDO> childApplications =
                 getOrgApplicationMgtDAO().getSharedApplications(mainAppId, mainOrgId, childOrgIds);
-        return sharedApplications.stream().collect(Collectors.toMap(SharedApplicationDO::getOrganizationId,
-                SharedApplicationDO::getFragmentApplicationId));
+        return childApplications.stream().collect(Collectors.toMap(
+                SharedApplicationDO::getOrganizationId, SharedApplicationDO::getFragmentApplicationId));
     }
 
     private OAuthAdminServiceImpl getOAuthAdminService() {
