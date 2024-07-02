@@ -672,7 +672,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         Map<String, String> ancestorAppIds = new HashMap<>();
        // Add root app to the map.
         ancestorAppIds.put(rootOrgId, rootAppId);
-        if (!ancestorOrganizationIds.isEmpty() && ancestorOrganizationIds.size() > 2) {
+        if (CollectionUtils.isNotEmpty(ancestorOrganizationIds) && ancestorOrganizationIds.size() > 2) {
             List<SharedApplicationDO> ancestorApplications =
                     getOrgApplicationMgtDAO().getSharedApplications(rootAppId, rootOrgId,
                             ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1));
