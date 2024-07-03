@@ -114,7 +114,9 @@ public class OrgApplicationManagerImplTest {
         when(organizationManager.getAncestorOrganizationIds(CHILD_ORG_ID)).thenReturn(ancestorOrganizationIds);
 
         List<SharedApplicationDO> ancestorApplications = new ArrayList<>();
+        SharedApplicationDO childApplicationDO = new SharedApplicationDO(CHILD_ORG_ID, CHILD_APP_ID);
         SharedApplicationDO parentApplicationDO = new SharedApplicationDO(PARENT_ORG_ID, PARENT_APP_ID);
+        ancestorApplications.add(childApplicationDO);
         ancestorApplications.add(parentApplicationDO);
 
         MainApplicationDO mainApp = new MainApplicationDO(ROOT_ORG_ID, ROOT_APP_ID);
@@ -126,7 +128,8 @@ public class OrgApplicationManagerImplTest {
                 orgApplicationManager.getAncestorAppIds(CHILD_APP_ID, CHILD_ORG_ID);
 
         Assert.assertNotNull(resolvedAncestorAppIds);
-        Assert.assertEquals(resolvedAncestorAppIds.size(), 2);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 3);
+        Assert.assertEquals(resolvedAncestorAppIds.get(CHILD_ORG_ID), CHILD_APP_ID);
         Assert.assertEquals(resolvedAncestorAppIds.get(PARENT_ORG_ID), PARENT_APP_ID);
         Assert.assertEquals(resolvedAncestorAppIds.get(ROOT_ORG_ID), ROOT_APP_ID);
     }
@@ -139,16 +142,21 @@ public class OrgApplicationManagerImplTest {
         ancestorOrganizationIds.add(ROOT_ORG_ID);
         when(organizationManager.getAncestorOrganizationIds(PARENT_ORG_ID)).thenReturn(ancestorOrganizationIds);
 
+        List<SharedApplicationDO> ancestorApplications = new ArrayList<>();
+        SharedApplicationDO parentApplicationDO = new SharedApplicationDO(PARENT_ORG_ID, PARENT_APP_ID);
+        ancestorApplications.add(parentApplicationDO);
+
         MainApplicationDO mainApp = new MainApplicationDO(ROOT_ORG_ID, ROOT_APP_ID);
         when(orgApplicationMgtDAO.getMainApplication(PARENT_APP_ID, PARENT_ORG_ID)).thenReturn(Optional.of(mainApp));
         when(orgApplicationMgtDAO.getSharedApplications(eq(ROOT_APP_ID), eq(ROOT_ORG_ID), anyList()))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(ancestorApplications);
 
         Map<String, String> resolvedAncestorAppIds =
                 orgApplicationManager.getAncestorAppIds(PARENT_APP_ID, PARENT_ORG_ID);
 
         Assert.assertNotNull(resolvedAncestorAppIds);
-        Assert.assertEquals(resolvedAncestorAppIds.size(), 1);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 2);
+        Assert.assertEquals(resolvedAncestorAppIds.get(PARENT_ORG_ID), PARENT_APP_ID);
         Assert.assertEquals(resolvedAncestorAppIds.get(ROOT_ORG_ID), ROOT_APP_ID);
     }
 
@@ -157,11 +165,21 @@ public class OrgApplicationManagerImplTest {
 
         when(orgApplicationMgtDAO.getMainApplication(ROOT_APP_ID, ROOT_ORG_ID)).thenReturn(Optional.empty());
 
+        when(organizationManager.resolveTenantDomain(ROOT_ORG_ID)).thenReturn(ROOT_TENANT_DOMAIN);
+
+        ServiceProvider rootApp = mock(ServiceProvider.class);
+        ServiceProviderProperty isFragmentAppProperty = new ServiceProviderProperty();
+        isFragmentAppProperty.setName(IS_FRAGMENT_APP);
+        isFragmentAppProperty.setValue("false");
+        when(rootApp.getSpProperties()).thenReturn(new ServiceProviderProperty[]{isFragmentAppProperty});
+        when(applicationManagementService.getApplicationByResourceId(ROOT_APP_ID, ROOT_TENANT_DOMAIN)).thenReturn(
+                rootApp);
+
         Map<String, String> resolvedAncestorAppIds =
                 orgApplicationManager.getAncestorAppIds(ROOT_APP_ID, ROOT_ORG_ID);
 
         Assert.assertNotNull(resolvedAncestorAppIds);
-        Assert.assertEquals(resolvedAncestorAppIds.size(), 0);
+        Assert.assertEquals(resolvedAncestorAppIds.size(), 1);
     }
 
     @Test

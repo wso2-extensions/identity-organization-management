@@ -663,6 +663,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         Optional<MainApplicationDO> mainApplicationDO =
                 getOrgApplicationMgtDAO().getMainApplication(childAppId, childOrgId);
         if (!mainApplicationDO.isPresent()) {
+            // Check if the child app is a main application.
+            if (isMainApp(childAppId, childOrgId)) {
+                return Collections.singletonMap(childOrgId, childAppId);
+            }
             return Collections.emptyMap();
         }
 
@@ -670,12 +674,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String mainAppId = mainApplicationDO.get().getMainApplicationId();
         List<String> ancestorOrganizationIds = getOrganizationManager().getAncestorOrganizationIds(childOrgId);
         Map<String, String> ancestorAppIds = new HashMap<>();
-       // Add main app to the map.
+        // Add main app to the map.
         ancestorAppIds.put(ownerOrgId, mainAppId);
-        if (CollectionUtils.isNotEmpty(ancestorOrganizationIds) && ancestorOrganizationIds.size() > 2) {
+        if (CollectionUtils.isNotEmpty(ancestorOrganizationIds) && ancestorOrganizationIds.size() > 1) {
             List<SharedApplicationDO> ancestorApplications =
                     getOrgApplicationMgtDAO().getSharedApplications(mainAppId, ownerOrgId,
-                            ancestorOrganizationIds.subList(1, ancestorOrganizationIds.size() - 1));
+                            ancestorOrganizationIds.subList(0, ancestorOrganizationIds.size() - 1));
             ancestorApplications.forEach(ancestorApplication -> ancestorAppIds.put(
                     ancestorApplication.getOrganizationId(), ancestorApplication.getFragmentApplicationId()));
         }
@@ -690,26 +694,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return Collections.emptyMap();
         }
 
-        OrganizationManager organizationManager = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
-        String parentTenantDomain = organizationManager.resolveTenantDomain(parentOrgId);
-
-        ApplicationManagementService applicationManagementService =
-                OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
-        ServiceProvider serviceProvider;
-        try {
-            serviceProvider = applicationManagementService.getApplicationByResourceId(parentAppId, parentTenantDomain);
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, parentAppId);
-        }
-
-        if (serviceProvider != null) {
-            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
-                    .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
-                            Boolean.parseBoolean(property.getValue()));
-            if (!isFragmentApp) {
-                // Parent app is the main application.
-                return getFilteredChildApplications(parentAppId, parentOrgId, childOrgIds);
-            }
+        // Check if the parent application is a main application.
+        if (isMainApp(parentAppId, parentOrgId)) {
+            return getFilteredChildApplications(parentAppId, parentOrgId, childOrgIds);
         }
 
         Optional<MainApplicationDO> mainApplicationDO =
@@ -719,6 +706,41 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     mainApplicationDO.get().getOrganizationId(), childOrgIds);
         }
         return Collections.emptyMap();
+    }
+
+    /**
+     * Returns whether the given application is a main application.
+     *
+     * @param appId The unique ID of the application.
+     * @param orgId The organization ID of the given application.
+     * @return Returns true if the given application is a main application.
+     * @throws OrganizationManagementException If an error occurs while retrieving the application.
+     */
+    private boolean isMainApp(String appId, String orgId)
+            throws OrganizationManagementException {
+
+        OrganizationManager organizationManager = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+        String parentTenantDomain = organizationManager.resolveTenantDomain(orgId);
+
+        ApplicationManagementService applicationManagementService =
+                OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
+        ServiceProvider serviceProvider;
+        try {
+            serviceProvider = applicationManagementService.getApplicationByResourceId(appId, parentTenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, appId);
+        }
+
+        if (serviceProvider != null) {
+            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
+                    .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                            Boolean.parseBoolean(property.getValue()));
+            if (!isFragmentApp) {
+                // Given app is a main application.
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
