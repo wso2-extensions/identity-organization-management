@@ -93,6 +93,13 @@
                             org.wso2.carbon.user.core.common; version="${carbon.user.core.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service; version="${carbon.user.core.imp.pkg.version.range}",
                         </Import-Package>
+                        <Provide-Capability>
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationManager,
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.listener.OrganizationManagerListener,
+                            osgi.service;objectClass=org.wso2.carbon.tenant.mgt.services.TenantMgtService,
+                            osgi.service;objectClass=org.wso2.carbon.user.core.service.RealmService,
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverServic
+                        </Provide-Capability>
                     </instructions>
                 </configuration>
             </plugin>

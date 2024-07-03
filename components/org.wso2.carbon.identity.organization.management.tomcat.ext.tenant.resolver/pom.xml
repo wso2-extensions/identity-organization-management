@@ -103,6 +103,10 @@
                             org.wso2.carbon.tomcat.ext.utils;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.tomcat.ext.valves;version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
+                        <Provide-Capability>
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationManager,
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitializ
+                        </Provide-Capability>
                     </instructions>
                 </configuration>
             </plugin>
