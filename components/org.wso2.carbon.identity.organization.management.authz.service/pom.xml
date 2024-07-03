@@ -108,6 +108,9 @@
                             org.wso2.carbon.user.core.tenant;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
+                        <Provide-Capability>
+                            osgi.service;objectClass=org.wso2.carbon.user.core.service.RealmService
+                        </Provide-Capability>
                     </instructions>
                 </configuration>
             </plugin>

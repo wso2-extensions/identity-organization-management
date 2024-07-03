@@ -100,6 +100,9 @@
                             org.wso2.carbon.identity.organization.management.service.listener; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.event.*; version="${carbon.identity.package.import.version.range}"
                         </Import-Package>
+                        <Provide-Capability>
+                            osgi.service;objectClass=org.wso2.carbon.identity.event.services.IdentityEventService
+                        </Provide-Capability>
                     </instructions>
                 </configuration>
             </plugin>

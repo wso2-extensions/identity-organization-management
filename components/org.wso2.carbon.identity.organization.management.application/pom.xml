@@ -169,6 +169,15 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
                         </Import-Package>
+                        <Provide-Capability>
+                            osgi.service;objectClass=org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl,
+                            osgi.service;objectClass=org.wso2.carbon.user.core.service.RealmService,
+                            osgi.service;objectClass=org.wso2.carbon.identity.application.mgt.ApplicationManagementService,
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationManage,
+                            osgi.service;objectClass=org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService,
+                            osgi.service;objectClass=org.wso2.carbon.idp.mgt.IdpManager,
+                            osgi.service;objectClass=org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService
+                        </Provide-Capability>
                     </instructions>
                 </configuration>
             </plugin>
