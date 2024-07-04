@@ -716,17 +716,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * @return Returns true if the given application is a main application.
      * @throws OrganizationManagementException If an error occurs while retrieving the application.
      */
-    private boolean isMainApp(String appId, String orgId)
-            throws OrganizationManagementException {
+    private boolean isMainApp(String appId, String orgId) throws OrganizationManagementException {
 
         OrganizationManager organizationManager = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
-        String parentTenantDomain = organizationManager.resolveTenantDomain(orgId);
+        String tenantDomain = organizationManager.resolveTenantDomain(orgId);
 
         ApplicationManagementService applicationManagementService =
                 OrgApplicationMgtDataHolder.getInstance().getApplicationManagementService();
         ServiceProvider serviceProvider;
         try {
-            serviceProvider = applicationManagementService.getApplicationByResourceId(appId, parentTenantDomain);
+            serviceProvider = applicationManagementService.getApplicationByResourceId(appId, tenantDomain);
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION, e, appId);
         }

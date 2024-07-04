@@ -153,7 +153,7 @@ public interface OrgApplicationManager {
      * @param childAppId The unique ID of the shared child application.
      * @param childOrgId The organization ID of the child.
      * @return Map containing shared ancestor application IDs and their organization IDs.
-     * @throws OrganizationManagementException If errors occurred when retrieving the parent application ID.
+     * @throws OrganizationManagementException If errors occurred when retrieving the shared ancestor application IDs
      */
     default Map<String, String> getAncestorAppIds(String childAppId, String childOrgId)
             throws OrganizationManagementException {
@@ -165,7 +165,7 @@ public interface OrgApplicationManager {
     /**
      * Get shared child application IDs of the given parent application.
      *
-     * @param parentAppId The unique ID of the shared parent application.
+     * @param parentAppId The unique ID of the root app / shared app in parent org.
      * @param parentOrgId The organization ID of the parent.
      * @param childOrgIds The organization ID list of the children.
      * @return The map containing organization ID and application ID of the shared child applications.
@@ -174,6 +174,6 @@ public interface OrgApplicationManager {
     default Map<String, String> getChildAppIds(String parentAppId, String parentOrgId, List<String> childOrgIds)
             throws OrganizationManagementException {
 
-        throw new NotImplementedException("getParentAppId method is not implemented in " + this.getClass().getName());
+        throw new NotImplementedException("getChildAppIds method is not implemented in " + this.getClass().getName());
     }
 }

@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
- * Unit tests for OrgApplicationManagerImpl..
+ * Unit tests for OrgApplicationManagerImpl.
  */
 public class OrgApplicationManagerImplTest {
 
@@ -243,9 +243,7 @@ public class OrgApplicationManagerImplTest {
                 parentApp);
 
         List<SharedApplicationDO> sharedApplications = childAppIdMap.entrySet().stream()
-                .map(app -> {
-                    return new SharedApplicationDO(app.getKey(), app.getValue());
-                })
+                .map(app -> new SharedApplicationDO(app.getKey(), app.getValue()))
                 .collect(Collectors.toList());
 
         MainApplicationDO mainApp = new MainApplicationDO(rootOrgId, rootAppId);
