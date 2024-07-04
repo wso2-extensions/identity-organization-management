@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application.dao.impl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
@@ -28,10 +29,14 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_FILTERED_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS;
@@ -49,6 +54,8 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.SHARED_ORG_ID_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.UPDATE_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECKING_APPLICATION_HAS_FRAGMENTS;
@@ -221,6 +228,39 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             });
         } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
+        }
+    }
+
+    @Override
+    public List<SharedApplicationDO> getSharedApplications(String mainAppId, String ownerOrgId,
+                                                           List<String> sharedOrgIds)
+            throws OrganizationManagementException {
+
+        if (CollectionUtils.isEmpty(sharedOrgIds)) {
+            return Collections.emptyList();
+        }
+
+        String placeholders = IntStream.range(0, sharedOrgIds.size())
+                .mapToObj(i -> ":" + SHARED_ORG_ID_PLACEHOLDER_PREFIX + i + ";")
+                .collect(Collectors.joining(", "));
+        String sqlStmt = GET_FILTERED_SHARED_APPLICATIONS.replace(SHARED_ORG_ID_LIST_PLACEHOLDER, placeholders);
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(sqlStmt,
+                    (resultSet, rowNumber) -> new SharedApplicationDO(
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
+                            resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID)),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainAppId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrgId);
+                        for (int i = 0; i < sharedOrgIds.size(); i++) {
+                            namedPreparedStatement.setString(SHARED_ORG_ID_PLACEHOLDER_PREFIX + i, sharedOrgIds.get(i));
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(
+                    ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppId, ownerOrgId);
         }
     }
 

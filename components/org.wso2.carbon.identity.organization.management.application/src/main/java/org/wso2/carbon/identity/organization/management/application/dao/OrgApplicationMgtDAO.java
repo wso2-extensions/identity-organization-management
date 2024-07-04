@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application.dao;
 
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -118,4 +119,23 @@ public interface OrgApplicationMgtDAO {
      */
     void updateShareWithAllChildren(String mainApplicationId, String ownerOrganizationId, boolean shareWithAllChildren)
             throws OrganizationManagementException;
+
+    /**
+     * Returns the unique identifiers of shared applications associated with the given main application
+     * within the given shared organizations.
+     *
+     * @param mainAppId    The app ID of the main application.
+     * @param ownerOrgId   The organization ID of the owner.
+     * @param sharedOrgIds The list of app shared organization IDs.
+     * @return The list of shared application IDs within the given shared organizations.
+     * @throws OrganizationManagementException The server exception is thrown in a failure
+     *                                         when retrieving the shared apps.
+     */
+    default List<SharedApplicationDO> getSharedApplications(String mainAppId, String ownerOrgId,
+                                                            List<String> sharedOrgIds)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "getSharedApplications method is not implemented in " + this.getClass().getName());
+    }
 }

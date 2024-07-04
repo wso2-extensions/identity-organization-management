@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -67,6 +67,12 @@ public class SQLConstants {
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :"
             + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + ";";
 
+    public static final String GET_FILTERED_SHARED_APPLICATIONS =
+            "SELECT SHARED_ORG_ID, SHARED_APP_ID FROM SP_SHARED_APP WHERE MAIN_APP_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND SHARED_ORG_ID IN (" +
+                    SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ")";
+
     private SQLConstants() {
 
     }
@@ -85,6 +91,9 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_METADATA_NAME = "METADATA_NAME";
         public static final String DB_SCHEMA_COLUMN_NAME_METADATA_VALUE = "METADATA_VALUE";
         public static final String DB_SCHEMA_COLUMN_NAME_SP_APP_ID = "SP_APP_ID";
+
+        public static final String SHARED_ORG_ID_LIST_PLACEHOLDER = "_SHARED_ORG_ID_LIST_";
+        public static final String SHARED_ORG_ID_PLACEHOLDER_PREFIX = "SHARED_ORG_ID_";
 
         private SQLPlaceholders() {
 

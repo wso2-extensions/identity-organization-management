@@ -263,6 +263,11 @@
                 <version>${findbugs.annotations.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>commons-collections.wso2</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${apache.common.collection.version}</version>
+            </dependency>
 
             <!--Test Dependencies-->
             <dependency>
@@ -512,7 +517,7 @@
         <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
-        <identity.organization.management.core.version>1.1.2</identity.organization.management.core.version>
+        <identity.organization.management.core.version>1.1.9</identity.organization.management.core.version>
         <org.wso2.identity.organization.mgt.core.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.core.imp.pkg.version.range>
 
@@ -543,6 +548,7 @@
         <carbon.identity.auth.imp.pkg.version.range>[1.4.0,2.0.0)</carbon.identity.auth.imp.pkg.version.range>
         <tomcat.version>9.0.31.wso2v1</tomcat.version>
 
+        <apache.common.collection.version>3.2.0.wso2v1</apache.common.collection.version>
         <org.apache.commons.lang.imp.pkg.version.range>[2.6,3)</org.apache.commons.lang.imp.pkg.version.range>
         <org.apache.commons.logging.imp.pkg.version.range>[1.2,2)</org.apache.commons.logging.imp.pkg.version.range>
         <org.apache.commons.collections.imp.pkg.version.range>[3.2.0,4.0.0)
