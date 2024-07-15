@@ -229,7 +229,9 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(invitedTenantId);
                     String userDomainQualifiedUserName = UserCoreUtil
                             .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
-                    if (userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
+                    String domain = UserCoreUtil.extractDomainFromName(userDomainQualifiedUserName);
+                    if (userStoreManager.getSecondaryUserStoreManager(domain) != null &&
+                            userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
                         LOG.error("User: " + invitation.getUsername() + " exists in the organization: "
                                 + invitedOrganizationId + ". Hence deleting the invitation with the " +
                                 "confirmation code: " + confirmationCode);
@@ -487,7 +489,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         properties.put(EVENT_PROP_USER_NAME, invitation.getUsername());
         properties.put(EVENT_PROP_EMAIL_ADDRESS, invitation.getEmail());
         properties.put(EVENT_PROP_CONFIRMATION_CODE, invitation.getConfirmationCode());
-        properties.put(EVENT_PROP_TENANT_DOMAIN, invitation.getInvitedOrganizationId());
+        properties.put(EVENT_PROP_TENANT_DOMAIN, resolveTenantDomain(invitation.getInvitedOrganizationId()));
         properties.put(EVENT_PROP_REDIRECT_URL, invitation.getUserRedirectUrl());
         properties.put(EVENT_PROP_PROPERTIES, invitation.getInvitationProperties());
         Event invitationEvent = new Event(EVENT_NAME_POST_ADD_INVITATION, properties);
@@ -658,6 +660,10 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
 
         int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
         AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+        String domain = UserCoreUtil.extractDomainFromName(domainQualifiedUserName);
+        if (userStoreManager.getSecondaryUserStoreManager(domain) == null) {
+            return false;
+        };
         if (userStoreManager.isExistingUser(domainQualifiedUserName)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("User: " + domainQualifiedUserName + " is already exists in the organization.");
