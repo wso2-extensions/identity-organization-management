@@ -75,7 +75,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             boolean isOrgOwnerSetInAttributes = checkOrgCreatorSetInOrgAttributes(organization);
             String authenticationType = (String) IdentityUtil.threadLocalProperties.get()
                     .get(UserSharingConstants.AUTHENTICATION_TYPE);
-            if (!isOrgOwnerSetInAttributes && StringUtils.isNotEmpty(authenticationType) &&
+            if (!isOrgOwnerSetInAttributes &&
                     UserSharingConstants.APPLICATION_AUTHENTICATION_TYPE.equals(authenticationType)) {
                 return;
             }
