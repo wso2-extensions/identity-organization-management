@@ -486,6 +486,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         PrivilegedCarbonContext.startTenantFlow();
                         PrivilegedCarbonContext.getThreadLocalCarbonContext()
                                 .setTenantDomain(sharedAppTenantDomain, true);
+                        // Set the request initiator as the downstream application deletion request initiator.
+                        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
                         getApplicationMgtService().deleteApplication(application.getApplicationName(),
                                 sharedAppTenantDomain, username);
                     } finally {
