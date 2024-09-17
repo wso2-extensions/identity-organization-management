@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application.dao;
 
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
@@ -137,5 +138,41 @@ public interface OrgApplicationMgtDAO {
 
         throw new NotImplementedException(
                 "getSharedApplications method is not implemented in " + this.getClass().getName());
+    }
+
+    /**
+     * Returns the basic information of the shared applications
+     * @param limit      Maximum no of applications to be returned in the result set (optional).
+     * @param offset     Zero based index of the first application to be returned in the result set (optional).
+     * @param filter     Filter to search for applications (optional).
+     * @param sortOrder  Sort order, ascending or descending (optional).
+     * @param sortBy     Attribute to sort from (optional).
+     * @param tenantDomain Tenant domain.
+     * @param rootOrgId Root organization ID.
+     * @return List of DiscoverableApplicationBasicInfo of applications matching the given criteria.
+     * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
+     * discoverable applications.
+     */
+    default List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+                                                                           String sortOrder, String sortBy,
+                                                                           String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        return null;
+    }
+
+    /*
+     * Returns the count of discoverable applications matching given filter.
+     * @param filter        Filter to search for applications (optional).
+     * @param tenantDomain  Tenant domain.
+     * @param rootOrgId     Root organization ID.
+     * @return Count of discoverable applications matching given filter.
+     * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
+     * discoverable applications count.
+     */
+    default int getCountOfDiscoverableApplications(String filter, String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        return 0;
     }
 }

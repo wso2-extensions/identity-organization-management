@@ -19,22 +19,43 @@
 package org.wso2.carbon.identity.organization.management.application.dao.impl;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.NamedPreparedStatement;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
+import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
+import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
+import org.wso2.carbon.identity.core.URLBuilderException;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.JdbcUtils;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.Error.INVALID_OFFSET;
+import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.Error.SORTING_NOT_IMPLEMENTED;
+import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.getConsoleAccessUrlFromServerConfig;
+import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.getMyAccountAccessUrlFromServerConfig;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_FILTERED_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
@@ -45,6 +66,18 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.IS_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.IS_FRAGMENT_APPLICATION_H2;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_INFORMIX;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_MYSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_ORACLE;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_POSTGRES;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APP_COUNT_BY_APP_NAME_AND_TENANT;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APP_COUNT_BY_TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE;
@@ -71,6 +104,9 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  * This class implements the {@link OrgApplicationMgtDAO} interface.
  */
 public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
+
+    private Log log = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
+    private static final String ASTERISK = "*";
 
     @Override
     public void addSharedApplication(String mainAppId, String ownerOrgId, String sharedAppId, String sharedOrgId,
@@ -264,6 +300,144 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         }
     }
 
+    @Override
+    public List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+                                                                          String sortOrder, String sortBy,
+                                                                          String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        validateForUnImplementedSortingAttributes(sortOrder, sortBy);
+        validateAttributesForPagination(offset, limit);
+
+        // TODO: 17/9/24 : Enforce a max limit
+        if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
+            return getDiscoverableApplicationBasicInfo(limit, offset, tenantDomain, rootOrgId);
+        }
+
+        String filterResolvedForSQL = resolveSQLFilter(filter);
+
+        List<ApplicationBasicInfo> applicationBasicInfoList = new ArrayList<>();
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+            String databaseVendorType = connection.getMetaData().getDatabaseProductName();
+
+            try (NamedPreparedStatement statement =
+                         new NamedPreparedStatement(connection,
+                                 getDBVendorSpecificDiscoverableAppRetrievalQueryByAppName(databaseVendorType))) {
+                statement.setString(1, tenantDomain);
+                statement.setString(2, filterResolvedForSQL);
+                statement.setString(3, rootOrgId);
+                statement.setInt(4, offset);
+                statement.setInt(5, limit);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        applicationBasicInfoList.add(buildApplicationBasicInfo(resultSet));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new OrganizationManagementException("Error while getting application basic information" +
+                    " for discoverable applications in tenantDomain: " + tenantDomain, e);
+        }
+
+        return Collections.unmodifiableList(applicationBasicInfoList);
+    }
+
+    @Override
+    public int getCountOfDiscoverableApplications(String filter, String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Getting count of discoverable applications matching filter: " + filter + " in tenantDomain: "
+                    + tenantDomain);
+        }
+
+        if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
+            return getCountOfDiscoverableApplications(tenantDomain, rootOrgId);
+        }
+
+        int count = 0;
+        String filterResolvedForSQL = resolveSQLFilter(filter);
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+
+            try (NamedPreparedStatement statement =
+                         new NamedPreparedStatement(connection,
+                                 LOAD_DISCOVERABLE_APP_COUNT_BY_APP_NAME_AND_TENANT)) {
+                statement.setString(1, tenantDomain);
+                statement.setString(2, filterResolvedForSQL);
+                statement.setString(3, rootOrgId);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        count = resultSet.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new OrganizationManagementServerException("Error while getting count of discoverable " +
+                    "applications matching filter:" + filter + " in tenantDomain: " + tenantDomain);
+        }
+
+        return count;
+    }
+
+    private int getCountOfDiscoverableApplications(String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        int count;
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+
+            try (NamedPreparedStatement statement =
+                         new NamedPreparedStatement(connection,
+                                 LOAD_DISCOVERABLE_APP_COUNT_BY_TENANT)) {
+                statement.setString(1, tenantDomain);
+                statement.setString(2, rootOrgId);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    resultSet.next();
+                    count = resultSet.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new OrganizationManagementServerException("Error while getting count of discoverable " +
+                    "applications in tenantDomain: " + tenantDomain);
+        }
+
+        return count;
+    }
+
+    private List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset,
+                                                                           String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException {
+
+        List<ApplicationBasicInfo> applicationBasicInfoList = new ArrayList<>();
+
+        try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+            String databaseVendorType = connection.getMetaData().getDatabaseProductName();
+
+            try (NamedPreparedStatement statement =
+                         new NamedPreparedStatement(connection,
+                                 getDBVendorSpecificDiscoverableAppRetrievalQuery(databaseVendorType))) {
+                statement.setString(1, tenantDomain);
+                statement.setString(2, rootOrgId);
+                statement.setInt(3, offset);
+                statement.setInt(4, limit);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        applicationBasicInfoList.add(buildApplicationBasicInfo(resultSet));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new OrganizationManagementException("Error while getting application basic information" +
+                    " for discoverable applications in tenantDomain: " + tenantDomain, e);
+        }
+
+        return Collections.unmodifiableList(applicationBasicInfoList);
+    }
+
     /**
      * Get the value for the shareWithAllChildren column according to the db type.
      *
@@ -278,5 +452,155 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             return shareWithAllChildren ? "1" : "0";
         }
         return String.valueOf(shareWithAllChildren);
+    }
+
+    private void validateForUnImplementedSortingAttributes(String sortOrder, String sortBy)
+            throws OrganizationManagementServerException {
+
+        if (StringUtils.isNotBlank(sortBy) || StringUtils.isNotBlank(sortOrder)) {
+            throw new OrganizationManagementServerException(SORTING_NOT_IMPLEMENTED.getCode(),
+                    "Sorting not supported.");
+        }
+    }
+
+    /**
+     * Validates the offset and limit values for pagination.
+     *
+     * @param offset Starting index.
+     * @param limit  Count value.
+     * @throws OrganizationManagementClientException
+     */
+    private void validateAttributesForPagination(int offset, int limit)
+            throws OrganizationManagementClientException {
+
+        if (offset < 0) {
+            throw new OrganizationManagementClientException("Invalid offset requested.",
+                    "Invalid offset requested. Offset value should be zero or greater than zero.",
+                    INVALID_OFFSET.getCode());
+        }
+
+        if (limit <= 0) {
+            throw new OrganizationManagementClientException("Invalid limit requested.",
+                    "Invalid limit requested. Limit value should be greater than zero.",
+                    INVALID_OFFSET.getCode());
+        }
+    }
+
+    private ApplicationBasicInfo buildApplicationBasicInfo(ResultSet appNameResultSet)
+            throws SQLException, OrganizationManagementException {
+
+        /*
+         * If you add a new value to basicInfo here, please consider to add it in the
+         * buildApplicationBasicInfoWithInboundConfig() function also.
+         */
+        ApplicationBasicInfo basicInfo = new ApplicationBasicInfo();
+        basicInfo.setApplicationId(appNameResultSet.getInt(ApplicationConstants.ApplicationTableColumns.ID));
+        basicInfo.setApplicationName(appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.APP_NAME));
+        basicInfo.setDescription(appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.DESCRIPTION));
+
+        basicInfo.setApplicationResourceId(appNameResultSet.getString(ApplicationConstants
+                .ApplicationTableColumns.UUID));
+        basicInfo.setImageUrl(appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.IMAGE_URL));
+
+        try {
+            basicInfo.setAccessUrl(appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.ACCESS_URL));
+            if (ApplicationMgtUtil.isConsoleOrMyAccount(basicInfo.getApplicationName())) {
+                basicInfo.setAccessUrl(ApplicationMgtUtil.resolveOriginUrlFromPlaceholders(
+                        appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.ACCESS_URL),
+                        basicInfo.getApplicationName()));
+            }
+        } catch (URLBuilderException e) {
+            throw new OrganizationManagementException(
+                    "Error occurred when resolving origin of the access URL with placeholders", e);
+        }
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(appNameResultSet.getInt(
+                ApplicationConstants.ApplicationTableColumns.TENANT_ID));
+        if (ApplicationMgtUtil.isConsole(basicInfo.getApplicationName())) {
+            String consoleAccessUrl = getConsoleAccessUrlFromServerConfig(tenantDomain);
+            if (StringUtils.isNotBlank(consoleAccessUrl)) {
+                basicInfo.setAccessUrl(consoleAccessUrl);
+            }
+        }
+        if (ApplicationMgtUtil.isMyAccount(basicInfo.getApplicationName())) {
+            String myAccountAccessUrl = getMyAccountAccessUrlFromServerConfig(tenantDomain);
+            if (StringUtils.isNotBlank(myAccountAccessUrl)) {
+                basicInfo.setAccessUrl(myAccountAccessUrl);
+            }
+        }
+
+        String username = appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.USERNAME);
+        String userStoreDomain = appNameResultSet.getString(ApplicationConstants.ApplicationTableColumns.USER_STORE);
+        int tenantId = appNameResultSet.getInt(ApplicationConstants.ApplicationTableColumns.TENANT_ID);
+
+        if (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(userStoreDomain)
+                && !(tenantId == MultitenantConstants.INVALID_TENANT_ID)) {
+            User appOwner = new User();
+            appOwner.setUserStoreDomain(userStoreDomain);
+            appOwner.setUserName(username);
+            appOwner.setTenantDomain(IdentityTenantUtil.getTenantDomain(tenantId));
+
+            basicInfo.setAppOwner(appOwner);
+        }
+
+        return basicInfo;
+    }
+
+    private String resolveSQLFilter(String filter) {
+
+        //To avoid any issues when the filter string is blank or null, assigning "%" to SQLFilter.
+        String sqlfilter = "SP_APP.APP_NAME LIKE '%'";
+        if (StringUtils.isNotBlank(filter)) {
+            sqlfilter = filter.trim()
+                    .replace(ASTERISK, "%")
+                    .replace("?", "_");
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Input filter: " + filter + " resolved for SQL filter: " + sqlfilter);
+        }
+
+        return sqlfilter;
+    }
+
+    private String getDBVendorSpecificDiscoverableAppRetrievalQuery(String dbVendorType)
+            throws OrganizationManagementServerException {
+
+        if ("MySQL".equals(dbVendorType) || "MariaDB".equals(dbVendorType)
+                || "H2".equals(dbVendorType)
+                || "DB2".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_MYSQL;
+        } else if ("Oracle".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_ORACLE;
+        } else if ("PostgreSQL".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_POSTGRES;
+        } else if ("Microsoft SQL Server".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_MSSQL;
+        } else if ("INFORMIX".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_INFORMIX;
+        }
+
+        throw new OrganizationManagementServerException("Error while loading discoverable applications from " +
+                "DB. Database driver for " + dbVendorType + "could not be identified or not supported.");
+    }
+
+    private String getDBVendorSpecificDiscoverableAppRetrievalQueryByAppName(String dbVendorType)
+            throws OrganizationManagementServerException {
+
+        if ("MySQL".equals(dbVendorType) || "MariaDB".equals(dbVendorType)
+                || "H2".equals(dbVendorType)
+                || "DB2".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
+        } else if ("Oracle".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
+        } else if ("PostgreSQL".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
+        } else if ("Microsoft SQL Server".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
+        } else if ("INFORMIX".equals(dbVendorType)) {
+            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
+        }
+
+        throw new OrganizationManagementServerException("Error while loading discoverable applications from " +
+                "DB. Database driver for " + dbVendorType + "could not be identified or not supported.");
     }
 }

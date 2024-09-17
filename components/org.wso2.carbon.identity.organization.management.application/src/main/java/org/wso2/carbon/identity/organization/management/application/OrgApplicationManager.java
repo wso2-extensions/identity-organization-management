@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application;
 
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
@@ -175,5 +176,38 @@ public interface OrgApplicationManager {
             throws OrganizationManagementException {
 
         throw new NotImplementedException("getChildAppIds method is not implemented in " + this.getClass().getName());
+    }
+
+    /*
+     * Get the discoverable application basic info.
+     * @param limit      Maximum no of applications to be returned in the result set (optional).
+     * @param offset     Zero based index of the first application to be returned in the result set (optional).
+     * @param filter     Filter to search for applications (optional).
+     * @param sortOrder  Sort order, ascending or descending (optional).
+     * @param sortBy     Attribute to sort from (optional).
+     * @param tenantDomain Tenant domain.
+     * @return List of DiscoverableApplicationBasicInfo of applications matching the given criteria.
+     * @throws OrganizationManagementException If an error occurred when retrieving the discoverable applications.
+     */
+    default List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+                                                                           String sortOrder,
+                                                                           String sortBy, String tenantDomain)
+            throws OrganizationManagementException {
+
+        return null;
+    }
+
+    /*
+     * Get the count of discoverable applications.
+     * @param filter     Filter to search for applications (optional).
+     * @param tenantDomain Tenant domain.
+     * @return Count of discoverable applications matching given filter.
+     * @throws OrganizationManagementException If an error occurred when retrieving the count of
+     * discoverable applications.
+     */
+    default int getCountOfDiscoverableApplications(String filter, String tenantDomain)
+            throws OrganizationManagementException {
+
+        return 0;
     }
 }

@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -59,6 +60,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -707,6 +709,29 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     mainApplicationDO.get().getOrganizationId(), childOrgIds);
         }
         return Collections.emptyMap();
+    }
+
+    @Override
+    public List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+                                                                          String sortOrder, String sortBy,
+                                                                          String tenantDomain)
+            throws OrganizationManagementException {
+
+        OrganizationManagerImpl organizationManager = new OrganizationManagerImpl();
+        String rootOrgId = organizationManager.getPrimaryOrganizationId(tenantDomain);
+
+        return getOrgApplicationMgtDAO().getDiscoverableApplicationBasicInfo(limit, offset, filter, sortOrder,
+                sortBy, tenantDomain, rootOrgId);
+    }
+
+    @Override
+    public int getCountOfDiscoverableApplications(String filter, String tenantDomain)
+            throws OrganizationManagementException {
+
+        OrganizationManagerImpl organizationManager = new OrganizationManagerImpl();
+        String rootOrgId = organizationManager.getPrimaryOrganizationId(tenantDomain);
+
+        return getOrgApplicationMgtDAO().getCountOfDiscoverableApplications(filter, tenantDomain, rootOrgId);
     }
 
     /**
