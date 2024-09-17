@@ -199,8 +199,8 @@ public interface OrgApplicationManager {
 
     /*
      * Get the count of discoverable applications.
-     * @param filter     Filter to search for applications (optional).
-     * @param tenantDomain Tenant domain.
+     * @param filter        Filter to search for applications (optional).
+     * @param tenantDomain  Tenant domain.
      * @return Count of discoverable applications matching given filter.
      * @throws OrganizationManagementException If an error occurred when retrieving the count of
      * discoverable applications.
