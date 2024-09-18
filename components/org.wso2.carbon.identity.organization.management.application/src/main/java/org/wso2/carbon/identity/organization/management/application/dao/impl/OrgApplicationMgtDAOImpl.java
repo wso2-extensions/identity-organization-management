@@ -105,7 +105,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
-    private Log log = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
+    private static final Log log = LogFactory.getLog(OrgApplicationMgtDAOImpl.class);
     private static final String ASTERISK = "*";
 
     @Override
