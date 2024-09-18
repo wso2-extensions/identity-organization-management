@@ -189,7 +189,7 @@ public interface OrgApplicationManager {
      * @return List of DiscoverableApplicationBasicInfo of applications matching the given criteria.
      * @throws OrganizationManagementException If an error occurred when retrieving the discoverable applications.
      */
-    default List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+    default List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
                                                                            String sortOrder,
                                                                            String sortBy, String tenantDomain)
             throws OrganizationManagementException {
@@ -205,7 +205,7 @@ public interface OrgApplicationManager {
      * @throws OrganizationManagementException If an error occurred when retrieving the count of
      * discoverable applications.
      */
-    default int getCountOfDiscoverableApplications(String filter, String tenantDomain)
+    default int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain)
             throws OrganizationManagementException {
 
         return 0;

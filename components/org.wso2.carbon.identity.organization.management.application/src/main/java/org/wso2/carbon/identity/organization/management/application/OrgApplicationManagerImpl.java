@@ -60,7 +60,6 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.OrganizationManagerImpl;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -712,26 +711,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+    public List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
                                                                           String sortOrder, String sortBy,
                                                                           String tenantDomain)
             throws OrganizationManagementException {
 
-        OrganizationManagerImpl organizationManager = new OrganizationManagerImpl();
-        String rootOrgId = organizationManager.getPrimaryOrganizationId(tenantDomain);
+        String rootOrgId = getOrganizationManager().getParentOrganizationId(tenantDomain);
 
-        return getOrgApplicationMgtDAO().getDiscoverableApplicationBasicInfo(limit, offset, filter, sortOrder,
+        return getOrgApplicationMgtDAO().getDiscoverableSharedApplicationBasicInfo(limit, offset, filter, sortOrder,
                 sortBy, tenantDomain, rootOrgId);
     }
 
     @Override
-    public int getCountOfDiscoverableApplications(String filter, String tenantDomain)
+    public int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain)
             throws OrganizationManagementException {
 
-        OrganizationManagerImpl organizationManager = new OrganizationManagerImpl();
-        String rootOrgId = organizationManager.getPrimaryOrganizationId(tenantDomain);
+        String rootOrgId = getOrganizationManager().getParentOrganizationId(tenantDomain);
 
-        return getOrgApplicationMgtDAO().getCountOfDiscoverableApplications(filter, tenantDomain, rootOrgId);
+        return getOrgApplicationMgtDAO().getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId);
     }
 
     /**

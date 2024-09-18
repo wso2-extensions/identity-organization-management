@@ -153,13 +153,10 @@ public interface OrgApplicationMgtDAO {
      * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
      * discoverable applications.
      */
-    default List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+    List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
                                                                            String sortOrder, String sortBy,
                                                                            String tenantDomain, String rootOrgId)
-            throws OrganizationManagementException {
-
-        return null;
-    }
+            throws OrganizationManagementException;
 
     /*
      * Returns the count of discoverable applications matching given filter.
@@ -170,9 +167,6 @@ public interface OrgApplicationMgtDAO {
      * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
      * discoverable applications count.
      */
-    default int getCountOfDiscoverableApplications(String filter, String tenantDomain, String rootOrgId)
-            throws OrganizationManagementException {
-
-        return 0;
-    }
+    int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
+            throws OrganizationManagementException;
 }

@@ -66,18 +66,18 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.IS_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.IS_FRAGMENT_APPLICATION_H2;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_INFORMIX;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_MSSQL;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_MYSQL;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_ORACLE;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APPS_BY_TENANT_POSTGRES;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APP_COUNT_BY_APP_NAME_AND_TENANT;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_APP_COUNT_BY_TENANT;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_INFORMIX;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MYSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_ORACLE;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_POSTGRES;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_NAME;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_METADATA_VALUE;
@@ -301,7 +301,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     }
 
     @Override
-    public List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset, String filter,
+    public List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
                                                                           String sortOrder, String sortBy,
                                                                           String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
@@ -311,7 +311,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         // TODO: 17/9/24 : Enforce a max limit
         if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
-            return getDiscoverableApplicationBasicInfo(limit, offset, tenantDomain, rootOrgId);
+            return getDiscoverableSharedApplicationBasicInfo(limit, offset, tenantDomain, rootOrgId);
         }
 
         String filterResolvedForSQL = resolveSQLFilter(filter);
@@ -323,7 +323,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
             try (NamedPreparedStatement statement =
                          new NamedPreparedStatement(connection,
-                                 getDBVendorSpecificDiscoverableAppRetrievalQueryByAppName(databaseVendorType))) {
+                                 getDBVendorSpecificDiscoverableSharedAppRetrievalQueryByAppName(databaseVendorType))) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
@@ -345,16 +345,16 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     }
 
     @Override
-    public int getCountOfDiscoverableApplications(String filter, String tenantDomain, String rootOrgId)
+    public int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
 
         if (log.isDebugEnabled()) {
-            log.debug("Getting count of discoverable applications matching filter: " + filter + " in tenantDomain: "
-                    + tenantDomain);
+            log.debug("Getting count of discoverable shared applications matching filter: " + filter + " in " +
+                    "tenantDomain: " + tenantDomain);
         }
 
         if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
-            return getCountOfDiscoverableApplications(tenantDomain, rootOrgId);
+            return getCountOfDiscoverableSharedApplications(tenantDomain, rootOrgId);
         }
 
         int count = 0;
@@ -363,7 +363,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
             try (NamedPreparedStatement statement =
                          new NamedPreparedStatement(connection,
-                                 LOAD_DISCOVERABLE_APP_COUNT_BY_APP_NAME_AND_TENANT)) {
+                                 LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
@@ -382,7 +382,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         return count;
     }
 
-    private int getCountOfDiscoverableApplications(String tenantDomain, String rootOrgId)
+    private int getCountOfDiscoverableSharedApplications(String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
 
         int count;
@@ -390,7 +390,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
             try (NamedPreparedStatement statement =
                          new NamedPreparedStatement(connection,
-                                 LOAD_DISCOVERABLE_APP_COUNT_BY_TENANT)) {
+                                 LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, rootOrgId);
 
@@ -401,13 +401,13 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw new OrganizationManagementServerException("Error while getting count of discoverable " +
-                    "applications in tenantDomain: " + tenantDomain);
+                    "shared applications in tenantDomain: " + tenantDomain);
         }
 
         return count;
     }
 
-    private List<ApplicationBasicInfo> getDiscoverableApplicationBasicInfo(int limit, int offset,
+    private List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset,
                                                                            String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
 
@@ -418,7 +418,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
             try (NamedPreparedStatement statement =
                          new NamedPreparedStatement(connection,
-                                 getDBVendorSpecificDiscoverableAppRetrievalQuery(databaseVendorType))) {
+                                 getDBVendorSpecificDiscoverableSharedAppRetrievalQuery(databaseVendorType))) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, rootOrgId);
                 statement.setInt(3, offset);
@@ -562,42 +562,42 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         return sqlfilter;
     }
 
-    private String getDBVendorSpecificDiscoverableAppRetrievalQuery(String dbVendorType)
+    private String getDBVendorSpecificDiscoverableSharedAppRetrievalQuery(String dbVendorType)
             throws OrganizationManagementServerException {
 
         if ("MySQL".equals(dbVendorType) || "MariaDB".equals(dbVendorType)
                 || "H2".equals(dbVendorType)
                 || "DB2".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_MYSQL;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MYSQL;
         } else if ("Oracle".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_ORACLE;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_ORACLE;
         } else if ("PostgreSQL".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_POSTGRES;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_POSTGRES;
         } else if ("Microsoft SQL Server".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_MSSQL;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MSSQL;
         } else if ("INFORMIX".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_INFORMIX;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_INFORMIX;
         }
 
         throw new OrganizationManagementServerException("Error while loading discoverable applications from " +
                 "DB. Database driver for " + dbVendorType + "could not be identified or not supported.");
     }
 
-    private String getDBVendorSpecificDiscoverableAppRetrievalQueryByAppName(String dbVendorType)
+    private String getDBVendorSpecificDiscoverableSharedAppRetrievalQueryByAppName(String dbVendorType)
             throws OrganizationManagementServerException {
 
         if ("MySQL".equals(dbVendorType) || "MariaDB".equals(dbVendorType)
                 || "H2".equals(dbVendorType)
                 || "DB2".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MYSQL;
         } else if ("Oracle".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_ORACLE;
         } else if ("PostgreSQL".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL;
         } else if ("Microsoft SQL Server".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MSSQL;
         } else if ("INFORMIX".equals(dbVendorType)) {
-            return LOAD_DISCOVERABLE_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
+            return LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_INFORMIX;
         }
 
         throw new OrganizationManagementServerException("Error while loading discoverable applications from " +
