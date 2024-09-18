@@ -74,108 +74,107 @@ public class SQLConstants {
                     SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ")";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MYSQL =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT ID, APP_NAME, " +
-            "DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM DiscoverableApps WHERE " +
-            "rn = 1 ORDER BY ID DESC LIMIT ?, ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
+            "ORDER BY ID DESC LIMIT ?, ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_POSTGRES =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT ID, APP_NAME, " +
-            "DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM DiscoverableApps WHERE " +
-            "rn = 1 ORDER BY ID DESC OFFSET ? LIMIT ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
+            "ORDER BY ID DESC OFFSET ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_ORACLE =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY " +
-            "sa.APP_NAME ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn " +
-            "FROM SP_APP sa JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT ID, APP_NAME, " +
-            "DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM DiscoverableApps WHERE " +
-            "rn = 1 BETWEEN ? AND ? ORDER BY ID DESC";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
+            "BETWEEN ? AND ? ORDER BY ID DESC";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MSSQL =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT ID, APP_NAME, " +
-            "DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM DiscoverableApps WHERE " +
-            "rn = 1 ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
+           "ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_INFORMIX =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT ID, APP_NAME, " +
-            "DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM DiscoverableApps WHERE " +
-            "rn = 1 ORDER BY ID DESC SKIP ? LIMIT ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
+            "ORDER BY ID DESC SKIP ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MYSQL =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT ID, APP_NAME, DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM " +
-            "DiscoverableApps WHERE rn = 1 ORDER BY ID DESC LIMIT ?, ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC LIMIT ?, ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_POSTGRESL =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT ID, APP_NAME, DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM " +
-            "DiscoverableApps WHERE rn = 1 ORDER BY ID DESC OFFSET ? LIMIT ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC OFFSET ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_ORACLE =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT ID, APP_NAME, DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM " +
-            "DiscoverableApps WHERE rn = 1 BETWEEN ? AND ? ORDER BY ID DESC";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1') BETWEEN ? AND ? ORDER BY ID DESC";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MSSQL =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT ID, APP_NAME, DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM " +
-            "DiscoverableApps WHERE rn = 1 ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_INFORMIX =
-            "WITH DiscoverableApps AS ( SELECT sa.ID, sa.APP_NAME, sa.DESCRIPTION, sa.UUID, sa.IMAGE_URL, " +
-            "sa.ACCESS_URL, sa.USERNAME, sa.USER_STORE, sa.TENANT_ID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT ID, APP_NAME, DESCRIPTION, UUID, IMAGE_URL, ACCESS_URL, USERNAME, USER_STORE, TENANT_ID FROM " +
-            "DiscoverableApps WHERE rn = 1 ORDER BY ID DESC SKIP ? LIMIT ?";
+            "SELECT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, sa_shared.IMAGE_URL, " +
+            "CASE WHEN sa_shared.ACCESS_URL IS NOT NULL THEN sa_shared.ACCESS_URL ELSE sa_main.ACCESS_URL END AS " +
+            "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC SKIP ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT =
-            "WITH DiscoverableApps AS ( SELECT sa.UUID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME " +
-            "ORDER BY CASE WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa " +
-            "JOIN SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND ssa.OWNER_ORG_ID = ? ) SELECT count(UUID) " +
-            "FROM DiscoverableApps WHERE rn = 1";
+            "SELECT COUNT(sa_shared.UUID) FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT =
-            "WITH DiscoverableApps AS ( SELECT sa.UUID, ROW_NUMBER() OVER ( PARTITION BY sa.APP_NAME ORDER BY CASE " +
-            "WHEN sa.UUID = ssa.SHARED_APP_ID THEN 1 ELSE 2 END, sa.ID DESC ) AS rn FROM SP_APP sa JOIN " +
-            "SP_SHARED_APP ssa ON sa.UUID = ssa.SHARED_APP_ID OR sa.UUID = ssa.MAIN_APP_ID WHERE " +
-            "ssa.SHARED_ORG_ID = ? AND sa.IS_DISCOVERABLE = '1' AND sa.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? ) " +
-            "SELECT count(UUID) FROM DiscoverableApps WHERE rn = 1";
+            "SELECT COUNT(sa_shared.UUID) FROM SP_SHARED_APP ssa " +
+            "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
+            "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
+            "sa_shared.IS_DISCOVERABLE = '1')";
 
     private SQLConstants() {
 
