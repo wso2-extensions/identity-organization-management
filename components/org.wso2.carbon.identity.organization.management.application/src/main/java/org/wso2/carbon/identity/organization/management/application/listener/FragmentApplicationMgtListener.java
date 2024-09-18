@@ -300,6 +300,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     inheritAPIBasedAuthenticationEnabledProperty(mainApplication, serviceProvider);
                     // Inherit Application enabled property from the main application.
                     inheritApplicationEnabledProperty(mainApplication, serviceProvider);
+                    inheritDiscoverabilityProperty(mainApplication, serviceProvider);
 
                     /*
                     If the shared application doesn't have a configured access URL,
@@ -315,6 +316,11 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
+    }
+
+    private void inheritDiscoverabilityProperty(ServiceProvider mainApplication, ServiceProvider sharedApplication) {
+
+        sharedApplication.setDiscoverable(mainApplication.isDiscoverable() || sharedApplication.isDiscoverable());
     }
 
     private void inheritAPIBasedAuthenticationEnabledProperty(ServiceProvider mainApplication,
