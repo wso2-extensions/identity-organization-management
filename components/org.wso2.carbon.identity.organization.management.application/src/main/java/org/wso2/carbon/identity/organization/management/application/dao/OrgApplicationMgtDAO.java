@@ -142,30 +142,32 @@ public interface OrgApplicationMgtDAO {
 
     /**
      * Returns the basic information of the shared applications
-     * @param limit      Maximum no of applications to be returned in the result set (optional).
-     * @param offset     Zero based index of the first application to be returned in the result set (optional).
-     * @param filter     Filter to search for applications (optional).
-     * @param sortOrder  Sort order, ascending or descending (optional).
-     * @param sortBy     Attribute to sort from (optional).
+     *
+     * @param limit        Maximum no of applications to be returned in the result set (optional).
+     * @param offset       Zero based index of the first application to be returned in the result set (optional).
+     * @param filter       Filter to search for applications (optional).
+     * @param sortOrder    Sort order, ascending or descending (optional).
+     * @param sortBy       Attribute to sort from (optional).
      * @param tenantDomain Tenant domain.
-     * @param rootOrgId Root organization ID.
+     * @param rootOrgId    Root organization ID.
      * @return List of DiscoverableApplicationBasicInfo of applications matching the given criteria.
      * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
-     * discoverable applications.
+     *                                         discoverable applications.
      */
     List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
                                                                            String sortOrder, String sortBy,
                                                                            String tenantDomain, String rootOrgId)
             throws OrganizationManagementException;
 
-    /*
+    /**
      * Returns the count of discoverable applications matching given filter.
-     * @param filter        Filter to search for applications (optional).
-     * @param tenantDomain  Tenant domain.
-     * @param rootOrgId     Root organization ID.
+     *
+     * @param filter       Filter to search for applications (optional).
+     * @param tenantDomain Tenant domain.
+     * @param rootOrgId    Root organization ID.
      * @return Count of discoverable applications matching given filter.
      * @throws OrganizationManagementException The server exception is thrown in a failure when retrieving the
-     * discoverable applications count.
+     *                                         discoverable applications count.
      */
     int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException;

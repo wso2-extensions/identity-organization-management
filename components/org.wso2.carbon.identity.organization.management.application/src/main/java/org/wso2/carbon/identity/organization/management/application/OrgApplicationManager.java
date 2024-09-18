@@ -178,13 +178,14 @@ public interface OrgApplicationManager {
         throw new NotImplementedException("getChildAppIds method is not implemented in " + this.getClass().getName());
     }
 
-    /*
+    /**
      * Get the discoverable application basic info.
-     * @param limit      Maximum no of applications to be returned in the result set (optional).
-     * @param offset     Zero based index of the first application to be returned in the result set (optional).
-     * @param filter     Filter to search for applications (optional).
-     * @param sortOrder  Sort order, ascending or descending (optional).
-     * @param sortBy     Attribute to sort from (optional).
+     *
+     * @param limit        Maximum no of applications to be returned in the result set (optional).
+     * @param offset       Zero based index of the first application to be returned in the result set (optional).
+     * @param filter       Filter to search for applications (optional).
+     * @param sortOrder    Sort order, ascending or descending (optional).
+     * @param sortBy       Attribute to sort from (optional).
      * @param tenantDomain Tenant domain.
      * @return List of DiscoverableApplicationBasicInfo of applications matching the given criteria.
      * @throws OrganizationManagementException If an error occurred when retrieving the discoverable applications.
@@ -197,13 +198,14 @@ public interface OrgApplicationManager {
         return null;
     }
 
-    /*
+    /**
      * Get the count of discoverable applications.
-     * @param filter        Filter to search for applications (optional).
-     * @param tenantDomain  Tenant domain.
+     *
+     * @param filter       Filter to search for applications (optional).
+     * @param tenantDomain Tenant domain.
      * @return Count of discoverable applications matching given filter.
      * @throws OrganizationManagementException If an error occurred when retrieving the count of
-     * discoverable applications.
+     *                                         discoverable applications.
      */
     default int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain)
             throws OrganizationManagementException {
