@@ -717,7 +717,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
-
         return getOrgApplicationMgtDAO().getDiscoverableSharedApplicationBasicInfo(limit, offset, filter, sortOrder,
                 sortBy, tenantDomain, rootOrgId);
     }
@@ -727,7 +726,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
-
         return getOrgApplicationMgtDAO().getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId);
     }
 
