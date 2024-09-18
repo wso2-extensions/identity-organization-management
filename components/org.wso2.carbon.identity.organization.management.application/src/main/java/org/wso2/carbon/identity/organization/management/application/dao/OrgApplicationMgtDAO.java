@@ -141,7 +141,7 @@ public interface OrgApplicationMgtDAO {
     }
 
     /**
-     * Returns the basic information of the shared applications
+     * Returns the basic information of the discoverable shared applications
      *
      * @param limit        Maximum no of applications to be returned in the result set (optional).
      * @param offset       Zero based index of the first application to be returned in the result set (optional).
@@ -160,7 +160,7 @@ public interface OrgApplicationMgtDAO {
             throws OrganizationManagementException;
 
     /**
-     * Returns the count of discoverable applications matching given filter.
+     * Returns the count of discoverable shared applications matching given filter.
      *
      * @param filter       Filter to search for applications (optional).
      * @param tenantDomain Tenant domain.

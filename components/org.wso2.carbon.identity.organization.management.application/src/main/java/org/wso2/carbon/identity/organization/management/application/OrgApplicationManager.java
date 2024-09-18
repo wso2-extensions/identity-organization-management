@@ -179,7 +179,7 @@ public interface OrgApplicationManager {
     }
 
     /**
-     * Get the discoverable application basic info.
+     * Get the discoverable shared application basic info.
      *
      * @param limit        Maximum no of applications to be returned in the result set (optional).
      * @param offset       Zero based index of the first application to be returned in the result set (optional).
@@ -199,7 +199,7 @@ public interface OrgApplicationManager {
     }
 
     /**
-     * Get the count of discoverable applications.
+     * Get the count of discoverable shared applications.
      *
      * @param filter       Filter to search for applications (optional).
      * @param tenantDomain Tenant domain.

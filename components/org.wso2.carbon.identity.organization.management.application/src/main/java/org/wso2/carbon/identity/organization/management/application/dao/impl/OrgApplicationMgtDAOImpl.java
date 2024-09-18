@@ -340,7 +340,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementException("Error while getting application basic information" +
                     " for discoverable applications in tenantDomain: " + tenantDomain, e);
         }
-
         return Collections.unmodifiableList(applicationBasicInfoList);
     }
 
@@ -378,7 +377,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementServerException("Error while getting count of discoverable " +
                     "applications matching filter:" + filter + " in tenantDomain: " + tenantDomain);
         }
-
         return count;
     }
 
@@ -403,7 +401,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementServerException("Error while getting count of discoverable " +
                     "shared applications in tenantDomain: " + tenantDomain);
         }
-
         return count;
     }
 
@@ -434,7 +431,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementException("Error while getting application basic information" +
                     " for discoverable applications in tenantDomain: " + tenantDomain, e);
         }
-
         return Collections.unmodifiableList(applicationBasicInfoList);
     }
 
