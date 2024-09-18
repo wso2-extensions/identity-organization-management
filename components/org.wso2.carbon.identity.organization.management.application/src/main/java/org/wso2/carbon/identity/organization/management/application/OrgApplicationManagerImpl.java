@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -707,6 +708,25 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     mainApplicationDO.get().getOrganizationId(), childOrgIds);
         }
         return Collections.emptyMap();
+    }
+
+    @Override
+    public List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
+                                                                          String sortOrder, String sortBy,
+                                                                          String tenantDomain)
+            throws OrganizationManagementException {
+
+        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
+        return getOrgApplicationMgtDAO().getDiscoverableSharedApplicationBasicInfo(limit, offset, filter, sortOrder,
+                sortBy, tenantDomain, rootOrgId);
+    }
+
+    @Override
+    public int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain)
+            throws OrganizationManagementException {
+
+        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
+        return getOrgApplicationMgtDAO().getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId);
     }
 
     /**
