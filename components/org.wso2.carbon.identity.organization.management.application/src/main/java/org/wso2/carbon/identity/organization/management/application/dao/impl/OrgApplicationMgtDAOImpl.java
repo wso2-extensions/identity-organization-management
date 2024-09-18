@@ -558,7 +558,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         if (log.isDebugEnabled()) {
             log.debug("Input filter: " + filter + " resolved for SQL filter: " + sqlfilter);
         }
-
         return sqlfilter;
     }
 
