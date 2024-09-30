@@ -53,6 +53,7 @@ import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 
@@ -143,17 +144,13 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
                         .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
                                 p.getName()) && Boolean.parseBoolean(p.getValue()))) {
-                    String mainAppOrgId = getOrganizationManager().resolveOrganizationId(mainApplication
-                            .getTenantDomain());
-                    List<BasicOrganization> applicationSharedOrganizations = getOrgApplicationManager()
-                            .getApplicationSharedOrganizations(mainAppOrgId,
-                                    mainApplication.getApplicationResourceId());
-                    // Having an empty list implies that this is the first organization to which the application is
-                    // shared with.
-                    boolean updateIsAppSharedProperty = CollectionUtils.isEmpty(applicationSharedOrganizations);
                     getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
                             mainApplication, true);
-                    if (updateIsAppSharedProperty) {
+                    // Check whether the application is shared with any child organization using `isAppShared` property.
+                    boolean isAppShared = isAppShared(mainApplication);
+                    if (!isAppShared) {
+                        // Update the `isAppShared` property of the main application to true if it hasn't been shared
+                        // previously.
                         updateApplicationWithIsAppSharedProperty(true, mainApplication);
                     }
                 }
@@ -236,6 +233,18 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
             }
         }
+    }
+
+    /**
+     * Return the value of the `isAppShared` property of the main application.
+     *
+     * @param mainApplication The main application service provider object.
+     * @return True if the `isAppShared` property of the main application is set as true.
+     */
+    private boolean isAppShared(ServiceProvider mainApplication) {
+
+        return Arrays.stream(mainApplication.getSpProperties())
+                .anyMatch(p -> IS_APP_SHARED.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()));
     }
 
     private ApplicationManagementService getApplicationManagementService() {
