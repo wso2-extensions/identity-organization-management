@@ -467,45 +467,51 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
     public boolean doPreDeleteApplication(String applicationName, String tenantDomain, String userName)
             throws IdentityApplicationManagementException {
 
-        try {
-            // If the deleting application is an application of tenant(i.e primary org) nothing to do here.
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
-                return true;
-            }
+//        if (StringUtils.isEmpty(PrivilegedCarbonContext.getThreadLocalCarbonContext()
+//                .getApplicationResidentOrganizationId())) {
+            try {
+                // If the deleting application is an application of tenant(i.e primary org) nothing to do here.
+                if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                    return true;
+                }
 
-            ServiceProvider sharedApplication = getApplicationByName(applicationName, tenantDomain);
-            if (sharedApplication == null) {
-                return false;
-            }
-            String sharedAppId = sharedApplication.getApplicationResourceId();
-            String sharedAppOrgId = organizationManager.resolveOrganizationId(tenantDomain);
-            // Resolve the main application details.
-            String mainAppId = orgApplicationManager.getMainApplicationIdForGivenSharedApp(sharedAppId, sharedAppOrgId);
-            if (mainAppId == null) {
-                return false;
-            }
-            int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
-            String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+                ServiceProvider sharedApplication = getApplicationByName(applicationName, tenantDomain);
+                if (sharedApplication == null) {
+                    return false;
+                }
+                String sharedAppId = sharedApplication.getApplicationResourceId();
+                String sharedAppOrgId = organizationManager.resolveOrganizationId(tenantDomain);
+                // Resolve the main application details.
+                String mainAppId = orgApplicationManager.getMainApplicationIdForGivenSharedApp(sharedAppId,
+                        sharedAppOrgId);
+                if (mainAppId == null) {
+                    return false;
+                }
+                int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
+                String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
 
-            String allowedAudienceForRoleAssociationInMainApp =
-                    applicationManagementService.getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain);
-            boolean hasAppAudiencedRoles =
-                    RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociationInMainApp);
-            if (hasAppAudiencedRoles) {
-                // Handle role deletion in application deletion post actions.
-                return true;
-            }
+                String allowedAudienceForRoleAssociationInMainApp =
+                        applicationManagementService.getAllowedAudienceForRoleAssociation(mainAppId,
+                                mainAppTenantDomain);
+                boolean hasAppAudiencedRoles =
+                        RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociationInMainApp);
+                if (hasAppAudiencedRoles) {
+                    // Handle role deletion in application deletion post actions.
+                    return true;
+                }
 
-            // Handing organization audienced roles associated case.
-            List<RoleV2> associatedRolesOfMainApplication = applicationManagementService
-                    .getAssociatedRolesOfApplication(mainAppId, mainAppTenantDomain);
-            handleOrganizationAudiencedSharedRoleDeletion(associatedRolesOfMainApplication, mainAppId,
-                    mainAppTenantDomain, sharedAppOrgId);
-        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            throw new IdentityApplicationManagementException(
-                    "Error while deleting organization roles associated to the app.", e);
-        }
-        return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
+                // Handing organization audienced roles associated case.
+                List<RoleV2> associatedRolesOfMainApplication = applicationManagementService
+                        .getAssociatedRolesOfApplication(mainAppId, mainAppTenantDomain);
+                handleOrganizationAudiencedSharedRoleDeletion(associatedRolesOfMainApplication, mainAppId,
+                        mainAppTenantDomain, sharedAppOrgId);
+            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+                throw new IdentityApplicationManagementException(
+                        "Error while deleting organization roles associated to the app.", e);
+            }
+            return super.doPreDeleteApplication(applicationName, tenantDomain, userName);
+//        }
+//        return true;
     }
 
     private void handleOrganizationAudiencedSharedRoleDeletion(List<RoleV2> rolesList, String mainApplicationId,
@@ -584,7 +590,10 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throws IdentityApplicationManagementException {
 
         try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            if (!OrganizationManagementUtil.isOrganization(tenantDomain)
+//                    || StringUtils.isNotEmpty(PrivilegedCarbonContext.getThreadLocalCarbonContext()
+//                            .getApplicationResidentOrganizationId())
+                            ) {
                 return true;
             }
             // Resolve the allowed audience for associated roles of shared application from main application details.
