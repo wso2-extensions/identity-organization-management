@@ -212,7 +212,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     });
             return Optional.ofNullable(sharedAppId);
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETING_SHARED_APPLICATION_LINK, e, mainAppId, ownerOrgId);
+            throw handleServerException(ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppId, ownerOrgId);
         }
     }
 
@@ -391,7 +391,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                 preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, organizationId);
             });
         } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, organizationId);
+            throw handleServerException(ERROR_CODE_ERROR_DELETING_SHARED_APPLICATION_LINK, e, organizationId);
         }
     }
 
