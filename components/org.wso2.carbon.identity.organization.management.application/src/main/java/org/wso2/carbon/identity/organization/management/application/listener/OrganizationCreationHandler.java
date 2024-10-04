@@ -42,7 +42,6 @@ import org.wso2.carbon.identity.organization.management.application.util.OrgAppl
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
@@ -165,7 +164,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
      * @param organizationId ID of the organization.
      */
     private void handleSharedAppDeletionForPostDeleteOrganization(String organizationId)
-            throws OrganizationManagementServerException {
+            throws OrganizationManagementException {
 
         if (StringUtils.isBlank(organizationId)) {
             return;
@@ -221,7 +220,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
             for (String mainAppId : mainAppIds) {
                 boolean hasSharedApps = getOrgApplicationManager().hasSharedApps(mainAppId);
-                // Since the application doesn't have any shared organizations, isAppShared service provider property
+                // Since the application doesn't have any shared applications, isAppShared service provider property
                 // should be set to false.
                 if (!hasSharedApps) {
                     ServiceProvider mainApplication = getApplicationManagementService()
