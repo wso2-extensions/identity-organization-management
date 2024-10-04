@@ -212,4 +212,16 @@ public interface OrgApplicationManager {
 
         return 0;
     }
+
+    /**
+     * Check whether the main application has fragment applications.
+     *
+     * @param mainApplicationId Main application ID.
+     * @return True if the main application has fragment applications.
+     * @throws OrganizationManagementException If an error occurred when checking fragment applications.
+     */
+    default boolean hasFragmentApps(String mainApplicationId) throws OrganizationManagementException {
+
+        return false;
+    }
 }

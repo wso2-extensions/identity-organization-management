@@ -23,6 +23,7 @@ import org.wso2.carbon.identity.organization.management.application.model.MainAp
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
 import java.util.List;
 import java.util.Optional;
@@ -171,4 +172,9 @@ public interface OrgApplicationMgtDAO {
      */
     int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException;
+
+    default void deleteSharedAppLink(String organizationId) throws OrganizationManagementServerException {
+
+        return;
+    }
 }

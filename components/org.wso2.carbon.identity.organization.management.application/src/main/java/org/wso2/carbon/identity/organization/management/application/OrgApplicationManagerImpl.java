@@ -729,6 +729,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOrgApplicationMgtDAO().getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId);
     }
 
+    @Override
+    public boolean hasFragmentApps(String mainApplicationId) throws OrganizationManagementException {
+
+        return getOrgApplicationMgtDAO().hasFragments(mainApplicationId);
+    }
+
     /**
      * Returns whether the given application is a main application.
      *

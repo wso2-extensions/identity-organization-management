@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.listener;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -41,7 +42,7 @@ import org.wso2.carbon.identity.organization.management.application.util.OrgAppl
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
@@ -54,6 +55,7 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_PROPERTY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 
@@ -85,6 +87,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             Map<String, Object> eventProperties = event.getEventProperties();
             String organizationId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
             try {
+                handleSharedAppDeletionForPostDeleteOrganization(event);
                 handleMainApplicationUpdateForPreDeleteOrganization(organizationId);
             } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
                 throw new IdentityEventException("An error occurred while retrieving main applications of " +
@@ -158,6 +161,22 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
     }
 
+    /**
+     * Handle shared application deletion for post delete organization.
+     *
+     * @param event Event.
+     */
+    private void handleSharedAppDeletionForPostDeleteOrganization(Event event)
+            throws OrganizationManagementServerException {
+
+        String organizationId = (String) event.getEventProperties().get(ORGANIZATION_ID_PROPERTY);
+        if (StringUtils.isBlank(organizationId)) {
+            return;
+        }
+        getOrgApplicationMgtDAO().deleteSharedAppLink(organizationId);
+    }
+
+
     private void handleMainApplicationUpdateForPreDeleteOrganization(String organizationId)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
@@ -199,17 +218,15 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             // All the applications have the same tenant ID. Therefore, tenant ID of the first application is used.
             int rootTenantId = getApplicationManagementService().getTenantIdByApp(mainAppIds.get(0));
             String rootTenantDomain = IdentityTenantUtil.getTenantDomain(rootTenantId);
-            String rootOrganizationId = getOrganizationManager().resolveOrganizationId(rootTenantDomain);
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(rootTenantDomain, true);
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
             for (String mainAppId : mainAppIds) {
-                List<BasicOrganization> applicationSharedOrganizations = getOrgApplicationManager()
-                        .getApplicationSharedOrganizations(rootOrganizationId, mainAppId);
+                boolean hasFragmentsApps = getOrgApplicationManager().hasFragmentApps(mainAppId);
                 // Since the application doesn't have any shared organizations, isAppShared service provider property
                 // should be set to false.
-                if (CollectionUtils.isEmpty(applicationSharedOrganizations)) {
+                if (!hasFragmentsApps) {
                     ServiceProvider mainApplication = getApplicationManagementService()
                             .getApplicationByResourceId(mainAppId, rootTenantDomain);
                     updateApplicationWithIsAppSharedProperty(false, mainApplication);
