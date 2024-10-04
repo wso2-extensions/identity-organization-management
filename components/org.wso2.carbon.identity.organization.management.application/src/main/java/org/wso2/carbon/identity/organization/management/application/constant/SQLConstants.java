@@ -176,7 +176,7 @@ public class SQLConstants {
             "sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
             "sa_shared.IS_DISCOVERABLE = '1')";
 
-    public static final String DELETE_SHARED_APP_LINK = "DELETE FROM SP_SHARED_APP WHERE SHARED_ORG_ID = :" +
+    public static final String DELETE_SHARED_APP_LINKS_OF_ORG = "DELETE FROM SP_SHARED_APP WHERE SHARED_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + ";";
 
     private SQLConstants() {

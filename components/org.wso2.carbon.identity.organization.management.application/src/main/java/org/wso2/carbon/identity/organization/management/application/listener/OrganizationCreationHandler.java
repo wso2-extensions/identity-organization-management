@@ -55,7 +55,6 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_PROPERTY;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getAuthenticatedUsername;
 
@@ -71,9 +70,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     public void handleEvent(Event event) throws IdentityEventException {
 
         String eventName = event.getEventName();
+        Map<String, Object> eventProperties = event.getEventProperties();
+        String organizationId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
 
         if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
-            Map<String, Object> eventProperties = event.getEventProperties();
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
             try {
                 addSharedApplicationsToOrganization(organization);
@@ -84,10 +84,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
 
         if (Constants.EVENT_PRE_DELETE_ORGANIZATION.equals(eventName)) {
-            Map<String, Object> eventProperties = event.getEventProperties();
-            String organizationId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
             try {
-                handleSharedAppDeletionForPostDeleteOrganization(event);
                 handleMainApplicationUpdateForPreDeleteOrganization(organizationId);
             } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
                 throw new IdentityEventException("An error occurred while retrieving main applications of " +
@@ -97,6 +94,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
 
         if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {
             try {
+                handleSharedAppDeletionForPostDeleteOrganization(organizationId);
                 handleMainApplicationUpdateForPostDeleteOrganization();
             } catch (OrganizationManagementException | IdentityApplicationManagementException e) {
                 throw new IdentityEventException("An error occurred while updating main application based " +
@@ -164,16 +162,15 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     /**
      * Handle shared application deletion for post delete organization.
      *
-     * @param event Event.
+     * @param organizationId ID of the organization.
      */
-    private void handleSharedAppDeletionForPostDeleteOrganization(Event event)
+    private void handleSharedAppDeletionForPostDeleteOrganization(String organizationId)
             throws OrganizationManagementServerException {
 
-        String organizationId = (String) event.getEventProperties().get(ORGANIZATION_ID_PROPERTY);
         if (StringUtils.isBlank(organizationId)) {
             return;
         }
-        getOrgApplicationMgtDAO().deleteSharedAppLink(organizationId);
+        getOrgApplicationMgtDAO().deleteSharedAppLinks(organizationId);
     }
 
 
@@ -223,10 +220,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(rootTenantDomain, true);
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
             for (String mainAppId : mainAppIds) {
-                boolean hasFragmentsApps = getOrgApplicationManager().hasFragmentApps(mainAppId);
+                boolean hasSharedApps = getOrgApplicationManager().hasSharedApps(mainAppId);
                 // Since the application doesn't have any shared organizations, isAppShared service provider property
                 // should be set to false.
-                if (!hasFragmentsApps) {
+                if (!hasSharedApps) {
                     ServiceProvider mainApplication = getApplicationManagementService()
                             .getApplicationByResourceId(mainAppId, rootTenantDomain);
                     updateApplicationWithIsAppSharedProperty(false, mainApplication);

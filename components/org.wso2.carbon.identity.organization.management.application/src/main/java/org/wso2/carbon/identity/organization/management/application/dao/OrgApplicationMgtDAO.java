@@ -173,7 +173,7 @@ public interface OrgApplicationMgtDAO {
     int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException;
 
-    default void deleteSharedAppLink(String organizationId) throws OrganizationManagementServerException {
+    default void deleteSharedAppLinks(String organizationId) throws OrganizationManagementServerException {
 
         return;
     }

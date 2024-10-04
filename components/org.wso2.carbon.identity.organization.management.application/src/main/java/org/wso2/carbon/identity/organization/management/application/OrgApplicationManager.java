@@ -214,13 +214,13 @@ public interface OrgApplicationManager {
     }
 
     /**
-     * Check whether the main application has fragment applications.
+     * Check whether the main application has shared applications.
      *
      * @param mainApplicationId Main application ID.
-     * @return True if the main application has fragment applications.
-     * @throws OrganizationManagementException If an error occurred when checking fragment applications.
+     * @return True if the main application has shared applications.
+     * @throws OrganizationManagementException If an error occurred when checking shared applications.
      */
-    default boolean hasFragmentApps(String mainApplicationId) throws OrganizationManagementException {
+    default boolean hasSharedApps(String mainApplicationId) throws OrganizationManagementException {
 
         return false;
     }

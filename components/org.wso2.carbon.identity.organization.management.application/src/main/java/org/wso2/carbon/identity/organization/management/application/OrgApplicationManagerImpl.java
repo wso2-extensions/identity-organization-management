@@ -730,7 +730,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public boolean hasFragmentApps(String mainApplicationId) throws OrganizationManagementException {
+    public boolean hasSharedApps(String mainApplicationId) throws OrganizationManagementException {
 
         return getOrgApplicationMgtDAO().hasFragments(mainApplicationId);
     }

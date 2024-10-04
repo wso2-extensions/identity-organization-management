@@ -57,7 +57,7 @@ import static org.wso2.carbon.identity.application.common.util.IdentityApplicati
 import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.getConsoleAccessUrlFromServerConfig;
 import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.getMyAccountAccessUrlFromServerConfig;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
-import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.DELETE_SHARED_APP_LINK;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.DELETE_SHARED_APP_LINKS_OF_ORG;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_FILTERED_SHARED_APPLICATIONS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATION;
@@ -383,11 +383,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     }
 
     @Override
-    public void deleteSharedAppLink(String organizationId) throws OrganizationManagementServerException {
+    public void deleteSharedAppLinks(String organizationId) throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
-            namedJdbcTemplate.executeUpdate(DELETE_SHARED_APP_LINK, preparedStatement -> {
+            namedJdbcTemplate.executeUpdate(DELETE_SHARED_APP_LINKS_OF_ORG, preparedStatement -> {
                 preparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, organizationId);
             });
         } catch (DataAccessException e) {
