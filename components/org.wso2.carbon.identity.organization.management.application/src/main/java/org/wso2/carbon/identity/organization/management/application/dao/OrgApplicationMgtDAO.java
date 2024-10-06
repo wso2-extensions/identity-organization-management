@@ -171,4 +171,16 @@ public interface OrgApplicationMgtDAO {
      */
     int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException;
+
+    /**
+     * Delete shared application links of an organization.
+     *
+     * @param organizationId    The unique ID of the organization.
+     * @throws OrganizationManagementException the server exception is thrown in a failure when deleting the shared
+     * applications.
+     */
+    default void deleteSharedAppLinks(String organizationId) throws OrganizationManagementException {
+
+        return;
+    }
 }

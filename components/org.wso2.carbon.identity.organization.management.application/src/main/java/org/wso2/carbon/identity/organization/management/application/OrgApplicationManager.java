@@ -212,4 +212,16 @@ public interface OrgApplicationManager {
 
         return 0;
     }
+
+    /**
+     * Check whether the main application has shared applications.
+     *
+     * @param mainApplicationId Main application ID.
+     * @return True if the main application has shared applications.
+     * @throws OrganizationManagementException If an error occurred when checking shared applications.
+     */
+    default boolean hasSharedApps(String mainApplicationId) throws OrganizationManagementException {
+
+        return false;
+    }
 }
