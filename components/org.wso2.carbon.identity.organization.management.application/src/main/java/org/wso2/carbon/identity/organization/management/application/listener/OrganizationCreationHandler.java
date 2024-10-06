@@ -172,7 +172,6 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         getOrgApplicationMgtDAO().deleteSharedAppLinks(organizationId);
     }
 
-
     private void handleMainApplicationUpdateForPreDeleteOrganization(String organizationId)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
