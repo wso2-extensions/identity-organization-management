@@ -300,7 +300,6 @@ public class OrgApplicationManagerImplTest {
                 sortOrder, sortBy, tenantDomain, rootOrgId)).thenReturn(expectedApps);
         List<ApplicationBasicInfo> actualApps = orgApplicationManager.getDiscoverableSharedApplicationBasicInfo(
                 limit, offset, filter, sortOrder, sortBy, tenantDomain);
-
         assertEquals(expectedApps, actualApps);
     }
 
@@ -315,9 +314,7 @@ public class OrgApplicationManagerImplTest {
         when(organizationManager.getPrimaryOrganizationId(tenantDomain)).thenReturn(rootOrgId);
         when(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId))
                 .thenReturn(expectedCount);
-
         int actualCount = orgApplicationManager.getCountOfDiscoverableSharedApplications(filter, tenantDomain);
-
         assertEquals(expectedCount, actualCount);
     }
 }
