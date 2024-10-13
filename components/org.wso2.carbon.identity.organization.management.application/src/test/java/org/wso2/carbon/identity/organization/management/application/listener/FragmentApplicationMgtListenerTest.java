@@ -69,7 +69,6 @@ public class FragmentApplicationMgtListenerTest {
         MockitoAnnotations.openMocks(this);
         serviceProvider = mock(ServiceProvider.class);
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
-
         mockedUtilities = Mockito.mockStatic(IdentityTenantUtil.class, Mockito.withSettings()
                 .defaultAnswer(Mockito.CALLS_REAL_METHODS));
     }
@@ -127,7 +126,6 @@ public class FragmentApplicationMgtListenerTest {
     public void testInheritDiscoverabilityProperty() throws Exception {
 
         ServiceProvider mainApplication = mock(ServiceProvider.class);
-
         when(mainApplication.isDiscoverable()).thenReturn(true);
         when(serviceProvider.isDiscoverable()).thenReturn(false);
         Method method = fragmentApplicationMgtListener.getClass()
