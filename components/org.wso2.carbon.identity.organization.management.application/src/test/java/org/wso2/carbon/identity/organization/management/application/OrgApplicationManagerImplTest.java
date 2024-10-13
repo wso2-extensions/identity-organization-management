@@ -285,23 +285,19 @@ public class OrgApplicationManagerImplTest {
         String filter = "*";
         String sortOrder = "ASC";
         String sortBy = "name";
-        String tenantDomain = "example.com";
+        String tenantDomain = "abc.com";
         String rootOrgId = "root-org-id";
 
         ApplicationBasicInfo app1 = new ApplicationBasicInfo();
         app1.setApplicationName("App1");
         app1.setDescription("Description1");
-
         ApplicationBasicInfo app2 = new ApplicationBasicInfo();
         app2.setApplicationName("App2");
         app2.setDescription("Description2");
-
         List<ApplicationBasicInfo> expectedApps = Arrays.asList(app1, app2);
-
         when(organizationManager.getPrimaryOrganizationId(tenantDomain)).thenReturn(rootOrgId);
         when(orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(limit, offset, filter,
                 sortOrder, sortBy, tenantDomain, rootOrgId)).thenReturn(expectedApps);
-
         List<ApplicationBasicInfo> actualApps = orgApplicationManager.getDiscoverableSharedApplicationBasicInfo(
                 limit, offset, filter, sortOrder, sortBy, tenantDomain);
 
