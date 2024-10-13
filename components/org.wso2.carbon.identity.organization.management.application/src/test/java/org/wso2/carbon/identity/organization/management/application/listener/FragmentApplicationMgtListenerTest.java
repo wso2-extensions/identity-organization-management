@@ -36,7 +36,10 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
+import java.lang.reflect.Method;
+
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -66,6 +69,9 @@ public class FragmentApplicationMgtListenerTest {
         MockitoAnnotations.openMocks(this);
         serviceProvider = mock(ServiceProvider.class);
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
+
+        mockedUtilities = Mockito.mockStatic(IdentityTenantUtil.class, Mockito.withSettings()
+                .defaultAnswer(Mockito.CALLS_REAL_METHODS));
     }
 
     @DataProvider(name = "subOrganizationMetaData")
@@ -117,10 +123,22 @@ public class FragmentApplicationMgtListenerTest {
         assertTrue(result);
     }
 
+    @Test
+    public void testInheritDiscoverabilityProperty() throws Exception {
+
+        ServiceProvider mainApplication = mock(ServiceProvider.class);
+
+        when(mainApplication.isDiscoverable()).thenReturn(true);
+        when(serviceProvider.isDiscoverable()).thenReturn(false);
+        Method method = fragmentApplicationMgtListener.getClass()
+                .getDeclaredMethod("inheritDiscoverabilityProperty", ServiceProvider.class, ServiceProvider.class);
+        method.setAccessible(true);
+        method.invoke(fragmentApplicationMgtListener, mainApplication, serviceProvider);
+        verify(serviceProvider).setDiscoverable(true);
+    }
+
     private void mockUtils(String requestInitiatedDomain) {
 
-        mockedUtilities = Mockito.mockStatic(IdentityTenantUtil.class, Mockito.withSettings()
-                .defaultAnswer(Mockito.CALLS_REAL_METHODS));
         mockedUtilities.when(() -> IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(requestInitiatedDomain);
     }
 
