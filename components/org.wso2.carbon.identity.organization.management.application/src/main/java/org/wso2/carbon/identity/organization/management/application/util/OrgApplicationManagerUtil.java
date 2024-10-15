@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthent
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
+import org.wso2.carbon.identity.base.AuthenticatorPropertyConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -168,6 +169,7 @@ public class OrgApplicationManagerUtil {
         FederatedAuthenticatorConfig authConfig = new FederatedAuthenticatorConfig();
         authConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
         authConfig.setDisplayName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+        authConfig.setDefinedByType(AuthenticatorPropertyConstants.DefinedByType.SYSTEM);
         authConfig.setEnabled(true);
 
         IdentityProvider idp = new IdentityProvider();
