@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
-import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -34,9 +33,14 @@ import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.User;
+import org.wso2.carbon.user.core.model.UniqueIDUserClaimSearchEntry;
+import org.wso2.carbon.user.core.model.UserClaimSearchEntry;
 import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
@@ -52,10 +56,112 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     private final OrganizationUserSharingService organizationUserSharingService =
             new OrganizationUserSharingServiceImpl();
 
+    private final List<String> sharedUserSpecificClaims =
+            Arrays.asList("http://wso2.org/claims/groups", "http://wso2.org/claims/roles");
+
     @Override
     public int getExecutionOrderId() {
 
         return 8;
+    }
+
+    public boolean doPostGetUserClaimValueWithID(String userID, String claim, List<String> claimValue,
+                                                 String profileName, UserStoreManager userStoreManager)
+            throws UserStoreException {
+
+        if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        // If claimValue is not empty, it means the claim value is already set. Hence, return.
+        if (!claimValue.isEmpty()) {
+            return true;
+        }
+        // Get the claim trying to retrieve if shared user specific one, no need to check it from root user.
+        if (sharedUserSpecificClaims.contains(claim)) {
+            return true;
+        }
+
+        String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
+        try {
+            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
+                // There is no shared users in root organizations. Hence, return.
+                return true;
+            }
+            UserAssociation userAssociation =
+                    OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+                            .getUserAssociation(userID, currentOrganizationId);
+            if (userAssociation == null) {
+                // User is not a shared user. Hence, return.
+                return true;
+            }
+            // Get the associated user id and user's managed organization.
+            String associatedUserId = userAssociation.getAssociatedUserId();
+            String userResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
+            String userResidentTenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                    .resolveTenantDomain(userResidentOrganizationId);
+
+            // Get the resident user claim value.
+            AbstractUserStoreManager residentUserStoreManager =
+                    getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(userResidentTenantDomain));
+            String residentUserClaimValueWithID =
+                    residentUserStoreManager.getUserClaimValueWithID(associatedUserId, claim,
+                            profileName);
+            if (residentUserClaimValueWithID != null) {
+                claimValue.add(residentUserClaimValueWithID);
+            }
+        } catch (OrganizationManagementException | org.wso2.carbon.user.api.UserStoreException e) {
+            throw new UserStoreException(e.getMessage(), e);
+        }
+        return true;
+    }
+
+    public boolean doPostGetUsersClaimValuesWithID(List<String> userIDs, List<String> claims, String profileName,
+                                                   List<UniqueIDUserClaimSearchEntry> userClaimSearchEntries,
+                                                   UserStoreManager userStoreManager) throws UserStoreException {
+
+        if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
+        try {
+            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
+                // There is no shared users in root organizations. Hence, return.
+                return true;
+            }
+            String[] claimsArray = claims.toArray(new String[0]);
+            for (UniqueIDUserClaimSearchEntry userClaimSearchEntry : userClaimSearchEntries) {
+                User user = userClaimSearchEntry.getUser();
+                UserAssociation userAssociation =
+                        OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+                                .getUserAssociation(user.getUserID(), currentOrganizationId);
+                if (userAssociation == null) {
+                    // User is not a shared user. Hence, return.
+                    continue;
+                }
+                // Get the associated user id and user's managed organization.
+                String associatedUserId = userAssociation.getAssociatedUserId();
+                String userResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
+                String userResidentTenantDomain =
+                        OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                                .resolveTenantDomain(userResidentOrganizationId);
+
+                // Get the resident user claim values.
+                AbstractUserStoreManager residentUserStoreManager =
+                        getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(userResidentTenantDomain));
+                Map<String, String> residentUserClaimValuesWithID =
+                        residentUserStoreManager.getUserClaimValuesWithID(associatedUserId, claimsArray, profileName);
+                Map<String, String> aggregatedProfileClaims =
+                        getAggregatedProfile(userClaimSearchEntry.getClaims(), residentUserClaimValuesWithID);
+                userClaimSearchEntry.setClaims(aggregatedProfileClaims);
+                UserClaimSearchEntry searchEntryObject = userClaimSearchEntry.getUserClaimSearchEntry();
+                searchEntryObject.setClaims(aggregatedProfileClaims);
+            }
+        } catch (OrganizationManagementException | org.wso2.carbon.user.api.UserStoreException e) {
+            throw new UserStoreException(e.getMessage(), e);
+        }
+        return true;
     }
 
     public boolean doPostGetUserClaimValuesWithID(String userID, String[] claims, String profileName,
@@ -105,14 +211,13 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         } else if (residentUserClaims == null) {
             return sharedUserClaims;
         }
-        Map<String, String> result =
-                new HashMap<>(residentUserClaims); // Start with all entries from residentUserClaims
-        result.remove("http://wso2.org/claims/groups");
-        result.remove("http://wso2.org/claims/roles");
-        for (Map.Entry<String, String> entry : sharedUserClaims.entrySet()) {
-            result.put(entry.getKey(), entry.getValue()); // Add entries from sharedUserClaims, overriding duplicates
-        }
-        return result;
+        // Start with all entries from residentUserClaims.
+        Map<String, String> aggregatedResult = new HashMap<>(residentUserClaims);
+        // Remove sharedUserSpecificClaims from aggregatedResult.
+        sharedUserSpecificClaims.forEach(aggregatedResult::remove);
+        // Add entries from sharedUserClaims, overriding duplicates
+        aggregatedResult.putAll(sharedUserClaims);
+        return aggregatedResult;
     }
 
     @Override
