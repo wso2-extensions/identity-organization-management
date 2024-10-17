@@ -153,6 +153,9 @@ public class UserInvitationMgtConstants {
         ERROR_CODE_GROUP_EXISTENCE("10035",
                 "Error while checking the group existence.",
                 "Could not resolve the group existence from the given list."),
+        ERROR_CODE_INVALID_USER_STORE_DOMAIN("10036",
+                "Invalid user store domain specified in the invitation.",
+                "Could not find a user store domain with identifier %s."),
 
         // DAO layer errors
         ERROR_CODE_STORE_INVITATION("10501",
