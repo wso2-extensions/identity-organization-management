@@ -297,25 +297,7 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-inline</artifactId>
-                <version>${mockito-core.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-core</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito2</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${powermock.version}</version>
+                <version>${mockito-inline.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -428,6 +410,25 @@
                         <doUpdate>false</doUpdate>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -475,6 +476,25 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -557,12 +577,11 @@
         <oltu.oauth2.client.version>1.0.0</oltu.oauth2.client.version>
         <oltu.oauth2.client.version.range>[1.0.0,1.0.3)</oltu.oauth2.client.version.range>
 
-        <mockito-core.version>4.6.1</mockito-core.version>
-        <jacoco.version>0.8.2</jacoco.version>
+        <mockito-core.version>5.3.1</mockito-core.version>
+        <mockito-inline.version>5.2.0</mockito-inline.version>
         <testng.version>6.9.10</testng.version>
         <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
         <h2database.version>1.4.199</h2database.version>
-        <powermock.version>2.0.9</powermock.version>
 
         <openapi.tools.version>4.1.2</openapi.tools.version>
 
@@ -574,7 +593,7 @@
         <findbugs.annotations.version>3.0.1</findbugs.annotations.version>
         <carbon.p2.plugin.version>5.1.2</carbon.p2.plugin.version>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
-        <jacoco.version>0.8.2</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
 
         <compiler-source.version>1.8</compiler-source.version>
         <compiler-target.version>1.8</compiler-target.version>
