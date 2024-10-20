@@ -251,6 +251,37 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     }
 
     @Override
+    public boolean doPostGetServiceProviderByClientId(ServiceProvider serviceProvider, String clientId,
+                                                      String clientType, String tenantDomain)
+            throws IdentityApplicationManagementException {
+
+        // If the application is a shared application, updates to the application are allowed
+        if (serviceProvider != null && Arrays.stream(serviceProvider.getSpProperties())
+                .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+
+            try {
+                String sharedOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+                Optional<MainApplicationDO> mainApplicationDO = getOrgApplicationMgtDAO()
+                        .getMainApplication(serviceProvider.getApplicationResourceId(), sharedOrgId);
+                if (mainApplicationDO.isPresent()) {
+                    String mainApplicationTenantDomain = getOrganizationManager()
+                            .resolveTenantDomain(mainApplicationDO.get().getOrganizationId());
+                    ServiceProvider mainApplication = getApplicationByResourceId
+                            (mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
+                    if (mainApplication.isAPIBasedAuthenticationEnabled()) {
+                        serviceProvider.setAPIBasedAuthenticationEnabled(true);
+                    }
+                }
+
+            } catch (OrganizationManagementException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        return super.doPostGetServiceProviderByClientId(serviceProvider, clientId, clientType, tenantDomain);
+    }
+
+    @Override
     public boolean doPostGetServiceProvider(ServiceProvider serviceProvider, String applicationName,
                                             String tenantDomain) throws IdentityApplicationManagementException {
 
