@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -178,6 +179,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
+
+            if (StringUtils.isBlank(currentOrganizationId)) {
+                currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveOrganizationId(currentTenantDomain);
+            }
+
             UserAssociation userAssociation =
                     OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
                             .getUserAssociation(userID, currentOrganizationId);
