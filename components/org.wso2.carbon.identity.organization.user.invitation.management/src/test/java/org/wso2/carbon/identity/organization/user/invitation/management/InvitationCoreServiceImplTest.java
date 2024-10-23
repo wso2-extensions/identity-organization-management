@@ -119,9 +119,7 @@ public class InvitationCoreServiceImplTest {
     @Mock
     private IdentityEventService identityEventService;
 
-    private MockedStatic<IdentityUtil> identityUtilMockedStatic;
-    private MockedStatic<OrganizationSharedUserUtil> organizationSharedUserUtilMockedStatic;
-    private MockedStatic<Utils> utilsMockedStatic;
+    private MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -132,13 +130,8 @@ public class InvitationCoreServiceImplTest {
         invitationCoreService = new InvitationCoreServiceImpl();
         TestUtils.initiateH2Base();
         setUpCarbonHome();
-        mockCarbonContextForTenant();
-
-        identityUtilMockedStatic = mockStatic(IdentityUtil.class);
-        identityUtilMockedStatic.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
-
-        organizationSharedUserUtilMockedStatic = mockStatic(OrganizationSharedUserUtil.class);
-        utilsMockedStatic = mockStatic(Utils.class);
+        privilegedCarbonContext = mockStatic(PrivilegedCarbonContext.class);
+        mockCarbonContext(privilegedCarbonContext);
 
         Invitation invitation1 = buildInvitation(INV_01_INVITATION_ID, INV_01_CONF_CODE, INV_01_UN,
                 "DEFAULT", INV_01_EMAIL,
@@ -412,17 +405,21 @@ public class InvitationCoreServiceImplTest {
         when(organizationManager.getAncestorOrganizationIds(anyString())).thenReturn(ancestors);
         when(organizationManager.getParentOrganizationId(subOrgId)).thenReturn(parentOrgId);
 
-        utilsMockedStatic.when(() -> Utils.getConnectorConfig(EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
-                "carbon.super")).thenReturn(isNotificationManagedInternallyForOrg);
-
         try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
-             MockedStatic<IdentityTenantUtil> identityUtil = Mockito.mockStatic(IdentityTenantUtil.class)) {
+             MockedStatic<IdentityTenantUtil> identityTenantUtil = Mockito.mockStatic(IdentityTenantUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class);
+             MockedStatic<Utils> utils = Mockito.mockStatic(Utils.class);
+             MockedStatic<OrganizationSharedUserUtil> orgSharedUserUtil =
+                     Mockito.mockStatic(OrganizationSharedUserUtil.class)) {
 
-            identityUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
+            identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
             identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(true))
                     .thenReturn(getConnection());
             identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(false))
                     .thenReturn(getConnection()).thenReturn(getConnection());
+            identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
+            utils.when(() -> Utils.getConnectorConfig(EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
+                            "carbon.super")).thenReturn(isNotificationManagedInternallyForOrg);
 
             UserRealm userRealmParentOrg = mock(UserRealm.class);
             AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
@@ -439,10 +436,8 @@ public class InvitationCoreServiceImplTest {
             when(userStoreManagerParentOrg.getSecondaryUserStoreManager(anyString()))
                     .thenReturn(userStoreManagerParentOrg);
 
-            organizationSharedUserUtilMockedStatic
-                    .when(() -> OrganizationSharedUserUtil
-                            .getUserManagedOrganizationClaim(userStoreManagerSubOrg, userId))
-                    .thenReturn(parentOrgId);
+            orgSharedUserUtil.when(() -> OrganizationSharedUserUtil
+                            .getUserManagedOrganizationClaim(userStoreManagerSubOrg, userId)).thenReturn(parentOrgId);
 
             List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation);
             assertNotNull(createdInvitation);
@@ -533,9 +528,11 @@ public class InvitationCoreServiceImplTest {
 
     private void storeParentUserInvitation(Invitation invitation) throws Exception {
 
-        try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class)) {
+        try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+
             identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
-            when(IdentityUtil.getProperty(anyString())).thenReturn("1440");
+            identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
             if (invitation.getRoleAssignments() != null) {
                 for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {
                     for (String role : roleList) {
@@ -547,13 +544,13 @@ public class InvitationCoreServiceImplTest {
         }
     }
 
-    private void mockCarbonContextForTenant() {
+    public static void mockCarbonContext(MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext) {
 
-        mockStatic(PrivilegedCarbonContext.class);
-        PrivilegedCarbonContext privilegedCarbonContext = mock(PrivilegedCarbonContext.class);
-        when(PrivilegedCarbonContext.getThreadLocalCarbonContext()).thenReturn(privilegedCarbonContext);
-        when(PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId()).
-                thenReturn("dc828181-e1a8-4f5e-8936-f154f4aefa75");
+        PrivilegedCarbonContext mockPrivilegedCarbonContext = mock(PrivilegedCarbonContext.class);
+
+        privilegedCarbonContext.when(PrivilegedCarbonContext::getThreadLocalCarbonContext)
+                .thenReturn(mockPrivilegedCarbonContext);
+        when(mockPrivilegedCarbonContext.getOrganizationId()).thenReturn("dc828181-e1a8-4f5e-8936-f154f4aefa75");
     }
 
     private Invitation buildInvitation(String invitationId, String confirmationCode, String username,
