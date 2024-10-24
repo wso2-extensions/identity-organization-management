@@ -50,9 +50,11 @@ import org.wso2.carbon.identity.organization.user.invitation.management.util.Tes
 import org.wso2.carbon.identity.recovery.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.nio.file.Paths;
@@ -60,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -117,6 +120,9 @@ public class InvitationCoreServiceImplTest {
     @Mock
     private AbstractUserStoreManager userStoreManager;
     @Mock
+    private RoleManagementService roleManagementService;
+
+    @Mock
     private IdentityEventService identityEventService;
 
     private MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
@@ -164,6 +170,11 @@ public class InvitationCoreServiceImplTest {
         when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
         when(userStoreManager.getSecondaryUserStoreManager(anyString())).thenReturn(userStoreManager);
         doNothing().when(identityEventService).handleEvent(isA(Event.class));
+        when(userStoreManager.getSecondaryUserStoreManager(anyString())).thenReturn(userStoreManager);
+
+        UserInvitationMgtDataHolder.getInstance().setRoleManagementService(roleManagementService);
+        when(roleManagementService.getRoleWithoutUsers(anyString(), anyString())).thenReturn(buildRoleInfo());
+        when(roleManagementService.isExistingRole(anyString(), anyString())).thenReturn(true);
     }
 
     private Role buildRoleInfo() {
@@ -184,6 +195,7 @@ public class InvitationCoreServiceImplTest {
         Mockito.reset(userRealm);
         Mockito.reset(userStoreManager);
         Mockito.reset(identityEventService);
+        Mockito.reset(roleManagementService);
     }
 
 
@@ -204,9 +216,6 @@ public class InvitationCoreServiceImplTest {
 
             identityUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
             identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
-            RoleManagementService roleManagementService = mock(RoleManagementService.class);
-            UserInvitationMgtDataHolder.getInstance().setRoleManagementService(roleManagementService);
-            when(roleManagementService.getRoleWithoutUsers(anyString(), anyString())).thenReturn(buildRoleInfo());
             OrganizationManager organizationManager = mock(OrganizationManager.class);
             UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
             when(organizationManager.resolveTenantDomain(anyString())).thenReturn("carbon.super");
@@ -349,22 +358,22 @@ public class InvitationCoreServiceImplTest {
 
         return new Object[][]{
                 {
-                        true, "false", "true", true
+                        true, "false", "true", true, true
                 },
                 {
-                        true, "false", "false", true
+                        true, "false", "false", true, false
                 },
                 {
-                        true, "true", "true", false
+                        true, "true", "true", false, true
                 },
                 {
-                        true, "true", "false", false
+                        true, "true", "false", false, false
                 },
                 {
-                        false, null, "false", true
+                        false, null, "false", true, true
                 },
                 {
-                        false, null, "true", false
+                        false, null, "true", false, false
                 }
         };
     }
@@ -373,7 +382,8 @@ public class InvitationCoreServiceImplTest {
     public void testConfirmationCodeReturnOnInviteCreation(boolean setNotificationManagingProperty,
                                                            String propertyValue,
                                                            String isNotificationManagedInternallyForOrg,
-                                                           boolean isConfirmationCodeReturnInResponse)
+                                                           boolean isConfirmationCodeReturnInResponse,
+                                                           boolean inviteConsoleRole)
             throws Exception {
 
         String username = "alex";
@@ -388,7 +398,14 @@ public class InvitationCoreServiceImplTest {
         InvitationDO invitation = new InvitationDO();
         invitation.setUsernamesList(Collections.singletonList(username));
         invitation.setUserDomain(userStoreDomain);
-        invitation.setRoleAssignments(null);
+
+        if (inviteConsoleRole) {
+            RoleAssignments roleAssignments = buildRoleAssignments(roleList);
+            roleAssignments.setRole(roleList[0]);
+            invitation.setRoleAssignments(new RoleAssignments[]{roleAssignments});
+            invitation.setGroupAssignments(new GroupAssignments[]{buildGroupAssignments(groupList)});
+        }
+
         invitation.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
         if (setNotificationManagingProperty) {
             invitation.setInvitationProperties(
@@ -423,18 +440,29 @@ public class InvitationCoreServiceImplTest {
 
             UserRealm userRealmParentOrg = mock(UserRealm.class);
             AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+            AbstractUserStoreManager secondaryUserStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+
+            if (inviteConsoleRole) {
+                RoleBasicInfo roleBasicInfo = new RoleBasicInfo();
+                roleBasicInfo.setAudienceName("Console");
+                List<Group> groupsList = new ArrayList<>();
+                groupsList.add(new Group("123", "adminGroup"));
+                when(userStoreManagerParentOrg.getGroupListOfUser(anyString(), any(), any()))
+                        .thenReturn(groupsList);
+                when(roleManagementService.getRoleListOfGroups(any(), anyString()))
+                        .thenReturn(Collections.singletonList(roleBasicInfo));
+            }
+
             mockParentOrgDetails(userStoreManagerParentOrg, userStoreQualifiedUsername, userId, userRealmParentOrg,
                     realmService, tenantDomainOfParentOrg, organizationManager, parentOrgId, identityDBUtil);
             when(userStoreManagerParentOrg.getSecondaryUserStoreManager(anyString()))
-                    .thenReturn(userStoreManagerParentOrg);
+                    .thenReturn(secondaryUserStoreManagerParentOrg);
 
             UserRealm userRealmSubOrg = mock(UserRealm.class);
             AbstractUserStoreManager userStoreManagerSubOrg = mock(AbstractUserStoreManager.class);
             mockSubOrgDetails(userStoreManagerSubOrg, userStoreQualifiedUsername, userRealmSubOrg, realmService,
                     tenantDomainOfSubOrg, organizationManager, subOrgId, identityDBUtil);
-
-            when(userStoreManagerParentOrg.getSecondaryUserStoreManager(anyString()))
-                    .thenReturn(userStoreManagerParentOrg);
+            when(userStoreManagerSubOrg.isGroupExist(anyString())).thenReturn(true);
 
             orgSharedUserUtil.when(() -> OrganizationSharedUserUtil
                             .getUserManagedOrganizationClaim(userStoreManagerSubOrg, userId)).thenReturn(parentOrgId);
