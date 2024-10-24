@@ -103,6 +103,7 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_GROUP;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_INVITATION_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_ROLE;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVALID_USER_STORE_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVITATION_EXPIRED;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_INVITED_USER_EMAIL_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_NO_INVITATION_FOR_USER;
@@ -149,6 +150,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             String parentTenantDomain = resolveTenantDomain(parentOrgId);
             int parentTenantId = IdentityTenantUtil.getTenantId(parentTenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(parentTenantId);
+            validateInvitedUserStoreDomain(userStoreManager, invitationDO.getUserDomain());
             for (String username : invitationDO.getUsernamesList()) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Creating invitation for the user: " + username + " in the organization: " +
@@ -729,6 +731,17 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         } catch (UserStoreException e) {
             throw new UserInvitationMgtServerException(ERROR_CODE_GROUP_EXISTENCE.getCode(),
                     ERROR_CODE_GROUP_EXISTENCE.getMessage(), ERROR_CODE_GROUP_EXISTENCE.getDescription());
+        }
+    }
+
+    private void validateInvitedUserStoreDomain(AbstractUserStoreManager userStoreManager, String domain)
+            throws UserInvitationMgtException {
+
+        LOG.debug("Validating the user store domain of the invitation.");
+        if (userStoreManager.getSecondaryUserStoreManager(domain) == null) {
+            throw new UserInvitationMgtClientException(ERROR_CODE_INVALID_USER_STORE_DOMAIN.getCode(),
+                    ERROR_CODE_INVALID_USER_STORE_DOMAIN.getMessage(),
+                    String.format(ERROR_CODE_INVALID_USER_STORE_DOMAIN.getDescription(), domain));
         }
     }
 
