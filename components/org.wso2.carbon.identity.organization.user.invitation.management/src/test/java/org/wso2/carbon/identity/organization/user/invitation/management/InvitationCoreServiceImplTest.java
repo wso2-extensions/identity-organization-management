@@ -355,13 +355,13 @@ public class InvitationCoreServiceImplTest {
                         true, "false", "false", true
                 },
                 {
-                        false, null, "false", true
+                        true, "true", "true", false
                 },
                 {
                         true, "true", "false", false
                 },
                 {
-                        true, "true", "true", false
+                        false, null, "false", true
                 },
                 {
                         false, null, "true", false
