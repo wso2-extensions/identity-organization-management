@@ -81,7 +81,8 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
-            if (claims.containsKey(CLAIM_MANAGED_ORGANIZATION)) {
+            if (claims != null && claims.containsKey(CLAIM_MANAGED_ORGANIZATION)
+                    && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
                 return true;
             }
             String organizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();

@@ -21,6 +21,7 @@
 
     <test name="organization-discovery-tests" preserve-order="true" parallel="false">
         <classes>
+            <class name="org.wso2.carbon.identity.organization.discovery.service.listener.OrganizationDiscoveryUserOperationListenerTest"/>
             <class name="org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImplTest"/>
         </classes>
     </test>
