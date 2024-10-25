@@ -271,7 +271,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     for (BasicOrganization organization : applicationSharedOrganizations) {
                         String shareAppTenantDomain =
                                 getOrganizationManager().resolveTenantDomain(organization.getId());
-                        RoleBasicInfo sharedRoleInfo = getRoleManagementServiceV2().addRole(mainRoleName,
+                        String sharedOrgRoleName = mainRoleName;
+                        if (getRoleManagementServiceV2().isExistingRoleName(mainRoleName, RoleConstants.ORGANIZATION,
+                                organization.getId(), shareAppTenantDomain)) {
+                            sharedOrgRoleName = mainRoleName + "_shared_to_" + shareAppTenantDomain;
+                        }
+                        RoleBasicInfo sharedRoleInfo = getRoleManagementServiceV2().addRole(sharedOrgRoleName,
                                 Collections.emptyList(),
                                 Collections.emptyList(),
                                 Collections.emptyList(), RoleConstants.ORGANIZATION, organization.getId(),
