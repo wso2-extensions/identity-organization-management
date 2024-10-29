@@ -360,6 +360,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 }
             }
             sharedApplication.setSpProperties(properties);
+            sharedApplication.setAPIBasedAuthenticationEnabled(mainApplication.isAPIBasedAuthenticationEnabled());
         }
     }
 
