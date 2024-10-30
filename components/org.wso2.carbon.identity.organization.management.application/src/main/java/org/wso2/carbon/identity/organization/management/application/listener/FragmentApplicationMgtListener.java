@@ -287,6 +287,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
                             mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
+                    claimConfig.setMappedLocalSubjectMandatory(
+                            mainApplication.getClaimConfig().isMappedLocalSubjectMandatory());
                     serviceProvider.setClaimConfig(claimConfig);
 
                     // Set application's associated roles.
