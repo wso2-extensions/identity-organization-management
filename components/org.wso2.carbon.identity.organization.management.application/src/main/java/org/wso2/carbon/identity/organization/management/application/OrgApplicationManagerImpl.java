@@ -902,8 +902,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         delegatedApplication.setApplicationName(oAuthConsumerApp.getApplicationName());
         delegatedApplication.setDescription(mainApplication.getDescription());
         delegatedApplication.setInboundAuthenticationConfig(inboundAuthConfig);
-        delegatedApplication.setAPIBasedAuthenticationEnabled(mainApplication.isAPIBasedAuthenticationEnabled());
-
         if (ApplicationMgtUtil.isConsole(mainApplication.getApplicationName())) {
             delegatedApplication.setAccessUrl(resolveAccessURL(mainApplication.getTenantDomain(), sharedOrgId,
                     FrameworkConstants.Application.CONSOLE_APP_PATH));
