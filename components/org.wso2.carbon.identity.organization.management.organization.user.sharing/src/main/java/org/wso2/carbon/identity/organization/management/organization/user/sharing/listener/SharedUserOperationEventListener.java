@@ -22,11 +22,8 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.user.api.UserRealm;
@@ -46,16 +43,11 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
 /**
  * User operation event listener for shared user management.
  */
 public class SharedUserOperationEventListener extends AbstractIdentityUserOperationEventListener {
-
-    private final OrganizationUserSharingService organizationUserSharingService =
-            new OrganizationUserSharingServiceImpl();
 
     private final List<String> sharedUserSpecificClaims =
             Arrays.asList("http://wso2.org/claims/groups", "http://wso2.org/claims/roles");
@@ -231,33 +223,6 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         // Add entries from sharedUserClaims, overriding duplicates
         aggregatedResult.putAll(sharedUserClaims);
         return aggregatedResult;
-    }
-
-    @Override
-    public boolean doPreDeleteUserWithID(String userID, UserStoreManager userStoreManager) throws UserStoreException {
-
-        if (!isEnable() || userStoreManager == null) {
-            return true;
-        }
-        try {
-            // The organization where the user identity is managed. Clear all the associations of the user.
-            String associatedOrgId = OrganizationSharedUserUtil
-                    .getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
-            if (associatedOrgId != null) {
-                // User is associated only for shared users. Hence, delete the user association.
-                return organizationUserSharingService.deleteUserAssociation(userID, associatedOrgId);
-            }
-
-            String orgId = getOrganizationId();
-            if (orgId == null) {
-                orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(getTenantDomain());
-            }
-            // Delete all the user associations of the user.
-            return organizationUserSharingService.unshareOrganizationUsers(userID, orgId);
-        } catch (OrganizationManagementException e) {
-            throw new UserStoreException(e.getMessage(), e.getErrorCode(), e);
-        }
     }
 
     @Override
