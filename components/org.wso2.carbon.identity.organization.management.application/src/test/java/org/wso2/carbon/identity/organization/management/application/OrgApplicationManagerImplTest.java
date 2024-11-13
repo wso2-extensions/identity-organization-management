@@ -24,6 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -32,8 +33,10 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
@@ -271,5 +275,39 @@ public class OrgApplicationManagerImplTest {
                         new ArrayList<>(childAppIdMap.keySet()));
 
         Assert.assertEquals(resolvedChildAppIdMap, Collections.emptyMap());
+    }
+
+    @Test
+    public void testGetDiscoverableSharedApplicationBasicInfo() throws OrganizationManagementException {
+
+        String tenantDomain = "abc.com";
+        String rootOrgId = "root-org-id";
+
+        ApplicationBasicInfo app1 = new ApplicationBasicInfo();
+        app1.setApplicationName("App1");
+        app1.setDescription("Description1");
+        ApplicationBasicInfo app2 = new ApplicationBasicInfo();
+        app2.setApplicationName("App2");
+        app2.setDescription("Description2");
+        List<ApplicationBasicInfo> expectedApps = Arrays.asList(app1, app2);
+        when(organizationManager.getPrimaryOrganizationId(tenantDomain)).thenReturn(rootOrgId);
+        when(orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "*",
+                "ASC", "dummyName", tenantDomain, rootOrgId)).thenReturn(expectedApps);
+        List<ApplicationBasicInfo> actualApps = orgApplicationManager.getDiscoverableSharedApplicationBasicInfo(
+                10, 0, "*", "ASC", "dummyName", tenantDomain);
+        assertEquals(expectedApps, actualApps);
+    }
+
+    @Test
+    public void testGetCountOfDiscoverableSharedApplications() throws OrganizationManagementException {
+
+        int expectedCount = 5;
+
+        when(organizationManager.getPrimaryOrganizationId("dummyTenant")).thenReturn("rootOrg123");
+        when(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("*", "dummyTenant",
+                "rootOrg123")).thenReturn(5);
+
+        int actualCount = orgApplicationManager.getCountOfDiscoverableSharedApplications("*", "dummyTenant");
+        assertEquals(expectedCount, actualCount);
     }
 }
