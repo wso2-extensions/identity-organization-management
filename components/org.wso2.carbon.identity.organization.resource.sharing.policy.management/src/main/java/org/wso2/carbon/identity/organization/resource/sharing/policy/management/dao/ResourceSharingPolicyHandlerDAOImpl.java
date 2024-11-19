@@ -18,17 +18,7 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
-import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
-import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
-import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_RESOURCE_SHARING_POLICY;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
  * DAO implementation for handling user sharing policies.

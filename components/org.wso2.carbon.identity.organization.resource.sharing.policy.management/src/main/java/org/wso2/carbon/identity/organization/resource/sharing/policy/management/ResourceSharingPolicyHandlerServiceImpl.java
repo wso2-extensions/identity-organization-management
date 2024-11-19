@@ -25,7 +25,10 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService{
+/**
+ * Implementation of the core service for managing resource sharing policies.
+ */
+public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerServiceImpl.class);
     private static final ResourceSharingPolicyHandlerDAO resourceSharingPolicyHandlerDAO =
@@ -35,7 +38,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     @Override
     public void save() {
 
-        System.out.println("---------came-------");
         LOG.info("Saving resource sharing policy handler");
     }
 }

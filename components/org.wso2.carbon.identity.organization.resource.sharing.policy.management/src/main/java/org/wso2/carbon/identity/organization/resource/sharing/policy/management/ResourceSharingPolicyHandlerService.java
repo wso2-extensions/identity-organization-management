@@ -18,8 +18,15 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
+/**
+ * Service that manages the core service for managing resource sharing policies.
+ */
 public interface ResourceSharingPolicyHandlerService {
 
+    /**
+     * Saves the resource sharing policy to the data store.
+     *
+     */
     public void save();
 
 }
