@@ -18,23 +18,76 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
+import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
+
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_RESOURCE_SHARING_POLICY;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.util.ResourceSharingUtils.handleServerException;
 
 /**
  * DAO implementation for handling user sharing policies.
  */
 public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolicyHandlerDAO {
 
-    public void createResourceSharingPolicyRecord(String resource, String resourceType, String initiatedOrganization,
-                                                  String policyHoldingOrganization, String policy)
-            throws OrganizationManagementServerException {
+    @Override
+    public void addResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
+            throws ResourceSharingPolicyMgtServerException {
 
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeInsert(CREATE_RESOURCE_SHARING_POLICY, namedPreparedStatement -> {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
+                            resourceSharingPolicy.getResourceId());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE,
+                            resourceSharingPolicy.getResourceType().name());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
+                            resourceSharingPolicy.getInitiatingOrgId());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID,
+                            resourceSharingPolicy.getPolicyHoldingOrgId());
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARING_POLICY,
+                            resourceSharingPolicy.getSharingPolicy().name());
+                }, null, false);
+                return null;
+            });
+        } catch (TransactionException e) {
+            throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED, e,
+                    resourceSharingPolicy.getResourceType(), resourceSharingPolicy.getResourceId());
+        }
     }
 
-    public boolean deleteResourceSharingPolicyRecord(String resource, String resourceType, String initiatedOrganization,
-                                                     String policyHoldingOrganization)
-            throws OrganizationManagementServerException {
+    @Override
+    public boolean deleteResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
+            throws ResourceSharingPolicyMgtServerException {
 
-        return false;
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY, namedPreparedStatement -> {
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
+                        resourceSharingPolicy.getResourceId());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE,
+                        resourceSharingPolicy.getResourceType().name());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
+                        resourceSharingPolicy.getInitiatingOrgId());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID,
+                        resourceSharingPolicy.getPolicyHoldingOrgId());
+            });
+            return true;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED, e,
+                    resourceSharingPolicy.getResourceType(), resourceSharingPolicy.getResourceId());
+        }
     }
 }

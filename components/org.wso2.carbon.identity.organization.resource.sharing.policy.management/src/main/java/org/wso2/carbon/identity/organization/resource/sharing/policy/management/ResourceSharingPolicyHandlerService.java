@@ -18,6 +18,10 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
+
 /**
  * Service that manages the core service for managing resource sharing policies.
  */
@@ -25,8 +29,8 @@ public interface ResourceSharingPolicyHandlerService {
 
     /**
      * Saves the resource sharing policy to the data store.
-     *
      */
-    public void save();
+    public void addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
 
 }

@@ -24,11 +24,43 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 public class ResourceSharingSQLConstants {
 
     // SQL for creating a resource sharing policy
-    public static final String CREATE_RESOURCE_SHARING_POLICY = "INSERT INTO UM_RESOURCE_SHARING_POLICY" +
-            "(UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATED_ORG_ID, UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY) " +
-            "VALUES(?, ?, ?, ?, ?)";
+    public static final String CREATE_RESOURCE_SHARING_POLICY =
+            "INSERT INTO UM_RESOURCE_SHARING_POLICY (UM_RESOURCE_ID, UM_RESOURCE_TYPE, " +
+                    "UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY) VALUES (:" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";, :" +
+            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
 
     // SQL for deleting a resource sharing policy
-    public static final String DELETE_RESOURCE_SHARING_POLICY = "DELETE FROM UM_RESOURCE_SHARING_POLICY " +
-            "WHERE UM_RESOURCE = ? AND UM_RESOURCE_TYPE = ? AND UM_INITIATED_ORG = ? AND UM_POLICY_HOLDING_ORG = ?";
+    public static final String DELETE_RESOURCE_SHARING_POLICY =
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+            "UM_RESOURCE_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND " +
+            "UM_RESOURCE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
+            "UM_INITIATING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + "; AND " +
+            "UM_POLICY_HOLDING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";";
+
+    private ResourceSharingSQLConstants() {
+
+    }
+
+    /**
+     * SQL Placeholders.
+     */
+    public static final class SQLPlaceholders {
+
+        public static final String DB_SCHEMA_COLUMN_NAME_RESOURCE_ID = "UM_RESOURCE_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE = "UM_RESOURCE_TYPE";
+        public static final String DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID = "UM_INITIATING_ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID = "UM_POLICY_HOLDING_ORG_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_SHARING_POLICY = "UM_SHARING_POLICY";
+
+
+        private SQLPlaceholders() {
+
+        }
+    }
+
 }
+

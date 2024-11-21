@@ -20,8 +20,11 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -36,8 +39,8 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     private static ConcurrentLinkedQueue<String> errorMessages;
 
     @Override
-    public void save() {
-
-        LOG.info("Saving resource sharing policy handler");
+    public void addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException {
+        resourceSharingPolicyHandlerDAO.addResourceSharingPolicyRecord(resourceSharingPolicy);
     }
 }

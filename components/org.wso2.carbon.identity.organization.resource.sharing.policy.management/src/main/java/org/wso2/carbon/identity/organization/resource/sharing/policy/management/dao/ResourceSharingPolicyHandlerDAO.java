@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 
 /**
  * DAO interface for handling user sharing policies.
@@ -28,28 +30,23 @@ public interface ResourceSharingPolicyHandlerDAO {
     /**
      * Creates a record of a resource sharing policy.
      *
-     * @param resource               The resource being shared.
-     * @param resourceType           The type of the resource.
-     * @param initiatedOrganization  The organization initiating the sharing.
-     * @param policyHoldingOrganization The organization holding the policy for the shared resource.
-     * @param policy                 The sharing policy.
+     * @param resourceSharingPolicy The {@link ResourceSharingPolicy} object containing details about the resource,
+     *                              resource type, initiated organization, policy holding organization, and the
+     *                              sharing policy.
      * @throws OrganizationManagementServerException If an error occurs while creating the sharing policy record.
      */
-    void createResourceSharingPolicyRecord(String resource, String resourceType, String initiatedOrganization,
-                                           String policyHoldingOrganization, String policy)
-            throws OrganizationManagementServerException;
+    void addResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
 
     /**
      * Deletes a resource sharing policy record.
      *
-     * @param resource               The resource being shared.
-     * @param resourceType           The type of the resource.
-     * @param initiatedOrganization  The organization initiating the sharing.
-     * @param policyHoldingOrganization The organization holding the policy for the shared resource.
+     * @param resourceSharingPolicy The {@link ResourceSharingPolicy} object containing details about the resource,
+     *                              resource type, initiated organization, and policy holding organization for the
+     *                              sharing policy to be deleted.
      * @return True if the record is deleted successfully.
      * @throws OrganizationManagementServerException If an error occurs while deleting the sharing policy record.
      */
-    boolean deleteResourceSharingPolicyRecord(String resource, String resourceType, String initiatedOrganization,
-                                              String policyHoldingOrganization)
-            throws OrganizationManagementServerException;
+    boolean deleteResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
 }
