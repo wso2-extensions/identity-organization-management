@@ -89,7 +89,9 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.internal
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant,
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal,
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util
                         </Private-Package>
                         <Import-Package>
                             org.apache.commons.lang; version="${org.apache.commons.lang.imp.pkg.version.range}",
@@ -112,8 +114,12 @@
                             version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.internal,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.*;
+                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant,
+                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal,
+                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util,
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service,
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception,
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy;
                             version="${project.version}"
                         </Export-Package>
                     </instructions>

@@ -47,9 +47,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
             throws OrgResourceHierarchyTraverseException {
 
         try {
-            OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
-            List<String> organizationIds = organizationManager.getAncestorOrganizationIds(organizationId);
-
+            List<String> organizationIds = getAncestorOrganizationsIds(organizationId);
             if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
                 return null;
             }
@@ -69,9 +67,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
             throws OrgResourceHierarchyTraverseException {
 
         try {
-            OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
-            List<String> organizationIds = organizationManager.getAncestorOrganizationIds(organizationId);
-
+            List<String> organizationIds = getAncestorOrganizationsIds(organizationId);
             if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
                 return null;
             }
@@ -93,6 +89,13 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
                             .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_APPLICATIONS,
                     e, organizationId, applicationId);
         }
+    }
+
+    private List<String> getAncestorOrganizationsIds(String organizationId)
+            throws OrganizationManagementException {
+
+        OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
+        return organizationManager.getAncestorOrganizationIds(organizationId);
     }
 
     private ApplicationManagementService getApplicationManagementService() {
