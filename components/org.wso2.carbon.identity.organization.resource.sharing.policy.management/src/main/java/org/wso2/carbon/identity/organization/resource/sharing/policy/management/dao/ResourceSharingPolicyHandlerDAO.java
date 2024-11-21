@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,9 +18,13 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
+
+import java.util.List;
 
 /**
  * DAO interface for handling user sharing policies.
@@ -33,10 +37,13 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @param resourceSharingPolicy The {@link ResourceSharingPolicy} object containing details about the resource,
      *                              resource type, initiated organization, policy holding organization, and the
      *                              sharing policy.
-     * @throws OrganizationManagementServerException If an error occurs while creating the sharing policy record.
+     * @return The ID of the newly created resource sharing policy record.
+     * @throws OrganizationManagementServerException   If an error occurs while creating the sharing policy record.
+     * @throws ResourceSharingPolicyMgtServerException If a server error specific to resource sharing policy
+     *                                                 management occurs.
      */
-    void addResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
+    int addResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
      * Deletes a resource sharing policy record.
@@ -49,4 +56,16 @@ public interface ResourceSharingPolicyHandlerDAO {
      */
     boolean deleteResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
             throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Adds shared resource attributes to an existing resource sharing policy.
+     *
+     * @param resourceSharingPolicyId The ID of the resource sharing policy record.
+     * @param sharedAttributeType     The type of shared attribute being added (e.g., USER, ROLE, GROUP).
+     * @param attributes              A list of attribute values to be associated with the policy.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
+     */
+    void addSharedResourceAttributes(int resourceSharingPolicyId, SharedAttributeType sharedAttributeType,
+                                     List<String> attributes)
+            throws ResourceSharingPolicyMgtServerException;
 }

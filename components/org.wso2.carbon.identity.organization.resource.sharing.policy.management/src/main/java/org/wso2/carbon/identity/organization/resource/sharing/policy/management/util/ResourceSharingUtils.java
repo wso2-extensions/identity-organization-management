@@ -44,4 +44,15 @@ public class ResourceSharingUtils {
 
         return new ResourceSharingPolicyMgtServerException(error.getMessage(), e, error.getCode(), description);
     }
+
+    /**
+     * Handle server exception for failed shared resource attributes.
+     *
+     * @param error             The ErrorMessage enum containing error details.
+     * @return A ResourceSharingPolicyMgtServerException.
+     */
+    public static ResourceSharingPolicyMgtServerException handleServerException(ErrorMessage error) {
+
+        return new ResourceSharingPolicyMgtServerException(error.getMessage(), error.getCode());
+    }
 }
