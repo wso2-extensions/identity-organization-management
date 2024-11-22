@@ -57,8 +57,8 @@ public interface OrgResourceResolverService {
     /**
      * Retrieves resources by traversing the hierarchy of a given organization and application.
      *
-     * @param organizationId      The unique identifier of the organization. Must not be null.
-     * @param applicationId       The unique identifier of the application within the organization. Must not be null.
+     * @param organizationId      The unique identifier of the organization.
+     * @param applicationId       The unique identifier of the application within the organization.
      * @param resourceRetriever   A bi-function that defines how to fetch a resource based on the
      *                            organization and application IDs. The function must return an
      *                            {@link Optional<T>} containing the resource if found,
