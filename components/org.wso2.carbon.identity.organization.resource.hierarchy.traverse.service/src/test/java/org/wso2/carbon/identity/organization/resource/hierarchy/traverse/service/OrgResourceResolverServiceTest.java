@@ -681,11 +681,6 @@ public class OrgResourceResolverServiceTest {
      */
     private void assertResolvedResponse(MockResource resolvedResource, MockResource actualResource) {
 
-        if (actualResource == null) {
-            assertNull(resolvedResource);
-            return;
-        }
-
         assertNotNull(resolvedResource);
         assertEquals(resolvedResource.getId(), actualResource.getId());
         assertEquals(resolvedResource.getResourceName(), actualResource.getResourceName());
