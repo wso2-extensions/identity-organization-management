@@ -19,18 +19,23 @@
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant;
 
 /**
- * Constants for organization resource hierarchy traverse service.
+ * Constants defined for the organization resource hierarchy traverse service.
  */
 public class OrgResourceHierarchyTraverseConstants {
 
     private static final String ORGANIZATION_RESOURCE_HIERARCHY_TRAVERSE_ERROR_CODE_PREFIX = "ORHT-";
 
+    /**
+     * Private constructor to prevent instantiation of this constant class.
+     */
     private OrgResourceHierarchyTraverseConstants() {
 
     }
 
     /**
-     * Enum for error messages related to organization resource hierarchy traverse service.
+     * Enum which provides error codes and predefined error messages related to the traversal of
+     * the organization resource hierarchy. It ensures that error handling within the service is consistent
+     * and that detailed error descriptions are available for debugging and troubleshooting.
      */
     public enum ErrorMessages {
 
@@ -50,6 +55,16 @@ public class OrgResourceHierarchyTraverseConstants {
         private final String message;
         private final String description;
 
+        /**
+         * Constructor for the ErrorMessages enum.
+         * <p>
+         * This constructor is used to define each error message with a unique error code, a brief message, and
+         * a detailed description.
+         *
+         * @param code        The unique error code for the message (prefixed with "ORHT-").
+         * @param message     A brief message describing the error.
+         * @param description A detailed description of the error, often including placeholders for dynamic data.
+         */
         ErrorMessages(String code, String message, String description) {
 
             this.code = code;
@@ -57,16 +72,39 @@ public class OrgResourceHierarchyTraverseConstants {
             this.description = description;
         }
 
+        /**
+         * Gets the unique error code for the error message.
+         * <p>
+         * The error code is prefixed with "ORHT-" to ensure consistency in the error code system.
+         *
+         * @return The error code prefixed with "ORHT-".
+         */
         public String getCode() {
 
             return ORGANIZATION_RESOURCE_HIERARCHY_TRAVERSE_ERROR_CODE_PREFIX + code;
         }
 
+        /**
+         * Gets the brief message for the error.
+         * <p>
+         * This message provides a short description of the error, usually without context-specific details.
+         * It is used for logging or displaying to the user as part of the error response.
+         *
+         * @return A brief message describing the error.
+         */
         public String getMessage() {
 
             return message;
         }
 
+        /**
+         * Gets the detailed description for the error message.
+         * <p>
+         * This description provides a more detailed explanation of the error and often contains placeholders
+         * for dynamic data (e.g., organization or application IDs). It is typically used for logging or debugging.
+         *
+         * @return A detailed description of the error, including placeholders for dynamic data.
+         */
         public String getDescription() {
 
             return description;

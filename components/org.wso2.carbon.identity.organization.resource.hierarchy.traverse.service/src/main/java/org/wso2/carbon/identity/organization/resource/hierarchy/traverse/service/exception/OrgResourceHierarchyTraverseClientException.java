@@ -25,14 +25,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Exception class for client side errors in organization resource hierarchy traverse.
+ * Exception class for client-side errors during organization resource hierarchy traversal.
+ * <p>
+ * This class handles exceptions where client-side errors occur, capturing error codes, messages, and descriptions
+ * to provide detailed context for troubleshooting.
  */
 public class OrgResourceHierarchyTraverseClientException extends OrgResourceHierarchyTraverseException {
 
-    private static final long serialVersionUID = 559143944402014381L;
-
     private String[] messages;
 
+    /**
+     * Constructs a new exception with an array of specified error messages.
+     *
+     * @param messages Detailed error messages
+     */
     public OrgResourceHierarchyTraverseClientException(String[] messages) {
 
         super(Arrays.toString(messages));

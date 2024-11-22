@@ -22,7 +22,8 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
- * This class holds the data required for the organization resource hierarchy traverse service.
+ * Singleton class that serves as a centralized data holder for key service instances used in the organization
+ * resource hierarchy traversal process.
  */
 public class OrgResourceHierarchyTraverseServiceDataHolder {
 
@@ -37,9 +38,9 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Get the instance of OrgResourceManagementServiceDataHolder.
+     * Retires the Singleton instance of the OrgResourceHierarchyTraverseServiceDataHolder class.
      *
-     * @return OrgResourceManagementServiceDataHolder instance.
+     * @return The singleton instance of OrgResourceHierarchyTraverseServiceDataHolder.
      */
     public static OrgResourceHierarchyTraverseServiceDataHolder getInstance() {
 
@@ -47,9 +48,9 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Get the organization manager.
+     * Retrieves the current instance of the OrganizationManager.
      *
-     * @return Organization manager.
+     * @return The current OrganizationManager instance that manages organizational data.
      */
     public OrganizationManager getOrganizationManager() {
 
@@ -57,9 +58,9 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Set the organization manager.
+     * Sets the OrganizationManager instance.
      *
-     * @param organizationManager Organization manager instance.
+     * @param organizationManager The OrganizationManager instance to be assigned.
      */
     public void setOrganizationManager(
             OrganizationManager organizationManager) {
@@ -68,9 +69,9 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Get the application management service.
+     * Retrieves the current instance of the ApplicationManagementService.
      *
-     * @return Application management service.
+     * @return The current ApplicationManagementService instance responsible for managing applications.
      */
     public ApplicationManagementService getApplicationManagementService() {
 
@@ -78,9 +79,9 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Set the application management service.
+     * Sets the ApplicationManagementService instance.
      *
-     * @param applicationManagementService Application management service instance.
+     * @param applicationManagementService The ApplicationManagementService instance to be set.
      */
     public void setApplicationManagementService(
             ApplicationManagementService applicationManagementService) {

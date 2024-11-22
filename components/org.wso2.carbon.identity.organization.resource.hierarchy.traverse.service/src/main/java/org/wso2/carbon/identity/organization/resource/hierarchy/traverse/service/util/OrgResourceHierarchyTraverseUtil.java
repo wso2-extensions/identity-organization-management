@@ -20,26 +20,31 @@ package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.servic
 
 import org.apache.commons.lang.ArrayUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant.OrgResourceHierarchyTraverseConstants;
-import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseClientException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseServerException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal.OrgResourceHierarchyTraverseServiceDataHolder;
 
 /**
- * Utility class for organization resource hierarchy traverse service.
+ * Utility class for the Organization Resource Hierarchy Traverse Service.
+ * <p>
+ * This class provides helper methods to interact with the organization hierarchy and manage traversal logic,
+ * such as verifying the hierarchy depth and handling server-side exceptions.
  */
 public class OrgResourceHierarchyTraverseUtil {
 
+    /**
+     * Private constructor to prevent instantiation of the utility class.
+     */
     private OrgResourceHierarchyTraverseUtil() {
 
     }
 
     /**
-     * Get the organization manager.
+     * Retrieve the organization manager instance.
      *
-     * @return Organization manager.
+     * @return The {@link OrganizationManager} instance used to manage organizations.
      */
     public static OrganizationManager getOrganizationManager() {
 
@@ -47,11 +52,14 @@ public class OrgResourceHierarchyTraverseUtil {
     }
 
     /**
-     * Check whether the minimum organization hierarchy depth is reached.
+     * Verify if the organization hierarchy depth has reached the minimum required level.
+     * <p>
+     * This method obtains the depth of the specified organization in the hierarchy and compares it
+     * with the configured minimum depth. An exception is thrown if an error occurs during the depth calculation.
      *
-     * @param orgId Organization ID.
-     * @return True if the minimum hierarchy depth is reached.
-     * @throws OrgResourceHierarchyTraverseServerException If an error occurs while checking the hierarchy depth.
+     * @param orgId The ID of the organization to check.
+     * @return {@code true} if the hierarchy depth is less than the minimum required depth, {@code false} otherwise.
+     * @throws OrgResourceHierarchyTraverseServerException If an error occurs while retrieving the organization's depth.
      */
     public static boolean isMinOrgHierarchyDepthReached(String orgId) throws
             OrgResourceHierarchyTraverseServerException {
@@ -60,38 +68,22 @@ public class OrgResourceHierarchyTraverseUtil {
         try {
             int depthInHierarchy = getOrganizationManager().getOrganizationDepthInHierarchy(orgId);
             return depthInHierarchy < minHierarchyDepth;
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementServerException e) {
             throw new OrgResourceHierarchyTraverseServerException(
                     "Error occurred while getting the hierarchy depth of the organization: " + orgId, e);
         }
     }
 
     /**
-     * Throw an OrgResourceHierarchyTraverseClientException upon client side error while traversing organization
-     * resource hierarchy traverse.
+     * Create an {@link OrgResourceHierarchyTraverseServerException} to handle server-side errors.
+     * <p>
+     * This method formats the error description using the provided data, if applicable, and constructs
+     * a custom exception for consistent error handling in the service.
      *
-     * @param error The error enum.
-     * @param data  The error message data.
-     * @return OrgResourceHierarchyTraverseClientException
-     */
-    public static OrgResourceHierarchyTraverseClientException handleClientException(
-            OrgResourceHierarchyTraverseConstants.ErrorMessages error, String... data) {
-
-        String description = error.getDescription();
-        if (ArrayUtils.isNotEmpty(data)) {
-            description = String.format(description, data);
-        }
-        return new OrgResourceHierarchyTraverseClientException(error.getMessage(), description, error.getCode());
-    }
-
-    /**
-     * Throw an OrgResourceHierarchyTraverseServerException upon server side error while traversing organization
-     * resource hierarchy traverse.
-     *
-     * @param error The error enum.
-     * @param e     The error.
-     * @param data  The error message data.
-     * @return OrgResourceHierarchyTraverseServerException
+     * @param error The error enumeration containing predefined error messages and codes.
+     * @param e     The underlying cause of the error.
+     * @param data  Optional data to format the error message description.
+     * @return An {@link OrgResourceHierarchyTraverseServerException} with the formatted error details.
      */
     public static OrgResourceHierarchyTraverseServerException handleServerException(
             OrgResourceHierarchyTraverseConstants.ErrorMessages error, Throwable e, String... data) {

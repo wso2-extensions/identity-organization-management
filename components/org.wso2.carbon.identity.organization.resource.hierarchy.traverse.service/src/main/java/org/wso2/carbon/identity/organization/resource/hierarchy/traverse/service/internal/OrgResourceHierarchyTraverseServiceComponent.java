@@ -33,7 +33,10 @@ import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverServiceImpl;
 
 /**
- * OSGi declarative services component of the organization resource hierarchy traverse service.
+ * OSGi component responsible for managing the activation and deactivation of the organization resource hierarchy
+ * traverse service.
+ * <p>
+ * It manages dynamic references to necessary services required by {@link OrgResourceResolverService} as well.
  */
 @Component(
         name = "org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service",
@@ -42,6 +45,12 @@ public class OrgResourceHierarchyTraverseServiceComponent {
 
     private static final Log log = LogFactory.getLog(OrgResourceHierarchyTraverseServiceComponent.class);
 
+    /**
+     * Activates the OSGi component by registering the {@link OrgResourceResolverService} service.
+     * This method is called when the component is activated in the OSGi environment.
+     *
+     * @param context The ComponentContext instance that provides the OSGi environment context.
+     */
     @Activate
     protected void activate(ComponentContext context) {
 
@@ -57,6 +66,12 @@ public class OrgResourceHierarchyTraverseServiceComponent {
         }
     }
 
+    /**
+     * Deactivates the OSGi component by cleaning up resources and logging the deactivation.
+     * This method is called when the component is deactivated in the OSGi environment.
+     *
+     * @param context The ComponentContext instance that provides the OSGi environment context.
+     */
     @Deactivate
     protected void deactivate(ComponentContext context) {
 
@@ -65,6 +80,11 @@ public class OrgResourceHierarchyTraverseServiceComponent {
         }
     }
 
+    /**
+     * Sets the OrganizationManager instance in the OrgResourceHierarchyTraverseServiceDataHolder.
+     *
+     * @param organizationManager The OrganizationManager instance to be assigned.
+     */
     @Reference(name = "org.wso2.carbon.identity.organization.management.service",
             service = OrganizationManager.class,
             cardinality = ReferenceCardinality.OPTIONAL,
@@ -76,12 +96,22 @@ public class OrgResourceHierarchyTraverseServiceComponent {
         log.debug("OrganizationManager set in OrgResourceManagementServiceComponent bundle.");
     }
 
+    /**
+     * Unsets the OrganizationManager instance in the OrgResourceHierarchyTraverseServiceDataHolder.
+     *
+     * @param organizationManager The OrganizationManager instance to be removed.
+     */
     protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setOrganizationManager(null);
         log.debug("OrganizationManager unset in OrgResourceManagementServiceComponent bundle.");
     }
 
+    /**
+     * Sets the ApplicationManagementService instance in the OrgResourceHierarchyTraverseServiceDataHolder.
+     *
+     * @param applicationManagementService The ApplicationManagementService instance to be assigned.
+     */
     @Reference(
             name = "org.wso2.carbon.identity.application.mgt",
             service = ApplicationManagementService.class,
@@ -95,6 +125,11 @@ public class OrgResourceHierarchyTraverseServiceComponent {
         log.debug("ApplicationManagementService set in OrgResourceManagementServiceComponent bundle.");
     }
 
+    /**
+     * Unsets the ApplicationManagementService instance in the OrgResourceHierarchyTraverseServiceDataHolder.
+     *
+     * @param applicationManagementService The ApplicationManagementService instance to be removed.
+     */
     protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setApplicationManagementService(null);

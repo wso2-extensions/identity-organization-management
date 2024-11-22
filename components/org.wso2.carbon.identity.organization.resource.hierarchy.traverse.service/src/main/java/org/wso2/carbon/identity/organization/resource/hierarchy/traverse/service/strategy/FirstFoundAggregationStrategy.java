@@ -29,9 +29,11 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Aggregation strategy to retrieve the first found resource in the organization hierarchy.
+ * Aggregation strategy that can be used to traverse the organization hierarchy and retrieve the first resource found.
+ * This strategy is commonly applied when multiple resources might exist at different levels of the hierarchy,
+ * and only the first one encountered at the bottom of the hierarchy needs to be returned.
  *
- * @param <T> Type of the resource.
+ * @param <T> The type of the resource being retrieved from the organization/ application hierarchy.
  */
 public class FirstFoundAggregationStrategy<T> implements AggregationStrategy<T> {
 

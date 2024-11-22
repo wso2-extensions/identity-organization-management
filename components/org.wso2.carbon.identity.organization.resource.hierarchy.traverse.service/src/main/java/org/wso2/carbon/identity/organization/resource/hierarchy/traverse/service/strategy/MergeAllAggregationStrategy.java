@@ -29,9 +29,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Aggregation strategy to merge all resources in the organization hierarchy with the given resource merger function.
+ * Aggregation strategy to merge all resources in the organization hierarchy using the specified
+ * resource merger function.
+ * <p>
+ * This strategy traverses the hierarchy and applies the provided function
+ * to combine the resources at each level. It ensures that the resources are merged according to the
+ * logic defined by the merger function, which could involve combining attributes, performing calculations, or
+ * resolving conflicts between resources.
  *
- * @param <T> Type of the resource.
+ * @param <T> The type of the resources being merged in the organization/ application hierarchy.
  */
 public class MergeAllAggregationStrategy<T> implements AggregationStrategy<T> {
 

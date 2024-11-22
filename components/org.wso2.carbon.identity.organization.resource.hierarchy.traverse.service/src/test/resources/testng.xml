@@ -21,6 +21,7 @@
 <suite name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.suite">
     <test name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.tests" preserve-order="true" parallel="false">
         <classes>
+            <class name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverHierarchyServiceTest"/>
         </classes>
     </test>
 </suite>

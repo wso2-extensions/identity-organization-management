@@ -28,19 +28,33 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Interface for aggregation strategies.
+ * Defines an interface for a strategy used for aggregating resources retrieved from hierarchical structures,
+ * such as organization and application hierarchies. This interface provides default
+ * methods that can be overridden to implement specific aggregation logic.
+ * <p>
+ * Implementations should specify how resources are combined and may use functional
+ * interfaces for flexible retrieval mechanisms.
  *
- * @param <T> Type of the resource to be aggregated.
+ * @param <T> The type of the resource to be aggregated.
  */
 public interface AggregationStrategy<T> {
 
     /**
-     * Aggregate resolved resources of the given organization hierarchy.
+     * Aggregates resources resolved from an organization's hierarchical structure.
+     * <p>
+     * This method provides a default implementation that throws a
+     * {@link NotImplementedException}. Subclasses must override this method to define
+     * specific aggregation logic for organization hierarchies.
      *
-     * @param organizationHierarchy Organization hierarchy.
-     * @param resourceRetriever     Function to retrieve the resource.
-     * @return Aggregated resource.
-     * @throws OrgResourceHierarchyTraverseException If an error occurs while aggregating the resources.
+     * @param organizationHierarchy A list representing the organization hierarchy,
+     *                              where the first element is the root organization
+     *                              and subsequent elements represent child organizations.
+     * @param resourceRetriever     A function that retrieves a resource given an organization ID.
+     *                              Returns an {@link Optional<T>} containing the resource, or empty
+     *                              if no resource is found for the given ID.
+     * @return The aggregated resource of type <T>.
+     * @throws OrgResourceHierarchyTraverseException If any error occurs during resource
+     *                                               retrieval or aggregation.
      */
     default T aggregate(List<String> organizationHierarchy, Function<String, Optional<T>> resourceRetriever)
             throws OrgResourceHierarchyTraverseException {
@@ -49,13 +63,24 @@ public interface AggregationStrategy<T> {
     }
 
     /**
-     * Aggregate resolved resources of the given organization and application hierarchy.
+     * Aggregates resources resolved from an organization's and application's hierarchical structure.
+     * <p>
+     * This method provides a default implementation that throws a
+     * {@link NotImplementedException}. Subclasses must override this method to define
+     * specific aggregation logic for combined organization and application hierarchies.
      *
-     * @param organizationHierarchy Organization hierarchy.
-     * @param applicationHierarchy  Application hierarchy.
-     * @param resourceRetriever     Function to retrieve the resource.
-     * @return Aggregated resource.
-     * @throws OrgResourceHierarchyTraverseException If an error occurs while aggregating the resources.
+     * @param organizationHierarchy A list representing the organization hierarchy,
+     *                              where the first element is the root organization
+     *                              and subsequent elements represent child organizations.
+     * @param applicationHierarchy  A map representing the application hierarchy, where keys
+     *                              are organization IDs, and values are application-specific
+     *                              details or IDs for each organization.
+     * @param resourceRetriever     A bi-function that retrieves a resource based on both an
+     *                              organization ID and an application ID. Returns an {@link Optional<T>}
+     *                              containing the resource, or empty if no resource is found.
+     * @return The aggregated resource of type <T>.
+     * @throws OrgResourceHierarchyTraverseException If any error occurs during resource
+     *                                               retrieval or aggregation.
      */
     default T aggregate(List<String> organizationHierarchy, Map<String, String> applicationHierarchy,
                         BiFunction<String, String, Optional<T>> resourceRetriever)

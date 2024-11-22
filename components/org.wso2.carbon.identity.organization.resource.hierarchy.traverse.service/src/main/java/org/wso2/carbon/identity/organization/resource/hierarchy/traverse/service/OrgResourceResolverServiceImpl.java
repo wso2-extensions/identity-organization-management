@@ -22,7 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant.OrgResourceHierarchyTraverseConstants;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal.OrgResourceHierarchyTraverseServiceDataHolder;
@@ -37,7 +37,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Implementation of the OrgResourceResolverService.
+ * Implementation of the OrgResourceResolverService interface, responsible for resolving resources within the
+ * given organization/ application hierarchy.
  */
 public class OrgResourceResolverServiceImpl implements OrgResourceResolverService {
 
@@ -53,7 +54,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
             }
 
             return aggregationStrategy.aggregate(organizationIds, resourceRetriever);
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementServerException e) {
             throw OrgResourceHierarchyTraverseUtil.handleServerException(
                     OrgResourceHierarchyTraverseConstants.ErrorMessages
                             .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS, e, organizationId);
@@ -79,7 +80,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
             }
 
             return aggregationStrategy.aggregate(organizationIds, ancestorAppIds, resourceRetriever);
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementServerException e) {
             throw OrgResourceHierarchyTraverseUtil.handleServerException(
                     OrgResourceHierarchyTraverseConstants.ErrorMessages
                             .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS, e, organizationId);
@@ -92,7 +93,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
     }
 
     private List<String> getAncestorOrganizationsIds(String organizationId)
-            throws OrganizationManagementException {
+            throws OrganizationManagementServerException {
 
         OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
         return organizationManager.getAncestorOrganizationIds(organizationId);

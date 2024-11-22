@@ -26,19 +26,28 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Service interface for organization resource resolver.
+ * Provides a service interface to retrieve resources from an organization's hierarchy.
+ * Supports traversal of both organization and application hierarchies using customizable
+ * resource retrieval and aggregation strategies.
+ * <p>
+ * The service is designed for extensibility, allowing clients to define their own retrieval logic
+ * and aggregation mechanisms via functional interfaces and strategy patterns.
  */
 public interface OrgResourceResolverService {
 
     /**
-     * Get resources from the organization hierarchy.
+     * Retrieves resources by traversing the hierarchy of a given organization.
      *
-     * @param organizationId      Organization ID.
-     * @param resourceRetriever   Function to retrieve the resource.
-     * @param aggregationStrategy Aggregation strategy.
-     * @param <T>                 Type of the resource.
-     * @return Resolved resources.
-     * @throws OrgResourceHierarchyTraverseException If an error occurs while retrieving the resources.
+     * @param organizationId      The unique identifier of the organization.
+     * @param resourceRetriever   A function that defines how to fetch a resource for a given organization ID.
+     *                            The function must return an {@link Optional<T>} containing the resource if found,
+     *                            or an empty {@link Optional<T>} if not.
+     * @param aggregationStrategy A strategy defining how to aggregate resources retrieved from
+     *                            different levels of the hierarchy.
+     * @param <T>                 The type of the resource being retrieved and aggregated.
+     * @return An aggregated resource of type <T> obtained from the organization hierarchy.
+     * @throws OrgResourceHierarchyTraverseException If any errors occur during resource retrieval
+     *                                               or aggregation.
      */
     <T> T getResourcesFromOrgHierarchy(String organizationId,
                                        Function<String, Optional<T>> resourceRetriever,
@@ -46,15 +55,20 @@ public interface OrgResourceResolverService {
             throws OrgResourceHierarchyTraverseException;
 
     /**
-     * Get resources from the organization and application hierarchy.
+     * Retrieves resources by traversing the hierarchy of a given organization and application.
      *
-     * @param organizationId      Organization ID.
-     * @param applicationId       Application ID.
-     * @param resourceRetriever   Function to retrieve the resource.
-     * @param aggregationStrategy Aggregation strategy.
-     * @param <T>                 Type of the resource.
-     * @return Resolved resources.
-     * @throws OrgResourceHierarchyTraverseException If an error occurs while retrieving the resources.
+     * @param organizationId      The unique identifier of the organization. Must not be null.
+     * @param applicationId       The unique identifier of the application within the organization. Must not be null.
+     * @param resourceRetriever   A bi-function that defines how to fetch a resource based on the
+     *                            organization and application IDs. The function must return an
+     *                            {@link Optional<T>} containing the resource if found,
+     *                            or an empty {@link Optional<T>} if not.
+     * @param aggregationStrategy A strategy defining how to aggregate resources retrieved from
+     *                            different levels of the hierarchy.
+     * @param <T>                 The type of the resource being retrieved and aggregated.
+     * @return An aggregated resource of type <T> obtained from the organization and application hierarchy.
+     * @throws OrgResourceHierarchyTraverseException If any errors occur during resource retrieval
+     *                                               or aggregation.
      */
     <T> T getResourcesFromOrgHierarchy(String organizationId, String applicationId,
                                        BiFunction<String, String, Optional<T>> resourceRetriever,

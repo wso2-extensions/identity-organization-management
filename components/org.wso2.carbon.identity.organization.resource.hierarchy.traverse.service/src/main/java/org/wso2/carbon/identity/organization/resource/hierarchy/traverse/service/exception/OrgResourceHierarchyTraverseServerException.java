@@ -19,7 +19,10 @@
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception;
 
 /**
- * Exception class that represents server side errors in organization resource hierarchy traverse.
+ * Exception class for server-side errors during organization resource hierarchy traversal.
+ * <p>
+ * This class handles exceptions related to server-side failures, including error codes, messages,
+ * descriptions, and causes, to provide detailed information for debugging.
  */
 public class OrgResourceHierarchyTraverseServerException extends OrgResourceHierarchyTraverseException {
 

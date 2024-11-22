@@ -19,14 +19,17 @@
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception;
 
 /**
- * Exception class that represents exceptions thrown upon organization resource hierarchy traverse.
+ * Custom exception for errors encountered during organization resource hierarchy traversal.
+ * <p>
+ * This exception captures detailed error information, including error codes, messages, descriptions,
+ * and causes, to assist in troubleshooting issues related to resolving ancestor organizations or applications.
  */
 public class OrgResourceHierarchyTraverseException extends Exception {
 
     private String errorCode;
     private String description;
 
-    private static final long serialVersionUID = -1982152066401023165L;
+    private static final long serialVersionUID = 5967152066669023668L;
 
     /**
      * Constructs a new exception with the specified message.
