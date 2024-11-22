@@ -147,11 +147,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         };
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when no resources are available in the organization hierarchy.
+     * <p>
+     * This test ensures that the resolver correctly returns null when no resources are found at any organization level.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetOrgLevelResourcesFromOrgHierarchyWhenNoResourceAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
-
-        // No resources available in the mock resource management service.
 
         MockResource resolvedRootResource = invokeOrgLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID);
         assertNull(resolvedRootResource);
@@ -163,6 +168,14 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertNull(resolvedL2Resource);
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the root organization level.
+     * <p>
+     * This test ensures that the resolver correctly returns the resource for the root organization and propagates
+     * the resolution to its child organizations (L1 and L2) using the given aggregation strategy.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetOrgLevelResourcesFromOrgHierarchyWhenRootResourceAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -180,6 +193,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertResolvedResponse(resolvedL2Resource, createdOrgResource.get(0));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the
+     * L1 organization.
+     * <p>
+     * This test ensures that when a resource is available at the L1 level, it is correctly resolved for
+     * L1, and L2 organizations according to the provided aggregation strategy. At the root level,
+     * its own resource should be returned.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetOrgLevelResourcesFromOrgHierarchyWhenL1OrgResourceAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -197,6 +220,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertResolvedResponse(resolvedL2Resource, createdOrgResources.get(1));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the
+     * L2 organization.
+     * <p>
+     * This test ensures that when a resource is available at the L2 level, it is correctly resolved for the
+     * L2 organization based on the provided aggregation strategy.
+     * At the root and L1 level, their own resource should be returned.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetOrgLevelResourcesFromOrgHierarchyWhenL2OrgResourceAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -214,6 +247,15 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertResolvedResponse(resolvedL2Resource, createdOrgResources.get(2));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when no application-level or organization-level resources
+     * are available in the hierarchy.
+     * <p>
+     * This test ensures that when no resources are available at the organization or application levels,
+     * the resolver correctly returns null.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetAppLevelResourcesFromOrgHierarchyWhenNoResourceAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -229,6 +271,15 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertNull(resolvedL2AppResource);
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when resources are available at both root organization and/ or
+     * root application levels in the organization hierarchy.
+     * <p>
+     * This test verifies that when resources are available for the root level, they are correctly resolved at the
+     * organization and application levels across all organization levels (root, L1, and L2).
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources at different levels.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetAppLevelResourcesFromOrgHierarchyWhenRootResourcesAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -261,6 +312,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertResolvedResponse(resolvedL2AppResource, createdAppResource.get(0));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when organization-level and/ or application-level resources
+     * are available for both root and L1 organizations in the hierarchy.
+     * <p>
+     * This test ensures when resources are available for the L1 level, they are correctly resolved at the
+     * organization and application levels across both organization levels, L1, and L2. At the root level,
+     * its own resource should be returned.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources at different levels.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetAppLevelResourcesFromOrgHierarchyWhenL1ResourcesAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -296,6 +357,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         assertResolvedResponse(resolvedL2AppResource, createdAppResources.get(1));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when organization-level and/ or application-level resources
+     * are available for all organization levels in the hierarchy.
+     * <p>
+     * This test ensures that when a resource is available at the L2 level, it is correctly resolved for the
+     * L2 organization based on the provided aggregation strategy. At the root and L1 level, their own resources
+     * should be returned.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources at different levels.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetAppLevelResourcesFromOrgHierarchyWhenL2ResourcesAvailable(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -342,6 +413,16 @@ public class OrgResourceResolverHierarchyServiceTest {
         };
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when provided with invalid organization IDs.
+     * <p>
+     * This test ensures that when invalid organization IDs are passed to the resolver, it correctly returns null,
+     * indicating that no resources are found for the invalid input.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources at different levels.
+     * @param invalidOrgIds       A list of invalid organization IDs to test the resolver's behavior.
+     * @throws Exception If an error occurs during resolution.
+     */
     @Test(dataProvider = "provideAggregationStrategiesForOrgLevelResolverWithInvalidInput")
     public void testGetOrgLevelResourcesFromOrgHierarchyForInvalidInput(
             AggregationStrategy<MockResource> aggregationStrategy, List<String> invalidOrgIds) throws Exception {
@@ -364,6 +445,20 @@ public class OrgResourceResolverHierarchyServiceTest {
         };
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when provided with invalid organization and application IDs.
+     * <p>
+     * This test verifies that the resolver correctly handles invalid input combinations by returning null,
+     * ensuring robustness and appropriate error handling in edge cases. The test covers scenarios where:
+     * - The organization ID is invalid.
+     * - The application ID is invalid.
+     * - Both the organization and application IDs are invalid.
+     *
+     * @param aggregationStrategy The aggregation strategy used to resolve resources across the hierarchy.
+     * @param invalidOrgIds       A list of invalid organization IDs to test the resolver's behavior.
+     * @param invalidAppIds       A list of invalid application IDs to test the resolver's behavior.
+     * @throws Exception If an error occurs during resolution.
+     */
     @Test(dataProvider = "provideAggregationStrategiesForAppLevelResolverWithInvalidInput")
     public void testGetAppLevelResourcesFromOrgHierarchyForInvalidInput(
             AggregationStrategy<MockResource> aggregationStrategy, List<String> invalidOrgIds,
@@ -378,6 +473,17 @@ public class OrgResourceResolverHierarchyServiceTest {
         }
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when server-side errors occur during
+     * organizational hierarchy traversal.
+     * <p>
+     * This test simulates server-side exceptions thrown by the `organizationManager` during the following scenarios:
+     * - Fetching the depth of an organization within the hierarchy.
+     * - Retrieving ancestor organization IDs.
+     *
+     * @param aggregationStrategy The aggregation strategy used for resolving resources.
+     * @throws Exception If an unexpected error occurs.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetOrgLevelResourcesFromOrgHierarchyWhenServerErrorOccurs(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
@@ -401,6 +507,17 @@ public class OrgResourceResolverHierarchyServiceTest {
                 () -> invokeOrgLevelResourceResolver(aggregationStrategy, L2_ORG_ID));
     }
 
+    /**
+     * Tests the behavior of the OrgResourceResolver when server-side errors occur during
+     * application hierarchy traversal within an organization.
+     * <p>
+     * This test simulates server-side exceptions thrown by the following:
+     * - The `applicationManagementService` while retrieving ancestor application IDs.
+     * - The `organizationManager` while retrieving ancestor organization IDs.
+     *
+     * @param aggregationStrategy The aggregation strategy used for resolving resources.
+     * @throws Exception If an unexpected error occurs.
+     */
     @Test(dataProvider = "AggregationStrategyDataProvider")
     public void testGetAppLevelResourcesFromOrgHierarchyWhenServerErrorOccurs(
             AggregationStrategy<MockResource> aggregationStrategy) throws Exception {
