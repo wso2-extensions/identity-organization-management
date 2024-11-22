@@ -87,7 +87,7 @@ public class OrgResourceResolverServiceTest {
     @BeforeClass
     public void init() {
 
-        // Open mock objects for the current test instance
+        // Open mock objects for the current test instance.
         openMocks(this);
 
         // Set the OrganizationManager and ApplicationManagementService to the data holder for use in tests
@@ -95,7 +95,7 @@ public class OrgResourceResolverServiceTest {
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance()
                 .setApplicationManagementService(applicationManagementService);
 
-        // Initialize the aggregation strategies with the appropriate strategy types
+        // Initialize the aggregation strategies with the appropriate strategy types.
         firstFoundAggregationStrategy = new FirstFoundAggregationStrategy<>();
         mergeAllAggregationStrategy = new MergeAllAggregationStrategy<>(this::resourceMerger);
     }
@@ -107,12 +107,12 @@ public class OrgResourceResolverServiceTest {
     @BeforeMethod
     public void setUp() throws Exception {
 
-        // Mock responses for the organization manager with different ancestor organization chains
+        // Mock responses for the organization manager with different ancestor organization chains.
         mockAncestorOrganizationRetrieval(Arrays.asList(L2_ORG_ID, L1_ORG_ID, ROOT_ORG_ID));
         mockAncestorOrganizationRetrieval(Arrays.asList(L1_ORG_ID, ROOT_ORG_ID));
         mockAncestorOrganizationRetrieval(Collections.singletonList(ROOT_ORG_ID));
 
-        // Mock responses for the application management service with corresponding application ancestor data
+        // Mock responses for the application management service with corresponding application ancestor data.
         mockAncestorApplicationRetrieval(Arrays.asList(L2_ORG_ID, L1_ORG_ID, ROOT_ORG_ID),
                 Arrays.asList(L2_APP_ID, L1_APP_ID, ROOT_APP_ID));
         mockAncestorApplicationRetrieval(Arrays.asList(L1_ORG_ID, ROOT_ORG_ID),
@@ -120,10 +120,10 @@ public class OrgResourceResolverServiceTest {
         mockAncestorApplicationRetrieval(Collections.singletonList(ROOT_ORG_ID),
                 Collections.singletonList(ROOT_APP_ID));
 
-        // Initialize the mock resource management service used in tests
+        // Initialize the mock resource management service used in tests.
         mockResourceManagementService = new MockResourceManagementService();
 
-        // Instantiate the OrgResourceResolverService for testing
+        // Instantiate the OrgResourceResolverService for testing.
         orgResourceResolverService = new OrgResourceResolverServiceImpl();
     }
 
@@ -133,7 +133,7 @@ public class OrgResourceResolverServiceTest {
     @AfterMethod
     public void tearDown() {
 
-        // Reset the mock services to their default state after each test
+        // Reset the mock services to their default state after each test.
         reset(organizationManager);
         reset(applicationManagementService);
     }
