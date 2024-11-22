@@ -56,9 +56,9 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertThrows;
 
 /**
- * Unit tests for the OrgResourceResolverHierarchyService.
+ * Unit tests for the OrgResourceResolverServiceTest.
  */
-public class OrgResourceResolverHierarchyServiceTest {
+public class OrgResourceResolverServiceTest {
 
     private static final String ROOT_ORG_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private static final String ROOT_APP_ID = "1ee981ab-64e7-435c-ab91-e8d1e0a13b2c";
@@ -148,7 +148,8 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when no resources are available in the organization hierarchy.
+     * Tests the behavior of the OrgResourceResolverService when no resources are available in the
+     * organization hierarchy.
      * <p>
      * This test ensures that the resolver correctly returns null when no resources are found at any organization level.
      *
@@ -169,7 +170,8 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the root organization level.
+     * Tests the behavior of the OrgResourceResolverService when an organization-level resource is available at the
+     * root organization level.
      * <p>
      * This test ensures that the resolver correctly returns the resource for the root organization and propagates
      * the resolution to its child organizations (L1 and L2) using the given aggregation strategy.
@@ -194,7 +196,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the
+     * Tests the behavior of the OrgResourceResolverService when an organization-level resource is available at the
      * L1 organization.
      * <p>
      * This test ensures that when a resource is available at the L1 level, it is correctly resolved for
@@ -221,7 +223,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when an organization-level resource is available at the
+     * Tests the behavior of the OrgResourceResolverService when an organization-level resource is available at the
      * L2 organization.
      * <p>
      * This test ensures that when a resource is available at the L2 level, it is correctly resolved for the
@@ -248,7 +250,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when no application-level or organization-level resources
+     * Tests the behavior of the OrgResourceResolverService when no application-level or organization-level resources
      * are available in the hierarchy.
      * <p>
      * This test ensures that when no resources are available at the organization or application levels,
@@ -272,8 +274,8 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when resources are available at both root organization and/ or
-     * root application levels in the organization hierarchy.
+     * Tests the behavior of the OrgResourceResolverService when resources are available at both root organization
+     * and/ or root application levels in the organization hierarchy.
      * <p>
      * This test verifies that when resources are available for the root level, they are correctly resolved at the
      * organization and application levels across all organization levels (root, L1, and L2).
@@ -313,7 +315,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when organization-level and/ or application-level resources
+     * Tests the behavior of the OrgResourceResolverService when organization-level and/ or application-level resources
      * are available for both root and L1 organizations in the hierarchy.
      * <p>
      * This test ensures when resources are available for the L1 level, they are correctly resolved at the
@@ -358,7 +360,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when organization-level and/ or application-level resources
+     * Tests the behavior of the OrgResourceResolverService when organization-level and/ or application-level resources
      * are available for all organization levels in the hierarchy.
      * <p>
      * This test ensures that when a resource is available at the L2 level, it is correctly resolved for the
@@ -414,7 +416,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when provided with invalid organization IDs.
+     * Tests the behavior of the OrgResourceResolverService when provided with invalid organization IDs.
      * <p>
      * This test ensures that when invalid organization IDs are passed to the resolver, it correctly returns null,
      * indicating that no resources are found for the invalid input.
@@ -446,7 +448,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when provided with invalid organization and application IDs.
+     * Tests the behavior of the OrgResourceResolverService when provided with invalid organization and application IDs.
      * <p>
      * This test verifies that the resolver correctly handles invalid input combinations by returning null,
      * ensuring robustness and appropriate error handling in edge cases. The test covers scenarios where:
@@ -474,7 +476,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when server-side errors occur during
+     * Tests the behavior of the OrgResourceResolverService when server-side errors occur during
      * organizational hierarchy traversal.
      * <p>
      * This test simulates server-side exceptions thrown by the `organizationManager` during the following scenarios:
@@ -508,7 +510,7 @@ public class OrgResourceResolverHierarchyServiceTest {
     }
 
     /**
-     * Tests the behavior of the OrgResourceResolver when server-side errors occur during
+     * Tests the behavior of the OrgResourceResolverService when server-side errors occur during
      * application hierarchy traversal within an organization.
      * <p>
      * This test simulates server-side exceptions thrown by the following:
