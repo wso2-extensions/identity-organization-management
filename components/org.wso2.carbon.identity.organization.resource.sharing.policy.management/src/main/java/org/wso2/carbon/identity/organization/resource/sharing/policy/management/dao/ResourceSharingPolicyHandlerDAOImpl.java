@@ -20,12 +20,12 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
+import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
@@ -82,31 +82,29 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-
         int resourceSharingPolicyId = sharedResourceAttributes.getResourceSharingPolicyId();
         SharedAttributeType sharedAttributeType = sharedResourceAttributes.getSharedAttributeType();
         List<String> sharedAttributes = sharedResourceAttributes.getSharedAttributes();
-        List<String> failedAttributes = new ArrayList<>();
 
-        for (String attribute : sharedAttributes) {
-            try {
-                namedJdbcTemplate.executeInsert(INSERT_SHARED_RESOURCE_ATTRIBUTE, namedPreparedStatement -> {
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeBatchInsert(INSERT_SHARED_RESOURCE_ATTRIBUTE, (namedPreparedStatement -> {
                     namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
                             resourceSharingPolicyId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID,
-                            attribute);
                     namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
                             sharedAttributeType.name());
-                }, null, false);
-            } catch (DataAccessException e) {
-                failedAttributes.add(attribute);
-            }
-        }
-
-        if (!failedAttributes.isEmpty()) {
+                    for (String attribute : sharedAttributes) {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID, attribute);
+                        namedPreparedStatement.addBatch();
+                    }
+                }), null);
+                return null;
+            });
+        } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED);
         }
     }
+
 
     @Override
     public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
