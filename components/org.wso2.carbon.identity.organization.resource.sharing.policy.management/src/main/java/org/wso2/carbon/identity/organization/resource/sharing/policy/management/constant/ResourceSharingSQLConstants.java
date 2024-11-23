@@ -26,12 +26,12 @@ public class ResourceSharingSQLConstants {
     // SQL for creating a resource sharing policy
     public static final String CREATE_RESOURCE_SHARING_POLICY =
             "INSERT INTO UM_RESOURCE_SHARING_POLICY (UM_RESOURCE_ID, UM_RESOURCE_TYPE, " +
-                    "UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY) VALUES (:" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";, :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
+                    "UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY) VALUES (" +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
 
     // SQL for deleting a resource sharing policy
     public static final String DELETE_RESOURCE_SHARING_POLICY =
@@ -44,10 +44,10 @@ public class ResourceSharingSQLConstants {
     // SQL constant for inserting a shared resource attribute
     public static final String INSERT_SHARED_RESOURCE_ATTRIBUTE =
             "INSERT INTO UM_SHARED_RESOURCE_ATTRIBUTES " +
-                    "(UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_ID, UM_SHARED_ATTRIBUTE_TYPE) VALUES (:" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";, :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
+                    "(UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_ID, UM_SHARED_ATTRIBUTE_TYPE) VALUES (" +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
 
     private ResourceSharingSQLConstants() {
 

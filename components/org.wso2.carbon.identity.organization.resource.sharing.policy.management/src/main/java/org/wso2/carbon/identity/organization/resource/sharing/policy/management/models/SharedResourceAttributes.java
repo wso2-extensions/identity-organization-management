@@ -20,6 +20,8 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 
+import java.util.List;
+
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_MISSING_MANDATORY_FIELDS;
 
 /**
@@ -28,7 +30,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 public class SharedResourceAttributes {
 
     private int resourceSharingPolicyId;
-    private String sharedAttributeId;
+    private List<String> sharedAttributes;
     private SharedAttributeType sharedAttributeType;
 
     public int getResourceSharingPolicyId() {
@@ -39,12 +41,14 @@ public class SharedResourceAttributes {
         this.resourceSharingPolicyId = resourceSharingPolicyId;
     }
 
-    public String getSharedAttributeId() {
-        return sharedAttributeId;
+    public List<String> getSharedAttributes() {
+
+        return sharedAttributes;
     }
 
-    public void setSharedAttributeId(String sharedAttributeId) {
-        this.sharedAttributeId = sharedAttributeId;
+    public void setSharedAttributes(List<String> sharedAttributes) {
+
+        this.sharedAttributes = sharedAttributes;
     }
 
     public SharedAttributeType getSharedAttributeType() {
@@ -64,7 +68,7 @@ public class SharedResourceAttributes {
      */
     public static class Builder {
         private int resourceSharingPolicyId;
-        private String sharedAttributeId;
+        private List<String> sharedAttributes;
         private SharedAttributeType sharedAttributeType;
 
         public Builder withResourceSharingPolicyId(int resourceSharingPolicyId) {
@@ -72,8 +76,8 @@ public class SharedResourceAttributes {
             return this;
         }
 
-        public Builder withSharedAttributeId(String sharedAttributeId) {
-            this.sharedAttributeId = sharedAttributeId;
+        public Builder withSharedAttributes(List<String> sharedAttributes) {
+            this.sharedAttributes = sharedAttributes;
             return this;
         }
 
@@ -83,13 +87,13 @@ public class SharedResourceAttributes {
         }
 
         public SharedResourceAttributes build() throws ResourceSharingPolicyMgtException {
-            if (sharedAttributeId == null || sharedAttributeType == null) {
+            if (sharedAttributes == null || sharedAttributeType == null) {
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
                         ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
             }
             SharedResourceAttributes attributes = new SharedResourceAttributes();
             attributes.setResourceSharingPolicyId(this.resourceSharingPolicyId);
-            attributes.setSharedAttributeId(this.sharedAttributeId);
+            attributes.setSharedAttributes(this.sharedAttributes);
             attributes.setSharedAttributeType(this.sharedAttributeType);
             return attributes;
         }

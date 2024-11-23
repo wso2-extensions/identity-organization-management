@@ -20,11 +20,9 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
-
-import java.util.List;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
 /**
  * DAO interface for handling user sharing policies.
@@ -60,12 +58,9 @@ public interface ResourceSharingPolicyHandlerDAO {
     /**
      * Adds shared resource attributes to an existing resource sharing policy.
      *
-     * @param resourceSharingPolicyId The ID of the resource sharing policy record.
-     * @param sharedAttributeType     The type of shared attribute being added (e.g., USER, ROLE, GROUP).
-     * @param attributes              A list of attribute values to be associated with the policy.
+     * @param sharedResourceAttributes Details about the shared resource attributes
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
      */
-    void addSharedResourceAttributes(int resourceSharingPolicyId, SharedAttributeType sharedAttributeType,
-                                     List<String> attributes)
+    void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 }

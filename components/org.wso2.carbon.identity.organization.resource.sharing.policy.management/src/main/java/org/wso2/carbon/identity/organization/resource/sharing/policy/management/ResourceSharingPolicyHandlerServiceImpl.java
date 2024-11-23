@@ -22,13 +22,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -44,13 +43,14 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     @Override
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
             throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException {
+
         return resourceSharingPolicyHandlerDAO.addResourceSharingPolicyRecord(resourceSharingPolicy);
     }
 
     @Override
-    public void addSharedResourceAttributes(int resourceSharingPolicyId, SharedAttributeType sharedAttributeType,
-                                            List<String> attributes) throws ResourceSharingPolicyMgtServerException {
-        resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(resourceSharingPolicyId, sharedAttributeType,
-                attributes);
+    public void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+            throws ResourceSharingPolicyMgtServerException {
+
+        resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
     }
 }

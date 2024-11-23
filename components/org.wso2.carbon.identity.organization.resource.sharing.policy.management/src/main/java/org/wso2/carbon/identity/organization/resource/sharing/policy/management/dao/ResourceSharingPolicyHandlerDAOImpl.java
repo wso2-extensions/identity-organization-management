@@ -23,6 +23,7 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,12 +100,17 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public void addSharedResourceAttributes(int resourceSharingPolicyId, SharedAttributeType sharedAttributeType,
-                                            List<String> attributes) throws ResourceSharingPolicyMgtServerException {
+    public void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+            throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
+        int resourceSharingPolicyId = sharedResourceAttributes.getResourceSharingPolicyId();
+        SharedAttributeType sharedAttributeType = sharedResourceAttributes.getSharedAttributeType();
+        List<String> sharedAttributes = sharedResourceAttributes.getSharedAttributes();
         List<String> failedAttributes = new ArrayList<>();
-        for (String attribute : attributes) {
+
+        for (String attribute : sharedAttributes) {
             try {
                 namedJdbcTemplate.executeInsert(INSERT_SHARED_RESOURCE_ATTRIBUTE, namedPreparedStatement -> {
                     namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
