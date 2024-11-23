@@ -78,30 +78,6 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
-            throws ResourceSharingPolicyMgtServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY, namedPreparedStatement -> {
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
-                        resourceSharingPolicy.getResourceId());
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE,
-                        resourceSharingPolicy.getResourceType().name());
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
-                        resourceSharingPolicy.getInitiatingOrgId());
-                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID,
-                        resourceSharingPolicy.getPolicyHoldingOrgId());
-                //TODO: Check Policy
-            });
-            return true;
-        } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED, e,
-                    resourceSharingPolicy.getResourceType(), resourceSharingPolicy.getResourceId());
-        }
-    }
-
-    @Override
     public void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
@@ -139,9 +115,9 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY, namedPreparedStatement -> {
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
-                                resourceSharingPolicyId);
-                    });
+                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
+                        resourceSharingPolicyId);
+            });
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED);
@@ -150,17 +126,17 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
-                                                      SharedAttributeType sharedAttributeType)
+                                                                           SharedAttributeType sharedAttributeType)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_SHARED_RESOURCE_ATTRIBUTE, namedPreparedStatement -> {
-                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
-                                resourceSharingPolicyId);
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
-                                sharedAttributeType.name());
-                    });
+                namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
+                        resourceSharingPolicyId);
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
+                        sharedAttributeType.name());
+            });
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED);

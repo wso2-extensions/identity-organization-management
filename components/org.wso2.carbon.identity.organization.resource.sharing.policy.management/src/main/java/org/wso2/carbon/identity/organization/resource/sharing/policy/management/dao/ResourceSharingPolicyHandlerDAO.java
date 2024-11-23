@@ -45,18 +45,6 @@ public interface ResourceSharingPolicyHandlerDAO {
             throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
-     * Deletes a resource sharing policy record.
-     *
-     * @param resourceSharingPolicy The {@link ResourceSharingPolicy} object containing details about the resource,
-     *                              resource type, initiated organization, and policy holding organization for the
-     *                              sharing policy to be deleted.
-     * @return True if the record is deleted successfully.
-     * @throws OrganizationManagementServerException If an error occurs while deleting the sharing policy record.
-     */
-    boolean deleteResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
-
-    /**
      * Adds shared resource attributes to an existing resource sharing policy.
      *
      * @param sharedResourceAttributes Details about the shared resource attributes
