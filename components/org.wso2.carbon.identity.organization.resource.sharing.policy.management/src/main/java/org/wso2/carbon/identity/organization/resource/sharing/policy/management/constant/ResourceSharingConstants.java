@@ -56,7 +56,10 @@ public class ResourceSharingConstants {
                 "An error occurred while deleting the resource sharing policy from the database."),
         ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED("65003",
                 "Failed to add shared resource attributes for policy ID: %d. Failed attributes: %s",
-                "An error occurred while creating the shared resource attributes in the database.");
+                "An error occurred while creating the shared resource attributes in the database."),
+        ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED("65004",
+                "Failed to delete shared resource attributes for policy ID: %d. Failed attributes: %s",
+                "An error occurred while deleting the shared resource attributes in the database.");
 
         private final String code;
         private final String message;

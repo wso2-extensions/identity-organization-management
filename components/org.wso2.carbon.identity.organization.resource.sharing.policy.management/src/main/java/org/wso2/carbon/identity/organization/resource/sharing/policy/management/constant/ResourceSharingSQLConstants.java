@@ -34,7 +34,7 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
 
     // SQL for deleting a resource sharing policy
-    public static final String DELETE_RESOURCE_SHARING_POLICY =
+    public static final String DELETE_RESOURCE_SHARING_POLICY_old =
             "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE " +
             "UM_RESOURCE_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND " +
             "UM_RESOURCE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
@@ -48,6 +48,16 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
+
+    public static final String DELETE_RESOURCE_SHARING_POLICY =
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
+
+    // SQL for deleting shared resource attributes
+    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE =
+            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + " AND " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";";
 
     private ResourceSharingSQLConstants() {
 

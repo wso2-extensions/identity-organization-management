@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
@@ -62,5 +63,27 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
      */
     void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes a resource sharing policy record by ID.
+     *
+     * @param resourceSharingPolicyId The ID of the resource sharing policy to delete.
+     * @return True if the record was deleted successfully, false otherwise.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policy.
+     */
+    boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes shared resource attributes for a given resource sharing policy ID.
+     *
+     * @param resourceSharingPolicyId The ID of the resource sharing policy to delete shared attributes for.
+     * @param sharedAttributeType     The type of the shared attribute ({@link SharedAttributeType}).
+     * @return True if the shared resource attributes were deleted successfully, false otherwise.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the shared resource attributes.
+     */
+    boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
+                                                                    SharedAttributeType sharedAttributeType)
             throws ResourceSharingPolicyMgtServerException;
 }
