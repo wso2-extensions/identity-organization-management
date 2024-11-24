@@ -29,6 +29,12 @@ public class ResourceSharingConstants {
 
     public static final String SHARING_ERROR_PREFIX = "RSPM-";
 
+    public static final String OPEN_PARENTHESES = "(";
+    public static final String CLOSE_PARENTHESES = ")";
+    public static final String SEMICOLON = ";";
+    public static final String SINGLE_QUOTE = "'";
+    public static final String COMMA = ",";
+
     /**
      * Enum for assignmentType.
      */

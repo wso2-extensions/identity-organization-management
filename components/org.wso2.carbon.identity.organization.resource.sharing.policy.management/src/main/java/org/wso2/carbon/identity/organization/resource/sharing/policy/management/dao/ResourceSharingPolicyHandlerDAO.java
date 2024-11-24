@@ -20,12 +20,14 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO interface for handling user sharing policies.
@@ -102,7 +104,7 @@ public interface ResourceSharingPolicyHandlerDAO {
     /**
      * Retrieves shared resource attributes for a specific resource ID and type.
      *
-     * @param attributeId   The ID of the attribute for which shared attributes are to be retrieved.
+     * @param attributeId The ID of the attribute for which shared attributes are to be retrieved.
      * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
      *                                                 attributes.
@@ -124,14 +126,31 @@ public interface ResourceSharingPolicyHandlerDAO {
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Retrieves a list of resource sharing policies associated with the specified organization IDs.
+     * Fetches ResourceSharingPolicy records for the given organization IDs.
      *
-     * @param orgIds A list of organization IDs for which the resource sharing policies are to be retrieved.
-     * @return A list of {@link ResourceSharingPolicy} objects representing the resource sharing policies for the
-     * specified organization IDs.
-     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
-     *                                                 policies.
+     * @param organizationIds List of organization IDs.
+     * @return List of ResourceSharingPolicy.
      */
-    List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by ResourceType.
+     *
+     * @param organizationIds List of organization IDs.
+     * @return Map of ResourceType to List of ResourceSharingPolicy.
+     */
+    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by PolicyHoldingOrgId.
+     *
+     * @param organizationIds List of organization IDs.
+     * @return Map of PolicyHoldingOrgId to List of ResourceSharingPolicy.
+     */
+    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds)
             throws ResourceSharingPolicyMgtServerException;
 }

@@ -20,12 +20,14 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service that manages the core service for managing resource sharing policies.
@@ -79,12 +81,26 @@ public interface ResourceSharingPolicyHandlerService {
      * Retrieves shared resource attributes for a given attribute Type and ID.
      */
     List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
-                                                                                  String attributeId)
-    throws ResourceSharingPolicyMgtServerException;
+                                                                         String attributeId)
+            throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Retrieves resource sharing policies for the given organization IDs.
      */
-    List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves resource sharing policies for the given organization IDs grouped by resource type.
+     */
+    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves resource sharing policies for the given organization IDs grouped by resource policy holding org IDs.
+     */
+    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds)
             throws ResourceSharingPolicyMgtServerException;
 }

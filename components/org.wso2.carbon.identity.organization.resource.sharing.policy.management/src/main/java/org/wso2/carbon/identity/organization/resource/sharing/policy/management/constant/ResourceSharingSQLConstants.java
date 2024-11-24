@@ -81,13 +81,10 @@ public class ResourceSharingSQLConstants {
                     "UM_SHARED_ATTRIBUTE_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
 
-    // SQL for retrieving resource sharing policies by org ids.
-    public static final String
-            GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS =
-            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, " +
-                    "UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY " +
-                    "FROM UM_RESOURCE_SHARING_POLICY " +
-                    "WHERE UM_POLICY_HOLDING_ORG_ID IN (:orgIds;)";
+    // SQL HEAD constant for retrieving resource sharing policies by organization IDs
+    public static final String GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD =
+            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID," +
+                    " UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY WHERE UM_POLICY_HOLDING_ORG_ID IN ";
 
     private ResourceSharingSQLConstants() {
 

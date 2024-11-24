@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
@@ -30,6 +31,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -105,10 +107,24 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+    public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
             throws ResourceSharingPolicyMgtServerException {
 
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesByOrgIds(orgIds);
-
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPolicies(organizationIds);
     }
+
+    @Override
+    public Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByResourceType(organizationIds);
+    }
+
+    @Override
+    public Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(organizationIds);
+    }
+
 }
