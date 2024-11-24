@@ -60,9 +60,12 @@ public class ResourceSharingConstants {
         ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED("65004",
                 "Failed to delete shared resource attributes for policy ID: %d. Failed attributes: %s",
                 "An error occurred while deleting the shared resource attributes in the database."),
-        ERROR_CODE_ERROR_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES("65005",
+        ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED("65005",
                 "Failed to retrieve shared resource attributes.",
-                "An error occurred while retrieving the shared resource attributes from the database.");
+                "An error occurred while retrieving the shared resource attributes from the database."),
+        ERROR_CODE_CREATION_OF_SHARED_RESOURCE_ATTRIBUTE_BUILDER_FAILED("65006",
+                "Failed to create shared resource attributes builder.",
+                "An error occurred while creating the shared resource attributes builder from the database.");
 
         private final String code;
         private final String message;
