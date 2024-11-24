@@ -81,6 +81,30 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.
+                getSharedResourceAttributesByType(attributeType);
+    }
+
+    @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.
+                getSharedResourceAttributesById(attributeId);
+    }
+
+    @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId
+            (SharedAttributeType attributeType, String attributeId) throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.
+                getSharedResourceAttributesByTypeAndId(attributeType, attributeId);
+    }
+
+    @Override
     public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
             throws ResourceSharingPolicyMgtServerException {
 

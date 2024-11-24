@@ -38,11 +38,15 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_RESOURCE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID_AND_TYPE;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_TYPE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.INSERT_SHARED_RESOURCE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID;
@@ -179,6 +183,75 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED);
+        }
+
+        return sharedResourceAttributes;
+    }
+
+    @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return getSharedResourceAttributes(GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_TYPE, attributeType, null);
+    }
+
+    @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return getSharedResourceAttributes(GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID, null, attributeId);
+    }
+
+    @Override
+    public List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
+                                                                                String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return getSharedResourceAttributes(GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID_AND_TYPE, attributeType,
+                attributeId);
+    }
+
+    private List<SharedResourceAttribute> getSharedResourceAttributes(String query, SharedAttributeType attributeType,
+                                                                      String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
+
+        try {
+            namedJdbcTemplate.executeQuery(query, (resultSet, rowNumber) -> {
+                SharedResourceAttribute.Builder attributesBuilder = SharedResourceAttribute.builder()
+                        .withResourceSharingPolicyId(
+                                resultSet.getInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID))
+                        .withSharedAttributeType(SharedAttributeType.valueOf(
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE)))
+                        .withSharedAttributeId(
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID));
+
+                try {
+                    SharedResourceAttribute sharedResourceAttribute = attributesBuilder.build();
+                    sharedResourceAttribute.setSharedResourceAttributeId(
+                            resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID));
+                    sharedResourceAttributes.add(sharedResourceAttribute);
+                } catch (Exception e) {
+                    LOG.debug(
+                            ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED
+                                    .toString());
+                }
+
+                return null;
+            }, namedPreparedStatement -> {
+                if (attributeType != null) {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE, attributeType.name());
+                }
+                if (attributeId != null) {
+                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID, attributeId);
+                }
+            });
+
+        } catch (DataAccessException e) {
+            throw handleServerException(
+                    ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED);
         }
 
         return sharedResourceAttributes;

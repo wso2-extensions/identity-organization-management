@@ -58,13 +58,36 @@ public class ResourceSharingSQLConstants {
                     "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
 
+    // SQL for retrieving shared resource attributes by attribute type
+    public static final String GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_TYPE =
+            "SELECT UM_ID, UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
+                    "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";";
+
+    // SQL for retrieving shared resource attributes by attribute ID
+    public static final String GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID =
+            "SELECT UM_ID, UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
+                    "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_SHARED_ATTRIBUTE_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
+
+    // SQL for retrieving shared resource attributes by attribute type and ID
+    public static final String GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID_AND_TYPE =
+            "SELECT UM_ID, UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
+                    "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
+                    "UM_SHARED_ATTRIBUTE_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
+
     // SQL for retrieving resource sharing policies by org ids.
     public static final String
             GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS =
             "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, " +
-            "UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY " +
-            "FROM UM_RESOURCE_SHARING_POLICY " +
-            "WHERE UM_POLICY_HOLDING_ORG_ID IN (:orgIds;)";
+                    "UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY " +
+                    "FROM UM_RESOURCE_SHARING_POLICY " +
+                    "WHERE UM_POLICY_HOLDING_ORG_ID IN (:orgIds;)";
 
     private ResourceSharingSQLConstants() {
 

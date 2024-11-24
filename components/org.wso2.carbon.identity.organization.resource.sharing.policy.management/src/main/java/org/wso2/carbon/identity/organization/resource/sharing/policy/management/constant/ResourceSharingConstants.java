@@ -68,7 +68,11 @@ public class ResourceSharingConstants {
                 "An error occurred while creating the shared resource attributes builder from the database."),
         ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED("65007",
                 "Failed to retrieve resource sharing policies.",
-                "An error occurred while retrieving the resource sharing policies from the database.");
+                "An error occurred while retrieving the resource sharing policies from the database."),
+        ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED("65008",
+                "Failed to retrieve shared resource attributes by resource ID and type.",
+                "An error occurred while retrieving shared resource attributes from the database by " +
+                        "resource ID and type.");
 
         private final String code;
         private final String message;

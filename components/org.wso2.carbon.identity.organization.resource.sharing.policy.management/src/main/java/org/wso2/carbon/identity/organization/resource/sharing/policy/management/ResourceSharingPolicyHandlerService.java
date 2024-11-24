@@ -64,6 +64,25 @@ public interface ResourceSharingPolicyHandlerService {
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
+     * Retrieves shared resource attributes for a given attribute Type.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves shared resource attributes for a given attribute ID.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves shared resource attributes for a given attribute Type and ID.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
+                                                                                  String attributeId)
+    throws ResourceSharingPolicyMgtServerException;
+
+    /**
      * Retrieves resource sharing policies for the given organization IDs.
      */
     List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)

@@ -89,11 +89,46 @@ public interface ResourceSharingPolicyHandlerDAO {
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
+     * Retrieves shared resource attributes for a specific resource ID and type.
+     *
+     * @param attributeType The type of the attribute ({@link SharedAttributeType}).
+     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
+     *                                                 attributes.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves shared resource attributes for a specific resource ID and type.
+     *
+     * @param attributeId   The ID of the attribute for which shared attributes are to be retrieved.
+     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
+     *                                                 attributes.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves shared resource attributes for a specific resource ID and type.
+     *
+     * @param attributeType The type of the attribute ({@link SharedAttributeType}).
+     * @param attributeId   The ID of the attribute for which shared attributes are to be retrieved.
+     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
+     *                                                 attributes.
+     */
+    List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
+                                                                         String attributeId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
      * Retrieves a list of resource sharing policies associated with the specified organization IDs.
      *
      * @param orgIds A list of organization IDs for which the resource sharing policies are to be retrieved.
      * @return A list of {@link ResourceSharingPolicy} objects representing the resource sharing policies for the
-     *                                                 specified organization IDs.
+     * specified organization IDs.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
      *                                                 policies.
      */
