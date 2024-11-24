@@ -63,4 +63,9 @@ public interface ResourceSharingPolicyHandlerService {
     List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
+    /**
+     * Retrieves resource sharing policies for the given organization IDs.
+     */
+    List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException;
 }

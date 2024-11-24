@@ -41,6 +41,7 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
 
+    // SQL for deleting resource sharing policy
     public static final String DELETE_RESOURCE_SHARING_POLICY =
             "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
@@ -57,6 +58,13 @@ public class ResourceSharingSQLConstants {
                     "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
 
+    // SQL for retrieving resource sharing policies by org ids.
+    public static final String
+            GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS =
+            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, " +
+            "UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY " +
+            "FROM UM_RESOURCE_SHARING_POLICY " +
+            "WHERE UM_POLICY_HOLDING_ORG_ID IN (:orgIds;)";
 
     private ResourceSharingSQLConstants() {
 

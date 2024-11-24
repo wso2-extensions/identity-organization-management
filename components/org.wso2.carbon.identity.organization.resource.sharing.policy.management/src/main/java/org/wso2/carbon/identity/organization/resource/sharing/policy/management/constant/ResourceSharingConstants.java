@@ -65,7 +65,10 @@ public class ResourceSharingConstants {
                 "An error occurred while retrieving the shared resource attributes from the database."),
         ERROR_CODE_CREATION_OF_SHARED_RESOURCE_ATTRIBUTE_BUILDER_FAILED("65006",
                 "Failed to create shared resource attributes builder.",
-                "An error occurred while creating the shared resource attributes builder from the database.");
+                "An error occurred while creating the shared resource attributes builder from the database."),
+        ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED("65007",
+                "Failed to retrieve resource sharing policies.",
+                "An error occurred while retrieving the resource sharing policies from the database.");
 
         private final String code;
         private final String message;
@@ -91,6 +94,13 @@ public class ResourceSharingConstants {
         public String getDescription() {
 
             return description;
+        }
+
+        @Override
+        public String toString() {
+
+            return String.format("ErrorMessage{code='%s', message='%s', description='%s'}",
+                    getCode(), getMessage(), getDescription());
         }
     }
 }

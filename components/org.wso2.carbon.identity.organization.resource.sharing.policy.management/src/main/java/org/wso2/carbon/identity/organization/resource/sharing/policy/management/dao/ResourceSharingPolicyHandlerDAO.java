@@ -87,4 +87,16 @@ public interface ResourceSharingPolicyHandlerDAO {
      */
     List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
+
+    /**
+     * Retrieves a list of resource sharing policies associated with the specified organization IDs.
+     *
+     * @param orgIds A list of organization IDs for which the resource sharing policies are to be retrieved.
+     * @return A list of {@link ResourceSharingPolicy} objects representing the resource sharing policies for the
+     *                                                 specified organization IDs.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
+     *                                                 policies.
+     */
+    List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException;
 }

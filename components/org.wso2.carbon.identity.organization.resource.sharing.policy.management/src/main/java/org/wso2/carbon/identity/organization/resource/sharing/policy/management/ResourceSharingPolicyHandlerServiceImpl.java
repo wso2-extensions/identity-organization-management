@@ -79,4 +79,12 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         return resourceSharingPolicyHandlerDAO.getSharedResourceAttributes(resourceSharingPolicyId);
     }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesByOrgIds(orgIds);
+
+    }
 }
