@@ -22,12 +22,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -52,5 +54,29 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
             throws ResourceSharingPolicyMgtServerException {
 
         resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
+    }
+
+    @Override
+    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId);
+    }
+
+    @Override
+    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
+                                                                           SharedAttributeType sharedAttributeType)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
+                resourceSharingPolicyId,
+                sharedAttributeType);
+    }
+
+    @Override
+    public List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtServerException, DataAccessException {
+
+        return resourceSharingPolicyHandlerDAO.getSharedResourceAttributes(resourceSharingPolicyId);
     }
 }

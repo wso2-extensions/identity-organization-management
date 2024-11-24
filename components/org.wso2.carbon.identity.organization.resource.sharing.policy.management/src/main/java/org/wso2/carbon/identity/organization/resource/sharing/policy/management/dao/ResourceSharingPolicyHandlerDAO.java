@@ -25,6 +25,8 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
 
+import java.util.List;
+
 /**
  * DAO interface for handling user sharing policies.
  */
@@ -74,4 +76,15 @@ public interface ResourceSharingPolicyHandlerDAO {
     boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                     SharedAttributeType sharedAttributeType)
             throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves shared resource attributes for a given resource sharing policy ID.
+     *
+     * @param resourceSharingPolicyId The ID of the resource sharing policy.
+     * @return A list of {@link SharedResourceAttributes} associated with the given policy ID.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
+     *                                                 attributes.
+     */
+    List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtServerException, DataAccessException;
 }
