@@ -20,8 +20,6 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 
-import java.util.List;
-
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_MISSING_MANDATORY_FIELDS;
 
 /**
@@ -29,37 +27,54 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
  */
 public class SharedResourceAttributes {
 
+    private int sharedResourceAttributeId;
     private int resourceSharingPolicyId;
-    private List<String> sharedAttributes;
     private SharedAttributeType sharedAttributeType;
+    private String sharedAttributeId;
+
+    public int getSharedResourceAttributeId() {
+
+        return sharedResourceAttributeId;
+    }
+
+    public void setSharedResourceAttributeId(int sharedResourceAttributeId) {
+
+        this.sharedResourceAttributeId = sharedResourceAttributeId;
+    }
 
     public int getResourceSharingPolicyId() {
+
         return resourceSharingPolicyId;
     }
 
     public void setResourceSharingPolicyId(int resourceSharingPolicyId) {
+
         this.resourceSharingPolicyId = resourceSharingPolicyId;
     }
 
-    public List<String> getSharedAttributes() {
-
-        return sharedAttributes;
-    }
-
-    public void setSharedAttributes(List<String> sharedAttributes) {
-
-        this.sharedAttributes = sharedAttributes;
-    }
-
     public SharedAttributeType getSharedAttributeType() {
+
         return sharedAttributeType;
     }
 
-    public void setSharedAttributeType(SharedAttributeType sharedAttributeType) {
+    public void setSharedAttributeType(
+            SharedAttributeType sharedAttributeType) {
+
         this.sharedAttributeType = sharedAttributeType;
     }
 
+    public String getSharedAttributeId() {
+
+        return sharedAttributeId;
+    }
+
+    public void setSharedAttributeId(String sharedAttributeId) {
+
+        this.sharedAttributeId = sharedAttributeId;
+    }
+
     public static Builder builder() {
+
         return new Builder();
     }
 
@@ -67,34 +82,39 @@ public class SharedResourceAttributes {
      * Builder for constructing {@link SharedResourceAttributes} instances.
      */
     public static class Builder {
+
         private int resourceSharingPolicyId;
-        private List<String> sharedAttributes;
         private SharedAttributeType sharedAttributeType;
+        private String sharedAttributeId;
 
         public Builder withResourceSharingPolicyId(int resourceSharingPolicyId) {
+
             this.resourceSharingPolicyId = resourceSharingPolicyId;
             return this;
         }
 
-        public Builder withSharedAttributes(List<String> sharedAttributes) {
-            this.sharedAttributes = sharedAttributes;
-            return this;
-        }
-
         public Builder withSharedAttributeType(SharedAttributeType sharedAttributeType) {
+
             this.sharedAttributeType = sharedAttributeType;
             return this;
         }
 
+        public Builder withSharedAttributeId(String sharedAttributeId) {
+
+            this.sharedAttributeId = sharedAttributeId;
+            return this;
+        }
+
         public SharedResourceAttributes build() throws ResourceSharingPolicyMgtException {
-            if (sharedAttributes == null || sharedAttributeType == null) {
+
+            if (sharedAttributeType == null || sharedAttributeId == null) {
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
                         ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
             }
             SharedResourceAttributes attributes = new SharedResourceAttributes();
             attributes.setResourceSharingPolicyId(this.resourceSharingPolicyId);
-            attributes.setSharedAttributes(this.sharedAttributes);
             attributes.setSharedAttributeType(this.sharedAttributeType);
+            attributes.setSharedAttributeId(this.sharedAttributeId);
             return attributes;
         }
     }

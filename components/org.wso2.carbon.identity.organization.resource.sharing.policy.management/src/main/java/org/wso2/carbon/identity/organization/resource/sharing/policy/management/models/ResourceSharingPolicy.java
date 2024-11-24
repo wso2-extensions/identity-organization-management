@@ -28,11 +28,20 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
  */
 public class ResourceSharingPolicy {
 
+    private int resourceSharingPolicyId;
     private String resourceId;
     private ResourceType resourceType;
     private String initiatingOrgId;
     private String policyHoldingOrgId;
     private PolicyEnum sharingPolicy;
+
+    public int getResourceSharingPolicyId() {
+        return resourceSharingPolicyId;
+    }
+
+    public void setResourceSharingPolicyId(int resourceSharingPolicyId) {
+        this.resourceSharingPolicyId = resourceSharingPolicyId;
+    }
 
     public String getResourceId() {
 
