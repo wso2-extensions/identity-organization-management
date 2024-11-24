@@ -27,12 +27,10 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_CREATION_OF_SHARED_RESOURCE_ATTRIBUTE_BUILDER_FAILED;
@@ -89,23 +87,21 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        int resourceSharingPolicyId = sharedResourceAttributes.getResourceSharingPolicyId();
-        SharedAttributeType sharedAttributeType = sharedResourceAttributes.getSharedAttributeType();
-        List<String> sharedAttributes = sharedResourceAttributes.getSharedAttributes();
 
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeBatchInsert(INSERT_SHARED_RESOURCE_ATTRIBUTE, (namedPreparedStatement -> {
-                    namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
-                            resourceSharingPolicyId);
-                    namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
-                            sharedAttributeType.name());
-                    for (String attribute : sharedAttributes) {
-                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID, attribute);
+                    for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
+                                sharedResourceAttribute.getResourceSharingPolicyId());
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
+                                sharedResourceAttribute.getSharedAttributeType().name());
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID,
+                                sharedResourceAttribute.getSharedAttributeId());
                         namedPreparedStatement.addBatch();
                     }
                 }), null);
@@ -152,47 +148,115 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        Map<String, SharedResourceAttributes> attributesMap = new HashMap<>();
+        List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
 
         try {
             namedJdbcTemplate.executeQuery(GET_SHARED_RESOURCE_ATTRIBUTES, (resultSet, rowNumber) -> {
-                String sharedAttributeType = resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE);
-                String sharedAttributeId = resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID);
 
-                // If an object for the current type already exists, add the attribute to its list.
-                if (attributesMap.containsKey(sharedAttributeType)) {
-                    attributesMap.get(sharedAttributeType).getSharedAttributes().add(sharedAttributeId);
-                } else {
-                    // Otherwise, create a new SharedResourceAttributes.Builder object.
-                    SharedResourceAttributes.Builder attributesBuilder = SharedResourceAttributes.builder()
-                            .withResourceSharingPolicyId(
-                                    resultSet.getInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID))
-                            .withSharedAttributeType(SharedAttributeType.valueOf(sharedAttributeType));
-                    List<String> sharedAttributes = new ArrayList<>();
-                    sharedAttributes.add(sharedAttributeId);
-                    attributesBuilder.withSharedAttributes(sharedAttributes);
-                    try {
-                        attributesMap.put(sharedAttributeType, attributesBuilder.build());
-                    } catch (ResourceSharingPolicyMgtException e) {
-                        LOG.debug(ERROR_CODE_CREATION_OF_SHARED_RESOURCE_ATTRIBUTE_BUILDER_FAILED);
-                    }
-
+                SharedResourceAttribute.Builder attributesBuilder = SharedResourceAttribute.builder()
+                        .withResourceSharingPolicyId(
+                                resultSet.getInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID))
+                        .withSharedAttributeType(SharedAttributeType.valueOf(
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE)))
+                        .withSharedAttributeId(
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID));
+                try {
+                    SharedResourceAttribute sharedResourceAttribute = attributesBuilder.build();
+                    sharedResourceAttribute.setSharedResourceAttributeId(resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID));
+                    sharedResourceAttributes.add(sharedResourceAttribute);
+                } catch (ResourceSharingPolicyMgtException e) {
+                    LOG.debug(ERROR_CODE_CREATION_OF_SHARED_RESOURCE_ATTRIBUTE_BUILDER_FAILED.toString());
                 }
+
                 return null;
             }, namedPreparedStatement -> namedPreparedStatement.setInt(
                     DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
                     resourceSharingPolicyId));
 
-            // Build and collect the final SharedResourceAttributes objects.
-            return new ArrayList<>(attributesMap.values());
-
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED);
         }
+
+        return sharedResourceAttributes;
     }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return new ArrayList<>();
+    }
+
+
+
+   /* //@Override
+    public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds2(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        List<ResourceSharingPolicy> resourceSharingPolicies = new ArrayList<>();
+
+        try {
+            namedJdbcTemplate.executeQuery(GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS, (resultSet, rowNumber) -> {
+                ResourceSharingPolicy policy = new ResourceSharingPolicy();
+                policy.setResourceSharingPolicyId(resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID));
+                policy.setResourceId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID));
+                policy.setResourceType(ResourceType.valueOf(resultSet.getString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE)));
+                policy.setInitiatingOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID));
+                policy.setPolicyHoldingOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID));
+                policy.setSharingPolicy(
+                        PolicyEnum.getPolicyByPolicyCode(resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARING_POLICY)));
+
+                resourceSharingPolicies.add(policy);
+                return null;
+            }, namedPreparedStatement -> namedPreparedStatement.setString("orgIds", String.join(",", orgIds)));
+
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
+        }
+
+        return resourceSharingPolicies;
+    }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPoliciesByOrgIds(List<String> orgIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        List<ResourceSharingPolicy> policies = new ArrayList<>();
+
+        // Create dynamic placeholders for the orgIds
+        StringJoiner joiner = new StringJoiner(", ", "(", ")");
+        for (int i = 0; i < orgIds.size(); i++) {
+            joiner.add("?");
+        }
+        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS.replace(":orgIds", joiner.toString());
+
+        try {
+            namedJdbcTemplate.executeQuery(query, (resultSet, rowNumber) -> {
+                ResourceSharingPolicy policy = new ResourceSharingPolicy();
+                policy.setResourceSharingPolicyId(resultSet.getInt(DB_SCHEMA_COLUMN_NAME_UM_ID));
+                policy.setResourceId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID));
+                policy.setResourceType(ResourceType.valueOf(resultSet.getString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE)));
+                policy.setInitiatingOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID));
+                policy.setPolicyHoldingOrgId(resultSet.getString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID));
+                policy.setSharingPolicy(
+                        PolicyEnum.getPolicyByPolicyCode(resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARING_POLICY)));
+                policies.add(policy);
+                return null;
+            }, namedPreparedStatement -> {
+                for (int i = 0; i < orgIds.size(); i++) {
+                    namedPreparedStatement.setString(i + 1, orgIds.get(i));
+                }
+            });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
+        }
+        return policies;
+    }*/
 
 }

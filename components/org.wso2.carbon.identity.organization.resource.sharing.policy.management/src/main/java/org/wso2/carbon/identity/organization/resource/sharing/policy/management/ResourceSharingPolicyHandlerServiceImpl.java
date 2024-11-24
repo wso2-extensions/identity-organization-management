@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -50,7 +50,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
         resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
@@ -74,10 +74,10 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException {
 
-        return resourceSharingPolicyHandlerDAO.getSharedResourceAttributes(resourceSharingPolicyId);
+        return resourceSharingPolicyHandlerDAO.getSharedResourceAttributesBySharingPolicyId(resourceSharingPolicyId);
     }
 
     @Override

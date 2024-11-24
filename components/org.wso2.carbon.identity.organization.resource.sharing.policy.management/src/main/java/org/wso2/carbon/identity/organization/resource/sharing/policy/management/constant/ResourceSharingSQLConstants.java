@@ -54,7 +54,7 @@ public class ResourceSharingSQLConstants {
 
     // SQL for retrieving shared resource attributes.
     public static final String GET_SHARED_RESOURCE_ATTRIBUTES =
-            "SELECT UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
+            "SELECT UM_ID, UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
                     "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
 

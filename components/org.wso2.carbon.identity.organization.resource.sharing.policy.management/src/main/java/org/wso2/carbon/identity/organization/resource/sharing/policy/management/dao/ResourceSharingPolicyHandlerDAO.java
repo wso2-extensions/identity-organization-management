@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
 
@@ -49,10 +49,10 @@ public interface ResourceSharingPolicyHandlerDAO {
     /**
      * Adds shared resource attributes to an existing resource sharing policy.
      *
-     * @param sharedResourceAttributes Details about the shared resource attributes
+     * @param sharedResourceAttributes List of shared resource attributes
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
      */
-    void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
@@ -81,11 +81,11 @@ public interface ResourceSharingPolicyHandlerDAO {
      * Retrieves shared resource attributes for a given resource sharing policy ID.
      *
      * @param resourceSharingPolicyId The ID of the resource sharing policy.
-     * @return A list of {@link SharedResourceAttributes} associated with the given policy ID.
+     * @return A list of {@link SharedResourceAttribute} associated with the given policy ID.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
      *                                                 attributes.
      */
-    List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+    List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**

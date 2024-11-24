@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.ResourceSharingPolicy;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttributes;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.models.SharedResourceAttribute;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public interface ResourceSharingPolicyHandlerService {
     /**
      * Saves the shared resource attributes to the data store.
      */
-    void addSharedResourceAttributes(SharedResourceAttributes sharedResourceAttributes)
+    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
@@ -60,7 +60,7 @@ public interface ResourceSharingPolicyHandlerService {
     /**
      * Retrieves shared resource attributes for a given resource sharing policy ID.
      */
-    List<SharedResourceAttributes> getSharedResourceAttributes(int resourceSharingPolicyId)
+    List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**

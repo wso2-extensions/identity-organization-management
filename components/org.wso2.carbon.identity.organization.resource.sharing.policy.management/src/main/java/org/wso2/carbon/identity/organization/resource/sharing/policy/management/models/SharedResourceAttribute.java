@@ -25,7 +25,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 /**
  * Model representing the Shared Resource Attribute.
  */
-public class SharedResourceAttributes {
+public class SharedResourceAttribute {
 
     private int sharedResourceAttributeId;
     private int resourceSharingPolicyId;
@@ -73,13 +73,23 @@ public class SharedResourceAttributes {
         this.sharedAttributeId = sharedAttributeId;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "\"sharedResourceAttributeId\": " + sharedResourceAttributeId + ", " +
+                "\"resourceSharingPolicyId\": " + resourceSharingPolicyId + ", " +
+                "\"sharedAttributeType\": \"" + sharedAttributeType + "\", " +
+                "\"sharedAttributeId\": \"" + sharedAttributeId + "\"" +
+                "}";
+    }
+
     public static Builder builder() {
 
         return new Builder();
     }
 
     /**
-     * Builder for constructing {@link SharedResourceAttributes} instances.
+     * Builder for constructing {@link SharedResourceAttribute} instances.
      */
     public static class Builder {
 
@@ -105,13 +115,13 @@ public class SharedResourceAttributes {
             return this;
         }
 
-        public SharedResourceAttributes build() throws ResourceSharingPolicyMgtException {
+        public SharedResourceAttribute build() throws ResourceSharingPolicyMgtException {
 
             if (sharedAttributeType == null || sharedAttributeId == null) {
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
                         ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
             }
-            SharedResourceAttributes attributes = new SharedResourceAttributes();
+            SharedResourceAttribute attributes = new SharedResourceAttribute();
             attributes.setResourceSharingPolicyId(this.resourceSharingPolicyId);
             attributes.setSharedAttributeType(this.sharedAttributeType);
             attributes.setSharedAttributeId(this.sharedAttributeId);

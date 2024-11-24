@@ -93,6 +93,18 @@ public class ResourceSharingPolicy {
         this.sharingPolicy = sharingPolicy;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "\"resourceSharingPolicyId\": " + resourceSharingPolicyId + ", " +
+                "\"resourceId\": \"" + resourceId + "\", " +
+                "\"resourceType\": \"" + resourceType + "\", " +
+                "\"initiatingOrgId\": \"" + initiatingOrgId + "\", " +
+                "\"policyHoldingOrgId\": \"" + policyHoldingOrgId + "\", " +
+                "\"sharingPolicy\": \"" + sharingPolicy + "\"" +
+                "}";
+    }
+
     public static Builder builder() {
 
         return new Builder();
