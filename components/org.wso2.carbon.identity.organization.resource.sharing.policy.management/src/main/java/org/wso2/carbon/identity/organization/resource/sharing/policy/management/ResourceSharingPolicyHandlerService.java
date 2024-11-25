@@ -53,10 +53,22 @@ public interface ResourceSharingPolicyHandlerService {
             throws ResourceSharingPolicyMgtServerException;
 
     /**
+     * Deletes a resource sharing policy record by resource Type and ID.
+     */
+    boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
      * Deletes shared resource attributes for a given resource sharing policy ID.
      */
     boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                     SharedAttributeType sharedAttributeType)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes shared resource attributes by attribute Type and ID.
+     */
+    boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**

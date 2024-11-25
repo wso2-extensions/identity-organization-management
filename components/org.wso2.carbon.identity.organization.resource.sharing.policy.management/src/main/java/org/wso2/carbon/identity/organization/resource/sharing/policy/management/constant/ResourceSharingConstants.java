@@ -78,7 +78,15 @@ public class ResourceSharingConstants {
         ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED("65008",
                 "Failed to retrieve shared resource attributes by resource ID and type.",
                 "An error occurred while retrieving shared resource attributes from the database by " +
-                        "resource ID and type.");
+                        "resource ID and type."),
+        ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_BY_RESOURCE_TYPE_AND_ID_FAILED("65009",
+                "Failed to delete resource sharing policy by type and ID.",
+                "An error occurred while deleting the resource sharing policy by resource type and ID " +
+                        "from the database."),
+        ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED("65010",
+                "Failed to delete shared resource attribute by type and ID.",
+                "An error occurred while deleting the shared resource attribute by attribute type and ID " +
+                        "from the database.");
 
         private final String code;
         private final String message;

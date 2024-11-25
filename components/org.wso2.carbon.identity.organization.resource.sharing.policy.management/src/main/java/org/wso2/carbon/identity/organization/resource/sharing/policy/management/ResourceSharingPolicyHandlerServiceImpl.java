@@ -66,6 +66,14 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
+    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.
+                deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId);
+    }
+
+    @Override
     public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType)
             throws ResourceSharingPolicyMgtServerException {
@@ -73,6 +81,15 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
         return resourceSharingPolicyHandlerDAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
                 resourceSharingPolicyId,
                 sharedAttributeType);
+    }
+
+    @Override
+    public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
+                                                                     String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.
+                deleteSharedResourceAttributeByAttributeTypeAndId(attributeType, attributeId);
     }
 
     @Override

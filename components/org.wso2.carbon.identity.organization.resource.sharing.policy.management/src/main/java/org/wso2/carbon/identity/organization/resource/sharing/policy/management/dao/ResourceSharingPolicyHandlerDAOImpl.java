@@ -43,16 +43,20 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_BY_RESOURCE_TYPE_AND_ID_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.OPEN_PARENTHESES;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.SEMICOLON;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.SINGLE_QUOTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_RESOURCE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY_BY_RESOURCE_TYPE_AND_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID;
@@ -144,6 +148,25 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
+    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY_BY_RESOURCE_TYPE_AND_ID,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE,
+                                resourceType.name());
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
+                                resourceId);
+                    });
+            return true;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_BY_RESOURCE_TYPE_AND_ID_FAILED);
+        }
+    }
+
+    @Override
     public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType)
             throws ResourceSharingPolicyMgtServerException {
@@ -159,6 +182,26 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED);
+        }
+    }
+
+    @Override
+    public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
+                                                                     String attributeId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
+                                attributeType.name());
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID,
+                                attributeId);
+                    });
+            return true;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED);
         }
     }
 
