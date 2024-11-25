@@ -49,15 +49,6 @@ public interface ResourceSharingPolicyHandlerDAO {
             throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
-     * Adds shared resource attributes to an existing resource sharing policy.
-     *
-     * @param sharedResourceAttributes List of shared resource attributes
-     * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
-     */
-    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
      * Deletes a resource sharing policy record by ID.
      *
      * @param resourceSharingPolicyId The ID of the resource sharing policy to delete.
@@ -76,6 +67,44 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policy.
      */
     boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Fetches ResourceSharingPolicy records for the given organization IDs.
+     *
+     * @param organizationIds List of organization IDs.
+     * @return List of ResourceSharingPolicy.
+     */
+    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by ResourceType.
+     *
+     * @param organizationIds List of organization IDs.
+     * @return Map of ResourceType to List of ResourceSharingPolicy.
+     */
+    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by PolicyHoldingOrgId.
+     *
+     * @param organizationIds List of organization IDs.
+     * @return Map of PolicyHoldingOrgId to List of ResourceSharingPolicy.
+     */
+    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Adds shared resource attributes to an existing resource sharing policy.
+     *
+     * @param sharedResourceAttributes List of shared resource attributes
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
+     */
+    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
@@ -147,32 +176,4 @@ public interface ResourceSharingPolicyHandlerDAO {
                                                                          String attributeId)
             throws ResourceSharingPolicyMgtServerException;
 
-    /**
-     * Fetches ResourceSharingPolicy records for the given organization IDs.
-     *
-     * @param organizationIds List of organization IDs.
-     * @return List of ResourceSharingPolicy.
-     */
-    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
-     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by ResourceType.
-     *
-     * @param organizationIds List of organization IDs.
-     * @return Map of ResourceType to List of ResourceSharingPolicy.
-     */
-    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
-            List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
-     * Fetches ResourceSharingPolicy records for the given organization IDs, grouped by PolicyHoldingOrgId.
-     *
-     * @param organizationIds List of organization IDs.
-     * @return Map of PolicyHoldingOrgId to List of ResourceSharingPolicy.
-     */
-    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
-            List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
 }

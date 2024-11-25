@@ -52,13 +52,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
-            throws ResourceSharingPolicyMgtServerException {
-
-        resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
-    }
-
-    @Override
     public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException {
 
@@ -71,6 +64,34 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         return resourceSharingPolicyHandlerDAO.
                 deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId);
+    }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPolicies(organizationIds);
+    }
+
+    @Override
+    public Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByResourceType(organizationIds);
+    }
+
+    @Override
+    public Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+
+        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(organizationIds);
+    }
+
+    @Override
+    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
+            throws ResourceSharingPolicyMgtServerException {
+
+        resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
     }
 
     @Override
@@ -122,26 +143,4 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
         return resourceSharingPolicyHandlerDAO.
                 getSharedResourceAttributesByTypeAndId(attributeType, attributeId);
     }
-
-    @Override
-    public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException {
-
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPolicies(organizationIds);
-    }
-
-    @Override
-    public Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
-            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
-
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByResourceType(organizationIds);
-    }
-
-    @Override
-    public Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
-            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
-
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(organizationIds);
-    }
-
 }

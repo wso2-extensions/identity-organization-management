@@ -41,12 +41,6 @@ public interface ResourceSharingPolicyHandlerService {
             throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
-     * Saves the shared resource attributes to the data store.
-     */
-    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
      * Deletes a resource sharing policy record by ID.
      */
     boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
@@ -56,6 +50,32 @@ public interface ResourceSharingPolicyHandlerService {
      * Deletes a resource sharing policy record by resource Type and ID.
      */
     boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves resource sharing policies for the given organization IDs.
+     */
+    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves resource sharing policies for the given organization IDs grouped by resource type.
+     */
+    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves resource sharing policies for the given organization IDs grouped by resource policy holding org IDs.
+     */
+    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+            List<String> organizationIds)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Saves the shared resource attributes to the data store.
+     */
+    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
@@ -96,23 +116,4 @@ public interface ResourceSharingPolicyHandlerService {
                                                                          String attributeId)
             throws ResourceSharingPolicyMgtServerException;
 
-    /**
-     * Retrieves resource sharing policies for the given organization IDs.
-     */
-    List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
-     * Retrieves resource sharing policies for the given organization IDs grouped by resource type.
-     */
-    Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
-            List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
-
-    /**
-     * Retrieves resource sharing policies for the given organization IDs grouped by resource policy holding org IDs.
-     */
-    Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
-            List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException;
 }
