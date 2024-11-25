@@ -19,30 +19,51 @@
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception;
 
 /**
- * The exception to throw when the code is not implemented.
+ * A custom runtime exception to indicate that a method or functionality is not yet implemented.
  */
 public class NotImplementedException extends RuntimeException {
 
-    private static final long serialVersionUID = 5117918786934510964L;
+    private static final long serialVersionUID = 5117918786934518376L;
 
+    /**
+     * Constructs a new NotImplementedException with no detail message or cause.
+     *
+     * <p>This constructor is typically used when no additional information is required
+     * to explain why the exception is thrown.
+     */
     public NotImplementedException() {
 
         super();
     }
 
+    /**
+     * Constructs a new NotImplementedException with a detailed message and the root cause.
+     *
+     * @param message A descriptive message explaining why this exception is thrown.
+     * @param cause   The underlying cause of this exception.
+     */
     public NotImplementedException(String message, Throwable cause) {
 
         super(message, cause);
     }
 
+    /**
+     * Constructs a new NotImplementedException with a detailed message.
+     *
+     * @param message A descriptive message explaining why this exception is thrown.
+     */
     public NotImplementedException(String message) {
 
         super(message);
     }
 
+    /**
+     * Constructs a new NotImplementedException with the root cause.
+     *
+     * @param cause The underlying cause of this exception.
+     */
     public NotImplementedException(Throwable cause) {
 
         super(cause);
     }
-
 }
