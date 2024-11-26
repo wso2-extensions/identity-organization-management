@@ -40,13 +40,22 @@ public class OrgResourceHierarchyTraverseConstants {
     public enum ErrorMessages {
 
         // Server errors.
-        ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS(
+        ERROR_CODE_EMPTY_ORGANIZATION_ID(
                 "65001",
+                "Empty organization id.",
+                "Organization id cannot be null or empty."),
+        ERROR_CODE_INVALID_ANCESTOR_ORGANIZATION_ID_LIST(
+                "65002",
+                "Invalid ancestor organization id list.",
+                "The ancestor organization id list cannot be empty for the organization with id: %s. " +
+                        "At least the organization itself should be included in the list."),
+        ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS(
+                "65003",
                 "Unable to resolve ancestor organizations.",
                 "Unexpected server error occurred " +
                         "while resolving ancestor organizations for organization with id: %s."),
         ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_APPLICATIONS(
-                "65002",
+                "65004",
                 "Unable to resolve ancestor applications.",
                 "Unexpected server error occurred while resolving ancestor applications for organization " +
                         "with id: %s for application with id: %s.");

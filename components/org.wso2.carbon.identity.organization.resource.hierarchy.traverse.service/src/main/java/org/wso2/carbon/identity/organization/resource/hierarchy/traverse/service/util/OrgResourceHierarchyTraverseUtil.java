@@ -81,6 +81,26 @@ public class OrgResourceHierarchyTraverseUtil {
      * a custom exception for consistent error handling in the service.
      *
      * @param error The error enumeration containing predefined error messages and codes.
+     * @param data  Optional data to format the error message description.
+     * @return An {@link OrgResourceHierarchyTraverseServerException} with the formatted error details.
+     */
+    public static OrgResourceHierarchyTraverseServerException handleServerException(
+            OrgResourceHierarchyTraverseConstants.ErrorMessages error, String... data) {
+
+        String description = error.getDescription();
+        if (ArrayUtils.isNotEmpty(data)) {
+            description = String.format(description, data);
+        }
+        return new OrgResourceHierarchyTraverseServerException(error.getMessage(), description, error.getCode());
+    }
+
+    /**
+     * Create an {@link OrgResourceHierarchyTraverseServerException} to handle server-side errors.
+     * <p>
+     * This method formats the error description using the provided data, if applicable, and constructs
+     * a custom exception including the underlying cause of the error, for consistent error handling in the service.
+     *
+     * @param error The error enumeration containing predefined error messages and codes.
      * @param e     The underlying cause of the error.
      * @param data  Optional data to format the error message description.
      * @return An {@link OrgResourceHierarchyTraverseServerException} with the formatted error details.

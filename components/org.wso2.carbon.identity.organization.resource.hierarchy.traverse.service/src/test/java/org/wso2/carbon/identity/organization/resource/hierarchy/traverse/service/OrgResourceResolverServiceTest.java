@@ -56,7 +56,7 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertThrows;
 
 /**
- * Unit tests for the OrgResourceResolverServiceTest.
+ * Unit tests for the OrgResourceResolverService.
  */
 public class OrgResourceResolverServiceTest {
 
@@ -430,8 +430,8 @@ public class OrgResourceResolverServiceTest {
             AggregationStrategy<MockResource> aggregationStrategy, List<String> invalidOrgIds) throws Exception {
 
         for (String orgId : invalidOrgIds) {
-            MockResource resolvedResource = invokeOrgLevelResourceResolver(aggregationStrategy, orgId);
-            assertNull(resolvedResource);
+            assertThrows(OrgResourceHierarchyTraverseServerException.class,
+                    () -> invokeOrgLevelResourceResolver(aggregationStrategy, orgId));
         }
     }
 
@@ -468,9 +468,8 @@ public class OrgResourceResolverServiceTest {
 
         for (String invalidOrgId : invalidOrgIds) {
             for (String invalidAppId : invalidAppIds) {
-                MockResource resolvedResource =
-                        invokeAppLevelResourceResolver(aggregationStrategy, invalidOrgId, invalidAppId);
-                assertNull(resolvedResource);
+                assertThrows(OrgResourceHierarchyTraverseServerException.class,
+                        () -> invokeAppLevelResourceResolver(aggregationStrategy, invalidOrgId, invalidAppId));
             }
         }
     }
@@ -643,7 +642,7 @@ public class OrgResourceResolverServiceTest {
 
         return orgResourceResolverService.getResourcesFromOrgHierarchy(
                 organizationId,
-                (orgId) -> {
+                orgId -> {
                     MockResource resource = mockResourceManagementService.getOrgResource(orgId);
                     return Optional.ofNullable(resource);
                 },

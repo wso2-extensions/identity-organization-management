@@ -19,12 +19,14 @@
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant.OrgResourceHierarchyTraverseConstants;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseException;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseServerException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal.OrgResourceHierarchyTraverseServiceDataHolder;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy.AggregationStrategy;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util.OrgResourceHierarchyTraverseUtil;
@@ -47,18 +49,8 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
                                               AggregationStrategy<T> aggregationStrategy)
             throws OrgResourceHierarchyTraverseException {
 
-        try {
-            List<String> organizationIds = getAncestorOrganizationsIds(organizationId);
-            if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
-                return null;
-            }
-
-            return aggregationStrategy.aggregate(organizationIds, resourceRetriever);
-        } catch (OrganizationManagementServerException e) {
-            throw OrgResourceHierarchyTraverseUtil.handleServerException(
-                    OrgResourceHierarchyTraverseConstants.ErrorMessages
-                            .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS, e, organizationId);
-        }
+        List<String> organizationIds = getAncestorOrganizationsIds(organizationId);
+        return aggregationStrategy.aggregate(organizationIds, resourceRetriever);
     }
 
     @Override
@@ -69,9 +61,6 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
 
         try {
             List<String> organizationIds = getAncestorOrganizationsIds(organizationId);
-            if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
-                return null;
-            }
 
             ApplicationManagementService applicationManagementService = getApplicationManagementService();
             Map<String, String> ancestorAppIds = Collections.emptyMap();
@@ -80,10 +69,6 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
             }
 
             return aggregationStrategy.aggregate(organizationIds, ancestorAppIds, resourceRetriever);
-        } catch (OrganizationManagementServerException e) {
-            throw OrgResourceHierarchyTraverseUtil.handleServerException(
-                    OrgResourceHierarchyTraverseConstants.ErrorMessages
-                            .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS, e, organizationId);
         } catch (IdentityApplicationManagementException e) {
             throw OrgResourceHierarchyTraverseUtil.handleServerException(
                     OrgResourceHierarchyTraverseConstants.ErrorMessages
@@ -93,10 +78,27 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
     }
 
     private List<String> getAncestorOrganizationsIds(String organizationId)
-            throws OrganizationManagementServerException {
+            throws OrgResourceHierarchyTraverseServerException {
 
-        OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
-        return organizationManager.getAncestorOrganizationIds(organizationId);
+        if (StringUtils.isBlank(organizationId)) {
+            throw OrgResourceHierarchyTraverseUtil.handleServerException(
+                    OrgResourceHierarchyTraverseConstants.ErrorMessages.ERROR_CODE_EMPTY_ORGANIZATION_ID);
+        }
+
+        try {
+            OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
+            List<String> organizationIds = organizationManager.getAncestorOrganizationIds(organizationId);
+            if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
+                throw OrgResourceHierarchyTraverseUtil.handleServerException(OrgResourceHierarchyTraverseConstants
+                                .ErrorMessages.ERROR_CODE_INVALID_ANCESTOR_ORGANIZATION_ID_LIST,
+                        organizationId);
+            }
+            return organizationIds;
+        } catch (OrganizationManagementServerException e) {
+            throw OrgResourceHierarchyTraverseUtil.handleServerException(
+                    OrgResourceHierarchyTraverseConstants.ErrorMessages
+                            .ERROR_CODE_SERVER_ERROR_WHILE_RESOLVING_ANCESTOR_ORGANIZATIONS, e, organizationId);
+        }
     }
 
     private ApplicationManagementService getApplicationManagementService() {
