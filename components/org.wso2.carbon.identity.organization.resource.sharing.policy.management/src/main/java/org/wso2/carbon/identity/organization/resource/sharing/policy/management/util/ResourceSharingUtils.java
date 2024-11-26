@@ -55,4 +55,6 @@ public class ResourceSharingUtils {
 
         return new ResourceSharingPolicyMgtServerException(error.getMessage(), error.getCode());
     }
+
+    private ResourceSharingUtils() {}
 }

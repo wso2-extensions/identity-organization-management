@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.resource.sharing.policy.management.models;
+package org.wso2.carbon.identity.organization.resource.sharing.policy.management.model;
 
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
