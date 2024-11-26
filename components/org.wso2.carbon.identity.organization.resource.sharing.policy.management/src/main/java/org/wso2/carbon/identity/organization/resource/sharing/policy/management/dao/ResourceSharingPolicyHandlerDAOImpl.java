@@ -107,7 +107,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         try {
             namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY,
                     namedPreparedStatement -> namedPreparedStatement.setInt(
-                            DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
+                            DB_SCHEMA_COLUMN_NAME_UM_ID,
                             resourceSharingPolicyId));
             return true;
         } catch (DataAccessException e) {

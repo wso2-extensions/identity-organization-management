@@ -43,8 +43,8 @@ public class ResourceSharingSQLConstants {
 
     // SQL for deleting resource sharing policy
     public static final String DELETE_RESOURCE_SHARING_POLICY =
-            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE UM_RESOURCE_SHARING_POLICY_ID = " +
-                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";";
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE UM_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID + ";";
 
     // SQL for deleting resource sharing policy by resource type and ID
     public static final String DELETE_RESOURCE_SHARING_POLICY_BY_RESOURCE_TYPE_AND_ID =
