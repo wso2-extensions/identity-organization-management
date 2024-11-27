@@ -86,7 +86,16 @@ public class ResourceSharingConstants {
         ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED("65010",
                 "Failed to delete shared resource attribute by type and ID.",
                 "An error occurred while deleting the shared resource attribute by attribute type and ID " +
-                        "from the database.");
+                        "from the database."),
+        ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL("65011",
+                "ResourceSharingPolicyId cannot be null",
+                "An error occurred while attempting to do CRUD operations with a null ResourceSharingPolicyId."),
+        ERROR_CODE_RESOURCE_TYPE_IS_NULL("65012",
+                "ResourceType cannot be null",
+                "An error occurred while attempting to do CRUD operations with a null ResourceType."),
+        ERROR_CODE_ATTRIBUTE_TYPE_IS_NULL("65013",
+                "AttributeType cannot be null",
+                "An error occurred while attempting to do CRUD operations with a null AttributeType.");
 
         private final String code;
         private final String message;

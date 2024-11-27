@@ -43,13 +43,14 @@ public interface ResourceSharingPolicyHandlerService {
     /**
      * Deletes a resource sharing policy record by ID.
      */
-    boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
+    boolean deleteResourceSharingPolicyRecordById(Integer resourceSharingPolicyId, String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Deletes a resource sharing policy record by resource Type and ID.
      */
-    boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+    boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
+                                                           String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
@@ -75,26 +76,28 @@ public interface ResourceSharingPolicyHandlerService {
     /**
      * Saves the shared resource attributes to the data store.
      */
-    void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
+    boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Deletes shared resource attributes for a given resource sharing policy ID.
      */
-    boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
-                                                                    SharedAttributeType sharedAttributeType)
+    boolean deleteSharedResourceAttributesByResourceSharingPolicyId(Integer resourceSharingPolicyId,
+                                                                    SharedAttributeType sharedAttributeType,
+                                                                    String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Deletes shared resource attributes by attribute Type and ID.
      */
-    boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId)
+    boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId,
+                                                              String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Retrieves shared resource attributes for a given resource sharing policy ID.
      */
-    List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
+    List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(Integer resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**

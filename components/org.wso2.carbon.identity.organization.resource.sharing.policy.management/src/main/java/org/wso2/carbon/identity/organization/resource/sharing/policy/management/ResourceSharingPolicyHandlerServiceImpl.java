@@ -46,24 +46,26 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
     @Override
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException {
+            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException {
 
         return resourceSharingPolicyHandlerDAO.addResourceSharingPolicyRecord(resourceSharingPolicy);
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
+    public boolean deleteResourceSharingPolicyRecordById(Integer resourceSharingPolicyId, String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
-        return resourceSharingPolicyHandlerDAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId);
+        return resourceSharingPolicyHandlerDAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
+                permittedOrgId);
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
+                                                                  String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         return resourceSharingPolicyHandlerDAO.
-                deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId);
+                deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId, permittedOrgId);
     }
 
     @Override
@@ -88,33 +90,33 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
+    public boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
-        resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
+        return resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
     }
 
     @Override
-    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
-                                                                           SharedAttributeType sharedAttributeType)
+    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(Integer resourceSharingPolicyId,
+                                                                           SharedAttributeType sharedAttributeType,
+                                                                           String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         return resourceSharingPolicyHandlerDAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
-                resourceSharingPolicyId,
-                sharedAttributeType);
+                resourceSharingPolicyId, sharedAttributeType, permittedOrgId);
     }
 
     @Override
     public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
-                                                                     String attributeId)
+                                                                     String attributeId, String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         return resourceSharingPolicyHandlerDAO.
-                deleteSharedResourceAttributeByAttributeTypeAndId(attributeType, attributeId);
+                deleteSharedResourceAttributeByAttributeTypeAndId(attributeType, attributeId, permittedOrgId);
     }
 
     @Override
-    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
+    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(Integer resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException {
 
         return resourceSharingPolicyHandlerDAO.getSharedResourceAttributesBySharingPolicyId(resourceSharingPolicyId);

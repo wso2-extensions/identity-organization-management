@@ -36,11 +36,14 @@ import java.util.stream.Collectors;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.CLOSE_PARENTHESES;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.COMMA;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_ATTRIBUTE_TYPE_IS_NULL;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_BY_RESOURCE_TYPE_AND_ID_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_TYPE_IS_NULL;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED;
@@ -100,15 +103,19 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId)
+    public boolean deleteResourceSharingPolicyRecordById(Integer resourceSharingPolicyId, String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            if (resourceSharingPolicyId == null) {
+                throw new DataAccessException(ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY,
-                    namedPreparedStatement -> namedPreparedStatement.setInt(
-                            DB_SCHEMA_COLUMN_NAME_UM_ID,
-                            resourceSharingPolicyId));
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID, permittedOrgId);
+                    });
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED);
@@ -116,17 +123,23 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
+                                                                  String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            if (resourceType == null) {
+                throw new DataAccessException(ERROR_CODE_RESOURCE_TYPE_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeUpdate(DELETE_RESOURCE_SHARING_POLICY_BY_RESOURCE_TYPE_AND_ID,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE,
                                 resourceType.name());
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
                                 resourceId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
+                                permittedOrgId);
                     });
             return true;
         } catch (DataAccessException e) {
@@ -193,7 +206,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public void addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
+    public boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -211,25 +224,32 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.addBatch();
                     }
                 }), null);
-                return null;
+                return true;
             });
         } catch (TransactionException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED);
         }
+        return true;
     }
 
     @Override
-    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
-                                                                           SharedAttributeType sharedAttributeType)
+    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(Integer resourceSharingPolicyId,
+                                                                           SharedAttributeType sharedAttributeType,
+                                                                           String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            if (resourceSharingPolicyId == null) {
+                throw new DataAccessException(ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeUpdate(DELETE_SHARED_RESOURCE_ATTRIBUTE, namedPreparedStatement -> {
                 namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID,
                         resourceSharingPolicyId);
                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
                         sharedAttributeType.name());
+                namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
+                        permittedOrgId);
             });
             return true;
         } catch (DataAccessException e) {
@@ -239,17 +259,22 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
-                                                                     String attributeId)
+                                                                     String attributeId, String permittedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            if (attributeType == null) {
+                throw new DataAccessException(ERROR_CODE_ATTRIBUTE_TYPE_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeUpdate(DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID,
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
                                 attributeType.name());
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID,
                                 attributeId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
+                                permittedOrgId);
                     });
             return true;
         } catch (DataAccessException e) {
@@ -258,13 +283,16 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
+    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(Integer resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
 
         try {
+            if (resourceSharingPolicyId == null) {
+                throw new DataAccessException(ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeQuery(GET_SHARED_RESOURCE_ATTRIBUTES, (resultSet, rowNumber) -> {
 
                 SharedResourceAttribute attributes = new SharedResourceAttribute();
@@ -320,6 +348,9 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
 
         try {
+            if (attributeType == null && attributeId == null) {
+                throw new DataAccessException(ERROR_CODE_ATTRIBUTE_TYPE_IS_NULL.getMessage());
+            }
             namedJdbcTemplate.executeQuery(query, (resultSet, rowNumber) -> {
 
                 SharedResourceAttribute attributes = new SharedResourceAttribute();
