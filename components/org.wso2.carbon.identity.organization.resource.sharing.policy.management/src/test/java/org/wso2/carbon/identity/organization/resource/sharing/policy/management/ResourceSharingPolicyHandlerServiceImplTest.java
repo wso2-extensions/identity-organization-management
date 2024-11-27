@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
-import org.mockito.Mock;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -27,7 +26,6 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
@@ -63,18 +61,12 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 
 public class ResourceSharingPolicyHandlerServiceImplTest {
 
-    @Mock
-    private ResourceSharingPolicyHandlerDAO resourceSharingPolicyHandlerDAO;
-
     private ResourceSharingPolicyHandlerServiceImpl resourceSharingPolicyHandlerService;
-
-    private List<Integer> addedResourceSharingPolicyIds;
 
     @BeforeClass
     public void setUp() throws Exception {
 
         resourceSharingPolicyHandlerService = new ResourceSharingPolicyHandlerServiceImpl();
-        addedResourceSharingPolicyIds = new ArrayList<>();
         openMocks(this);
         TestUtils.initiateH2Base();
         TestUtils.mockDataSource();
@@ -86,6 +78,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         closeH2Base();
     }
 
+    // Tests: CREATE Resource Sharing Policy Records.
     @DataProvider(name = "resourceSharingPolicyProvider")
     public Object[][] resourceSharingPolicyProvider() throws ResourceSharingPolicyMgtException {
 
@@ -133,7 +126,6 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
         Assert.assertTrue(addedPolicyId > 0,
                 "Expected a positive non-zero integer as the result for a clean record insertion to the database.");
-        addedResourceSharingPolicyIds.add(addedPolicyId);
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 2)
@@ -150,6 +142,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
     }
 
+    // Tests: GET Resource Sharing Policy Records.
     @DataProvider(name = "organizationIdsProvider")
     public Object[][] organizationIdsProvider() {
 
@@ -245,6 +238,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 Collections.singletonList(UM_ID_ORGANIZATION_INVALID_FORMAT));
     }
 
+    // Tests: DELETE Resource Sharing Policy Records.
     @Test(dataProvider = "organizationIdsProvider", priority = 8)
     public void testDeleteResourceSharingPolicyRecordById_success(List<String> organizationIds) throws Exception {
 
@@ -300,6 +294,139 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
     }
 
+    // Tests: CREATE Shared Resource Attributes Records.
+    @Test(priority = 12)
+    public void testAddSharedResourceAttributes_success() throws Exception {
+
+        List<SharedResourceAttribute> sharedResourceAttributes = Arrays.asList(
+                new SharedResourceAttribute.Builder()
+                        .withResourceSharingPolicyId(1)
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                        .build(),
+                new SharedResourceAttribute.Builder()
+                        .withResourceSharingPolicyId(1)
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
+                        .build());
+
+        boolean isAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
+        Assert.assertTrue(isAdded, "Failed to add shared resource attributes.");
+
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 13)
+    public void testAddSharedResourceAttributes_failure() throws Exception {
+
+        List<SharedResourceAttribute> sharedResourceAttributes = Collections.singletonList(
+                new SharedResourceAttribute.Builder()
+                        .withResourceSharingPolicyId(Integer.MIN_VALUE)
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                        .build());
+
+        resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
+    }
+
+    // Tests: GET Shared Resource Attributes Records.
+    @Test(priority = 14)
+    public void testGetSharedResourceAttributesBySharingPolicyId_success() throws Exception {
+
+        addAndAssertSharedResourceAttributes();
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(1);
+        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes.");
+        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
+                "Expected non-empty list of shared resource attributes.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 15)
+    public void testGetSharedResourceAttributesBySharingPolicyId_failure() throws Exception {
+
+        resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(null);
+    }
+
+    @Test(priority = 16)
+    public void testGetSharedResourceAttributesByType_success() throws Exception {
+
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(
+                        SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1);
+        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by type.");
+        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
+                "Expected non-empty list of shared resource attributes by type.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 17)
+    public void testGetSharedResourceAttributesByType_failure() throws Exception {
+
+        resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(null);
+    }
+
+    @Test(priority = 18)
+    public void testGetSharedResourceAttributesById_success() throws Exception {
+
+        addAndAssertSharedResourceAttributes();
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesById(UM_ID_RESOURCE_ATTRIBUTE_1);
+        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by ID.");
+        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
+                "Expected non-empty list of shared resource attributes by ID.");
+    }
+
+    @Test(priority = 19)
+    public void testGetSharedResourceAttributesByTypeAndId_success() throws Exception {
+
+        addAndAssertSharedResourceAttributes();
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(
+                        SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1);
+        Assert.assertNotNull(sharedResourceAttributes,
+                "Expected non-null list of shared resource attributes by type and ID.");
+        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
+                "Expected non-empty list of shared resource attributes by type and ID.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 20)
+    public void testGetSharedResourceAttributesByTypeAndId_failure() throws Exception {
+
+        resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(null, null);
+    }
+
+    // Tests: DELETE Shared Resource Attributes Records.
+    @Test(priority = 21)
+    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_success() throws Exception {
+
+        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId
+                (1, SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
+        Assert.assertTrue(result, "Expected successful deletion of shared resource attributes by policy ID and " +
+                "attribute type.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 22)
+    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_failure() throws Exception {
+
+        resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId(null,
+                SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
+    }
+
+    @Test(priority = 23)
+    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_success() throws Exception {
+
+        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
+                SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
+        Assert.assertTrue(result,
+                "Expected successful deletion of shared resource attribute by attribute type and ID.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 24)
+    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_failure() throws Exception {
+
+        resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId
+                (null, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+    }
+
+    // Helpers: Private helper methods for tests.
     private List<Integer> addAndAssertResourceSharingPolicy(List<String> policyHoldingOrgIds)
             throws ResourceSharingPolicyMgtException, OrganizationManagementServerException {
 
@@ -331,135 +458,6 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
             policyIds.add(resourceSharingPolicyRecord);
         }
         return policyIds;
-    }
-
-    @Test(priority = 11)
-    public void testAddSharedResourceAttributes_success() throws Exception {
-
-        List<SharedResourceAttribute> sharedResourceAttributes = Arrays.asList(
-                new SharedResourceAttribute.Builder()
-                        .withResourceSharingPolicyId(1)
-                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
-                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
-                        .build(),
-                new SharedResourceAttribute.Builder()
-                        .withResourceSharingPolicyId(1)
-                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
-                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
-                        .build());
-
-        boolean isAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
-        Assert.assertTrue(isAdded, "Failed to add shared resource attributes.");
-
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class)
-    public void testAddSharedResourceAttributes_failure() throws Exception {
-
-        List<SharedResourceAttribute> sharedResourceAttributes = Collections.singletonList(
-                new SharedResourceAttribute.Builder()
-                        .withResourceSharingPolicyId(Integer.MIN_VALUE)
-                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
-                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
-                        .build());
-
-        resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
-    }
-
-    @Test(priority = 12)
-    public void testGetSharedResourceAttributesBySharingPolicyId_success() throws Exception {
-
-        addAndAssertSharedResourceAttributes();
-        List<SharedResourceAttribute> sharedResourceAttributes =
-                resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes.");
-        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
-                "Expected non-empty list of shared resource attributes.");
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class)
-    public void testGetSharedResourceAttributesBySharingPolicyId_failure() throws Exception {
-
-        resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(null);
-    }
-
-    @Test(priority = 13)
-    public void testGetSharedResourceAttributesByType_success() throws Exception {
-
-        List<SharedResourceAttribute> sharedResourceAttributes =
-                resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(
-                        SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by type.");
-        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
-                "Expected non-empty list of shared resource attributes by type.");
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 14)
-    public void testGetSharedResourceAttributesByType_failure() throws Exception {
-
-        resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(null);
-    }
-
-    @Test(priority = 15)
-    public void testGetSharedResourceAttributesById_success() throws Exception {
-
-        addAndAssertSharedResourceAttributes();
-        List<SharedResourceAttribute> sharedResourceAttributes =
-                resourceSharingPolicyHandlerService.getSharedResourceAttributesById(UM_ID_RESOURCE_ATTRIBUTE_1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by ID.");
-        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
-                "Expected non-empty list of shared resource attributes by ID.");
-    }
-
-    @Test(priority = 16)
-    public void testGetSharedResourceAttributesByTypeAndId_success() throws Exception {
-
-        addAndAssertSharedResourceAttributes();
-        List<SharedResourceAttribute> sharedResourceAttributes =
-                resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(
-                        SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1);
-        Assert.assertNotNull(sharedResourceAttributes,
-                "Expected non-null list of shared resource attributes by type and ID.");
-        Assert.assertFalse(sharedResourceAttributes.isEmpty(),
-                "Expected non-empty list of shared resource attributes by type and ID.");
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 17)
-    public void testGetSharedResourceAttributesByTypeAndId_failure() throws Exception {
-
-        resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(null, null);
-    }
-
-    @Test(priority = 18)
-    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_success() throws Exception {
-
-        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId
-                (1, SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(result, "Expected successful deletion of shared resource attributes by policy ID and " +
-                "attribute type.");
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class)
-    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_failure() throws Exception {
-
-        resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId(null,
-                SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-    }
-
-    @Test(priority = 19)
-    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_success() throws Exception {
-
-        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
-                SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(result,
-                "Expected successful deletion of shared resource attribute by attribute type and ID.");
-    }
-
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class)
-    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_failure() throws Exception {
-
-        resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId
-                (null, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
     }
 
     private void addAndAssertSharedResourceAttributes()
