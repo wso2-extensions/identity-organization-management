@@ -22,7 +22,7 @@
 <suite name="organization-user-sharing">
     <test name="organization-resource-sharing-test-all">
         <classes>
-            <class name="org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerServiceImpl"/>
+            <class name="org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerServiceImplTest"/>
         </classes>
     </test>
 </suite>
