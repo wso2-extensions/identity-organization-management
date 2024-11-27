@@ -33,13 +33,10 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
 
-    // SQL constant for inserting a shared resource attribute
-    public static final String INSERT_SHARED_RESOURCE_ATTRIBUTE =
-            "INSERT INTO UM_SHARED_RESOURCE_ATTRIBUTES " +
-                    "(UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_ID, UM_SHARED_ATTRIBUTE_TYPE) VALUES (" +
-                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";, " +
-                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, " +
-                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
+    // SQL HEAD constant for retrieving resource sharing policies by organization IDs
+    public static final String GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD =
+            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID," +
+                    " UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY WHERE UM_POLICY_HOLDING_ORG_ID IN ";
 
     // SQL for deleting resource sharing policy
     public static final String DELETE_RESOURCE_SHARING_POLICY =
@@ -57,27 +54,13 @@ public class ResourceSharingSQLConstants {
                     "UM_INITIATING_ORG_ID = :" +
                     SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";";
 
-    // SQL for deleting shared resource attributes
-    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE =
-            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
-                    "UM_RESOURCE_SHARING_POLICY_ID = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + "; AND " +
-                    "UM_SHARED_ATTRIBUTE_TYPE = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
-                    "UM_RESOURCE_SHARING_POLICY_ID IN (SELECT UM_ID FROM UM_RESOURCE_SHARING_POLICY WHERE " +
-                    "UM_INITIATING_ORG_ID = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";)";
-
-    // SQL for deleting shared resource attribute by attribute type and ID
-    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID =
-            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
-                    "UM_SHARED_ATTRIBUTE_TYPE = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
-                    "UM_SHARED_ATTRIBUTE_ID = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + "; AND " +
-                    "UM_RESOURCE_SHARING_POLICY_ID IN (SELECT UM_ID FROM UM_RESOURCE_SHARING_POLICY WHERE " +
-                    "UM_INITIATING_ORG_ID = :" +
-                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";)";
+    // SQL constant for inserting a shared resource attribute
+    public static final String CREATE_SHARED_RESOURCE_ATTRIBUTE =
+            "INSERT INTO UM_SHARED_RESOURCE_ATTRIBUTES " +
+                    "(UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_ID, UM_SHARED_ATTRIBUTE_TYPE) VALUES (" +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";, " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + ";)";
 
     // SQL for retrieving shared resource attributes.
     public static final String GET_SHARED_RESOURCE_ATTRIBUTES =
@@ -100,7 +83,7 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
 
     // SQL for retrieving shared resource attributes by attribute type and ID
-    public static final String GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID_AND_TYPE =
+    public static final String GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_TYPE_AND_ID =
             "SELECT UM_ID, UM_RESOURCE_SHARING_POLICY_ID, UM_SHARED_ATTRIBUTE_TYPE, UM_SHARED_ATTRIBUTE_ID " +
                     "FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
                     "UM_SHARED_ATTRIBUTE_TYPE = " +
@@ -108,10 +91,27 @@ public class ResourceSharingSQLConstants {
                     "UM_SHARED_ATTRIBUTE_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
 
-    // SQL HEAD constant for retrieving resource sharing policies by organization IDs
-    public static final String GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD =
-            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID," +
-                    " UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY WHERE UM_POLICY_HOLDING_ORG_ID IN ";
+    // SQL for deleting shared resource attributes
+    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE =
+            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_RESOURCE_SHARING_POLICY_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_SHARING_POLICY_ID + "; AND " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
+                    "UM_RESOURCE_SHARING_POLICY_ID IN (SELECT UM_ID FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+                    "UM_INITIATING_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";)";
+
+    // SQL for deleting shared resource attribute by attribute type and ID
+    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID =
+            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
+                    "UM_SHARED_ATTRIBUTE_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + "; AND " +
+                    "UM_RESOURCE_SHARING_POLICY_ID IN (SELECT UM_ID FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+                    "UM_INITIATING_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";)";
 
     private ResourceSharingSQLConstants() {
 

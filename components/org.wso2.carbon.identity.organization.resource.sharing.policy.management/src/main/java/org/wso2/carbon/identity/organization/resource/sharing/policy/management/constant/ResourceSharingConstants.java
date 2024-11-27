@@ -36,14 +36,6 @@ public class ResourceSharingConstants {
     public static final String COMMA = ",";
 
     /**
-     * Enum for assignmentType.
-     */
-    public enum AssignmentType {
-        ROLE,
-        GROUP
-    }
-
-    /**
      * Error messages for organization user sharing management related errors.
      */
     public enum ErrorMessage {
