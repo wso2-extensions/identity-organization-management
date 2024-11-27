@@ -30,13 +30,15 @@ import org.wso2.carbon.user.core.util.DatabaseUtil;
 import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import static org.mockito.Mockito.mock;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.RUNSCRIPT_FROM;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.SINGLE_QUOTE;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.WHITESPACE;
 
 /**
  * Util methods needed for testing of Resource Sharing policy Management component.
@@ -66,7 +68,8 @@ public class TestUtils {
         dataSource.setTestOnBorrow(true);
         dataSource.setValidationQuery("select 1");
         try (Connection connection = dataSource.getConnection()) {
-            connection.createStatement().executeUpdate("RUNSCRIPT FROM '" + getFilePath(H2_SCRIPT_NAME) + "'");
+            connection.createStatement().executeUpdate(
+                    RUNSCRIPT_FROM + WHITESPACE + SINGLE_QUOTE + getFilePath(H2_SCRIPT_NAME) + SINGLE_QUOTE);
         }
         dataSourceMap.put(DB_NAME, dataSource);
     }
@@ -77,14 +80,6 @@ public class TestUtils {
         if (dataSource != null) {
             dataSource.close();
         }
-    }
-
-    public static Connection getConnection() throws SQLException {
-
-        if (dataSourceMap.get(DB_NAME) != null) {
-            return dataSourceMap.get(DB_NAME).getConnection();
-        }
-        throw new RuntimeException("No datasource initiated for database: " + DB_NAME);
     }
 
     public static void mockDataSource() throws Exception {

@@ -26,25 +26,27 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
  */
 public class TestResourceSharingConstants {
 
+    //DB Constants.
+    public static final String RUNSCRIPT_FROM = "RUNSCRIPT FROM";
+    public static final String WHITESPACE = " ";
+    public static final String SINGLE_QUOTE = "'";
+
     //Organizations.
     public static final String UM_ID_ORGANIZATION_SUPER = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String UM_ID_ORGANIZATION_ORG_ALL = "c524c30a-cbd4-4169-ac9d-1ee3edf1bf16";
     public static final String UM_ID_ORGANIZATION_ORG_ALL_CHILD1 = "cd5a1dcb-fff2-4c14-a073-c07b3caf1757";
-    public static final String UM_ID_ORGANIZATION_ORG_ALL_GRANDCHILD1 = "46edfee9-b9f7-4480-ab45-353a571eafb4";
     public static final String UM_ID_ORGANIZATION_ORG_IMMEDIATE = "7cb4ab7e-9a25-44bd-a9e0-cf4e07d804dc";
     public static final String UM_ID_ORGANIZATION_ORG_IMMEDIATE_CHILD1 = "440ad5b6-6a41-4da7-aadd-272995d0e5db";
-    public static final String UM_ID_ORGANIZATION_ORG_IMMEDIATE_GRANDCHILD1 = "ea1a347c-0b2b-421a-a21a-50fb489bc41f";
 
+    //Invalid Organizations.
     public static final String UM_ID_ORGANIZATION_INVALID = "abcdefgh-0123-ijkl-4563-mnopqrstuvwx";
     public static final String UM_ID_ORGANIZATION_INVALID_FORMAT = "12'3";
-
 
     //Resources.
     public static final String UM_ID_RESOURCE_1 = "448e57e7-ff6b-4c31-a1eb-2a0e2d635b2a";
     public static final String UM_ID_RESOURCE_2 = "558e57e7-ff6b-4c31-a1eb-2a0e2d635b2a";
     public static final String UM_ID_RESOURCE_3 = "668e57e7-ff6b-4c31-a1eb-2a0e2d635b2b";
     public static final String UM_ID_RESOURCE_4 = "778e57e7-ff6b-4c31-a1eb-2a0e2d635b2c";
-    public static final String UM_ID_RESOURCE_INVALID_FORMAT = "45'6";
 
     //Resources Types.
     public static final ResourceType RESOURCE_TYPE_RESOURCE_1 = ResourceType.USER;
@@ -53,8 +55,6 @@ public class TestResourceSharingConstants {
     //Resource Attributes.
     public static final String UM_ID_RESOURCE_ATTRIBUTE_1 = "daea2340-4686-4929-b0c3-aad28237b065";
     public static final String UM_ID_RESOURCE_ATTRIBUTE_2 = "daea2341-4686-4929-b0c3-aad28237b065";
-    public static final String UM_ID_RESOURCE_ATTRIBUTE_INVALID_FORMAT = "78'9";
-
 
     //Resource Attributes Types.
     public static final SharedAttributeType SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1 = SharedAttributeType.ROLE;
@@ -64,7 +64,6 @@ public class TestResourceSharingConstants {
      */
     public enum ErrorMessage {
 
-        // Client Errors
         ERROR_CODE_ERROR_TEST("Error Code",
                 "Error Message",
                 "Error Description");
