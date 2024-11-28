@@ -58,6 +58,9 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for OrganizationConfigManagerImpl class.
+ */
 public class OrganizationConfigManagerImplTest {
 
     @Mock

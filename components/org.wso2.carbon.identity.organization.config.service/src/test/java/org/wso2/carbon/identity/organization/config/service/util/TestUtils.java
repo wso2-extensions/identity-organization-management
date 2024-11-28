@@ -27,6 +27,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Test utils class for OrganizationConfigManagerImpl tests.
+ */
 public class TestUtils {
 
     public static final String DB_NAME = "testOrgDiscoveryConfig_db";
