@@ -103,8 +103,11 @@
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal,
-                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.*;
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management,
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant,
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception,
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.model,
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.util;
                             version="${identity.organization.management.exp.pkg.version}",
                         </Export-Package>
                         <Import-Package>
