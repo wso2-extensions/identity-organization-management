@@ -92,7 +92,6 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             } else {
                 getConfigurationManager().replaceResource(RESOURCE_TYPE_NAME, resource);
             }
-
         } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG, e, getOrganizationId());
         }
