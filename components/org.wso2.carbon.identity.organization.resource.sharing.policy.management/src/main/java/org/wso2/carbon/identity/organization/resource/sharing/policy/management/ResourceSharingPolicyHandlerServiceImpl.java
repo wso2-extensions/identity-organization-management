@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
@@ -46,7 +45,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
     @Override
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException {
+            throws ResourceSharingPolicyMgtServerException {
 
         return resourceSharingPolicyHandlerDAO.addResourceSharingPolicyRecord(resourceSharingPolicy);
     }

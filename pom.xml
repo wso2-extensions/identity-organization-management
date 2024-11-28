@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.4.56-SNAPSHOT</version>
+    <version>1.4.54</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -54,6 +54,7 @@
         <module>components/org.wso2.carbon.identity.organization.config.service</module>
         <module>components/org.wso2.carbon.identity.organization.discovery.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
+        <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
     </modules>
 
     <dependencyManagement>
@@ -117,6 +118,12 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.resource.sharing.policy.management</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -502,7 +509,7 @@
     <properties>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.9.17</carbon.kernel.version>
+        <carbon.kernel.version>4.10.25</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
 
@@ -545,7 +552,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>7.3.3</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.6.9</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 
@@ -561,7 +568,7 @@
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
         <carbon.user.core.imp.pkg.version.range>[4.7.0, 5.0.0)</carbon.user.core.imp.pkg.version.range>
 
-        <carbon.database.utils.version>2.1.7</carbon.database.utils.version>
+        <carbon.database.utils.version>2.2.2</carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,3.0.0)</org.wso2.carbon.database.utils.version.range>
 
         <carbon.identity.auth.version>1.4.47</carbon.identity.auth.version>
@@ -581,7 +588,7 @@
         <mockito-inline.version>5.2.0</mockito-inline.version>
         <testng.version>6.9.10</testng.version>
         <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
-        <h2database.version>1.4.199</h2database.version>
+        <h2database.version>2.2.224</h2database.version>
 
         <openapi.tools.version>4.1.2</openapi.tools.version>
 

@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
@@ -38,7 +37,7 @@ public interface ResourceSharingPolicyHandlerService {
      * Saves the resource sharing policy to the data store and return the record id.
      */
     int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException, DataAccessException;
+            throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
      * Retrieves resource sharing policies for the given organization IDs.

@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
@@ -41,12 +40,11 @@ public interface ResourceSharingPolicyHandlerDAO {
      *                              resource type, initiated organization, policy holding organization, and the
      *                              sharing policy.
      * @return The ID of the newly created resource sharing policy record.
-     * @throws OrganizationManagementServerException   If an error occurs while creating the sharing policy record.
      * @throws ResourceSharingPolicyMgtServerException If a server error specific to resource sharing policy
      *                                                 management occurs.
      */
     int addResourceSharingPolicyRecord(ResourceSharingPolicy resourceSharingPolicy)
-            throws OrganizationManagementServerException, ResourceSharingPolicyMgtServerException;
+            throws ResourceSharingPolicyMgtServerException;
 
     /**
      * Fetches ResourceSharingPolicy records for the given organization IDs.

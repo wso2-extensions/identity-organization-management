@@ -23,7 +23,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
@@ -428,7 +427,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
     // Helpers: Private helper methods for tests.
     private List<Integer> addAndAssertResourceSharingPolicy(List<String> policyHoldingOrgIds)
-            throws ResourceSharingPolicyMgtException, OrganizationManagementServerException {
+            throws ResourceSharingPolicyMgtException {
 
         ResourceSharingPolicy policy1 = new ResourceSharingPolicy.Builder()
                 .withResourceId(UM_ID_RESOURCE_1)
@@ -461,7 +460,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     }
 
     private void addAndAssertSharedResourceAttributes()
-            throws ResourceSharingPolicyMgtException, OrganizationManagementServerException {
+            throws ResourceSharingPolicyMgtException {
 
         List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
         List<Integer> resourceSharingPolicyIds =

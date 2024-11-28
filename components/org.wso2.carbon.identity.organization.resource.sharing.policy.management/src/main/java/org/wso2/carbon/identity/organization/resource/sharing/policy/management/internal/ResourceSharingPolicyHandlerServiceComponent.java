@@ -23,10 +23,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerServiceImpl;
 
@@ -47,29 +43,10 @@ public class ResourceSharingPolicyHandlerServiceComponent {
         BundleContext bundleContext = componentContext.getBundleContext();
         ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
                 new ResourceSharingPolicyHandlerServiceImpl();
-        ResourceSharingPolicyHandlerDataHolder.getInstance()
-                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
         bundleContext.registerService(ResourceSharingPolicyHandlerService.class.getName(),
                 resourceSharingPolicyHandlerService, null);
 
         LOG.info("ResourceSharingPolicyHandlerServiceComponent activated successfully.");
     }
 
-    @Reference(
-            name = "organization.management.service",
-            service = OrganizationManager.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetOrganizationManagementService")
-    protected void setOrganizationManagementService(OrganizationManager organizationManager) {
-
-        ResourceSharingPolicyHandlerDataHolder.getInstance().setOrganizationManager(organizationManager);
-        LOG.debug("Set Organization Management Service");
-    }
-
-    protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {
-
-        ResourceSharingPolicyHandlerDataHolder.getInstance().setOrganizationManager(null);
-        LOG.debug("Unset Organization Management Service");
-    }
 }
