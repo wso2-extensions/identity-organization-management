@@ -131,6 +131,15 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>org/wso2/carbon/identity/organization/resource/sharing/policy/management/constant/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/resource/sharing/policy/management/exception/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/resource/sharing/policy/management/internal/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/resource/sharing/policy/management/model/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/resource/sharing/policy/management/ResourceSharingPolicyHandlerService.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
