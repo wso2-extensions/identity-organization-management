@@ -41,7 +41,7 @@ public class FirstFoundAggregationStrategy<T> implements AggregationStrategy<T> 
     public T aggregate(List<String> organizationHierarchy, Function<String, Optional<T>> resourceRetriever)
             throws OrgResourceHierarchyTraverseException {
 
-        if (CollectionUtils.isEmpty(organizationHierarchy) || organizationHierarchy.isEmpty()) {
+        if (CollectionUtils.isEmpty(organizationHierarchy)) {
             return null;
         }
 
@@ -63,7 +63,7 @@ public class FirstFoundAggregationStrategy<T> implements AggregationStrategy<T> 
                        BiFunction<String, String, Optional<T>> resourceRetriever)
             throws OrgResourceHierarchyTraverseException {
 
-        if (CollectionUtils.isEmpty(organizationHierarchy) || organizationHierarchy.isEmpty()) {
+        if (CollectionUtils.isEmpty(organizationHierarchy)) {
             return null;
         }
 

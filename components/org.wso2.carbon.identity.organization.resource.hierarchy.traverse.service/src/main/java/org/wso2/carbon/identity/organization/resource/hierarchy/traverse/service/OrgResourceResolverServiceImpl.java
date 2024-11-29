@@ -88,7 +88,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
         try {
             OrganizationManager organizationManager = OrgResourceHierarchyTraverseUtil.getOrganizationManager();
             List<String> organizationIds = organizationManager.getAncestorOrganizationIds(organizationId);
-            if (CollectionUtils.isEmpty(organizationIds) || organizationIds.isEmpty()) {
+            if (CollectionUtils.isEmpty(organizationIds)) {
                 throw OrgResourceHierarchyTraverseUtil.handleServerException(OrgResourceHierarchyTraverseConstants
                                 .ErrorMessages.ERROR_CODE_INVALID_ANCESTOR_ORGANIZATION_ID_LIST,
                         organizationId);

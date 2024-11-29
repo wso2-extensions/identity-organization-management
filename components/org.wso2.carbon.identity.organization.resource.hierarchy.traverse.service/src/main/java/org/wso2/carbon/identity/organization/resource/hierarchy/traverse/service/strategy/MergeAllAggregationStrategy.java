@@ -58,7 +58,7 @@ public class MergeAllAggregationStrategy<T> implements AggregationStrategy<T> {
             throws OrgResourceHierarchyTraverseException {
 
         T aggregatedResource = null;
-        if (CollectionUtils.isEmpty(organizationHierarchy) || organizationHierarchy.isEmpty()) {
+        if (CollectionUtils.isEmpty(organizationHierarchy)) {
             return aggregatedResource;
         }
 
@@ -85,7 +85,7 @@ public class MergeAllAggregationStrategy<T> implements AggregationStrategy<T> {
             throws OrgResourceHierarchyTraverseException {
 
         T aggregatedResource = null;
-        if (CollectionUtils.isEmpty(organizationHierarchy) || organizationHierarchy.isEmpty()) {
+        if (CollectionUtils.isEmpty(organizationHierarchy)) {
             return aggregatedResource;
         }
 
