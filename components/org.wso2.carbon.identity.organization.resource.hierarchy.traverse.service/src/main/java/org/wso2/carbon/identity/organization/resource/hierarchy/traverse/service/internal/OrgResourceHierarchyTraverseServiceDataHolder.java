@@ -38,7 +38,7 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     }
 
     /**
-     * Retires the Singleton instance of the OrgResourceHierarchyTraverseServiceDataHolder class.
+     * Retrieves the Singleton instance of the OrgResourceHierarchyTraverseServiceDataHolder class.
      *
      * @return The singleton instance of OrgResourceHierarchyTraverseServiceDataHolder.
      */
