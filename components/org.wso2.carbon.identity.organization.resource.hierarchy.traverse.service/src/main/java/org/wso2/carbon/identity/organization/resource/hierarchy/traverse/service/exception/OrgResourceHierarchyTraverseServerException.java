@@ -29,7 +29,7 @@ public class OrgResourceHierarchyTraverseServerException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified message.
      *
-     * @param message Detailed message
+     * @param message Detailed message.
      */
     public OrgResourceHierarchyTraverseServerException(String message) {
 
@@ -39,8 +39,8 @@ public class OrgResourceHierarchyTraverseServerException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified message and cause.
      *
-     * @param message Detailed message
-     * @param e       Cause as {@link Throwable}
+     * @param message Detailed message.
+     * @param e       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseServerException(String message, Throwable e) {
 
@@ -50,8 +50,8 @@ public class OrgResourceHierarchyTraverseServerException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified error code and message.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
+     * @param errorCode Error code.
+     * @param message   Detailed message.
      */
     public OrgResourceHierarchyTraverseServerException(String errorCode, String message) {
 
@@ -61,9 +61,9 @@ public class OrgResourceHierarchyTraverseServerException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified error code, message and cause.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
-     * @param cause     Cause as {@link Throwable}
+     * @param errorCode Error code.
+     * @param message   Detailed message.
+     * @param cause     Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseServerException(String errorCode, String message, Throwable cause) {
 
@@ -87,8 +87,8 @@ public class OrgResourceHierarchyTraverseServerException extends OrgResourceHier
      *
      * @param errorCode   Error code.
      * @param message     Detailed message.
-     * @param cause       Cause as {@link Throwable}.
      * @param description Error description.
+     * @param cause       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseServerException(String errorCode, String message, String description,
                                                        Throwable cause) {

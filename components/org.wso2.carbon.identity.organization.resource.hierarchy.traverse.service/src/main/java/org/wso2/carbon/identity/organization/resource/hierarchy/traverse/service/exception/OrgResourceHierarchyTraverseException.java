@@ -34,7 +34,7 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     /**
      * Constructs a new exception with the specified message.
      *
-     * @param message Detailed message
+     * @param message Detailed message.
      */
     public OrgResourceHierarchyTraverseException(String message) {
 
@@ -44,8 +44,8 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     /**
      * Constructs a new exception with the specified message and cause.
      *
-     * @param message Detailed message
-     * @param e       Cause as {@link Throwable}
+     * @param message Detailed message.
+     * @param e       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseException(String message, Throwable e) {
 
@@ -55,8 +55,8 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     /**
      * Constructs a new exception with the specified error code and cause.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
+     * @param errorCode Error code.
+     * @param message   Detailed message.
      */
     public OrgResourceHierarchyTraverseException(String errorCode, String message) {
 
@@ -81,9 +81,9 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     /**
      * Constructs a new exception with the specified error code, message and cause.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
-     * @param cause     Cause as {@link Throwable}
+     * @param errorCode Error code.
+     * @param message   Detailed message.
+     * @param cause     Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseException(String errorCode, String message, Throwable cause) {
 
@@ -96,8 +96,8 @@ public class OrgResourceHierarchyTraverseException extends Exception {
      *
      * @param errorCode   Error code.
      * @param message     Detailed message.
-     * @param cause       Cause as {@link Throwable}.
      * @param description Error description.
+     * @param cause       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseException(String errorCode, String message, String description,
                                                  Throwable cause) {
@@ -110,7 +110,7 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     /**
      * Returns the error code.
      *
-     * @return Error code
+     * @return Error code.
      */
     public String getErrorCode() {
 
@@ -118,16 +118,10 @@ public class OrgResourceHierarchyTraverseException extends Exception {
     }
 
     /**
-     * This public method is required by the stub.
+     * Returns the error description.
      *
-     * @return Error message.
+     * @return Error description.
      */
-    @Override
-    public String getMessage() {
-
-        return super.getMessage();
-    }
-
     public String getDescription() {
 
         return description;

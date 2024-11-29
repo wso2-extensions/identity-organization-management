@@ -547,7 +547,7 @@ public class OrgResourceResolverServiceTest {
     /**
      * Mock the retrieval of ancestor organization IDs.
      *
-     * @param orgIds Organization IDs
+     * @param orgIds Organization IDs.
      * @throws OrganizationManagementException If an error occurs while retrieving ancestor organization IDs.
      */
     private void mockAncestorOrganizationRetrieval(List<String> orgIds)
@@ -560,8 +560,8 @@ public class OrgResourceResolverServiceTest {
     /**
      * Mock the retrieval of ancestor application IDs.
      *
-     * @param orgIds Organization IDs
-     * @param appIds Application IDs
+     * @param orgIds Organization IDs.
+     * @param appIds Application IDs.
      * @throws IdentityApplicationManagementException If an error occurs while retrieving ancestor application IDs.
      */
     private void mockAncestorApplicationRetrieval(List<String> orgIds, List<String> appIds)
@@ -578,7 +578,7 @@ public class OrgResourceResolverServiceTest {
     /**
      * Add organization resources to the mock resource management service.
      *
-     * @param orgIds Organization IDs
+     * @param orgIds Organization IDs.
      * @return List of created organization resources.
      */
     private List<MockResource> addOrgResources(List<String> orgIds) {
@@ -596,8 +596,8 @@ public class OrgResourceResolverServiceTest {
     /**
      * Add application resources to the mock resource management service.
      *
-     * @param orgIds Organization IDs
-     * @param appIds Application IDs
+     * @param orgIds Organization IDs.
+     * @param appIds Application IDs.
      * @return List of created application resources.
      */
     private List<MockResource> addAppResources(List<String> orgIds, List<String> appIds) {
@@ -616,8 +616,8 @@ public class OrgResourceResolverServiceTest {
     /**
      * Resource resolver function used for testing MergeAllAggregationStrategy.
      *
-     * @param aggregatedResource Aggregated resource
-     * @param newResource        New resource
+     * @param aggregatedResource Aggregated resource.
+     * @param newResource        New resource.
      * @return Merged resource.
      */
     private MockResource resourceMerger(MockResource aggregatedResource, MockResource newResource) {
@@ -631,9 +631,9 @@ public class OrgResourceResolverServiceTest {
     /**
      * Invoke the organization level resource resolver.
      *
-     * @param aggregationStrategy Aggregation strategy
-     * @param organizationId      Organization ID
-     * @return Resolved resource
+     * @param aggregationStrategy Aggregation strategy.
+     * @param organizationId      Organization ID.
+     * @return Resolved resource.
      * @throws OrgResourceHierarchyTraverseException If an error occurs while resolving the resource.
      */
     private MockResource invokeOrgLevelResourceResolver(AggregationStrategy<MockResource> aggregationStrategy,
@@ -652,10 +652,10 @@ public class OrgResourceResolverServiceTest {
     /**
      * Invoke the application level resource resolver.
      *
-     * @param aggregationStrategy Aggregation strategy
-     * @param organizationId      Organization ID
-     * @param applicationId       Application ID
-     * @return Resolved resource
+     * @param aggregationStrategy Aggregation strategy.
+     * @param organizationId      Organization ID.
+     * @param applicationId       Application ID.
+     * @return Resolved resource.
      * @throws OrgResourceHierarchyTraverseException If an error occurs while resolving the resource.
      */
     private MockResource invokeAppLevelResourceResolver(AggregationStrategy<MockResource> aggregationStrategy,
@@ -675,8 +675,8 @@ public class OrgResourceResolverServiceTest {
     /**
      * Assert the resolved resource with the actual resource.
      *
-     * @param resolvedResource Resolved resource
-     * @param actualResource   Actual resource
+     * @param resolvedResource Resolved resource.
+     * @param actualResource   Actual resource.
      */
     private void assertResolvedResponse(MockResource resolvedResource, MockResource actualResource) {
 

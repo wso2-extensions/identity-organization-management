@@ -37,7 +37,7 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with an array of specified error messages.
      *
-     * @param messages Detailed error messages
+     * @param messages Detailed error messages.
      */
     public OrgResourceHierarchyTraverseClientException(String[] messages) {
 
@@ -57,7 +57,7 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified message.
      *
-     * @param message Detailed message
+     * @param message Detailed message.
      */
     public OrgResourceHierarchyTraverseClientException(String message) {
 
@@ -67,8 +67,8 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified message and cause.
      *
-     * @param message Detailed message
-     * @param e       Cause as {@link Throwable}
+     * @param message Detailed message.
+     * @param e       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseClientException(String message, Throwable e) {
 
@@ -78,8 +78,8 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified error code and cause.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
+     * @param errorCode Error code.
+     * @param message   Detailed message.
      */
     public OrgResourceHierarchyTraverseClientException(String errorCode, String message) {
 
@@ -89,9 +89,9 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified error code, message and cause.
      *
-     * @param errorCode Error code
-     * @param message   Detailed message
-     * @param cause     Cause as {@link Throwable}
+     * @param errorCode Error code.
+     * @param message   Detailed message.
+     * @param cause     Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseClientException(String errorCode, String message, Throwable cause) {
 
@@ -113,10 +113,10 @@ public class OrgResourceHierarchyTraverseClientException extends OrgResourceHier
     /**
      * Constructs a new exception with the specified error code, message, description and cause.
      *
-     * @param errorCode   Error code
-     * @param message     Detailed message
-     * @param cause       Cause as {@link Throwable}
+     * @param errorCode   Error code.
+     * @param message     Detailed message.
      * @param description Error description.
+     * @param cause       Cause as {@link Throwable}.
      */
     public OrgResourceHierarchyTraverseClientException(String errorCode, String message, String description,
                                                        Throwable cause) {

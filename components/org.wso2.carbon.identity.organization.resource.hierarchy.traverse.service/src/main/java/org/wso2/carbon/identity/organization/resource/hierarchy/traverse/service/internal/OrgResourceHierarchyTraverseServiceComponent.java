@@ -43,7 +43,7 @@ import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service
         immediate = true)
 public class OrgResourceHierarchyTraverseServiceComponent {
 
-    private static final Log log = LogFactory.getLog(OrgResourceHierarchyTraverseServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(OrgResourceHierarchyTraverseServiceComponent.class);
 
     /**
      * Activates the OSGi component by registering the {@link OrgResourceResolverService} service.
@@ -58,11 +58,11 @@ public class OrgResourceHierarchyTraverseServiceComponent {
             BundleContext bundleContext = context.getBundleContext();
             bundleContext.registerService(OrgResourceResolverService.class.getName(),
                     new OrgResourceResolverServiceImpl(), null);
-            if (log.isDebugEnabled()) {
-                log.debug("OrgResourceResolverService bundle is activated successfully.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("OrgResourceResolverService bundle is activated successfully.");
             }
         } catch (Exception e) {
-            log.error("Error while activating OrgResourceResolverService bundle.", e);
+            LOG.error("Error while activating OrgResourceResolverService bundle.", e);
         }
     }
 
@@ -75,8 +75,8 @@ public class OrgResourceHierarchyTraverseServiceComponent {
     @Deactivate
     protected void deactivate(ComponentContext context) {
 
-        if (log.isDebugEnabled()) {
-            log.debug("OrgResourceResolverService bundle is deactivated");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("OrgResourceResolverService bundle is deactivated");
         }
     }
 
@@ -87,13 +87,13 @@ public class OrgResourceHierarchyTraverseServiceComponent {
      */
     @Reference(name = "org.wso2.carbon.identity.organization.management.service",
             service = OrganizationManager.class,
-            cardinality = ReferenceCardinality.OPTIONAL,
+            cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetOrganizationManager")
     protected void setOrganizationManager(OrganizationManager organizationManager) {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setOrganizationManager(organizationManager);
-        log.debug("OrganizationManager set in OrgResourceManagementServiceComponent bundle.");
+        LOG.debug("OrganizationManager set in OrgResourceManagementServiceComponent bundle.");
     }
 
     /**
@@ -104,7 +104,7 @@ public class OrgResourceHierarchyTraverseServiceComponent {
     protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setOrganizationManager(null);
-        log.debug("OrganizationManager unset in OrgResourceManagementServiceComponent bundle.");
+        LOG.debug("OrganizationManager unset in OrgResourceManagementServiceComponent bundle.");
     }
 
     /**
@@ -122,7 +122,7 @@ public class OrgResourceHierarchyTraverseServiceComponent {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance()
                 .setApplicationManagementService(applicationManagementService);
-        log.debug("ApplicationManagementService set in OrgResourceManagementServiceComponent bundle.");
+        LOG.debug("ApplicationManagementService set in OrgResourceManagementServiceComponent bundle.");
     }
 
     /**
@@ -133,7 +133,7 @@ public class OrgResourceHierarchyTraverseServiceComponent {
     protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setApplicationManagementService(null);
-        log.debug("ApplicationManagementService unset in OrgResourceManagementServiceComponent bundle.");
+        LOG.debug("ApplicationManagementService unset in OrgResourceManagementServiceComponent bundle.");
     }
 }
 

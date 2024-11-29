@@ -27,8 +27,8 @@ public class NotImplementedException extends RuntimeException {
 
     /**
      * Constructs a new NotImplementedException with no detail message or cause.
-     *
-     * <p>This constructor is typically used when no additional information is required
+     * <p>
+     * This constructor is typically used when no additional information is required
      * to explain why the exception is thrown.
      */
     public NotImplementedException() {

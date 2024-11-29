@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
  */
 public class OrgResourceHierarchyTraverseServiceDataHolder {
 
-    private static final OrgResourceHierarchyTraverseServiceDataHolder instance =
+    private static final OrgResourceHierarchyTraverseServiceDataHolder INSTANCE =
             new OrgResourceHierarchyTraverseServiceDataHolder();
 
     private OrganizationManager organizationManager;
@@ -44,7 +44,7 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
      */
     public static OrgResourceHierarchyTraverseServiceDataHolder getInstance() {
 
-        return instance;
+        return INSTANCE;
     }
 
     /**
@@ -62,8 +62,7 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
      *
      * @param organizationManager The OrganizationManager instance to be assigned.
      */
-    public void setOrganizationManager(
-            OrganizationManager organizationManager) {
+    public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
     }
@@ -83,8 +82,7 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
      *
      * @param applicationManagementService The ApplicationManagementService instance to be set.
      */
-    public void setApplicationManagementService(
-            ApplicationManagementService applicationManagementService) {
+    public void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         this.applicationManagementService = applicationManagementService;
     }
