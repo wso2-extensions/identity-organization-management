@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
@@ -31,17 +29,14 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Implementation of the core service for managing resource sharing policies.
  */
 public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
-    private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerServiceImpl.class);
     private static final ResourceSharingPolicyHandlerDAO resourceSharingPolicyHandlerDAO =
             new ResourceSharingPolicyHandlerDAOImpl();
-    private static ConcurrentLinkedQueue<String> errorMessages;
 
     @Override
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
