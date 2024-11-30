@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,8 +24,7 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 public class ResourceSharingConstants {
 
     public static final String USER = "USER";
-    public static final String APPLICATION = "APPLICATION";
-    public static final String IDP = "IDP";
+    public static final String ROLE = "ROLE";
 
     public static final String SHARING_ERROR_PREFIX = "RSPM-";
 
@@ -44,6 +43,13 @@ public class ResourceSharingConstants {
         ERROR_CODE_MISSING_MANDATORY_FIELDS("60001",
                 "All fields are mandatory and must be provided.",
                 "One or more mandatory field is empty."),
+        ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY("60002",
+                "Inapplicable resource type to resource sharing policy is not allowed.",
+                "The given sharing resource cannot be shared under the given policy since the resource " +
+                        "sharing policy doesn't support for the given resource type."),
+        ERROR_CODE_NULL_INPUTS("60003",
+                "Input values cannot be null.",
+                "One or more input values are null, which is not allowed."),
 
         // Server Errors
         ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED("65001",
@@ -78,16 +84,7 @@ public class ResourceSharingConstants {
         ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED("65010",
                 "Failed to delete shared resource attribute by type and ID.",
                 "An error occurred while deleting the shared resource attribute by attribute type and ID " +
-                        "from the database."),
-        ERROR_CODE_RESOURCE_SHARING_POLICY_IS_NULL("65011",
-                "ResourceSharingPolicyId cannot be null",
-                "An error occurred while attempting to do CRUD operations with a null ResourceSharingPolicyId."),
-        ERROR_CODE_RESOURCE_TYPE_IS_NULL("65012",
-                "ResourceType cannot be null",
-                "An error occurred while attempting to do CRUD operations with a null ResourceType."),
-        ERROR_CODE_ATTRIBUTE_TYPE_IS_NULL("65013",
-                "AttributeType cannot be null",
-                "An error occurred while attempting to do CRUD operations with a null AttributeType.");
+                        "from the database.");
 
         private final String code;
         private final String message;

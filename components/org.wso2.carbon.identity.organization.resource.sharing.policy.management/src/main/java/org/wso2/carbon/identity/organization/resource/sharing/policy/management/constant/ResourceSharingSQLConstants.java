@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -32,6 +32,13 @@ public class ResourceSharingSQLConstants {
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";, " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY + ";)";
+
+    // SQL for retrieving resource sharing policy by resource sharing policy ID.
+    public static final String GET_RESOURCE_SHARING_POLICY_BY_ID =
+            "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, " +
+                    "UM_POLICY_HOLDING_ORG_ID, UM_SHARING_POLICY " +
+                    "FROM UM_RESOURCE_SHARING_POLICY WHERE UM_ID = " +
+                    ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID + ";";
 
     // SQL HEAD constant for retrieving resource sharing policies by organization IDs
     public static final String GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD =

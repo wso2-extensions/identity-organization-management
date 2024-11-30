@@ -23,120 +23,197 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAOImpl;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtClientException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUTS;
 
 /**
  * Implementation of the core service for managing resource sharing policies.
  */
 public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
-    private static final ResourceSharingPolicyHandlerDAO resourceSharingPolicyHandlerDAO =
+    private static final ResourceSharingPolicyHandlerDAO RESOURCE_SHARING_POLICY_HANDLER_DAO =
             new ResourceSharingPolicyHandlerDAOImpl();
 
     @Override
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
-            throws ResourceSharingPolicyMgtServerException {
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.addResourceSharingPolicyRecord(resourceSharingPolicy);
+        validateInputs(resourceSharingPolicy);
+
+        List<String> applicableResources = resourceSharingPolicy.getSharingPolicy().getApplicableResources();
+        if (applicableResources.contains(resourceSharingPolicy.getResourceType().name())) {
+
+            return RESOURCE_SHARING_POLICY_HANDLER_DAO.addResourceSharingPolicy(resourceSharingPolicy);
+        }
+        throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getCode(),
+                ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getMessage());
     }
 
     @Override
-    public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> organizationIds)
-            throws ResourceSharingPolicyMgtServerException {
+    public ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPolicies(organizationIds);
+        validateInputs(resourceSharingPolicyId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyById(resourceSharingPolicyId);
+    }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> policyHoldingOrganizationIds)
+            throws ResourceSharingPolicyMgtException {
+
+        validateInputs(policyHoldingOrganizationIds);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicies(policyHoldingOrganizationIds);
     }
 
     @Override
     public Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
-            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+            List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByResourceType(organizationIds);
+        validateInputs(policyHoldingOrganizationIds);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesGroupedByResourceType(
+                policyHoldingOrganizationIds);
     }
 
     @Override
     public Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
-            List<String> organizationIds) throws ResourceSharingPolicyMgtServerException {
+            List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(organizationIds);
+        validateInputs(policyHoldingOrganizationIds);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
+                policyHoldingOrganizationIds);
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecordById(Integer resourceSharingPolicyId, String permittedOrgId)
-            throws ResourceSharingPolicyMgtServerException {
+    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
+                                                         String deleteRequestInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
-                permittedOrgId);
+        validateInputs(deleteRequestInitiatedOrgId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
+                deleteRequestInitiatedOrgId);
     }
 
     @Override
     public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
-                                                                  String permittedOrgId)
-            throws ResourceSharingPolicyMgtServerException {
+                                                                  String deleteRequestInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.
-                deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId, permittedOrgId);
+        validateInputs(resourceType, resourceId, deleteRequestInitiatedOrgId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
+                resourceId, deleteRequestInitiatedOrgId);
     }
 
     @Override
     public boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
-            throws ResourceSharingPolicyMgtServerException {
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.addSharedResourceAttributes(sharedResourceAttributes);
+        validateInputs(sharedResourceAttributes);
+
+        List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
+        for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
+            ResourceSharingPolicy resourceSharingPolicy =
+                    getResourceSharingPolicyById(sharedResourceAttribute.getResourceSharingPolicyId());
+            if (resourceSharingPolicy != null &&
+                    resourceSharingPolicy.getSharingPolicy().getApplicableResourceAttributes()
+                            .contains(sharedResourceAttribute.getSharedAttributeType().name())) {
+                addableSharedResourceAttributes.add(sharedResourceAttribute);
+            }
+        }
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.addSharedResourceAttributes(addableSharedResourceAttributes);
     }
 
     @Override
-    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(Integer resourceSharingPolicyId)
-            throws ResourceSharingPolicyMgtServerException, DataAccessException {
+    public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
+            throws ResourceSharingPolicyMgtException, DataAccessException {
 
-        return resourceSharingPolicyHandlerDAO.getSharedResourceAttributesBySharingPolicyId(resourceSharingPolicyId);
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesBySharingPolicyId(
+                resourceSharingPolicyId);
     }
 
     @Override
     public List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
-            throws ResourceSharingPolicyMgtServerException {
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.
-                getSharedResourceAttributesByType(attributeType);
+        validateInputs(attributeType);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesByType(attributeType);
     }
 
     @Override
     public List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
-            throws ResourceSharingPolicyMgtServerException {
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.
-                getSharedResourceAttributesById(attributeId);
+        validateInputs(attributeId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesById(attributeId);
     }
 
     @Override
-    public List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId
-            (SharedAttributeType attributeType, String attributeId) throws ResourceSharingPolicyMgtServerException {
+    public List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
+                                                                                String attributeId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.
-                getSharedResourceAttributesByTypeAndId(attributeType, attributeId);
+        validateInputs(attributeType, attributeId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesByTypeAndId(attributeType, attributeId);
     }
 
     @Override
-    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(Integer resourceSharingPolicyId,
+    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType,
-                                                                           String permittedOrgId)
-            throws ResourceSharingPolicyMgtServerException {
+                                                                           String deleteRequestInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
-                resourceSharingPolicyId, sharedAttributeType, permittedOrgId);
+        validateInputs(sharedAttributeType, deleteRequestInitiatedOrgId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
+                resourceSharingPolicyId, sharedAttributeType, deleteRequestInitiatedOrgId);
     }
 
     @Override
     public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
-                                                                     String attributeId, String permittedOrgId)
-            throws ResourceSharingPolicyMgtServerException {
+                                                                     String attributeId,
+                                                                     String deleteRequestInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
 
-        return resourceSharingPolicyHandlerDAO.
-                deleteSharedResourceAttributeByAttributeTypeAndId(attributeType, attributeId, permittedOrgId);
+        validateInputs(attributeType, attributeId, deleteRequestInitiatedOrgId);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
+                attributeId, deleteRequestInitiatedOrgId);
+    }
+
+    private void validateInputs(Object... inputs) throws ResourceSharingPolicyMgtClientException {
+
+        for (Object input : inputs) {
+            if (input == null) {
+                throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_INPUTS.getCode(),
+                        ERROR_CODE_NULL_INPUTS.getMessage());
+            }
+
+            if (input instanceof List<?>) {
+                for (Object o : (List<?>) input) {
+                    if (o == null) {
+                        throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_INPUTS.getCode(),
+                                ERROR_CODE_NULL_INPUTS.getMessage());
+                    }
+                }
+            }
+        }
     }
 }

@@ -21,7 +21,5 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
  * Enum representing the type of resource being shared.
  */
 public enum ResourceType {
-    USER,
-    APPLICATION,
-    IDP;
+    USER;
 }

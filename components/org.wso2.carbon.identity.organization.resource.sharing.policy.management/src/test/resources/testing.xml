@@ -19,7 +19,7 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="organization-user-sharing">
+<suite name="organization-resource-sharing">
     <test name="organization-resource-sharing-test-all">
         <classes>
             <class name="org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerServiceImplTest"/>

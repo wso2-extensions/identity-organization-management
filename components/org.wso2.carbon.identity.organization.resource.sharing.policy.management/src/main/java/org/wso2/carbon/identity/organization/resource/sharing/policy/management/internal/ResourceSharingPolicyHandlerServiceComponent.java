@@ -46,7 +46,7 @@ public class ResourceSharingPolicyHandlerServiceComponent {
         bundleContext.registerService(ResourceSharingPolicyHandlerService.class.getName(),
                 resourceSharingPolicyHandlerService, null);
 
-        LOG.info("ResourceSharingPolicyHandlerServiceComponent activated successfully.");
+        LOG.debug("ResourceSharingPolicyHandlerServiceComponent activated successfully.");
     }
 
 }

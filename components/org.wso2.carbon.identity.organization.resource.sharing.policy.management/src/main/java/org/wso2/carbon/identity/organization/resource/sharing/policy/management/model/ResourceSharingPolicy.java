@@ -36,10 +36,12 @@ public class ResourceSharingPolicy {
     private PolicyEnum sharingPolicy;
 
     public int getResourceSharingPolicyId() {
+
         return resourceSharingPolicyId;
     }
 
     public void setResourceSharingPolicyId(int resourceSharingPolicyId) {
+
         this.resourceSharingPolicyId = resourceSharingPolicyId;
     }
 
@@ -95,6 +97,7 @@ public class ResourceSharingPolicy {
 
     @Override
     public String toString() {
+
         return "{" +
                 "\"resourceSharingPolicyId\": " + resourceSharingPolicyId + ", " +
                 "\"resourceId\": \"" + resourceId + "\", " +
@@ -168,5 +171,4 @@ public class ResourceSharingPolicy {
             return policy;
         }
     }
-
 }

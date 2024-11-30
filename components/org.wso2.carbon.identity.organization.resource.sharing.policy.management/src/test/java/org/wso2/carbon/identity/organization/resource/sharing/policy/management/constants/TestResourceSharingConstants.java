@@ -50,7 +50,6 @@ public class TestResourceSharingConstants {
 
     //Resources Types.
     public static final ResourceType RESOURCE_TYPE_RESOURCE_1 = ResourceType.USER;
-    public static final ResourceType RESOURCE_TYPE_RESOURCE_2 = ResourceType.APPLICATION;
 
     //Resource Attributes.
     public static final String UM_ID_RESOURCE_ATTRIBUTE_1 = "daea2340-4686-4929-b0c3-aad28237b065";
