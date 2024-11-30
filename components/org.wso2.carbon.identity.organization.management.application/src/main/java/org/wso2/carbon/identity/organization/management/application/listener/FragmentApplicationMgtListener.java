@@ -131,23 +131,26 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     public boolean doPreCreateApplication(ServiceProvider serviceProvider, String tenantDomain, String userName)
             throws IdentityApplicationManagementException {
 
-        try {
-            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-            int organizationDepthInHierarchy =
-                    getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
-            if (isSubOrganization(organizationDepthInHierarchy) &&
-                    !isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
-                throw new IdentityApplicationManagementClientException(
-                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
-                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
+        if (StringUtils.isEmpty(PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                .getApplicationResidentOrganizationId())) {
+            try {
+                String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+                int organizationDepthInHierarchy =
+                        getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
+                if (isSubOrganization(organizationDepthInHierarchy) &&
+                        !isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
+                    throw new IdentityApplicationManagementClientException(
+                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
+                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
+                }
+            } catch (OrganizationManagementClientException e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Organization not found for the tenant: " + tenantDomain);
+                }
+            } catch (OrganizationManagementException e) {
+                throw new IdentityApplicationManagementException(
+                        "An error occurred while getting depth of the organization", e);
             }
-        } catch (OrganizationManagementClientException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Organization not found for the tenant: " + tenantDomain);
-            }
-        } catch (OrganizationManagementException e) {
-            throw new IdentityApplicationManagementException(
-                    "An error occurred while getting depth of the organization", e);
         }
         return true;
     }
