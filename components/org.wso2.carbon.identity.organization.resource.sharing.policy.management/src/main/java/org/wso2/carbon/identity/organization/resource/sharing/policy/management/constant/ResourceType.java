@@ -17,9 +17,37 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Enum representing the type of resource being shared.
  */
 public enum ResourceType {
-    USER;
+    USER(Collections.singletonList(SharedAttributeType.ROLE));
+
+    private final List<SharedAttributeType> applicableAttributes;
+
+    ResourceType(List<SharedAttributeType> applicableAttributes) {
+        this.applicableAttributes = applicableAttributes;
+    }
+
+    /**
+     * Checks if the given SharedAttributeType is applicable for this ResourceType.
+     *
+     * @param attributeType The shared attribute type to be checked.
+     * @return True if the attribute type is applicable, false otherwise.
+     */
+    public boolean isApplicableAttributeType(SharedAttributeType attributeType) {
+        return applicableAttributes.contains(attributeType);
+    }
+
+    /**
+     * Returns the list of applicable shared attribute types for this resource type.
+     *
+     * @return List of applicable shared attribute types.
+     */
+    public List<SharedAttributeType> getApplicableAttributes() {
+        return applicableAttributes;
+    }
 }

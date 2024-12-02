@@ -21,5 +21,5 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
  * Enum representing the type of shared attribute.
  */
 public enum SharedAttributeType {
-    ROLE;
+    ROLE
 }

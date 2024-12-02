@@ -49,8 +49,8 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         validateInputs(resourceSharingPolicy);
 
-        List<String> applicableResources = resourceSharingPolicy.getSharingPolicy().getApplicableResources();
-        if (applicableResources.contains(resourceSharingPolicy.getResourceType().name())) {
+        List<ResourceType> applicableResources = resourceSharingPolicy.getSharingPolicy().getApplicableResources();
+        if (applicableResources.contains(resourceSharingPolicy.getResourceType())) {
 
             return RESOURCE_SHARING_POLICY_HANDLER_DAO.addResourceSharingPolicy(resourceSharingPolicy);
         }
@@ -126,11 +126,12 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
         for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
+
             ResourceSharingPolicy resourceSharingPolicy =
                     getResourceSharingPolicyById(sharedResourceAttribute.getResourceSharingPolicyId());
-            if (resourceSharingPolicy != null &&
-                    resourceSharingPolicy.getSharingPolicy().getApplicableResourceAttributes()
-                            .contains(sharedResourceAttribute.getSharedAttributeType().name())) {
+
+            if (isValidAttributeForTheResource(resourceSharingPolicy, sharedResourceAttribute)) {
+
                 addableSharedResourceAttributes.add(sharedResourceAttribute);
             }
         }
@@ -196,6 +197,13 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
                 attributeId, deleteRequestInitiatedOrgId);
+    }
+
+    private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
+                                                   SharedResourceAttribute sharedResourceAttribute) {
+
+        return resourceSharingPolicy != null && resourceSharingPolicy.getResourceType()
+                .isApplicableAttributeType(sharedResourceAttribute.getSharedAttributeType());
     }
 
     private void validateInputs(Object... inputs) throws ResourceSharingPolicyMgtClientException {
