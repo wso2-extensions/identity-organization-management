@@ -58,6 +58,10 @@ public class TestResourceSharingConstants {
     //Resource Attributes Types.
     public static final SharedAttributeType SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1 = SharedAttributeType.ROLE;
 
+    //Mocks
+    public static final String MOCKED_DATA_ACCESS_EXCEPTION = "Mocked DataAccessException";
+    public static final String MOCKED_TRANSACTION_EXCEPTION = "Mocked TransactionException";
+
     /**
      * Error messages for organization user sharing management related errors.
      */

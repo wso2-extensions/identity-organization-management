@@ -18,13 +18,20 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
+import org.mockito.MockedStatic;
 import org.testng.Assert;
+import org.testng.TestException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
+import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtClientException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
@@ -38,8 +45,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType.USER;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.MOCKED_DATA_ACCESS_EXCEPTION;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.MOCKED_TRANSACTION_EXCEPTION;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.RESOURCE_TYPE_RESOURCE_1;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.UM_ID_ORGANIZATION_INVALID;
@@ -110,7 +128,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     }
 
     @Test(dataProvider = "resourceSharingPolicyProvider", priority = 1)
-    public void testAddResourceSharingPolicy_success(ResourceSharingPolicy testData) throws Exception {
+    public void testAddResourceSharingPolicySuccess(ResourceSharingPolicy testData) throws Exception {
 
         ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
                 .withResourceId(testData.getResourceId())
@@ -127,7 +145,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 2)
-    public void testAddResourceSharingPolicy_failure() throws Exception {
+    public void testAddResourceSharingPolicyFailure() throws Exception {
 
         ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
                 .withResourceId(UM_ID_RESOURCE_1)
@@ -140,7 +158,56 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
     }
 
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 3)
+    public void testAddResourceSharingPolicyFailureForNotApplicableResource() throws Exception {
+
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_INVALID)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_ORG_ALL)
+                .withSharingPolicy(PolicyEnum.NO_SHARING)
+                .build();
+
+        resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
+    }
+
     // Tests: GET Resource Sharing Policy Records.
+    @Test(priority = 4)
+    public void testGetResourceSharingPolicyByIdSuccess() throws ResourceSharingPolicyMgtException {
+
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_ORG_ALL)
+                .withSharingPolicy(PolicyEnum.SELECTED_ORG_ONLY)
+                .build();
+
+        int recordId = resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
+        ResourceSharingPolicy resource = resourceSharingPolicyHandlerService.getResourceSharingPolicyById(recordId);
+
+        Assert.assertNotNull(resource);
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 5)
+    public void testGetResourceSharingPolicyByIdFailure() throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeQuery(anyString(), any(), any());
+
+            resourceSharingPolicyHandlerService.getResourceSharingPolicyById(1);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
+
     @DataProvider(name = "organizationIdsProvider")
     public Object[][] organizationIdsProvider() {
 
@@ -151,8 +218,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         };
     }
 
-    @Test(dataProvider = "organizationIdsProvider", priority = 3)
-    public void testGetResourceSharingPolicies_success(List<String> organizationIds) throws Exception {
+    @Test(dataProvider = "organizationIdsProvider", priority = 6)
+    public void testGetResourceSharingPoliciesSuccess(List<String> organizationIds) throws Exception {
 
         addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
 
@@ -164,8 +231,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
     }
 
-    @Test(dataProvider = "organizationIdsProvider", priority = 4)
-    public void testGetResourceSharingPoliciesGroupedByResourceType_success(List<String> organizationIds)
+    @Test(dataProvider = "organizationIdsProvider", priority = 7)
+    public void testGetResourceSharingPoliciesGroupedByResourceTypeSuccess(List<String> organizationIds)
             throws Exception {
 
         addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
@@ -173,10 +240,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         Map<ResourceType, List<ResourceSharingPolicy>> actualPoliciesGroupedByType =
                 resourceSharingPolicyHandlerService.getResourceSharingPoliciesGroupedByResourceType(organizationIds);
 
-        Assert.assertTrue(actualPoliciesGroupedByType.containsKey(RESOURCE_TYPE_RESOURCE_1),
-                "Missing resource type 1");
-        Assert.assertTrue(actualPoliciesGroupedByType.containsKey(RESOURCE_TYPE_RESOURCE_1),
-                "Missing resource type 2");
+        Assert.assertTrue(actualPoliciesGroupedByType.containsKey(RESOURCE_TYPE_RESOURCE_1));
+        Assert.assertTrue(actualPoliciesGroupedByType.containsKey(RESOURCE_TYPE_RESOURCE_1));
 
         for (Map.Entry<ResourceType, List<ResourceSharingPolicy>> entry : actualPoliciesGroupedByType.entrySet()) {
             ResourceType resourceType = entry.getKey();
@@ -197,8 +262,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
     }
 
-    @Test(dataProvider = "organizationIdsProvider", priority = 5)
-    public void testGetResourceSharingPoliciesGroupedByPolicyHoldingOrgId_success(List<String> organizationIds)
+    @Test(dataProvider = "organizationIdsProvider", priority = 8)
+    public void testGetResourceSharingPoliciesGroupedByPolicyHoldingOrgIdSuccess(List<String> organizationIds)
             throws Exception {
 
         addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
@@ -213,8 +278,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 6)
-    public void testGetResourceSharingPolicies_null_failure() throws Exception {
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 9)
+    public void testGetResourceSharingPoliciesFailureForNullOrgIdList() throws Exception {
 
         List<ResourceSharingPolicy> actualPolicies =
                 resourceSharingPolicyHandlerService.getResourceSharingPolicies(null);
@@ -222,16 +287,29 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         Assert.assertTrue(actualPolicies.isEmpty());
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 7)
-    public void testGetResourceSharingPolicies_failure() throws Exception {
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 10)
+    public void testGetResourceSharingPoliciesFailureForInvalidOrgId() throws Exception {
 
         resourceSharingPolicyHandlerService.getResourceSharingPolicies(
                 Collections.singletonList(UM_ID_ORGANIZATION_INVALID_FORMAT));
     }
 
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 11)
+    public void testGetResourceSharingPoliciesFailureForNullOrgs() throws Exception {
+
+        List<String> policyHoldingOrgIds = new ArrayList<>();
+        policyHoldingOrgIds.add(UM_ID_RESOURCE_1);
+        policyHoldingOrgIds.add(null);
+
+        List<ResourceSharingPolicy> actualPolicies =
+                resourceSharingPolicyHandlerService.getResourceSharingPolicies(policyHoldingOrgIds);
+
+        Assert.assertTrue(actualPolicies.isEmpty());
+    }
+
     // Tests: DELETE Resource Sharing Policy Records.
-    @Test(dataProvider = "organizationIdsProvider", priority = 8)
-    public void testDeleteResourceSharingPolicyRecordById_success(List<String> organizationIds) throws Exception {
+    @Test(dataProvider = "organizationIdsProvider", priority = 12)
+    public void testDeleteResourceSharingPolicyRecordByIdSuccess(List<String> organizationIds) throws Exception {
 
         List<Integer> addedResourceSharingPolyIds =
                 addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
@@ -239,15 +317,28 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         for (int addedResourceSharingPolyId : addedResourceSharingPolyIds) {
             boolean deleteSuccess = resourceSharingPolicyHandlerService.deleteResourceSharingPolicyRecordById(
                     addedResourceSharingPolyId, UM_ID_ORGANIZATION_SUPER);
-            Assert.assertTrue(deleteSuccess, "Failed to delete the resource sharing policy by ID.");
+            Assert.assertTrue(deleteSuccess);
         }
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 9)
-//    public void testDeleteResourceSharingPolicyRecordById_failure() throws Exception {
-//
-//        resourceSharingPolicyHandlerService.deleteResourceSharingPolicyRecordById(null, UM_ID_ORGANIZATION_SUPER);
-//    }
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 13)
+    public void testDeleteResourceSharingPolicyRecordByIdFailure()
+            throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeUpdate(anyString(), any());
+
+            resourceSharingPolicyHandlerService.deleteResourceSharingPolicyRecordById(1, UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
 
     @DataProvider(name = "organizationsAndResourceTypesAndIdsProvider")
     public Object[][] organizationsAndResourceTypesAndIdsProvider() {
@@ -264,30 +355,42 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         };
     }
 
-    @Test(dataProvider = "organizationsAndResourceTypesAndIdsProvider", priority = 10)
-    public void testDeleteResourceSharingPolicyByResourceTypeAndId_success(List<String> organizationIds,
-                                                                           ResourceType resourceType,
-                                                                           String resourceId) throws Exception {
+    @Test(dataProvider = "organizationsAndResourceTypesAndIdsProvider", priority = 14)
+    public void testDeleteResourceSharingPolicyByResourceTypeAndIdSuccess(List<String> organizationIds,
+                                                                          ResourceType resourceType, String resourceId)
+            throws Exception {
 
         addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
 
         // Delete the resource sharing policy by resource type and ID.
-        boolean deleteSuccess = resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(
-                resourceType, resourceId, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(deleteSuccess, "Failed to delete the resource sharing policy by resource type and ID.");
+        boolean deleteSuccess =
+                resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
+                        resourceId, UM_ID_ORGANIZATION_SUPER);
+        Assert.assertTrue(deleteSuccess);
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 11)
-//    public void testDeleteResourceSharingPolicyByResourceTypeAndId_failure() throws Exception {
-//
-//        // Attempt to delete a policy with a non-existent resource type and ID.
-//        resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(null,
-//                UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
-//    }
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 15)
+    public void testDeleteResourceSharingPolicyByResourceTypeAndIdFailure() throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeUpdate(anyString(), any());
+
+            resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(RESOURCE_TYPE_RESOURCE_1,
+                    UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
 
     // Tests: CREATE Shared Resource Attributes Records.
-    @Test(priority = 12)
-    public void testAddSharedResourceAttributes_success() throws Exception {
+    @Test(priority = 16)
+    public void testAddSharedResourceAttributesSuccess() throws Exception {
 
         List<SharedResourceAttribute> sharedResourceAttributes = Arrays.asList(
                 new SharedResourceAttribute.Builder()
@@ -302,71 +405,146 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                         .build());
 
         boolean isAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
-        Assert.assertTrue(isAdded, "Failed to add shared resource attributes.");
+        Assert.assertTrue(isAdded, "Added shared resource attributes.");
 
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 13)
-//    public void testAddSharedResourceAttributes_failure() throws Exception {
-//
-//        List<SharedResourceAttribute> sharedResourceAttributes = Collections.singletonList(
-//                new SharedResourceAttribute.Builder()
-//                        .withResourceSharingPolicyId(Integer.MIN_VALUE)
-//                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
-//                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
-//                        .build());
-//
-//        resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
-//    }
+    @Test(priority = 17)
+    public void testAddSharedResourceAttributesSuccessWithIgnoringInvalidAttributes() throws Exception {
+
+        List<SharedResourceAttribute> sharedResourceAttributes = Arrays.asList(
+                new SharedResourceAttribute.Builder()
+                        .withResourceSharingPolicyId(Integer.MIN_VALUE)
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                        .build(),
+                new SharedResourceAttribute.Builder()
+                        .withResourceSharingPolicyId(1)
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
+                        .build());
+
+        boolean isAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
+        Assert.assertTrue(isAdded, "Skipped the invalid attributes and added the rest.");
+
+    }
+
+    @Test(priority = 18)
+    public void testAddSharedResourceAttributesSuccessWithInapplicableAttribute() throws Exception {
+
+        ResourceSharingPolicy resourceSharingPolicyMock = mock(ResourceSharingPolicy.class);
+        ResourceType resourceTypeMock = mock(ResourceType.class);
+
+        when(resourceSharingPolicyMock.getResourceType()).thenReturn(resourceTypeMock);
+        when(resourceTypeMock.isApplicableAttributeType(any(SharedAttributeType.class))).thenReturn(false);
+
+        SharedResourceAttribute sharedResourceAttribute = new SharedResourceAttribute.Builder()
+                .withResourceSharingPolicyId(1)
+                .withSharedAttributeType(SharedAttributeType.ROLE)
+                .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                .build();
+
+        ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerServiceMock =
+                spy(new ResourceSharingPolicyHandlerServiceImpl());
+
+        doReturn(resourceSharingPolicyMock).when(resourceSharingPolicyHandlerServiceMock)
+                .getResourceSharingPolicyById(sharedResourceAttribute.getResourceSharingPolicyId());
+
+        List<SharedResourceAttribute> sharedResourceAttributes = Collections.singletonList(sharedResourceAttribute);
+
+        boolean isAdded = resourceSharingPolicyHandlerServiceMock.addSharedResourceAttributes(sharedResourceAttributes);
+
+        Assert.assertTrue(isAdded, "Skipped the inapplicable attributes and added the rest.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 19)
+    public void testAddSharedResourceAttributesFailure() throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new TransactionException(MOCKED_TRANSACTION_EXCEPTION)).when(mockJdbcTemplate)
+                    .withTransaction(any());
+
+            resourceSharingPolicyHandlerService.addSharedResourceAttributes(
+                    Collections.singletonList(new SharedResourceAttribute()));
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (TransactionException e) {
+            throw new TestException(e);
+        }
+    }
 
     // Tests: GET Shared Resource Attributes Records.
-    @Test(priority = 14)
-    public void testGetSharedResourceAttributesBySharingPolicyId_success() throws Exception {
+    @Test(priority = 20)
+    public void testGetSharedResourceAttributesBySharingPolicyIdSuccess() throws Exception {
 
         addAndAssertSharedResourceAttributes();
         List<SharedResourceAttribute> sharedResourceAttributes =
                 resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes.");
+        Assert.assertNotNull(sharedResourceAttributes,
+                "Expected non-null list of shared resource attributes.");
         Assert.assertFalse(sharedResourceAttributes.isEmpty(),
                 "Expected non-empty list of shared resource attributes.");
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 15)
-//    public void testGetSharedResourceAttributesBySharingPolicyId_failure() throws Exception {
-//
-//        resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(null);
-//    }
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 21)
+    public void testGetSharedResourceAttributesBySharingPolicyIdFailure() throws ResourceSharingPolicyMgtException {
 
-    @Test(priority = 16)
-    public void testGetSharedResourceAttributesByType_success() throws Exception {
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeQuery(anyString(), any(), any());
+
+            resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(1);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
+
+    @Test(priority = 22)
+    public void testGetSharedResourceAttributesByTypeSuccess() throws Exception {
 
         List<SharedResourceAttribute> sharedResourceAttributes =
                 resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(
                         SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by type.");
+        Assert.assertNotNull(sharedResourceAttributes,
+                "Expected non-null list of shared resource attributes by type.");
         Assert.assertFalse(sharedResourceAttributes.isEmpty(),
                 "Expected non-empty list of shared resource attributes by type.");
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 17)
-    public void testGetSharedResourceAttributesByType_failure() throws Exception {
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 23)
+    public void testGetSharedResourceAttributesByTypeFailureForNull() throws Exception {
 
         resourceSharingPolicyHandlerService.getSharedResourceAttributesByType(null);
     }
 
-    @Test(priority = 18)
-    public void testGetSharedResourceAttributesById_success() throws Exception {
+    @Test(priority = 24)
+    public void testGetSharedResourceAttributesByIdSuccess() throws Exception {
 
         addAndAssertSharedResourceAttributes();
         List<SharedResourceAttribute> sharedResourceAttributes =
                 resourceSharingPolicyHandlerService.getSharedResourceAttributesById(UM_ID_RESOURCE_ATTRIBUTE_1);
-        Assert.assertNotNull(sharedResourceAttributes, "Expected non-null list of shared resource attributes by ID.");
+        Assert.assertNotNull(sharedResourceAttributes,
+                "Expected non-null list of shared resource attributes by ID.");
         Assert.assertFalse(sharedResourceAttributes.isEmpty(),
                 "Expected non-empty list of shared resource attributes by ID.");
     }
 
-    @Test(priority = 19)
-    public void testGetSharedResourceAttributesByTypeAndId_success() throws Exception {
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 25)
+    public void testGetSharedResourceAttributesByIdFailureForNull() throws Exception {
+
+        resourceSharingPolicyHandlerService.getSharedResourceAttributesById(null);
+    }
+
+    @Test(priority = 26)
+    public void testGetSharedResourceAttributesByTypeAndIdSuccess() throws Exception {
 
         addAndAssertSharedResourceAttributes();
         List<SharedResourceAttribute> sharedResourceAttributes =
@@ -378,31 +556,64 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 "Expected non-empty list of shared resource attributes by type and ID.");
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 20)
-    public void testGetSharedResourceAttributesByTypeAndId_failure() throws Exception {
+    @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 27)
+    public void testGetSharedResourceAttributesByTypeAndIdFailureForNull() throws Exception {
 
         resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(null, null);
     }
 
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 28)
+    public void testGetSharedResourceAttributesByTypeAndIdFailure()
+            throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeQuery(anyString(), any(), any());
+
+            resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(
+                    SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
+
     // Tests: DELETE Shared Resource Attributes Records.
-    @Test(priority = 21)
-    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_success() throws Exception {
+    @Test(priority = 29)
+    public void testDeleteSharedResourceAttributesByResourceSharingPolicyIdSuccess() throws Exception {
 
         boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId
                 (1, SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(result, "Expected successful deletion of shared resource attributes by policy ID and " +
-                "attribute type.");
+        Assert.assertTrue(result,
+                "Expected successful deletion of shared resource attributes by policy ID and attribute type.");
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 22)
-//    public void testDeleteSharedResourceAttributesByResourceSharingPolicyId_failure() throws Exception {
-//
-//        resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId(1,
-//                SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-//    }
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 30)
+    public void testDeleteSharedResourceAttributesByResourceSharingPolicyIdFailure()
+            throws ResourceSharingPolicyMgtException {
 
-    @Test(priority = 23)
-    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_success() throws Exception {
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeUpdate(anyString(), any());
+
+            resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId(1,
+                    SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
+
+    @Test(priority = 31)
+    public void testDeleteSharedResourceAttributeByAttributeTypeAndIdSuccess() throws Exception {
 
         boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
                 SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
@@ -410,12 +621,25 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 "Expected successful deletion of shared resource attribute by attribute type and ID.");
     }
 
-//    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 24)
-//    public void testDeleteSharedResourceAttributeByAttributeTypeAndId_failure() throws Exception {
-//
-//        resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId
-//                (null, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
-//    }
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 31)
+    public void testDeleteSharedResourceAttributeByAttributeTypeAndIdFailure()
+            throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeUpdate(anyString(), any());
+
+            resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
+                    SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
 
     // Helpers: Private helper methods for tests.
     private List<Integer> addAndAssertResourceSharingPolicy(List<String> policyHoldingOrgIds)
@@ -444,8 +668,8 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
             int resourceSharingPolicyRecord =
                     resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
             Assert.assertTrue(resourceSharingPolicyRecord > 0,
-                    "Expected a positive non-zero integer as the result for a clean record insertion to " +
-                            "the database.");
+                    "Expected a positive non-zero integer as the result for a clean record insertion " +
+                            "to the database.");
             policyIds.add(resourceSharingPolicyRecord);
         }
         return policyIds;
@@ -469,7 +693,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
 
         boolean isAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedResourceAttributes);
-        Assert.assertTrue(isAdded, "Failed to add shared resource attributes.");
+        Assert.assertTrue(isAdded, "Added shared resource attributes.");
 
     }
 
