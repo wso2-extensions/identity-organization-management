@@ -29,79 +29,100 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DAO interface for handling user sharing policies.
+ * DAO interface for handling resource sharing policies across organizations.
+ * <p>
+ * This interface provides methods for adding, retrieving, and deleting resource sharing policies.
+ * It also allows managing shared resource attributes, offering capabilities to add, retrieve, and delete
+ * these attributes.
+ * </p>
  */
 public interface ResourceSharingPolicyHandlerDAO {
 
     /**
-     * Add a resource sharing policy in the database and return the record id.
+     * Adds a new resource sharing policy to the database and returns its unique identifier.
      *
-     * @param resourceSharingPolicy The {@link ResourceSharingPolicy} object containing details about the resource,
-     *                              resource type, initiated organization, policy holding organization, and the
-     *                              sharing policy.
-     * @return The ID of the newly created resource sharing policy record.
-     * @throws ResourceSharingPolicyMgtServerException If a server error specific to resource sharing policy
-     *                                                 management occurs.
+     * @param resourceSharingPolicy The {@link ResourceSharingPolicy} containing details such as resource type,
+     *                              initiating organization, policy holding organization, and sharing policy.
+     *                              Must not be {@code null}.
+     * @return The unique identifier of the newly created resource sharing policy.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the resource sharing policy.
      */
     int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Fetches ResourceSharingPolicy record for the given resource sharing policy ID.
+     * Retrieves a resource sharing policy by its unique identifier.
      *
-     * @param resourceSharingPolicyId ID of the resource sharing policy record.
-     * @return ResourceSharingPolicy.
+     * @param resourceSharingPolicyId The unique identifier of the resource sharing policy to be retrieved.
+     *                                Must be a valid ID greater than zero.
+     * @return The {@link ResourceSharingPolicy} corresponding to the given ID.
+     * @throws ResourceSharingPolicyMgtServerException If the resource sharing policy could not be found or retrieved.
      */
     ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Fetches ResourceSharingPolicy records for the given policy holding organization IDs.
+     * Retrieves a list of resource sharing policies associated with the given policy holding organization IDs.
      *
-     * @param policyHoldingOrganizationIds List of organization IDs.
-     * @return List of ResourceSharingPolicy.
+     * @param policyHoldingOrganizationIds A list of organization IDs whose policies need to be retrieved.
+     *                                     Must not be {@code null} or empty.
+     * @return A list of {@link ResourceSharingPolicy} objects for the specified organization IDs.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
+     * policies.
      */
     List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Fetches ResourceSharingPolicy records for the given policy holding organization IDs, grouped by ResourceType.
+     * Retrieves a map of resource sharing policies grouped by resource type for the given policy holding
+     * organization IDs.
      *
-     * @param policyHoldingOrganizationIds List of organization IDs.
-     * @return Map of ResourceType to List of ResourceSharingPolicy.
+     * @param policyHoldingOrganizationIds A list of organization IDs whose policies need to be retrieved.
+     *                                     Must not be {@code null} or empty.
+     * @return A map where each key is a {@link ResourceType} and the corresponding value is a list of
+     * {@link ResourceSharingPolicy}.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
+     * policies.
      */
     Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
             List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Fetches ResourceSharingPolicy records for the given policy holding organization IDs, grouped by
-     * PolicyHoldingOrgId.
+     * Retrieves a map of resource sharing policies grouped by policy holding organization ID for the given policy
+     * holding organization IDs.
      *
-     * @param policyHoldingOrganizationIds List of organization IDs.
-     * @return Map of PolicyHoldingOrgId to List of ResourceSharingPolicy.
+     * @param policyHoldingOrganizationIds A list of organization IDs whose policies need to be retrieved.
+     *                                     Must not be {@code null} or empty.
+     * @return A map where each key is an organization ID, and the value is a list of {@link ResourceSharingPolicy}.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
+     * policies.
      */
     Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
             List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Deletes a resource sharing policy record by ID if the specified organization is permitted to perform the
-     * deletion.
+     * Deletes a resource sharing policy by its unique identifier if the specified organization has permission.
      *
-     * @param resourceSharingPolicyId     The ID of the resource sharing policy to delete.
-     * @param deleteRequestInitiatedOrgId The ID of the organization which initiate the delete request.
-     * @return True if the record was deleted successfully by the permitted organization, false otherwise.
+     * @param resourceSharingPolicyId     The unique identifier of the resource sharing policy to be deleted.
+     * @param deleteRequestInitiatedOrgId The ID of the organization initiating the delete request.
+     *                                    The deletion will only be successful if the initiating organization
+     *                                    has permission to delete sharing policies.
+     *                                    Must not be {@code null}.
+     * @return {@code true} if the resource sharing policy was deleted successfully, {@code false} otherwise.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policy.
      */
     boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId, String deleteRequestInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Deletes a resource sharing policy by resource type and ID.
+     * Deletes a resource sharing policy based on its resource type and resource ID if permitted.
      *
-     * @param resourceType                The type of the resource ({@link ResourceType}).
-     * @param resourceId                  The ID of the resource whose sharing policy is to be deleted.
-     * @param deleteRequestInitiatedOrgId The ID of the organization which initiate the delete request.
-     * @return True if the resource sharing policy was deleted successfully, false otherwise.
+     * @param resourceType                The {@link ResourceType} of the resource.
+     * @param resourceId                  The unique identifier of the resource whose sharing policy is to be deleted.
+     * @param deleteRequestInitiatedOrgId The ID of the organization initiating the delete request.
+     *                                    The deletion will only be successful if the initiating organization
+     *                                    has permission to delete sharing policies.
+     * @return {@code true} if the resource sharing policy was deleted successfully, {@code false} otherwise.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policy.
      */
     boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
@@ -111,66 +132,70 @@ public interface ResourceSharingPolicyHandlerDAO {
     /**
      * Adds shared resource attributes to an existing resource sharing policy.
      *
-     * @param sharedResourceAttributes List of shared resource attributes
+     * @param sharedResourceAttributes A list of {@link SharedResourceAttribute} objects to be added.
+     *                                 Must not be {@code null} or empty.
+     * @return {@code true} if the shared resource attributes were added successfully.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while adding the shared resource attributes.
      */
     boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Retrieves shared resource attributes for a given resource sharing policy ID.
+     * Retrieves shared resource attributes for a given resource sharing policy.
      *
-     * @param resourceSharingPolicyId The ID of the resource sharing policy.
-     * @return A list of {@link SharedResourceAttribute} associated with the given policy ID.
+     * @param resourceSharingPolicyId The unique identifier of the resource sharing policy.
+     * @return A list of {@link SharedResourceAttribute} associated with the given policy.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
-     *                                                 attributes.
+     * attributes.
      */
     List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException, DataAccessException;
 
     /**
-     * Retrieves shared resource attributes for a specific resource ID and type.
+     * Retrieves shared resource attributes based on attribute type.
      *
-     * @param attributeType The type of the attribute ({@link SharedAttributeType}).
-     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @param attributeType The {@link SharedAttributeType} of the resource attribute to be retrieved.
+     * @return A list of {@link SharedResourceAttribute} objects for the specified type.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
-     *                                                 attributes.
+     * attributes.
      */
     List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Retrieves shared resource attributes for a specific resource ID and type.
+     * Retrieves shared resource attributes based on attribute ID.
      *
-     * @param attributeId The ID of the attribute for which shared attributes are to be retrieved.
-     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @param attributeId The unique identifier of the resource attribute to be retrieved.
+     * @return A list of {@link SharedResourceAttribute} objects for the specified attribute ID.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
-     *                                                 attributes.
+     * attributes.
      */
     List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Retrieves shared resource attributes for a specific resource ID and type.
+     * Retrieves shared resource attributes based on attribute type and ID.
      *
-     * @param attributeType The type of the attribute ({@link SharedAttributeType}).
-     * @param attributeId   The ID of the attribute for which shared attributes are to be retrieved.
-     * @return A list of {@link SharedResourceAttribute} objects associated with the specified resource ID and type.
+     * @param attributeType The {@link SharedAttributeType} of the resource attribute to be retrieved.
+     * @param attributeId   The unique identifier of the attribute to be retrieved.
+     * @return A list of {@link SharedResourceAttribute} objects for the specified type and ID.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the shared resource
-     *                                                 attributes.
+     * attributes.
      */
     List<SharedResourceAttribute> getSharedResourceAttributesByTypeAndId(SharedAttributeType attributeType,
                                                                          String attributeId)
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Deletes shared resource attributes for a given resource sharing policy ID.
+     * Deletes shared resource attributes for a given resource sharing policy and attribute type if the specified
+     * organization has permission.
      *
-     * @param resourceSharingPolicyId     The ID of the resource sharing policy to delete shared attributes for.
-     * @param sharedAttributeType         The type of the shared attribute ({@link SharedAttributeType}).
-     * @param deleteRequestInitiatedOrgId The ID of the organization which initiate the delete
-     *                                    request.
-     * @return True if the shared resource attributes were deleted successfully, false otherwise.
+     * @param resourceSharingPolicyId     The unique identifier of the resource sharing policy.
+     * @param sharedAttributeType         The {@link SharedAttributeType} to be deleted.
+     * @param deleteRequestInitiatedOrgId The ID of the organization initiating the delete request.
+     *                                    The deletion will only be successful if the initiating organization
+     *                                    has permission to delete shared attributes.
+     * @return {@code true} if the shared resource attributes were deleted successfully, {@code false} otherwise.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the shared resource attributes.
      */
     boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
@@ -179,12 +204,15 @@ public interface ResourceSharingPolicyHandlerDAO {
             throws ResourceSharingPolicyMgtServerException;
 
     /**
-     * Deletes a shared resource attribute by attribute type and ID.
+     * Deletes a shared resource attribute based on its attribute type and unique identifier if the specified
+     * organization has permission.
      *
-     * @param attributeType               The type of the shared attribute ({@link SharedAttributeType}).
-     * @param attributeId                 The ID of the shared attribute to be deleted.
-     * @param deleteRequestInitiatedOrgId The ID of the organization which initiate the delete request.
-     * @return True if the shared resource attribute was deleted successfully, false otherwise.
+     * @param attributeType               The {@link SharedAttributeType} of the attribute to be deleted.
+     * @param attributeId                 The unique identifier of the attribute to be deleted.
+     * @param deleteRequestInitiatedOrgId The ID of the organization initiating the delete request.
+     *                                    The deletion will only be successful if the initiating organization
+     *                                    has permission to delete shared attributes.
+     * @return {@code true} if the shared resource attribute was deleted successfully, {@code false} otherwise.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the shared resource attribute.
      */
     boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId,
