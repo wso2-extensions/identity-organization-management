@@ -529,7 +529,7 @@ public class OrgResourceResolverServiceTest {
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeAppLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID, ROOT_APP_ID));
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
-                () -> invokeAppLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID, ROOT_APP_ID));
+                () -> invokeAppLevelResourceResolver(aggregationStrategy, L1_ORG_ID, L1_APP_ID));
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeAppLevelResourceResolver(aggregationStrategy, L2_ORG_ID, L2_APP_ID));
 
@@ -539,7 +539,7 @@ public class OrgResourceResolverServiceTest {
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeAppLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID, ROOT_APP_ID));
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
-                () -> invokeAppLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID, ROOT_APP_ID));
+                () -> invokeAppLevelResourceResolver(aggregationStrategy, L1_ORG_ID, L1_APP_ID));
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeAppLevelResourceResolver(aggregationStrategy, L2_ORG_ID, L2_APP_ID));
     }
