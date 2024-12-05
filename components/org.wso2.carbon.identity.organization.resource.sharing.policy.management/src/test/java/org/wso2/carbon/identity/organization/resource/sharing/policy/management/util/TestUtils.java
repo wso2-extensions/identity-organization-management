@@ -36,9 +36,6 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import static org.mockito.Mockito.mock;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.RUNSCRIPT_FROM;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.SINGLE_QUOTE;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.WHITESPACE;
 
 /**
  * Util methods needed for testing of Resource Sharing policy Management component.
@@ -68,8 +65,7 @@ public class TestUtils {
         dataSource.setTestOnBorrow(true);
         dataSource.setValidationQuery("select 1");
         try (Connection connection = dataSource.getConnection()) {
-            connection.createStatement().executeUpdate(
-                    RUNSCRIPT_FROM + WHITESPACE + SINGLE_QUOTE + getFilePath(H2_SCRIPT_NAME) + SINGLE_QUOTE);
+            connection.createStatement().executeUpdate(getExecuteUpdateQuery());
         }
         dataSourceMap.put(DB_NAME, dataSource);
     }
@@ -108,4 +104,8 @@ public class TestUtils {
         field.set(null, newValue);
     }
 
+    private static String getExecuteUpdateQuery() {
+
+        return "RUNSCRIPT FROM '" + getFilePath(H2_SCRIPT_NAME) + "'";
+    }
 }

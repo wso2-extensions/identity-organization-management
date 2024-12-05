@@ -26,11 +26,6 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
  */
 public class TestResourceSharingConstants {
 
-    //DB Constants.
-    public static final String RUNSCRIPT_FROM = "RUNSCRIPT FROM";
-    public static final String WHITESPACE = " ";
-    public static final String SINGLE_QUOTE = "'";
-
     //Organizations.
     public static final String UM_ID_ORGANIZATION_SUPER = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String UM_ID_ORGANIZATION_ORG_ALL = "c524c30a-cbd4-4169-ac9d-1ee3edf1bf16";
@@ -61,48 +56,5 @@ public class TestResourceSharingConstants {
     //Mocks
     public static final String MOCKED_DATA_ACCESS_EXCEPTION = "Mocked DataAccessException";
     public static final String MOCKED_TRANSACTION_EXCEPTION = "Mocked TransactionException";
-
-    /**
-     * Error messages for organization user sharing management related errors.
-     */
-    public enum ErrorMessage {
-
-        ERROR_CODE_ERROR_TEST("Error Code",
-                "Error Message",
-                "Error Description");
-
-        private final String code;
-        private final String message;
-        private final String description;
-
-        ErrorMessage(String code, String message, String description) {
-
-            this.code = code;
-            this.message = message;
-            this.description = description;
-        }
-
-        public String getCode() {
-
-            return "SHARING_ERROR_PREFIX" + code;
-        }
-
-        public String getMessage() {
-
-            return message;
-        }
-
-        public String getDescription() {
-
-            return description;
-        }
-
-        @Override
-        public String toString() {
-
-            return String.format("ErrorMessage{code='%s', message='%s', description='%s'}",
-                    getCode(), getMessage(), getDescription());
-        }
-    }
 
 }

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUTS;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_NULL_OR_EMPTY_INPUTS;
 
 /**
  * Implementation of the core service for managing resource sharing policies.
@@ -210,15 +210,15 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         for (Object input : inputs) {
             if (input == null) {
-                throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_INPUTS.getCode(),
-                        ERROR_CODE_NULL_INPUTS.getMessage());
+                throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_OR_EMPTY_INPUTS.getCode(),
+                        ERROR_CODE_NULL_OR_EMPTY_INPUTS.getMessage());
             }
 
             if (input instanceof List<?>) {
                 for (Object o : (List<?>) input) {
                     if (o == null) {
-                        throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_INPUTS.getCode(),
-                                ERROR_CODE_NULL_INPUTS.getMessage());
+                        throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_OR_EMPTY_INPUTS.getCode(),
+                                ERROR_CODE_NULL_OR_EMPTY_INPUTS.getMessage());
                     }
                 }
             }

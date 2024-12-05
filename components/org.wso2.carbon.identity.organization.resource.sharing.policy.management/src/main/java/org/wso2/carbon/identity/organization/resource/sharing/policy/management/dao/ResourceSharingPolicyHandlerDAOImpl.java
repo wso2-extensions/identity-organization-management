@@ -37,8 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.CLOSE_PARENTHESES;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.COMMA;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED;
@@ -48,9 +46,6 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_BY_RESOURCE_ID_AND_TYPE_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_RETRIEVING_SHARED_RESOURCE_ATTRIBUTES_FAILED;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.OPEN_PARENTHESES;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.SEMICOLON;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.SINGLE_QUOTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_RESOURCE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.CREATE_SHARED_RESOURCE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_RESOURCE_SHARING_POLICY;
@@ -134,10 +129,9 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         List<ResourceSharingPolicy> resourceSharingPolicies = new ArrayList<>();
 
-        String orgIdsString = policyHoldingOrganizationIds.stream().map(id -> SINGLE_QUOTE + id + SINGLE_QUOTE)
-                .collect(Collectors.joining(COMMA));
-        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD +
-                OPEN_PARENTHESES + orgIdsString + CLOSE_PARENTHESES + SEMICOLON;
+        String orgIdsString = policyHoldingOrganizationIds.stream().map(id -> "'" + id + "'")
+                .collect(Collectors.joining(","));
+        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + orgIdsString + ");";
 
         try {
             namedJdbcTemplate.executeQuery(query, (resultSet, rowNumber) -> {

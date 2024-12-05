@@ -23,16 +23,7 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
  */
 public class ResourceSharingConstants {
 
-    public static final String USER = "USER";
-    public static final String ROLE = "ROLE";
-
     public static final String SHARING_ERROR_PREFIX = "RSPM-";
-
-    public static final String OPEN_PARENTHESES = "(";
-    public static final String CLOSE_PARENTHESES = ")";
-    public static final String SEMICOLON = ";";
-    public static final String SINGLE_QUOTE = "'";
-    public static final String COMMA = ",";
 
     /**
      * Error messages for organization user sharing management related errors.
@@ -44,12 +35,11 @@ public class ResourceSharingConstants {
                 "All fields are mandatory and must be provided.",
                 "One or more mandatory field is empty."),
         ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY("60002",
-                "Inapplicable resource type to resource sharing policy is not allowed.",
-                "The given sharing resource cannot be shared under the given policy since the resource " +
-                        "sharing policy doesn't support for the given resource type."),
-        ERROR_CODE_NULL_INPUTS("60003",
-                "Input values cannot be null.",
-                "One or more input values are null, which is not allowed."),
+                "The specified resource type is not supported by the selected sharing policy.",
+                "The resource sharing policy does not allow sharing for the provided resource type."),
+        ERROR_CODE_NULL_OR_EMPTY_INPUTS("60003",
+                "Input values cannot be null or empty.",
+                "One or more input values are null or empty, which is not allowed."),
 
         // Server Errors
         ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED("65001",
