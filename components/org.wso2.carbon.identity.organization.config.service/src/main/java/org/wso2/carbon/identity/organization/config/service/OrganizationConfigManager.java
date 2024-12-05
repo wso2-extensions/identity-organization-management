@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.config.service;
 
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 
 /**
  * Interface for organization configuration management.
@@ -34,6 +35,19 @@ public interface OrganizationConfigManager {
      *                                     configuration.
      */
     void addDiscoveryConfiguration(DiscoveryConfig discoveryConfig) throws OrganizationConfigException;
+
+    /**
+     * Update the discovery configuration of the primary organization.
+     *
+     * @param discoveryConfig The discovery configuration.
+     * @throws OrganizationConfigException The exception thrown when an error occurs while updating the discovery
+     *                                     configuration.
+     */
+    default void updateDiscoveryConfiguration(DiscoveryConfig discoveryConfig) throws OrganizationConfigException {
+
+        throw new NotImplementedException("updateDiscoveryConfiguration method is not implemented in " +
+                this.getClass().getName());
+    }
 
     /**
      * Fetch the discovery configuration of the primary organization.

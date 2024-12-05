@@ -54,6 +54,7 @@
         <module>components/org.wso2.carbon.identity.organization.config.service</module>
         <module>components/org.wso2.carbon.identity.organization.discovery.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
+        <module>components/org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
     </modules>
 
@@ -193,6 +194,12 @@
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -274,6 +281,11 @@
                 <groupId>commons-collections.wso2</groupId>
                 <artifactId>commons-collections</artifactId>
                 <version>${apache.common.collection.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
 
             <!--Test Dependencies-->

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -608,11 +608,13 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throws IdentityApplicationManagementException {
 
         try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
+            // If the main application id is null, then this is the main application. We can skip this operation based
+            // on that.
+            if (StringUtils.isEmpty(mainAppId)) {
                 return true;
             }
             // Resolve the associated roles of shared application from main application details.
-            String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
             int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
             String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
             List<RoleV2> resolvedAssociatedRolesFromMainApp =
@@ -641,7 +643,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                     .collect(Collectors.toList());
             associatedRolesOfApplication.clear();
             associatedRolesOfApplication.addAll(associatedRolesOfSharedApplication);
-        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+        } catch (IdentityRoleManagementException e) {
             throw new IdentityApplicationManagementException(String.format(
                     "Error while fetching the allowed audience for role association of application with: %s.",
                     applicationUUID), e);

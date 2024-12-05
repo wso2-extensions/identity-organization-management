@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -26,6 +26,9 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -42,9 +45,11 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
+import org.wso2.carbon.utils.AuditLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -71,6 +76,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 break;
             case IdentityEventConstants.Event.POST_ADD_ROLE_V2_EVENT:
                 createSharedRolesOnNewRoleCreation(eventProperties);
+                break;
+            case OrgApplicationMgtConstants.EVENT_PRE_SHARE_APPLICATION:
+                checkSharingRoleConflicts(eventProperties);
                 break;
             default:
                 if (LOG.isDebugEnabled()) {
@@ -271,13 +279,31 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     for (BasicOrganization organization : applicationSharedOrganizations) {
                         String shareAppTenantDomain =
                                 getOrganizationManager().resolveTenantDomain(organization.getId());
-                        RoleBasicInfo sharedRoleInfo = getRoleManagementServiceV2().addRole(mainRoleName,
-                                Collections.emptyList(),
-                                Collections.emptyList(),
-                                Collections.emptyList(), RoleConstants.ORGANIZATION, organization.getId(),
-                                shareAppTenantDomain);
-                        getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
-                                sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                        if (!getRoleManagementServiceV2().isExistingRoleName(mainRoleName, RoleConstants.ORGANIZATION,
+                                organization.getId(), shareAppTenantDomain)) {
+                            RoleBasicInfo sharedRoleInfo = getRoleManagementServiceV2().addRole(mainRoleName,
+                                    Collections.emptyList(),
+                                    Collections.emptyList(),
+                                    Collections.emptyList(), RoleConstants.ORGANIZATION, organization.getId(),
+                                    shareAppTenantDomain);
+                            getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
+                                    sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
+                        } else {
+                            if (LoggerUtils.isEnableV2AuditLogs()) {
+                                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                                String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                                        getTenantDomain();
+                                AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                        IdentityUtil.getInitiatorId(username, tenantDomain),
+                                        LoggerUtils.Target.User.name(), mainRoleName, LoggerUtils.Target.Role.name(),
+                                        LogConstants.UserManagement.ADD_ROLE_ACTION)
+                                        .data(buildAuditData(roleOrgId, null, organization.getId(), mainRoleName,
+                                        mainRoleUUID, "Role conflict"));
+                                LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+                            }
+                            LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
+                                    organization.getId(), mainRoleName));
+                        }
                     }
                     break;
                 default:
@@ -286,6 +312,60 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         } catch (OrganizationManagementException | IdentityApplicationManagementException |
                  IdentityRoleManagementException e) {
             throw new IdentityEventException("Error occurred while retrieving shared applications.", e);
+        }
+    }
+
+    private void checkSharingRoleConflicts(Map<String, Object> eventProperties) throws IdentityEventException {
+
+        String parentOrganizationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID);
+        String parentApplicationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID);
+        String sharedOrganizationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID);
+        String sharedApplicationId =
+                (String) eventProperties.get(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID);
+        try {
+            String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
+            String mainAppTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
+            String allowedAudienceForRoleAssociationInMainApp = getApplicationMgtService().
+                    getAllowedAudienceForRoleAssociation(parentApplicationId, mainAppTenantDomain);
+            if (RoleConstants.ORGANIZATION.equals(allowedAudienceForRoleAssociationInMainApp.toLowerCase())) {
+                List<RoleV2> associatedRolesOfApplication = getApplicationMgtService().
+                        getAssociatedRolesOfApplication(parentApplicationId, mainAppTenantDomain);
+                for (RoleV2 roleV2 : associatedRolesOfApplication) {
+                    boolean roleExistsInSharedOrg = getRoleManagementServiceV2().isExistingRoleName(roleV2.getName(),
+                            RoleConstants.ORGANIZATION, sharedOrganizationId, sharedAppTenantDomain);
+                    Map<String, String> mainRoleToSharedRoleMappingInSharedOrg =
+                            getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(
+                                    Collections.singletonList(roleV2.getId()), sharedAppTenantDomain);
+                    boolean roleRelationshipExistsInSharedOrg =
+                            MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
+                    if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+                        // If the role exists in the shared org, but the relationship does not exist then this role is
+                        // created directly in the sub organization level. So this is a conflict to share the role
+                        // with same name and organization audience to the sub organization.
+                        if (LoggerUtils.isEnableV2AuditLogs()) {
+                            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                            String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                                    getTenantDomain();
+                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                    IdentityUtil.getInitiatorId(username, tenantDomain),
+                                    LoggerUtils.Target.User.name(), roleV2.getName(), LoggerUtils.Target.Role.name(),
+                                    LogConstants.ApplicationManagement.CREATE_APPLICATION_ACTION).
+                                    data(buildAuditData(parentOrganizationId, parentApplicationId,
+                                            sharedOrganizationId, roleV2.getName(), roleV2.getId(), "Role conflict"));
+                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+                        }
+                        throw new IdentityEventException(String.format("Organization %s has a non shared role with " +
+                                "name %s, ", sharedOrganizationId, roleV2.getName()));
+                    }
+                }
+            }
+        } catch (OrganizationManagementException | IdentityRoleManagementException |
+                 IdentityApplicationManagementException e) {
+            throw new IdentityEventException(String.format("Error while sharing roles related to application %s.",
+                    sharedApplicationId), e);
         }
     }
 
@@ -307,5 +387,19 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private static ApplicationManagementService getApplicationMgtService() {
 
         return OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private Map<String, String> buildAuditData(String parentOrganizationId, String parentApplicationId,
+                                          String sharedOrganizationId, String roleName, String roleId,
+                                          String failureReason) {
+
+        Map<String, String> auditData = new HashMap<>();
+        auditData.put(RoleConstants.PARENT_ORG_ID, parentOrganizationId);
+        auditData.put("parentApplicationId", parentApplicationId);
+        auditData.put(RoleConstants.SHARED_ORG_ID, sharedOrganizationId);
+        auditData.put("roleId", roleId);
+        auditData.put("roleName", roleName);
+        auditData.put(RoleConstants.FAILURE_REASON, failureReason);
+        return auditData;
     }
 }

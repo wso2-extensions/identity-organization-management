@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.config.service.constant;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,8 +27,10 @@ public class OrganizationConfigConstants {
 
     public static final String RESOURCE_TYPE_NAME = "ORGANIZATION_CONFIGURATION";
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
+    public static final String EMAIL_DOMAIN_ENABLE = "emailDomain.enable";
+    public static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
     public static final List<String> SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS =
-            Collections.singletonList("emailDomain.enable");
+            List.of(EMAIL_DOMAIN_ENABLE, EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE);
     private static final String ORGANIZATION_CONFIGURATION_ERROR_CODE_PREFIX = "OCM-";
 
     /**
@@ -47,6 +48,8 @@ public class OrganizationConfigConstants {
                 "The organization discovery configuration is already for available for the organization with id: %s."),
         ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE("60004", "Invalid organization discovery attribute.",
                 "The organization discovery attribute with key: %s is not supported."),
+        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES("60005", "Invalid organization discovery attribute " +
+                "values.", "Provided organization discovery attribute value combination is not supported."),
 
         // Server errors.
         ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG("65001", "Unable to add the organization discovery " +
