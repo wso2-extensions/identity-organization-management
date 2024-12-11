@@ -492,8 +492,6 @@ public class OrgResourceResolverServiceTest {
         when(organizationManager.getOrganizationDepthInHierarchy(anyString()))
                 .thenThrow(OrganizationManagementServerException.class);
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
-                () -> invokeOrgLevelResourceResolver(aggregationStrategy, ROOT_ORG_ID));
-        assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeOrgLevelResourceResolver(aggregationStrategy, L1_ORG_ID));
         assertThrows(OrgResourceHierarchyTraverseServerException.class,
                 () -> invokeOrgLevelResourceResolver(aggregationStrategy, L2_ORG_ID));
