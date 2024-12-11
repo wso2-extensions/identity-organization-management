@@ -63,7 +63,8 @@ public class MergeAllAggregationStrategy<T> implements AggregationStrategy<T> {
         }
 
         for (String orgId : organizationHierarchy) {
-            if (OrgResourceHierarchyTraverseUtil.isMinOrgHierarchyDepthReached(orgId)) {
+            if (organizationHierarchy.size() != 1 &&
+                    OrgResourceHierarchyTraverseUtil.isMinOrgHierarchyDepthReached(orgId)) {
                 break;
             }
 
@@ -90,7 +91,8 @@ public class MergeAllAggregationStrategy<T> implements AggregationStrategy<T> {
         }
 
         for (String orgId : organizationHierarchy) {
-            if (OrgResourceHierarchyTraverseUtil.isMinOrgHierarchyDepthReached(orgId)) {
+            if (organizationHierarchy.size() != 1 &&
+                    OrgResourceHierarchyTraverseUtil.isMinOrgHierarchyDepthReached(orgId)) {
                 break;
             }
 
