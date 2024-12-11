@@ -621,7 +621,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 "Expected successful deletion of shared resource attribute by attribute type and ID.");
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 31)
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 32)
     public void testDeleteSharedResourceAttributeByAttributeTypeAndIdFailure()
             throws ResourceSharingPolicyMgtException {
 

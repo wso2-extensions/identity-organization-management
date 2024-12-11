@@ -37,6 +37,11 @@ public class ResourceSharingPolicyHandlerServiceComponent {
 
     private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerServiceComponent.class);
 
+    /**
+     * Register the Resource Sharing Policy Mgt service in the OSGI context.
+     *
+     * @param componentContext OSGi service component context.
+     */
     @Activate
     protected void activate(ComponentContext componentContext) {
 
@@ -45,8 +50,8 @@ public class ResourceSharingPolicyHandlerServiceComponent {
                 new ResourceSharingPolicyHandlerServiceImpl();
         bundleContext.registerService(ResourceSharingPolicyHandlerService.class.getName(),
                 resourceSharingPolicyHandlerService, null);
-
-        LOG.debug("ResourceSharingPolicyHandlerServiceComponent activated successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("ResourceSharingPolicyHandlerServiceComponent activated successfully.");
+        }
     }
-
 }

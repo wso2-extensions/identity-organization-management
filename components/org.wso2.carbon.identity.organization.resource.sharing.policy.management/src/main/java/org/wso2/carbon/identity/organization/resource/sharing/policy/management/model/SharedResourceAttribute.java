@@ -75,6 +75,7 @@ public class SharedResourceAttribute {
 
     @Override
     public String toString() {
+
         return "{" +
                 "\"sharedResourceAttributeId\": " + sharedResourceAttributeId + ", " +
                 "\"resourceSharingPolicyId\": " + resourceSharingPolicyId + ", " +

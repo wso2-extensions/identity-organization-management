@@ -30,7 +30,7 @@ public class ResourceSharingConstants {
      */
     public enum ErrorMessage {
 
-        // Client Errors
+        // Client Errors.
         ERROR_CODE_MISSING_MANDATORY_FIELDS("60001",
                 "All fields are mandatory and must be provided.",
                 "One or more mandatory field is empty."),
@@ -41,7 +41,7 @@ public class ResourceSharingConstants {
                 "Input values cannot be null or empty.",
                 "One or more input values are null or empty, which is not allowed."),
 
-        // Server Errors
+        // Server Errors.
         ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED("65001",
                 "Failed to create resource sharing policy.",
                 "An error occurred while creating the resource sharing policy in the database."),
