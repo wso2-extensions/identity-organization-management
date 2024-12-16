@@ -126,22 +126,24 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        List<ResourceSharingPolicy> resourceSharingPolicies = new ArrayList<>();
 
-        String orgIdsString = policyHoldingOrganizationIds.stream().map(id -> "'" + id + "'")
+        // Dynamically build placeholders for the query
+        String placeholders = policyHoldingOrganizationIds.stream()
+                .map(id -> "?")
                 .collect(Collectors.joining(","));
-        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + orgIdsString + ");";
+        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + placeholders + ");";
 
         try {
-            namedJdbcTemplate.executeQuery(query, (resultSet, rowNumber) -> {
-
-                resourceSharingPolicies.add(retrieveResourceSharingPolicyRecordFromDB(resultSet));
-                return null;
-            });
+            return namedJdbcTemplate.executeQuery(query,
+                    (resultSet, rowNumber) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
+                    preparedStatement -> {
+                        for (int i = 0; i < policyHoldingOrganizationIds.size(); i++) {
+                            preparedStatement.setString(i + 1, policyHoldingOrganizationIds.get(i));
+                        }
+                    });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }
-        return resourceSharingPolicies;
     }
 
     @Override

@@ -290,8 +290,20 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 10)
     public void testGetResourceSharingPoliciesFailureForInvalidOrgId() throws Exception {
 
-        resourceSharingPolicyHandlerService.getResourceSharingPolicies(
-                Collections.singletonList(UM_ID_ORGANIZATION_INVALID_FORMAT));
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeQuery(anyString(), any(), any());
+
+            resourceSharingPolicyHandlerService.getResourceSharingPolicies(
+                    Collections.singletonList(UM_ID_ORGANIZATION_INVALID_FORMAT));
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtClientException.class, priority = 11)
