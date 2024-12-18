@@ -165,7 +165,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
-                                                         String deleteRequestInitiatedOrgId)
+                                                         String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -174,7 +174,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                     namedPreparedStatement -> {
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
-                                deleteRequestInitiatedOrgId);
+                                sharingPolicyInitiatedOrgId);
                     });
             return true;
         } catch (DataAccessException e) {
@@ -184,7 +184,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
-                                                                  String deleteRequestInitiatedOrgId)
+                                                                  String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -196,7 +196,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID,
                                 resourceId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
-                                deleteRequestInitiatedOrgId);
+                                sharingPolicyInitiatedOrgId);
                     });
             return true;
         } catch (DataAccessException e) {
@@ -277,7 +277,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     @Override
     public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType,
-                                                                           String deleteRequestInitiatedOrgId)
+                                                                           String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -288,7 +288,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE,
                         sharedAttributeType.name());
                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
-                        deleteRequestInitiatedOrgId);
+                        sharingPolicyInitiatedOrgId);
             });
             return true;
         } catch (DataAccessException e) {
@@ -299,7 +299,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     @Override
     public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
                                                                      String attributeId,
-                                                                     String deleteRequestInitiatedOrgId)
+                                                                     String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -311,7 +311,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID,
                                 attributeId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
-                                deleteRequestInitiatedOrgId);
+                                sharingPolicyInitiatedOrgId);
                     });
             return true;
         } catch (DataAccessException e) {

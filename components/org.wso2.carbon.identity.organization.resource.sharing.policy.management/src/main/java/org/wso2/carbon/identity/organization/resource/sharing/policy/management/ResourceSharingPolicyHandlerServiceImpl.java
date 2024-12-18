@@ -98,24 +98,24 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
     @Override
     public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
-                                                         String deleteRequestInitiatedOrgId)
+                                                         String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(deleteRequestInitiatedOrgId);
+        validateInputs(sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
-                deleteRequestInitiatedOrgId);
+                sharingPolicyInitiatedOrgId);
     }
 
     @Override
     public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
-                                                                  String deleteRequestInitiatedOrgId)
+                                                                  String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(resourceType, resourceId, deleteRequestInitiatedOrgId);
+        validateInputs(resourceType, resourceId, sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
-                resourceId, deleteRequestInitiatedOrgId);
+                resourceId, sharingPolicyInitiatedOrgId);
     }
 
     @Override
@@ -175,25 +175,25 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     @Override
     public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType,
-                                                                           String deleteRequestInitiatedOrgId)
+                                                                           String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(sharedAttributeType, deleteRequestInitiatedOrgId);
+        validateInputs(sharedAttributeType, sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
-                resourceSharingPolicyId, sharedAttributeType, deleteRequestInitiatedOrgId);
+                resourceSharingPolicyId, sharedAttributeType, sharingPolicyInitiatedOrgId);
     }
 
     @Override
     public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
                                                                      String attributeId,
-                                                                     String deleteRequestInitiatedOrgId)
+                                                                     String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(attributeType, attributeId, deleteRequestInitiatedOrgId);
+        validateInputs(attributeType, attributeId, sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
-                attributeId, deleteRequestInitiatedOrgId);
+                attributeId, sharingPolicyInitiatedOrgId);
     }
 
     private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
