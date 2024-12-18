@@ -29,8 +29,8 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 public class ResourceSharingPolicy {
 
     private int resourceSharingPolicyId;
-    private String resourceId;
     private ResourceType resourceType;
+    private String resourceId;
     private String initiatingOrgId;
     private String policyHoldingOrgId;
     private PolicyEnum sharingPolicy;
@@ -50,16 +50,6 @@ public class ResourceSharingPolicy {
         return resourceId;
     }
 
-    public void setResourceId(String resourceId) {
-
-        this.resourceId = resourceId;
-    }
-
-    public ResourceType getResourceType() {
-
-        return resourceType;
-    }
-
     public void setResourceType(ResourceType resourceType) {
 
         this.resourceType = resourceType;
@@ -68,6 +58,16 @@ public class ResourceSharingPolicy {
     public String getInitiatingOrgId() {
 
         return initiatingOrgId;
+    }
+
+    public void setResourceId(String resourceId) {
+
+        this.resourceId = resourceId;
+    }
+
+    public ResourceType getResourceType() {
+
+        return resourceType;
     }
 
     public void setInitiatingOrgId(String initiatingOrgId) {
@@ -100,8 +100,8 @@ public class ResourceSharingPolicy {
 
         return "{" +
                 "\"resourceSharingPolicyId\": " + resourceSharingPolicyId + ", " +
-                "\"resourceId\": \"" + resourceId + "\", " +
                 "\"resourceType\": \"" + resourceType + "\", " +
+                "\"resourceId\": \"" + resourceId + "\", " +
                 "\"initiatingOrgId\": \"" + initiatingOrgId + "\", " +
                 "\"policyHoldingOrgId\": \"" + policyHoldingOrgId + "\", " +
                 "\"sharingPolicy\": \"" + sharingPolicy + "\"" +
@@ -118,21 +118,21 @@ public class ResourceSharingPolicy {
      */
     public static class Builder {
 
-        private String resourceId;
         private ResourceType resourceType;
+        private String resourceId;
         private String initiatingOrgId;
         private String policyHoldingOrgId;
         private PolicyEnum sharingPolicy;
 
-        public Builder withResourceId(String resourceId) {
-
-            this.resourceId = resourceId;
-            return this;
-        }
-
         public Builder withResourceType(ResourceType resourceType) {
 
             this.resourceType = resourceType;
+            return this;
+        }
+
+        public Builder withResourceId(String resourceId) {
+
+            this.resourceId = resourceId;
             return this;
         }
 
@@ -156,15 +156,15 @@ public class ResourceSharingPolicy {
 
         public ResourceSharingPolicy build() throws ResourceSharingPolicyMgtException {
 
-            if (resourceId == null || resourceType == null || initiatingOrgId == null || policyHoldingOrgId == null ||
+            if (resourceType == null || resourceId == null || initiatingOrgId == null || policyHoldingOrgId == null ||
                     sharingPolicy == null) {
 
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
                         ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
             }
             ResourceSharingPolicy policy = new ResourceSharingPolicy();
-            policy.setResourceId(this.resourceId);
             policy.setResourceType(this.resourceType);
+            policy.setResourceId(this.resourceId);
             policy.setInitiatingOrgId(this.initiatingOrgId);
             policy.setPolicyHoldingOrgId(this.policyHoldingOrgId);
             policy.setSharingPolicy(this.sharingPolicy);

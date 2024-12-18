@@ -198,7 +198,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
             mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
             doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
-                    .executeQuery(anyString(), any(), any());
+                    .fetchSingleRecord(anyString(), any(), any());
 
             resourceSharingPolicyHandlerService.getResourceSharingPolicyById(1);
 

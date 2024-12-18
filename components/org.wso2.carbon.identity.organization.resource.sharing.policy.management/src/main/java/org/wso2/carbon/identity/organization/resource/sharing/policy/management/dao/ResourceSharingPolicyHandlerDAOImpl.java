@@ -33,7 +33,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
@@ -98,27 +97,44 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         }
     }
 
+//    @Override
+//    public ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
+//            throws ResourceSharingPolicyMgtServerException {
+//
+//        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+//        AtomicReference<ResourceSharingPolicy> resourceSharingPolicy = new AtomicReference<>(null);
+//
+//        try {
+//            namedJdbcTemplate.executeQuery(
+//                    GET_RESOURCE_SHARING_POLICY_BY_ID,
+//                    (resultSet, rowNumber) -> {
+//
+//                        resourceSharingPolicy.set(retrieveResourceSharingPolicyRecordFromDB(resultSet));
+//                        return null;
+//                    },
+//                    namedPreparedStatement ->
+//                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId));
+//        } catch (DataAccessException e) {
+//            throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
+//        }
+//        return resourceSharingPolicy.get();
+//    }
+
     @Override
     public ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        AtomicReference<ResourceSharingPolicy> resourceSharingPolicy = new AtomicReference<>(null);
 
         try {
-            namedJdbcTemplate.executeQuery(
+            return namedJdbcTemplate.fetchSingleRecord(
                     GET_RESOURCE_SHARING_POLICY_BY_ID,
-                    (resultSet, rowNumber) -> {
-
-                        resourceSharingPolicy.set(retrieveResourceSharingPolicyRecordFromDB(resultSet));
-                        return null;
-                    },
+                    (resultSet, rowNum) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
                     namedPreparedStatement ->
                             namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }
-        return resourceSharingPolicy.get();
     }
 
     @Override
