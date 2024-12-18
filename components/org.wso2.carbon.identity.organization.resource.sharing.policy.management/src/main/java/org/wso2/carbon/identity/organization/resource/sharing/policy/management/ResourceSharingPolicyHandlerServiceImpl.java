@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
@@ -31,6 +33,8 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_NULL_OR_EMPTY_INPUTS;
@@ -40,6 +44,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
  */
 public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
+    private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerService.class);
     private static final ResourceSharingPolicyHandlerDAO RESOURCE_SHARING_POLICY_HANDLER_DAO =
             new ResourceSharingPolicyHandlerDAOImpl();
 
@@ -59,7 +64,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
+    public Optional<ResourceSharingPolicy> getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtException {
 
         validateInputs(resourceSharingPolicyId);
@@ -125,12 +130,24 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
         validateInputs(sharedResourceAttributes);
 
         List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
+        List<Integer> invalidPolicyIds = new ArrayList<>();
+
         for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
-            ResourceSharingPolicy resourceSharingPolicy =
+            Optional<ResourceSharingPolicy> resourceSharingPolicy =
                     getResourceSharingPolicyById(sharedResourceAttribute.getResourceSharingPolicyId());
-            if (isValidAttributeForTheResource(resourceSharingPolicy, sharedResourceAttribute)) {
-                addableSharedResourceAttributes.add(sharedResourceAttribute);
+            if (resourceSharingPolicy.isPresent()) {
+                if (isValidAttributeForTheResource(resourceSharingPolicy.get(), sharedResourceAttribute)) {
+                    addableSharedResourceAttributes.add(sharedResourceAttribute);
+                }
+            } else {
+                invalidPolicyIds.add(sharedResourceAttribute.getResourceSharingPolicyId());
             }
+        }
+
+        if (!invalidPolicyIds.isEmpty()) {
+            String warnMessage = "Some attributes were skipped due to invalid ResourceSharingPolicy IDs: " +
+                    invalidPolicyIds.stream().map(String::valueOf).collect(Collectors.joining(", ", "{", "}"));
+            LOG.warn(warnMessage);
         }
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.addSharedResourceAttributes(addableSharedResourceAttributes);
@@ -199,7 +216,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
                                                    SharedResourceAttribute sharedResourceAttribute) {
 
-        return resourceSharingPolicy != null && resourceSharingPolicy.getResourceType()
+        return resourceSharingPolicy.getResourceType()
                 .isApplicableAttributeType(sharedResourceAttribute.getSharedAttributeType());
     }
 

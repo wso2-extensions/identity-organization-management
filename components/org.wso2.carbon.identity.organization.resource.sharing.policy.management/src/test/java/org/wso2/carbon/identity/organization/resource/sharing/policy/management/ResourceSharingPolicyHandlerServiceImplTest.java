@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -53,6 +54,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType.USER;
@@ -185,9 +187,12 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 .build();
 
         int recordId = resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
-        ResourceSharingPolicy resource = resourceSharingPolicyHandlerService.getResourceSharingPolicyById(recordId);
+        Optional<ResourceSharingPolicy> optionalResource =
+                resourceSharingPolicyHandlerService.getResourceSharingPolicyById(recordId);
 
-        Assert.assertNotNull(resource);
+        Assert.assertTrue(optionalResource.isPresent(), "ResourceSharingPolicy should be present.");
+        ResourceSharingPolicy resource = optionalResource.get();
+        Assert.assertNotNull(resource, "ResourceSharingPolicy object should not be null.");
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 5)
@@ -450,23 +455,39 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         when(resourceSharingPolicyMock.getResourceType()).thenReturn(resourceTypeMock);
         when(resourceTypeMock.isApplicableAttributeType(any(SharedAttributeType.class))).thenReturn(false);
 
-        SharedResourceAttribute sharedResourceAttribute = new SharedResourceAttribute.Builder()
+        // Valid attribute
+        SharedResourceAttribute validSharedResourceAttribute = new SharedResourceAttribute.Builder()
                 .withResourceSharingPolicyId(1)
                 .withSharedAttributeType(SharedAttributeType.ROLE)
                 .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
                 .build();
 
+        // Invalid attribute
+        SharedResourceAttribute invalidSharedResourceAttribute = new SharedResourceAttribute.Builder()
+                .withResourceSharingPolicyId(-1)
+                .withSharedAttributeType(SharedAttributeType.ROLE)
+                .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
+                .build();
+
         ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerServiceMock =
                 spy(new ResourceSharingPolicyHandlerServiceImpl());
 
-        doReturn(resourceSharingPolicyMock).when(resourceSharingPolicyHandlerServiceMock)
-                .getResourceSharingPolicyById(sharedResourceAttribute.getResourceSharingPolicyId());
+        doReturn(Optional.of(resourceSharingPolicyMock)).when(resourceSharingPolicyHandlerServiceMock)
+                .getResourceSharingPolicyById(validSharedResourceAttribute.getResourceSharingPolicyId());
 
-        List<SharedResourceAttribute> sharedResourceAttributes = Collections.singletonList(sharedResourceAttribute);
+        doReturn(Optional.empty()).when(resourceSharingPolicyHandlerServiceMock)
+                .getResourceSharingPolicyById(invalidSharedResourceAttribute.getResourceSharingPolicyId());
+
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                Arrays.asList(validSharedResourceAttribute, invalidSharedResourceAttribute);
 
         boolean isAdded = resourceSharingPolicyHandlerServiceMock.addSharedResourceAttributes(sharedResourceAttributes);
 
         Assert.assertTrue(isAdded, "Skipped the inapplicable attributes and added the rest.");
+        verify(resourceSharingPolicyHandlerServiceMock, times(1))
+                .getResourceSharingPolicyById(validSharedResourceAttribute.getResourceSharingPolicyId());
+        verify(resourceSharingPolicyHandlerServiceMock, times(1))
+                .getResourceSharingPolicyById(invalidSharedResourceAttribute.getResourceSharingPolicyId());
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 19)

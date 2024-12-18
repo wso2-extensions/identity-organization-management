@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Service interface for managing resource sharing policies across organizations.
@@ -51,14 +52,15 @@ public interface ResourceSharingPolicyHandlerService {
             throws ResourceSharingPolicyMgtException, DataAccessException;
 
     /**
-     * Retrieves a resource sharing policy by its unique identifier.
+     * Retrieves a resource sharing policy by its unique identifier, if present.
      *
      * @param resourceSharingPolicyId The unique identifier of the resource sharing policy to be retrieved.
      *                                Must be a valid ID greater than zero.
-     * @return The {@link ResourceSharingPolicy} corresponding to the given ID.
-     * @throws ResourceSharingPolicyMgtException If the resource sharing policy could not be found or retrieved.
+     * @return An {@link Optional} containing the {@link ResourceSharingPolicy} if found,
+     *         or an empty {@link Optional} if no matching resource sharing policy exists.
+     * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policy.
      */
-    ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
+    Optional<ResourceSharingPolicy> getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtException;
 
     /**

@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
@@ -98,17 +99,17 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public ResourceSharingPolicy getResourceSharingPolicyById(int resourceSharingPolicyId)
+    public Optional<ResourceSharingPolicy> getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
 
         try {
-            return namedJdbcTemplate.fetchSingleRecord(
+            return Optional.ofNullable(namedJdbcTemplate.fetchSingleRecord(
                     GET_RESOURCE_SHARING_POLICY_BY_ID,
                     (resultSet, rowNum) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
                     namedPreparedStatement ->
-                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId));
+                            namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId)));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }
