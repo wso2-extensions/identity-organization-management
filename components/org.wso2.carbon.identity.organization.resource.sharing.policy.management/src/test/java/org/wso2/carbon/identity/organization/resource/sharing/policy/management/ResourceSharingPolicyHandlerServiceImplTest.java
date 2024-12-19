@@ -674,6 +674,61 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
     }
 
+    @Test
+    public void testAddResourceSharingPolicyWithAttributesSuccess() throws ResourceSharingPolicyMgtException {
+
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_ORG_ALL)
+                .withSharingPolicy(PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN)
+                .build();
+
+        List<SharedResourceAttribute> sharedResourceAttributes = Arrays.asList(
+                new SharedResourceAttribute.Builder()
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                        .build(),
+                new SharedResourceAttribute.Builder()
+                        .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                        .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
+                        .build());
+
+        boolean result =
+                resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
+                        sharedResourceAttributes, UM_ID_ORGANIZATION_SUPER);
+
+        Assert.assertTrue(result, "Expected the method to successfully add valid attributes.");
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 19)
+    public void testAddResourceSharingPolicyWithAttributesFailure() throws ResourceSharingPolicyMgtException {
+
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_ORG_ALL)
+                .withSharingPolicy(PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN)
+                .build();
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new TransactionException(MOCKED_TRANSACTION_EXCEPTION)).when(mockJdbcTemplate)
+                    .withTransaction(any());
+
+            resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
+                    Collections.singletonList(new SharedResourceAttribute()), UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (TransactionException e) {
+            throw new TestException(e);
+        }
+    }
+
     // Helpers: Private helper methods for tests.
     private List<Integer> addAndAssertResourceSharingPolicy(List<String> policyHoldingOrgIds)
             throws ResourceSharingPolicyMgtException {

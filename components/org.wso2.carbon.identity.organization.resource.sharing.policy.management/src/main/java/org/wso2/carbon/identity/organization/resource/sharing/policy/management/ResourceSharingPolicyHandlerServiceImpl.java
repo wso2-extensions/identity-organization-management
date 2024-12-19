@@ -213,6 +213,26 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                 attributeId, sharingPolicyInitiatedOrgId);
     }
 
+    @Override
+    public boolean addResourceSharingPolicyWithAttributes(ResourceSharingPolicy resourceSharingPolicy,
+                                                          List<SharedResourceAttribute> sharedResourceAttributes,
+                                                          String sharingPolicyInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
+
+        validateInputs(resourceSharingPolicy, sharedResourceAttributes);
+
+        List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
+
+        for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
+            if (isValidAttributeForTheResource(resourceSharingPolicy, sharedResourceAttribute)) {
+                addableSharedResourceAttributes.add(sharedResourceAttribute);
+            }
+        }
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
+                addableSharedResourceAttributes, sharingPolicyInitiatedOrgId);
+    }
+
     private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
                                                    SharedResourceAttribute sharedResourceAttribute) {
 
