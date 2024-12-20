@@ -674,7 +674,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
     }
 
-    @Test
+    @Test (priority = 33)
     public void testAddResourceSharingPolicyWithAttributesSuccess() throws ResourceSharingPolicyMgtException {
 
         ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
@@ -702,7 +702,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         Assert.assertTrue(result, "Expected the method to successfully add valid attributes.");
     }
 
-    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 19)
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 34)
     public void testAddResourceSharingPolicyWithAttributesFailure() throws ResourceSharingPolicyMgtException {
 
         ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
@@ -725,6 +725,86 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
             mockedStatic.verify(Utils::getNewTemplate, times(1));
         } catch (TransactionException e) {
+            throw new TestException(e);
+        }
+    }
+
+    @Test(priority = 35)
+    public void testGetResourceSharingPoliciesWithSharedAttributesSuccess() throws Exception {
+        // Prepare mock data
+        List<String> policyHoldingOrganizationIds = Arrays.asList(
+                UM_ID_ORGANIZATION_SUPER, UM_ID_ORGANIZATION_ORG_ALL);
+
+        SharedResourceAttribute attribute1 = new SharedResourceAttribute.Builder()
+                .withResourceSharingPolicyId(1)
+                .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_1)
+                .build();
+
+        SharedResourceAttribute attribute2 = new SharedResourceAttribute.Builder()
+                .withResourceSharingPolicyId(2)
+                .withSharedAttributeType(SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1)
+                .withSharedAttributeId(UM_ID_RESOURCE_ATTRIBUTE_2)
+                .build();
+
+        List<SharedResourceAttribute> sharedAttributes = Arrays.asList(attribute1, attribute2);
+        boolean attributesAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedAttributes);
+        Assert.assertTrue(attributesAdded, "Shared resource attributes were not added successfully.");
+
+
+        Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>> result =
+                resourceSharingPolicyHandlerService.getResourceSharingPoliciesWithSharedAttributes(
+                        policyHoldingOrganizationIds);
+
+        Assert.assertTrue(result.isPresent(), "Expected non-empty result for shared policies with attributes.");
+
+        Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> groupedResult = result.get();
+        Assert.assertEquals(groupedResult.size(), policyHoldingOrganizationIds.size(),
+                "Grouped result size does not match the number of policy holding organizations.");
+
+        for (String policyHoldingOrgId : policyHoldingOrganizationIds) {
+            Assert.assertTrue(groupedResult.containsKey(policyHoldingOrgId),
+                    "Grouped result does not contain expected organization ID: " + policyHoldingOrgId);
+
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policyMap = groupedResult.get(policyHoldingOrgId);
+
+            for (Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry : policyMap.entrySet()) {
+                ResourceSharingPolicy policy = entry.getKey();
+                List<SharedResourceAttribute> attributes = entry.getValue();
+
+                Assert.assertNotNull(policy, "Resource sharing policy should not be null.");
+                Assert.assertNotNull(attributes, "Shared resource attributes list should not be null.");
+            }
+        }
+    }
+
+    @Test(priority = 36)
+    public void testGetResourceSharingPoliciesWithSharedAttributesEmptyResult() throws Exception {
+
+        List<String> policyHoldingOrganizationIds = Collections.singletonList(UM_ID_ORGANIZATION_INVALID);
+
+        Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>> result =
+                resourceSharingPolicyHandlerService.getResourceSharingPoliciesWithSharedAttributes(
+                        policyHoldingOrganizationIds);
+
+        Assert.assertFalse(result.isPresent(), "Expected an empty Optional result when no policies are found.");
+    }
+
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 37)
+    public void testGetResourceSharingPoliciesWithSharedAttributesFailure() throws ResourceSharingPolicyMgtException {
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeQuery(anyString(), any(), any());
+
+            resourceSharingPolicyHandlerService.getResourceSharingPoliciesWithSharedAttributes(
+                    Arrays.asList(UM_ID_ORGANIZATION_SUPER, UM_ID_ORGANIZATION_ORG_ALL));
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
             throw new TestException(e);
         }
     }

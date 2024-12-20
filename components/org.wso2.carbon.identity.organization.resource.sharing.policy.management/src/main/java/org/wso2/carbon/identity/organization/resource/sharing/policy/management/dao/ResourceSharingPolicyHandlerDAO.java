@@ -240,4 +240,23 @@ public interface ResourceSharingPolicyHandlerDAO {
                                                    List<SharedResourceAttribute> sharedResourceAttributes,
                                                    String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Retrieves a map of resource sharing policies along with their associated shared resource attributes
+     * for the given list of policy holding organization IDs.
+     *
+     * @param policyHoldingOrganizationIds A list of organization IDs whose resource sharing policies along with
+     *                                     shared resource attributes need to be retrieved.
+     *                                     Must not be {@code null} or empty.
+     * @return An {@link Optional} containing a nested map where:
+     * - The first key is the organization ID.
+     * - The second key is the {@link ResourceSharingPolicy}.
+     * - The value is a list of {@link SharedResourceAttribute} associated with the policy.
+     * If no matching policies or attributes are found, the {@link Optional} will be empty.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
+     *                                                 policies or shared attributes.
+     */
+    Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
+            throws ResourceSharingPolicyMgtServerException;
 }

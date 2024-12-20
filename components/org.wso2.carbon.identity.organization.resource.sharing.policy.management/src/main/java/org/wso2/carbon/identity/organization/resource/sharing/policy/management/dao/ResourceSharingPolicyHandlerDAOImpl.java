@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicyWithAttributes;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 
 import java.sql.ResultSet;
@@ -55,6 +56,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICY_BY_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID;
@@ -69,6 +71,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.SQLPlaceholders.JOIN_COLUMN_UM_ID_OF_UM_SHARED_RESOURCE_ATTRIBUTES_TABLE;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.util.ResourceSharingUtils.handleServerException;
 
 /**
@@ -319,6 +322,52 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         }
 
         return true;
+    }
+
+    @Override
+    public Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
+        String placeholders = policyHoldingOrganizationIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        String query = String.format(GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD,
+                placeholders);
+
+        try {
+            List<ResourceSharingPolicyWithAttributes> result = namedJdbcTemplate.executeQuery(query,
+                    (resultSet, rowNumber) -> {
+                        ResourceSharingPolicy policy = retrieveResourceSharingPolicyRecordFromDB(resultSet);
+                        SharedResourceAttribute attribute = null;
+                        if (resultSet.getString(JOIN_COLUMN_UM_ID_OF_UM_SHARED_RESOURCE_ATTRIBUTES_TABLE) != null) {
+                            attribute = retrieveSharedResourceAttributeRecordFromDB(resultSet);
+                        }
+                        return new ResourceSharingPolicyWithAttributes(
+                                resultSet.getString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID), policy, attribute);
+                    },
+                    namedPreparedStatement -> {
+                        for (int i = 0; i < policyHoldingOrganizationIds.size(); i++) {
+                            namedPreparedStatement.setString(i + 1, policyHoldingOrganizationIds.get(i));
+                        }
+                    });
+
+            Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> groupedResult =
+                    result.stream()
+                            .collect(Collectors.groupingBy(
+                                    ResourceSharingPolicyWithAttributes::getPolicyHoldingOrgId,
+                                    Collectors.groupingBy(
+                                            ResourceSharingPolicyWithAttributes::getPolicy,
+                                            Collectors.mapping(ResourceSharingPolicyWithAttributes::getAttribute,
+                                                    Collectors.toList())
+                                                         )
+                                                          ));
+
+            return Optional.ofNullable(groupedResult.isEmpty() ? null : groupedResult);
+
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
+        }
     }
 
     private List<SharedResourceAttribute> getSharedResourceAttributes(String query, SharedAttributeType attributeType,

@@ -233,6 +233,17 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                 addableSharedResourceAttributes, sharingPolicyInitiatedOrgId);
     }
 
+    @Override
+    public Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
+            throws ResourceSharingPolicyMgtException {
+
+        validateInputs(policyHoldingOrganizationIds);
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesWithSharedAttributes(
+                policyHoldingOrganizationIds);
+    }
+
     private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
                                                    SharedResourceAttribute sharedResourceAttribute) {
 
