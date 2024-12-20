@@ -31,13 +31,14 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY;
-import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_NULL_OR_EMPTY_INPUTS;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingConstants.ErrorMessage.ERROR_CODE_INVALID_ID;
 
 /**
  * Implementation of the core service for managing resource sharing policies.
@@ -52,8 +53,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public int addResourceSharingPolicy(ResourceSharingPolicy resourceSharingPolicy)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(resourceSharingPolicy);
-
         List<ResourceType> applicableResources = resourceSharingPolicy.getSharingPolicy().getApplicableResources();
         if (!applicableResources.contains(resourceSharingPolicy.getResourceType())) {
             throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getCode(),
@@ -67,8 +66,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public Optional<ResourceSharingPolicy> getResourceSharingPolicyById(int resourceSharingPolicyId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(resourceSharingPolicyId);
-
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyById(resourceSharingPolicyId);
     }
 
@@ -76,7 +73,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(policyHoldingOrganizationIds);
+        validateIdFormat(policyHoldingOrganizationIds);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicies(policyHoldingOrganizationIds);
     }
@@ -85,7 +82,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public Map<ResourceType, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByResourceType(
             List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtException {
 
-        validateInputs(policyHoldingOrganizationIds);
+        validateIdFormat(policyHoldingOrganizationIds);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesGroupedByResourceType(
                 policyHoldingOrganizationIds);
@@ -95,7 +92,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public Map<String, List<ResourceSharingPolicy>> getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
             List<String> policyHoldingOrganizationIds) throws ResourceSharingPolicyMgtException {
 
-        validateInputs(policyHoldingOrganizationIds);
+        validateIdFormat(policyHoldingOrganizationIds);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
                 policyHoldingOrganizationIds);
@@ -106,7 +103,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                          String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(sharingPolicyInitiatedOrgId);
+        validateIdFormat(sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
                 sharingPolicyInitiatedOrgId);
@@ -117,7 +114,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                                   String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(resourceType, resourceId, sharingPolicyInitiatedOrgId);
+        validateIdFormat(Arrays.asList(resourceId, sharingPolicyInitiatedOrgId));
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
                 resourceId, sharingPolicyInitiatedOrgId);
@@ -126,8 +123,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     @Override
     public boolean addSharedResourceAttributes(List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtException {
-
-        validateInputs(sharedResourceAttributes);
 
         List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
         List<Integer> invalidPolicyIds = new ArrayList<>();
@@ -165,8 +160,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public List<SharedResourceAttribute> getSharedResourceAttributesByType(SharedAttributeType attributeType)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(attributeType);
-
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesByType(attributeType);
     }
 
@@ -174,7 +167,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     public List<SharedResourceAttribute> getSharedResourceAttributesById(String attributeId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(attributeId);
+        validateIdFormat(attributeId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesById(attributeId);
     }
@@ -184,7 +177,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                                                 String attributeId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(attributeType, attributeId);
+        validateIdFormat(attributeId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesByTypeAndId(attributeType, attributeId);
     }
@@ -195,7 +188,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                                            String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(sharedAttributeType, sharingPolicyInitiatedOrgId);
+        validateIdFormat(sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
                 resourceSharingPolicyId, sharedAttributeType, sharingPolicyInitiatedOrgId);
@@ -207,7 +200,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                                      String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(attributeType, attributeId, sharingPolicyInitiatedOrgId);
+        validateIdFormat(sharingPolicyInitiatedOrgId);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
                 attributeId, sharingPolicyInitiatedOrgId);
@@ -219,7 +212,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                                                           String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(resourceSharingPolicy, sharedResourceAttributes);
+        validateIdFormat(sharingPolicyInitiatedOrgId);
 
         List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
 
@@ -238,7 +231,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtException {
 
-        validateInputs(policyHoldingOrganizationIds);
+        validateIdFormat(policyHoldingOrganizationIds);
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPoliciesWithSharedAttributes(
                 policyHoldingOrganizationIds);
@@ -251,22 +244,22 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                 .isApplicableAttributeType(sharedResourceAttribute.getSharedAttributeType());
     }
 
-    private void validateInputs(Object... inputs) throws ResourceSharingPolicyMgtClientException {
+    private void validateIdFormat(String id) throws ResourceSharingPolicyMgtClientException {
 
-        for (Object input : inputs) {
-            if (input == null) {
-                throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_OR_EMPTY_INPUTS.getCode(),
-                        ERROR_CODE_NULL_OR_EMPTY_INPUTS.getMessage());
-            }
-
-            if (input instanceof List<?>) {
-                for (Object o : (List<?>) input) {
-                    if (o == null) {
-                        throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_NULL_OR_EMPTY_INPUTS.getCode(),
-                                ERROR_CODE_NULL_OR_EMPTY_INPUTS.getMessage());
-                    }
-                }
-            }
+        if (isInvalidId(id)) {
+            throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_INVALID_ID.getCode(),
+                    ERROR_CODE_INVALID_ID.getMessage());
         }
+    }
+
+    private void validateIdFormat(List<String> ids) throws ResourceSharingPolicyMgtClientException {
+
+        for (String id : ids) {
+            validateIdFormat(id);
+        }
+    }
+
+    private boolean isInvalidId(String id) {
+        return id == null || id.isEmpty();
     }
 }

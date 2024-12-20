@@ -37,9 +37,9 @@ public class ResourceSharingConstants {
         ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY("60002",
                 "The specified resource type is not supported by the selected sharing policy.",
                 "The resource sharing policy does not allow sharing for the provided resource type."),
-        ERROR_CODE_NULL_OR_EMPTY_INPUTS("60003",
-                "Input values cannot be null or empty.",
-                "One or more input values are null or empty, which is not allowed."),
+        ERROR_CODE_INVALID_ID("60003",
+                "ID is invalid.",
+                "ID cannot be null or empty."),
 
         // Server Errors.
         ERROR_CODE_RESOURCE_SHARING_POLICY_CREATION_FAILED("65001",
