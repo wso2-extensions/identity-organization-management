@@ -22,82 +22,93 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Enum representing user sharing policies with additional fields for code, name, applicable resources, and details.
+ * Enum representing user sharing policies with additional fields for code, name, value, organization scope, applicable
+ * resources, and details.
  */
 public enum PolicyEnum {
 
     ALL_EXISTING_ORGS_ONLY(
-            "GEN-EO-0001",
+            "GENERAL-001",
             "AllExistingOrgsOnly",
             "ALL_EXISTING_ORGS_ONLY",
+            OrganizationScope.EXISTING_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy applies when the resource needs to be shared with all existing organizations at " +
                     "the current time. Newly created organizations after the policy is applied will not be included " +
                     "under this policy."),
     ALL_EXISTING_AND_FUTURE_ORGS(
-            "GEN-EF-0002",
+            "GENERAL-002",
             "AllExistingAndFutureOrgs",
             "ALL_EXISTING_AND_FUTURE_ORGS",
+            OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy allows sharing the resource with all current and any future organizations. It " +
                     "ensures that any new organizations created after the policy is set are automatically included."),
     IMMEDIATE_EXISTING_ORGS_ONLY(
-            "GEN-EO-0003",
+            "GENERAL-003",
             "ImmediateExistingOrgsOnly",
             "IMMEDIATE_EXISTING_ORGS_ONLY",
+            OrganizationScope.EXISTING_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy is used to share the resource exclusively with all immediate existing child " +
                     "organizations. Newly created immediate child organizations after the policy is applied are " +
                     "not included."),
     IMMEDIATE_EXISTING_AND_FUTURE_ORGS(
-            "GEN-EF-0004",
+            "GENERAL-004",
             "ImmediateExistingAndFutureOrgs",
             "IMMEDIATE_EXISTING_AND_FUTURE_ORGS",
+            OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy is used to share the resource exclusively with all immediate existing child " +
                     "organizations. Newly created immediate child organizations after the policy is applied are " +
                     "not included."),
     SELECTED_ORG_ONLY(
-            "SEL-EO-0001",
+            "SELECTIVE-001",
             "SelectedOrgOnly",
             "SELECTED_ORG_ONLY",
+            OrganizationScope.EXISTING_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy applies when the resource is to be shared with a single, specific organization " +
                     "only. Newly created child organizations under this selected organization will not be included."),
     SELECTED_ORG_WITH_ALL_EXISTING_CHILDREN_ONLY(
-            "SEL-EO-0002",
+            "SELECTIVE-002",
             "SelectedOrgWithAllExistingChildrenOnly",
             "SELECTED_ORG_WITH_ALL_EXISTING_CHILDREN_ONLY",
+            OrganizationScope.EXISTING_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy ensures the resource is shared with a selected organization and all of its " +
                     "existing child organizations. New child organizations created under this selected organization " +
                     "after the policy is applied will not be included."),
     SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN(
-            "SEL-EF-0003",
+            "SELECTIVE-003",
             "SelectedOrgWithAllExistingAndFutureChildren",
             "SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN",
+            OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy ensures the resource is shared with a selected organization and all of its child " +
                     "organizations, including those created in the future."),
     SELECTED_ORG_WITH_EXISTING_IMMEDIATE_CHILDREN_ONLY(
-            "SEL-EO-0004",
+            "SELECTIVE-004",
             "SelectedOrgWithExistingImmediateChildrenOnly",
             "SELECTED_ORG_WITH_EXISTING_IMMEDIATE_CHILDREN_ONLY",
+            OrganizationScope.EXISTING_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy shares the resource with a selected organization and all of its existing " +
                     "immediate child organizations. Newly created immediate children will not be included after " +
                     "the policy is applied."),
     SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN(
-            "SEL-EF-0005",
+            "SELECTIVE-005",
             "SelectedOrgWithExistingImmediateAndFutureChildren",
             "SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN",
+            OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
             Collections.singletonList(ResourceType.USER),
             "This policy allows sharing the resource with a selected organization and all of its " +
                     "immediate child organizations, including those created in the future."),
     NO_SHARING(
-            "NS-0000",
+            "NONE-000",
             "NoSharing",
             "NO_SHARING",
+            OrganizationScope.NO_ORG,
             Collections.emptyList(),
             "This policy specifies that no sharing will occur. The resource remains restricted to its " +
                     "current context and is not shared with any organization."
@@ -106,6 +117,7 @@ public enum PolicyEnum {
     private final String policyCode;
     private final String policyName;
     private final String value;
+    private final OrganizationScope organizationScope;
     private final List<ResourceType> applicableResources;
     private final String description;
 
@@ -118,12 +130,13 @@ public enum PolicyEnum {
      * @param applicableResources Type of resources to which the policy applies.
      * @param description         Short description of the sharing policy.
      */
-    PolicyEnum(String policyCode, String policyName, String value,
+    PolicyEnum(String policyCode, String policyName, String value, OrganizationScope organizationScope,
                List<ResourceType> applicableResources, String description) {
 
         this.policyCode = policyCode;
         this.policyName = policyName;
         this.value = value;
+        this.organizationScope = organizationScope;
         this.applicableResources = applicableResources;
         this.description = description;
     }
@@ -156,6 +169,16 @@ public enum PolicyEnum {
     public String getValue() {
 
         return value;
+    }
+
+    /**
+     * Get the organization scope of the sharing policy.
+     *
+     * @return {@link OrganizationScope} of the sharing policy.
+     */
+    public OrganizationScope getOrganizationScope() {
+
+        return organizationScope;
     }
 
     /**
