@@ -53,7 +53,7 @@ public class ResourceSharingUtils {
      */
     public static ResourceSharingPolicyMgtServerException handleServerException(ErrorMessage error) {
 
-        return new ResourceSharingPolicyMgtServerException(error.getMessage(), error.getCode());
+        return new ResourceSharingPolicyMgtServerException(error.getCode(), error.getDescription());
     }
 
     private ResourceSharingUtils() {}

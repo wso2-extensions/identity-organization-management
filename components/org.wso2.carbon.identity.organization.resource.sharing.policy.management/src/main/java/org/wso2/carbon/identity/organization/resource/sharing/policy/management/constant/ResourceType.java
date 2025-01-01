@@ -29,6 +29,7 @@ public enum ResourceType {
     private final List<SharedAttributeType> applicableAttributes;
 
     ResourceType(List<SharedAttributeType> applicableAttributes) {
+
         this.applicableAttributes = applicableAttributes;
     }
 
@@ -39,6 +40,7 @@ public enum ResourceType {
      * @return True if the attribute type is applicable, false otherwise.
      */
     public boolean isApplicableAttributeType(SharedAttributeType attributeType) {
+
         return applicableAttributes.contains(attributeType);
     }
 
@@ -48,6 +50,7 @@ public enum ResourceType {
      * @return List of applicable shared attribute types.
      */
     public List<SharedAttributeType> getApplicableAttributes() {
+
         return applicableAttributes;
     }
 }

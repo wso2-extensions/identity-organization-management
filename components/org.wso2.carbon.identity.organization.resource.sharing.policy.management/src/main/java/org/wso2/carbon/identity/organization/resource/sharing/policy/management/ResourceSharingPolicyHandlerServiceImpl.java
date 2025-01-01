@@ -44,7 +44,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
  */
 public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
-    private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerService.class);
+    private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerServiceImpl.class);
     private static final ResourceSharingPolicyHandlerDAO RESOURCE_SHARING_POLICY_HANDLER_DAO =
             new ResourceSharingPolicyHandlerDAOImpl();
 
@@ -259,6 +259,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     private boolean isInvalidId(String id) {
+
         return id == null || id.isEmpty();
     }
 }
