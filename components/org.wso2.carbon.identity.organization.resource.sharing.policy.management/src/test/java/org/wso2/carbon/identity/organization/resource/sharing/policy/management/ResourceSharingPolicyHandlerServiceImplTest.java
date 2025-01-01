@@ -341,9 +341,11 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                 addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
 
         for (int addedResourceSharingPolyId : addedResourceSharingPolyIds) {
-            boolean deleteSuccess = resourceSharingPolicyHandlerService.deleteResourceSharingPolicyRecordById(
+            resourceSharingPolicyHandlerService.deleteResourceSharingPolicyRecordById(
                     addedResourceSharingPolyId, UM_ID_ORGANIZATION_SUPER);
-            Assert.assertTrue(deleteSuccess);
+            Optional<ResourceSharingPolicy> resourceSharingPolicyById =
+                    resourceSharingPolicyHandlerService.getResourceSharingPolicyById(addedResourceSharingPolyId);
+            Assert.assertFalse(resourceSharingPolicyById.isPresent());
         }
     }
 
@@ -388,18 +390,27 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         };
     }
 
-    @Test(dataProvider = "organizationsAndResourceTypesAndIdsProvider", priority = 14)
-    public void testDeleteResourceSharingPolicyByResourceTypeAndIdSuccess(List<String> organizationIds,
-                                                                          ResourceType resourceType, String resourceId)
-            throws Exception {
+    @Test(priority = 14)
+    public void testDeleteResourceSharingPolicyByResourceTypeAndIdSuccess() throws Exception {
 
-        addAndAssertResourceSharingPolicy(Arrays.asList(organizationIds.get(0), organizationIds.get(1)));
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withSharingPolicy(PolicyEnum.SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN)
+                .build();
 
-        // Delete the resource sharing policy by resource type and ID.
-        boolean deleteSuccess =
-                resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
-                        resourceId, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(deleteSuccess);
+        int addedPolicyId = resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
+
+        // Deleting the added policy
+        resourceSharingPolicyHandlerService.deleteResourceSharingPolicyByResourceTypeAndId(
+                RESOURCE_TYPE_RESOURCE_1, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+
+        // Verifying that the policy is deleted
+        Optional<ResourceSharingPolicy> deletedPolicy =
+                resourceSharingPolicyHandlerService.getResourceSharingPolicyById(addedPolicyId);
+        Assert.assertFalse(deletedPolicy.isPresent());
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 15)
@@ -629,10 +640,11 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     @Test(priority = 29)
     public void testDeleteSharedResourceAttributesByResourceSharingPolicyIdSuccess() throws Exception {
 
-        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId
+        resourceSharingPolicyHandlerService.deleteSharedResourceAttributesByResourceSharingPolicyId
                 (1, SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(result,
-                "Expected successful deletion of shared resource attributes by policy ID and attribute type.");
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesBySharingPolicyId(1);
+        Assert.assertEquals(sharedResourceAttributes.size(), 0);
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 30)
@@ -658,10 +670,12 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
     @Test(priority = 31)
     public void testDeleteSharedResourceAttributeByAttributeTypeAndIdSuccess() throws Exception {
 
-        boolean result = resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
+        resourceSharingPolicyHandlerService.deleteSharedResourceAttributeByAttributeTypeAndId(
                 SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1, UM_ID_ORGANIZATION_SUPER);
-        Assert.assertTrue(result,
-                "Expected successful deletion of shared resource attribute by attribute type and ID.");
+        List<SharedResourceAttribute> sharedResourceAttributes =
+                resourceSharingPolicyHandlerService.getSharedResourceAttributesByTypeAndId(
+                        SHARED_ATTRIBUTE_TYPE_RESOURCE_ATTRIBUTE_1, UM_ID_RESOURCE_ATTRIBUTE_1);
+        Assert.assertEquals(sharedResourceAttributes.size(), 0);
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 32)

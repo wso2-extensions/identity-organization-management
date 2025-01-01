@@ -154,7 +154,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
+    public void deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
                                                          String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
@@ -166,14 +166,13 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
                                 sharingPolicyInitiatedOrgId);
                     });
-            return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_FAILED);
         }
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
+    public void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
                                                                   String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
 
@@ -188,7 +187,6 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
                                 sharingPolicyInitiatedOrgId);
                     });
-            return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARING_POLICY_DELETION_BY_RESOURCE_TYPE_AND_ID_FAILED);
         }
@@ -259,7 +257,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
+    public void deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType,
                                                                            String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
@@ -274,14 +272,13 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
                         sharingPolicyInitiatedOrgId);
             });
-            return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RESOURCE_SHARED_RESOURCE_ATTRIBUTE_DELETION_FAILED);
         }
     }
 
     @Override
-    public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
+    public void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
                                                                      String attributeId,
                                                                      String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtServerException {
@@ -297,7 +294,6 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID,
                                 sharingPolicyInitiatedOrgId);
                     });
-            return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_SHARED_RESOURCE_ATTRIBUTE_DELETION_BY_ATTRIBUTE_TYPE_AND_ID_FAILED);
         }

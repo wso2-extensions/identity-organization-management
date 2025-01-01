@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
@@ -99,24 +98,24 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
+    public void deleteResourceSharingPolicyRecordById(int resourceSharingPolicyId,
                                                          String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
         validateIdFormat(sharingPolicyInitiatedOrgId);
 
-        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyRecordById(resourceSharingPolicyId,
                 sharingPolicyInitiatedOrgId);
     }
 
     @Override
-    public boolean deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
+    public void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
                                                                   String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
         validateIdFormat(Arrays.asList(resourceId, sharingPolicyInitiatedOrgId));
 
-        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType,
                 resourceId, sharingPolicyInitiatedOrgId);
     }
 
@@ -150,7 +149,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
     @Override
     public List<SharedResourceAttribute> getSharedResourceAttributesBySharingPolicyId(int resourceSharingPolicyId)
-            throws ResourceSharingPolicyMgtException, DataAccessException {
+            throws ResourceSharingPolicyMgtException {
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getSharedResourceAttributesBySharingPolicyId(
                 resourceSharingPolicyId);
@@ -183,26 +182,26 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public boolean deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
+    public void deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
                                                                            SharedAttributeType sharedAttributeType,
                                                                            String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
         validateIdFormat(sharingPolicyInitiatedOrgId);
 
-        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributesByResourceSharingPolicyId(
                 resourceSharingPolicyId, sharedAttributeType, sharingPolicyInitiatedOrgId);
     }
 
     @Override
-    public boolean deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
+    public void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
                                                                      String attributeId,
                                                                      String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
         validateIdFormat(sharingPolicyInitiatedOrgId);
 
-        return RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
                 attributeId, sharingPolicyInitiatedOrgId);
     }
 
