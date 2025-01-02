@@ -320,7 +320,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     }
 
     @Override
-    public Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    public Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>
     getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtServerException {
 
@@ -347,8 +347,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         }
                     });
 
-            Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> groupedResult =
-                    result.stream()
+           return result.stream()
                             .collect(Collectors.groupingBy(
                                     ResourceSharingPolicyWithAttributes::getPolicyHoldingOrgId,
                                     Collectors.groupingBy(
@@ -357,9 +356,6 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                                                     Collectors.toList())
                                                          )
                                                           ));
-
-            return Optional.ofNullable(groupedResult.isEmpty() ? null : groupedResult);
-
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }

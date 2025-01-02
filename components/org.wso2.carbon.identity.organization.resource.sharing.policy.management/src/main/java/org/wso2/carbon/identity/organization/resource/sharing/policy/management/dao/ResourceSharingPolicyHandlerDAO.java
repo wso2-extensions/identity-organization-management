@@ -241,15 +241,15 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @param policyHoldingOrganizationIds A list of organization IDs whose resource sharing policies along with
      *                                     shared resource attributes need to be retrieved.
      *                                     Must not be {@code null} or empty.
-     * @return An {@link Optional} containing a nested map where:
+     * @return A nested map where:
      * - The first key is the organization ID.
      * - The second key is the {@link ResourceSharingPolicy}.
      * - The value is a list of {@link SharedResourceAttribute} associated with the policy.
-     * If no matching policies or attributes are found, the {@link Optional} will be empty.
+     * If no matching policies or attributes are found, an empty map will be returned.
      * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the resource sharing
-     *                                                 policies or shared attributes.
+     *                                           policies or shared attributes.
      */
-    Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>
     getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtServerException;
 }

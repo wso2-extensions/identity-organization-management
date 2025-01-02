@@ -223,7 +223,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>>
+    public Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>
     getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtException {
 

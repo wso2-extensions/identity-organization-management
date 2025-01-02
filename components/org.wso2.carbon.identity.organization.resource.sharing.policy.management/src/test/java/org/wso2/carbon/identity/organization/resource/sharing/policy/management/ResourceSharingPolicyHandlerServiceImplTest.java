@@ -775,21 +775,19 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         boolean attributesAdded = resourceSharingPolicyHandlerService.addSharedResourceAttributes(sharedAttributes);
         Assert.assertTrue(attributesAdded, "Shared resource attributes were not added successfully.");
 
-        Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>> result =
+        Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> result =
                 resourceSharingPolicyHandlerService.getResourceSharingPoliciesWithSharedAttributes(
                         policyHoldingOrganizationIds);
 
-        Assert.assertTrue(result.isPresent(), "Expected non-empty result for shared policies with attributes.");
-
-        Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> groupedResult = result.get();
-        Assert.assertEquals(groupedResult.size(), policyHoldingOrganizationIds.size(),
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.size(), policyHoldingOrganizationIds.size(),
                 "Grouped result size does not match the number of policy holding organizations.");
 
         for (String policyHoldingOrgId : policyHoldingOrganizationIds) {
-            Assert.assertTrue(groupedResult.containsKey(policyHoldingOrgId),
+            Assert.assertTrue(result.containsKey(policyHoldingOrgId),
                     "Grouped result does not contain expected organization ID: " + policyHoldingOrgId);
 
-            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policyMap = groupedResult.get(policyHoldingOrgId);
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policyMap = result.get(policyHoldingOrgId);
 
             for (Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry : policyMap.entrySet()) {
                 ResourceSharingPolicy policy = entry.getKey();
@@ -806,11 +804,11 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
         List<String> policyHoldingOrganizationIds = Collections.singletonList(UM_ID_ORGANIZATION_INVALID);
 
-        Optional<Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>> result =
+        Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>> result =
                 resourceSharingPolicyHandlerService.getResourceSharingPoliciesWithSharedAttributes(
                         policyHoldingOrganizationIds);
 
-        Assert.assertFalse(result.isPresent(), "Expected an empty Optional result when no policies are found.");
+        Assert.assertEquals(result.size(), 0);
     }
 
     @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 37)
