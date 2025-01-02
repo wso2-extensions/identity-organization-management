@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -38,6 +38,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_CONFLICT;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED;
@@ -45,6 +47,7 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
@@ -70,6 +73,25 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             }
             Resource resource = buildResourceFromValidationConfig(discoveryConfig);
             getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
+        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    @Override
+    public void updateDiscoveryConfiguration(DiscoveryConfig discoveryConfig) throws OrganizationConfigException {
+
+        try {
+            if (!isDiscoveryConfigChangeAllowed()) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
+            }
+            Optional<Resource> resourceOptional = getDiscoveryResource();
+            Resource resource = buildResourceFromValidationConfig(discoveryConfig);
+            if (!resourceOptional.isPresent()) {
+                getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
+            } else {
+                getConfigurationManager().replaceResource(RESOURCE_TYPE_NAME, resource);
+            }
         } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
             throw handleServerException(ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG, e, getOrganizationId());
         }
@@ -158,6 +180,12 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             }
             configAttributes.put(key, property.getValue());
         }
+
+        if (Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE)) &&
+                !Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_ENABLE))) {
+            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES);
+        }
+
         List<Attribute> resourceAttributes = configAttributes.entrySet().stream()
                 .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
                 .map(attribute -> new Attribute(attribute.getKey(), attribute.getValue()))
