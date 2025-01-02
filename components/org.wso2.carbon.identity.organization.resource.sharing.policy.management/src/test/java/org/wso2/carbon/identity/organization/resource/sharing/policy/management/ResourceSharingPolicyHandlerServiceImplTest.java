@@ -721,7 +721,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
 
         boolean result =
                 resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
-                        sharedResourceAttributes, UM_ID_ORGANIZATION_SUPER);
+                        sharedResourceAttributes);
 
         Assert.assertTrue(result, "Expected the method to successfully add valid attributes.");
     }
@@ -745,7 +745,7 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
                     .withTransaction(any());
 
             resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
-                    Collections.singletonList(new SharedResourceAttribute()), UM_ID_ORGANIZATION_SUPER);
+                    Collections.singletonList(new SharedResourceAttribute()));
 
             mockedStatic.verify(Utils::getNewTemplate, times(1));
         } catch (TransactionException e) {

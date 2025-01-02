@@ -207,11 +207,8 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
     @Override
     public boolean addResourceSharingPolicyWithAttributes(ResourceSharingPolicy resourceSharingPolicy,
-                                                          List<SharedResourceAttribute> sharedResourceAttributes,
-                                                          String sharingPolicyInitiatedOrgId)
+                                                          List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtException {
-
-        validateIdFormat(sharingPolicyInitiatedOrgId);
 
         List<SharedResourceAttribute> addableSharedResourceAttributes = new ArrayList<>();
 
@@ -222,7 +219,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
         }
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
-                addableSharedResourceAttributes, sharingPolicyInitiatedOrgId);
+                addableSharedResourceAttributes);
     }
 
     @Override

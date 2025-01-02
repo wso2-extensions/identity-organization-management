@@ -301,8 +301,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public boolean addResourceSharingPolicyWithAttributes(ResourceSharingPolicy resourceSharingPolicy,
-                                                          List<SharedResourceAttribute> sharedResourceAttributes,
-                                                          String sharingPolicyInitiatedOrgId)
+                                                          List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtServerException {
 
         int resourceSharingPolicyId = addResourceSharingPolicy(resourceSharingPolicy);
@@ -312,7 +311,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         try {
             addSharedResourceAttributes(sharedResourceAttributes);
         } catch (ResourceSharingPolicyMgtServerException e) {
-            deleteResourceSharingPolicyRecordById(resourceSharingPolicyId, sharingPolicyInitiatedOrgId);
+            deleteResourceSharingPolicyRecordById(resourceSharingPolicyId, resourceSharingPolicy.getInitiatingOrgId());
             throw handleServerException(
                     ERROR_CODE_RESOURCE_SHARING_POLICY_AND_SHARED_RESOURCE_ATTRIBUTE_CREATION_FAILED);
         }

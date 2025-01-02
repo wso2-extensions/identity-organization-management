@@ -215,15 +215,13 @@ public interface ResourceSharingPolicyHandlerService {
      *                                    Must not be {@code null}.
      * @param sharedResourceAttributes    A list of {@link SharedResourceAttribute} objects associated with the resource
      *                                    sharing policy. Must not be {@code null} or empty.
-     * @param sharingPolicyInitiatedOrgId The ID of the organization initiating the share request.
      * @return {@code true} if both the resource sharing policy and the shared resource attributes were added
      * successfully.
      * @throws ResourceSharingPolicyMgtException If an error occurs while adding the resource sharing policy or the
      *                                           shared resource attributes.
      */
     boolean addResourceSharingPolicyWithAttributes(ResourceSharingPolicy resourceSharingPolicy,
-                                                   List<SharedResourceAttribute> sharedResourceAttributes,
-                                                   String sharingPolicyInitiatedOrgId)
+                                                   List<SharedResourceAttribute> sharedResourceAttributes)
             throws ResourceSharingPolicyMgtException;
 
     /**
