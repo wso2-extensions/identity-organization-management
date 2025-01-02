@@ -120,7 +120,8 @@ public class SharedResourceAttribute {
 
             if (sharedAttributeType == null || sharedAttributeId == null) {
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
-                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
+                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage(),
+                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getDescription());
             }
             SharedResourceAttribute attributes = new SharedResourceAttribute();
             attributes.setResourceSharingPolicyId(this.resourceSharingPolicyId);

@@ -23,30 +23,21 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
  */
 public class ResourceSharingPolicyMgtServerException extends ResourceSharingPolicyMgtException {
 
-    public ResourceSharingPolicyMgtServerException(String message, String errorCode, String description) {
+    public ResourceSharingPolicyMgtServerException(String errorCode, String message, String description) {
 
-        super(message, errorCode, description);
+        super(errorCode, message, description);
     }
 
-    public ResourceSharingPolicyMgtServerException(String errorCode, String description) {
+    public ResourceSharingPolicyMgtServerException(String errorCode, String message, String description,
+                                                   Throwable cause) {
 
-        super(errorCode, description);
+        super(errorCode, message, description, cause);
     }
 
-    public ResourceSharingPolicyMgtServerException(Throwable cause, String errorCode, String description) {
+    public ResourceSharingPolicyMgtServerException(String errorCode, String message, String description,
+                                                   Throwable cause, boolean enableSuppression,
+                                                   boolean writableStackTrace) {
 
-        super(cause, errorCode, description);
-    }
-
-    public ResourceSharingPolicyMgtServerException(String message, Throwable cause, String errorCode,
-                                                   String description) {
-
-        super(message, cause, errorCode, description);
-    }
-
-    public ResourceSharingPolicyMgtServerException(String message, Throwable cause, boolean enableSuppression,
-                                                   boolean writableStackTrace, String errorCode, String description) {
-
-        super(message, cause, enableSuppression, writableStackTrace, errorCode, description);
+        super(errorCode, message, description, cause, enableSuppression, writableStackTrace);
     }
 }

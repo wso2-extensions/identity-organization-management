@@ -160,7 +160,8 @@ public class ResourceSharingPolicy {
                     sharingPolicy == null) {
 
                 throw new ResourceSharingPolicyMgtException(ERROR_CODE_MISSING_MANDATORY_FIELDS.getCode(),
-                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage());
+                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getMessage(),
+                        ERROR_CODE_MISSING_MANDATORY_FIELDS.getDescription());
             }
             ResourceSharingPolicy policy = new ResourceSharingPolicy();
             policy.setResourceType(this.resourceType);

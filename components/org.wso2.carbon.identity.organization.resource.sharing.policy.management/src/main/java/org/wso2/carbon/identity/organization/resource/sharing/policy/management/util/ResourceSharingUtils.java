@@ -42,7 +42,7 @@ public class ResourceSharingUtils {
         String description = String.format("%s (Resource Type: %s, Resource ID: %s)",
                 error.getDescription(), resourceType.name(), resourceId);
 
-        return new ResourceSharingPolicyMgtServerException(error.getMessage(), e, error.getCode(), description);
+        return new ResourceSharingPolicyMgtServerException(error.getCode(), error.getMessage(), description, e);
     }
 
     /**
@@ -53,7 +53,7 @@ public class ResourceSharingUtils {
      */
     public static ResourceSharingPolicyMgtServerException handleServerException(ErrorMessage error) {
 
-        return new ResourceSharingPolicyMgtServerException(error.getCode(), error.getDescription());
+        return new ResourceSharingPolicyMgtServerException(error.getCode(), error.getMessage(), error.getDescription());
     }
 
     private ResourceSharingUtils() {}

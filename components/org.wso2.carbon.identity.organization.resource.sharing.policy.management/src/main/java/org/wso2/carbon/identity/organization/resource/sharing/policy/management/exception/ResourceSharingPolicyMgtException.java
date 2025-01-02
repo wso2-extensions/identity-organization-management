@@ -26,36 +26,22 @@ public class ResourceSharingPolicyMgtException extends Exception {
     private final String errorCode;
     private final String description;
 
-    public ResourceSharingPolicyMgtException(String message, String errorCode, String description) {
+    public ResourceSharingPolicyMgtException(String errorCode, String message, String description) {
 
         super(message);
         this.errorCode = errorCode;
         this.description = description;
     }
 
-    public ResourceSharingPolicyMgtException(String errorCode, String description) {
-
-        this.errorCode = errorCode;
-        this.description = description;
-    }
-
-    public ResourceSharingPolicyMgtException(String message, Throwable cause, String errorCode, String description) {
+    public ResourceSharingPolicyMgtException(String errorCode, String message, String description, Throwable cause) {
 
         super(message, cause);
         this.errorCode = errorCode;
         this.description = description;
     }
 
-    public ResourceSharingPolicyMgtException(Throwable cause, String errorCode, String description) {
-
-        super(cause);
-        this.errorCode = errorCode;
-        this.description = description;
-    }
-
-    public ResourceSharingPolicyMgtException(String message, Throwable cause, boolean enableSuppression,
-                                             boolean writableStackTrace,
-                                             String errorCode, String description) {
+    public ResourceSharingPolicyMgtException(String errorCode, String message, String description, Throwable cause,
+                                             boolean enableSuppression, boolean writableStackTrace) {
 
         super(message, cause, enableSuppression, writableStackTrace);
         this.errorCode = errorCode;

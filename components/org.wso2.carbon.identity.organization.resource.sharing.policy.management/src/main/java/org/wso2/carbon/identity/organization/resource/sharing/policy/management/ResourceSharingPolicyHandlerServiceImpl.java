@@ -55,7 +55,8 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
         List<ResourceType> applicableResources = resourceSharingPolicy.getSharingPolicy().getApplicableResources();
         if (!applicableResources.contains(resourceSharingPolicy.getResourceType())) {
             throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getCode(),
-                    ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getMessage());
+                    ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getMessage(),
+                    ERROR_CODE_INAPPLICABLE_RESOURCE_TYPE_TO_POLICY.getDescription());
         }
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.addResourceSharingPolicy(resourceSharingPolicy);
@@ -244,7 +245,7 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         if (isInvalidId(id)) {
             throw new ResourceSharingPolicyMgtClientException(ERROR_CODE_INVALID_ID.getCode(),
-                    ERROR_CODE_INVALID_ID.getMessage());
+                    ERROR_CODE_INVALID_ID.getMessage(), ERROR_CODE_INVALID_ID.getDescription());
         }
     }
 
