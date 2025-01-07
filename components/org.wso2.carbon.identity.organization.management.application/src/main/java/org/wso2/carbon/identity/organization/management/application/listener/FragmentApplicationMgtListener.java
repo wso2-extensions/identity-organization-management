@@ -132,22 +132,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             throws IdentityApplicationManagementException {
 
         try {
-            boolean isFragmentApp = serviceProvider.getSpProperties() != null &&
-                    Arrays.stream(serviceProvider.getSpProperties()).anyMatch(
-                            property -> IS_FRAGMENT_APP.equals(property.getName()) &&
-                                    Boolean.parseBoolean(property.getValue()));
-            if (isFragmentApp) {
-                String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-                int organizationDepthInHierarchy =
-                        getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
-                if (isSubOrganization(organizationDepthInHierarchy) &&
-                        !isSharedAppFromSharingProcess(serviceProvider, tenantDomain)) {
-                    throw new IdentityApplicationManagementClientException(
-                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
-                            ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
-                }
+            String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            int organizationDepthInHierarchy =
+                    getOrganizationManager().getOrganizationDepthInHierarchy(organizationId);
+            if (isSubOrganization(organizationDepthInHierarchy) &&
+                    !isSharedAppFromInternalProcess(serviceProvider, tenantDomain)) {
+                throw new IdentityApplicationManagementClientException(
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getCode(),
+                        ERROR_CODE_SUB_ORG_CANNOT_CREATE_APP.getMessage());
             }
-            return true;
         } catch (OrganizationManagementClientException e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Organization not found for the tenant: " + tenantDomain);
@@ -591,7 +584,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
      * @param tenantDomain    The tenant domain which the service provider app is belongs to.
      * @return True if app is shared by an internal process of Asgardeo for sharing apps to sub organizations.
      */
-    private boolean isSharedAppFromSharingProcess(ServiceProvider serviceProvider, String tenantDomain) {
+    private boolean isSharedAppFromInternalProcess(ServiceProvider serviceProvider, String tenantDomain) {
 
         return serviceProvider.getSpProperties() != null && Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
