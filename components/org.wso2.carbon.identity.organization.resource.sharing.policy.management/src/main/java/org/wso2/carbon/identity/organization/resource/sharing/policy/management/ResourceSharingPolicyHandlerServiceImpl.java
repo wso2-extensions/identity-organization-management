@@ -234,6 +234,28 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
                 policyHoldingOrganizationIds);
     }
 
+    @Override
+    public void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtException {
+
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyByResourceTypeAndId(resourceType, resourceId);
+    }
+
+    @Override
+    public void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId)
+            throws ResourceSharingPolicyMgtException {
+
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteSharedResourceAttributeByAttributeTypeAndId(attributeType,
+                attributeId);
+    }
+
+    @Override
+    public void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
+            throws ResourceSharingPolicyMgtException {
+
+        RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPoliciesAndAttributesByOrganizationId(organizationId);
+    }
+
     private boolean isValidAttributeForTheResource(ResourceSharingPolicy resourceSharingPolicy,
                                                    SharedResourceAttribute sharedResourceAttribute) {
 

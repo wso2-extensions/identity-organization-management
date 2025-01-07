@@ -134,6 +134,28 @@ public class ResourceSharingSQLConstants {
                     "UM_INITIATING_ORG_ID = :" +
                     SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";)";
 
+    // SQL for deleting resource sharing policy by resource type and ID at Resource deletion.
+    public static final String DELETE_RESOURCE_SHARING_POLICY_BY_RESOURCE_TYPE_AND_ID_AT_RESOURCE_DELETION =
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+                    "UM_RESOURCE_TYPE = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
+                    "UM_RESOURCE_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + ";";
+
+    // SQL for deleting shared resource attribute by attribute type and ID at Attribute deletion.
+    public static final String DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID_AT_ATTRIBUTE_DELETION =
+            "DELETE FROM UM_SHARED_RESOURCE_ATTRIBUTES WHERE " +
+                    "UM_SHARED_ATTRIBUTE_TYPE = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_TYPE + "; AND " +
+                    "UM_SHARED_ATTRIBUTE_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ATTRIBUTE_ID + ";";
+
+    // SQL for deleting resource sharing policy by org ID.
+    public static final String DELETE_RESOURCE_SHARING_POLICY_BY_ORG_ID_AT_ATTRIBUTE_DELETION =
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+                    "UM_INITIATING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + "; OR " +
+                    "UM_POLICY_HOLDING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";";
+
     private ResourceSharingSQLConstants() {
 
     }

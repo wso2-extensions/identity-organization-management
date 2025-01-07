@@ -252,4 +252,54 @@ public interface ResourceSharingPolicyHandlerDAO {
     Map<String, Map<ResourceSharingPolicy, List<SharedResourceAttribute>>>
     getResourceSharingPoliciesWithSharedAttributes(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes a resource sharing policy based on its resource type and resource ID.
+     * <p>
+     * This method is intended to be used when a resource (e.g., user) is being deleted independently of the policies.
+     * It ensures that all related resource sharing policies associated with the specified resource are deleted
+     * as part of the resource deletion process.
+     * </p>
+     *
+     * @param resourceType The {@link ResourceType} of the resource whose policy needs to be deleted.
+     *                     Must not be {@code null}.
+     * @param resourceId   The unique identifier of the resource whose sharing policy is to be deleted.
+     *                     Must not be {@code null} or empty.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policy.
+     */
+    void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes a shared resource attribute based on its attribute type and unique identifier.
+     * <p>
+     * This method is intended to be used when a resource (e.g., roles) is being deleted independently of the policies.
+     * It ensures that all corresponding shared resource attributes associated with the specified attribute are deleted
+     * as part of the attribute deletion process.
+     * </p>
+     *
+     * @param attributeType The {@link SharedAttributeType} of the attribute to be deleted.
+     *                      Must not be {@code null}.
+     * @param attributeId   The unique identifier of the attribute to be deleted.
+     *                      Must not be {@code null} or empty.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the shared resource attribute.
+     */
+    void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId)
+            throws ResourceSharingPolicyMgtServerException;
+
+    /**
+     * Deletes all resource sharing policies and shared resource attributes associated with a given organization.
+     * <p>
+     * This method is intended to be used when an organization is being deleted. It ensures that all resource sharing
+     * policies and corresponding shared resource attributes related to the specified organization are also deleted
+     * as part of the organization's deletion process.
+     * </p>
+     *
+     * @param organizationId The unique identifier of the organization whose policies and attributes need to be deleted.
+     *                       Must not be {@code null} or empty.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while deleting the resource sharing policies
+     *                                                 or attributes.
+     */
+    void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
+            throws ResourceSharingPolicyMgtServerException;
 }
