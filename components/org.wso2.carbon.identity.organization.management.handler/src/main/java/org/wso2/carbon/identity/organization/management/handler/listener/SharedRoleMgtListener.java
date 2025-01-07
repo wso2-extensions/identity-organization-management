@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -57,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 
 /**
@@ -468,16 +469,26 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throws IdentityApplicationManagementException {
 
         try {
-            // If the deleting application is an application of tenant(i.e primary org) nothing to do here.
+            // If the tenant is not an organization, no need to handle shared roles.
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
 
-            ServiceProvider sharedApplication = getApplicationByName(applicationName, tenantDomain);
-            if (sharedApplication == null) {
+            ServiceProvider serviceProvider = getApplicationByName(applicationName, tenantDomain);
+            if (serviceProvider == null) {
                 return false;
             }
-            String sharedAppId = sharedApplication.getApplicationResourceId();
+
+            // If the application is not a fragment app in the sub organization level, no need to handle shared roles.
+            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
+                    .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                            Boolean.parseBoolean(property.getValue()));
+            if (!isFragmentApp) {
+                // Given app is a sub org level application.
+                return true;
+            }
+
+            String sharedAppId = serviceProvider.getApplicationResourceId();
             String sharedAppOrgId = organizationManager.resolveOrganizationId(tenantDomain);
             // Resolve the main application details.
             String mainAppId = orgApplicationManager.getMainApplicationIdForGivenSharedApp(sharedAppId, sharedAppOrgId);
@@ -583,22 +594,18 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                                                               String applicationUUID, String tenantDomain)
             throws IdentityApplicationManagementException {
 
-        try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
-                return true;
-            }
-            // Resolve the allowed audience for associated roles of shared application from main application details.
-            String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
-            int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
-            String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
-            String resolvedAllowedAudienceFromMainApp =
-                    applicationManagementService.getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain);
-            allowedAudienceForRoleAssociation.setAllowedAudience(resolvedAllowedAudienceFromMainApp);
-        } catch (OrganizationManagementException e) {
-            throw new IdentityApplicationManagementException(String.format(
-                    "Error while fetching the allowed audience for role association of application with: %s.",
-                    applicationUUID), e);
+        String mainAppId = applicationManagementService.getMainAppId(applicationUUID);
+        // If the main application id is null, then this is the main application. We can skip this operation
+        // based on that.
+        if (StringUtils.isEmpty(mainAppId)) {
+            return true;
         }
+        // Resolve the allowed audience for associated roles of shared application from main application details.
+        int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
+        String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+        String resolvedAllowedAudienceFromMainApp =
+                applicationManagementService.getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain);
+        allowedAudienceForRoleAssociation.setAllowedAudience(resolvedAllowedAudienceFromMainApp);
         return true;
     }
 
