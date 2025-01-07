@@ -101,7 +101,7 @@ public class FragmentApplicationMgtListenerTest {
 
         return new Object[][]{
                 // Create application in sub-organization.
-                {"orgId2", 2, tenantDomain, false, true},
+                {"orgId2", 2, tenantDomain, false, false},
                 // Create an application in a sub-organization, and it's marked as a fragment app.
                 {"orgId3", 2, tenantDomain, true, true},
                 // Create an application marked as a fragmented app by an internal process of primaryTenantDomain.
