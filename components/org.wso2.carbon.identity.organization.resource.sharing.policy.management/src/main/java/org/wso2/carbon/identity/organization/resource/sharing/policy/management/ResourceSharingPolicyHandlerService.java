@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
@@ -253,8 +254,11 @@ public interface ResourceSharingPolicyHandlerService {
      * @param resourceId   The unique identifier of the resource whose sharing policy is to be deleted.
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the resource sharing policy.
      */
-    void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
-            throws ResourceSharingPolicyMgtException;
+    default void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+    }
 
     /**
      * Deletes a shared resource attribute based on its attribute type and unique identifier.
@@ -266,8 +270,12 @@ public interface ResourceSharingPolicyHandlerService {
      * @param attributeId   The unique identifier of the attribute to be deleted.
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the shared resource attribute.
      */
-    void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId)
-            throws ResourceSharingPolicyMgtException;
+    default void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType,
+                                                                   String attributeId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+    }
 
     /**
      * Deletes all resource sharing policies and shared resource attributes associated with a given organization.
@@ -279,6 +287,9 @@ public interface ResourceSharingPolicyHandlerService {
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the resource sharing policies or
      *                                           attributes.
      */
-    void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
-            throws ResourceSharingPolicyMgtException;
+    default void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+    }
 }
