@@ -432,6 +432,49 @@ public class ResourceSharingPolicyHandlerServiceImplTest {
         }
     }
 
+    @Test(priority = 14)
+    public void testDeleteResourceSharingPolicyInOrgByResourceTypeAndIdSuccess() throws Exception {
+
+        ResourceSharingPolicy resourceSharingPolicy = new ResourceSharingPolicy.Builder()
+                .withResourceId(UM_ID_RESOURCE_1)
+                .withResourceType(RESOURCE_TYPE_RESOURCE_1)
+                .withInitiatingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withPolicyHoldingOrgId(UM_ID_ORGANIZATION_SUPER)
+                .withSharingPolicy(PolicyEnum.SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN)
+                .build();
+
+        int addedPolicyId = resourceSharingPolicyHandlerService.addResourceSharingPolicy(resourceSharingPolicy);
+
+        // Deleting the added policy
+        resourceSharingPolicyHandlerService.deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                UM_ID_ORGANIZATION_SUPER, RESOURCE_TYPE_RESOURCE_1, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+
+        // Verifying that the policy is deleted
+        Optional<ResourceSharingPolicy> deletedPolicy =
+                resourceSharingPolicyHandlerService.getResourceSharingPolicyById(addedPolicyId);
+        Assert.assertFalse(deletedPolicy.isPresent());
+    }
+
+    @Test(expectedExceptions = ResourceSharingPolicyMgtServerException.class, priority = 15)
+    public void testDeleteResourceSharingPolicyInOrgByResourceTypeAndIdFailure()
+            throws ResourceSharingPolicyMgtException {
+
+        NamedJdbcTemplate mockJdbcTemplate = mock(NamedJdbcTemplate.class);
+
+        try (MockedStatic<Utils> mockedStatic = mockStatic(Utils.class)) {
+            mockedStatic.when(Utils::getNewTemplate).thenReturn(mockJdbcTemplate);
+            doThrow(new DataAccessException(MOCKED_DATA_ACCESS_EXCEPTION)).when(mockJdbcTemplate)
+                    .executeUpdate(anyString(), any());
+
+            resourceSharingPolicyHandlerService.deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                    UM_ID_ORGANIZATION_SUPER, RESOURCE_TYPE_RESOURCE_1, UM_ID_RESOURCE_1, UM_ID_ORGANIZATION_SUPER);
+
+            mockedStatic.verify(Utils::getNewTemplate, times(1));
+        } catch (DataAccessException e) {
+            throw new TestException(e);
+        }
+    }
+
     // Tests: CREATE Shared Resource Attributes Records.
     @Test(priority = 16)
     public void testAddSharedResourceAttributesSuccess() throws Exception {
