@@ -130,7 +130,6 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
 
         RESOURCE_SHARING_POLICY_HANDLER_DAO.deleteResourceSharingPolicyInOrgByResourceTypeAndId(policyHoldingOrgId,
                 resourceType, resourceId, sharingPolicyInitiatedOrgId);
-
     }
 
     @Override
