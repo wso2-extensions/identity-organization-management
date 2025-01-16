@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -52,6 +52,8 @@ public class UserSharingConstants {
     public static final String PRIMARY_DOMAIN = "PRIMARY";
     public static final String AUTHENTICATION_TYPE = "authenticationType";
     public static final String APPLICATION_AUTHENTICATION_TYPE = "APPLICATION";
+
+    public static final String USER_UNSHARING_RESTRICTION = "RESTRICTED";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,

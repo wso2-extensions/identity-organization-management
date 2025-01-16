@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -23,10 +23,23 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
  */
 public class UserAssociation {
 
+    private int id;
     private String userId;
     private String organizationId;
     private String associatedUserId;
     private String userResidentOrganizationId;
+    private String sharedType;
+    private String editRestriction;
+
+    public int getId() {
+
+        return id;
+    }
+
+    public void setId(int id) {
+
+        this.id = id;
+    }
 
     public String getUserId() {
 
@@ -66,5 +79,25 @@ public class UserAssociation {
     public void setUserResidentOrganizationId(String userResidentOrganizationId) {
 
         this.userResidentOrganizationId = userResidentOrganizationId;
+    }
+
+    public String getSharedType() {
+
+        return sharedType;
+    }
+
+    public void setSharedType(String sharedType) {
+
+        this.sharedType = sharedType;
+    }
+
+    public String getEditRestriction() {
+
+        return editRestriction;
+    }
+
+    public void setEditRestriction(String editRestriction) {
+
+        this.editRestriction = editRestriction;
     }
 }

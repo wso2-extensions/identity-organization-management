@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -33,6 +33,7 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -41,8 +42,10 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_UNSHARING_RESTRICTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
@@ -110,18 +113,19 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         List<UserAssociation> userAssociationList =
                 organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(associatedUserId, associatedOrgId);
         // Removing the shared users from the shared organizations.
-        for (UserAssociation userAssociation : userAssociationList) {
-            String organizationId = userAssociation.getOrganizationId();
-            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
-            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            try {
-                AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-                sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
-            } catch (UserStoreException e) {
-                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
-                        userAssociation.getUserId(), organizationId);
-            }
-        }
+        removeSharedUsers(userAssociationList);
+        return true;
+    }
+
+    @Override
+    public boolean unshareOrganizationUserInSharedOrganization(String associatedUserId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        UserAssociation userAssociation =
+                organizationUserSharingDAO.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, sharedOrgId);
+
+        // Removing the shared users from the shared organization.
+        removeSharedUsers(Collections.singletonList(userAssociation));
         return true;
     }
 
@@ -168,5 +172,25 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
         UUID uuid = UUID.randomUUID();
         return uuid.toString().substring(0, 12);
+    }
+
+    private void removeSharedUsers(List<UserAssociation> userAssociationList) throws OrganizationManagementException {
+
+        for (UserAssociation userAssociation : userAssociationList) {
+            if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
+                    !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+                continue;
+            }
+            String organizationId = userAssociation.getOrganizationId();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            try {
+                AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
+                sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
+            } catch (UserStoreException e) {
+                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
+                        userAssociation.getUserId(), organizationId);
+            }
+        }
     }
 }
