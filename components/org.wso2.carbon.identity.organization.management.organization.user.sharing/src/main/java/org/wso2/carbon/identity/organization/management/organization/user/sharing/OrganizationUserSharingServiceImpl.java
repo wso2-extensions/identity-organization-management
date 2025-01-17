@@ -113,7 +113,9 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         List<UserAssociation> userAssociationList =
                 organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(associatedUserId, associatedOrgId);
         // Removing the shared users from the shared organizations.
-        removeSharedUsers(userAssociationList);
+        for (UserAssociation userAssociation : userAssociationList) {
+            removeSharedUser(userAssociation);
+        }
         return true;
     }
 
@@ -124,8 +126,8 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         UserAssociation userAssociation =
                 organizationUserSharingDAO.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, sharedOrgId);
 
-        // Removing the shared users from the shared organization.
-        removeSharedUsers(Collections.singletonList(userAssociation));
+        // Removing the shared user from the shared organization.
+        removeSharedUser(userAssociation);
         return true;
     }
 
@@ -174,23 +176,22 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         return uuid.toString().substring(0, 12);
     }
 
-    private void removeSharedUsers(List<UserAssociation> userAssociationList) throws OrganizationManagementException {
+    private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        for (UserAssociation userAssociation : userAssociationList) {
-            if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
-                    !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
-                continue;
-            }
-            String organizationId = userAssociation.getOrganizationId();
-            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
-            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            try {
-                AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-                sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
-            } catch (UserStoreException e) {
-                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
-                        userAssociation.getUserId(), organizationId);
-            }
+        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
+                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+            return;
+        }
+
+        String organizationId = userAssociation.getOrganizationId();
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+        try {
+            AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
+            sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
+        } catch (UserStoreException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
+                    userAssociation.getUserId(), organizationId);
         }
     }
 }
