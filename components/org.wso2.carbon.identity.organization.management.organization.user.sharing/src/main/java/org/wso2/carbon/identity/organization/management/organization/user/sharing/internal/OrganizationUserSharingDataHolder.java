@@ -22,6 +22,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -37,6 +38,7 @@ public class OrganizationUserSharingDataHolder {
     private OrganizationUserSharingService organizationUserSharingService;
     private ApplicationManagementService applicationManagementService;
     private RoleManager roleManager;
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -161,5 +163,26 @@ public class OrganizationUserSharingDataHolder {
     public void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         this.applicationManagementService = applicationManagementService;
+    }
+
+    /**
+     * Get the Resource Sharing Policy Handler service.
+     *
+     * @return Resource Sharing Policy Handler service.
+     */
+    public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
+
+        return resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Set the oResource Sharing Policy Handler service.
+     *
+     * @param resourceSharingPolicyHandlerService Resource Sharing Policy Handler service.
+     */
+    public void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 }

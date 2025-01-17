@@ -25,6 +25,9 @@ public class SQLConstants {
 
     public static final String CREATE_ORGANIZATION_USER_ASSOCIATION = "INSERT INTO UM_ORG_USER_ASSOCIATION(" +
             "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID) VALUES(?, ?, ?, ?)";
+    public static final String CREATE_ORGANIZATION_USER_ASSOCIATION_EXTENDED = "INSERT INTO UM_ORG_USER_ASSOCIATION(" +
+            "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, " +
+            "UM_ASSOCIATION_INITIATED_ORG_ID, UM_ASSOCIATION_TYPE) VALUES(?, ?, ?, ?, ?, ?)";
     public static final String DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER = "DELETE FROM " +
             "UM_ORG_USER_ASSOCIATION WHERE UM_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
     public static final String DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER = "DELETE FROM " +
@@ -38,15 +41,27 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER = "SELECT UM_USER_ID, UM_ORG_ID, " +
             "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_USER_ID = ? AND UM_ORG_ID = ?";
+    public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER_BY_USER_ID =
+            "SELECT UM_USER_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID " +
+                    "FROM UM_ORG_USER_ASSOCIATION WHERE UM_USER_ID = ?";
+    public static final String CHECK_COLUMN_EXISTENCE_IN_TABLE =
+            "SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+
+    public static final String DEFAULT_VALUE_NOT_SPECIFIED = "NOT_SPECIFIED";
+
     /**
      * SQL placeholders related to organization user sharing SQL operations.
      */
     public static final class SQLPlaceholders {
 
+        public static final String TABLE_NAME_UM_ORG_USER_ASSOCIATION = "UM_ORG_USER_ASSOCIATION";
         public static final String COLUMN_NAME_USER_ID = "UM_USER_ID";
         public static final String COLUMN_NAME_ORG_ID = "UM_ORG_ID";
         public static final String COLUMN_NAME_ASSOCIATED_USER_ID = "UM_ASSOCIATED_USER_ID";
         public static final String COLUMN_NAME_ASSOCIATED_ORG_ID = "UM_ASSOCIATED_ORG_ID";
+        public static final String COLUMN_NAME_ASSOCIATION_INITIATED_ORG_ID = "UM_ASSOCIATION_INITIATED_ORG_ID";
+        public static final String COLUMN_NAME_ASSOCIATION_TYPE = "UM_ASSOCIATION_TYPE";
+        public static final String COUNT_ALIAS = "count";
     }
 
 }
