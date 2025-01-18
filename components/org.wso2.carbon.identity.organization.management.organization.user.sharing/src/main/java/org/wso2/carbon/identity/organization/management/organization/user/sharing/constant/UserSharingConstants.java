@@ -187,6 +187,17 @@ public class UserSharingConstants {
         ERROR_CODE_USER_UNSHARE("10038",
                 "Error occurred during user unshare operation.",
                 "An unexpected error occurred while unsharing the user."),
+        ERROR_CODE_GET_ROLE_IDS("10039",
+                "Error occurred while retrieving role IDs.",
+                "An unexpected error occurred during the retrieval of role IDs for the provided roles with " +
+                        "audience details."),
+        ERROR_CODE_INVALID_AUDIENCE_TYPE("10040",
+                "Invalid audience type provided.",
+                "The audience type '%s' is invalid. Allowed types are 'ORGANIZATION' and 'APPLICATION'."),
+        ERROR_CODE_INVALID_POLICY("10041",
+                "Invalid policy provided: %s",
+                "The policy '%s' is not recognized or supported for determining organizations to share " +
+                        "the user with."),
         ;
 
         private final String code;
