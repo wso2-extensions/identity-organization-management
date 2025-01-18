@@ -198,6 +198,10 @@ public class UserSharingConstants {
                 "Invalid policy provided: %s",
                 "The policy '%s' is not recognized or supported for determining organizations to share " +
                         "the user with."),
+        ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS("10042",
+                "Error occurred while retrieving immediate child organizations.",
+                "An unexpected error occurred while fetching immediate child organizations for the " +
+                        "sharing initiated organization with ID: %s."),
         ;
 
         private final String code;
