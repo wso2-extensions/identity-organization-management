@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2021-2024, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2021-2025, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -570,7 +570,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>7.7.15</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.7.95</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 

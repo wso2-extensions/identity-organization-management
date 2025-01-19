@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -28,6 +28,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
@@ -147,5 +148,24 @@ public class OrganizationUserSharingServiceComponent {
     protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         OrganizationUserSharingDataHolder.getInstance().setApplicationManagementService(null);
+    }
+
+    @Reference(
+            name = "claim.metadata.management.service",
+            service = ClaimMetadataManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetClaimMetadataManagementService"
+    )
+    protected void setClaimMetadataManagementService(ClaimMetadataManagementService claimManagementService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setClaimManagementService(claimManagementService);
+        LOG.debug("Set Claim Metadata Management Service.");
+    }
+
+    protected void unsetClaimMetadataManagementService(ClaimMetadataManagementService claimManagementService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setClaimManagementService(null);
+        LOG.debug("Unset Claim Metadata Management Service.");
     }
 }
