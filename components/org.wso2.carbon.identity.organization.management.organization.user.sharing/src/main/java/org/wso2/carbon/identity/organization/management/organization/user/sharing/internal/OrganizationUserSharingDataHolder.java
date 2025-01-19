@@ -40,7 +40,6 @@ public class OrganizationUserSharingDataHolder {
     private RoleManager roleManager;
     private ClaimMetadataManagementService claimManagementService;
 
-
     public static OrganizationUserSharingDataHolder getInstance() {
 
         return instance;
