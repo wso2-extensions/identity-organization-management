@@ -162,8 +162,8 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
-                // There is no shared users in root organizations. Hence, return.
-                return true;
+                // There is no shared users in root organizations. Hence, return false.
+                return false;
             }
             if (StringUtils.isBlank(currentOrganizationId)) {
                 currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
@@ -173,14 +173,14 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                     OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
                             .getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
-                // User is not a shared user. Hence, return.
-                return true;
+                // User is not a shared user. Hence, return false.
+                return false;
             }
         } catch (OrganizationManagementException e) {
             throw new UserStoreClientException(
                     "Error while checking the user association of the user: " + userID + " with the organization: " +
                             currentOrganizationId, e);
         }
-        return false;
+        return true;
     }
 }
