@@ -316,9 +316,16 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
     @Test
     public void testGetExecutionOrderId() {
 
-        SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
-                new SharedUserProfileUpdateGovernanceEventListener();
-        assertEquals(sharedUserProfileUpdateGovernanceEventListener.getExecutionOrderId(), 8);
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            identityUtil.when(() -> IdentityUtil.readEventListenerProperty(anyString(), anyString()))
+                    .thenReturn(identityEventListenerConfig);
+            when(identityEventListenerConfig.getOrder()).thenReturn(9);
+            SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
+                    new SharedUserProfileUpdateGovernanceEventListener();
+            assertEquals(sharedUserProfileUpdateGovernanceEventListener.getExecutionOrderId(), 9);
+            when(identityEventListenerConfig.getOrder()).thenReturn(-1);
+            assertEquals(sharedUserProfileUpdateGovernanceEventListener.getExecutionOrderId(), 8);
+        }
     }
 
     private void setUpClaims() throws ClaimMetadataException {
