@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -30,6 +31,8 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
+import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
@@ -83,6 +86,8 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
     OrganizationUserSharingService organizationUserSharingService;
     @Mock
     private UserStoreManager userStoreManager;
+    @Mock
+    IdentityEventListenerConfig identityEventListenerConfig;
     private MockedStatic<OrganizationManagementUtil> organizationManagementUtilMockedStatic;
     MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
 
@@ -275,6 +280,27 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
                 assertEquals(e.getMessage(), String.format(
                         String.format("Claim: %s is not allowed to be updated for shared users.", claimURI)));
             }
+        }
+    }
+
+    @Test
+    public void testSharedUserProfileUpdateGovernanceEventListenerDisabledState() throws Exception {
+
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+
+            identityUtil.when(() -> IdentityUtil.readEventListenerProperty(anyString(), anyString()))
+                    .thenReturn(identityEventListenerConfig);
+            when(identityEventListenerConfig.getEnable()).thenReturn("false");
+
+            SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
+                    new SharedUserProfileUpdateGovernanceEventListener();
+            assertTrue(sharedUserProfileUpdateGovernanceEventListener.doPreSetUserClaimValueWithID(
+                    SHARED_USER_OF_USER_1_IN_L1_ORG, GIVEN_NAME_CLAIM, "John", DEFAULT_PROFILE, userStoreManager));
+
+            Map<String, String> claimMapWithFromOriginResolvedClaim = new HashMap<>();
+            claimMapWithFromOriginResolvedClaim.put(GIVEN_NAME_CLAIM, "John");
+            assertTrue(sharedUserProfileUpdateGovernanceEventListener.doPreSetUserClaimValuesWithID(USER_1_IN_ROOT,
+                    claimMapWithFromOriginResolvedClaim, DEFAULT_PROFILE, userStoreManager));
         }
     }
 

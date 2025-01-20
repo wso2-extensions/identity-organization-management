@@ -170,6 +170,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/constant/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/internal/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/models/*.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
