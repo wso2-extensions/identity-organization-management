@@ -89,7 +89,7 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
     @Mock
     IdentityEventListenerConfig identityEventListenerConfig;
     private MockedStatic<OrganizationManagementUtil> organizationManagementUtilMockedStatic;
-    MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
+    private MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
 
     @BeforeClass
     public void init() {
