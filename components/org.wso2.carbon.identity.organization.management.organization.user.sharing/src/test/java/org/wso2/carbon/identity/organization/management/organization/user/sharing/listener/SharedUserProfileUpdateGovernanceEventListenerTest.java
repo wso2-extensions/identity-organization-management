@@ -174,8 +174,11 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
                         L1_ORG_ID, true, true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, claimMapWithFromHierarchyResolvingClaim, L1_ORG_TENANT_DOMAIN,
                         L1_ORG_ID, true, true},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, claimMapWithFromHierarchyResolvingClaim, L1_ORG_TENANT_DOMAIN,
+                        null, true, true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, claimMapWithInvalidClaim, L1_ORG_TENANT_DOMAIN, L1_ORG_ID,
                         true, true},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, new HashMap<>(), L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true, true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, claimMapWithFromOriginResolvedClaim, L1_ORG_TENANT_DOMAIN, L1_ORG_ID,
                         true, false},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, claimMapWithBlankResolvingMethodClaim, L1_ORG_TENANT_DOMAIN,
@@ -193,6 +196,8 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
         mockCarbonContextForTenant(tenantDomain, organizationId, privilegedCarbonContext);
         organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
                 .thenReturn(isOrganization);
+        when(organizationManager.resolveOrganizationId(ROOT_TENANT_DOMAIN)).thenReturn(ROOT_ORG_ID);
+        when(organizationManager.resolveOrganizationId(L1_ORG_TENANT_DOMAIN)).thenReturn(L1_ORG_ID);
 
         SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
                 new SharedUserProfileUpdateGovernanceEventListener();
@@ -246,8 +251,10 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
                         true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, CUSTOM_CLAIM_1, "value1", L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
                         true},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, CUSTOM_CLAIM_1, "value1", L1_ORG_TENANT_DOMAIN, null, true, true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, INVALID_CLAIM, "invalid", L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
                         true},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, null, null, L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true, true},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, GIVEN_NAME_CLAIM, "John", L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
                         false},
                 {SHARED_USER_OF_USER_1_IN_L1_ORG, CUSTOM_CLAIM_2, "value2", L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
@@ -265,6 +272,8 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
         mockCarbonContextForTenant(tenantDomain, organizationId, privilegedCarbonContext);
         organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
                 .thenReturn(isOrganization);
+        when(organizationManager.resolveOrganizationId(ROOT_TENANT_DOMAIN)).thenReturn(ROOT_ORG_ID);
+        when(organizationManager.resolveOrganizationId(L1_ORG_TENANT_DOMAIN)).thenReturn(L1_ORG_ID);
 
         SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
                 new SharedUserProfileUpdateGovernanceEventListener();
@@ -302,6 +311,14 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
             assertTrue(sharedUserProfileUpdateGovernanceEventListener.doPreSetUserClaimValuesWithID(USER_1_IN_ROOT,
                     claimMapWithFromOriginResolvedClaim, DEFAULT_PROFILE, userStoreManager));
         }
+    }
+
+    @Test
+    public void testGetExecutionOrderId() {
+
+        SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
+                new SharedUserProfileUpdateGovernanceEventListener();
+        assertEquals(sharedUserProfileUpdateGovernanceEventListener.getExecutionOrderId(), 8);
     }
 
     private void setUpClaims() throws ClaimMetadataException {
