@@ -344,7 +344,13 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
 
                 userClaimSearchEntry.setClaims(aggregatedProfileClaims);
                 UserClaimSearchEntry searchEntryObject = userClaimSearchEntry.getUserClaimSearchEntry();
-                searchEntryObject.setClaims(aggregatedProfileClaims);
+                if (searchEntryObject != null) {
+                    searchEntryObject.setClaims(aggregatedProfileClaims);
+                } else {
+                    UserClaimSearchEntry userClaimSearchEntryForUser = new UserClaimSearchEntry();
+                    userClaimSearchEntryForUser.setClaims(aggregatedProfileClaims);
+                    userClaimSearchEntry.setUserClaimSearchEntry(userClaimSearchEntryForUser);
+                }
             }
         } catch (OrganizationManagementException | org.wso2.carbon.user.api.UserStoreException |
                  ClaimMetadataException | OrgResourceHierarchyTraverseException e) {

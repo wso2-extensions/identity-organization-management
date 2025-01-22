@@ -18,11 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
@@ -45,12 +46,16 @@ import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
+import org.wso2.carbon.user.core.model.UniqueIDUserClaimSearchEntry;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -84,9 +89,10 @@ public class SharedUserOperationEventListenerTest {
     private static final String L2_ORG_TENANT_DOMAIN = "bf75bafa-605b-4d0b-add2-d5021217c5c4";
     private static final String USER_1_USER_GIVEN_NAME = "John";
     private static final String USER_1_IN_ROOT = "user-id-1";
-    private static final String SHARED_USER_OF_USER_1_IN_L1_ORG = "user-id-L1";
-    private static final String SHARED_USER_OF_USER_1_IN_L2_ORG = "user-id-L2";
-    private static final String USER_2_IN_L1_ORG = "user-id-2";
+    private static final String USER_2_IN_ROOT = "user-id-2";
+    private static final String SHARED_USER_OF_USER_1_IN_L1_ORG = "user-id-1-L1";
+    private static final String SHARED_USER_OF_USER_1_IN_L2_ORG = "user-id-1-L2";
+    private static final String USER_2_IN_L1_ORG = "user-id-2-L1";
     private static final String GROUPS_CLAIM = "http://wso2.org/claims/groups";
     private static final String GIVEN_NAME_CLAIM = "http://wso2.org/claims/givenname";
     private static final String CUSTOM_CLAIM_1 = "http://wso2.org/claims/customAttribute1";
@@ -115,7 +121,7 @@ public class SharedUserOperationEventListenerTest {
     private MockedStatic<PrivilegedCarbonContext> privilegedCarbonContext;
     private MockedStatic<IdentityTenantUtil> identityTenantUtil;
 
-    @BeforeClass
+    @BeforeMethod
     public void init() {
 
         // Open mock objects for the current test instance.
@@ -139,7 +145,7 @@ public class SharedUserOperationEventListenerTest {
     /**
      * Resets mock services after test class to ensure a clean state for subsequent tests.
      */
-    @AfterClass
+    @AfterMethod
     public void tearDown() {
 
         reset(organizationManager);
@@ -337,6 +343,159 @@ public class SharedUserOperationEventListenerTest {
             boolean listenerStatus =
                     sharedUserOperationEventListener.doPostGetUserClaimValueWithID(userId,
                             claimURI, new ArrayList<>(), DEFAULT_PROFILE, userStoreManager);
+            verify(orgResourceResolverService, times(claimResolverCalledTimes)).getResourcesFromOrgHierarchy(
+                    anyString(), any(), any());
+            assertTrue(listenerStatus);
+        }
+    }
+
+    @DataProvider(name = "dataProviderForTestDoPostGetUserClaimValuesWithID")
+    public Object[][] dataProviderForTestDoPostGetUserClaimValuesWithID() {
+
+        String[] claimsSetWithOutHierarchyResolvingClaim = {GIVEN_NAME_CLAIM, GROUPS_CLAIM};
+
+        Map<String, String> claimsOfRootUserWithOutHierarchyResolvingClaim = new HashMap<>();
+        claimsOfRootUserWithOutHierarchyResolvingClaim.put(GIVEN_NAME_CLAIM, USER_1_USER_GIVEN_NAME);
+        claimsOfRootUserWithOutHierarchyResolvingClaim.put(GROUPS_CLAIM, "group1");
+
+        Map<String, String> claimsOfSharedUserInL1WithOutHierarchyResolvingClaim = new HashMap<>();
+        claimsOfSharedUserInL1WithOutHierarchyResolvingClaim.put(GIVEN_NAME_CLAIM, StringUtils.EMPTY);
+        claimsOfSharedUserInL1WithOutHierarchyResolvingClaim.put(GROUPS_CLAIM, "group1,group2");
+
+        String[] claimsSetWithHierarchyResolvingClaim = {GIVEN_NAME_CLAIM, GROUPS_CLAIM, CUSTOM_CLAIM_1};
+
+        Map<String, String> claimsOfRootUser = new HashMap<>();
+        claimsOfRootUser.put(GIVEN_NAME_CLAIM, USER_1_USER_GIVEN_NAME);
+        claimsOfRootUser.put(GROUPS_CLAIM, "group1");
+        claimsOfRootUser.put(CUSTOM_CLAIM_1, StringUtils.EMPTY);
+
+        Map<String, String> claimsOfSharedUserInL1 = new HashMap<>();
+        claimsOfSharedUserInL1.put(GIVEN_NAME_CLAIM, StringUtils.EMPTY);
+        claimsOfSharedUserInL1.put(GROUPS_CLAIM, "group1,group2");
+        claimsOfSharedUserInL1.put(CUSTOM_CLAIM_1, "value1");
+
+        return new Object[][]{
+                {USER_1_IN_ROOT, ROOT_TENANT_DOMAIN, ROOT_ORG_ID, false, claimsSetWithOutHierarchyResolvingClaim,
+                        claimsOfRootUserWithOutHierarchyResolvingClaim, 0},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
+                        claimsSetWithOutHierarchyResolvingClaim, claimsOfSharedUserInL1WithOutHierarchyResolvingClaim,
+                        0},
+                {USER_1_IN_ROOT, ROOT_TENANT_DOMAIN, ROOT_ORG_ID, false, claimsSetWithHierarchyResolvingClaim,
+                        claimsOfRootUser, 0},
+                {SHARED_USER_OF_USER_1_IN_L1_ORG, L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
+                        claimsSetWithHierarchyResolvingClaim, claimsOfSharedUserInL1, 1},
+        };
+    }
+
+    @Test(dataProvider = "dataProviderForTestDoPostGetUserClaimValuesWithID")
+    public void testDoPostGetUserClaimValuesWithID(String userId, String tenantDomain, String organizationId,
+                                                   boolean isOrganization, String[] claimsSet,
+                                                   Map<String, String> claimValues, int claimResolverCalledTimes)
+            throws Exception {
+
+        setUpClaims();
+        setUpUserSharing();
+        mockCarbonContextForTenant(tenantDomain, organizationId, privilegedCarbonContext);
+        mockOrgIdResolverByTenantDomain();
+        organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
+                .thenReturn(isOrganization);
+        identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(tenantUserRealm);
+        when(tenantUserRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockListenerEnabledStatus(true, true, identityUtil);
+            SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
+            boolean listenerStatus =
+                    sharedUserOperationEventListener.doPostGetUserClaimValuesWithID(userId, claimsSet, DEFAULT_PROFILE,
+                            claimValues, userStoreManager);
+            verify(orgResourceResolverService, times(claimResolverCalledTimes)).getResourcesFromOrgHierarchy(
+                    anyString(), any(), any());
+            assertTrue(listenerStatus);
+        }
+    }
+
+    @DataProvider(name = "dataProviderForTestDoPostGetUsersClaimValuesWithID")
+    public Object[][] dataProviderForTestDoPostGetUsersClaimValuesWithID() {
+
+        String[] claimsSetWithOutHierarchyResolvingClaim = {GIVEN_NAME_CLAIM, GROUPS_CLAIM};
+        List<String> claimsListWithOutHierarchyResolvingClaim =
+                new ArrayList<>(Arrays.asList(claimsSetWithOutHierarchyResolvingClaim));
+
+        String[] claimsSetWithHierarchyResolvingClaim = {GIVEN_NAME_CLAIM, GROUPS_CLAIM, CUSTOM_CLAIM_1};
+        List<String> claimsListWithWithHierarchyResolvingClaim =
+                new ArrayList<>(Arrays.asList(claimsSetWithHierarchyResolvingClaim));
+
+        Map<String, String> claimsOfRootUsers = new HashMap<>();
+        claimsOfRootUsers.put(GIVEN_NAME_CLAIM, USER_1_USER_GIVEN_NAME);
+        claimsOfRootUsers.put(GROUPS_CLAIM, "group1");
+        claimsOfRootUsers.put(CUSTOM_CLAIM_1, StringUtils.EMPTY);
+
+        Map<String, String> claimsOfUsersInL1 = new HashMap<>();
+        claimsOfUsersInL1.put(GIVEN_NAME_CLAIM, StringUtils.EMPTY);
+        claimsOfUsersInL1.put(GROUPS_CLAIM, "group1,group2");
+        claimsOfUsersInL1.put(CUSTOM_CLAIM_1, "value1");
+
+        String[] rootOrgUsersIdList = {USER_1_IN_ROOT, USER_2_IN_ROOT};
+        String[] orgL1UsersIdList = {SHARED_USER_OF_USER_1_IN_L1_ORG, USER_2_IN_L1_ORG};
+
+        UniqueIDUserClaimSearchEntry rootUser1ClaimSearchEntry = new UniqueIDUserClaimSearchEntry();
+        rootUser1ClaimSearchEntry.setUser(new User(USER_1_IN_ROOT));
+        rootUser1ClaimSearchEntry.setClaims(claimsOfRootUsers);
+
+        UniqueIDUserClaimSearchEntry rootUser2ClaimSearchEntry = new UniqueIDUserClaimSearchEntry();
+        rootUser2ClaimSearchEntry.setUser(new User(USER_2_IN_ROOT));
+        rootUser2ClaimSearchEntry.setClaims(claimsOfRootUsers);
+
+        ArrayList<UniqueIDUserClaimSearchEntry> uniqueIDUserClaimSearchEntriesOfRootUsers = new ArrayList<>();
+        uniqueIDUserClaimSearchEntriesOfRootUsers.add(rootUser1ClaimSearchEntry);
+        uniqueIDUserClaimSearchEntriesOfRootUsers.add(rootUser2ClaimSearchEntry);
+
+        UniqueIDUserClaimSearchEntry sharedUser1ClaimSearchEntry = new UniqueIDUserClaimSearchEntry();
+        sharedUser1ClaimSearchEntry.setUser(new User(SHARED_USER_OF_USER_1_IN_L1_ORG));
+        sharedUser1ClaimSearchEntry.setClaims(claimsOfUsersInL1);
+
+        UniqueIDUserClaimSearchEntry user2InL1OrgClaimSearchEntry = new UniqueIDUserClaimSearchEntry();
+        user2InL1OrgClaimSearchEntry.setUser(new User(USER_2_IN_L1_ORG));
+        user2InL1OrgClaimSearchEntry.setClaims(claimsOfUsersInL1);
+
+        ArrayList<UniqueIDUserClaimSearchEntry> uniqueIDUserClaimSearchEntriesOfUsersInL1Org = new ArrayList<>();
+        uniqueIDUserClaimSearchEntriesOfUsersInL1Org.add(sharedUser1ClaimSearchEntry);
+        uniqueIDUserClaimSearchEntriesOfUsersInL1Org.add(user2InL1OrgClaimSearchEntry);
+
+        return new Object[][]{
+                {new ArrayList<>(Arrays.asList(rootOrgUsersIdList)), ROOT_TENANT_DOMAIN, ROOT_ORG_ID, false,
+                        claimsListWithOutHierarchyResolvingClaim, uniqueIDUserClaimSearchEntriesOfRootUsers, 0},
+                {new ArrayList<>(Arrays.asList(orgL1UsersIdList)), L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
+                        claimsListWithOutHierarchyResolvingClaim, uniqueIDUserClaimSearchEntriesOfUsersInL1Org, 0},
+                {new ArrayList<>(Arrays.asList(rootOrgUsersIdList)), ROOT_TENANT_DOMAIN, ROOT_ORG_ID, false,
+                        claimsListWithOutHierarchyResolvingClaim, uniqueIDUserClaimSearchEntriesOfRootUsers, 0},
+                // Claim resolver invokes only for shared user.
+                {new ArrayList<>(Arrays.asList(orgL1UsersIdList)), L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true,
+                        claimsListWithWithHierarchyResolvingClaim, uniqueIDUserClaimSearchEntriesOfUsersInL1Org, 1},
+        };
+    }
+
+    @Test(dataProvider = "dataProviderForTestDoPostGetUsersClaimValuesWithID")
+    public void testDoPostGetUsersClaimValuesWithID(List<String> userIds, String tenantDomain, String organizationId,
+                                                    boolean isOrganization, List<String> claims,
+                                                    List<UniqueIDUserClaimSearchEntry> userClaims,
+                                                    int claimResolverCalledTimes) throws Exception {
+
+        setUpClaims();
+        setUpUserSharing();
+        mockCarbonContextForTenant(tenantDomain, organizationId, privilegedCarbonContext);
+        mockOrgIdResolverByTenantDomain();
+        organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
+                .thenReturn(isOrganization);
+        identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(tenantUserRealm);
+        when(tenantUserRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockListenerEnabledStatus(true, true, identityUtil);
+            SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
+            boolean listenerStatus =
+                    sharedUserOperationEventListener.doPostGetUsersClaimValuesWithID(userIds, claims,
+                            DEFAULT_PROFILE, userClaims, userStoreManager);
             verify(orgResourceResolverService, times(claimResolverCalledTimes)).getResourcesFromOrgHierarchy(
                     anyString(), any(), any());
             assertTrue(listenerStatus);
