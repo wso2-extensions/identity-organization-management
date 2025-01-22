@@ -18,8 +18,11 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
+import org.apache.commons.lang.NotImplementedException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.List;
 
@@ -75,6 +78,22 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
+     * Get all the user associations for a given user filtered by shared type.
+     *
+     * @param associatedUserId Actual user ID of the user.
+     * @param associatedOrgId  The organization ID where the user is managed.
+     * @param sharedType       The type of sharing relationship to filter the associations.
+     * @return the list of {@link UserAssociation}s.
+     * @throws OrganizationManagementServerException If an error occurs while fetching user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId,
+                                                              SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented");
+    }
+
+    /**
      * Get the organization user association of a given user in a given organization.
      *
      * @param associatedUserId ID of the associated user.
@@ -95,4 +114,23 @@ public interface OrganizationUserSharingDAO {
      */
     UserAssociation getUserAssociation(String userId, String organizationId)
             throws OrganizationManagementServerException;
+
+    /**
+     * Retrieve the list of usernames eligible to be removed from the specified role within the given tenant domain,
+     * based on the permissions of the requesting organization.
+     *
+     * @param roleId               The role ID from which the users are to be removed.
+     * @param deletedUserNamesList The list of usernames intended for removal.
+     * @param tenantDomain         The tenant domain where the operation is being performed.
+     * @param requestingOrgId      The ID of the requesting organization performing the operation.
+     * @return A list of usernames that the requesting organization is permitted to remove from the given role.
+     * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
+     *                                         eligible usernames.
+     */
+    default List<String> getEligibleUsernamesForUserRemovalFromRole(String roleId, List<String> deletedUserNamesList,
+                                                                    String tenantDomain, String requestingOrgId)
+            throws IdentityRoleManagementException {
+
+        throw new NotImplementedException("getEligibleUsernamesForUserRemovalFromRole method is not implemented.");
+    }
 }

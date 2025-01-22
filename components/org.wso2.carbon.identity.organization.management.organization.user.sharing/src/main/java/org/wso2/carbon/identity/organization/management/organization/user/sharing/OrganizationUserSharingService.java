@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -109,5 +110,21 @@ public interface OrganizationUserSharingService {
             throws OrganizationManagementException {
 
         return null;
+    }
+
+    /**
+     * Get all user associations for a given user filtered by shared type.
+     *
+     * @param actualUserId  Actual user ID of the user.
+     * @param residentOrgId The organization ID where the user is managed.
+     * @param sharedType    The type of sharing relationship to filter the associations.
+     * @return the list of {@link UserAssociation}s.
+     * @throws OrganizationManagementException If an error occurs while fetching user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
+                                                                 SharedType sharedType)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented");
     }
 }

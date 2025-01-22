@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
@@ -157,6 +158,14 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId);
     }
 
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
+                                                                SharedType sharedType)
+            throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId, sharedType);
+    }
+
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
@@ -177,10 +186,11 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
-                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
-            return;
-        }
+        //todo
+//        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
+//                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+//            return;
+//        }
 
         String organizationId = userAssociation.getOrganizationId();
         String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);

@@ -35,6 +35,10 @@ public class SQLConstants {
     public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER = "SELECT UM_USER_ID, UM_ORG_ID, " +
             "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID " +
             "FROM UM_ORG_USER_ASSOCIATION WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
+    public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE = "SELECT UM_ID, " +
+            "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
+            "FROM UM_ORG_USER_ASSOCIATION WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ? AND " +
+            "UM_SHARED_TYPE = ?";
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG = "SELECT UM_USER_ID, " +
             "UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ORG_ID = ?";
@@ -46,6 +50,15 @@ public class SQLConstants {
                     "FROM UM_ORG_USER_ASSOCIATION WHERE UM_USER_ID = ?";
     public static final String CHECK_COLUMN_EXISTENCE_IN_TABLE =
             "SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+    public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_HEAD =
+            "SELECT r.UM_USER_NAME FROM UM_HYBRID_USER_ROLE r "
+                    + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS p "
+                    + "ON r.UM_ID = p.UM_HYBRID_USER_ROLE_ID AND r.UM_TENANT_ID = p.UM_HYBRID_USER_ROLE_TENANT_ID "
+                    + "WHERE r.UM_ROLE_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID + "; AND r.UM_USER_NAME IN (";
+    public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL =
+            "); AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +
+                    "; AND p.UM_PERMITTED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID +
+                    "; AND r.UM_EDIT_OPERATION = 'DELETE';";
 
     public static final String DEFAULT_VALUE_NOT_SPECIFIED = "NOT_SPECIFIED";
 
@@ -62,6 +75,12 @@ public class SQLConstants {
         public static final String COLUMN_NAME_ASSOCIATION_INITIATED_ORG_ID = "UM_ASSOCIATION_INITIATED_ORG_ID";
         public static final String COLUMN_NAME_ASSOCIATION_TYPE = "UM_ASSOCIATION_TYPE";
         public static final String COUNT_ALIAS = "count";
+        public static final String COLUMN_NAME_UM_USER_NAME = "UM_USER_NAME";
+        public static final String COLUMN_NAME_UM_ROLE_ID = "UM_ROLE_ID";
+        public static final String COLUMN_NAME_UM_TENANT_ID = "UM_TENANT_ID";
+        public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
+        public static final String COLUMN_NAME_UM_ID = "UM_ID";
+        public static final String COLUMN_NAME_UM_SHARED_TYPE = "UM_SHARED_TYPE";
     }
 
 }
