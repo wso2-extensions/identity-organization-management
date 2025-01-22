@@ -23,6 +23,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -39,6 +40,7 @@ public class OrganizationUserSharingDataHolder {
     private ApplicationManagementService applicationManagementService;
     private RoleManager roleManager;
     private ClaimMetadataManagementService claimManagementService;
+    private OrgResourceResolverService orgResourceResolverService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -183,5 +185,25 @@ public class OrganizationUserSharingDataHolder {
     public void setClaimManagementService(ClaimMetadataManagementService claimManagementService) {
 
         this.claimManagementService = claimManagementService;
+    }
+
+    /**
+     * Get the organization resource resolver service.
+     *
+     * @return OrgResourceResolverService organization resource resolver service.
+     */
+    public OrgResourceResolverService getOrgResourceResolverService() {
+
+        return orgResourceResolverService;
+    }
+
+    /**
+     * Set the organization resource resolver service.
+     *
+     * @param orgResourceResolverService OrgResourceResolverService organization resource resolver service.
+     */
+    public void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        this.orgResourceResolverService = orgResourceResolverService;
     }
 }

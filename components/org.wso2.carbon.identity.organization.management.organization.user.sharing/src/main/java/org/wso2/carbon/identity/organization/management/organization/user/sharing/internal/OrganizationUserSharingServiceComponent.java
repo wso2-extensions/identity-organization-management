@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandler;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -170,5 +171,23 @@ public class OrganizationUserSharingServiceComponent {
 
         OrganizationUserSharingDataHolder.getInstance().setClaimManagementService(null);
         LOG.debug("Unset Claim Metadata Management Service.");
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service",
+            service = OrgResourceResolverService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrgResourceResolverService")
+    protected void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setOrgResourceResolverService(orgResourceResolverService);
+        LOG.debug("Set Org Resource Resolver Service.");
+    }
+
+    protected void unsetOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setOrgResourceResolverService(null);
+        LOG.debug("Unset Org Resource Resolver Service.");
     }
 }
