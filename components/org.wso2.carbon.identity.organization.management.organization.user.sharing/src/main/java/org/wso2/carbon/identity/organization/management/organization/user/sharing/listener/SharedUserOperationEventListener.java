@@ -52,13 +52,17 @@ import org.wso2.carbon.user.core.model.UserClaimSearchEntry;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SHARED_PROFILE_VALUE_RESOLVING_METHOD;
+import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_FIRST_FOUND_IN_HIERARCHY;
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_ORIGIN;
+import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_SHARED_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
@@ -131,93 +135,21 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            if (StringUtils.isBlank(currentOrganizationId)) {
-                currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(currentTenantDomain);
-            }
-            UserAssociation userAssociation =
-                    OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
-                            .getUserAssociation(userID, currentOrganizationId);
+            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.
                 return true;
             }
-            // Get the associated user id and user's managed organization.
-            String associatedUserId = userAssociation.getAssociatedUserId();
-            String associationUserResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
-            String userResidentTenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                    .resolveTenantDomain(associationUserResidentOrganizationId);
-
-            // Analyse SharedProfileValueResolvingMethod value of claim and decide.
-            ClaimMetadataManagementService claimManagementService =
-                    OrganizationUserSharingDataHolder.getInstance().getClaimManagementService();
-            List<String> resolveFromOriginClaims = new ArrayList<>();
-            List<String> resolveFromSharedProfileClaims = new ArrayList<>();
-            List<String> resolveFromHierarchyClaims = new ArrayList<>();
-            /*
-             For each claim in claims get the value of "SharedProfileValueResolvingMethod" property and add to
-             above lists.
-             */
-            for (String claim : claims) {
-                Optional<LocalClaim> localClaim = claimManagementService.getLocalClaim(claim, currentTenantDomain);
-                if (!localClaim.isPresent()) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(String.format("Claim %s not found in the tenant domain: %s", claim,
-                                currentTenantDomain));
-                    }
-                    continue;
-                }
-                String sharedProfileValueResolvingMethod =
-                        localClaim.get().getClaimProperty(SHARED_PROFILE_VALUE_RESOLVING_METHOD);
-                if (StringUtils.isNotBlank(sharedProfileValueResolvingMethod)) {
-                    ClaimConstants.SharedProfileValueResolvingMethod sharedProfileValueResolvingMethodEnum =
-                            ClaimConstants.SharedProfileValueResolvingMethod.fromName(
-                                    sharedProfileValueResolvingMethod);
-                    switch (sharedProfileValueResolvingMethodEnum) {
-                        case FROM_ORIGIN:
-                            resolveFromOriginClaims.add(claim);
-                            break;
-                        case FROM_SHARED_PROFILE:
-                            resolveFromSharedProfileClaims.add(claim);
-                            break;
-                        case FROM_FIRST_FOUND_IN_HIERARCHY:
-                            resolveFromHierarchyClaims.add(claim);
-                            break;
-                    }
-                } else {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("SharedProfileValueResolvingMethod is not found for the claim: " + claim);
-                    }
-                    resolveFromOriginClaims.add(claim);
-                }
-            }
-
-            // Resolve claims from origin.
-            AbstractUserStoreManager residentUserStoreManager =
-                    getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(userResidentTenantDomain));
+            // Analyse SharedProfileValueResolvingMethod value of claim and categorize.
+            Map<ClaimConstants.SharedProfileValueResolvingMethod, List<String>> claimsByResolvingMethod =
+                    categorizeClaimsByResolvingMethod(Arrays.asList(claims), currentTenantDomain);
             Map<String, String> resolvedClaimsFromOrigin =
-                    residentUserStoreManager.getUserClaimValuesWithID(associatedUserId,
-                            resolveFromOriginClaims.toArray(new String[0]), profileName);
-
-            // Resolve claims from shared profile.
-            Map<String, String> resolvedClaimsFromSharedProfile = new HashMap<>();
-            for (String claim : resolveFromSharedProfileClaims) {
-                resolvedClaimsFromSharedProfile.put(claim, claimMap.get(claim));
-            }
-
-            // Resolve claims from hierarchy.
-            Map<String, String> resolvedClaimsFromHierarchy = new HashMap<>();
-            OrgResourceResolverService orgResourceResolverService =
-                    OrganizationUserSharingDataHolder.getInstance().getOrgResourceResolverService();
-            for (String claim : resolveFromHierarchyClaims) {
-                String resolvedClaimValueFromOrgHierarchy =
-                        orgResourceResolverService.getResourcesFromOrgHierarchy(currentOrganizationId,
-                                LambdaExceptionUtils.rethrowFunction(
-                                        orgId -> claimResolver(associatedUserId, associationUserResidentOrganizationId,
-                                                claim, orgId)),
-                                new FirstFoundAggregationStrategy<>());
-                resolvedClaimsFromHierarchy.put(claim, resolvedClaimValueFromOrgHierarchy);
-            }
+                    resolveClaimsFromOrigin(userAssociation, claimsByResolvingMethod.get(FROM_ORIGIN), profileName);
+            Map<String, String> resolvedClaimsFromSharedProfile =
+                    resolveClaimsFromSharedProfile(claimMap, claimsByResolvingMethod.get(FROM_SHARED_PROFILE));
+            Map<String, String> resolvedClaimsFromHierarchy = resolveClaimsFromHierarchy(userAssociation,
+                    claimsByResolvingMethod.get(FROM_FIRST_FOUND_IN_HIERARCHY), currentOrganizationId);
 
             // Set resolvedClaimsFromOrigin,resolvedClaimsFromSharedProfile and resolvedClaimsFromHierarchy to claimMap.
             claimMap.putAll(resolvedClaimsFromOrigin);
@@ -251,91 +183,24 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            if (StringUtils.isBlank(currentOrganizationId)) {
-                currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(currentTenantDomain);
-            }
-            // Analyse SharedProfileValueResolvingMethod value of claim and decide.
-            ClaimMetadataManagementService claimManagementService =
-                    OrganizationUserSharingDataHolder.getInstance().getClaimManagementService();
-            List<String> resolveFromOriginClaims = new ArrayList<>();
-            List<String> resolveFromSharedProfileClaims = new ArrayList<>();
-            List<String> resolveFromHierarchyClaims = new ArrayList<>();
-            /*
-            For each claim in claims get the value of "SharedProfileValueResolvingMethod" property and add to
-             above lists.
-             */
-            for (String claim : claims) {
-                Optional<LocalClaim> localClaim = claimManagementService.getLocalClaim(claim, currentTenantDomain);
-                if (!localClaim.isPresent()) {
-                    continue;
-                }
-                String sharedProfileValueResolvingMethod =
-                        localClaim.get().getClaimProperty(SHARED_PROFILE_VALUE_RESOLVING_METHOD);
-                if (StringUtils.isBlank(sharedProfileValueResolvingMethod)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("SharedProfileValueResolvingMethod is not resolved for the claim: " + claim);
-                    }
-                    resolveFromOriginClaims.add(claim);
-                }
-                ClaimConstants.SharedProfileValueResolvingMethod sharedProfileValueResolvingMethodEnum =
-                        ClaimConstants.SharedProfileValueResolvingMethod.fromName(
-                                sharedProfileValueResolvingMethod);
-                switch (sharedProfileValueResolvingMethodEnum) {
-                    case FROM_ORIGIN:
-                        resolveFromOriginClaims.add(claim);
-                        break;
-                    case FROM_SHARED_PROFILE:
-                        resolveFromSharedProfileClaims.add(claim);
-                        break;
-                    case FROM_FIRST_FOUND_IN_HIERARCHY:
-                        resolveFromHierarchyClaims.add(claim);
-                        break;
-                }
-            }
-
+            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            // Analyse SharedProfileValueResolvingMethod value of claim and categorize.
+            Map<ClaimConstants.SharedProfileValueResolvingMethod, List<String>>
+                    claimsByResolvingMethod = categorizeClaimsByResolvingMethod(claims, currentTenantDomain);
             for (UniqueIDUserClaimSearchEntry userClaimSearchEntry : userClaimSearchEntries) {
                 User user = userClaimSearchEntry.getUser();
-                UserAssociation userAssociation =
-                        OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
-                                .getUserAssociation(user.getUserID(), currentOrganizationId);
+                UserAssociation userAssociation = getUserAssociation(user.getUserID(), currentOrganizationId);
                 if (userAssociation == null) {
                     // User is not a shared user. Hence, return.
                     continue;
                 }
-                // Get the associated user id and user's managed organization.
-                String associatedUserId = userAssociation.getAssociatedUserId();
-                String associationUserResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
-                String userResidentTenantDomain =
-                        OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                                .resolveTenantDomain(associationUserResidentOrganizationId);
-
-                // Resolve claims from origin.
-                AbstractUserStoreManager residentUserStoreManager =
-                        getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(userResidentTenantDomain));
                 Map<String, String> resolvedClaimsFromOrigin =
-                        residentUserStoreManager.getUserClaimValuesWithID(associatedUserId,
-                                resolveFromOriginClaims.toArray(new String[0]), profileName);
-
-                // Resolve claims from shared profile.
-                Map<String, String> resolvedClaimsFromSharedProfile = new HashMap<>();
-                for (String claim : resolveFromSharedProfileClaims) {
-                    resolvedClaimsFromSharedProfile.put(claim, userClaimSearchEntry.getClaims().get(claim));
-                }
-
-                // Resolve claims from hierarchy.
-                Map<String, String> resolvedClaimsFromHierarchy = new HashMap<>();
-                OrgResourceResolverService orgResourceResolverService =
-                        OrganizationUserSharingDataHolder.getInstance().getOrgResourceResolverService();
-                for (String claim : resolveFromHierarchyClaims) {
-                    String resolvedClaimValueFromOrgHierarchy =
-                            orgResourceResolverService.getResourcesFromOrgHierarchy(currentOrganizationId,
-                                    LambdaExceptionUtils.rethrowFunction(
-                                            orgId -> claimResolver(associatedUserId,
-                                                    associationUserResidentOrganizationId, claim, orgId)),
-                                    new FirstFoundAggregationStrategy<>());
-                    resolvedClaimsFromHierarchy.put(claim, resolvedClaimValueFromOrgHierarchy);
-                }
+                        resolveClaimsFromOrigin(userAssociation, claimsByResolvingMethod.get(FROM_ORIGIN), profileName);
+                Map<String, String> resolvedClaimsFromSharedProfile =
+                        resolveClaimsFromSharedProfile(userClaimSearchEntry.getClaims(),
+                                claimsByResolvingMethod.get(FROM_SHARED_PROFILE));
+                Map<String, String> resolvedClaimsFromHierarchy = resolveClaimsFromHierarchy(userAssociation,
+                        claimsByResolvingMethod.get(FROM_FIRST_FOUND_IN_HIERARCHY), currentOrganizationId);
 
                 Map<String, String> aggregatedProfileClaims = new HashMap<>();
                 aggregatedProfileClaims.putAll(resolvedClaimsFromOrigin);
@@ -380,13 +245,8 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            if (StringUtils.isBlank(currentOrganizationId)) {
-                currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(currentTenantDomain);
-            }
-            UserAssociation userAssociation =
-                    OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
-                            .getUserAssociation(userID, currentOrganizationId);
+            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.
                 return true;
@@ -566,6 +426,83 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         }
     }
 
+    private Map<ClaimConstants.SharedProfileValueResolvingMethod, List<String>> categorizeClaimsByResolvingMethod(
+            List<String> claims, String tenantDomain) throws ClaimMetadataException {
+
+        ClaimMetadataManagementService claimManagementService =
+                OrganizationUserSharingDataHolder.getInstance().getClaimManagementService();
+        Map<ClaimConstants.SharedProfileValueResolvingMethod, List<String>> claimsByResolvingMethod =
+                new EnumMap<>(ClaimConstants.SharedProfileValueResolvingMethod.class);
+        claimsByResolvingMethod.put(FROM_ORIGIN, new ArrayList<>());
+        claimsByResolvingMethod.put(FROM_SHARED_PROFILE, new ArrayList<>());
+        claimsByResolvingMethod.put(FROM_FIRST_FOUND_IN_HIERARCHY, new ArrayList<>());
+
+        for (String claim : claims) {
+            Optional<LocalClaim> localClaim = claimManagementService.getLocalClaim(claim, tenantDomain);
+            if (!localClaim.isPresent()) {
+                continue;
+            }
+            String resolvingMethod =
+                    localClaim.map(claimEntry -> claimEntry.getClaimProperty(SHARED_PROFILE_VALUE_RESOLVING_METHOD))
+                            .orElse(FROM_ORIGIN.getName());
+            claimsByResolvingMethod.get(ClaimConstants.SharedProfileValueResolvingMethod.fromName(resolvingMethod))
+                    .add(claim);
+        }
+        return claimsByResolvingMethod;
+    }
+
+    private Map<String, String> resolveClaimsFromHierarchy(UserAssociation userAssociation, List<String> claimURIs,
+                                                           String currentOrganizationId)
+            throws OrgResourceHierarchyTraverseException {
+
+        Map<String, String> resolvedClaimsFromHierarchy = new HashMap<>();
+        String associatedUserId = userAssociation.getAssociatedUserId();
+        String associationUserResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
+        OrgResourceResolverService orgResourceResolverService =
+                OrganizationUserSharingDataHolder.getInstance().getOrgResourceResolverService();
+        for (String claim : claimURIs) {
+            String resolvedClaimValueFromOrgHierarchy =
+                    orgResourceResolverService.getResourcesFromOrgHierarchy(currentOrganizationId,
+                            LambdaExceptionUtils.rethrowFunction(
+                                    orgId -> claimResolver(associatedUserId, associationUserResidentOrganizationId,
+                                            claim, orgId)),
+                            new FirstFoundAggregationStrategy<>());
+            resolvedClaimsFromHierarchy.put(claim, resolvedClaimValueFromOrgHierarchy);
+        }
+        return resolvedClaimsFromHierarchy;
+    }
+
+    private Map<String, String> resolveClaimsFromOrigin(UserAssociation userAssociation, List<String> claimURIs,
+                                                        String profileName)
+            throws OrganizationManagementException, org.wso2.carbon.user.api.UserStoreException {
+
+        String associatedUserId = userAssociation.getAssociatedUserId();
+        String associationUserResidentOrganizationId = userAssociation.getUserResidentOrganizationId();
+        String userResidentTenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                .resolveTenantDomain(associationUserResidentOrganizationId);
+        AbstractUserStoreManager residentUserStoreManager =
+                getAbstractUserStoreManager(IdentityTenantUtil.getTenantId(userResidentTenantDomain));
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(userResidentTenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .setOrganizationId(associationUserResidentOrganizationId);
+            return residentUserStoreManager.getUserClaimValuesWithID(associatedUserId, claimURIs.toArray(new String[0]),
+                    profileName);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private Map<String, String> resolveClaimsFromSharedProfile(Map<String, String> claimMap, List<String> claimURIs) {
+
+        Map<String, String> resolveClaimsFromSharedProfile = new HashMap<>();
+        for (String claimURI : claimURIs) {
+            resolveClaimsFromSharedProfile.put(claimURI, claimMap.get(claimURI));
+        }
+        return resolveClaimsFromSharedProfile;
+    }
+
     private void blockClaimUpdatesForSharedUser(AbstractUserStoreManager userStoreManager, String userID)
             throws UserStoreException {
 
@@ -582,5 +519,38 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
         UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
         return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+    }
+
+    /**
+     * Check whether the organizationID is properly found, if not resolve it.
+     *
+     * @param currentTenantDomain   Current tenant domain.
+     * @param currentOrganizationId Current organization id.
+     * @return Resolved organization id.
+     * @throws OrganizationManagementException If an error occurs while resolving the organization id.
+     */
+    private String resolveOrganizationId(String currentTenantDomain, String currentOrganizationId)
+            throws OrganizationManagementException {
+
+        if (StringUtils.isBlank(currentOrganizationId)) {
+            currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                    .resolveOrganizationId(currentTenantDomain);
+        }
+        return currentOrganizationId;
+    }
+
+    /**
+     * Find the user association from a given user id in the current organization.
+     *
+     * @param userID                User id in current organization.
+     * @param currentOrganizationId Current organization id.
+     * @return Resolved user association details.
+     * @throws OrganizationManagementException If an error occurs while resolving the user association.
+     */
+    private UserAssociation getUserAssociation(String userID, String currentOrganizationId)
+            throws OrganizationManagementException {
+
+        return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
+                .getUserAssociation(userID, currentOrganizationId);
     }
 }
