@@ -186,11 +186,10 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        //todo
-//        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
-//                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
-//            return;
-//        }
+        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
+                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+            return;
+        }
 
         String organizationId = userAssociation.getOrganizationId();
         String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);

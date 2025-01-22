@@ -23,11 +23,11 @@ import java.util.List;
 /**
  * Represents a user criteria type that contains a list of user IDs.
  */
-public class UserIds implements UserCriteriaType {
+public class UserIdList implements UserCriteriaType {
 
     private List<String> ids;
 
-    public UserIds(List<String> ids) {
+    public UserIdList(List<String> ids) {
 
         this.ids = ids;
     }

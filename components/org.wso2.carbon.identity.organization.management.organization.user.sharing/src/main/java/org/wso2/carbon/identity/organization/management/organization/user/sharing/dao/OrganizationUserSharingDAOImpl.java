@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -20,10 +20,8 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
-import org.wso2.carbon.database.utils.jdbc.NamedPreparedStatement;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
@@ -31,10 +29,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -136,11 +130,13 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER,
                     (resultSet, rowNumber) -> {
                         UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
                         userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
                         userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(COLUMN_NAME_UM_SHARED_TYPE);
                         return userAssociation;
                     },
                     namedPreparedStatement -> {
@@ -190,11 +186,13 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG,
                     (resultSet, rowNumber) -> {
                         UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
                         userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
                         userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {
@@ -216,11 +214,13 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER,
                     (resultSet, rowNumber) -> {
                         UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
                         userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
                         userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {

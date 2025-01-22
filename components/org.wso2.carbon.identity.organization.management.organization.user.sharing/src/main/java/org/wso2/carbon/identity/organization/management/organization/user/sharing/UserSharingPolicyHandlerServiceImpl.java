@@ -23,11 +23,10 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareOrgDetailsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIds;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -101,8 +100,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             switch (criterionKey) {
                 case USER_IDS:
-                    if (criterionValues instanceof UserIds) {
-                        selectiveUserShareByUserIds((UserIds) criterionValues, organization);
+                    if (criterionValues instanceof UserIdList) {
+                        selectiveUserShareByUserIds((UserIdList) criterionValues, organization);
                     } else {
                         throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
                                 ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
@@ -117,7 +116,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void selectiveUserShareByUserIds(UserIds userIds, SelectiveUserShareOrgDetailsDO organization)
+    private void selectiveUserShareByUserIds(UserIdList userIds, SelectiveUserShareOrgDetailsDO organization)
             throws UserShareMgtException {
 
         String sharingInitiatedOrgId = getOrganizationId();
@@ -164,8 +163,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
                 if (!orgsToShareUserWith.contains(userAssociation.getOrganizationId())) {
                     //Unshare from out of scopes organizations for the new policy
-                    UserIds associatedUserIdsToBeRemoved =
-                            new UserIds(Collections.singletonList(userAssociation.getAssociatedUserId()));
+                    UserIdList associatedUserIdsToBeRemoved =
+                            new UserIdList(Collections.singletonList(userAssociation.getAssociatedUserId()));
                     selectiveUserUnshareByUserIds(associatedUserIdsToBeRemoved,
                             Collections.singletonList(userAssociation.getOrganizationId()));
                 } else {
@@ -178,7 +177,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             //Handle for the newly sharing users
             List<String> newlySharedOrgs = new ArrayList<>(orgsToShareUserWith);
             newlySharedOrgs.removeAll(previouslySharedAnsStillInScopeOrgs);
-            //todo: recheck logic when narrowing down the general share
+
             for (String orgId : newlySharedOrgs) {
                 shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
             }
@@ -229,9 +228,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             UserCriteriaType criterionValues = criterion.getValue();
 
             switch (criterionKey) {
-                case USER_IDS: //todo: rename class to userIdList
-                    if (criterionValues instanceof UserIds) {
-                        generalUserShareByUserIds((UserIds) criterionValues, policy, roleIds);
+                case USER_IDS:
+                    if (criterionValues instanceof UserIdList) {
+                        generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds);
                     } else {
                         throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
                                 ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
@@ -247,7 +246,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     }
 
-    private void generalUserShareByUserIds(UserIds userIds, PolicyEnum policy, List<String> roleIds)
+    private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds)
             throws UserShareMgtException {
 
         String sharingInitiatedOrgId = getOrganizationId();
@@ -259,7 +258,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         .withRoles(roleIds)
                         .build();
 
-                shareUser(generalUserShare, sharingInitiatedOrgId); //todo: remove associatedUserId
+                shareUser(generalUserShare, sharingInitiatedOrgId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -271,58 +270,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         LOG.debug("Completed user general share.");
     }
 
-    /*private void shareUser2(String associatedUserId, String sharingInitiatedOrgId, GeneralUserShare userShare)
-            throws OrganizationManagementException, UserShareMgtServerException, IdentityRoleManagementException,
-            ResourceSharingPolicyMgtException {
-        //get the orgs as per policy and then share
-        List<String> orgsToShareUserWith =
-                getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
-
-        if (isUserAlreadyShared(userShare.getUserId(), sharingInitiatedOrgId)) {
-            //Update User Share Path
-            List<UserAssociation> userAssociationsOfGivenUser =
-                    getUserAssociationsOfGivenUser(associatedUserId, sharingInitiatedOrgId);
-            List<String> previouslySharedAnsStillInScopeOrgs = new ArrayList<>();
-
-            //Handle for the previously shared users
-            for (UserAssociation userAssociation : userAssociationsOfGivenUser) {
-
-                if (!orgsToShareUserWith.contains(userAssociation.getOrganizationId())) {
-                    //Unshare from out of scopes organizations for the new policy
-                    UserIds associatedUserIdsToBeRemoved =
-                            new UserIds(Collections.singletonList(userAssociation.getAssociatedUserId()));
-                    selectiveUserUnshareByUserIds(associatedUserIdsToBeRemoved,
-                            Collections.singletonList(userAssociation.getOrganizationId()));
-                } else {
-                    //Update the roles
-                    previouslySharedAnsStillInScopeOrgs.add(userAssociation.getOrganizationId());
-                    updateRolesIfNecessary(userAssociation, userShare.getRoles(), sharingInitiatedOrgId);
-                }
-            }
-
-            //Handle for the newly sharing users
-            List<String> newlySharedOrgs = new ArrayList<>(orgsToShareUserWith);
-            newlySharedOrgs.removeAll(previouslySharedAnsStillInScopeOrgs);
-
-            for (String orgId : newlySharedOrgs) {
-                shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
-            }
-
-            //Update the sharing policy
-            updateResourceSharingPolicy(userShare, sharingInitiatedOrgId);
-
-        } else {
-            //Create a new user Share Path
-            for (String orgId : orgsToShareUserWith) {
-                shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
-            }
-
-            if (isApplicableOrganizationScopeForSavingPolicy(userShare.getPolicy())) {
-                saveUserSharingPolicy(userShare, sharingInitiatedOrgId);
-            }
-        }
-    }*/
-
     private boolean hasRoleChanges(List<String> oldSharedRoleIds, List<String> newRoleIds) {
 
         return !new HashSet<>(oldSharedRoleIds).equals(new HashSet<>(newRoleIds));
@@ -331,7 +278,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private void updateRolesIfNecessary(UserAssociation userAssociation, List<String> roleIds,
                                         String sharingInitiatedOrgId)
             throws OrganizationManagementException, IdentityRoleManagementException {
-        //todo: get the current roles of the shared user - only the shared roles
+
         List<String> oldSharedRoleIds = getOldSharedRoleIdsForSharedUser(userAssociation);
         List<String> newRoleIds = getRolesToBeAddedAfterUpdate(userAssociation, oldSharedRoleIds, roleIds);
 
@@ -342,14 +289,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private List<String> getOldSharedRoleIdsForSharedUser(UserAssociation userAssociation)
             throws OrganizationManagementException {
-        //////error1//implement
+        ////error1//implement
         //todo: get the old roles of shared user - done (MY NEW CODE SHOULD BE MERGED)
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
         String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
         return new ArrayList<>();
-        //////return getRoleManagementService().getRoleIdListOfSharedUser(userId, targetOrgTenantDomain);
+        ////return getRoleManagementService().getRoleIdListOfSharedUser(userId, targetOrgTenantDomain);
     }
 
     private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
@@ -458,7 +405,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void deleteOldSharedRoles(UserAssociation userAssociation, List<String> rolesToBeRemoved)
             throws OrganizationManagementException, IdentityRoleManagementException {
-        //////error2//implement
+        ////error2//implement
         //todo: delete the old roles (rolesToBeRemoved) - done (MY NEW CODE SHOULD BE MERGED)
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
@@ -511,7 +458,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         //TODO: Since we are going only with POST, even for role updates, we have to get the earlier roles and delete it
         //TODO: Handle sub-org role assignments (consider only roles assigned from parents)
-        //////error3//make those shares RESTRICTED
+        ////error3//make those shares RESTRICTED
         for (String role : mainRoleToSharedRoleMappingsBySubOrg.values()) {
             getRoleManagementService().updateUserListOfRole(role, Collections.singletonList(userId),
                     Collections.emptyList(), targetOrgTenantDomain);
@@ -644,8 +591,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             switch (criterionKey) {
                 case USER_IDS:
-                    if (criterionValues instanceof UserIds) {
-                        selectiveUserUnshareByUserIds((UserIds) criterionValues, organizations);
+                    if (criterionValues instanceof UserIdList) {
+                        selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations);
                     } else {
                         throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
                                 ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
@@ -662,7 +609,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         LOG.debug("Completed user selective unshare.");
     }
 
-    private void selectiveUserUnshareByUserIds(UserIds userIds, List<String> organizations)
+    private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations)
             throws UserShareMgtServerException {
 
         String unsharingInitiatedOrgId = getOrganizationId();
@@ -712,8 +659,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             switch (criterionKey) {
                 case USER_IDS:
-                    if (criterionValues instanceof UserIds) {
-                        generalUserUnshareByUserIds((UserIds) criterionValues);
+                    if (criterionValues instanceof UserIdList) {
+                        generalUserUnshareByUserIds((UserIdList) criterionValues);
                     } else {
                         throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
                                 ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
@@ -731,7 +678,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     }
 
-    private void generalUserUnshareByUserIds(UserIds userIds)
+    private void generalUserUnshareByUserIds(UserIdList userIds)
             throws UserShareMgtServerException {
 
         String unsharingInitiatedOrgId = getOrganizationId();
