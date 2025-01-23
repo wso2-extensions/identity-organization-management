@@ -18,7 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -150,11 +153,13 @@ public interface OrganizationUserSharingService {
      * @param username       The username of the shared user.
      * @param tenantDomain   The tenant domain of the shared user.
      * @param domainName     The domain name associated with the user.
-     * @param name           The name of the role or restriction.
+     * @param editOperation  The type of edit operation being performed.
      * @param permittedOrgId The organization ID with permitted access.
+     * @throws UserShareMgtException If an error occurs while retrieving shared user roles.
      */
     default void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
-                                                       String name, String permittedOrgId) {
+                                                       EditOperation editOperation, String permittedOrgId)
+            throws UserShareMgtException {
 
         throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
     }

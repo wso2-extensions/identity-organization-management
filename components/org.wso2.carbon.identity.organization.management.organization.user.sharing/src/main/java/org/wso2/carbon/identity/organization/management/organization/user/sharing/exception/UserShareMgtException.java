@@ -42,6 +42,13 @@ public class UserShareMgtException extends Exception {
         this.description = error.getDescription();
     }
 
+    public UserShareMgtException(UserSharingConstants.ErrorMessage error,  Throwable cause) {
+
+        super(error.getMessage(), cause);
+        this.errorCode = error.getCode();
+        this.description = error.getDescription();
+    }
+
     public UserShareMgtException(String errorCode, String message, String description) {
 
         super(message);

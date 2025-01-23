@@ -61,16 +61,30 @@ public class SQLConstants {
                     "; AND r.UM_EDIT_OPERATION = 'DELETE';";
     public static final String GET_SHARED_USER_ROLES_HEAD =
             "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
-                    + "INNER JOIN UM_HYBRID_USER_ROLE ur ON hr.UM_ID = ur.UM_ROLE_ID AND hr.UM_TENANT_ID = ur.UM_TENANT_ID "
+                    + "INNER JOIN UM_HYBRID_USER_ROLE ur "
+                    + "ON hr.UM_ID = ur.UM_ROLE_ID "
+                    + "AND hr.UM_TENANT_ID = ur.UM_TENANT_ID "
                     + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS rep "
-                    + "ON ur.UM_ID = rep.UM_HYBRID_USER_ROLE_ID AND ur.UM_TENANT_ID = rep.UM_HYBRID_USER_ROLE_TENANT_ID "
+                    + "ON ur.UM_ID = rep.UM_HYBRID_USER_ROLE_ID "
+                    + "AND ur.UM_TENANT_ID = rep.UM_HYBRID_USER_ROLE_TENANT_ID "
                     + "WHERE hr.UM_UUID IN (";
-
     public static final String GET_SHARED_USER_ROLES_TAIL =
             ") AND hr.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + ";";
-
-
-    public static final String DEFAULT_VALUE_NOT_SPECIFIED = "NOT_SPECIFIED";
+    public static final String QUERY_GET_USER_ROLE_ID =
+            "SELECT UR.UM_ID FROM UM_HYBRID_USER_ROLE UR " +
+                    "JOIN UM_DOMAIN D ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
+                    "AND UR.UM_TENANT_ID = D.UM_TENANT_ID " +
+                    "WHERE UR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
+                    "AND UR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
+                    "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
+    public static final String QUERY_INSERT_RESTRICTED_EDIT_PERMISSION =
+            "INSERT INTO UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS (" +
+                    "UM_HYBRID_USER_ROLE_ID, UM_HYBRID_USER_ROLE_TENANT_ID, " +
+                    "UM_EDIT_OPERATION, UM_PERMITTED_ORG_ID) VALUES (" +
+                    ":" + SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_ID + ";, " +
+                    ":" + SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID + ";, " +
+                    ":" + SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION + ";, " +
+                    ":" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID + ";)";
 
     /**
      * SQL placeholders related to organization user sharing SQL operations.
@@ -88,10 +102,14 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_USER_NAME = "UM_USER_NAME";
         public static final String COLUMN_NAME_UM_ROLE_ID = "UM_ROLE_ID";
         public static final String COLUMN_NAME_UM_TENANT_ID = "UM_TENANT_ID";
-        public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
         public static final String COLUMN_NAME_UM_ID = "UM_ID";
         public static final String COLUMN_NAME_UM_SHARED_TYPE = "UM_SHARED_TYPE";
         public static final String COLUMN_NAME_UM_UUID = "UM_UUID";
+        public static final String COLUMN_NAME_UM_DOMAIN_NAME = "UM_DOMAIN_NAME";
+        public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_ID = "UM_HYBRID_USER_ROLE_ID";
+        public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID = "UM_HYBRID_USER_ROLE_TENANT_ID";
+        public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";
+        public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
     }
 
 }

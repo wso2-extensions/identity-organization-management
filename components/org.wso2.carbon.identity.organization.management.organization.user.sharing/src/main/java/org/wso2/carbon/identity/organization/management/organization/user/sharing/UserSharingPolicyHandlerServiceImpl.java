@@ -173,7 +173,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void shareUser(BaseUserShare userShare, String sharingInitiatedOrgId)
-            throws OrganizationManagementException, UserShareMgtServerException, IdentityRoleManagementException,
+            throws OrganizationManagementException, UserShareMgtException, IdentityRoleManagementException,
             ResourceSharingPolicyMgtException {
 
         //get the orgs as per policy and then share
@@ -298,7 +298,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void updateRolesIfNecessary(UserAssociation userAssociation, List<String> roleIds,
                                         String sharingInitiatedOrgId)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+            throws OrganizationManagementException, IdentityRoleManagementException, UserShareMgtException {
 
         List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
         List<String> newSharedRoleIds = getRolesToBeAddedAfterUpdate(userAssociation, currentSharedRoleIds, roleIds);
@@ -346,17 +346,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 new ResourceSharingPolicy.Builder().withResourceType(ResourceType.USER)
                         .withResourceId(userShare.getUserId())
                         .withInitiatingOrgId(sharingInitiatedOrgId)
+                        .withPolicyHoldingOrgId(getPolicyHoldingOrgId(userShare, sharingInitiatedOrgId))
                         .withSharingPolicy(userShare.getPolicy()).build();
-
-        /*
-        For the selective user share, the policy holding orgs are the respective selected orgs.
-        For the general user share, the policy holding org is the same org from which the request is initiated.
-         */
-        if(userShare instanceof SelectiveUserShare) {
-            resourceSharingPolicy.setPolicyHoldingOrgId(((SelectiveUserShare) userShare).getOrganizationId());
-        } else {
-            resourceSharingPolicy.setPolicyHoldingOrgId(sharingInitiatedOrgId);
-        }
 
         List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
         for (String roleId : userShare.getRoles()) {
@@ -371,6 +362,25 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     }
 
+    /**
+     * Determines the policy-holding organization ID based on the type of user share.
+     * For a selective user share, the policy-holding organization is the organization specified in the selective
+     * share request.
+     * For a general user share, the policy-holding organization is the organization from which the
+     * sharing request was initiated.
+     *
+     * @param userShare            The user share object, which can be either selective or general.
+     * @param sharingInitiatedOrgId The ID of the organization from which the sharing request was initiated.
+     * @return The ID of the policy-holding organization based on the type of user share.
+     */
+    private String getPolicyHoldingOrgId(BaseUserShare userShare, String sharingInitiatedOrgId) {
+        if (userShare instanceof SelectiveUserShare) {
+            return ((SelectiveUserShare) userShare).getOrganizationId();
+        } else {
+            return sharingInitiatedOrgId;
+        }
+    }
+
     private boolean isApplicableOrganizationScopeForSavingPolicy(PolicyEnum policy) {
 
         return OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope()) ||
@@ -379,7 +389,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare,
                                               String sharingInitiatedOrgId)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+            throws OrganizationManagementException, IdentityRoleManagementException, UserShareMgtException {
 
         String associatedUserId = baseUserShare.getUserId();
         List<String> roleIds = baseUserShare.getRoles();
@@ -452,7 +462,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void assignRolesIfPresent(UserAssociation userAssociation, String sharingInitiatedOrgId,
                                       List<String> roleIds)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+            throws OrganizationManagementException, IdentityRoleManagementException, UserShareMgtException {
 
         if (!roleIds.isEmpty()) {
             assignRolesToTheSharedUser(userAssociation, sharingInitiatedOrgId, roleIds);
@@ -461,7 +471,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void assignRolesToTheSharedUser(UserAssociation userAssociation, String sharingInitiatedOrgId,
                                             List<String> roleIds)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+            throws OrganizationManagementException, IdentityRoleManagementException, UserShareMgtException {
 
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
@@ -495,7 +505,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             //todo: update the UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS table
             getOrganizationUserSharingService().addEditRestrictionsForSharedUserRoles(username, targetOrgTenantDomain
-                    , domainName, EditOperation.DELETE.name(), sharingInitiatedOrgId);
+                    , domainName, EditOperation.DELETE, sharingInitiatedOrgId);
         }
 
     }

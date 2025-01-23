@@ -211,6 +211,12 @@ public class UserSharingConstants {
         ERROR_CODE_USER_SHARE("10044",
                 "Error occurred during user share propagation for userId: %s - %s",
                 "Error occurred during user share propagation for a given user."),
+        ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID("10045",
+                "Error retrieving user role ID for user: %s",
+                "Unable to fetch the role ID for the specified user in the given context."),
+        ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION("10046",
+                "Error inserting restricted permission for user: %s",
+                "Failed to insert restricted permission during user role management operation.")
         ;
 
         private final String code;

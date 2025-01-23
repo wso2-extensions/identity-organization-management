@@ -23,7 +23,9 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
@@ -45,9 +47,12 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES_HEAD;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES_TAIL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_GET_USER_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_INSERT_RESTRICTED_EDIT_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID;
@@ -56,6 +61,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_USER_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
@@ -362,11 +369,40 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     @Override
     public void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
-                                                      String name, String permittedOrgId) {
+                                                      EditOperation editOperation, String permittedOrgId)
+            throws UserShareMgtServerException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
 
-        //error4 = code
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
+        try {
+            // Query to retrieve UM_ID
+            Integer userRoleId = namedJdbcTemplate.fetchSingleRecord(QUERY_GET_USER_ROLE_ID,
+                    (resultSet, rowNumber) -> resultSet.getInt("UM_ID"),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_USER_NAME, username);
+                        namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
+                    });
+
+            if (userRoleId != null) {
+                // Insert the record into UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS
+                namedJdbcTemplate.executeUpdate(QUERY_INSERT_RESTRICTED_EDIT_PERMISSION,
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setInt(1, userRoleId);
+                            namedPreparedStatement.setInt(2, tenantId);
+                            namedPreparedStatement.setString(3, editOperation.name());
+                            namedPreparedStatement.setString(4, permittedOrgId);
+                        });
+            } else {
+                throw new UserShareMgtServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID);
+            }
+        } catch (DataAccessException e) {
+            //throw new UserShareMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION, e);
+            throw new UserShareMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION);
+            //throw handleServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION, e);
+        }
 
     }
 

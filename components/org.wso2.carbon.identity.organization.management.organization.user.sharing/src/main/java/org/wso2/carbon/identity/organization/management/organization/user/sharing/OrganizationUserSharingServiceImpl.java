@@ -24,6 +24,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -178,10 +180,11 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     @Override
     public void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
-                                                      String name, String permittedOrgId) {
+                                                      EditOperation editOperation, String permittedOrgId)
+            throws UserShareMgtException {
 
-        organizationUserSharingDAO.addEditRestrictionsForSharedUserRoles(username, tenantDomain
-                , domainName, EditOperation.DELETE.name(), permittedOrgId);
+        organizationUserSharingDAO.addEditRestrictionsForSharedUserRoles(username, tenantDomain, domainName,
+                editOperation, permittedOrgId);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

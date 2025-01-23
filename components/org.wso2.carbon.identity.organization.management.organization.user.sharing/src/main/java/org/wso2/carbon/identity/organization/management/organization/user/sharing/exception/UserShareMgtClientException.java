@@ -30,6 +30,11 @@ public class UserShareMgtClientException extends UserShareMgtException {
         super(error);
     }
 
+    public UserShareMgtClientException(UserSharingConstants.ErrorMessage error,  Throwable cause) {
+
+        super(error, cause);
+    }
+
     public UserShareMgtClientException(UserSharingConstants.ErrorMessage error, String specificMessage) {
 
         super(error, specificMessage);

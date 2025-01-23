@@ -158,19 +158,19 @@ public class OrganizationUserSharingServiceComponent {
         OrganizationUserSharingDataHolder.getInstance().setApplicationManagementService(null);
     }
 
-//    @Reference(
-//            name = "ResourceSharingPolicyHandlerService",
-//            service = ResourceSharingPolicyHandlerService.class,
-//            cardinality = ReferenceCardinality.MANDATORY,
-//            policy = ReferencePolicy.DYNAMIC,
-//            unbind = "unsetResourceSharingPolicyHandlerService")
-//    protected void setResourceSharingPolicyHandlerService(ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
-//
-//        OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
-//    }
-//
-//    protected void unsetResourceSharingPolicyHandlerService(ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
-//
-//        OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
-//    }
+    @Reference(
+            name = "ResourceSharingPolicyHandlerService",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService")
+    protected void setResourceSharingPolicyHandlerService(ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+    }
 }
