@@ -202,6 +202,12 @@ public class UserSharingConstants {
                 "Error occurred while retrieving immediate child organizations.",
                 "An unexpected error occurred while fetching immediate child organizations for the " +
                         "sharing initiated organization with ID: %s."),
+        ERROR_CODE_NULL_SHARE("10043",
+                "Attempting to do a null share.",
+                "The input provided for the share operation is null and must be valid."),
+        ERROR_CODE_NULL_UNSHARE("10044",
+                "Attempting to do a null unshare.",
+                "The input provided for the unshare operation is null and must be valid."),
         ;
 
         private final String code;

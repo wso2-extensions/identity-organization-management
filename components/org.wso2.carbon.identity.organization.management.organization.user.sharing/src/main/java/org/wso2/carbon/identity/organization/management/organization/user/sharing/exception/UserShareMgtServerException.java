@@ -18,10 +18,22 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.exception;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
+
 /**
  * Exception class for organization user share management for server exceptions.
  */
 public class UserShareMgtServerException extends UserShareMgtException {
+
+    public UserShareMgtServerException(UserSharingConstants.ErrorMessage error) {
+
+        super(error);
+    }
+
+    public UserShareMgtServerException(UserSharingConstants.ErrorMessage error, String specificMessage) {
+
+        super(error, specificMessage);
+    }
 
     public UserShareMgtServerException(String errorCode, String message, String description) {
 

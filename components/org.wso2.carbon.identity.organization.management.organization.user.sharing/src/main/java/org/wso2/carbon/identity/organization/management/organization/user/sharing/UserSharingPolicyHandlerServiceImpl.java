@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.apache.commons.logging.Log;
@@ -47,11 +65,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLE_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_AUDIENCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_UNSHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
@@ -85,8 +113,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             if (immediateChildOrgs.contains(organization.getOrganizationId())) {
                 populateSelectiveUserShareByCriteria(organization, userCriteria);
             } else {
-                throw new UserShareMgtClientException(ERROR_SKIP_SHARE.getCode(), ERROR_SKIP_SHARE.getMessage(),
-                        ERROR_SKIP_SHARE.getDescription());
+                throw new UserShareMgtClientException(ERROR_SKIP_SHARE);
             }
         }
     }
@@ -103,15 +130,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (criterionValues instanceof UserIdList) {
                         selectiveUserShareByUserIds((UserIdList) criterionValues, organization);
                     } else {
-                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
                     }
                     break;
                 default:
-                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
             }
         }
     }
@@ -134,8 +157,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             } catch (OrganizationManagementException | IdentityRoleManagementException | ResourceSharingPolicyMgtException e) {
                 String errorMessage =
                         String.format(ERROR_SELECTIVE_SHARE.getMessage(), associatedUserId, e.getMessage());
-                throw new UserShareMgtServerException(ERROR_SELECTIVE_SHARE.getCode(), errorMessage,
-                        ERROR_SELECTIVE_SHARE.getDescription());
+                throw new UserShareMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
             }
             
         }
@@ -205,10 +227,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (OrganizationManagementException e) {
             String errorMessage = String.format(
                     ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getMessage(), sharingInitiatedOrgId);
-            throw new UserShareMgtServerException(
-                    ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getCode(),
-                    errorMessage,
-                    ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getDescription());
+            throw new UserShareMgtServerException(ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS, errorMessage);
         }
     }
 
@@ -232,15 +251,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (criterionValues instanceof UserIdList) {
                         generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds);
                     } else {
-                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
                     }
                     break;
                 default:
-                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
             }
         }
 
@@ -262,8 +277,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
-                throw new UserShareMgtServerException(ERROR_GENERAL_SHARE.getCode(), errorMessage,
-                        ERROR_GENERAL_SHARE.getDescription());
+                throw new UserShareMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
 
@@ -544,9 +558,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             return list;
         } catch (OrganizationManagementException | IdentityApplicationManagementException |
                  IdentityRoleManagementException e) {
-            throw new UserShareMgtServerException(ERROR_CODE_GET_ROLE_IDS.getCode(),
-                    ERROR_CODE_GET_ROLE_IDS.getMessage(),
-                    ERROR_CODE_GET_ROLE_IDS.getDescription());
+            throw new UserShareMgtServerException(ERROR_CODE_GET_ROLE_IDS);
         }
 
     }
@@ -562,9 +574,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         .getApplicationBasicInfoByName(role.getAudienceName(), tenantDomain)
                         .getApplicationResourceId();
             default:
-                throw new OrganizationManagementException(
-                        String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getMessage(), role.getAudienceType()),
-                        ERROR_CODE_INVALID_AUDIENCE_TYPE.getCode());
+                String errorMessage = String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getMessage(),
+                        role.getAudienceType());
+                throw new OrganizationManagementException(ERROR_CODE_INVALID_AUDIENCE_TYPE.getCode(), errorMessage);
         }
     }
 
@@ -594,15 +606,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (criterionValues instanceof UserIdList) {
                         selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations);
                     } else {
-                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
                     }
                     break;
                 default:
-                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
             }
         }
 
@@ -630,8 +638,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new UserShareMgtServerException(ERROR_CODE_USER_UNSHARE.getCode(),
-                        ERROR_CODE_USER_UNSHARE.getMessage(), ERROR_CODE_USER_UNSHARE.getDescription());
+                throw new UserShareMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
             LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
         }
@@ -662,15 +669,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (criterionValues instanceof UserIdList) {
                         generalUserUnshareByUserIds((UserIdList) criterionValues);
                     } else {
-                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                                ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                        throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
                     }
                     break;
                 default:
-                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID.getCode(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                            ERROR_CODE_USER_CRITERIA_INVALID.getDescription());
+                    throw new UserShareMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
             }
         }
 
@@ -698,8 +701,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 }
 
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new UserShareMgtServerException(ERROR_CODE_USER_UNSHARE.getCode(),
-                        ERROR_CODE_USER_UNSHARE.getMessage(), ERROR_CODE_USER_UNSHARE.getDescription());
+                throw new UserShareMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
@@ -713,9 +715,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserShareMgtClientException {
 
         if (userShareDO == null) {
-            throwValidationException(NULL_SHARE_INPUT_MESSAGE,
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUT.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUT.getDescription());
+            throwValidationException(ERROR_CODE_NULL_SHARE);
         }
 
         if (userShareDO instanceof SelectiveUserShareDO) {
@@ -729,52 +729,31 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserShareMgtClientException {
 
         // Validate userCriteria is not null
-        validateNotNull(selectiveUserShareDO.getUserCriteria(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getCode());
+        validateNotNull(selectiveUserShareDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
 
         // Validate that userCriteria contains the required USER_IDS key and is not null
         if (!selectiveUserShareDO.getUserCriteria().containsKey(USER_IDS) ||
                 selectiveUserShareDO.getUserCriteria().get(USER_IDS) == null) {
-            throwValidationException(UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getDescription());
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
 
         // Validate organizations list is not null
-        validateNotNull(selectiveUserShareDO.getOrganizations(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL.getMessage(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL.getCode());
+        validateNotNull(selectiveUserShareDO.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
 
         // Validate each organization in the list
         for (SelectiveUserShareOrgDetailsDO orgDetails : selectiveUserShareDO.getOrganizations()) {
-            validateNotNull(orgDetails.getOrganizationId(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL.getCode());
-
-            validateNotNull(orgDetails.getPolicy(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL.getCode());
+            validateNotNull(orgDetails.getOrganizationId(), ERROR_CODE_ORG_ID_NULL);
+            validateNotNull(orgDetails.getPolicy(), ERROR_CODE_POLICY_NULL);
 
             // Validate roles list is not null (it can be empty)
             if (orgDetails.getRoles() == null) {
-                throwValidationException(UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL.getMessage(),
-                        UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL.getCode(),
-                        UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL.getDescription());
+                throwValidationException(ERROR_CODE_ROLES_NULL);
             } else {
                 // Validate each role's properties if present
                 for (RoleWithAudienceDO role : orgDetails.getRoles()) {
-                    validateNotNull(role.getRoleName(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL.getMessage(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL.getCode());
-
-                    validateNotNull(role.getAudienceName(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL.getMessage(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL.getCode());
-
-                    validateNotNull(role.getAudienceType(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL.getMessage(),
-                            UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL.getCode());
+                    validateNotNull(role.getRoleName(), ERROR_CODE_ROLE_NAME_NULL);
+                    validateNotNull(role.getAudienceName(), ERROR_CODE_AUDIENCE_NAME_NULL);
+                    validateNotNull(role.getAudienceType(), ERROR_CODE_AUDIENCE_TYPE_NULL);
                 }
             }
         }
@@ -782,36 +761,18 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void validateGeneralUserShareDO(GeneralUserShareDO generalDO) throws UserShareMgtClientException {
 
-        validateNotNull(generalDO.getUserCriteria(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getCode());
+        validateNotNull(generalDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
         if (!generalDO.getUserCriteria().containsKey(USER_IDS) || generalDO.getUserCriteria().get(USER_IDS) == null) {
-            throwValidationException(UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getDescription());
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
-
-        validateNotNull(generalDO.getPolicy(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL.getMessage(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL.getCode());
-
-        validateNotNull(generalDO.getRoles(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL.getMessage(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL.getCode());
+        validateNotNull(generalDO.getPolicy(), ERROR_CODE_POLICY_NULL);
+        validateNotNull(generalDO.getRoles(), ERROR_CODE_ROLES_NULL);
 
         // Validate each role's properties if present
         for (RoleWithAudienceDO role : generalDO.getRoles()) {
-            validateNotNull(role.getRoleName(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL.getCode());
-
-            validateNotNull(role.getAudienceName(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL.getCode());
-
-            validateNotNull(role.getAudienceType(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL.getCode());
+            validateNotNull(role.getRoleName(), ERROR_CODE_ROLE_NAME_NULL);
+            validateNotNull(role.getAudienceName(), ERROR_CODE_AUDIENCE_NAME_NULL);
+            validateNotNull(role.getAudienceType(), ERROR_CODE_AUDIENCE_TYPE_NULL);
         }
     }
 
@@ -819,9 +780,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserShareMgtClientException {
 
         if (userUnshareDO == null) {
-            throwValidationException(NULL_UNSHARE_INPUT_MESSAGE,
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUT.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUT.getDescription());
+            throwValidationException(ERROR_CODE_NULL_UNSHARE);
         }
 
         if (userUnshareDO instanceof SelectiveUserUnshareDO) {
@@ -835,27 +794,19 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserShareMgtClientException {
 
         // Validate userCriteria is not null
-        validateNotNull(selectiveUserUnshareDO.getUserCriteria(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getCode());
+        validateNotNull(selectiveUserUnshareDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
 
         // Validate that userCriteria contains the required USER_IDS key and is not null
         if (!selectiveUserUnshareDO.getUserCriteria().containsKey(USER_IDS) ||
                 selectiveUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
-            throwValidationException(UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getDescription());
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
 
         // Validate organizations list is not null
-        validateNotNull(selectiveUserUnshareDO.getOrganizations(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL.getMessage(),
-                UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL.getCode());
+        validateNotNull(selectiveUserUnshareDO.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
 
         for (String organization : selectiveUserUnshareDO.getOrganizations()) {
-            validateNotNull(organization,
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL.getCode());
+            validateNotNull(organization, ERROR_CODE_ORG_ID_NULL);
         }
     }
 
@@ -863,31 +814,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserShareMgtClientException {
 
         // Validate userCriteria is not null
-        validateNotNull(generalUserUnshareDO.getUserCriteria(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getMessage(),
-                ERROR_CODE_USER_CRITERIA_INVALID.getCode());
+        validateNotNull(generalUserUnshareDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
 
         // Validate that userCriteria contains the required USER_IDS key and is not null
         if (!generalUserUnshareDO.getUserCriteria().containsKey(USER_IDS) ||
                 generalUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
-            throwValidationException(UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getMessage(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getCode(),
-                    UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING.getDescription());
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
     }
 
-    private void validateNotNull(Object obj, String errorMessage, String errorCode)
+    private void validateNotNull(Object obj, UserSharingConstants.ErrorMessage error)
             throws UserShareMgtClientException {
 
         if (obj == null) {
-            throwValidationException(errorMessage, errorCode, errorMessage);
+            throwValidationException(error);
         }
     }
 
-    private void throwValidationException(String message, String errorCode, String description)
+    private void throwValidationException(UserSharingConstants.ErrorMessage error)
             throws UserShareMgtClientException {
 
-        throw new UserShareMgtClientException(errorCode, message, description, new NullPointerException(message));
+        throw new UserShareMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
     }
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {
