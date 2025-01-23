@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,9 +19,11 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -38,6 +40,8 @@ public class OrganizationUserSharingDataHolder {
     private OrganizationUserSharingService organizationUserSharingService;
     private ApplicationManagementService applicationManagementService;
     private RoleManager roleManager;
+    private ClaimMetadataManagementService claimManagementService;
+    private OrgResourceResolverService orgResourceResolverService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
@@ -163,6 +167,46 @@ public class OrganizationUserSharingDataHolder {
     public void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
 
         this.applicationManagementService = applicationManagementService;
+    }
+
+    /**
+     * Get the claim management service.
+     *
+     * @return ClaimMetadataManagementService claim management service.
+     */
+    public ClaimMetadataManagementService getClaimManagementService() {
+
+        return claimManagementService;
+    }
+
+    /**
+     * Set the claim management service.
+     *
+     * @param claimManagementService ClaimMetadataManagementService claim management service.
+     */
+    public void setClaimManagementService(ClaimMetadataManagementService claimManagementService) {
+
+        this.claimManagementService = claimManagementService;
+    }
+
+    /**
+     * Get the organization resource resolver service.
+     *
+     * @return OrgResourceResolverService organization resource resolver service.
+     */
+    public OrgResourceResolverService getOrgResourceResolverService() {
+
+        return orgResourceResolverService;
+    }
+
+    /**
+     * Set the organization resource resolver service.
+     *
+     * @param orgResourceResolverService OrgResourceResolverService organization resource resolver service.
+     */
+    public void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        this.orgResourceResolverService = orgResourceResolverService;
     }
 
     /**
