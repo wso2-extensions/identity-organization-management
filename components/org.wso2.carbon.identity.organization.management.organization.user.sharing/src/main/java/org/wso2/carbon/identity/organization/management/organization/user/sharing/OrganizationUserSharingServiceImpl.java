@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
@@ -27,6 +28,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -166,6 +169,21 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId, sharedType);
     }
 
+    @Override
+    public List<String> getSharedUserRolesOfSharedUser(List<String> allUserRolesOfSharedUser, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        return organizationUserSharingDAO.getSharedUserRolesOfSharedUser(allUserRolesOfSharedUser, tenantDomain);
+    }
+
+    @Override
+    public void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
+                                                      String name, String permittedOrgId) {
+
+        organizationUserSharingDAO.addEditRestrictionsForSharedUserRoles(username, tenantDomain
+                , domainName, EditOperation.DELETE.name(), permittedOrgId);
+    }
+
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
@@ -186,8 +204,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
-                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+        if (!userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
             return;
         }
 

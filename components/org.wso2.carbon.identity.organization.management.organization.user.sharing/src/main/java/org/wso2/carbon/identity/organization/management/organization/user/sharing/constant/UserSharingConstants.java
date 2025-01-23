@@ -208,6 +208,9 @@ public class UserSharingConstants {
         ERROR_CODE_NULL_UNSHARE("10044",
                 "Attempting to do a null unshare.",
                 "The input provided for the unshare operation is null and must be valid."),
+        ERROR_CODE_USER_SHARE("10044",
+                "Error occurred during user share propagation for userId: %s - %s",
+                "Error occurred during user share propagation for a given user."),
         ;
 
         private final String code;

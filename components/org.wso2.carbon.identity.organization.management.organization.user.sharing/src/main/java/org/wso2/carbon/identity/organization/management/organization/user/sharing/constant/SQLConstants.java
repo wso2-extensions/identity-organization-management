@@ -59,6 +59,16 @@ public class SQLConstants {
             "); AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +
                     "; AND p.UM_PERMITTED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID +
                     "; AND r.UM_EDIT_OPERATION = 'DELETE';";
+    public static final String GET_SHARED_USER_ROLES_HEAD =
+            "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
+                    + "INNER JOIN UM_HYBRID_USER_ROLE ur ON hr.UM_ID = ur.UM_ROLE_ID AND hr.UM_TENANT_ID = ur.UM_TENANT_ID "
+                    + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS rep "
+                    + "ON ur.UM_ID = rep.UM_HYBRID_USER_ROLE_ID AND ur.UM_TENANT_ID = rep.UM_HYBRID_USER_ROLE_TENANT_ID "
+                    + "WHERE hr.UM_UUID IN (";
+
+    public static final String GET_SHARED_USER_ROLES_TAIL =
+            ") AND hr.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + ";";
+
 
     public static final String DEFAULT_VALUE_NOT_SPECIFIED = "NOT_SPECIFIED";
 
@@ -81,6 +91,7 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
         public static final String COLUMN_NAME_UM_ID = "UM_ID";
         public static final String COLUMN_NAME_UM_SHARED_TYPE = "UM_SHARED_TYPE";
+        public static final String COLUMN_NAME_UM_UUID = "UM_UUID";
     }
 
 }

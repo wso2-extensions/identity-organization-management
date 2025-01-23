@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtClientException;
@@ -55,6 +56,9 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
+import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
@@ -80,6 +85,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
@@ -93,6 +99,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
+    private final UserIDResolver userIDResolver = new UserIDResolver();
     private static ConcurrentLinkedQueue<String> errorMessages; //todo: populate this at last
 
     @Override
@@ -293,24 +300,24 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                                         String sharingInitiatedOrgId)
             throws OrganizationManagementException, IdentityRoleManagementException {
 
-        List<String> oldSharedRoleIds = getOldSharedRoleIdsForSharedUser(userAssociation);
-        List<String> newRoleIds = getRolesToBeAddedAfterUpdate(userAssociation, oldSharedRoleIds, roleIds);
+        List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
+        List<String> newSharedRoleIds = getRolesToBeAddedAfterUpdate(userAssociation, currentSharedRoleIds, roleIds);
 
-        if (hasRoleChanges(oldSharedRoleIds, newRoleIds)) {
-            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newRoleIds);
+        if (hasRoleChanges(currentSharedRoleIds, newSharedRoleIds)) {
+            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds);
         }
     }
 
-    private List<String> getOldSharedRoleIdsForSharedUser(UserAssociation userAssociation)
-            throws OrganizationManagementException {
-        ////error1//implement
-        //todo: get the old roles of shared user - done (MY NEW CODE SHOULD BE MERGED)
+    private List<String> getCurrentSharedRoleIdsForSharedUser(UserAssociation userAssociation)
+            throws OrganizationManagementException, IdentityRoleManagementException {
+        //error1
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
-        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
-        return new ArrayList<>();
-        ////return getRoleManagementService().getRoleIdListOfSharedUser(userId, targetOrgTenantDomain);
+        List<String> allUserRolesOfSharedUser = getRoleManagementService().getRoleIdListOfUser(userId, tenantDomain);
+
+        return getOrganizationUserSharingService().getSharedUserRolesOfSharedUser(allUserRolesOfSharedUser, tenantDomain);
     }
 
     private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
@@ -341,7 +348,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         .withInitiatingOrgId(sharingInitiatedOrgId)
                         .withSharingPolicy(userShare.getPolicy()).build();
 
-        //todo: describe the setting of policy holding org
+        /*
+        For the selective user share, the policy holding orgs are the respective selected orgs.
+        For the general user share, the policy holding org is the same org from which the request is initiated.
+         */
         if(userShare instanceof SelectiveUserShare) {
             resourceSharingPolicy.setPolicyHoldingOrgId(((SelectiveUserShare) userShare).getOrganizationId());
         } else {
@@ -376,10 +386,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         UserAssociation userAssociation;
 
         try {
-            userAssociation =
-                    shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
+            userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
         } catch (OrganizationManagementException e) {
-            LOG.warn("Error occurred while sharing user association.", e);
+            String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
+            LOG.error(errorMessage, e);
             return;
         }
 
@@ -403,24 +413,26 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 SharedType.SHARED);
     }
 
-    private List<String> getRolesToBeAddedAfterUpdate(UserAssociation userAssociation, List<String> oldRoleIds,
+    private List<String> getRolesToBeAddedAfterUpdate(UserAssociation userAssociation, List<String> currentRoleIds,
                                                       List<String> newRoleIds)
             throws OrganizationManagementException, IdentityRoleManagementException {
 
-        List<String> rolesToBeRemoved = new ArrayList<>(oldRoleIds);
+        // Roles to be added are those in newRoleIds that are not in currentRoleIds
         List<String> rolesToBeAdded = new ArrayList<>(newRoleIds);
+        rolesToBeAdded.removeAll(currentRoleIds);
 
-        rolesToBeRemoved.removeAll(newRoleIds); // Determine roles to be removed.
-        rolesToBeAdded.removeAll(oldRoleIds); // Determine roles to be added.
+        // Roles to be removed are those in currentRoleIds that are not in newRoleIds
+        List<String> rolesToBeRemoved = new ArrayList<>(currentRoleIds);
+        rolesToBeRemoved.removeAll(newRoleIds);
 
-        deleteOldSharedRoles(userAssociation, rolesToBeRemoved); // Handle role deletion.
+        deleteOldSharedRoles(userAssociation, rolesToBeRemoved);
         return rolesToBeAdded;
     }
 
     private void deleteOldSharedRoles(UserAssociation userAssociation, List<String> rolesToBeRemoved)
             throws OrganizationManagementException, IdentityRoleManagementException {
-        ////error2//implement
-        //todo: delete the old roles (rolesToBeRemoved) - done (MY NEW CODE SHOULD BE MERGED)
+        //error2
+        //todo: listener
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
         String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
@@ -456,10 +468,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         String sharingInitiatedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
         String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
+        String usernameWithDomain = userIDResolver.getNameByID(userId, targetOrgTenantDomain);;
+        String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
+        String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
+
         //TODO: Update the query
 
+        RoleManagementService roleManagementService = getRoleManagementService();
         Map<String, String> sharedRoleToMainRoleMappingsBySubOrg =
-                getRoleManagementService().getSharedRoleToMainRoleMappingsBySubOrg(roleIds,
+                roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(roleIds,
                         sharingInitiatedOrgTenantDomain);
 
         List<String> mainRoles = new ArrayList<>();
@@ -468,15 +485,17 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
 
         Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
-                getRoleManagementService().getMainRoleToSharedRoleMappingsBySubOrg(mainRoles, targetOrgTenantDomain);
+                roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(mainRoles, targetOrgTenantDomain);
 
-        //TODO: Since we are going only with POST, even for role updates, we have to get the earlier roles and delete it
-        //TODO: Handle sub-org role assignments (consider only roles assigned from parents)
-        ////error3//make those shares RESTRICTED
+        //error3
         for (String role : mainRoleToSharedRoleMappingsBySubOrg.values()) {
-            getRoleManagementService().updateUserListOfRole(role, Collections.singletonList(userId),
+            roleManagementService.updateUserListOfRole(role, Collections.singletonList(userId),
                     Collections.emptyList(), targetOrgTenantDomain);
+            roleManagementService.getRoleListOfUser(userId, targetOrgTenantDomain);
+
             //todo: update the UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS table
+            getOrganizationUserSharingService().addEditRestrictionsForSharedUserRoles(username, targetOrgTenantDomain
+                    , domainName, EditOperation.DELETE.name(), sharingInitiatedOrgId);
         }
 
     }

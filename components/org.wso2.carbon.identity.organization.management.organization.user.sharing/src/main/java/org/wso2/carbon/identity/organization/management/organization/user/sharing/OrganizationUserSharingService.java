@@ -22,6 +22,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.List;
 
@@ -126,5 +128,34 @@ public interface OrganizationUserSharingService {
             throws OrganizationManagementException {
 
         throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented");
+    }
+
+    /**
+     * Retrieves the roles of a shared user based on all user roles.
+     *
+     * @param allUserRolesOfSharedUser List of all roles associated with the shared user.
+     * @param tenantDomain             The tenant domain of the shared user.
+     * @return List of shared user roles.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving shared user roles.
+     */
+    default List<String> getSharedUserRolesOfSharedUser(List<String> allUserRolesOfSharedUser, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        throw new NotImplementedException("getSharedUserRolesOfSharedUser method is not implemented");
+    }
+
+    /**
+     * Adds edit restrictions for shared user roles.
+     *
+     * @param username       The username of the shared user.
+     * @param tenantDomain   The tenant domain of the shared user.
+     * @param domainName     The domain name associated with the user.
+     * @param name           The name of the role or restriction.
+     * @param permittedOrgId The organization ID with permitted access.
+     */
+    default void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
+                                                       String name, String permittedOrgId) {
+
+        throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
     }
 }
