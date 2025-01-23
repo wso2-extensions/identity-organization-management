@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
@@ -31,6 +32,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.listener.AbstractRoleManagement
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
@@ -57,6 +59,9 @@ public class SharedUserRoleListener extends AbstractRoleManagementListener {
                                            String tenantDomain) throws IdentityRoleManagementException {
 
         //todo
+        if (CollectionUtils.isEmpty(deletedUserIDList)) {
+            return;
+        }
         //int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         try {
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {

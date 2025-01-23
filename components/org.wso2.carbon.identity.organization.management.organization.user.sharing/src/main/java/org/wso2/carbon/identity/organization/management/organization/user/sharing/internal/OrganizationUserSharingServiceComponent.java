@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.organization.management.role.management.service.
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.listener.RoleManagementListener;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -65,7 +66,7 @@ public class OrganizationUserSharingServiceComponent {
                 null);
         bundleContext.registerService(UserOperationEventListener.class.getName(),
                 new SharedUserOperationEventListener(), null);
-        bundleContext.registerService(RoleManagementService.class.getName(),
+        bundleContext.registerService(RoleManagementListener.class.getName(),
                 new SharedUserRoleListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
                 new SharingOrganizationCreatorUserEventHandler(), null);
