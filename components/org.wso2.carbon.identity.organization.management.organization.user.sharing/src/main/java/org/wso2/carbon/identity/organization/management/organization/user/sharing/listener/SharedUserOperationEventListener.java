@@ -75,7 +75,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class SharedUserOperationEventListener extends AbstractIdentityUserOperationEventListener {
 
     private static final Log LOG = LogFactory.getLog(SharedUserOperationEventListener.class);
-    private static final String INSIDE_CLAIM_RESOLVER_FLAG = "InSideClaimResolverFunction";
+    private static final String INSIDE_CLAIM_RESOLVER_FLAG = "insideClaimResolverFunction";
     private final OrganizationUserSharingService organizationUserSharingService =
             new OrganizationUserSharingServiceImpl();
     private final SharedUserProfileUpdateGovernanceEventListener sharedUserProfileUpdateGovernanceEventListener =
@@ -129,13 +129,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            String currentOrganizationId = resolveOrganizationId(currentTenantDomain);
             UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.
@@ -177,13 +176,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            String currentOrganizationId = resolveOrganizationId(currentTenantDomain);
             // Analyse SharedProfileValueResolvingMethod value of claim and categorize.
             Map<ClaimConstants.SharedProfileValueResolvingMethod, List<String>>
                     claimsByResolvingMethod = categorizeClaimsByResolvingMethod(claims, currentTenantDomain);
@@ -239,13 +237,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            currentOrganizationId = resolveOrganizationId(currentTenantDomain, currentOrganizationId);
+            String currentOrganizationId = resolveOrganizationId(currentTenantDomain);
             UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.
@@ -294,9 +291,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     /*
                     If the flow is invoked by a claim resolver function, don't execute the following to avoid recursion.
                      */
-                    boolean inSideClaimResolverFunction =
+                    boolean insideClaimResolverFunction =
                             IdentityUtil.threadLocalProperties.get().containsKey(INSIDE_CLAIM_RESOLVER_FLAG);
-                    if (inSideClaimResolverFunction) {
+                    if (insideClaimResolverFunction) {
                         break;
                     }
                     try {
@@ -440,6 +437,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
         for (String claim : claims) {
             Optional<LocalClaim> localClaim = claimManagementService.getLocalClaim(claim, tenantDomain);
             if (!localClaim.isPresent()) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Claim: %s is not available in the tenant: %s.", claim, tenantDomain));
+                }
                 continue;
             }
             String resolvingMethod =
@@ -522,16 +522,15 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     }
 
     /**
-     * Check whether the organizationID is properly found, if not resolve it.
+     * Check whether the organizationID is properly found from PrivilegedCarbonContext, if not resolve it.
      *
      * @param currentTenantDomain   Current tenant domain.
-     * @param currentOrganizationId Current organization id.
      * @return Resolved organization id.
      * @throws OrganizationManagementException If an error occurs while resolving the organization id.
      */
-    private String resolveOrganizationId(String currentTenantDomain, String currentOrganizationId)
-            throws OrganizationManagementException {
+    private String resolveOrganizationId(String currentTenantDomain) throws OrganizationManagementException {
 
+        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         if (StringUtils.isBlank(currentOrganizationId)) {
             currentOrganizationId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                     .resolveOrganizationId(currentTenantDomain);
