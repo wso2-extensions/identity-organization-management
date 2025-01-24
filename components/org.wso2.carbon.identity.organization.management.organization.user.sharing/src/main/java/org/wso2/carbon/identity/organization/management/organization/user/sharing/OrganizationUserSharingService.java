@@ -134,17 +134,37 @@ public interface OrganizationUserSharingService {
     }
 
     /**
-     * Retrieves the roles of a shared user based on all user roles.
+     * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
+     * tenant domain, based on the permissions of the requesting organization.
+     *
+     * @param roleId               The role ID from which the users are to be removed.
+     * @param deletedUserNamesList The list of usernames intended for removal.
+     * @param tenantDomain         The tenant domain where the operation is being performed.
+     * @param requestingOrgId      The ID of the requesting organization performing the operation.
+     * @return A list of usernames that the requesting organization is not permitted to remove from the given role.
+     * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
+     *                                         eligible usernames.
+     */
+    default List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+                                                            String tenantDomain, String requestingOrgId)
+            throws IdentityRoleManagementException {
+
+        throw new NotImplementedException(
+                "getNonDeletableUserRoleAssignments method is not implemented.");
+    }
+
+    /**
+     * Retrieves the shared user roles among the given user roles.
      *
      * @param allUserRolesOfSharedUser List of all roles associated with the shared user.
      * @param tenantDomain             The tenant domain of the shared user.
      * @return List of shared user roles.
      * @throws IdentityRoleManagementException If an error occurs while retrieving shared user roles.
      */
-    default List<String> getSharedUserRolesOfSharedUser(List<String> allUserRolesOfSharedUser, String tenantDomain)
+    default List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
             throws IdentityRoleManagementException {
 
-        throw new NotImplementedException("getSharedUserRolesOfSharedUser method is not implemented");
+        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented");
     }
 
     /**

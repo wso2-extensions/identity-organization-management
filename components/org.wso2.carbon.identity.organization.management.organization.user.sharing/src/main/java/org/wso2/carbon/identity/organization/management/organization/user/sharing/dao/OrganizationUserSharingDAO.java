@@ -18,12 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
@@ -120,36 +120,36 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
-     * Retrieve the list of usernames eligible to be removed from the specified role within the given tenant domain,
-     * based on the permissions of the requesting organization.
+     * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
+     * tenant domain, based on the permissions of the requesting organization.
      *
      * @param roleId               The role ID from which the users are to be removed.
      * @param deletedUserNamesList The list of usernames intended for removal.
      * @param tenantDomain         The tenant domain where the operation is being performed.
      * @param requestingOrgId      The ID of the requesting organization performing the operation.
-     * @return A list of usernames that the requesting organization is permitted to remove from the given role.
+     * @return A list of usernames that the requesting organization is not permitted to remove from the given role.
      * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
      *                                         eligible usernames.
      */
-    default List<String> getEligibleUsernamesForUserRemovalFromRole(String roleId, List<String> deletedUserNamesList,
+    default List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
                                                                     String tenantDomain, String requestingOrgId)
             throws IdentityRoleManagementException {
 
-        throw new NotImplementedException("getEligibleUsernamesForUserRemovalFromRole method is not implemented.");
+        throw new NotImplementedException("getNonDeletableUserRoleAssignments method is not implemented.");
     }
 
     /**
-     * Retrieves the roles of a shared user based on all user roles.
+     * Retrieves the shared user roles among the given user roles.
      *
      * @param allUserRolesOfSharedUser List of all roles associated with the shared user.
      * @param tenantDomain             The tenant domain of the shared user.
      * @return List of shared user roles.
      * @throws IdentityRoleManagementException If an error occurs while retrieving shared user roles.
      */
-    default List<String> getSharedUserRolesOfSharedUser(List<String> allUserRolesOfSharedUser, String tenantDomain)
+    default List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
             throws IdentityRoleManagementException {
 
-        throw new NotImplementedException("getSharedUserRolesOfSharedUser method is not implemented");
+        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented");
     }
 
     /**

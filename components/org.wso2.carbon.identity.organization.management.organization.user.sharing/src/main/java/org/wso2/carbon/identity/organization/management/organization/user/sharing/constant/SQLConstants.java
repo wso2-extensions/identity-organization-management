@@ -18,6 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
+
 /**
  * SQL constants for organization user sharing.
  */
@@ -50,26 +56,72 @@ public class SQLConstants {
                     "FROM UM_ORG_USER_ASSOCIATION WHERE UM_USER_ID = ?";
     public static final String CHECK_COLUMN_EXISTENCE_IN_TABLE =
             "SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+
     public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_HEAD =
             "SELECT r.UM_USER_NAME FROM UM_HYBRID_USER_ROLE r "
                     + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS p "
                     + "ON r.UM_ID = p.UM_HYBRID_USER_ROLE_ID AND r.UM_TENANT_ID = p.UM_HYBRID_USER_ROLE_TENANT_ID "
-                    + "WHERE r.UM_ROLE_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID + "; AND r.UM_USER_NAME IN (";
+                    + "WHERE r.UM_ROLE_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID + "; AND r.UM_USER_NAME IN " +
+                    "(:" + SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES + ";) ";
     public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL =
-            "); AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +
+            "AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +
                     "; AND p.UM_PERMITTED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID +
-                    "; AND r.UM_EDIT_OPERATION = 'DELETE';";
-    public static final String GET_SHARED_USER_ROLES_HEAD =
-            "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
+                    "; AND p.UM_EDIT_OPERATION = :"+ SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION +";";
+
+/*    public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG = "SELECT r.UM_USER_NAME FROM UM_HYBRID_USER_ROLE r "
+            + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS p "
+            + "ON r.UM_ID = p.UM_HYBRID_USER_ROLE_ID AND r.UM_TENANT_ID = p.UM_HYBRID_USER_ROLE_TENANT_ID "
+            + "WHERE r.UM_ROLE_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID + "; AND r.UM_USER_NAME IN " +
+            "(:" + SQLPlaceholders.USER_NAMES + ";) AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +
+            "; AND p.UM_PERMITTED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID +
+            "; AND p.UM_EDIT_OPERATION = :"+ SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION +";";*/
+
+//    public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG =
+//            "SELECT r.UM_USER_NAME FROM UM_HYBRID_USER_ROLE r "
+//                    + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS p "
+//                    + "ON r.UM_ID = p.UM_HYBRID_USER_ROLE_ID AND r.UM_TENANT_ID = p.UM_HYBRID_USER_ROLE_TENANT_ID "
+//                    + "INNER JOIN UM_HYBRID_ROLE h "
+//                    + "ON r.UM_ROLE_ID = h.UM_ID AND r.UM_TENANT_ID = h.UM_TENANT_ID "
+//                    + "WHERE h.UM_UUID = :" + SQLPlaceholders.COLUMN_NAME_UM_UUID + "; "
+//                    + "AND r.UM_USER_NAME IN (:" + SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES + ";) "
+//                    + "AND r.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; "
+//                    + "AND p.UM_PERMITTED_ORG_ID != :" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID + "; "
+//                    + "AND p.UM_EDIT_OPERATION = :" + SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION + ";";
+
+    public static final String GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG =
+            "SELECT r.UM_USER_NAME FROM UM_HYBRID_USER_ROLE r "
+                    + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS p "
+                    + "ON r.UM_ID = p.UM_HYBRID_USER_ROLE_ID AND r.UM_TENANT_ID = p.UM_HYBRID_USER_ROLE_TENANT_ID "
+                    + "INNER JOIN UM_HYBRID_ROLE h "
+                    + "ON r.UM_ROLE_ID = h.UM_ID AND r.UM_TENANT_ID = h.UM_TENANT_ID "
+                    + "WHERE h.UM_UUID = :" + COLUMN_NAME_UM_UUID + "; "
+                    + "AND r.UM_USER_NAME IN (" + PLACEHOLDER_NAME_USER_NAMES + ") "
+                    + "AND r.UM_TENANT_ID = :" + COLUMN_NAME_UM_TENANT_ID + "; "
+                    + "AND p.UM_PERMITTED_ORG_ID != :" + COLUMN_NAME_UM_PERMITTED_ORG_ID + "; "
+                    + "AND p.UM_EDIT_OPERATION = :" + COLUMN_NAME_UM_EDIT_OPERATION + ";";
+
+//    public static final String GET_SHARED_USER_ROLES_HEAD =
+//            "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
+//                    + "INNER JOIN UM_HYBRID_USER_ROLE ur "
+//                    + "ON hr.UM_ID = ur.UM_ROLE_ID "
+//                    + "AND hr.UM_TENANT_ID = ur.UM_TENANT_ID "
+//                    + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS rep "
+//                    + "ON ur.UM_ID = rep.UM_HYBRID_USER_ROLE_ID "
+//                    + "AND ur.UM_TENANT_ID = rep.UM_HYBRID_USER_ROLE_TENANT_ID "
+//                    + "WHERE hr.UM_UUID IN (%s) ";
+//    public static final String GET_SHARED_USER_ROLES_TAIL =
+//            "AND hr.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + ";";
+    public static final String GET_SHARED_USER_ROLES =
+             "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
                     + "INNER JOIN UM_HYBRID_USER_ROLE ur "
                     + "ON hr.UM_ID = ur.UM_ROLE_ID "
                     + "AND hr.UM_TENANT_ID = ur.UM_TENANT_ID "
                     + "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS rep "
                     + "ON ur.UM_ID = rep.UM_HYBRID_USER_ROLE_ID "
                     + "AND ur.UM_TENANT_ID = rep.UM_HYBRID_USER_ROLE_TENANT_ID "
-                    + "WHERE hr.UM_UUID IN (";
-    public static final String GET_SHARED_USER_ROLES_TAIL =
-            ") AND hr.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + ";";
+                    + "WHERE hr.UM_UUID IN (" + SQLPlaceholders.PLACEHOLDER_ROLE_IDS + ") "
+                    + "AND hr.UM_TENANT_ID = :" + COLUMN_NAME_UM_TENANT_ID + ";";
+
     public static final String QUERY_GET_USER_ROLE_ID =
             "SELECT UR.UM_ID FROM UM_HYBRID_USER_ROLE UR " +
                     "JOIN UM_DOMAIN D ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
@@ -110,6 +162,10 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID = "UM_HYBRID_USER_ROLE_TENANT_ID";
         public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";
         public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
+        public static final String COLUMN_NAME_UM_ROLE_UUID = "UM_UUID";
+
+        public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
+        public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
     }
 
 }

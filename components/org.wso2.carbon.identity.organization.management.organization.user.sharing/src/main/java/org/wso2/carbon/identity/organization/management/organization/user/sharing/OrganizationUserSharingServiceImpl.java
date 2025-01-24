@@ -172,10 +172,19 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public List<String> getSharedUserRolesOfSharedUser(List<String> allUserRolesOfSharedUser, String tenantDomain)
+    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+                                                           String tenantDomain, String requestingOrgId)
             throws IdentityRoleManagementException {
 
-        return organizationUserSharingDAO.getSharedUserRolesOfSharedUser(allUserRolesOfSharedUser, tenantDomain);
+        return organizationUserSharingDAO.getNonDeletableUserRoleAssignments(roleId, deletedUserNamesList,
+                tenantDomain, requestingOrgId);
+    }
+
+    @Override
+    public List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        return organizationUserSharingDAO.getSharedUserRolesFromUserRoles(allUserRolesOfSharedUser, tenantDomain);
     }
 
     @Override

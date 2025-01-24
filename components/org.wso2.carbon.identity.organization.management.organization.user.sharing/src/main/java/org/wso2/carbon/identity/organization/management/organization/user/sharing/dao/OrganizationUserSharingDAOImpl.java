@@ -30,8 +30,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
-import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,24 +43,32 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_HEAD;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES_HEAD;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES_TAIL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES;
+//import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants
+// .GET_SHARED_USER_ROLES_HEAD;
+//import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants
+// .GET_SHARED_USER_ROLES_TAIL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_GET_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_INSERT_RESTRICTED_EDIT_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_USER_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION;
@@ -245,121 +253,82 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public List<String> getEligibleUsernamesForUserRemovalFromRole(String roleId, List<String> deletedUserNamesList,
-                                                                   String tenantDomain, String permittedOrgId)
+    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+                                                           String tenantDomain, String permittedOrgId)
             throws IdentityRoleManagementException {
 
         if (CollectionUtils.isEmpty(deletedUserNamesList)) {
             return Collections.emptyList();
         }
 
+        String usernamePlaceholder = "USERNAME_";
+        List<String> usernamePlaceholders = new ArrayList<>();
+
+        for (int i = 1; i <= deletedUserNamesList.size(); i++) {
+            usernamePlaceholders.add(":" + usernamePlaceholder + i + ";");
+        }
+
+        String sqlStmt = GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG.replace(
+                PLACEHOLDER_NAME_USER_NAMES, String.join(", ", usernamePlaceholders));
+
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-
-        String placeholders = deletedUserNamesList.stream()
-                .map(username -> ":" + COLUMN_NAME_UM_USER_NAME + deletedUserNamesList.indexOf(username))
-                .collect(Collectors.joining(","));
-
-        String fetchRestrictedUsernamesWithPermittedAccessQuery =
-                GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_HEAD + placeholders +
-                        GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL;
-
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
         try {
             return namedJdbcTemplate.executeQuery(
-                    fetchRestrictedUsernamesWithPermittedAccessQuery,
+                    sqlStmt,
                     (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_USER_NAME),
                     namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_ROLE_ID, roleId);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
                         namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
-
-                        // Dynamically set usernames
-                        for (int i = 0; i < deletedUserNamesList.size(); i++) {
-                            namedPreparedStatement
-                                    .setString(COLUMN_NAME_UM_USER_NAME + i, deletedUserNamesList.get(i));
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION, EditOperation.DELETE.name());
+                        int index = 1;
+                        for (String username : deletedUserNamesList) {
+                            namedPreparedStatement.setString(usernamePlaceholder + index, username);
+                            index++;
                         }
-                    }
-                                                 );
+                    });
         } catch (DataAccessException e) {
-            String errorMessage =
-                    String.format("Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.",
-                            roleId, tenantDomain);
+            String errorMessage = String.format(
+                    "Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.",
+                    roleId, tenantDomain);
             throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
         }
     }
 
-    /*@Override
-    public List<String> getSharedUserRolesOfSharedUser(List<String> roleIds, String tenantDomain)
-            throws IdentityRoleManagementException {
-
-        if (CollectionUtils.isEmpty(roleIds)) {
-            return Collections.emptyList();
-        }
-
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-
-        // Dynamically generate placeholders for the role IDs
-        String placeholders = roleIds.stream()
-                .map(roleId -> ":" + COLUMN_NAME_UM_ROLE_ID + roleIds.indexOf(roleId))
-                .collect(Collectors.joining(","));
-
-        // Construct the query
-        String fetchEligibleUUIDsQuery = GET_ELIGIBLE_UUIDS_BY_ROLE_AND_TENANT_HEAD + placeholders +
-                GET_ELIGIBLE_UUIDS_BY_ROLE_AND_TENANT_TAIL;
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            return namedJdbcTemplate.executeQuery(
-                    fetchEligibleUUIDsQuery,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_UUID),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-
-                        // Dynamically set role IDs
-                        for (int i = 0; i < roleIds.size(); i++) {
-                            namedPreparedStatement.setString(COLUMN_NAME_UM_ROLE_ID + i, roleIds.get(i));
-                        }
-                    }
-                                                 );
-        } catch (DataAccessException e) {
-            String errorMessage = String.format("Error while retrieving UM_UUIDs for role IDs in tenant domain: %s.",
-                    tenantDomain);
-            throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
-        }
-    }*/
-
     @Override
-    public List<String> getSharedUserRolesOfSharedUser(List<String> roleIds, String tenantDomain)
+    public List<String> getSharedUserRolesFromUserRoles(List<String> roleIds, String tenantDomain)
             throws IdentityRoleManagementException {
 
         if (CollectionUtils.isEmpty(roleIds)) {
             return Collections.emptyList();
         }
 
+        String roleIdPlaceholder = "ROLE_ID_";
+        List<String> roleIdPlaceholders = new ArrayList<>();
+        for (int i = 1; i <= roleIds.size(); i++) {
+            roleIdPlaceholders.add(":" + roleIdPlaceholder + i + ";");
+        }
+
+        String fetchSharedRolesQuery =
+                GET_SHARED_USER_ROLES.replace(PLACEHOLDER_ROLE_IDS, String.join(", ", roleIdPlaceholders));
+
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-
-        // Generate placeholders for the role IDs dynamically
-        String placeholders = roleIds.stream()
-                .map(roleId -> ":" + COLUMN_NAME_UM_UUID + roleIds.indexOf(roleId))
-                .collect(Collectors.joining(","));
-
-        String fetchSharedRolesQuery = GET_SHARED_USER_ROLES_HEAD + placeholders + GET_SHARED_USER_ROLES_TAIL;
-
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
         try {
             return namedJdbcTemplate.executeQuery(
                     fetchSharedRolesQuery,
                     (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_UUID),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-
-                        // Dynamically set role IDs
-                        for (int i = 0; i < roleIds.size(); i++) {
-                            namedPreparedStatement
-                                    .setString(COLUMN_NAME_UM_UUID + i, roleIds.get(i));
+                        int index = 1;
+                        for (String roleId : roleIds) {
+                            namedPreparedStatement.setString(roleIdPlaceholder + index, roleId);
+                            index++;
                         }
-                    }
-                                                 );
+                    });
         } catch (DataAccessException e) {
             String errorMessage =
                     String.format("Error while retrieving shared user roles for tenant domain: %s.", tenantDomain);
@@ -379,7 +348,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         try {
             // Query to retrieve UM_ID
             Integer userRoleId = namedJdbcTemplate.fetchSingleRecord(QUERY_GET_USER_ROLE_ID,
-                    (resultSet, rowNumber) -> resultSet.getInt("UM_ID"),
+                    (resultSet, rowNumber) -> resultSet.getInt(COLUMN_NAME_UM_ID),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_UM_USER_NAME, username);
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
@@ -390,20 +359,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                 // Insert the record into UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS
                 namedJdbcTemplate.executeUpdate(QUERY_INSERT_RESTRICTED_EDIT_PERMISSION,
                         namedPreparedStatement -> {
-                            namedPreparedStatement.setInt(1, userRoleId);
-                            namedPreparedStatement.setInt(2, tenantId);
-                            namedPreparedStatement.setString(3, editOperation.name());
-                            namedPreparedStatement.setString(4, permittedOrgId);
+                            namedPreparedStatement.setInt(COLUMN_NAME_UM_HYBRID_USER_ROLE_ID, userRoleId);
+                            namedPreparedStatement.setInt(COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID, tenantId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION, editOperation.name());
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
                         });
             } else {
                 throw new UserShareMgtServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID);
             }
         } catch (DataAccessException e) {
-            //throw new UserShareMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION, e);
             throw new UserShareMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION);
-            //throw handleServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION, e);
         }
-
     }
-
 }

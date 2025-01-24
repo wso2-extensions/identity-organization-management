@@ -317,7 +317,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         List<String> allUserRolesOfSharedUser = getRoleManagementService().getRoleIdListOfUser(userId, tenantDomain);
 
-        return getOrganizationUserSharingService().getSharedUserRolesOfSharedUser(allUserRolesOfSharedUser, tenantDomain);
+        return getOrganizationUserSharingService().getSharedUserRolesFromUserRoles(allUserRolesOfSharedUser, tenantDomain);
     }
 
     private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)

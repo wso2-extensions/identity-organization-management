@@ -20,12 +20,15 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.listener.AbstractRoleManagementListener;
@@ -33,8 +36,11 @@ import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.OPERATION_FORBIDDEN;
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
 
 public class SharedUserRoleListener extends AbstractRoleManagementListener {
@@ -56,34 +62,30 @@ public class SharedUserRoleListener extends AbstractRoleManagementListener {
 
     @Override
     public void preUpdateUserListOfRole(String roleID, List<String> newUserIDList, List<String> deletedUserIDList,
-                                           String tenantDomain) throws IdentityRoleManagementException {
+                                        String tenantDomain) throws IdentityRoleManagementException {
 
-        //todo
         if (CollectionUtils.isEmpty(deletedUserIDList)) {
             return;
         }
-        //int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+
         try {
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return;
             }
-//            return getUpdatedUserIDListToBeDeletedBasedOnPermission(roleID, deletedUserIDList, tenantDomain,
-//                    Utils.getOrganizationId());
-
 
             List<String> deletedUserNamesList = userIDResolver.getNamesByIDs(deletedUserIDList, tenantDomain);
 
-            List<String> modifiedDeletedUserNamesList =
-                    organizationUserSharingDAO.getEligibleUsernamesForUserRemovalFromRole(roleID,
-                            deletedUserNamesList, tenantDomain, Utils.getOrganizationId());
+            List<String> nonDeletableUserNamesList =
+                    getOrganizationUserSharingService().getNonDeletableUserRoleAssignments(roleID, deletedUserNamesList,
+                            tenantDomain, Utils.getOrganizationId());
 
-//            List<String> modifiedDeletedUserNamesList =
-//                    roleDAO.getEligibleUsernamesForUserRemovalFromRole(roleID, deletedUserNamesList, tenantDomain,
-//                            Utils.getOrganizationId());
-
-            deletedUserIDList = userIDResolver.getIDsByNames(modifiedDeletedUserNamesList, tenantDomain);
-            //return getUserIDsByNames(modifiedDeletedUserNamesList, tenantDomain);
-
+            if (CollectionUtils.isNotEmpty(nonDeletableUserNamesList)) {
+                String errorMessage = String.format(
+                        "User(s): %s cannot be deleted from the role: %s from this organization.",
+                        String.join(", ", nonDeletableUserNamesList),
+                        getRoleManagementService().getRoleNameByRoleId(roleID, tenantDomain));
+                throw new IdentityRoleManagementException(OPERATION_FORBIDDEN.getCode(), errorMessage);
+            }
 
         } catch (OrganizationManagementException e) {
             String errorMessage = "Error while retrieving the organization id for the given tenantDomain: "
@@ -92,15 +94,13 @@ public class SharedUserRoleListener extends AbstractRoleManagementListener {
         }
     }
 
+    private OrganizationUserSharingService getOrganizationUserSharingService() {
 
-    private List<String> getUserNamesByIDs(List<String> deletedUserIDList, String tenantDomain)
-            throws IdentityRoleManagementException {
-
-        //todo
-        return new ArrayList<>();
+        return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService();
     }
 
+    private RoleManagementService getRoleManagementService() {
 
-
-
+        return OrganizationUserSharingDataHolder.getInstance().getRoleManagementService();
+    }
 }
