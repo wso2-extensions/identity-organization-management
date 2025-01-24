@@ -273,7 +273,7 @@ public interface ResourceSharingPolicyHandlerService {
     default void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+        throw new NotImplementedException("deleteResourceSharingPolicyByResourceTypeAndId method is not implemented in " + this.getClass());
     }
 
     /**
@@ -290,7 +290,7 @@ public interface ResourceSharingPolicyHandlerService {
                                                                    String attributeId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+        throw new NotImplementedException("deleteSharedResourceAttributeByAttributeTypeAndId method is not implemented in " + this.getClass());
     }
 
     /**
@@ -306,6 +306,6 @@ public interface ResourceSharingPolicyHandlerService {
     default void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("aggregate method is not implemented in " + this.getClass());
+        throw new NotImplementedException("deleteResourceSharingPoliciesAndAttributesByOrganizationId method is not implemented in " + this.getClass());
     }
 }
