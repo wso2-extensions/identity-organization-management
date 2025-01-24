@@ -18,9 +18,9 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
