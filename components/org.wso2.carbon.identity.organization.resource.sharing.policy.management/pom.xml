@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.4.63-SNAPSHOT</version>
+        <version>1.4.73-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -87,7 +87,7 @@
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Bundle-Description>Organization Resource Sharing Policy Service Bundle</Bundle-Description>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal,
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao
                         </Private-Package>
                         <Export-Package>

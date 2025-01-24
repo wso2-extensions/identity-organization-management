@@ -75,6 +75,18 @@ public class ResourceSharingSQLConstants {
                     "UM_INITIATING_ORG_ID = :" +
                     SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";";
 
+    // SQL for deleting resource sharing policy in an organization by resource type and ID.
+    public static final String DELETE_RESOURCE_SHARING_POLICY_IN_ORG_BY_RESOURCE_TYPE_AND_ID =
+            "DELETE FROM UM_RESOURCE_SHARING_POLICY WHERE " +
+                    "UM_POLICY_HOLDING_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + "; AND " +
+                    "UM_RESOURCE_TYPE = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
+                    "UM_RESOURCE_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND " +
+                    "UM_INITIATING_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + ";";
+
     // SQL constant for inserting a shared resource attribute.
     public static final String CREATE_SHARED_RESOURCE_ATTRIBUTE =
             "INSERT INTO UM_SHARED_RESOURCE_ATTRIBUTES " +

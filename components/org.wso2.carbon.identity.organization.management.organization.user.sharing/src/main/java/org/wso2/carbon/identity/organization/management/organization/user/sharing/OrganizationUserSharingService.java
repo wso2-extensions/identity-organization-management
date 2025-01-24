@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -49,6 +50,21 @@ public interface OrganizationUserSharingService {
      */
     boolean unshareOrganizationUsers(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException;
+
+    /**
+     * Unshare the specified user in the given shared organization.
+     *
+     * @param associatedUserId  The ID of the associated user.
+     * @param sharedOrgId       The ID of the shared organization from which the user will be unshared.
+     * @return True if the user is unshared successfully.
+     * @throws OrganizationManagementException If an error occurs while unsharing the user in the shared organization.
+     */
+    default boolean unshareOrganizationUserInSharedOrganization(String associatedUserId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException("unshareOrganizationUserInSharedOrganization method is not implemented in " +
+                this.getClass().getName());
+    }
 
     /**
      * Delete the organization user association of the shared user.

@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
@@ -176,11 +177,20 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             ApplicationBasicInfo[] applicationBasicInfos = getApplicationManagementService()
                     .getAllApplicationBasicInfo(tenantDomain, getAuthenticatedUsername());
             for (ApplicationBasicInfo applicationBasicInfo : applicationBasicInfos) {
-                ServiceProvider fragmentApplication = getApplicationManagementService().getServiceProvider(
+                ServiceProvider orgApplication = getApplicationManagementService().getServiceProvider(
                         applicationBasicInfo.getApplicationId());
-                String mainAppId = getApplicationManagementService()
-                        .getMainAppId(fragmentApplication.getApplicationResourceId());
-                mainAppIds.add(mainAppId);
+                boolean isFragmentApp = Arrays.stream(orgApplication.getSpProperties())
+                        .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                                Boolean.parseBoolean(property.getValue()));
+                /*
+                 Only adding the main app IDs of the fragment applications since there can be applications which
+                 are directly created in the sub organization level.
+                */
+                if (isFragmentApp) {
+                    String mainAppId = getApplicationManagementService()
+                            .getMainAppId(orgApplication.getApplicationResourceId());
+                    mainAppIds.add(mainAppId);
+                }
             }
             OrgApplicationManagerUtil.setB2BApplicationIds(mainAppIds);
         } finally {
