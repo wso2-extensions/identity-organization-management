@@ -57,7 +57,7 @@ public interface ResourceSharingPolicyHandlerService {
      * @param resourceSharingPolicyId The unique identifier of the resource sharing policy to be retrieved.
      *                                Must be a valid ID greater than zero.
      * @return An {@link Optional} containing the {@link ResourceSharingPolicy} if found,
-     *         or an empty {@link Optional} if no matching resource sharing policy exists.
+     * or an empty {@link Optional} if no matching resource sharing policy exists.
      * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policy.
      */
     Optional<ResourceSharingPolicy> getResourceSharingPolicyById(int resourceSharingPolicyId)
@@ -121,7 +121,7 @@ public interface ResourceSharingPolicyHandlerService {
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the resource sharing policy.
      */
     void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId,
-                                                           String sharingPolicyInitiatedOrgId)
+                                                        String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException;
 
     /**
@@ -205,8 +205,8 @@ public interface ResourceSharingPolicyHandlerService {
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the shared resource attributes.
      */
     void deleteSharedResourceAttributesByResourceSharingPolicyId(int resourceSharingPolicyId,
-                                                                    SharedAttributeType sharedAttributeType,
-                                                                    String sharingPolicyInitiatedOrgId)
+                                                                 SharedAttributeType sharedAttributeType,
+                                                                 String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException;
 
     /**
@@ -221,17 +221,17 @@ public interface ResourceSharingPolicyHandlerService {
      * @throws ResourceSharingPolicyMgtException If an error occurs while deleting the shared resource attribute.
      */
     void deleteSharedResourceAttributeByAttributeTypeAndId(SharedAttributeType attributeType, String attributeId,
-                                                              String sharingPolicyInitiatedOrgId)
+                                                           String sharingPolicyInitiatedOrgId)
             throws ResourceSharingPolicyMgtException;
 
     /**
      * Adds a resource sharing policy along with its associated shared resource attributes in a single transaction.
      *
-     * @param resourceSharingPolicy       The {@link ResourceSharingPolicy} containing details such as resource type,
-     *                                    initiating organization, policy holding organization, and sharing policy.
-     *                                    Must not be {@code null}.
-     * @param sharedResourceAttributes    A list of {@link SharedResourceAttribute} objects associated with the resource
-     *                                    sharing policy. Must not be {@code null} or empty.
+     * @param resourceSharingPolicy    The {@link ResourceSharingPolicy} containing details such as resource type,
+     *                                 initiating organization, policy holding organization, and sharing policy.
+     *                                 Must not be {@code null}.
+     * @param sharedResourceAttributes A list of {@link SharedResourceAttribute} objects associated with the resource
+     *                                 sharing policy. Must not be {@code null} or empty.
      * @return {@code true} if both the resource sharing policy and the shared resource attributes were added
      * successfully.
      * @throws ResourceSharingPolicyMgtException If an error occurs while adding the resource sharing policy or the
@@ -273,7 +273,8 @@ public interface ResourceSharingPolicyHandlerService {
     default void deleteResourceSharingPolicyByResourceTypeAndId(ResourceType resourceType, String resourceId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("deleteResourceSharingPolicyByResourceTypeAndId method is not implemented in " + this.getClass());
+        throw new NotImplementedException(
+                "deleteResourceSharingPolicyByResourceTypeAndId method is not implemented in " + this.getClass());
     }
 
     /**
@@ -290,7 +291,8 @@ public interface ResourceSharingPolicyHandlerService {
                                                                    String attributeId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("deleteSharedResourceAttributeByAttributeTypeAndId method is not implemented in " + this.getClass());
+        throw new NotImplementedException(
+                "deleteSharedResourceAttributeByAttributeTypeAndId method is not implemented in " + this.getClass());
     }
 
     /**
@@ -306,6 +308,8 @@ public interface ResourceSharingPolicyHandlerService {
     default void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String organizationId)
             throws ResourceSharingPolicyMgtException {
 
-        throw new NotImplementedException("deleteResourceSharingPoliciesAndAttributesByOrganizationId method is not implemented in " + this.getClass());
+        throw new NotImplementedException(
+                "deleteResourceSharingPoliciesAndAttributesByOrganizationId method is not implemented in " +
+                        this.getClass());
     }
 }
