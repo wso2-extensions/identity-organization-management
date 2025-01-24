@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.handler.GovernanceConfig
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
 import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -190,5 +191,24 @@ public class OrganizationManagementHandlerServiceComponent {
 
         OrganizationManagementHandlerDataHolder.getInstance().setRealmService(null);
         LOG.debug("Realm service unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    @Reference(
+            name = "ResourceSharingPolicyHandlerService",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService")
+    protected void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
     }
 }
