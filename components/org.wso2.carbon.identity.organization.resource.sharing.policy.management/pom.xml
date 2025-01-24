@@ -87,7 +87,7 @@
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Bundle-Description>Organization Resource Sharing Policy Service Bundle</Bundle-Description>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.internal,
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao
                         </Private-Package>
                         <Export-Package>
