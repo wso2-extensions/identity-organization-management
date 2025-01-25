@@ -202,6 +202,13 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
                 editOperation, permittedOrgId);
     }
 
+    @Override
+    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, int domainId)
+            throws UserShareMgtException {
+
+        return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainId);
+    }
+
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();

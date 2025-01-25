@@ -185,4 +185,19 @@ public interface OrganizationUserSharingService {
 
         throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
     }
+
+    /**
+     * Retrieves the IDs of roles shared with a user in a specific organization.
+     *
+     * @param username The username of the user whose shared roles are to be retrieved.
+     * @param tenantId The ID of the tenant to which the user belongs.
+     * @param domainId The ID of the domain in which the user resides.
+     * @return A {@link List<String>} containing the IDs of the shared roles.
+     * @throws UserShareMgtException If an error occurs while retrieving the roles shared with the user in the organization.
+     */
+    default List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, int domainId)
+            throws UserShareMgtException {
+
+        throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented");
+    }
 }

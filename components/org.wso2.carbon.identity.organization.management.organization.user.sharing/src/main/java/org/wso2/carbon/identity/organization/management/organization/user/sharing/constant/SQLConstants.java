@@ -134,7 +134,7 @@ public class SQLConstants {
                     "AND H.UM_UUID = :" + SQLPlaceholders.COLUMN_NAME_UM_UUID + "; " +
                     "AND UR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
                     "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
-    public static final String QUERY_INSERT_RESTRICTED_EDIT_PERMISSION =
+    public static final String INSERT_RESTRICTED_EDIT_PERMISSION =
             "INSERT INTO UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS (" +
                     "UM_HYBRID_USER_ROLE_ID, UM_HYBRID_USER_ROLE_TENANT_ID, " +
                     "UM_EDIT_OPERATION, UM_PERMITTED_ORG_ID) VALUES (" +
@@ -142,6 +142,16 @@ public class SQLConstants {
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID + ";)";
+    public static final String GET_SHARED_ROLES_OF_SHARED_USER =
+            "SELECT UHR.UM_ROLE_ID " +
+                    "FROM UM_HYBRID_USER_ROLE UHR " +
+                    "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS UHRREP " +
+                    "ON UHR.UM_ID = UHRREP.UM_HYBRID_USER_ROLE_ID " +
+                    "AND UHR.UM_TENANT_ID = UHRREP.UM_HYBRID_USER_ROLE_TENANT_ID " +
+                    "WHERE UHR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
+                    "AND UHR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
+                    "AND UHR.UM_DOMAIN_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_ID + ";";
+
 
     /**
      * SQL placeholders related to organization user sharing SQL operations.
@@ -163,6 +173,7 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_SHARED_TYPE = "UM_SHARED_TYPE";
         public static final String COLUMN_NAME_UM_UUID = "UM_UUID";
         public static final String COLUMN_NAME_UM_DOMAIN_NAME = "UM_DOMAIN_NAME";
+        public static final String COLUMN_NAME_UM_DOMAIN_ID = "UM_DOMAIN_ID";
         public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_ID = "UM_HYBRID_USER_ROLE_ID";
         public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID = "UM_HYBRID_USER_ROLE_TENANT_ID";
         public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";

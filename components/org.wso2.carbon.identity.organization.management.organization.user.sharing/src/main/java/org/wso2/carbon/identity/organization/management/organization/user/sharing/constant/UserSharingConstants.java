@@ -216,8 +216,13 @@ public class UserSharingConstants {
                 "Unable to fetch the role ID for the specified user in the given context."),
         ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION("10046",
                 "Error inserting restricted permission for user: %s",
-                "Failed to insert restricted permission during user role management operation.")
-        ;
+                "Failed to insert restricted permission during user role management operation."),
+        ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER("10047",
+                "Error occurred while retrieving roles shared with shared user.",
+                "Unable to retrieve the roles shared with the specified user due to an internal error."),
+        ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER("10048",
+                "Error occurred while retrieving shared organizations of user.",
+                "Unable to retrieve the organizations shared with the user due to an internal error.");
 
         private final String code;
         private final String message;
