@@ -231,6 +231,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                 template.executeBatchInsert(CREATE_SHARED_RESOURCE_ATTRIBUTE, (namedPreparedStatement -> {
                     for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
                         setSharedResourceAttributeParameters(namedPreparedStatement, sharedResourceAttribute);
+                        namedPreparedStatement.addBatch();
                     }
                 }), null);
                 return true;
