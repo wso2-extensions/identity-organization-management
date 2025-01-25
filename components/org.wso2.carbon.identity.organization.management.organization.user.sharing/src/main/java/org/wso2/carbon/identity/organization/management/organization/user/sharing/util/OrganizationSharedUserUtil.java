@@ -18,14 +18,19 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserProfileUpdateGovernanceEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 
 import java.util.Map;
 import java.util.Optional;
@@ -70,5 +75,22 @@ public class OrganizationSharedUserUtil {
             return Optional.empty();
         }
         return Optional.of(userAssociation.getUserId());
+    }
+
+    /**
+     * Check whether the shared user profile resolver is enabled.
+     *
+     * @return True if the shared user profile resolver is enabled.
+     */
+    public static boolean isSharedUserProfileResolverEnabled() {
+
+        IdentityEventListenerConfig identityEventListenerConfig = IdentityUtil.readEventListenerProperty(
+                UserOperationEventListener.class.getName(),
+                SharedUserProfileUpdateGovernanceEventListener.class.getName());
+        if (identityEventListenerConfig == null) {
+            return true;
+        }
+        return StringUtils.isBlank(identityEventListenerConfig.getEnable()) ||
+                Boolean.parseBoolean(identityEventListenerConfig.getEnable());
     }
 }
