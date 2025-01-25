@@ -20,6 +20,9 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import java.util.List;
 
+/**
+ * Model that contains the response object for retrieving the shared roles in an organizations of a user.
+ */
 public class ResponseSharedRolesDO {
 
     private List<ResponseLinkDO> responseLinks;

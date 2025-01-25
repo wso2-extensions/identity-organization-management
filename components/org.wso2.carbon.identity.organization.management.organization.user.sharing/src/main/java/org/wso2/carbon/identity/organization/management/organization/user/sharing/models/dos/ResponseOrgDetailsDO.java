@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
+/**
+ * Model that contains the shared organizations details of a user in the response object.
+ */
 public class ResponseOrgDetailsDO {
 
     private String organizationId;

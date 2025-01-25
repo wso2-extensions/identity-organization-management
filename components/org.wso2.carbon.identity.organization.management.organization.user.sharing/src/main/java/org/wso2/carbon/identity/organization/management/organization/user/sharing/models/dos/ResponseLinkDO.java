@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
+/**
+ * Model that contains the paginated links in the response object.
+ */
 public class ResponseLinkDO {
 
     private String href;
