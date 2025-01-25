@@ -33,8 +33,6 @@ import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_D
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_USER;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.ROLE_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.USER_ID;
-import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_POST_DELETE_ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
 
 /**
  * Event handler to clean up the stored sharing policies when associated resources are deleted.
@@ -47,10 +45,6 @@ public class SharingPolicyCleanUpHandler extends AbstractEventHandler {
         String eventName = event.getEventName();
         Map<String, Object> eventProperties = event.getEventProperties();
         switch (eventName) {
-            case EVENT_POST_DELETE_ORGANIZATION:
-                String deletedOrganizationId = (String) eventProperties.get(EVENT_PROP_ORGANIZATION_ID);
-                deleteResourceSharingPoliciesAndAttributesByOrganizationId(deletedOrganizationId);
-                break;
             case POST_DELETE_ROLE_V2_EVENT:
                 String deletedRoleId = (String) eventProperties.get(ROLE_ID);
                 deleteSharedResourceAttributesByRoleId(deletedRoleId);
@@ -79,17 +73,6 @@ public class SharingPolicyCleanUpHandler extends AbstractEventHandler {
         try {
             getResourceSharingPolicyHandlerService().deleteSharedResourceAttributeByAttributeTypeAndId(
                     SharedAttributeType.ROLE, deletedRoleId);
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw new IdentityEventException(e.getErrorCode(), e.getMessage(), e);
-        }
-    }
-
-    private void deleteResourceSharingPoliciesAndAttributesByOrganizationId(String deletedOrganizationId)
-            throws IdentityEventException {
-
-        try {
-            getResourceSharingPolicyHandlerService().deleteResourceSharingPoliciesAndAttributesByOrganizationId(
-                    deletedOrganizationId);
         } catch (ResourceSharingPolicyMgtException e) {
             throw new IdentityEventException(e.getErrorCode(), e.getMessage(), e);
         }

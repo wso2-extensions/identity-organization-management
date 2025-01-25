@@ -23,7 +23,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.event.event.Event;
-import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
@@ -31,7 +30,6 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,20 +60,6 @@ public class SharingPolicyCleanUpHandlerTest {
     public void tearDown() {
 
         reset(resourceSharingPolicyHandlerService);
-    }
-
-    @Test
-    public void testPostOrganizationDeleteHandleMethod() throws Exception {
-
-        // Trigger the event.
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, "org-uuid");
-        Event event = new Event(Constants.EVENT_POST_DELETE_ORGANIZATION, eventProperties);
-
-        SharingPolicyCleanUpHandler sharingPolicyCleanUpHandler = new SharingPolicyCleanUpHandler();
-        sharingPolicyCleanUpHandler.handleEvent(event);
-        verify(resourceSharingPolicyHandlerService,
-                times(1)).deleteResourceSharingPoliciesAndAttributesByOrganizationId(anyString());
     }
 
     @Test
