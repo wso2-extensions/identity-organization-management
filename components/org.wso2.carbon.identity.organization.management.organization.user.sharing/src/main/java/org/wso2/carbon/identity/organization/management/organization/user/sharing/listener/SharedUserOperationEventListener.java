@@ -101,6 +101,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 // User is associated only for shared users. Hence, delete the user association.
                 return organizationUserSharingService.deleteUserAssociation(userID, associatedOrgId);
             }
+            //TODO: bock shared user deletion from type and org
 
             String orgId = getOrganizationId();
             if (orgId == null) {

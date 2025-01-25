@@ -39,7 +39,7 @@ public class SQLConstants {
     public static final String DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER = "DELETE FROM " +
             "UM_ORG_USER_ASSOCIATION WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
     public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER = "SELECT UM_ID, UM_USER_ID, UM_ORG_ID, " +
-            "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE" +
+            "UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
             "FROM UM_ORG_USER_ASSOCIATION WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
     public static final String GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE = "SELECT UM_ID, " +
             "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
@@ -122,11 +122,16 @@ public class SQLConstants {
                     + "WHERE hr.UM_UUID IN (" + SQLPlaceholders.PLACEHOLDER_ROLE_IDS + ") "
                     + "AND hr.UM_TENANT_ID = :" + COLUMN_NAME_UM_TENANT_ID + ";";
 
-    public static final String QUERY_GET_USER_ROLE_ID =
+    public static final String GET_USER_ROLE_IN_TENANT =
             "SELECT UR.UM_ID FROM UM_HYBRID_USER_ROLE UR " +
-                    "JOIN UM_DOMAIN D ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
+                    "INNER JOIN UM_HYBRID_ROLE H " +
+                    "ON UR.UM_ROLE_ID = H.UM_ID " +
+                    "AND UR.UM_TENANT_ID = H.UM_TENANT_ID " +
+                    "INNER JOIN UM_DOMAIN D " +
+                    "ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
                     "AND UR.UM_TENANT_ID = D.UM_TENANT_ID " +
                     "WHERE UR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
+                    "AND H.UM_UUID = :" + SQLPlaceholders.COLUMN_NAME_UM_UUID + "; " +
                     "AND UR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
                     "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
     public static final String QUERY_INSERT_RESTRICTED_EDIT_PERMISSION =

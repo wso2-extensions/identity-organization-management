@@ -34,7 +34,6 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
@@ -44,14 +43,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_HEAD;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG_TAIL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES;
-//import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants
-// .GET_SHARED_USER_ROLES_HEAD;
-//import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants
-// .GET_SHARED_USER_ROLES_TAIL;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_GET_USER_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ROLE_IN_TENANT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.QUERY_INSERT_RESTRICTED_EDIT_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
@@ -337,8 +330,9 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
-                                                      EditOperation editOperation, String permittedOrgId)
+    public void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
+                                                      String domainName, EditOperation editOperation,
+                                                      String permittedOrgId)
             throws UserShareMgtServerException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
@@ -347,10 +341,11 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
         try {
             // Query to retrieve UM_ID
-            Integer userRoleId = namedJdbcTemplate.fetchSingleRecord(QUERY_GET_USER_ROLE_ID,
+            Integer userRoleId = namedJdbcTemplate.fetchSingleRecord(GET_USER_ROLE_IN_TENANT,
                     (resultSet, rowNumber) -> resultSet.getInt(COLUMN_NAME_UM_ID),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_UM_USER_NAME, username);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
                         namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
                     });

@@ -478,7 +478,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         String sharingInitiatedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
         String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
-        String usernameWithDomain = userIDResolver.getNameByID(userId, targetOrgTenantDomain);;
+        String usernameWithDomain = userIDResolver.getNameByID(userId, targetOrgTenantDomain);
         String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
         String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
@@ -504,8 +504,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             roleManagementService.getRoleListOfUser(userId, targetOrgTenantDomain);
 
             //todo: update the UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS table
-            getOrganizationUserSharingService().addEditRestrictionsForSharedUserRoles(username, targetOrgTenantDomain
-                    , domainName, EditOperation.DELETE, sharingInitiatedOrgId);
+            getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(role, username,
+                    targetOrgTenantDomain, domainName, EditOperation.DELETE, sharingInitiatedOrgId);
         }
 
     }

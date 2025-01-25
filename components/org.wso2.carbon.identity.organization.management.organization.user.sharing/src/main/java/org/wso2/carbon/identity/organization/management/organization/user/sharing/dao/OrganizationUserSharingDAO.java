@@ -155,6 +155,7 @@ public interface OrganizationUserSharingDAO {
     /**
      * Adds edit restrictions for shared user roles.
      *
+     * @param roleId         The roleId of the role to be restricted.
      * @param username       The username of the shared user.
      * @param tenantDomain   The tenant domain of the shared user.
      * @param domainName     The domain name associated with the user.
@@ -162,8 +163,9 @@ public interface OrganizationUserSharingDAO {
      * @param permittedOrgId The organization ID with permitted access.
      * @throws UserShareMgtServerException If an error occurs while retrieving shared user roles.
      */
-    default void addEditRestrictionsForSharedUserRoles(String username, String tenantDomain, String domainName,
-                                                       EditOperation editOperation, String permittedOrgId)
+    default void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
+                                                       String domainName, EditOperation editOperation,
+                                                       String permittedOrgId)
             throws UserShareMgtServerException {
 
         throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
