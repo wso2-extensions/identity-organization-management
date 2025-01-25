@@ -35,7 +35,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_ROLE_V2_EVENT;
-import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_USER;
+import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_USER_WITH_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.ROLE_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.USER_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType.ROLE;
@@ -68,7 +68,7 @@ public class SharingPolicyCleanUpHandlerTest {
         // Trigger the event.
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(USER_ID, "user-id");
-        Event event = new Event(POST_DELETE_USER, eventProperties);
+        Event event = new Event(POST_DELETE_USER_WITH_ID, eventProperties);
 
         SharingPolicyCleanUpHandler sharingPolicyCleanUpHandler = new SharingPolicyCleanUpHandler();
         sharingPolicyCleanUpHandler.handleEvent(event);
