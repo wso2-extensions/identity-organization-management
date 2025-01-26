@@ -142,19 +142,39 @@ public class SQLConstants {
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID + ";)";
+//    public static final String GET_SHARED_ROLES_OF_SHARED_USER =
+//            "SELECT UHR.UM_ROLE_ID " +
+//                    "FROM UM_HYBRID_USER_ROLE UHR " +
+//                    "INNER JOIN UM_DOMAIN D " +
+//                    "ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
+//                    "AND UR.UM_TENANT_ID = D.UM_TENANT_ID " +
+//                    "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS UHRREP " +
+//                    "ON UHR.UM_ID = UHRREP.UM_HYBRID_USER_ROLE_ID " +
+//                    "AND UHR.UM_TENANT_ID = UHRREP.UM_HYBRID_USER_ROLE_TENANT_ID " +
+//                    "WHERE UHR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
+//                    "AND UHR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
+//                    "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
     public static final String GET_SHARED_ROLES_OF_SHARED_USER =
-            "SELECT UHR.UM_ROLE_ID " +
+            "SELECT H.UM_UUID " +
                     "FROM UM_HYBRID_USER_ROLE UHR " +
-                    "INNER JOIN UM_DOMAIN D " +
-                    "ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
-                    "AND UR.UM_TENANT_ID = D.UM_TENANT_ID " +
+                    "INNER JOIN UM_HYBRID_ROLE H " +
+                    "ON UHR.UM_ROLE_ID = H.UM_ID " +
+                    "AND UHR.UM_TENANT_ID = H.UM_TENANT_ID " +
                     "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS UHRREP " +
                     "ON UHR.UM_ID = UHRREP.UM_HYBRID_USER_ROLE_ID " +
                     "AND UHR.UM_TENANT_ID = UHRREP.UM_HYBRID_USER_ROLE_TENANT_ID " +
                     "WHERE UHR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
                     "AND UHR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
-                    "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
+                    "AND UHR.UM_DOMAIN_ID = (SELECT UM_DOMAIN_ID FROM UM_DOMAIN WHERE " +
+                    "UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID +"; " +
+                    "AND UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";);";
 
+
+    public static final String ADD_USER_TO_ROLE_SQL = "INSERT INTO UM_HYBRID_USER_ROLE (UM_USER_NAME, UM_ROLE_ID, "
+            + "UM_TENANT_ID, UM_DOMAIN_ID) VALUES (:UM_USER_NAME;,(SELECT UM_ID FROM UM_HYBRID_ROLE WHERE "
+            + "UM_ROLE_NAME=:UM_ROLE_NAME; AND UM_AUDIENCE_REF_ID=:UM_AUDIENCE_REF_ID; AND " +
+            "UM_TENANT_ID=:UM_TENANT_ID;), :UM_TENANT_ID;, (SELECT UM_DOMAIN_ID FROM UM_DOMAIN WHERE " +
+            "UM_TENANT_ID=:UM_TENANT_ID; AND UM_DOMAIN_NAME=:UM_DOMAIN_NAME;))";
 
     /**
      * SQL placeholders related to organization user sharing SQL operations.

@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -66,6 +67,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +75,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
@@ -735,6 +738,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 ResponseOrgDetailsDO responseOrgDetailsDO = new ResponseOrgDetailsDO();
                 responseOrgDetailsDO.setOrganizationId(userAssociation.getOrganizationId());
                 responseOrgDetailsDO.setOrganizationName(getOrganizationName(userAssociation.getOrganizationId()));
+                responseOrgDetailsDO.setSharedUserId(userAssociation.getUserId());
                 responseOrgDetailsDO.setSharedType(userAssociation.getSharedType());
                 responseOrgDetailsDO.setRolesRef(getRolesRef(associatedUserId, userAssociation.getOrganizationId()));
                 responseOrgDetailsDOS.add(responseOrgDetailsDO);
@@ -752,8 +756,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private String getRolesRef(String userId, String orgId) {
-        String rolesRefTemplate = "/api/server/v1/users/%s/shared-roles?orgId=%s&after=&before=&limit=2&filter=&recursive=false";
-        return String.format(rolesRefTemplate, userId, orgId);
+
+        return String.format(API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG, userId, orgId);
     }
 
     @Override
@@ -780,12 +784,18 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
             String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
-            List<String> sharedRoleIds =
+            List<String> sharedRoleIdsInOrg =
                     getOrganizationUserSharingService().getRolesSharedWithUserInOrganization(username, tenantId,
                             domainName);
 
-            for (String sharedRoleId : sharedRoleIds) {
-                Role role = getRoleManagementService().getRole(sharedRoleId, tenantDomain);
+            if (CollectionUtils.isEmpty(sharedRoleIdsInOrg)) {
+                return new ResponseSharedRolesDO(responseLinkList, roleWithAudienceList);
+            }
+
+            RoleManagementService roleManagementService = getRoleManagementService();
+
+            for (String sharedRoleId : sharedRoleIdsInOrg) {
+                Role role = roleManagementService.getRole(sharedRoleId, tenantDomain);
                 RoleWithAudienceDO roleWithAudience = new RoleWithAudienceDO();
                 roleWithAudience.setRoleName(role.getName());
                 roleWithAudience.setAudienceName(role.getAudienceName());

@@ -379,7 +379,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             return namedJdbcTemplate.executeQuery(GET_SHARED_ROLES_OF_SHARED_USER,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_ROLE_ID),
+                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_UUID),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_UM_USER_NAME, username);
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);

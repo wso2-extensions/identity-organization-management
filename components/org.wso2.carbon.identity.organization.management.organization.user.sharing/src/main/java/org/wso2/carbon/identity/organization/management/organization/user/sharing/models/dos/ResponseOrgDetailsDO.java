@@ -25,6 +25,7 @@ public class ResponseOrgDetailsDO {
 
     private String organizationId;
     private String organizationName;
+    private String sharedUserId;
     private String sharedType;
     private String rolesRef;
 
@@ -46,6 +47,16 @@ public class ResponseOrgDetailsDO {
     public void setOrganizationName(String organizationName) {
 
         this.organizationName = organizationName;
+    }
+
+    public String getSharedUserId() {
+
+        return sharedUserId;
+    }
+
+    public void setSharedUserId(String sharedUserId) {
+
+        this.sharedUserId = sharedUserId;
     }
 
     public String getSharedType() {
