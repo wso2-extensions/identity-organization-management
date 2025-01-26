@@ -198,10 +198,10 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, int domainId)
+    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
             throws UserShareMgtException {
 
-        return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainId);
+        return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainName);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

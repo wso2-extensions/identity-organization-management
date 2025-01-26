@@ -145,12 +145,15 @@ public class SQLConstants {
     public static final String GET_SHARED_ROLES_OF_SHARED_USER =
             "SELECT UHR.UM_ROLE_ID " +
                     "FROM UM_HYBRID_USER_ROLE UHR " +
+                    "INNER JOIN UM_DOMAIN D " +
+                    "ON UR.UM_DOMAIN_ID = D.UM_DOMAIN_ID " +
+                    "AND UR.UM_TENANT_ID = D.UM_TENANT_ID " +
                     "INNER JOIN UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS UHRREP " +
                     "ON UHR.UM_ID = UHRREP.UM_HYBRID_USER_ROLE_ID " +
                     "AND UHR.UM_TENANT_ID = UHRREP.UM_HYBRID_USER_ROLE_TENANT_ID " +
                     "WHERE UHR.UM_USER_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_USER_NAME + "; " +
                     "AND UHR.UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
-                    "AND UHR.UM_DOMAIN_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_ID + ";";
+                    "AND D.UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";";
 
 
     /**

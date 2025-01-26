@@ -734,7 +734,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             for (UserAssociation userAssociation : userAssociations) {
                 ResponseOrgDetailsDO responseOrgDetailsDO = new ResponseOrgDetailsDO();
                 responseOrgDetailsDO.setOrganizationId(userAssociation.getOrganizationId());
-                responseOrgDetailsDO.setOrganizationName("aa"); //getOrgName(userAssociation.getOrganizationId())
+                responseOrgDetailsDO.setOrganizationName(getOrganizationName(userAssociation.getOrganizationId()));
                 responseOrgDetailsDO.setSharedType(userAssociation.getSharedType());
                 responseOrgDetailsDO.setRolesRef(getRolesRef(associatedUserId, userAssociation.getOrganizationId()));
                 responseOrgDetailsDOS.add(responseOrgDetailsDO);
@@ -744,6 +744,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (OrganizationManagementException e) {
             throw new UserShareMgtClientException(ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER);
         }
+    }
+
+    private String getOrganizationName (String organizationId) throws OrganizationManagementException {
+
+        return getOrganizationManager().getOrganizationNameById(organizationId);
     }
 
     private String getRolesRef(String userId, String orgId) {
@@ -774,11 +779,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String usernameWithDomain = userIDResolver.getNameByID(userAssociation.getUserId(), tenantDomain);
             String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
             String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
-            int domainId = 1; //getdomainId(domainName);
 
             List<String> sharedRoleIds =
                     getOrganizationUserSharingService().getRolesSharedWithUserInOrganization(username, tenantId,
-                            domainId);
+                            domainName);
 
             for (String sharedRoleId : sharedRoleIds) {
                 Role role = getRoleManagementService().getRole(sharedRoleId, tenantDomain);
@@ -790,7 +794,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
 
             return new ResponseSharedRolesDO(responseLinkList, roleWithAudienceList);
-        } catch ( OrganizationManagementException | IdentityRoleManagementException e) {
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             throw new UserShareMgtClientException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
         }
     }

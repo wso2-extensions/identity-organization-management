@@ -373,8 +373,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, int domainId)
-            throws UserShareMgtException {
+    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
+            throws UserShareMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -383,7 +383,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_UM_USER_NAME, username);
                         namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-                        namedPreparedStatement.setInt(COLUMN_NAME_UM_DOMAIN_ID, domainId);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
                     });
         } catch (DataAccessException e) {
             throw new UserShareMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
