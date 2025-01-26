@@ -45,6 +45,21 @@ public interface OrganizationUserSharingService {
             throws OrganizationManagementException;
 
     /**
+     * Creates the association between the shared user and the actual user in the organization.
+     *
+     * @param orgId            Organization ID of the user is shared.
+     * @param associatedUserId Actual user who is associated for a shared user.
+     * @param associatedOrgId  The organization ID associated user.
+     * @param sharedType       The type of sharing for the user in the organization.
+     * @throws OrganizationManagementException If an error occurs while creating the organization user association.
+     */
+    default void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId,
+                                       SharedType sharedType) throws OrganizationManagementException {
+
+        throw new NotImplementedException("shareOrganizationUser method is not implemented.");
+    }
+
+    /**
      * Unshare all the shared users for the given user.
      *
      * @param associatedUserId The ID of the associated user.

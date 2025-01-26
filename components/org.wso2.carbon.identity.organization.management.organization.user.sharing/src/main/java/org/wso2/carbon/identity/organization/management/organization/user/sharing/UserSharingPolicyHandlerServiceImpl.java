@@ -588,13 +588,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private boolean isUserAlreadySharedInGivenOrg(String associatedUserId, String orgId)
-            throws OrganizationManagementException {
-
-        return getOrganizationUserSharingService().getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
-                != null;
-    }
-
     private void assignRolesIfPresent(UserAssociation userAssociation, String sharingInitiatedOrgId,
                                       List<String> roleIds)
             throws OrganizationManagementException, IdentityRoleManagementException, UserSharingMgtException {
@@ -645,7 +638,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws OrganizationManagementException {
 
         OrganizationUserSharingService organizationUserSharingService = getOrganizationUserSharingService();
-        organizationUserSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
+        organizationUserSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId,
+                SharedType.SHARED);
         return organizationUserSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
     }
 

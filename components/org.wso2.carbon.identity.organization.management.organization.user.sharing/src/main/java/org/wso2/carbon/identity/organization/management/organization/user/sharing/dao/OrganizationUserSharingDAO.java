@@ -47,6 +47,24 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
+     * Creates the association between the shared user and the actual user in the shared organization.
+     *
+     * @param userId           ID of the user who gets created in the organization.
+     * @param orgId            Organization ID of the user's shared organization.
+     * @param associatedUserId Actual user ID of the associated user.
+     * @param associatedOrgId  The organization ID where the associated user is managed.
+     * @param sharedType       The type of sharing for the user in the organization.
+     * @throws OrganizationManagementServerException If an error occurs while creating the organization user
+     *                                               association.
+     */
+    default void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
+                                                   String associatedOrgId, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("createOrganizationUserAssociation method is not implemented.");
+    }
+
+    /**
      * Delete the organization user association for a shared user in a shared organization.
      *
      * @param userId          The ID of the user.

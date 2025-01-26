@@ -24,4 +24,5 @@ public enum SharedType {
     SHARED,
     INVITED,
     OWNER,
+    NOT_SPECIFIED,
 }

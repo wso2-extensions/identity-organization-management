@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER;
@@ -93,6 +94,28 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     namedPreparedStatement.setString(2, orgId);
                     namedPreparedStatement.setString(3, associatedUserId);
                     namedPreparedStatement.setString(4, associatedOrgId);
+                }, null, false);
+                return null;
+            });
+        } catch (TransactionException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION, e, associatedUserId);
+        }
+    }
+
+    @Override
+    public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
+                                                  String associatedOrgId, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.withTransaction(template -> {
+                template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE, namedPreparedStatement -> {
+                    namedPreparedStatement.setString(COLUMN_NAME_USER_ID, userId);
+                    namedPreparedStatement.setString(COLUMN_NAME_ORG_ID, orgId);
+                    namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                    namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
+                    namedPreparedStatement.setString(COLUMN_NAME_UM_SHARED_TYPE, sharedType.name());
                 }, null, false);
                 return null;
             });

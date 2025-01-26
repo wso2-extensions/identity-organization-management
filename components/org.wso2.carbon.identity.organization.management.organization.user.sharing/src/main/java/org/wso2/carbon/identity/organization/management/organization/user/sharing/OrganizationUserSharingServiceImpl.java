@@ -64,51 +64,18 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        try {
-            int associatedUserTenantId =
-                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
-            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
-            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, SharedType.NOT_SPECIFIED);
+    }
 
-            HashMap<String, String> userClaims = new HashMap<>();
-            userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
-            userClaims.put(ID_CLAIM_READ_ONLY, "true");
-            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+    @Override
+    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId,
+                                      SharedType sharedType) throws OrganizationManagementException {
 
-            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
-            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
-            userStoreManager = getAbstractUserStoreManager(tenantId);
-
-            if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
-                userStoreManager.addUser(userName, generatePassword(), null, userClaims,
-                        DEFAULT_PROFILE);
-            } else {
-                // Wait for the user store manager to be available in the user realm.
-                UserStoreManager defaultUserStore = null;
-                int threadSleepTime = Integer.parseInt(
-                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
-                int waited = 0;
-                int waitIntervals = 500;
-                while (defaultUserStore == null) {
-                    if (waited > threadSleepTime) {
-                        break;
-                    }
-                    Thread.sleep(waitIntervals);
-                    waited += waitIntervals;
-                    defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
-                }
-                if (defaultUserStore == null) {
-                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
-                            domain);
-                }
-                defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
-            }
-            String userId = userStoreManager.getUserIDFromUserName(UserCoreUtil.addDomainToName(userName, domain));
-            organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
-                    associatedOrgId);
-        } catch (UserStoreException | InterruptedException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
+        if (sharedType == null) {
+            shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
         }
+
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, sharedType);
     }
 
     @Override
@@ -240,6 +207,61 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
                     userAssociation.getUserId(), organizationId);
+        }
+    }
+
+    private void shareOrganizationUserWithOrWithoutType(String orgId, String associatedUserId, String associatedOrgId,
+                                                        SharedType sharedType) throws OrganizationManagementException {
+
+        try {
+            int associatedUserTenantId =
+                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
+            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
+
+            HashMap<String, String> userClaims = new HashMap<>();
+            userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
+            userClaims.put(ID_CLAIM_READ_ONLY, "true");
+            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+
+            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
+            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
+            userStoreManager = getAbstractUserStoreManager(tenantId);
+
+            if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
+                userStoreManager.addUser(userName, generatePassword(), null, userClaims,
+                        DEFAULT_PROFILE);
+            } else {
+                // Wait for the user store manager to be available in the user realm.
+                UserStoreManager defaultUserStore = null;
+                int threadSleepTime = Integer.parseInt(
+                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
+                int waited = 0;
+                int waitIntervals = 500;
+                while (defaultUserStore == null) {
+                    if (waited > threadSleepTime) {
+                        break;
+                    }
+                    Thread.sleep(waitIntervals);
+                    waited += waitIntervals;
+                    defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
+                }
+                if (defaultUserStore == null) {
+                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
+                            domain);
+                }
+                defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
+            }
+            String userId = userStoreManager.getUserIDFromUserName(UserCoreUtil.addDomainToName(userName, domain));
+            if (SharedType.NOT_SPECIFIED.equals(sharedType)) {
+                organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
+                        associatedOrgId);
+            } else {
+                organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
+                        associatedOrgId, sharedType);
+            }
+        } catch (UserStoreException | InterruptedException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         }
     }
 }
