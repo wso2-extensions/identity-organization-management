@@ -32,12 +32,14 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.OrganizationUserSharingHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserProfileUpdateGovernanceEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandler;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -68,6 +70,8 @@ public class OrganizationUserSharingServiceComponent {
                 new SharedUserProfileUpdateGovernanceEventListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
                 new SharingOrganizationCreatorUserEventHandler(), null);
+        bundleContext.registerService(AbstractEventHandler.class.getName(),
+                new OrganizationUserSharingHandler(), null);
         LOG.info("OrganizationUserSharingServiceComponent activated successfully.");
     }
 
@@ -189,5 +193,27 @@ public class OrganizationUserSharingServiceComponent {
 
         OrganizationUserSharingDataHolder.getInstance().setOrgResourceResolverService(null);
         LOG.debug("Unset Org Resource Resolver Service.");
+    }
+
+    @Reference(
+            name = "resource.sharing.policy.handler.service",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService"
+    )
+    protected void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationUserSharingDataHolder.getInstance()
+                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+        LOG.debug("Set Resource Sharing Policy Handler Service.");
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+        LOG.debug("Unset Resource Sharing Policy Handler Service.");
     }
 }
