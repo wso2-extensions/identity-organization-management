@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -41,6 +42,7 @@ public class OrganizationUserSharingDataHolder {
     private RoleManager roleManager;
     private ClaimMetadataManagementService claimManagementService;
     private OrgResourceResolverService orgResourceResolverService;
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -205,5 +207,27 @@ public class OrganizationUserSharingDataHolder {
     public void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
 
         this.orgResourceResolverService = orgResourceResolverService;
+    }
+
+    /**
+     * Get the resource sharing policy handler service.
+     *
+     * @return ResourceSharingPolicyHandlerService resource sharing policy handler service.
+     */
+    public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
+
+        return resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Set the resource sharing policy handler service.
+     *
+     * @param resourceSharingPolicyHandlerService ResourceSharingPolicyHandlerService resource
+     *                                            sharing policy handler service.
+     */
+    public void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 }
