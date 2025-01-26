@@ -210,9 +210,9 @@ public class OrganizationUserSharingDataHolder {
     }
 
     /**
-     * Get the Resource Sharing Policy Handler service.
+     * Get the resource sharing policy handler service.
      *
-     * @return Resource Sharing Policy Handler service.
+     * @return ResourceSharingPolicyHandlerService resource sharing policy handler service.
      */
     public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
 
@@ -220,9 +220,10 @@ public class OrganizationUserSharingDataHolder {
     }
 
     /**
-     * Set the oResource Sharing Policy Handler service.
+     * Set the resource sharing policy handler service.
      *
-     * @param resourceSharingPolicyHandlerService Resource Sharing Policy Handler service.
+     * @param resourceSharingPolicyHandlerService ResourceSharingPolicyHandlerService resource
+     *                                            sharing policy handler service.
      */
     public void setResourceSharingPolicyHandlerService(
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {

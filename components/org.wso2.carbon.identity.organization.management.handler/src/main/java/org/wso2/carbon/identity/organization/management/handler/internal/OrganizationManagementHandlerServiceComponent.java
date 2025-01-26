@@ -35,8 +35,10 @@ import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
+import org.wso2.carbon.identity.organization.management.handler.SharingPolicyCleanUpHandler;
 import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -64,6 +66,7 @@ public class OrganizationManagementHandlerServiceComponent {
             bundleContext.registerService(AbstractEventHandler.class, new GovernanceConfigUpdateHandler(), null);
             bundleContext.registerService(AbstractEventHandler.class, new SharedRoleMgtHandler(), null);
             bundleContext.registerService(ApplicationMgtListener.class.getName(), new SharedRoleMgtListener(), null);
+            bundleContext.registerService(AbstractEventHandler.class, new SharingPolicyCleanUpHandler(), null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);
@@ -190,5 +193,24 @@ public class OrganizationManagementHandlerServiceComponent {
 
         OrganizationManagementHandlerDataHolder.getInstance().setRealmService(null);
         LOG.debug("Realm service unset in OrganizationManagementHandlerService bundle.");
+    }
+
+    @Reference(
+            name = "ResourceSharingPolicyHandlerService",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService")
+    protected void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
     }
 }

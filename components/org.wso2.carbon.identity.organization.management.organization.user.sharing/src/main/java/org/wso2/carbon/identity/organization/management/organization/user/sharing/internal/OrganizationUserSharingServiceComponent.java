@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServic
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.OrganizationUserSharingHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
@@ -75,6 +76,8 @@ public class OrganizationUserSharingServiceComponent {
                 new SharedUserRoleGovernanceListener(), null);
         bundleContext.registerService(AbstractEventHandler.class.getName(),
                 new SharingOrganizationCreatorUserEventHandler(), null);
+        bundleContext.registerService(AbstractEventHandler.class.getName(),
+                new OrganizationUserSharingHandler(), null);
         UserSharingPolicyHandlerService userSharingPolicyHandlerService = new UserSharingPolicyHandlerServiceImpl();
         bundleContext.registerService(UserSharingPolicyHandlerService.class.getName(), userSharingPolicyHandlerService,
                 null);
@@ -202,11 +205,12 @@ public class OrganizationUserSharingServiceComponent {
     }
 
     @Reference(
-            name = "ResourceSharingPolicyHandlerService",
+            name = "resource.sharing.policy.handler.service",
             service = ResourceSharingPolicyHandlerService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetResourceSharingPolicyHandlerService")
+            unbind = "unsetResourceSharingPolicyHandlerService"
+    )
     protected void setResourceSharingPolicyHandlerService(
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 

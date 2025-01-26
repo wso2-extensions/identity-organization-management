@@ -21,7 +21,7 @@
     <parent>
         <artifactId>identity-organization-management</artifactId>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
-        <version>1.4.75-SNAPSHOT</version>
+        <version>1.4.79-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -83,6 +83,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.resource.sharing.policy.management</artifactId>
         </dependency>
         <!--Test Dependencies-->
         <dependency>
@@ -155,6 +159,12 @@
                             org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                     </instructions>
                 </configuration>

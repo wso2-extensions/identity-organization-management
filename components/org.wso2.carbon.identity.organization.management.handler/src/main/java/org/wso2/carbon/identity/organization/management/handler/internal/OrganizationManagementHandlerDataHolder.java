@@ -23,6 +23,7 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -41,6 +42,7 @@ public class OrganizationManagementHandlerDataHolder {
     private OrgApplicationManager orgApplicationManager;
     private ApplicationManagementService applicationManagementService;
     private RealmService realmService;
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -186,6 +188,27 @@ public class OrganizationManagementHandlerDataHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    /**
+     * Get {@link ResourceSharingPolicyHandlerService}.
+     *
+     * @return ResourceSharingPolicyHandlerService {@link ResourceSharingPolicyHandlerService}.
+     */
+    public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
+
+        return resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Set {@link ResourceSharingPolicyHandlerService}.
+     *
+     * @param resourceSharingPolicyHandlerService Instance of {@link ResourceSharingPolicyHandlerService}.
+     */
+    public void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 }
 
