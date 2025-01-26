@@ -107,7 +107,6 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                         .resolveOrganizationId(getTenantDomain());
             }
-            //TODO: bock shared user deletion from type and org
 
             // Delete all the user associations of the user.
             return organizationUserSharingService.unshareOrganizationUsers(userID, orgId);

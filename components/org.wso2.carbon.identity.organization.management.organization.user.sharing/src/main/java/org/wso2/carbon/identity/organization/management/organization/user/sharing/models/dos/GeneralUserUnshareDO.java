@@ -24,5 +24,4 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
  */
 public class GeneralUserUnshareDO extends BaseUserUnshareDO<UserCriteriaType> {
 
-
 }
