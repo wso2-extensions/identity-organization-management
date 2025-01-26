@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -26,6 +28,7 @@ import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
@@ -49,6 +52,7 @@ import java.util.stream.Collectors;
  */
 public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingHandler.class);
     private final OrganizationUserSharingService userSharingService = new OrganizationUserSharingServiceImpl();
 
     /**
@@ -140,9 +144,16 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
                         attribute.getSharedAttributeType())).map(SharedResourceAttribute::getSharedAttributeId)
                 .collect(Collectors.toList());
 
-        userSharingService.shareOrganizationUser(createdOrgId, userId, residentOrgId);
+        UserAssociation existingUserAssociation =
+                userSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, createdOrgId);
+        if (existingUserAssociation == null) {
+            userSharingService.shareOrganizationUser(createdOrgId, userId, residentOrgId);
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("User: " + userId + " is already shared with the organization: " + createdOrgId);
+        }
+
         if (roleIds.isEmpty()) {
-            // No roles to share.
+            // No roles assigned to the user.
             return;
         }
 
@@ -150,6 +161,13 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
         List<String> sharedRoleIds = getSharedRoleIds(roleIds, createdOrgId);
         String sharedUserId = userSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, createdOrgId)
                 .getUserId();
+
+        List<String> sharedUserExistingRoles =
+                OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
+                        .getRoleIdListOfUser(sharedUserId, getOrganizationManager().resolveTenantDomain(createdOrgId));
+
+        // Remove the shared roles that are already assigned to the shared user.
+        sharedRoleIds.removeIf(sharedUserExistingRoles::contains);
 
         for (String sharedRoleId : sharedRoleIds) {
             // Assign the shared roles to the shared user.
@@ -167,8 +185,18 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
     private List<String> getSharedRoleIds(List<String> roleIds, String createdOrgId)
             throws OrganizationManagementException, IdentityRoleManagementException {
 
-        return new ArrayList<>(OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
-                .getMainRoleToSharedRoleMappingsBySubOrg(roleIds,
-                        getOrganizationManager().resolveTenantDomain(createdOrgId)).values());
+        Map<String, String> mainRoleToSharedRoleMappings =
+                OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
+                        .getMainRoleToSharedRoleMappingsBySubOrg(roleIds,
+                                getOrganizationManager().resolveTenantDomain(createdOrgId));
+
+        List<String> rolesWithoutSharedRoles = roleIds.stream().filter(roleId -> !mainRoleToSharedRoleMappings
+                .containsKey(roleId)).collect(Collectors.toList());
+
+        if (!rolesWithoutSharedRoles.isEmpty() && LOG.isDebugEnabled()) {
+            LOG.debug("No shared roles found in organization: " + createdOrgId + " for the following roles: " +
+                    rolesWithoutSharedRoles);
+        }
+        return new ArrayList<>(mainRoleToSharedRoleMappings.values());
     }
 }
