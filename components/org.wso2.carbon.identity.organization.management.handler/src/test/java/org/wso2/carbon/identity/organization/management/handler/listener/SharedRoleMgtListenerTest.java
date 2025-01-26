@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -31,10 +32,19 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
+import org.wso2.carbon.identity.organization.management.handler.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
@@ -55,9 +65,13 @@ public class SharedRoleMgtListenerTest {
     private static final String SAMPLE_MAIN_APP_ID = "main-app-id";
     private static final String SAMPLE_SHARED_APP_ID = "shared-app-id";
     private static final String SAMPLE_SHARED_APP_ORG_ID = "shared-app-org-id";
+    private static final String SAMPLE_ORG_ID = "org-id";
+    private static final String SAMPLE_ROLE_ID = "role-id";
+    private static final String SAMPLE_SHARED_ROLE_ID = "shared-role-id";
     private static final String IS_FRAGMENT_APP = "isFragmentApp";
     private static final String ORGANIZATION_AUD = "organization";
     private static final String APPLICATION_AUD = "application";
+    private static final String REMOVED_ORGANIZATION_AUDIENCE_ROLES = "removedOrganizationAudienceRoles";
 
     @Mock
     private ApplicationManagementService mockedApplicationManagementService;
@@ -68,19 +82,31 @@ public class SharedRoleMgtListenerTest {
     @Mock
     private OrgApplicationManager mockedOrgApplicationManager;
 
+    @Mock
+    private RoleManagementService mockedRoleManagementService;
+
     private MockedStatic<OrganizationManagementUtil> organizationManagementUtilMockedStatic;
     private MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic;
 
     @BeforeClass
     public void setUpClass() {
 
+        TestUtils.initPrivilegedCarbonContext();
         MockitoAnnotations.openMocks(this);
         OrganizationManagementHandlerDataHolder.getInstance().
                 setApplicationManagementService(mockedApplicationManagementService);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(mockedOrgApplicationManager);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
         organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
         identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+    }
+
+    @AfterClass
+    public void tearDown() {
+
+        organizationManagementUtilMockedStatic.close();
+        identityTenantUtilMockedStatic.close();
     }
 
     @DataProvider(name = "organizationTypeDataProvider")
@@ -182,5 +208,36 @@ public class SharedRoleMgtListenerTest {
         if (StringUtils.isNotEmpty(mainAppId)) {
             assertEquals(associatedRolesConfig.getAllowedAudience(), ORGANIZATION_AUD);
         }
+    }
+
+    @Test
+    public void testHandleRemovedOrganizationAudienceRolesOnAppUpdate() throws Exception {
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> removedOrgRolesList = Collections.singletonList(roleV2);
+
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        threadLocalProperties.put(REMOVED_ORGANIZATION_AUDIENCE_ROLES, removedOrgRolesList);
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        SharedApplication sharedApplication = new SharedApplication(SAMPLE_SHARED_APP_ID, SAMPLE_ORG_ID);
+        List<SharedApplication> sharedApplications = Collections.singletonList(sharedApplication);
+
+        Map<String, String> mainRoleToSharedRoleMappingsInSubOrg = new HashMap<>();
+        mainRoleToSharedRoleMappingsInSubOrg.put(SAMPLE_ROLE_ID, SAMPLE_SHARED_ROLE_ID);
+
+        when(mockedOrgApplicationManager.getSharedApplications(null, SAMPLE_SHARED_APP_ID))
+                .thenReturn(sharedApplications);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList(SAMPLE_ROLE_ID), null))
+                .thenReturn(mainRoleToSharedRoleMappingsInSubOrg);
+        when(mockedRoleManagementService.getAssociatedApplicationByRoleId(SAMPLE_ROLE_ID, SAMPLE_TENANT_DOMAIN))
+                .thenReturn(Collections.singletonList(SAMPLE_SHARED_APP_ID));
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.setApplicationResourceId(SAMPLE_SHARED_APP_ID);
+        assertEquals(sharedRoleMgtListener.doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN,
+                SAMPLE_USERNAME), true);
     }
 }

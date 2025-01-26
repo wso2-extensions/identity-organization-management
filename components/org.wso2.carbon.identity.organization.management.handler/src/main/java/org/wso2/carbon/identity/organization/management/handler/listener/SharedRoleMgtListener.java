@@ -326,9 +326,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             CompletableFuture.runAsync(() -> {
                 String sharedAppOrgId = sharedApplication.getOrganizationId();
                 try {
-                    handleOrganizationAudiencedSharedRoleDeletion(removedOrgRolesList,
-                            serviceProvider.getApplicationResourceId(),
-                            tenantDomain, sharedAppOrgId);
+                    handleOrganizationAudiencedSharedRoleDeletion(
+                            removedOrgRolesList, mainAppId, tenantDomain, sharedAppOrgId);
                 } catch (IdentityRoleManagementException | OrganizationManagementException e) {
                     LOG.error(String.format("Exception occurred during deleting roles from organization %s",
                             sharedApplication.getOrganizationId()), e);
