@@ -920,6 +920,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private String resolveAccessURL(String ownerTenantDomain, String sharedOrgId, String appPath) {
 
+        if (!appPath.startsWith("/")) {
+            appPath = "/" + appPath;
+        }
         String accessUrl = IdentityUtil.getServerURL(appPath, true, true);
         accessUrl = accessUrl.replace(appPath, TENANT_CONTEXT_PREFIX + ownerTenantDomain +
                 ORGANIZATION_CONTEXT_PREFIX + sharedOrgId + appPath);
