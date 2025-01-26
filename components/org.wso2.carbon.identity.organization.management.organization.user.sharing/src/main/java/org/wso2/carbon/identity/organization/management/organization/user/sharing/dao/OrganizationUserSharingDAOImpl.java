@@ -25,8 +25,7 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
@@ -51,14 +50,12 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_USER_NAME;
@@ -338,7 +335,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
                                                       String domainName, EditOperation editOperation,
                                                       String permittedOrgId)
-            throws UserShareMgtServerException {
+            throws UserSharingMgtServerException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
 
@@ -365,16 +362,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                             namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
                         });
             } else {
-                throw new UserShareMgtServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID);
+                throw new UserSharingMgtServerException(ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID);
             }
         } catch (DataAccessException e) {
-            throw new UserShareMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION);
+            throw new UserSharingMgtServerException(ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION);
         }
     }
 
     @Override
     public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
-            throws UserShareMgtServerException {
+            throws UserSharingMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
@@ -386,7 +383,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
                     });
         } catch (DataAccessException e) {
-            throw new UserShareMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
         }
     }
 }

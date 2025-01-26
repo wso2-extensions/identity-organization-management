@@ -20,13 +20,11 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.List;
 
@@ -94,7 +92,7 @@ public interface OrganizationUserSharingDAO {
                                                               SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented");
+        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented.");
     }
 
     /**
@@ -149,7 +147,7 @@ public interface OrganizationUserSharingDAO {
     default List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
             throws IdentityRoleManagementException {
 
-        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented");
+        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented.");
     }
 
     /**
@@ -161,14 +159,14 @@ public interface OrganizationUserSharingDAO {
      * @param domainName     The domain name associated with the user.
      * @param editOperation  The type of edit operation being performed.
      * @param permittedOrgId The organization ID with permitted access.
-     * @throws UserShareMgtServerException If an error occurs while retrieving shared user roles.
+     * @throws UserSharingMgtServerException If an error occurs while retrieving shared user roles.
      */
     default void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
                                                        String domainName, EditOperation editOperation,
                                                        String permittedOrgId)
-            throws UserShareMgtServerException {
+            throws UserSharingMgtServerException {
 
-        throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
+        throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented.");
     }
 
     /**
@@ -178,11 +176,12 @@ public interface OrganizationUserSharingDAO {
      * @param tenantId   The ID of the tenant to which the user belongs.
      * @param domainName The name of the domain in which the user resides.
      * @return A {@link List<String>} containing the IDs of the shared roles.
-     * @throws UserShareMgtServerException If an error occurs while retrieving the roles shared with the user in the organization.
+     * @throws UserSharingMgtServerException If an error occurs while retrieving the roles shared with the user
+     * in the organization.
      */
     default List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
-            throws UserShareMgtServerException {
+            throws UserSharingMgtServerException {
 
-        throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented");
+        throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented.");
     }
 }

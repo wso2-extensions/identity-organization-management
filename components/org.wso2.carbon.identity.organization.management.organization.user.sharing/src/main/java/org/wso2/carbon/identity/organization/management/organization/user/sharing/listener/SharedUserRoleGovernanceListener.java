@@ -19,12 +19,8 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
@@ -34,19 +30,17 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import org.wso2.carbon.identity.role.v2.mgt.core.listener.AbstractRoleManagementListener;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.OPERATION_FORBIDDEN;
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
 
-public class SharedUserRoleListener extends AbstractRoleManagementListener {
+/**
+ * Shared user role update governing event listener.
+ */
+public class SharedUserRoleGovernanceListener extends AbstractRoleManagementListener {
 
-    private final UserIDResolver userIDResolver = new UserIDResolver();
-    private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
+    private static final UserIDResolver USER_ID_RESOLVER = new UserIDResolver();
 
     @Override
     public int getDefaultOrderId() {
@@ -73,8 +67,7 @@ public class SharedUserRoleListener extends AbstractRoleManagementListener {
                 return;
             }
 
-            List<String> deletedUserNamesList = userIDResolver.getNamesByIDs(deletedUserIDList, tenantDomain);
-
+            List<String> deletedUserNamesList = USER_ID_RESOLVER.getNamesByIDs(deletedUserIDList, tenantDomain);
             List<String> nonDeletableUserNamesList =
                     getOrganizationUserSharingService().getNonDeletableUserRoleAssignments(roleID, deletedUserNamesList,
                             tenantDomain, Utils.getOrganizationId());
@@ -86,7 +79,6 @@ public class SharedUserRoleListener extends AbstractRoleManagementListener {
                         getRoleManagementService().getRoleNameByRoleId(roleID, tenantDomain));
                 throw new IdentityRoleManagementException(OPERATION_FORBIDDEN.getCode(), errorMessage);
             }
-
         } catch (OrganizationManagementException e) {
             String errorMessage = "Error while retrieving the organization id for the given tenantDomain: "
                     + tenantDomain;

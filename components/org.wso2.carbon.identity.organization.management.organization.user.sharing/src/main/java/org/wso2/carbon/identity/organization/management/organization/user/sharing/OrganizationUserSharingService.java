@@ -20,13 +20,11 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtServerException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.List;
 
@@ -123,14 +121,14 @@ public interface OrganizationUserSharingService {
      * @param actualUserId  Actual user ID of the user.
      * @param residentOrgId The organization ID where the user is managed.
      * @param sharedType    The type of sharing relationship to filter the associations.
-     * @return the list of {@link UserAssociation}s.
+     * @return A list of {@link UserAssociation}s.
      * @throws OrganizationManagementException If an error occurs while fetching user associations.
      */
     default List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
                                                                  SharedType sharedType)
             throws OrganizationManagementException {
 
-        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented");
+        throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented.");
     }
 
     /**
@@ -139,7 +137,7 @@ public interface OrganizationUserSharingService {
      *
      * @param roleId               The role ID from which the users are to be removed.
      * @param deletedUserNamesList The list of usernames intended for removal.
-     * @param tenantDomain         The tenant domain where the operation is being performed.
+     * @param tenantDomain         The tenant domain where the role assignment is available.
      * @param requestingOrgId      The ID of the requesting organization performing the operation.
      * @return A list of usernames that the requesting organization is not permitted to remove from the given role.
      * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
@@ -164,7 +162,7 @@ public interface OrganizationUserSharingService {
     default List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
             throws IdentityRoleManagementException {
 
-        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented");
+        throw new NotImplementedException("getSharedUserRolesFromUserRoles method is not implemented.");
     }
 
     /**
@@ -173,17 +171,17 @@ public interface OrganizationUserSharingService {
      * @param roleId         The roleId of the role to be restricted.
      * @param username       The username of the shared user.
      * @param tenantDomain   The tenant domain of the shared user.
-     * @param domainName     The domain name associated with the user.
+     * @param domainName     The user store domain name associated with the user.
      * @param editOperation  The type of edit operation being performed.
      * @param permittedOrgId The organization ID with permitted access.
-     * @throws UserShareMgtException If an error occurs while retrieving shared user roles.
+     * @throws UserSharingMgtException If an error occurs while retrieving shared user roles.
      */
     default void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
                                                        String domainName, EditOperation editOperation,
                                                        String permittedOrgId)
-            throws UserShareMgtException {
+            throws UserSharingMgtException {
 
-        throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented");
+        throw new NotImplementedException("addEditRestrictionsForSharedUserRoles method is not implemented.");
     }
 
     /**
@@ -193,11 +191,12 @@ public interface OrganizationUserSharingService {
      * @param tenantId The ID of the tenant to which the user belongs.
      * @param domainName The name of the domain in which the user resides.
      * @return A {@link List<String>} containing the IDs of the shared roles.
-     * @throws UserShareMgtException If an error occurs while retrieving the roles shared with the user in the organization.
+     * @throws UserSharingMgtException If an error occurs while retrieving the roles shared with the user
+     * in the organization.
      */
     default List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
-            throws UserShareMgtException {
+            throws UserSharingMgtException {
 
-        throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented");
+        throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented.");
     }
 }

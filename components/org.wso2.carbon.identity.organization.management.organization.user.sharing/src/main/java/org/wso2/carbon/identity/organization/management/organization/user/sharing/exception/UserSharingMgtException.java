@@ -21,50 +21,50 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 
 /**
- * Exception class for organization user share management.
+ * Exception class for organization user sharing management.
  */
-public class UserShareMgtException extends Exception {
+public class UserSharingMgtException extends Exception {
 
     private final String errorCode;
     private final String description;
 
-    public UserShareMgtException(UserSharingConstants.ErrorMessage error) {
+    public UserSharingMgtException(UserSharingConstants.ErrorMessage error) {
 
         super(error.getMessage());
         this.errorCode = error.getCode();
         this.description = error.getDescription();
     }
 
-    public UserShareMgtException(UserSharingConstants.ErrorMessage error, String specificMessage) {
+    public UserSharingMgtException(UserSharingConstants.ErrorMessage error, String specificMessage) {
 
         super(specificMessage);
         this.errorCode = error.getCode();
         this.description = error.getDescription();
     }
 
-    public UserShareMgtException(UserSharingConstants.ErrorMessage error,  Throwable cause) {
+    public UserSharingMgtException(UserSharingConstants.ErrorMessage error, Throwable cause) {
 
         super(error.getMessage(), cause);
         this.errorCode = error.getCode();
         this.description = error.getDescription();
     }
 
-    public UserShareMgtException(String errorCode, String message, String description) {
+    public UserSharingMgtException(String errorCode, String message, String description) {
 
         super(message);
         this.errorCode = errorCode;
         this.description = description;
     }
 
-    public UserShareMgtException(String errorCode, String message, String description, Throwable cause) {
+    public UserSharingMgtException(String errorCode, String message, String description, Throwable cause) {
 
         super(message, cause);
         this.errorCode = errorCode;
         this.description = description;
     }
 
-    public UserShareMgtException(String errorCode, String message, String description, Throwable cause,
-                                 boolean enableSuppression, boolean writableStackTrace) {
+    public UserSharingMgtException(String errorCode, String message, String description, Throwable cause,
+                                   boolean enableSuppression, boolean writableStackTrace) {
 
         super(message, cause, enableSuppression, writableStackTrace);
         this.errorCode = errorCode;

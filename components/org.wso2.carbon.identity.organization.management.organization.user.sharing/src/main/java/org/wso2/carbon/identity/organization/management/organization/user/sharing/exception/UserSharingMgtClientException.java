@@ -21,37 +21,37 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 
 /**
- * Exception class for organization user share management for client exceptions.
+ * Exception class for organization user sharing management for client exceptions.
  */
-public class UserShareMgtClientException extends UserShareMgtException {
+public class UserSharingMgtClientException extends UserSharingMgtException {
 
-    public UserShareMgtClientException(UserSharingConstants.ErrorMessage error) {
+    public UserSharingMgtClientException(UserSharingConstants.ErrorMessage error) {
 
         super(error);
     }
 
-    public UserShareMgtClientException(UserSharingConstants.ErrorMessage error,  Throwable cause) {
+    public UserSharingMgtClientException(UserSharingConstants.ErrorMessage error, Throwable cause) {
 
         super(error, cause);
     }
 
-    public UserShareMgtClientException(UserSharingConstants.ErrorMessage error, String specificMessage) {
+    public UserSharingMgtClientException(UserSharingConstants.ErrorMessage error, String specificMessage) {
 
         super(error, specificMessage);
     }
 
-    public UserShareMgtClientException(String errorCode, String message, String description) {
+    public UserSharingMgtClientException(String errorCode, String message, String description) {
 
         super(errorCode, message, description);
     }
 
-    public UserShareMgtClientException(String errorCode, String message, String description, Throwable cause) {
+    public UserSharingMgtClientException(String errorCode, String message, String description, Throwable cause) {
 
         super(errorCode, message, description, cause);
     }
 
-    public UserShareMgtClientException(String errorCode, String message, String description, Throwable cause,
-                                       boolean enableSuppression, boolean writableStackTrace) {
+    public UserSharingMgtClientException(String errorCode, String message, String description, Throwable cause,
+                                         boolean enableSuppression, boolean writableStackTrace) {
 
         super(errorCode, message, description, cause, enableSuppression, writableStackTrace);
     }

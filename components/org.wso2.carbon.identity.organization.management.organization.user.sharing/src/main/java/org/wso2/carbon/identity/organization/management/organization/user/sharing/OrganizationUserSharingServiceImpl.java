@@ -18,15 +18,15 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -57,7 +57,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrganizationUserSharingServiceImpl implements OrganizationUserSharingService {
 
-    private static final Logger log = LoggerFactory.getLogger(OrganizationUserSharingServiceImpl.class);
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingServiceImpl.class);
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
 
     @Override
@@ -191,7 +191,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
                                                       String domainName, EditOperation editOperation,
                                                       String permittedOrgId)
-            throws UserShareMgtException {
+            throws UserSharingMgtException {
 
         organizationUserSharingDAO.addEditRestrictionsForSharedUserRole(roleId, username, tenantDomain, domainName,
                 editOperation, permittedOrgId);
@@ -199,7 +199,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     @Override
     public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
-            throws UserShareMgtException {
+            throws UserSharingMgtException {
 
         return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainName);
     }
@@ -225,7 +225,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
         if (!userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
-            log.error("User " + userAssociation.getUserId() + " cannot be deleted by " +
+            LOG.error("User " + userAssociation.getUserId() + " cannot be deleted by " +
                     userAssociation.getOrganizationId() + " since it is managed by " +
                     userAssociation.getUserResidentOrganizationId() + " org.");
             return;

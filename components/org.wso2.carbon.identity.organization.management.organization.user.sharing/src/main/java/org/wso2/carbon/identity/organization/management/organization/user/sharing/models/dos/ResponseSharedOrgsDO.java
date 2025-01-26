@@ -39,8 +39,7 @@ public class ResponseSharedOrgsDO {
         return responseLinks;
     }
 
-    public void setResponseLinks(
-            List<ResponseLinkDO> responseLinks) {
+    public void setResponseLinks(List<ResponseLinkDO> responseLinks) {
 
         this.responseLinks = responseLinks;
     }
@@ -50,8 +49,7 @@ public class ResponseSharedOrgsDO {
         return sharedOrgs;
     }
 
-    public void setSharedOrgs(
-            List<ResponseOrgDetailsDO> sharedOrgs) {
+    public void setSharedOrgs(List<ResponseOrgDetailsDO> sharedOrgs) {
 
         this.sharedOrgs = sharedOrgs;
     }

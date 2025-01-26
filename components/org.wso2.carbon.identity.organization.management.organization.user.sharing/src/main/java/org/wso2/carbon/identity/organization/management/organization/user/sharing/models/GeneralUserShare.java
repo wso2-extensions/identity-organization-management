@@ -37,11 +37,13 @@ public class GeneralUserShare extends BaseUserShare {
      * Builder for constructing {@link GeneralUserShare} instances.
      */
     public static class Builder {
+
         private String userId;
         private PolicyEnum policy;
         private List<String> roles;
 
         public Builder withUserId(String userId) throws OrganizationManagementServerException {
+
             if (userId == null || userId.isEmpty()) {
                 throw new OrganizationManagementServerException(ERROR_CODE_USER_ID_MISSING.getMessage());
             }
@@ -50,6 +52,7 @@ public class GeneralUserShare extends BaseUserShare {
         }
 
         public Builder withPolicy(PolicyEnum policy) throws OrganizationManagementServerException {
+
             if (policy == null) {
                 throw new OrganizationManagementServerException(ERROR_CODE_POLICY_MISSING.getMessage());
             }
@@ -58,6 +61,7 @@ public class GeneralUserShare extends BaseUserShare {
         }
 
         public Builder withRoles(List<String> roles) throws OrganizationManagementServerException {
+
             if (roles == null) {
                 throw new OrganizationManagementServerException(ERROR_CODE_ROLES_NULL.getMessage());
             }
@@ -66,6 +70,7 @@ public class GeneralUserShare extends BaseUserShare {
         }
 
         public GeneralUserShare build() throws OrganizationManagementServerException {
+
             if (userId == null || policy == null) {
                 throw new OrganizationManagementServerException(ERROR_CODE_BUILD_USER_SHARE.getMessage());
             }

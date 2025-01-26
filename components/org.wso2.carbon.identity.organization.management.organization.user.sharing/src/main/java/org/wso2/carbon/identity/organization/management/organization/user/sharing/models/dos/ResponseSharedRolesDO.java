@@ -39,8 +39,7 @@ public class ResponseSharedRolesDO {
         return responseLinks;
     }
 
-    public void setResponseLinks(
-            List<ResponseLinkDO> responseLinks) {
+    public void setResponseLinks(List<ResponseLinkDO> responseLinks) {
 
         this.responseLinks = responseLinks;
     }
@@ -50,8 +49,7 @@ public class ResponseSharedRolesDO {
         return sharedRoles;
     }
 
-    public void setSharedRoles(
-            List<RoleWithAudienceDO> sharedRoles) {
+    public void setSharedRoles(List<RoleWithAudienceDO> sharedRoles) {
 
         this.sharedRoles = sharedRoles;
     }

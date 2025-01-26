@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserShareMgtException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsDO;
@@ -35,33 +35,33 @@ public interface UserSharingPolicyHandlerService {
      * Populates the details required for selective user sharing.
      *
      * @param selectiveUserShareDO The object containing details for selective user sharing.
-     * @throws UserShareMgtException If an error occurs while populating the selective user share details.
+     * @throws UserSharingMgtException If an error occurs while populating the selective user share details.
      */
-    void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserShareMgtException;
+    void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException;
 
     /**
      * Populates the details required for general user sharing.
      *
      * @param generalUserShareDO The object containing details for general user sharing.
-     * @throws UserShareMgtException If an error occurs while populating the general user share details.
+     * @throws UserSharingMgtException If an error occurs while populating the general user share details.
      */
-    void populateGeneralUserShare(GeneralUserShareDO generalUserShareDO) throws UserShareMgtException;
+    void populateGeneralUserShare(GeneralUserShareDO generalUserShareDO) throws UserSharingMgtException;
 
     /**
      * Populates the details required for selective user unsharing.
      *
      * @param selectiveUserUnshareDO The object containing details for selective user unsharing.
-     * @throws UserShareMgtException If an error occurs while populating the selective user unshare details.
+     * @throws UserSharingMgtException If an error occurs while populating the selective user unshare details.
      */
-    void populateSelectiveUserUnshare(SelectiveUserUnshareDO selectiveUserUnshareDO) throws UserShareMgtException;
+    void populateSelectiveUserUnshare(SelectiveUserUnshareDO selectiveUserUnshareDO) throws UserSharingMgtException;
 
     /**
      * Populates the details required for general user unsharing.
      *
      * @param generalUserUnshareDO The object containing details for general user unsharing.
-     * @throws UserShareMgtException If an error occurs while populating the general user unshare details.
+     * @throws UserSharingMgtException If an error occurs while populating the general user unshare details.
      */
-    void populateGeneralUserUnshare(GeneralUserUnshareDO generalUserUnshareDO) throws UserShareMgtException;
+    void populateGeneralUserUnshare(GeneralUserUnshareDO generalUserUnshareDO) throws UserSharingMgtException;
 
     /**
      * Retrieves the organizations that a user has been shared with.
@@ -73,12 +73,12 @@ public interface UserSharingPolicyHandlerService {
      * @param filter           The filter criteria to apply when retrieving organizations.
      * @param recursive        Whether to include child organizations recursively.
      * @return A {@link ResponseSharedOrgsDO} object containing the shared organizations and pagination details.
-     * @throws UserShareMgtException If an error occurs while retrieving the shared organizations of the user.
+     * @throws UserSharingMgtException If an error occurs while retrieving the shared organizations of the user.
      */
     ResponseSharedOrgsDO getSharedOrganizationsOfUser(String associatedUserId, String after, String before,
                                                       Integer limit, String filter,
                                                       Boolean recursive)
-            throws UserShareMgtException;
+            throws UserSharingMgtException;
 
     /**
      * Retrieves the roles shared with a user in a specific organization.
@@ -91,10 +91,11 @@ public interface UserSharingPolicyHandlerService {
      * @param filter           The filter criteria to apply when retrieving roles.
      * @param recursive        Whether to include child organizations recursively.
      * @return A {@link ResponseSharedRolesDO} object containing the shared roles and pagination details.
-     * @throws UserShareMgtException If an error occurs while retrieving the roles shared with the user in the organization.
+     * @throws UserSharingMgtException If an error occurs while retrieving the roles shared with the user
+     * in the organization.
      */
     ResponseSharedRolesDO getRolesSharedWithUserInOrganization(String associatedUserId, String orgId, String after,
                                                                String before, Integer limit,
                                                                String filter, Boolean recursive)
-            throws UserShareMgtException;
+            throws UserSharingMgtException;
 }
