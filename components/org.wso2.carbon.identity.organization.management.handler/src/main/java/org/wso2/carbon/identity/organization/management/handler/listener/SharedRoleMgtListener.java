@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -326,9 +326,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             CompletableFuture.runAsync(() -> {
                 String sharedAppOrgId = sharedApplication.getOrganizationId();
                 try {
-                    handleOrganizationAudiencedSharedRoleDeletion(removedOrgRolesList,
-                            serviceProvider.getApplicationResourceId(),
-                            tenantDomain, sharedAppOrgId);
+                    handleOrganizationAudiencedSharedRoleDeletion(
+                            removedOrgRolesList, mainAppId, tenantDomain, sharedAppOrgId);
                 } catch (IdentityRoleManagementException | OrganizationManagementException e) {
                     LOG.error(String.format("Exception occurred during deleting roles from organization %s",
                             sharedApplication.getOrganizationId()), e);
@@ -536,9 +535,16 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
 
         // Get each role associated applications.
         for (String mainAppRoleId : mainAppRoleIds) {
-            List<String> associatedApplicationsIds =
-                    roleManagementService.getAssociatedApplicationByRoleId(mainAppRoleId,
-                            mainApplicationTenantDomain);
+            List<String> associatedApplicationsIds;
+            try {
+                PrivilegedCarbonContext.startTenantFlow();
+                PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                        .setTenantDomain(mainApplicationTenantDomain, true);
+                associatedApplicationsIds = roleManagementService.getAssociatedApplicationByRoleId(mainAppRoleId,
+                        mainApplicationTenantDomain);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
             String sharedRoleId = mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId);
             if (StringUtils.isBlank(sharedRoleId)) {
                 // There is no role available in the shared org. May be due to role creation issue.
