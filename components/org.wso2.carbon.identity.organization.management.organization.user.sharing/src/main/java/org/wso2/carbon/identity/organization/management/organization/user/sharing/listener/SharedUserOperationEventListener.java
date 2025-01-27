@@ -107,6 +107,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                         .resolveOrganizationId(getTenantDomain());
             }
+
             // Delete all the user associations of the user.
             return organizationUserSharingService.unshareOrganizationUsers(userID, orgId);
         } catch (OrganizationManagementException e) {

@@ -18,14 +18,20 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -41,7 +47,6 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_UNSHARING_RESTRICTION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -52,57 +57,25 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrganizationUserSharingServiceImpl implements OrganizationUserSharingService {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingServiceImpl.class);
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
 
     @Override
     public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        try {
-            int associatedUserTenantId =
-                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
-            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
-            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, SharedType.NOT_SPECIFIED);
+    }
 
-            HashMap<String, String> userClaims = new HashMap<>();
-            userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
-            userClaims.put(ID_CLAIM_READ_ONLY, "true");
-            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+    @Override
+    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId,
+                                      SharedType sharedType) throws OrganizationManagementException {
 
-            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
-            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
-            userStoreManager = getAbstractUserStoreManager(tenantId);
-
-            if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
-                userStoreManager.addUser(userName, generatePassword(), null, userClaims,
-                        DEFAULT_PROFILE);
-            } else {
-                // Wait for the user store manager to be available in the user realm.
-                UserStoreManager defaultUserStore = null;
-                int threadSleepTime = Integer.parseInt(
-                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
-                int waited = 0;
-                int waitIntervals = 500;
-                while (defaultUserStore == null) {
-                    if (waited > threadSleepTime) {
-                        break;
-                    }
-                    Thread.sleep(waitIntervals);
-                    waited += waitIntervals;
-                    defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
-                }
-                if (defaultUserStore == null) {
-                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
-                            domain);
-                }
-                defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
-            }
-            String userId = userStoreManager.getUserIDFromUserName(UserCoreUtil.addDomainToName(userName, domain));
-            organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
-                    associatedOrgId);
-        } catch (UserStoreException | InterruptedException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
+        if (sharedType == null) {
+            shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
         }
+
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, sharedType);
     }
 
     @Override
@@ -157,6 +130,47 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId);
     }
 
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
+                                                                SharedType sharedType)
+            throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId, sharedType);
+    }
+
+    @Override
+    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+                                                           String tenantDomain, String requestingOrgId)
+            throws IdentityRoleManagementException {
+
+        return organizationUserSharingDAO.getNonDeletableUserRoleAssignments(roleId, deletedUserNamesList,
+                tenantDomain, requestingOrgId);
+    }
+
+    @Override
+    public List<String> getSharedUserRolesFromUserRoles(List<String> allUserRolesOfSharedUser, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        return organizationUserSharingDAO.getSharedUserRolesFromUserRoles(allUserRolesOfSharedUser, tenantDomain);
+    }
+
+    @Override
+    public void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
+                                                      String domainName, EditOperation editOperation,
+                                                      String permittedOrgId)
+            throws UserSharingMgtException {
+
+        organizationUserSharingDAO.addEditRestrictionsForSharedUserRole(roleId, username, tenantDomain, domainName,
+                editOperation, permittedOrgId);
+    }
+
+    @Override
+    public List<String> getRolesSharedWithUserInOrganization(String username, int tenantId, String domainName)
+            throws UserSharingMgtException {
+
+        return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainName);
+    }
+
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
@@ -177,8 +191,10 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        if (USER_UNSHARING_RESTRICTION.equals(userAssociation.getEditRestriction()) &&
-                !userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+        if (!userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
+            LOG.error("User " + userAssociation.getUserId() + " cannot be deleted by " +
+                    userAssociation.getOrganizationId() + " since it is managed by " +
+                    userAssociation.getUserResidentOrganizationId() + " org.");
             return;
         }
 
@@ -191,6 +207,61 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
                     userAssociation.getUserId(), organizationId);
+        }
+    }
+
+    private void shareOrganizationUserWithOrWithoutType(String orgId, String associatedUserId, String associatedOrgId,
+                                                        SharedType sharedType) throws OrganizationManagementException {
+
+        try {
+            int associatedUserTenantId =
+                    IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
+            String userName = userStoreManager.getUser(associatedUserId, null).getUsername();
+
+            HashMap<String, String> userClaims = new HashMap<>();
+            userClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
+            userClaims.put(ID_CLAIM_READ_ONLY, "true");
+            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+
+            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
+            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
+            userStoreManager = getAbstractUserStoreManager(tenantId);
+
+            if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
+                userStoreManager.addUser(userName, generatePassword(), null, userClaims,
+                        DEFAULT_PROFILE);
+            } else {
+                // Wait for the user store manager to be available in the user realm.
+                UserStoreManager defaultUserStore = null;
+                int threadSleepTime = Integer.parseInt(
+                        IdentityUtil.getProperty("OrganizationUserInvitation.AssociationWaitTime"));
+                int waited = 0;
+                int waitIntervals = 500;
+                while (defaultUserStore == null) {
+                    if (waited > threadSleepTime) {
+                        break;
+                    }
+                    Thread.sleep(waitIntervals);
+                    waited += waitIntervals;
+                    defaultUserStore = getAbstractUserStoreManager(tenantId).getSecondaryUserStoreManager(domain);
+                }
+                if (defaultUserStore == null) {
+                    throw new OrganizationManagementException("Error while retrieving user store manager for domain: " +
+                            domain);
+                }
+                defaultUserStore.addUser(userName, generatePassword(), null, userClaims, DEFAULT_PROFILE);
+            }
+            String userId = userStoreManager.getUserIDFromUserName(UserCoreUtil.addDomainToName(userName, domain));
+            if (SharedType.NOT_SPECIFIED.equals(sharedType)) {
+                organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
+                        associatedOrgId);
+            } else {
+                organizationUserSharingDAO.createOrganizationUserAssociation(userId, orgId, associatedUserId,
+                        associatedOrgId, sharedType);
+            }
+        } catch (UserStoreException | InterruptedException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         }
     }
 }

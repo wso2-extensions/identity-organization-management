@@ -29,7 +29,6 @@ public class UserAssociation {
     private String associatedUserId;
     private String userResidentOrganizationId;
     private String sharedType;
-    private String editRestriction;
 
     public int getId() {
 
@@ -89,15 +88,5 @@ public class UserAssociation {
     public void setSharedType(String sharedType) {
 
         this.sharedType = sharedType;
-    }
-
-    public String getEditRestriction() {
-
-        return editRestriction;
-    }
-
-    public void setEditRestriction(String editRestriction) {
-
-        this.editRestriction = editRestriction;
     }
 }
