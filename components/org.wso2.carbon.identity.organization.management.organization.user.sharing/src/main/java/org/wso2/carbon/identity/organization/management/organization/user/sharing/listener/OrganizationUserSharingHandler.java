@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
@@ -101,12 +102,16 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
         // Get ancestor organizations of the current organization.
         List<String> allAncestorOrgs = getOrganizationManager().getAncestorOrganizationIds(createdOrgId);
-        allAncestorOrgs.removeIf(orgId -> orgId.equals(createdOrgId));
+        // Level of the primary organizations.
+        int topHierarchyLevel = Utils.getSubOrgStartLevel() >= 1 ? Utils.getSubOrgStartLevel() - 1 : 0;
+        // Get ancestor organizations starting from the immediate parent to the top level.
+        List<String> relevantAncestorOrgs =
+                new ArrayList<>(allAncestorOrgs.subList(1, allAncestorOrgs.size() - topHierarchyLevel));
 
         // Get all resources of each ancestor organization.
         Map<String, List<ResourceSharingPolicy>> resourcesGroupedByOrganization =
                 OrganizationUserSharingDataHolder.getInstance().getResourceSharingPolicyHandlerService()
-                        .getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(allAncestorOrgs);
+                        .getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(relevantAncestorOrgs);
 
         for (Map.Entry<String, List<ResourceSharingPolicy>> ancestorOrg : resourcesGroupedByOrganization.entrySet()) {
             List<ResourceSharingPolicy> resourcesList = ancestorOrg.getValue();
