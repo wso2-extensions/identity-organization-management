@@ -79,7 +79,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT JOIN APP_GROUP_ASSOCIATION ag_assoc " +
-            "ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND " +
+            "ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
             "ORDER BY ID DESC LIMIT ?, ?";
 
@@ -89,7 +89,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT JOIN APP_GROUP_ASSOCIATION ag_assoc " +
-            "ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
+            "ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
             "(sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC OFFSET ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_ORACLE =
@@ -98,7 +98,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
             "(sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') BETWEEN ? AND ? ORDER BY ID DESC";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MSSQL =
@@ -107,7 +107,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
             "(sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC OFFSET ? ROWS " +
             "FETCH NEXT ? ROWS ONLY";
 
@@ -117,7 +117,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
             "(sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ORDER BY ID DESC SKIP ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MYSQL =
@@ -126,7 +126,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT JOIN APP_GROUP_ASSOCIATION ag_assoc " +
-            "ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
+            "ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
             "ORDER BY ID DESC LIMIT ?, ?";
 
@@ -136,7 +136,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT JOIN APP_GROUP_ASSOCIATION ag_assoc " +
-            "ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
+            "ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
             "ORDER BY ID DESC OFFSET ? LIMIT ?";
 
@@ -146,7 +146,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') " +
             "BETWEEN ? AND ? ORDER BY ID DESC";
 
@@ -156,7 +156,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ORDER BY " +
             "ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
@@ -166,7 +166,7 @@ public class SQLConstants {
             "ACCESS_URL, sa_shared.USERNAME, sa_shared.USER_STORE, sa_shared.TENANT_ID, ag_assoc.GROUP_ID FROM " +
             "SP_SHARED_APP ssa JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
-            "ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
+            "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? AND " +
             "ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ORDER BY " +
             "ID DESC SKIP ? LIMIT ?";
 
@@ -174,14 +174,14 @@ public class SQLConstants {
             "SELECT ag_assoc.GROUP_ID FROM SP_SHARED_APP ssa " +
             "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID " +
-            "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = " +
+            "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = " +
             "? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1') ";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT =
             "SELECT ag_assoc.GROUP_ID FROM SP_SHARED_APP ssa " +
             "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID " +
-            "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.ID WHERE ssa.SHARED_ORG_ID = " +
+            "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = " +
             "? AND sa_shared.APP_NAME LIKE ? AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR " +
             "sa_shared.IS_DISCOVERABLE = '1')";
 
