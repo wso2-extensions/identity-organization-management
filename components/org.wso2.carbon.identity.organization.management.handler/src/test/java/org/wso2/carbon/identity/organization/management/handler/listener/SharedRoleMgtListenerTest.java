@@ -149,6 +149,27 @@ public class SharedRoleMgtListenerTest {
         };
     }
 
+    @DataProvider(name = "updateApplicationDataProvider")
+    public Object[][] updateApplicationDataProvider() {
+
+        ServiceProvider fragmentServiceProvider = new ServiceProvider();
+        ServiceProviderProperty serviceProviderProperty = new ServiceProviderProperty();
+        serviceProviderProperty.setName(IS_FRAGMENT_APP);
+        serviceProviderProperty.setValue(Boolean.TRUE.toString());
+        fragmentServiceProvider.setSpProperties(new ServiceProviderProperty[]{serviceProviderProperty});
+
+        ServiceProvider mainServiceProvider = new ServiceProvider();
+        ServiceProviderProperty mainServiceProviderProperty = new ServiceProviderProperty();
+        mainServiceProviderProperty.setName("SAMPLE_PROPERTY");
+        mainServiceProviderProperty.setValue("SAMPLE_VALUE");
+        mainServiceProvider.setSpProperties(new ServiceProviderProperty[]{mainServiceProviderProperty});
+
+        return new Object[][] {
+                {fragmentServiceProvider},
+                {mainServiceProvider}
+        };
+    }
+
     @Test(dataProvider = "organizationTypeDataProvider")
     public void testDoPreDeleteApplicationInOrgTypes(boolean isOrganization, ServiceProvider serviceProvider,
                                                      boolean expected) throws Exception {
@@ -239,5 +260,19 @@ public class SharedRoleMgtListenerTest {
         serviceProvider.setApplicationResourceId(SAMPLE_SHARED_APP_ID);
         assertEquals(sharedRoleMgtListener.doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN,
                 SAMPLE_USERNAME), true);
+    }
+
+    @Test(dataProvider = "updateApplicationDataProvider")
+    public void testDoPreUpdateApplication(ServiceProvider serviceProvider) throws Exception {
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        sharedRoleMgtListener.doPreUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test(dataProvider = "updateApplicationDataProvider")
+    public void testDoPostUpdateApplication(ServiceProvider serviceProvider) throws Exception {
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        sharedRoleMgtListener.doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
     }
 }
