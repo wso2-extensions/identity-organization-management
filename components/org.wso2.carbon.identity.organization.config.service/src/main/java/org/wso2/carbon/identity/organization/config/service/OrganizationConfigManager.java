@@ -18,9 +18,13 @@
 
 package org.wso2.carbon.identity.organization.config.service;
 
+import org.apache.xmlbeans.impl.xb.xsdschema.ListDocument;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Interface for organization configuration management.
@@ -75,4 +79,6 @@ public interface OrganizationConfigManager {
      *                                     configuration.
      */
     DiscoveryConfig getDiscoveryConfigurationByTenantId(int tenantId) throws OrganizationConfigException;
+
+
 }

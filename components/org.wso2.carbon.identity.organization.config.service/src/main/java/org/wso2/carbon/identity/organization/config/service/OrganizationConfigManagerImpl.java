@@ -172,12 +172,16 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     private Resource buildResourceFromValidationConfig(DiscoveryConfig discoveryConfig)
             throws OrganizationConfigClientException {
 
+        // First check if there's any unsupported discovery attribute keys. If there are any, throw an exception.
+        // TODO: Below comment will be removed in the original PR.
+        // Moved this out of the for loop to make this run with O(n) complexity. If we put this inside the for loop,
+        // it will be O(n^2) complexity.
+        if (!validateSupportedDiscoveryAttributeKeys(discoveryConfig.getConfigProperties())) {
+            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE);
+        }
         Map<String, String> configAttributes = new HashMap<>();
         for (ConfigProperty property : discoveryConfig.getConfigProperties()) {
             String key = property.getKey();
-            if (!SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS.contains(key)) {
-                throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE, key);
-            }
             configAttributes.put(key, property.getValue());
         }
 
@@ -194,6 +198,22 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         resource.setResourceName(RESOURCE_NAME);
         resource.setAttributes(resourceAttributes);
         return resource;
+    }
+
+    private boolean validateSupportedDiscoveryAttributeKeys(List<ConfigProperty> configProperties) {
+
+        // Fist we check if existing in the pre-defined list of supported discovery attribute keys.
+        boolean containsInPreDefinedList = configProperties.stream().allMatch(property ->
+                SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS.contains(property.getKey()));
+        if (containsInPreDefinedList) {
+            return true;
+        }
+
+        // Now check if the key is registered in the registry by Iterating through registered discovery attribute keys
+        // from AttributeBasedOrganizationDiscoveryHandlerRegistry.
+        List<String> supportedDiscoveryAttributeKeys = AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance()
+                .getSupportedDiscoveryAttributeKeys();
+        return configProperties.stream().allMatch(property -> supportedDiscoveryAttributeKeys.contains(property.getKey()));
     }
 
     private ConfigurationManager getConfigurationManager() {

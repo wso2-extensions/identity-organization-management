@@ -29,6 +29,7 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
+import org.wso2.carbon.identity.organization.discovery.service.CustomDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.EmailDomainBasedDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
@@ -54,6 +55,10 @@ public class OrganizationDiscoveryServiceComponent {
                 new OrganizationDiscoveryManagerImpl(), null);
         AttributeBasedOrganizationDiscoveryHandler emailDomainDiscovery = new EmailDomainBasedDiscoveryHandler();
         bundleContext.registerService(AttributeBasedOrganizationDiscoveryHandler.class.getName(), emailDomainDiscovery,
+                null);
+        // TODO: Will be removed.
+        AttributeBasedOrganizationDiscoveryHandler customDomainHandler = new CustomDiscoveryHandler();
+        bundleContext.registerService(AttributeBasedOrganizationDiscoveryHandler.class.getName(), customDomainHandler,
                 null);
         bundleContext.registerService(UserOperationEventListener.class.getName(),
                 new OrganizationDiscoveryUserOperationListener(), null);

@@ -29,6 +29,10 @@ public class OrganizationConfigConstants {
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
     public static final String EMAIL_DOMAIN_ENABLE = "emailDomain.enable";
     public static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
+    @Deprecated
+    // Do not use this constant to register new discovery types. The
+    // `AttributeBasedOrganizationDiscoveryHandlerRegistry` should be used instead. It has the supported discovery
+    // types.
     public static final List<String> SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS =
             List.of(EMAIL_DOMAIN_ENABLE, EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE);
     private static final String ORGANIZATION_CONFIGURATION_ERROR_CODE_PREFIX = "OCM-";

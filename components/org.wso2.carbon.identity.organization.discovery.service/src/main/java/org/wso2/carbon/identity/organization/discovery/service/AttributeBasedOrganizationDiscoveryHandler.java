@@ -59,6 +59,12 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      *
      * @return the list of events.
      */
+    @Deprecated
+    // We don't need it anymore, if we (WSO2) or a any other user writes a custom org discovery handler, they need to
+    // write matching event listeners to it and register it in the system.
+    // https://github.com/wso2-extensions/identity-organization-management/blob/706acfb2f3495f36d6b9feec3c6cc6dc9a96c6df/components/org.wso2.carbon.identity.organization.discovery.service/src/main/java/org/wso2/carbon/identity/organization/discovery/service/listener/OrganizationDiscoveryUserOperationListener.java#L108-L111
+    // The above implementation should be removed and should introduce a separate event listners for each discovery type.
+    //
     List<String> requiredEventValidations();
 
     /**
