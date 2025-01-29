@@ -69,6 +69,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
 
 /**
  * User operation event listener for shared user management.
@@ -99,6 +100,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             String associatedOrgId = OrganizationSharedUserUtil
                     .getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
             String orgId = getOrganizationId();
+            if (orgId == null) {
+                orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveOrganizationId(getTenantDomain());
+            }
 
             if (associatedOrgId != null) {
                 // Retrieve the user association details for the given user and organization.
