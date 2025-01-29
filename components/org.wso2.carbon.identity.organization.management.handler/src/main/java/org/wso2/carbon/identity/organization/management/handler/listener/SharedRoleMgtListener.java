@@ -93,7 +93,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
 
         // Associated role changes on main applications in tenant need to be handled here.
         try {
-            if (OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            if (isFragmentApp(serviceProvider)) {
                 return true;
             }
             String applicationResourceId = serviceProvider.getApplicationResourceId();
@@ -234,10 +234,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                         .put(REMOVED_ORGANIZATION_AUDIENCE_ROLES, existingAssociatedRolesList);
                 return true;
             }
-        } catch (OrganizationManagementException e) {
-            throw new IdentityApplicationManagementException(
-                    String.format("Error while checking shared roles to be updated related to application %s update.",
-                            serviceProvider.getApplicationID()), e);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityApplicationManagementException(
                     String.format("Error while retrieving organization roles to be updated related " +
@@ -252,7 +248,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throws IdentityApplicationManagementException {
 
         try {
-            if (OrganizationManagementUtil.isOrganization(tenantDomain)) {
+            if (isFragmentApp(serviceProvider)) {
                 return true;
             }
             Object addedAppRoles = IdentityUtil.threadLocalProperties.get().get(ADDED_APPLICATION_AUDIENCE_ROLES);
@@ -479,10 +475,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             }
 
             // If the application is not a fragment app in the sub organization level, no need to handle shared roles.
-            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
-                    .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
-                            Boolean.parseBoolean(property.getValue()));
-            if (!isFragmentApp) {
+            if (!isFragmentApp(serviceProvider)) {
                 // Given app is a sub org level application.
                 return true;
             }
@@ -676,5 +669,12 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             throw new IdentityRoleManagementException(String.format(
                     "Error while fetching the internal everyone role of the tenant with: %s.", tenantDomain), e);
         }
+    }
+
+    private static boolean isFragmentApp(ServiceProvider serviceProvider) {
+
+        return Arrays.stream(serviceProvider.getSpProperties())
+                .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
+                        Boolean.parseBoolean(property.getValue()));
     }
 }
