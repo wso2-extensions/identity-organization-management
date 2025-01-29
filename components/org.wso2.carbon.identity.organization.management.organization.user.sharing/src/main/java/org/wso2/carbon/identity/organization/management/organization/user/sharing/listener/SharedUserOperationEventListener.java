@@ -58,7 +58,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SHARED_PROFILE_VALUE_RESOLVING_METHOD;
@@ -107,7 +106,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 String sharedType = userAssociation.getSharedType();
 
                 // Restrict deletion if the shared type is not "INVITED".
-                if (!Objects.equals(sharedType, SharedType.INVITED.name())) {
+                if (SharedType.valueOf(sharedType) != SharedType.INVITED) {
                     throw new UserStoreClientException(
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getDescription(),
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getCode());

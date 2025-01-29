@@ -226,7 +226,7 @@ public class UserSharingConstants {
                 "Unable to retrieve the organizations shared with the user due to an internal error."),
         ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER("10049",
                 "Unauthorized deletion of shared user.",
-                "Shared users can only be deleted by that particular user's resident organization."),;
+                "Shared users can only be deleted by that particular user's resident organization.");
 
         private final String code;
         private final String message;
