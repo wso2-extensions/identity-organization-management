@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
@@ -49,7 +50,6 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
@@ -191,23 +191,38 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        if (!userAssociation.getUserResidentOrganizationId().equals(getOrganizationId())) {
-            LOG.error("User " + userAssociation.getUserId() + " cannot be deleted by " +
-                    userAssociation.getOrganizationId() + " since it is managed by " +
-                    userAssociation.getUserResidentOrganizationId() + " org.");
-            return;
-        }
-
+        String userId = userAssociation.getUserId();
         String organizationId = userAssociation.getOrganizationId();
         String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         try {
             AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-            sharedOrgUserStoreManager.deleteUserWithID(userAssociation.getUserId());
+            deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
         } catch (UserStoreException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e,
-                    userAssociation.getUserId(), organizationId);
+            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
         }
+    }
+
+    private void deleteUserInTenantFlow(AbstractUserStoreManager userStoreManager, String userId,
+                                        String tenantDomain, String organizationId) throws UserStoreException {
+        try {
+            String requestInitiator = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+            startTenantFlow(tenantDomain);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setOrganizationId(organizationId);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(requestInitiator);
+            userStoreManager.deleteUserWithID(userId);
+        } finally {
+            endTenantFlow();
+        }
+    }
+
+    private void startTenantFlow(String tenantDomain) {
+        PrivilegedCarbonContext.startTenantFlow();
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+    }
+
+    private void endTenantFlow() {
+        PrivilegedCarbonContext.endTenantFlow();
     }
 
     private void shareOrganizationUserWithOrWithoutType(String orgId, String associatedUserId, String associatedOrgId,

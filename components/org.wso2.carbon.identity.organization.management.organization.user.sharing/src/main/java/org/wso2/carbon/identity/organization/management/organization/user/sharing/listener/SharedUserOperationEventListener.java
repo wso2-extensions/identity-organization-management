@@ -100,18 +100,20 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             String associatedOrgId = OrganizationSharedUserUtil
                     .getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
             String orgId = getOrganizationId();
-            if (orgId == null) {
-                orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(getTenantDomain());
-            }
 
             if (associatedOrgId != null) {
                 // Retrieve the user association details for the given user and organization.
                 UserAssociation userAssociation = getUserAssociation(userID, orgId);
                 String sharedType = userAssociation.getSharedType();
 
-                // Restrict deletion if the shared type is not "INVITED".
-                if (SharedType.valueOf(sharedType) != SharedType.INVITED) {
+                int loginTenantId = IdentityTenantUtil.getLoginTenantId();
+                String tenantDomain = getTenantDomain(loginTenantId);
+                String requestInitiatedOrg = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveOrganizationId(tenantDomain);
+
+                // Prevent deletion if the request originates from a sub-org and the user has a restricted shared type.
+                if (StringUtils.equals(requestInitiatedOrg, orgId) &&
+                        !isEligibleSharedType(SharedType.valueOf(sharedType))) {
                     throw new UserStoreClientException(
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getDescription(),
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getCode());
@@ -565,5 +567,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
 
         return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
                 .getUserAssociation(userID, currentOrganizationId);
+    }
+
+    private boolean isEligibleSharedType(SharedType sharedType) {
+
+        return SharedType.INVITED.equals(sharedType) || SharedType.NOT_SPECIFIED.equals(sharedType);
     }
 }
