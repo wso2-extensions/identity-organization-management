@@ -205,6 +205,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void deleteUserInTenantFlow(AbstractUserStoreManager userStoreManager, String userId,
                                         String tenantDomain, String organizationId) throws UserStoreException {
+
         try {
             String requestInitiator = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             startTenantFlow(tenantDomain);

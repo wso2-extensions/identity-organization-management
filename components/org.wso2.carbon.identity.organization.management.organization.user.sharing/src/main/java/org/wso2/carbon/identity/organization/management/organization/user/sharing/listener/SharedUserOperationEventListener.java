@@ -110,11 +110,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 String tenantDomain = getTenantDomain(loginTenantId);
                 String requestInitiatedOrg = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                         .resolveOrganizationId(tenantDomain);
-                boolean isSharedOrOwner = sharedType == SharedType.SHARED || sharedType == SharedType.OWNER;
-                boolean isUnauthorizedDeletion = !StringUtils.equals(requestInitiatedOrg, associatedOrgId);
+                boolean isSharedUserOrOwner = sharedType == SharedType.SHARED || sharedType == SharedType.OWNER;
 
                 // Prevent deletion if the request originates from a sub-org and the user has a restricted shared type.
-                if (isSharedOrOwner && isUnauthorizedDeletion) {
+                if (isSharedUserOrOwner && !StringUtils.equals(requestInitiatedOrg, associatedOrgId)) {
                     throw new UserStoreClientException(
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getDescription(),
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getCode());
