@@ -217,11 +217,13 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     private void startTenantFlow(String tenantDomain) {
+
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
     }
 
     private void endTenantFlow() {
+
         PrivilegedCarbonContext.endTenantFlow();
     }
 

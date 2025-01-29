@@ -104,16 +104,17 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             if (associatedOrgId != null) {
                 // Retrieve the user association details for the given user and organization.
                 UserAssociation userAssociation = getUserAssociation(userID, orgId);
-                String sharedType = userAssociation.getSharedType();
+                SharedType sharedType = SharedType.valueOf(userAssociation.getSharedType());
 
                 int loginTenantId = IdentityTenantUtil.getLoginTenantId();
                 String tenantDomain = getTenantDomain(loginTenantId);
                 String requestInitiatedOrg = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
                         .resolveOrganizationId(tenantDomain);
+                boolean isSharedOrOwner = sharedType == SharedType.SHARED || sharedType == SharedType.OWNER;
+                boolean isUnauthorizedDeletion = !StringUtils.equals(requestInitiatedOrg, associatedOrgId);
 
                 // Prevent deletion if the request originates from a sub-org and the user has a restricted shared type.
-                if (StringUtils.equals(requestInitiatedOrg, orgId) &&
-                        !isEligibleSharedType(SharedType.valueOf(sharedType))) {
+                if (isSharedOrOwner && isUnauthorizedDeletion) {
                     throw new UserStoreClientException(
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getDescription(),
                             ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getCode());
@@ -567,10 +568,5 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
 
         return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
                 .getUserAssociation(userID, currentOrganizationId);
-    }
-
-    private boolean isEligibleSharedType(SharedType sharedType) {
-
-        return SharedType.INVITED.equals(sharedType) || SharedType.NOT_SPECIFIED.equals(sharedType);
     }
 }
