@@ -225,10 +225,14 @@ public class UserSharingConstants {
         ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER("10048",
                 "Error occurred while retrieving shared organizations of user.",
                 "Unable to retrieve the organizations shared with the user due to an internal error."),
-        ERROR_CODE_AUDIENCE_NOT_FOUND("10049",
+        ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER("10049",
+                "Unauthorized deletion of shared user.",
+                "Users shared by ancestor organization requests can only be deleted by that particular " +
+                        "user's resident organization."),
+        ERROR_CODE_AUDIENCE_NOT_FOUND("10050",
                 "Audience '%s' not found.",
                 "The audience with the provided name and type could not be found."),
-        ERROR_CODE_ROLE_NOT_FOUND("10050",
+        ERROR_CODE_ROLE_NOT_FOUND("10051",
                 "Role '%s' not found in audience '%s':'%s'.",
                 "The role with the provided name and audience could not be found.");
 
