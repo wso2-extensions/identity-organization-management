@@ -328,9 +328,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         .withPolicy(organization.getPolicy())
                         .withRoles(getRoleIds(organization.getRoles()))
                         .build();
-
                 shareUser(selectiveUserShare, sharingInitiatedOrgId);
-
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage =
@@ -338,7 +336,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
             }
         }
-
         LOG.debug("Completed user selective share.");
     }
 
@@ -346,52 +343,76 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
             ResourceSharingPolicyMgtException {
 
-        //get the orgs as per policy and then share.
-        List<String> orgsToShareUserWith =
-                getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
+        List<String> orgsToShareUserWith = getOrgsToShareUserWithBasedOnSharingType(userShare, sharingInitiatedOrgId);
 
         if (isUserAlreadyShared(userShare.getUserId(), sharingInitiatedOrgId)) {
-            //Update User Share Path.
-            List<UserAssociation> userAssociationsOfGivenUser =
-                    getSharedUserAssociationsOfGivenUser(userShare.getUserId(), sharingInitiatedOrgId);
-            //This will  only return the share type user associations.
-            List<String> previouslySharedAnsStillInScopeOrgs = new ArrayList<>();
-
-            //Handle for the previously shared users.
-            for (UserAssociation userAssociation : userAssociationsOfGivenUser) {
-
-                if (!orgsToShareUserWith.contains(userAssociation.getOrganizationId())) {
-                    //Unshare from out of scopes organizations for the new policy.
-                    selectiveUserUnshareByUserIds(
-                            new UserIdList(Collections.singletonList(userAssociation.getAssociatedUserId())),
-                            Collections.singletonList(userAssociation.getOrganizationId()));
-                } else {
-                    //Update the roles.
-                    previouslySharedAnsStillInScopeOrgs.add(userAssociation.getOrganizationId());
-                    updateRolesIfNecessary(userAssociation, userShare.getRoles(), sharingInitiatedOrgId);
-                }
-            }
-
-            //Handle for the newly sharing users.
-            List<String> newlySharedOrgs = new ArrayList<>(orgsToShareUserWith);
-            newlySharedOrgs.removeAll(previouslySharedAnsStillInScopeOrgs);
-
-            for (String orgId : newlySharedOrgs) {
-                shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
-            }
-
-            //Update the sharing policy.
-            updateResourceSharingPolicy(userShare, sharingInitiatedOrgId);
-
+            handleExistingSharedUser(userShare, sharingInitiatedOrgId, orgsToShareUserWith);
         } else {
-            //Create a new user Share Path.
-            for (String orgId : orgsToShareUserWith) {
-                shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
-            }
+            createNewUserShare(userShare, sharingInitiatedOrgId, orgsToShareUserWith);
+        }
+    }
 
-            if (isApplicableOrganizationScopeForSavingPolicy(userShare.getPolicy())) {
-                saveUserSharingPolicy(userShare, sharingInitiatedOrgId);
+    private List<String> getOrgsToShareUserWithBasedOnSharingType(BaseUserShare userShare,
+                                                                  String sharingInitiatedOrgId)
+            throws OrganizationManagementException {
+
+        if (userShare instanceof SelectiveUserShare) {
+            return getOrgsToShareUserWith(((SelectiveUserShare) userShare).getOrganizationId(), userShare.getPolicy());
+        }
+        return getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
+    }
+
+    private void handleExistingSharedUser(BaseUserShare userShare, String sharingInitiatedOrgId,
+                                          List<String> orgsToShareUserWith)
+            throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
+            ResourceSharingPolicyMgtException {
+
+        List<UserAssociation> userAssociations =
+                getSharedUserAssociationsOfGivenUser(userShare.getUserId(), sharingInitiatedOrgId);
+        List<String> retainedSharedOrganizations = new ArrayList<>();
+
+        for (UserAssociation association : userAssociations) {
+            if (!orgsToShareUserWith.contains(association.getOrganizationId())) {
+                unshareUserFromPreviousOrg(association);
+            } else {
+                retainedSharedOrganizations.add(association.getOrganizationId());
+                updateRolesIfNecessary(association, userShare.getRoles(), sharingInitiatedOrgId);
             }
+        }
+
+        shareWithNewOrganizations(userShare, sharingInitiatedOrgId, orgsToShareUserWith, retainedSharedOrganizations);
+        updateResourceSharingPolicy(userShare, sharingInitiatedOrgId);
+    }
+
+    private void unshareUserFromPreviousOrg(UserAssociation association) throws UserSharingMgtException {
+
+        selectiveUserUnshareByUserIds(new UserIdList(Collections.singletonList(association.getAssociatedUserId())),
+                Collections.singletonList(association.getOrganizationId()));
+    }
+
+    private void shareWithNewOrganizations(BaseUserShare userShare, String sharingInitiatedOrgId,
+                                           List<String> orgsToShareUserWith, List<String> alreadySharedOrgs)
+            throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException {
+
+        List<String> newlySharedOrgs = new ArrayList<>(orgsToShareUserWith);
+        newlySharedOrgs.removeAll(alreadySharedOrgs);
+
+        for (String orgId : newlySharedOrgs) {
+            shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
+        }
+    }
+
+    private void createNewUserShare(BaseUserShare userShare, String sharingInitiatedOrgId,
+                                    List<String> orgsToShareUserWith)
+            throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
+            ResourceSharingPolicyMgtException {
+
+        for (String orgId : orgsToShareUserWith) {
+            shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
+        }
+
+        if (isApplicableOrganizationScopeForSavingPolicy(userShare.getPolicy())) {
+            saveUserSharingPolicy(userShare, sharingInitiatedOrgId);
         }
     }
 
