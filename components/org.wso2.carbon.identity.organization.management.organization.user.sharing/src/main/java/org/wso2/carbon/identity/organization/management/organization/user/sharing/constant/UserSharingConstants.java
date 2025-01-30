@@ -36,6 +36,7 @@ public class UserSharingConstants {
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
     public static final String USER = "User";
+    public static final String BLANK = "";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";
@@ -227,7 +228,13 @@ public class UserSharingConstants {
         ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER("10049",
                 "Unauthorized deletion of shared user.",
                 "Users shared by ancestor organization requests can only be deleted by that particular " +
-                        "user's resident organization.");
+                        "user's resident organization."),
+        ERROR_CODE_AUDIENCE_NOT_FOUND("10050",
+                "Audience '%s' not found.",
+                "The audience with the provided name and type could not be found."),
+        ERROR_CODE_ROLE_NOT_FOUND("10051",
+                "Role '%s' not found in audience '%s':'%s'.",
+                "The role with the provided name and audience could not be found.");
 
         private final String code;
         private final String message;

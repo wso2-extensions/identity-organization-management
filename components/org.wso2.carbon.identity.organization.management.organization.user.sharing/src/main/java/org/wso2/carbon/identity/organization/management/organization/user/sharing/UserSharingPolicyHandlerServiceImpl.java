@@ -19,9 +19,11 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
@@ -71,11 +73,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
@@ -90,6 +94,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
@@ -628,7 +633,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     Collections.emptyList(), targetOrgTenantDomain);
             roleManagementService.getRoleListOfUser(userId, targetOrgTenantDomain);
 
-            //todo: update the UM_HYBRID_USER_ROLE_RESTRICTED_EDIT_PERMISSIONS table
             getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(role, username,
                     targetOrgTenantDomain, domainName, EditOperation.DELETE, sharingInitiatedOrgId);
         }
@@ -702,42 +706,67 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             for (RoleWithAudienceDO roleWithAudienceDO : rolesWithAudience) {
                 String audienceId =
                         getAudienceId(roleWithAudienceDO, sharingInitiatedOrgId, sharingInitiatedTenantDomain);
-                String roleId = getRoleIdFromAudience(
-                        roleWithAudienceDO.getRoleName(),
-                        roleWithAudienceDO.getAudienceType(),
-                        audienceId,
-                        sharingInitiatedTenantDomain);
-                list.add(roleId);
+                Optional<String> roleId =
+                        getRoleIdFromAudience(roleWithAudienceDO.getRoleName(), roleWithAudienceDO.getAudienceType(),
+                                audienceId, sharingInitiatedTenantDomain);
+                if (!roleId.isPresent()) {
+                    continue;
+                }
+                list.add(roleId.get());
             }
             return list;
-        } catch (OrganizationManagementException | IdentityApplicationManagementException |
-                 IdentityRoleManagementException e) {
+        } catch (OrganizationManagementException e) {
             throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS);
         }
-
     }
 
-    private String getAudienceId(RoleWithAudienceDO role, String originalOrgId, String tenantDomain)
-            throws IdentityApplicationManagementException, OrganizationManagementException {
+    private String getAudienceId(RoleWithAudienceDO role, String originalOrgId, String tenantDomain) {
 
-        switch (role.getAudienceType()) {
-            case ORGANIZATION:
-                return originalOrgId;
-            case APPLICATION:
-                return getApplicationManagementService()
-                        .getApplicationBasicInfoByName(role.getAudienceName(), tenantDomain)
-                        .getApplicationResourceId();
-            default:
-                String errorMessage = String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getMessage(),
-                        role.getAudienceType());
-                throw new OrganizationManagementException(ERROR_CODE_INVALID_AUDIENCE_TYPE.getCode(), errorMessage);
+        if (role == null || role.getAudienceType() == null) {
+            return null;
         }
+
+        try {
+            if (StringUtils.equals(ORGANIZATION, role.getAudienceType())) {
+                return originalOrgId;
+            }
+            if (StringUtils.equals(APPLICATION, role.getAudienceType())) {
+                return getApplicationResourceId(role.getAudienceName(), tenantDomain);
+            }
+            LOG.warn(String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getDescription(), role.getAudienceType()));
+        } catch (IdentityApplicationManagementException e) {
+            LOG.warn(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), role.getAudienceName()));
+        }
+        return null;
     }
 
-    private String getRoleIdFromAudience(String roleName, String audienceType, String audienceId, String tenantDomain)
-            throws IdentityRoleManagementException {
+    private String getApplicationResourceId(String audienceName, String tenantDomain)
+            throws IdentityApplicationManagementException {
 
-        return getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain);
+        ApplicationBasicInfo applicationBasicInfo = getApplicationManagementService()
+                .getApplicationBasicInfoByName(audienceName, tenantDomain);
+
+        if (applicationBasicInfo != null) {
+            return applicationBasicInfo.getApplicationResourceId();
+        }
+        LOG.warn(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), audienceName));
+        return null;
+    }
+
+    private Optional<String> getRoleIdFromAudience(String roleName, String audienceType, String audienceId,
+                                                   String tenantDomain) {
+
+        if (audienceId == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(
+                    getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain));
+        } catch (IdentityRoleManagementException e) {
+            LOG.warn(String.format(ERROR_CODE_ROLE_NOT_FOUND.getMessage(), roleName, audienceType, audienceId));
+            return Optional.empty();
+        }
     }
 
     private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations)
@@ -746,7 +775,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         String unsharingInitiatedOrgId = getOrganizationId();
 
         for (String associatedUserId : userIds.getIds()) {
-            LOG.debug("Deleting user general unshare for associated user id : " + associatedUserId);
             try {
                 for (String organizationId : organizations) {
 
@@ -763,7 +791,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
-            LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
         }
     }
 
@@ -791,19 +818,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         String unsharingInitiatedOrgId = getOrganizationId();
 
         for (String associatedUserId : userIds.getIds()) {
-            LOG.debug("Deleting user general unshare for associated user id : " + associatedUserId);
             try {
-
                 getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
 
                 //Delete resource sharing policy if it has been stored for future shares.
                 getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
                         ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
-
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
-                }
-
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
