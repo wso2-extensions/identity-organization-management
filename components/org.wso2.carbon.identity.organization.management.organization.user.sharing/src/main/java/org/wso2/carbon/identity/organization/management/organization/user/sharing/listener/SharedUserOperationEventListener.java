@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.core.util.LambdaExceptionUtils;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
@@ -64,6 +65,7 @@ import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.Sh
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_ORIGIN;
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_SHARED_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -97,15 +99,28 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             // The organization where the user identity is managed. Clear all the associations of the user.
             String associatedOrgId = OrganizationSharedUserUtil
                     .getUserManagedOrganizationClaim((AbstractUserStoreManager) userStoreManager, userID);
-            if (associatedOrgId != null) {
-                // User is associated only for shared users. Hence, delete the user association.
-                return organizationUserSharingService.deleteUserAssociation(userID, associatedOrgId);
-            }
-
             String orgId = getOrganizationId();
-            if (orgId == null) {
-                orgId = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                        .resolveOrganizationId(getTenantDomain());
+
+            if (associatedOrgId != null) {
+                // Retrieve the user association details for the given user and organization.
+                UserAssociation userAssociation = getUserAssociation(userID, orgId);
+                SharedType sharedType = SharedType.valueOf(userAssociation.getSharedType());
+
+                int loginTenantId = IdentityTenantUtil.getLoginTenantId();
+                String tenantDomain = getTenantDomain(loginTenantId);
+                String requestInitiatedOrg = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                        .resolveOrganizationId(tenantDomain);
+                boolean isSharedUserOrOwner = sharedType == SharedType.SHARED || sharedType == SharedType.OWNER;
+
+                // Prevent deletion if the request originates from a sub-org and the user has a restricted shared type.
+                if (isSharedUserOrOwner && !StringUtils.equals(requestInitiatedOrg, associatedOrgId)) {
+                    throw new UserStoreClientException(
+                            ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getDescription(),
+                            ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER.getCode());
+                }
+
+                // Delete the user's association with the organization.
+                return organizationUserSharingService.deleteUserAssociation(userID, associatedOrgId);
             }
 
             // Delete all the user associations of the user.

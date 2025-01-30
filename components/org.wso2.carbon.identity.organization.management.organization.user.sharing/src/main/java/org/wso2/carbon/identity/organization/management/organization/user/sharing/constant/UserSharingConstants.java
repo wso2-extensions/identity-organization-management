@@ -223,7 +223,11 @@ public class UserSharingConstants {
                 "Unable to retrieve the roles shared with the specified user due to an internal error."),
         ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER("10048",
                 "Error occurred while retrieving shared organizations of user.",
-                "Unable to retrieve the organizations shared with the user due to an internal error.");
+                "Unable to retrieve the organizations shared with the user due to an internal error."),
+        ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER("10049",
+                "Unauthorized deletion of shared user.",
+                "Users shared by ancestor organization requests can only be deleted by that particular " +
+                        "user's resident organization.");
 
         private final String code;
         private final String message;
