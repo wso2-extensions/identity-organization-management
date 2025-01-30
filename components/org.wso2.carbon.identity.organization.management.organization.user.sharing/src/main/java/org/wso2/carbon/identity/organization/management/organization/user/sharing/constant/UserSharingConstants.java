@@ -226,10 +226,10 @@ public class UserSharingConstants {
                 "Error occurred while retrieving shared organizations of user.",
                 "Unable to retrieve the organizations shared with the user due to an internal error."),
         ERROR_CODE_AUDIENCE_NOT_FOUND("10049",
-                "Audience not found.",
+                "Audience '%s' not found.",
                 "The audience with the provided name and type could not be found."),
         ERROR_CODE_ROLE_NOT_FOUND("10050",
-                "Role not found.",
+                "Role '%s' not found in audience '%s':'%s'.",
                 "The role with the provided name and audience could not be found.");
 
         private final String code;
