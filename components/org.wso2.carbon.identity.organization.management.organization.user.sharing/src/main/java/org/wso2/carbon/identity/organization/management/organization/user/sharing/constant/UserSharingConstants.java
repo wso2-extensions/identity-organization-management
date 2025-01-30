@@ -36,6 +36,7 @@ public class UserSharingConstants {
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
     public static final String USER = "User";
+    public static final String BLANK = "";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";
@@ -223,7 +224,13 @@ public class UserSharingConstants {
                 "Unable to retrieve the roles shared with the specified user due to an internal error."),
         ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER("10048",
                 "Error occurred while retrieving shared organizations of user.",
-                "Unable to retrieve the organizations shared with the user due to an internal error.");
+                "Unable to retrieve the organizations shared with the user due to an internal error."),
+        ERROR_CODE_AUDIENCE_NOT_FOUND("10049",
+                "Audience not found.",
+                "The audience with the provided name and type could not be found."),
+        ERROR_CODE_ROLE_NOT_FOUND("10050",
+                "Role not found.",
+                "The role with the provided name and audience could not be found.");
 
         private final String code;
         private final String message;

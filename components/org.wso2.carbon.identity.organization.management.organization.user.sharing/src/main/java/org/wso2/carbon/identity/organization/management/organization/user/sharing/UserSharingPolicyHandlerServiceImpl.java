@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -75,7 +76,9 @@ import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.BLANK;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
@@ -90,6 +93,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
@@ -702,42 +706,66 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             for (RoleWithAudienceDO roleWithAudienceDO : rolesWithAudience) {
                 String audienceId =
                         getAudienceId(roleWithAudienceDO, sharingInitiatedOrgId, sharingInitiatedTenantDomain);
+                if (!isExistingAudience(audienceId)) {
+                    LOG.warn(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage());
+                    continue;
+                }
                 String roleId = getRoleIdFromAudience(
                         roleWithAudienceDO.getRoleName(),
                         roleWithAudienceDO.getAudienceType(),
                         audienceId,
                         sharingInitiatedTenantDomain);
+                if (!isExistingRole(roleId)) {
+                    LOG.warn(ERROR_CODE_ROLE_NOT_FOUND.getMessage());
+                    continue;
+                }
                 list.add(roleId);
             }
             return list;
-        } catch (OrganizationManagementException | IdentityApplicationManagementException |
-                 IdentityRoleManagementException e) {
+        } catch (OrganizationManagementException e) {
             throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS);
         }
 
     }
 
-    private String getAudienceId(RoleWithAudienceDO role, String originalOrgId, String tenantDomain)
-            throws IdentityApplicationManagementException, OrganizationManagementException {
+    private boolean isExistingAudience(String audienceId) {
 
-        switch (role.getAudienceType()) {
-            case ORGANIZATION:
-                return originalOrgId;
-            case APPLICATION:
-                return getApplicationManagementService()
-                        .getApplicationBasicInfoByName(role.getAudienceName(), tenantDomain)
-                        .getApplicationResourceId();
-            default:
-                String errorMessage = String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getMessage(),
-                        role.getAudienceType());
-                throw new OrganizationManagementException(ERROR_CODE_INVALID_AUDIENCE_TYPE.getCode(), errorMessage);
+        return !StringUtils.isBlank(audienceId);
+    }
+
+    private boolean isExistingRole(String roleId) {
+
+        return !StringUtils.isBlank(roleId);
+    }
+
+    private String getAudienceId(RoleWithAudienceDO role, String originalOrgId, String tenantDomain) {
+
+        try {
+            switch (role.getAudienceType()) {
+                case ORGANIZATION:
+                    return originalOrgId;
+                case APPLICATION:
+                    return getApplicationManagementService()
+                            .getApplicationBasicInfoByName(role.getAudienceName(), tenantDomain)
+                            .getApplicationResourceId();
+                default:
+                    LOG.warn(String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getMessage(), role.getAudienceType()));
+                    return BLANK;
+            }
+        } catch (IdentityApplicationManagementException e) {
+            LOG.warn(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), role.getAudienceName()), e);
+            return BLANK;
         }
     }
 
-    private String getRoleIdFromAudience(String roleName, String audienceType, String audienceId, String tenantDomain)
-            throws IdentityRoleManagementException {
+    private String getRoleIdFromAudience(String roleName, String audienceType, String audienceId, String tenantDomain) {
 
-        return getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain);
+        try {
+            return getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain);
+        } catch (IdentityRoleManagementException e) {
+            LOG.warn(String.format(ERROR_CODE_ROLE_NOT_FOUND.getMessage(), roleName, audienceType, audienceId), e);
+            return BLANK;
+        }
     }
 
     private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations)
