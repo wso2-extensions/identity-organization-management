@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+
 /**
  * Model that contains the shared organizations details of a user in the response object.
  */
@@ -26,7 +28,7 @@ public class ResponseOrgDetailsDO {
     private String organizationId;
     private String organizationName;
     private String sharedUserId;
-    private String sharedType;
+    private SharedType sharedType;
     private String rolesRef;
 
     public String getOrganizationId() {
@@ -59,12 +61,13 @@ public class ResponseOrgDetailsDO {
         this.sharedUserId = sharedUserId;
     }
 
-    public String getSharedType() {
+    public SharedType getSharedType() {
 
         return sharedType;
     }
 
-    public void setSharedType(String sharedType) {
+    public void setSharedType(
+            SharedType sharedType) {
 
         this.sharedType = sharedType;
     }

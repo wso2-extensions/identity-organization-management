@@ -173,7 +173,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
-                        userAssociation.setSharedType(COLUMN_NAME_UM_SHARED_TYPE);
+                        userAssociation.setSharedType(SharedType.fromString(COLUMN_NAME_UM_SHARED_TYPE));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {
@@ -201,7 +201,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
-                        userAssociation.setSharedType(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {
@@ -229,7 +230,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
-                        userAssociation.setSharedType(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {
@@ -257,7 +259,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
                         userAssociation.setUserResidentOrganizationId(
                                 resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
-                        userAssociation.setSharedType(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
                         return userAssociation;
                     },
                     namedPreparedStatement -> {

@@ -104,7 +104,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             if (associatedOrgId != null) {
                 // Retrieve the user association details for the given user and organization.
                 UserAssociation userAssociation = getUserAssociation(userID, orgId);
-                SharedType sharedType = SharedType.valueOf(userAssociation.getSharedType());
+                SharedType sharedType = userAssociation.getSharedType();
 
                 int loginTenantId = IdentityTenantUtil.getLoginTenantId();
                 String tenantDomain = getTenantDomain(loginTenantId);
