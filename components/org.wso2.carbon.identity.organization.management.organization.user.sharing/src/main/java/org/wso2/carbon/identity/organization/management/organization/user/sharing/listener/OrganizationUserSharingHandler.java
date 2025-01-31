@@ -56,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
-
 /**
  * The event handler for sharing users to the newly created organization.
  */
@@ -121,35 +119,35 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
                 getResourceSharingPolicyHandlerService().getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(
                         relevantAncestorOrgs);
 
-        for (Map.Entry<String, List<ResourceSharingPolicy>> ancestorOrg : resourcesGroupedByOrganization.entrySet()) {
-            List<ResourceSharingPolicy> resourcesList = ancestorOrg.getValue();
+        for (Map.Entry<String, List<ResourceSharingPolicy>> ancestorOrgEntry :
+                resourcesGroupedByOrganization.entrySet()) {
+            List<ResourceSharingPolicy> resourcesList = ancestorOrgEntry.getValue();
             for (ResourceSharingPolicy resource : resourcesList) {
                 if (!ResourceType.USER.equals(resource.getResourceType())) {
                     continue;
                 }
 
-                if (shouldShareUser(resource.getSharingPolicy(), createdOrgId, ancestorOrg)) {
-                    shareUser(resource.getResourceSharingPolicyId(), resource.getResourceId(),
+                if (shouldShareUser(resource.getSharingPolicy(), createdOrgId, ancestorOrgEntry.getKey())) {
+                    shareUser(resource, resource.getResourceId(),
                             resource.getInitiatingOrgId(), createdOrgId);
                 }
             }
         }
     }
 
-    private boolean shouldShareUser(PolicyEnum policy, String createdOrgId,
-                                    Map.Entry<String, List<ResourceSharingPolicy>> ancestorOrgId)
+    private boolean shouldShareUser(PolicyEnum policy, String createdOrgId, String ancestorOrgId)
             throws OrganizationManagementServerException {
 
         return isAllExistingAndFutureOrgs(policy) ||
                 (isImmediateLevelOrganization(createdOrgId, ancestorOrgId) && isImmediateExistingAndFutureOrgs(policy));
     }
 
-    private void shareUser(int resourceSharingPolicyId, String userId, String residentOrgId, String createdOrgId)
+    private void shareUser(ResourceSharingPolicy resource, String userId, String residentOrgId, String createdOrgId)
             throws OrganizationManagementException, ResourceSharingPolicyMgtException, IdentityRoleManagementException {
 
         List<SharedResourceAttribute> userAttributes =
                 OrganizationUserSharingDataHolder.getInstance().getResourceSharingPolicyHandlerService()
-                        .getSharedResourceAttributesBySharingPolicyId(resourceSharingPolicyId);
+                        .getSharedResourceAttributesBySharingPolicyId(resource.getResourceSharingPolicyId());
 
         // Extract the role IDs from the user attributes.
         List<String> roleIds = userAttributes.stream()
@@ -183,11 +181,12 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
             // Assign the shared roles to the shared user.
             getRoleManagementService().updateUserListOfRole(sharedRoleId, Collections.singletonList(sharedUserId),
                     Collections.emptyList(), tenantDomain);
-            restrictUserRoleDeletion(sharedRoleId, userId, tenantDomain, createdOrgId);
+            restrictUserRoleDeletion(sharedRoleId, userId, tenantDomain, createdOrgId, resource.getInitiatingOrgId());
         }
     }
 
-    private void restrictUserRoleDeletion(String rolId, String userId, String tenantDomain, String createdOrgId) {
+    private void restrictUserRoleDeletion(String rolId, String userId, String tenantDomain, String createdOrgId,
+                                          String permittedOrgId) {
 
         try {
             UserAssociation userAssociation =
@@ -197,7 +196,7 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
             String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
             getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(rolId, username,
-                    tenantDomain, domainName, EditOperation.DELETE, getOrganizationId());
+                    tenantDomain, domainName, EditOperation.DELETE, permittedOrgId);
         } catch (IdentityRoleManagementException | UserSharingMgtException | OrganizationManagementException e) {
             LOG.error("Error while adding edit restrictions for shared user role deletion.", e);
         }
@@ -233,11 +232,10 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
                 PolicyEnum.SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN.equals(policy);
     }
 
-    private boolean isImmediateLevelOrganization(String createdOrgId,
-                                                 Map.Entry<String, List<ResourceSharingPolicy>> ancestorOrg)
+    private boolean isImmediateLevelOrganization(String createdOrgId, String ancestorOrg)
             throws OrganizationManagementServerException {
 
-        return getOrganizationManager().getRelativeDepthBetweenOrganizationsInSameBranch(ancestorOrg.getKey(),
+        return getOrganizationManager().getRelativeDepthBetweenOrganizationsInSameBranch(ancestorOrg,
                 createdOrgId) == 1;
     }
 
