@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -125,7 +125,7 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
         String placeholders = policyHoldingOrganizationIds.stream()
                 .map(id -> "?")
                 .collect(Collectors.joining(","));
-        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + placeholders + ");";
+        String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + placeholders + ")";
 
         try {
             return namedJdbcTemplate.executeQuery(query,
