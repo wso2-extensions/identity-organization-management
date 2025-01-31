@@ -177,11 +177,12 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
                 getRoleManagementService().getRoleIdListOfUser(sharedUserId, tenantDomain);
 
         // Remove the shared roles that are already assigned to the shared user.
-        sharedRoleIds.removeIf(sharedUserExistingRoles::contains);//TODO: WHAT?
+        sharedRoleIds.removeIf(sharedUserExistingRoles::contains);
 
         for (String sharedRoleId : sharedRoleIds) {
             // Assign the shared roles to the shared user.
-            getRoleManagementService().updateUserListOfRole(sharedRoleId, Collections.singletonList(sharedUserId), Collections.emptyList(), tenantDomain);
+            getRoleManagementService().updateUserListOfRole(sharedRoleId, Collections.singletonList(sharedUserId),
+                    Collections.emptyList(), tenantDomain);
             restrictUserRoleDeletion(sharedRoleId, userId, tenantDomain, createdOrgId);
         }
     }
