@@ -137,10 +137,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId),
                         EXECUTOR)
                 .exceptionally(ex -> {
-                    LOG.error("Error occurred during async user selective share processing", ex);
+                    LOG.error("Error occurred during async user selective share processing.", ex);
                     return null;
                 });
-        LOG.info("Initiated selective user sharing process from " + getOrganizationManager() + ".");
     }
 
     @Override
@@ -157,10 +156,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId),
                         EXECUTOR)
                 .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general user share processing", ex);
+                    LOG.error("Error occurred during async general user share processing.", ex);
                     return null;
                 });
-        LOG.info("Initiated general user share initiated from " + getOrganizationManager() + ".");
     }
 
     @Override
@@ -177,10 +175,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         CompletableFuture.runAsync(
                         () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId), EXECUTOR)
                 .exceptionally(ex -> {
-                    LOG.error("Error occurred during async user selective unshare processing", ex);
+                    LOG.error("Error occurred during async user selective unshare processing.", ex);
                     return null;
                 });
-        LOG.info("Initiated selective user unsharing process from " + getOrganizationManager() + ".");
     }
 
     @Override
@@ -194,10 +191,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         // Run the unsharing logic asynchronously.
         CompletableFuture.runAsync(() -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId), EXECUTOR)
                 .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general user unshare processing", ex);
+                    LOG.error("Error occurred during async general user unshare processing.", ex);
                     return null;
                 });
-        LOG.info("Initiated general user unsharing process from " + getOrganizationManager() + ".");
     }
 
     @Override
@@ -285,7 +281,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
                 populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
             }
-            LOG.info("Completed user selective share initiated from " + getOrganizationManager() + ".");
+            LOG.debug("Completed user selective share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -314,10 +310,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
-                    LOG.debug("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.info("Completed general user share initiated from " + getOrganizationManager() + ".");
+            LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -346,10 +342,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
-                    LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.info("Completed selective user unshare initiated from " + getOrganizationManager() + ".");
+            LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -376,10 +372,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
-                    LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.info("Completed general user unshare initiated from " + getOrganizationManager() + ".");
+            LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -429,11 +425,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
                 }
             } catch (UserSharingMgtException e) {
-                LOG.debug("Error occurred while sharing user from user criteria: " + USER_IDS + " for org: " +
+                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS + " for org: " +
                         organization.getOrganizationId(), e);
             }
         }
-        LOG.debug("Completed selective user share initiated from " + getOrganizationManager() + ".");
     }
 
     private void selectiveUserShareByUserIds(UserIdList userIds, SelectiveUserShareOrgDetailsDO organization,
@@ -456,7 +451,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
             }
         }
-        LOG.debug("Completed user selective share.");
     }
 
     private void shareUser(BaseUserShare userShare, String sharingInitiatedOrgId)
@@ -568,8 +562,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
-
-        LOG.debug("Completed user general share.");
     }
 
     private boolean hasRoleChanges(List<String> oldSharedRoleIds, List<String> newRoleIds) {
@@ -924,10 +916,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
                     //Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyIfAny(organizationId, associatedUserId, unsharingInitiatedOrgId);
-
-                    LOG.debug("Completed user selective unshare for associated user id : " + associatedUserId +
-                            " in shared org id : " + organizationId);
-
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
@@ -965,9 +953,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
             }
         }
     }
