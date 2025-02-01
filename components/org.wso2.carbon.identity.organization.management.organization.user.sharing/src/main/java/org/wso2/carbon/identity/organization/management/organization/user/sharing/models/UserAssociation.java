@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+
 /**
  * Model class to represent the user associations created for the shared users.
  */
@@ -28,7 +30,7 @@ public class UserAssociation {
     private String organizationId;
     private String associatedUserId;
     private String userResidentOrganizationId;
-    private String sharedType;
+    private SharedType sharedType;
 
     public int getId() {
 
@@ -80,12 +82,12 @@ public class UserAssociation {
         this.userResidentOrganizationId = userResidentOrganizationId;
     }
 
-    public String getSharedType() {
+    public SharedType getSharedType() {
 
         return sharedType;
     }
 
-    public void setSharedType(String sharedType) {
+    public void setSharedType(SharedType sharedType) {
 
         this.sharedType = sharedType;
     }

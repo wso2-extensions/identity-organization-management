@@ -21,8 +21,43 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
  * Enum representing the types of user associations.
  */
 public enum SharedType {
-    SHARED,
-    INVITED,
-    OWNER,
-    NOT_SPECIFIED,
+    SHARED("SHARED"),
+    INVITED("INVITED"),
+    OWNER("OWNER"),
+    NOT_SPECIFIED("NOT SPECIFIED");
+
+    private final String value;
+
+    SharedType(String value) {
+
+        this.value = value;
+    }
+
+    /**
+     * Returns the exact value as stored in the database.
+     *
+     * @return The database value of the enum.
+     */
+    @Override
+    public String toString() {
+
+        return value;
+    }
+
+    /**
+     * Custom method to get the enum from a string value, handling spaces.
+     *
+     * @param stringValueOfSharedType The string value of SharedType.
+     * @return The corresponding SharedType enum.
+     * @throws IllegalArgumentException if the value does not match any enum.
+     */
+    public static SharedType fromString(String stringValueOfSharedType) {
+
+        for (SharedType type : SharedType.values()) {
+            if (type.value.equalsIgnoreCase(stringValueOfSharedType)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Invalid SharedType value: " + stringValueOfSharedType);
+    }
 }
