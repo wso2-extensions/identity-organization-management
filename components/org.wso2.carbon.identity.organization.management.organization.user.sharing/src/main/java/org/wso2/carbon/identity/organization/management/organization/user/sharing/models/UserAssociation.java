@@ -87,8 +87,7 @@ public class UserAssociation {
         return sharedType;
     }
 
-    public void setSharedType(
-            SharedType sharedType) {
+    public void setSharedType(SharedType sharedType) {
 
         this.sharedType = sharedType;
     }

@@ -29,6 +29,7 @@ public enum SharedType {
     private final String value;
 
     SharedType(String value) {
+
         this.value = value;
     }
 
@@ -39,22 +40,24 @@ public enum SharedType {
      */
     @Override
     public String toString() {
+
         return value;
     }
 
     /**
      * Custom method to get the enum from a string value, handling spaces.
      *
-     * @param dbValue The database value.
+     * @param stringValueOfSharedType The string value of SharedType.
      * @return The corresponding SharedType enum.
      * @throws IllegalArgumentException if the value does not match any enum.
      */
-    public static SharedType fromString(String dbValue) {
+    public static SharedType fromString(String stringValueOfSharedType) {
+
         for (SharedType type : SharedType.values()) {
-            if (type.value.equalsIgnoreCase(dbValue)) {
+            if (type.value.equalsIgnoreCase(stringValueOfSharedType)) {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Invalid SharedType value: " + dbValue);
+        throw new IllegalArgumentException("Invalid SharedType value: " + stringValueOfSharedType);
     }
 }
