@@ -22,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -279,90 +280,109 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
                                            Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
-
-        for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
-            populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
+                populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
+            }
+            LOG.info("Completed user selective share initiated from " + getOrganizationManager() + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-        LOG.info("Completed user selective share initiated from " + getOrganizationManager() + ".");
     }
 
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
                                          List<String> roleIds, String sharingInitiatedOrgId) {
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
 
-            try {
-                switch (criterionKey) {
-                    case USER_IDS:
-                        if (criterionValues instanceof UserIdList) {
-                            generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
-                                    sharingInitiatedOrgId);
-                        } else {
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
+                                        sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                            }
+                            break;
+                        default:
                             LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
-                        }
-                        break;
-                    default:
-                        LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.debug("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
-            } catch (UserSharingMgtException e) {
-                LOG.debug("Error occurred while sharing user from user criteria: " + USER_IDS, e);
             }
+            LOG.info("Completed general user share initiated from " + getOrganizationManager() + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-        LOG.info("Completed general user share initiated from " + getOrganizationManager() + ".");
     }
 
     private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
                                              String sharingInitiatedOrgId) {
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
 
-            try {
-                switch (criterionKey) {
-                    case USER_IDS:
-                        if (criterionValues instanceof UserIdList) {
-                            selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
-                                    sharingInitiatedOrgId);
-                        } else {
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                        sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                            }
+                            break;
+                        default:
                             LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
-                        }
-                        break;
-                    default:
-                        LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
-            } catch (UserSharingMgtException e) {
-                LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
             }
+            LOG.info("Completed selective user unshare initiated from " + getOrganizationManager() + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-        LOG.info("Completed selective user unshare initiated from " + getOrganizationManager() + ".");
     }
 
     private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
 
-            try {
-                switch (criterionKey) {
-                    case USER_IDS:
-                        if (criterionValues instanceof UserIdList) {
-                            generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
-                        } else {
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                            }
+                            break;
+                        default:
                             LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
-                        }
-                        break;
-                    default:
-                        LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
-            } catch (UserSharingMgtException e) {
-                LOG.debug("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
             }
+            LOG.info("Completed general user unshare initiated from " + getOrganizationManager() + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-        LOG.info("Completed general user unshare initiated from " + getOrganizationManager() + ".");
     }
 
     private List<SelectiveUserShareOrgDetailsDO> filterValidOrganizations(
@@ -1103,5 +1123,16 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private ApplicationManagementService getApplicationManagementService() {
 
         return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId) {
+
+        try {
+            String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharingInitiatedTenantDomain, true);
+        } catch (OrganizationManagementException e) {
+            LOG.error("Error occurred while starting tenant flow from organization: " + sharingInitiatedOrgId, e);
+        }
     }
 }
