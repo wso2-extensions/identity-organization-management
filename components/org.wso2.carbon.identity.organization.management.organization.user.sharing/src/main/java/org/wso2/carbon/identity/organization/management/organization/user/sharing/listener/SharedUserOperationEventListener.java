@@ -323,7 +323,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                                                         userAssociation.getUserResidentOrganizationId(), claim, orgId)),
                                         new FirstFoundAggregationStrategy<>());
                         claimValue.clear();
-                        claimValue.add(resolvedClaimValueFromOrgHierarchy);
+                        if (resolvedClaimValueFromOrgHierarchy != null) {
+                            claimValue.add(resolvedClaimValueFromOrgHierarchy);
+                        }
                     } finally {
                         IdentityUtil.threadLocalProperties.get().remove(INSIDE_CLAIM_RESOLVER_FLAG);
                     }
@@ -483,7 +485,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                                     orgId -> claimResolver(associatedUserId, associationUserResidentOrganizationId,
                                             claim, orgId)),
                             new FirstFoundAggregationStrategy<>());
-            resolvedClaimsFromHierarchy.put(claim, resolvedClaimValueFromOrgHierarchy);
+            if (resolvedClaimValueFromOrgHierarchy != null) {
+                resolvedClaimsFromHierarchy.put(claim, resolvedClaimValueFromOrgHierarchy);
+            }
         }
         return resolvedClaimsFromHierarchy;
     }
@@ -514,7 +518,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
 
         Map<String, String> resolveClaimsFromSharedProfile = new HashMap<>();
         for (String claimURI : claimURIs) {
-            resolveClaimsFromSharedProfile.put(claimURI, claimMap.get(claimURI));
+            if (claimMap.containsKey(claimURI)) {
+                resolveClaimsFromSharedProfile.put(claimURI, claimMap.get(claimURI));
+            }
         }
         return resolveClaimsFromSharedProfile;
     }
