@@ -418,7 +418,7 @@ public class SharedUserOperationEventListenerTest {
     public Object[][] claimValuesForSharedUser() {
 
         Map<String, String> claimValuesWithOutCustomClaim = new HashMap<>();
-        claimValuesWithOutCustomClaim.put(GIVEN_NAME_CLAIM, StringUtils.EMPTY);
+        claimValuesWithOutCustomClaim.put(GIVEN_NAME_CLAIM, "John");
         claimValuesWithOutCustomClaim.put(GROUPS_CLAIM, "group1,group2");
 
         Map<String, String> claimValuesWithCustomClaim = new HashMap<>();
@@ -427,12 +427,22 @@ public class SharedUserOperationEventListenerTest {
         claimValuesWithCustomClaim.put(CUSTOM_CLAIM_1, "value1");
 
         return new Object[][]{
-                {claimValuesWithOutCustomClaim, 2},
-                {claimValuesWithCustomClaim, 3},
+                /*
+                Only groups claim will be returned, because no value resolved from origin for
+                given name and custom claim.
+                 */
+                {claimValuesWithOutCustomClaim, null, 1},
+                /*
+                 Only groups claim and custom claim will be returned, because no value resolved from origin
+                 for given name.
+                 */
+                {claimValuesWithCustomClaim, "value1", 2},
         };
     }
+
     @Test(dataProvider = "claimValuesForSharedUser")
     public void testDoPostGetUserClaimValuesWithIDWithUnResolvedClaims(Map<String, String> claimValues,
+                                                                       String resolvedValueForCustomClaim,
                                                                        int claimValuesAtTheEnd) throws Exception {
 
         setUpClaims();
@@ -444,7 +454,8 @@ public class SharedUserOperationEventListenerTest {
         identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(tenantUserRealm);
         when(tenantUserRealm.getUserStoreManager()).thenReturn(userStoreManager);
-
+        when(orgResourceResolverService.getResourcesFromOrgHierarchy(anyString(), any(), any())).thenReturn(
+                resolvedValueForCustomClaim);
         String[] claimsSet = {GIVEN_NAME_CLAIM, GROUPS_CLAIM, CUSTOM_CLAIM_1};
 
         try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {

@@ -167,6 +167,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     claimsByResolvingMethod.get(FROM_FIRST_FOUND_IN_HIERARCHY), currentOrganizationId);
 
             // Set resolvedClaimsFromOrigin,resolvedClaimsFromSharedProfile and resolvedClaimsFromHierarchy to claimMap.
+            claimMap.clear();
             claimMap.putAll(resolvedClaimsFromOrigin);
             claimMap.putAll(resolvedClaimsFromHierarchy);
             claimMap.putAll(resolvedClaimsFromSharedProfile);
