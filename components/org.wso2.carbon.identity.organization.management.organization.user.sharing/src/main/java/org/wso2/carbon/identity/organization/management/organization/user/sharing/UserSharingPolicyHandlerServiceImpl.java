@@ -22,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -75,6 +76,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
@@ -101,7 +106,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SKIP_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -113,54 +118,47 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
 
         validateUserShareInput(selectiveUserShareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
 
         List<SelectiveUserShareOrgDetailsDO> organizations = selectiveUserShareDO.getOrganizations();
         Map<String, UserCriteriaType> userCriteria = selectiveUserShareDO.getUserCriteria();
 
-        String sharingInitiatedOrgId = getOrganizationId();
-        List<String> immediateChildOrgs = getChildOrgsOfSharingInitiatedOrg(sharingInitiatedOrgId);
+        List<SelectiveUserShareOrgDetailsDO> validOrganizations =
+                filterValidOrganizations(organizations, sharingInitiatedOrgId);
 
-        for (SelectiveUserShareOrgDetailsDO organization : organizations) {
-            if (immediateChildOrgs.contains(organization.getOrganizationId())) {
-                populateSelectiveUserShareByCriteria(organization, userCriteria);
-            } else {
-                throw new UserSharingMgtClientException(ERROR_SKIP_SHARE);
-            }
-        }
-        LOG.debug("Completed user selective share initiated from " + getOrganizationManager() + ".");
+        // Run the sharing logic asynchronously.
+        CompletableFuture.runAsync(
+                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId),
+                        EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async user selective share processing.", ex);
+                    return null;
+                });
     }
 
     @Override
     public void populateGeneralUserShare(GeneralUserShareDO generalUserShareDO) throws UserSharingMgtException {
 
         validateUserShareInput(generalUserShareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
 
         Map<String, UserCriteriaType> userCriteria = generalUserShareDO.getUserCriteria();
         PolicyEnum policy = generalUserShareDO.getPolicy();
-        List<String> roleIds = getRoleIds(generalUserShareDO.getRoles());
+        List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
-
-            switch (criterionKey) {
-                case USER_IDS:
-                    if (criterionValues instanceof UserIdList) {
-                        generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds);
-                    } else {
-                        throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-                    }
-                    break;
-                default:
-                    throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-            }
-        }
-        LOG.debug("Completed user general share initiated from " + getOrganizationManager() + ".");
+        // Run the sharing logic asynchronously.
+        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId),
+                        EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async general user share processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -168,53 +166,34 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserSharingMgtException {
 
         validateUserUnshareInput(selectiveUserUnshareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
 
         Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
         List<String> organizations = selectiveUserUnshareDO.getOrganizations();
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
-
-            switch (criterionKey) {
-                case USER_IDS:
-                    if (criterionValues instanceof UserIdList) {
-                        selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations);
-                    } else {
-                        throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-                    }
-                    break;
-                default:
-                    throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-            }
-        }
-        LOG.debug("Completed user selective unshare initiated from " + getOrganizationManager() + ".");
+        // Run the unsharing logic asynchronously.
+        CompletableFuture.runAsync(
+                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId), EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async user selective unshare processing.", ex);
+                    return null;
+                });
     }
 
     @Override
     public void populateGeneralUserUnshare(GeneralUserUnshareDO generalUserUnshareDO) throws UserSharingMgtException {
 
         validateUserUnshareInput(generalUserUnshareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
 
         Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
-
-            switch (criterionKey) {
-                case USER_IDS:
-                    if (criterionValues instanceof UserIdList) {
-                        generalUserUnshareByUserIds((UserIdList) criterionValues);
-                    } else {
-                        throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-                    }
-                    break;
-                default:
-                    throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-            }
-        }
-        LOG.debug("Completed user general unshare initiated from " + getOrganizationManager() + ".");
+        // Run the unsharing logic asynchronously.
+        CompletableFuture.runAsync(() -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId), EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async general user unshare processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -223,11 +202,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserSharingMgtException {
 
         try {
+            String sharingInitiatedOrgId = getOrganizationId();
             List<ResponseOrgDetailsDO> responseOrgDetailsDOS = new ArrayList<>();
             List<ResponseLinkDO> responseLinkList = Collections.singletonList(new ResponseLinkDO());
             List<UserAssociation> userAssociations =
                     getOrganizationUserSharingService().getUserAssociationsOfGivenUser(associatedUserId,
-                            getOrganizationId());
+                            sharingInitiatedOrgId);
 
             for (UserAssociation userAssociation : userAssociations) {
                 ResponseOrgDetailsDO responseOrgDetailsDO = new ResponseOrgDetailsDO();
@@ -294,39 +274,174 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
+    private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
+                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
+                populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
+            }
+            LOG.debug("Completed user selective share initiated from " + sharingInitiatedOrgId + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
+                                         List<String> roleIds, String sharingInitiatedOrgId) {
+
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
+                                        sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                            }
+                            break;
+                        default:
+                            LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
+                                             String sharingInitiatedOrgId) {
+
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                        sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                            }
+                            break;
+                        default:
+                            LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+
+        try {
+            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                            }
+                            break;
+                        default:
+                            LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    private List<SelectiveUserShareOrgDetailsDO> filterValidOrganizations(
+            List<SelectiveUserShareOrgDetailsDO> organizations, String sharingInitiatedOrgId)
+            throws UserSharingMgtServerException {
+
+        List<String> immediateChildOrgs = getChildOrgsOfSharingInitiatedOrg(sharingInitiatedOrgId);
+
+        List<SelectiveUserShareOrgDetailsDO> validOrganizations = organizations.stream()
+                .filter(org -> immediateChildOrgs.contains(org.getOrganizationId()))
+                .collect(Collectors.toList());
+
+        List<String> skippedOrganizations = organizations.stream()
+                .map(SelectiveUserShareOrgDetailsDO::getOrganizationId)
+                .filter(orgId -> !immediateChildOrgs.contains(orgId))
+                .collect(Collectors.toList());
+
+        if (!skippedOrganizations.isEmpty()) {
+            LOG.warn(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
+        }
+
+        return validOrganizations;
+    }
+
     private void populateSelectiveUserShareByCriteria(SelectiveUserShareOrgDetailsDO organization,
-                                                      Map<String, UserCriteriaType> userCriteria)
-            throws UserSharingMgtException {
+                                                      Map<String, UserCriteriaType> userCriteria,
+                                                      String sharingInitiatedOrgId) {
 
         for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
             String criterionKey = criterion.getKey();
             UserCriteriaType criterionValues = criterion.getValue();
 
-            switch (criterionKey) {
-                case USER_IDS:
-                    if (criterionValues instanceof UserIdList) {
-                        selectiveUserShareByUserIds((UserIdList) criterionValues, organization);
-                    } else {
-                        throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
-                    }
-                    break;
-                default:
-                    throw new UserSharingMgtClientException(ERROR_CODE_USER_CRITERIA_INVALID);
+            try {
+                switch (criterionKey) {
+                    case USER_IDS:
+                        if (criterionValues instanceof UserIdList) {
+                            selectiveUserShareByUserIds((UserIdList) criterionValues, organization,
+                                    sharingInitiatedOrgId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                        }
+                        break;
+                    default:
+                        LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS + " for org: " +
+                        organization.getOrganizationId(), e);
             }
         }
     }
 
-    private void selectiveUserShareByUserIds(UserIdList userIds, SelectiveUserShareOrgDetailsDO organization)
+    private void selectiveUserShareByUserIds(UserIdList userIds, SelectiveUserShareOrgDetailsDO organization,
+                                             String sharingInitiatedOrgId)
             throws UserSharingMgtException {
 
-        String sharingInitiatedOrgId = getOrganizationId();
         for (String associatedUserId : userIds.getIds()) {
             try {
                 SelectiveUserShare selectiveUserShare = new SelectiveUserShare.Builder()
                         .withUserId(associatedUserId)
                         .withOrganizationId(organization.getOrganizationId())
                         .withPolicy(organization.getPolicy())
-                        .withRoles(getRoleIds(organization.getRoles()))
+                        .withRoles(getRoleIds(organization.getRoles(), sharingInitiatedOrgId))
                         .build();
                 shareUser(selectiveUserShare, sharingInitiatedOrgId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
@@ -336,7 +451,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
             }
         }
-        LOG.debug("Completed user selective share.");
     }
 
     private void shareUser(BaseUserShare userShare, String sharingInitiatedOrgId)
@@ -373,7 +487,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (UserAssociation association : userAssociations) {
             if (!orgsToShareUserWith.contains(association.getOrganizationId())) {
-                unshareUserFromPreviousOrg(association);
+                unshareUserFromPreviousOrg(association, sharingInitiatedOrgId);
             } else {
                 retainedSharedOrganizations.add(association.getOrganizationId());
                 updateRolesIfNecessary(association, userShare.getRoles(), sharingInitiatedOrgId);
@@ -384,10 +498,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         updateResourceSharingPolicy(userShare, sharingInitiatedOrgId);
     }
 
-    private void unshareUserFromPreviousOrg(UserAssociation association) throws UserSharingMgtException {
+    private void unshareUserFromPreviousOrg(UserAssociation association, String sharingInitiatedOrgId)
+            throws UserSharingMgtException {
 
         selectiveUserUnshareByUserIds(new UserIdList(Collections.singletonList(association.getAssociatedUserId())),
-                Collections.singletonList(association.getOrganizationId()));
+                Collections.singletonList(association.getOrganizationId()), sharingInitiatedOrgId);
     }
 
     private void shareWithNewOrganizations(BaseUserShare userShare, String sharingInitiatedOrgId,
@@ -428,10 +543,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds)
+    private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
+                                           String sharingInitiatedOrgId)
             throws UserSharingMgtException {
 
-        String sharingInitiatedOrgId = getOrganizationId();
         for (String associatedUserId : userIds.getIds()) {
             try {
                 GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
@@ -447,8 +562,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
-
-        LOG.debug("Completed user general share.");
     }
 
     private boolean hasRoleChanges(List<String> oldSharedRoleIds, List<String> newRoleIds) {
@@ -717,10 +830,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return new ArrayList<>(orgsToShareUserWith);
     }
 
-    private List<String> getRoleIds(List<RoleWithAudienceDO> rolesWithAudience) throws UserSharingMgtException {
+    private List<String> getRoleIds(List<RoleWithAudienceDO> rolesWithAudience, String sharingInitiatedOrgId)
+            throws UserSharingMgtException {
 
         try {
-            String sharingInitiatedOrgId = getOrganizationId();
             String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
 
             List<String> list = new ArrayList<>();
@@ -790,10 +903,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations)
+    private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations,
+                                               String unsharingInitiatedOrgId)
             throws UserSharingMgtServerException {
-
-        String unsharingInitiatedOrgId = getOrganizationId();
 
         for (String associatedUserId : userIds.getIds()) {
             try {
@@ -804,10 +916,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
                     //Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyIfAny(organizationId, associatedUserId, unsharingInitiatedOrgId);
-
-                    LOG.debug("Completed user selective unshare for associated user id : " + associatedUserId +
-                            " in shared org id : " + organizationId);
-
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
@@ -833,10 +941,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return String.format(API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG, userId, orgId);
     }
 
-    private void generalUserUnshareByUserIds(UserIdList userIds)
+    private void generalUserUnshareByUserIds(UserIdList userIds, String unsharingInitiatedOrgId)
             throws UserSharingMgtServerException {
-
-        String unsharingInitiatedOrgId = getOrganizationId();
 
         for (String associatedUserId : userIds.getIds()) {
             try {
@@ -847,9 +953,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed user general unshare for associated user id : " + associatedUserId);
             }
         }
     }
@@ -1005,5 +1108,16 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private ApplicationManagementService getApplicationManagementService() {
 
         return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId) {
+
+        try {
+            String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharingInitiatedTenantDomain, true);
+        } catch (OrganizationManagementException e) {
+            LOG.error("Error occurred while starting tenant flow from organization: " + sharingInitiatedOrgId, e);
+        }
     }
 }
