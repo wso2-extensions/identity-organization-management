@@ -214,7 +214,7 @@ public class UserSharingConstants {
                 "Attempting to do a null unshare.",
                 "The input provided for the unshare operation is null and must be valid."),
         ERROR_CODE_USER_SHARE("10044",
-                "Error occurred during user share propagation for userId: %s - %s",
+                "Error occurred during user share propagation for userId: %s",
                 "Error occurred during user share propagation for a given user."),
         ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID("10045",
                 "Error retrieving user role ID for user: %s",
@@ -237,7 +237,13 @@ public class UserSharingConstants {
                 "The audience with the provided name and type could not be found."),
         ERROR_CODE_ROLE_NOT_FOUND("10051",
                 "Role '%s' not found in audience '%s':'%s'.",
-                "The role with the provided name and audience could not be found.");
+                "The role with the provided name and audience could not be found."),
+        ERROR_CODE_GET_ORGS_TO_SHARE_USER_WITH("10052",
+                "Error occurred while retrieving organizations to share user with.",
+                "An unexpected error occurred while fetching organizations to share the user with."),
+        ERROR_CODE_GET_ROLE_WITH_AUDIENCE_BY_ROLE_ID("10053",
+                "Error occurred while retrieving role with audience by role ID.",
+                "An unexpected error occurred while fetching role with audience by role ID."),;
 
         private final String code;
         private final String message;
