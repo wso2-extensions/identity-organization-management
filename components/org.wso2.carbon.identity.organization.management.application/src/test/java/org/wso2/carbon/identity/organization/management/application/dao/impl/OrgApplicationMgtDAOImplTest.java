@@ -28,7 +28,11 @@ import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
+import org.wso2.carbon.identity.application.common.model.DiscoverableGroup;
+import org.wso2.carbon.identity.application.common.model.GroupBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.mgt.dao.ApplicationDAO;
 import org.wso2.carbon.identity.application.mgt.dao.impl.ApplicationDAOImpl;
 import org.wso2.carbon.identity.application.mgt.internal.ApplicationManagementServiceComponentHolder;
 import org.wso2.carbon.identity.application.mgt.provider.ApplicationPermissionProvider;
@@ -36,23 +40,31 @@ import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.user.core.UserRealm;
+import org.wso2.carbon.user.core.UserStoreClientException;
+import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.tenant.Tenant;
+import org.wso2.carbon.user.core.tenant.TenantManager;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertThrows;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
@@ -66,24 +78,36 @@ public class OrgApplicationMgtDAOImplTest {
     private static final String USERNAME = "test-user";
     private static final String USER_ID = "test-user-id";
     private static final String SUPER_ORG_ID = "test-super-org-id";
+    private static final String SHARED_ORG_ID_1 = "shared-org-id-1";
+    private static final int SHARED_TENANT_ID_1 = 1;
+    private static final String SHARED_ORG_ID_2 = "shared-org-id-2";
+    private static final int SHARED_TENANT_ID_2 = 2;
+    private static final String UN_SHARED_ORG_ID = "unshared-org-id";
+    private static final int UN_SHARED_TENANT_ID = 3;
+    private static final String SAMPLE_APP_1 = "test-app";
+    private static final String SAMPLE_APP_2 = "scl-app";
+    private static final String SAMPLE_APP_3 = "medical-app";
 
-    MockedStatic<IdentityTenantUtil> mockIdentityTenantUtil;
-    MockedStatic<IdentityUtil> mockIdentityUtil;
-    MockedStatic<ApplicationManagementServiceComponentHolder> mockedApplicationManagementServiceComponentHolder;
-    ApplicationManagementServiceComponentHolder mockComponentHolder;
-    UserRealm mockUserRealm;
-    RealmService mockRealmService;
-    AbstractUserStoreManager mockAbstractUserStoreManager;
-    ApplicationPermissionProvider mockApplicationPermissionProvider;
+    private MockedStatic<IdentityTenantUtil> mockIdentityTenantUtil;
+    private MockedStatic<IdentityUtil> mockIdentityUtil;
+    private MockedStatic<ApplicationManagementServiceComponentHolder> mockedApplicationManagementServiceComponentHolder;
+    private ApplicationManagementServiceComponentHolder mockComponentHolder;
+    private UserRealm mockUserRealm;
+    private RealmService mockRealmService;
+    private AbstractUserStoreManager mockAbstractUserStoreManager;
+    private ApplicationPermissionProvider mockApplicationPermissionProvider;
+    private TenantManager mockTenantManager;
+    private OrganizationUserResidentResolverService mockOrganizationUserResidentResolverService;
 
     private OrgApplicationMgtDAOImpl orgApplicationMgtDAO;
-    private ApplicationDAOImpl applicationDAO;
+    private ApplicationDAO applicationDAO;
 
     /**
      * Setup the test environment for OrgApplicationMgtDAOImpl.
      */
     @BeforeClass
-    public void setup() throws org.wso2.carbon.user.api.UserStoreException, IdentityApplicationManagementException {
+    public void setup() throws org.wso2.carbon.user.api.UserStoreException, IdentityApplicationManagementException,
+            OrganizationManagementException {
 
         mockIdentityTenantUtil = mockStatic(IdentityTenantUtil.class);
         mockIdentityUtil = mockStatic(IdentityUtil.class);
@@ -94,6 +118,8 @@ public class OrgApplicationMgtDAOImplTest {
         mockRealmService = mock(RealmService.class);
         mockAbstractUserStoreManager = mock(AbstractUserStoreManager.class);
         mockApplicationPermissionProvider = mock(ApplicationPermissionProvider.class);
+        mockTenantManager = mock(TenantManager.class);
+        mockOrganizationUserResidentResolverService = mock(OrganizationUserResidentResolverService.class);
         setupInitConfigurations();
 
         orgApplicationMgtDAO = new OrgApplicationMgtDAOImpl();
@@ -115,33 +141,29 @@ public class OrgApplicationMgtDAOImplTest {
     public Object[][] getFilteredSharedApplicationsTestData()
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
-        String sharedOrgID1 = "30b701c6-e309-4241-b047-0c299c45d1a0";
-        String sharedOrgID2 = "93d996f9-a5ba-4275-a52b-adaad9eba869";
-        String unsharedOrgID = "89d996f9-a5ba-4275-a52b-adaad9eba869";
-
-        Integer[] appIDs = createAndShareApplication("test-app", new String[] {sharedOrgID1, sharedOrgID2});
+        createAndShareApplication(SAMPLE_APP_1, new String[] {SHARED_ORG_ID_1, SHARED_ORG_ID_2});
 
         return new Object[][] {
                 // Passing org ids of both shared apps only.
-                {Arrays.asList(sharedOrgID1, sharedOrgID2), 2, appIDs[0]},
+                {Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2), 2},
                 // Passing org ids of both shared apps and an unshared org id.
-                {Arrays.asList(sharedOrgID1, sharedOrgID2, unsharedOrgID), 2, appIDs[0]},
+                {Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2, UN_SHARED_ORG_ID), 2},
                 // Passing org id of one shared app only.
-                {Collections.singletonList(sharedOrgID1), 1, appIDs[0]},
+                {Collections.singletonList(SHARED_ORG_ID_1), 1},
                 // Passing org id of shared app and an unshared org id.
-                {Arrays.asList(sharedOrgID1, unsharedOrgID), 1, appIDs[0]},
+                {Arrays.asList(SHARED_ORG_ID_1, UN_SHARED_ORG_ID), 1},
                 // Passing an unshared org id only.
-                {Collections.singletonList(unsharedOrgID), 0, appIDs[0]},
+                {Collections.singletonList(UN_SHARED_ORG_ID), 0},
                 // Passing an empty list
-                {Collections.emptyList(), 0, appIDs[0]},
+                {Collections.emptyList(), 0},
         };
     }
 
     @Test(dataProvider = "filteredSharedApplicationsTestData")
-    public void testGetFilteredSharedApplications(List<String> sharedOrgIds, int expectedNumOfApps, int rootAppId)
-            throws Exception {
+    public void testGetFilteredSharedApplications(List<String> sharedOrgIds, int expectedNumOfApps) throws Exception {
 
-        String rootAppUUID = applicationDAO.getApplication(rootAppId).getApplicationResourceId();
+        String rootAppUUID =
+                applicationDAO.getApplication(SAMPLE_APP_1, SUPER_TENANT_DOMAIN_NAME).getApplicationResourceId();
         List<SharedApplicationDO> sharedApplications =
                 orgApplicationMgtDAO.getSharedApplications(rootAppUUID, SUPER_ORG_ID, sharedOrgIds);
 
@@ -149,44 +171,140 @@ public class OrgApplicationMgtDAOImplTest {
         Assert.assertEquals(sharedApplications.size(), expectedNumOfApps);
     }
 
+    @Test(description = "Test the correct discoverable apps list for logged in user",
+            dependsOnMethods = {"testGetFilteredSharedApplications"})
+    public void testDiscoverableAppsList()
+            throws IdentityApplicationManagementException, OrganizationManagementException, UserStoreException {
+
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(SHARED_ORG_ID_1);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(SHARED_TENANT_ID_1);
+        createAndShareApplication(SAMPLE_APP_2, new String[] {SHARED_ORG_ID_1});
+        ServiceProvider serviceProvider1 = applicationDAO.getApplication(SAMPLE_APP_2, SHARED_ORG_ID_1);
+        serviceProvider1.setDiscoverable(true);
+        serviceProvider1.setAccessUrl("https://localhost:5000/scl-app");
+        serviceProvider1.setDiscoverableGroups(
+                new DiscoverableGroup[] {getNewDiscoverableGroup(DEFAULT_USER_STORE_DOMAIN, 1, 0)});
+        applicationDAO.updateApplication(serviceProvider1, SHARED_ORG_ID_1);
+        createAndShareApplication(SAMPLE_APP_3, new String[] {SHARED_ORG_ID_1});
+        ServiceProvider serviceProvider2 = applicationDAO.getApplication(SAMPLE_APP_3, SHARED_ORG_ID_1);
+        serviceProvider2.setDiscoverableGroups(
+                new DiscoverableGroup[] {getNewDiscoverableGroup(DEFAULT_USER_STORE_DOMAIN, 1, 1)});
+        serviceProvider2.setDiscoverable(true);
+        serviceProvider2.setAccessUrl("https://localhost:5000/medical-app");
+        applicationDAO.updateApplication(serviceProvider2, SHARED_ORG_ID_1);
+        ServiceProvider serviceProvider3 = applicationDAO.getApplication(SAMPLE_APP_1, SHARED_ORG_ID_1);
+        serviceProvider3.setDiscoverable(true);
+        serviceProvider3.setAccessUrl("https://localhost:5000/test-app");
+        applicationDAO.updateApplication(serviceProvider3, SHARED_ORG_ID_1);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
+                .thenReturn(true);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
+                .thenReturn(false);
+        List<ApplicationBasicInfo> applicationBasicInfos =
+                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
+                        SUPER_ORG_ID);
+        assertEquals(applicationBasicInfos.size(), 2);
+        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_1);
+        assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_2);
+    }
+
+    @Test(description = "Test retrieving discoverable apps when isUserInGroup throws an exception",
+            dependsOnMethods = {"testDiscoverableAppsList"})
+    public void testDiscoverableAppsListWhenIsUserInGroupThrowsException()
+            throws UserStoreException, OrganizationManagementException {
+
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
+                .thenReturn(true);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
+                .thenThrow(new UserStoreClientException());
+        List<ApplicationBasicInfo> applicationBasicInfos =
+                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
+                        SUPER_ORG_ID);
+        assertEquals(applicationBasicInfos.size(), 2);
+        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_1);
+        assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_2);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
+                .thenThrow(new UserStoreException());
+        assertThrows(OrganizationManagementException.class,
+                () -> orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null,
+                        SHARED_ORG_ID_1, SUPER_ORG_ID));
+    }
+
+    @Test(description = "Test retrieving discoverable apps list with a filter",
+            dependsOnMethods = {"testDiscoverableAppsListWhenIsUserInGroupThrowsException"})
+    public void testDiscoverableAppsListWithFilter()
+            throws UserStoreException, OrganizationManagementException {
+
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
+                .thenReturn(true);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
+                .thenReturn(true);
+        List<ApplicationBasicInfo> applicationBasicInfos =
+                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "medical*", null, null,
+                        SHARED_ORG_ID_1, SUPER_ORG_ID);
+        assertEquals(applicationBasicInfos.size(), 1);
+        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_3);
+    }
+
+    @Test(description = "Test getting count of discoverable applications", dependsOnMethods = {
+            "testDiscoverableAppsListWithFilter"})
+    public void testGetDiscoverableAppCount()
+            throws UserStoreException, OrganizationManagementException {
+
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
+                .thenReturn(true);
+        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
+                .thenReturn(false);
+        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, SHARED_ORG_ID_1, SUPER_ORG_ID),
+                2);
+        assertEquals(
+                orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("scl*", SHARED_ORG_ID_1, SUPER_ORG_ID),
+                1);
+    }
+
+    /**
+     * Get a new DiscoverableGroup object.
+     *
+     * @param userStore      User store domain.
+     * @param numberOfGroups Number of groups to be added.
+     * @param startIndex     Suffix start index of the group.
+     * @return New DiscoverableGroup object.
+     */
+    private DiscoverableGroup getNewDiscoverableGroup(String userStore, int numberOfGroups, int startIndex) {
+
+        DiscoverableGroup discoverableGroup = new DiscoverableGroup();
+        discoverableGroup.setUserStore(userStore);
+        List<GroupBasicInfo> groupBasicInfos = new ArrayList<>();
+        for (int i = startIndex; i < numberOfGroups + startIndex; i++) {
+            GroupBasicInfo groupBasicInfo = new GroupBasicInfo();
+            groupBasicInfo.setId("test-group-id-" + i);
+            groupBasicInfo.setName("test-group-name-" + i);
+            groupBasicInfos.add(groupBasicInfo);
+        }
+        discoverableGroup.setGroups(groupBasicInfos.toArray(new GroupBasicInfo[0]));
+        return discoverableGroup;
+    }
+
     /**
      * Create and share an application with the given shared organization ids.
      *
      * @param appName      Application name.
      * @param sharedOrgIds Shared organization ids.
-     * @return Application IDs of the created applications.
      */
-    private Integer[] createAndShareApplication(String appName, String[] sharedOrgIds)
+    private void createAndShareApplication(String appName, String[] sharedOrgIds)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
         ServiceProvider application = new ServiceProvider();
         application.setApplicationName(appName);
         application.setApplicationVersion("v1.0.0");
-        Integer[] createAppIds = new Integer[sharedOrgIds.length + 1];
-        int appId = applicationDAO.createApplication(application, SUPER_TENANT_DOMAIN_NAME);
-        createAppIds[0] = appId;
-        for (int i = 0; i < sharedOrgIds.length; i++) {
-            String sharedOrgId = sharedOrgIds[i];
-            mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(sharedOrgId)))
-                    .thenReturn(i + 1);
+        applicationDAO.createApplication(application, SUPER_TENANT_DOMAIN_NAME);
+        for (String sharedOrgId : sharedOrgIds) {
             ServiceProvider sharedApp = new ServiceProvider();
             sharedApp.setApplicationName(appName);
             sharedApp.setApplicationVersion("v1.0.0");
-            int sharedAppId = applicationDAO.createApplication(sharedApp, sharedOrgId);
+            applicationDAO.createApplication(sharedApp, sharedOrgId);
             orgApplicationMgtDAO.addSharedApplication(application.getApplicationResourceId(), SUPER_ORG_ID,
                     sharedApp.getApplicationResourceId(), sharedOrgId, false);
-            createAppIds[i + 1] = sharedAppId;
-        }
-        return createAppIds;
-    }
-
-    private void deleteAllApplications(String[] sharedOrgIds)
-            throws IdentityApplicationManagementException, OrganizationManagementServerException {
-
-        applicationDAO.deleteApplications(SUPER_TENANT_ID);
-        for (String sharedOrgId : sharedOrgIds) {
-            applicationDAO.deleteApplications(IdentityTenantUtil.getTenantId(sharedOrgId));
-            orgApplicationMgtDAO.deleteSharedAppLinks(sharedOrgId);
         }
     }
 
@@ -194,7 +312,8 @@ public class OrgApplicationMgtDAOImplTest {
      * Setup the configurations for the test.
      */
     private void setupInitConfigurations()
-            throws org.wso2.carbon.user.api.UserStoreException, IdentityApplicationManagementException {
+            throws org.wso2.carbon.user.api.UserStoreException, IdentityApplicationManagementException,
+            OrganizationManagementException {
 
         String carbonHome = Paths.get(System.getProperty("user.dir"), "target", "test-classes", "repository").
                 toString();
@@ -215,6 +334,14 @@ public class OrgApplicationMgtDAOImplTest {
                 .thenReturn(SUPER_TENANT_ID);
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SUPER_TENANT_ID)))
                 .thenReturn(SUPER_TENANT_DOMAIN_NAME);
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(SHARED_ORG_ID_1)))
+                .thenReturn(SHARED_TENANT_ID_1);
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SHARED_TENANT_ID_1)))
+                .thenReturn(SHARED_ORG_ID_1);
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(SHARED_ORG_ID_2)))
+                .thenReturn(SHARED_TENANT_ID_2);
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SHARED_TENANT_ID_2)))
+                .thenReturn(SHARED_ORG_ID_2);
 
         mockIdentityUtil.when(IdentityUtil::getIdentityConfigDirPath)
                 .thenReturn(Paths.get(carbonHome, "conf", "identity").toString());
@@ -227,8 +354,39 @@ public class OrgApplicationMgtDAOImplTest {
                 .thenReturn(mockComponentHolder);
         when(mockComponentHolder.getRealmService()).thenReturn(mockRealmService);
         when(mockRealmService.getTenantUserRealm(SUPER_TENANT_ID)).thenReturn(mockUserRealm);
+        when(mockRealmService.getTenantUserRealm(SHARED_TENANT_ID_1)).thenReturn(mockUserRealm);
+        when(mockRealmService.getTenantUserRealm(SHARED_TENANT_ID_2)).thenReturn(mockUserRealm);
+        when(mockRealmService.getTenantUserRealm(UN_SHARED_TENANT_ID)).thenReturn(mockUserRealm);
+        when(mockRealmService.getTenantManager()).thenReturn(mockTenantManager);
+        when(mockTenantManager.getTenant(eq(SHARED_TENANT_ID_1))).thenReturn(
+                getTenant(SHARED_TENANT_ID_1, SHARED_ORG_ID_1));
+        when(mockTenantManager.getTenant(eq(SHARED_TENANT_ID_2))).thenReturn(
+                getTenant(SHARED_TENANT_ID_2, SHARED_ORG_ID_2));
+        when(mockTenantManager.getTenant(eq(UN_SHARED_TENANT_ID))).thenReturn(
+                getTenant(UN_SHARED_TENANT_ID, UN_SHARED_ORG_ID));
         when(mockUserRealm.getUserStoreManager()).thenReturn(mockAbstractUserStoreManager);
         when(mockComponentHolder.getApplicationPermissionProvider()).thenReturn(mockApplicationPermissionProvider);
         when(mockApplicationPermissionProvider.loadPermissions(anyString())).thenReturn(new ArrayList<>());
+        when(mockComponentHolder.getOrganizationUserResidentResolverService())
+                .thenReturn(mockOrganizationUserResidentResolverService);
+        when(mockOrganizationUserResidentResolverService.resolveUserFromResidentOrganization(eq(USERNAME), eq(USER_ID),
+                anyString())).thenReturn(
+                Optional.of(new User(USER_ID, USERNAME, null)));
+    }
+
+    /**
+     * Get a new Tenant object.
+     *
+     * @param tenantId     Tenant id.
+     * @param tenantDomain Tenant domain.
+     * @return New Tenant object.
+     */
+    private Tenant getTenant(int tenantId, String tenantDomain) {
+
+        Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setDomain(tenantDomain);
+        tenant.setAssociatedOrganizationUUID(tenantDomain);
+        return tenant;
     }
 }

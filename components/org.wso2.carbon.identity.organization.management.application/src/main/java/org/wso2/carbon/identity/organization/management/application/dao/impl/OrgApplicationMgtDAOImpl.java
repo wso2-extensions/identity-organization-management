@@ -375,7 +375,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                 statement.setString(3, rootOrgId);
 
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
+                    while (resultSet.next()) {
                         String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
                         if (groupId == null || checkLoggedInUserIsInGroup(groupId)) {
                             count++;
@@ -416,10 +416,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                 statement.setString(2, rootOrgId);
 
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    resultSet.next();
-                    String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
-                    if (groupId == null || checkLoggedInUserIsInGroup(groupId)) {
-                        count++;
+                    while (resultSet.next()) {
+                        String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
+                        if (groupId == null || checkLoggedInUserIsInGroup(groupId)) {
+                            count++;
+                        }
                     }
                 }
             }
