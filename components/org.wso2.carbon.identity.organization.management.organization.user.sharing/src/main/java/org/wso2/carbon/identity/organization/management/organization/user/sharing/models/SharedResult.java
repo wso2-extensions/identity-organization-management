@@ -24,10 +24,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
  */
 public class SharedResult {
 
-    private String userId;
-    private String orgId;
-    private String associatedUserId;
-    private String associatedOrgId;
+    private int id;
+    private UserAssociation userAssociation;
     private SharingType sharingType;
     private RoleWithAudienceDO role;
     private SharedStatus status;
@@ -36,10 +34,8 @@ public class SharedResult {
 
     private SharedResult(Builder builder) {
 
-        this.userId = builder.userId;
-        this.orgId = builder.orgId;
-        this.associatedUserId = builder.associatedUserId;
-        this.associatedOrgId = builder.associatedOrgId;
+        this.id = builder.id;
+        this.userAssociation = builder.userAssociation;
         this.sharingType = builder.sharingType;
         this.role = builder.role;
         this.status = builder.status;
@@ -53,10 +49,8 @@ public class SharedResult {
     public Builder toBuilder() {
 
         return new Builder()
-                .userId(this.userId)
-                .orgId(this.orgId)
-                .associatedUserId(this.associatedUserId)
-                .associatedOrgId(this.associatedOrgId)
+                .id(this.id)
+                .userAssociation(this.userAssociation)
                 .sharingType(this.sharingType)
                 .role(this.role)
                 .status(this.status)
@@ -64,44 +58,25 @@ public class SharedResult {
                 .error(this.error);
     }
 
-    public String getUserId() {
+    public int getId() {
 
-        return userId;
+        return id;
     }
 
-    public void setUserId(String userId) {
+    public void setId(int id) {
 
-        this.userId = userId;
+        this.id = id;
     }
 
-    public String getOrgId() {
+    public UserAssociation getUserAssociation() {
 
-        return orgId;
+        return userAssociation;
     }
 
-    public void setOrgId(String orgId) {
+    public void setUserAssociation(
+            UserAssociation userAssociation) {
 
-        this.orgId = orgId;
-    }
-
-    public String getAssociatedUserId() {
-
-        return associatedUserId;
-    }
-
-    public void setAssociatedUserId(String associatedUserId) {
-
-        this.associatedUserId = associatedUserId;
-    }
-
-    public String getAssociatedOrgId() {
-
-        return associatedOrgId;
-    }
-
-    public void setAssociatedOrgId(String associatedOrgId) {
-
-        this.associatedOrgId = associatedOrgId;
+        this.userAssociation = userAssociation;
     }
 
     public SharingType getSharingType() {
@@ -159,37 +134,23 @@ public class SharedResult {
      */
     public static class Builder {
 
-        private String userId;
-        private String orgId;
-        private String associatedUserId;
-        private String associatedOrgId;
+        private int id;
+        private UserAssociation userAssociation;
         private SharingType sharingType;
         private RoleWithAudienceDO role;
         private SharedStatus status;
         private String statusDetail;
         private Throwable error;
 
-        public Builder userId(String userId) {
+        public Builder id(int id) {
 
-            this.userId = userId;
+            this.id = id;
             return this;
         }
 
-        public Builder orgId(String orgId) {
+        public Builder userAssociation(UserAssociation userAssociation) {
 
-            this.orgId = orgId;
-            return this;
-        }
-
-        public Builder associatedUserId(String associatedUserId) {
-
-            this.associatedUserId = associatedUserId;
-            return this;
-        }
-
-        public Builder associatedOrgId(String associatedOrgId) {
-
-            this.associatedOrgId = associatedOrgId;
+            this.userAssociation = userAssociation;
             return this;
         }
 
