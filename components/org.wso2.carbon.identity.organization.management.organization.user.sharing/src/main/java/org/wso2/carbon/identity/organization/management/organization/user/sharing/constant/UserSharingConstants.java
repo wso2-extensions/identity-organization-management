@@ -242,8 +242,8 @@ public class UserSharingConstants {
                 "Error occurred while retrieving organizations to share user with.",
                 "An unexpected error occurred while fetching organizations to share the user with."),
         ERROR_CODE_GET_ROLE_WITH_AUDIENCE_BY_ROLE_ID("10053",
-                "Error occurred while retrieving role with audience by role ID.",
-                "An unexpected error occurred while fetching role with audience by role ID."),;
+                "Error occurred while retrieving role with audience by roleId: %s",
+                "An unexpected error occurred while fetching role with audience by roleId."),;
 
         private final String code;
         private final String message;
