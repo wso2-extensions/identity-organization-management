@@ -53,6 +53,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.SharedResultLoggerUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
@@ -107,6 +108,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.RESULT_ERROR_FIX_SUGGESTION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
@@ -118,7 +120,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(1);
-    private ConcurrentLinkedQueue<SharedResult> sharedResults = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<SharedResult> sharedResults = new ConcurrentLinkedQueue<>();
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
@@ -274,23 +276,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private SharedResult buildOrUpdateSharedResult(SharedResult currentSharedResult, UserAssociation userAssociation,
-                                                   SharedResult.SharingType sharingType, RoleWithAudienceDO role,
-                                                   SharedResult.StatusDetail statusDetail,
-                                                   SharedResult.ErrorDetail errorDetail) {
-
-        SharedResult.Builder builder =
-                (currentSharedResult != null) ? currentSharedResult.toBuilder() : new SharedResult.Builder();
-
-        return builder.userAssociation(userAssociation)
-                .sharingType(sharingType)
-                .role(role)
-                .statusDetail(statusDetail)
-                .statusDetail(statusDetail)
-                .errorDetail(errorDetail)
-                .build();
-    }
-
     private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
                                            Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
 
@@ -317,7 +302,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             LOG.debug("Completed user selective share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
-            //todo: display errors
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
             sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -347,7 +332,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
-            //todo: display errors
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
             sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -377,7 +362,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
-            //todo: display errors
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
             sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -405,7 +390,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
-            //todo: display errors
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
             sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -594,8 +579,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (UserSharingMgtServerException e) {
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     "An error occurred while retrieving the current shared roles of the user.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             SharedResult sharedResult =
                     buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null, statusDetail,
                             errorDetail);
@@ -649,8 +633,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (ResourceSharingPolicyMgtException e) {
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     "Error occurred while deleting old user sharing policy.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             SharedResult sharedResult = buildOrUpdateSharedResult(null,
                     new UserAssociation(null, null, baseUserShare.getUserId(), sharingInitiatedOrgId,
                             SharedType.SHARED), SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
@@ -684,8 +667,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (ResourceSharingPolicyMgtException e) {
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     "Error occurred while saving user sharing policy.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             SharedResult sharedResult = buildOrUpdateSharedResult(null,
                     new UserAssociation(null, null, userShare.getUserId(), sharingInitiatedOrgId, SharedType.SHARED),
                     SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
@@ -742,8 +724,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     new UserAssociation(null, orgId, associatedUserId, sharingInitiatedOrgId, SharedType.SHARED);
             SharedResult.StatusDetail statusDetail =
                     new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "User Sharing Failed.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             sharedResult =
                     buildOrUpdateSharedResult(sharedResult, userAssociation, SharedResult.SharingType.SHARE, null,
                             statusDetail, errorDetail);
@@ -770,8 +751,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     new UserAssociation(null, null, associatedUserId, associatedOrgId, SharedType.SHARED);
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     "Error occurred while retrieving shared user associations.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             SharedResult sharedResult =
                     buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null, statusDetail,
                             errorDetail);
@@ -815,8 +795,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 SharedResult.StatusDetail statusDetail =
                         new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "Role unassignment failed.");
-                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                        "Please retry the operation. If the issue persists, contact the developers.");
+                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
                 sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE,
                         getRoleWithAudienceByRoleId(roleId), statusDetail, errorDetail);
                 sharedResults.add(sharedResult);
@@ -874,8 +853,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     sharedResult.getStatusDetail().getStatusMessage() + " Role assignment failed.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
                     SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
             sharedResults.add(sharedResult);
@@ -896,8 +874,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (IdentityRoleManagementException e) {
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     sharedResult.getStatusDetail().getStatusMessage() + " Role assignment failed.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
                     sharedResult.getSharingType(), null, statusDetail, errorDetail);
             sharedResults.add(sharedResult);
@@ -922,8 +899,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     sharedResult.getStatusDetail().getStatusMessage() +
                             " Error occurred while adding edit restrictions for shared user roleId: " + roleId);
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
                     sharedResult.getSharingType(), role, statusDetail, errorDetail);
             sharedResults.add(sharedResult);
@@ -1100,9 +1076,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             sharedResult);
                 } catch (OrganizationManagementException e) {
                     SharedResult.StatusDetail statusDetail =
-                            new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "User unsharing failed.");
-                    SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                            "Please retry the operation. If the issue persists, contact the developers.");
+                            new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                                    "User selective unsharing failed.");
+                    SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
                     sharedResult =
                             buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
                                     statusDetail, errorDetail);
@@ -1133,8 +1109,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
                     sharedResult.getStatusDetail().getStatusMessage() +
                             ". Error occurred while deleting resource sharing policy.");
-            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                    "Please retry the operation. If the issue persists, contact the developers.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
             sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
                     sharedResult.getSharingType(), sharedResult.getRole(), statusDetail, errorDetail);
             sharedResults.add(sharedResult);
@@ -1157,9 +1132,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 deleteResourceSharingPolicyIfAny(null, associatedUserId, unsharingInitiatedOrgId, sharedResult);
             } catch (OrganizationManagementException e) {
                 SharedResult.StatusDetail statusDetail =
-                        new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "User unsharing failed.");
-                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e,
-                        "Please retry the operation. If the issue persists, contact the developers.");
+                        new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                                "User general unsharing failed.");
+                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
                 sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
                         statusDetail, errorDetail);
                 sharedResults.add(sharedResult);
@@ -1180,6 +1155,23 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private String getRolesRef(String userId, String orgId) {
 
         return String.format(API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG, userId, orgId);
+    }
+
+    private SharedResult buildOrUpdateSharedResult(SharedResult currentSharedResult, UserAssociation userAssociation,
+                                                   SharedResult.SharingType sharingType, RoleWithAudienceDO role,
+                                                   SharedResult.StatusDetail statusDetail,
+                                                   SharedResult.ErrorDetail errorDetail) {
+
+        SharedResult.Builder builder =
+                (currentSharedResult != null) ? currentSharedResult.toBuilder() : new SharedResult.Builder();
+
+        return builder.userAssociation(userAssociation)
+                .sharingType(sharingType)
+                .role(role)
+                .statusDetail(statusDetail)
+                .statusDetail(statusDetail)
+                .errorDetail(errorDetail)
+                .build();
     }
 
     //Validation methods.

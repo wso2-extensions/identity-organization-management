@@ -59,6 +59,9 @@ public class UserSharingConstants {
     public static final String LOG_INFO_SELECTIVE_SHARE_COMPLETED = "Selective share completed.";
     public static final String LOG_INFO_GENERAL_SHARE_COMPLETED = "General share completed.";
 
+    public static final String RESULT_ERROR_FIX_SUGGESTION =
+            "Please retry the operation. If the issue persists, contact the developers.";
+
     public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
             "Skipping user share for organizations that are not immediate children: %s";
 
