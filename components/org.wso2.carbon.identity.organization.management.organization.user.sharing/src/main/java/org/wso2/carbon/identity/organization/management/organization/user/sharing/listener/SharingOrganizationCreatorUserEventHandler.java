@@ -32,7 +32,10 @@ import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
@@ -42,13 +45,16 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.Collections;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
  * The event handler for sharing the organization creator to the child organization.
@@ -56,6 +62,7 @@ import static org.wso2.carbon.identity.organization.management.ext.Constants.EVE
 public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHandler {
 
     private final OrganizationUserSharingService userSharingService = new OrganizationUserSharingServiceImpl();
+    private final UserIDResolver userIDResolver = new UserIDResolver();
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -100,7 +107,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
-                userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
+                userSharingService.shareOrganizationUser(orgId, associatedUserId, associatedOrgId, SharedType.OWNER);
                 String userId = userSharingService
                         .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                         .getUserId();
@@ -147,11 +154,40 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
                     .updateUserListOfRole(adminRoleId, Collections.singletonList(userId), Collections.emptyList(),
                             tenantDomain);
+            addEditRestrictionToOwner(adminRoleId, userId, tenantDomain);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityEventException("An error occurred while assigning the user to the administrator role", e);
         } catch (IdentityApplicationManagementException e) {
             throw new IdentityEventException("Failed to retrieve application id of Console application.", e);
+        } catch (UserSharingMgtException e) {
+            throw new IdentityEventException("An error occurred while adding edit restrictions to the owner", e);
         }
+    }
+
+    /**
+     * Add edit restrictions to the organization owner, ensuring that the owner cannot be deleted within the sub-org.
+     * The owner can only be unshared from the parent organization.
+     *
+     * @param adminRoleId  Admin role id.
+     * @param userId       User id.
+     * @param tenantDomain Tenant domain.
+     * @throws UserSharingMgtException         User sharing management exception.
+     * @throws IdentityRoleManagementException Identity role management exception.
+     */
+    private void addEditRestrictionToOwner(String adminRoleId, String userId, String tenantDomain)
+            throws UserSharingMgtException, IdentityRoleManagementException {
+
+        String usernameWithDomain = userIDResolver.getNameByID(userId, tenantDomain);
+        String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
+        String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
+
+        getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(adminRoleId, username,
+                tenantDomain, domainName, EditOperation.DELETE, getOrganizationId());
+    }
+
+    private OrganizationUserSharingService getOrganizationUserSharingService() {
+
+        return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService();
     }
 
     private OrganizationManager getOrganizationManager() {
