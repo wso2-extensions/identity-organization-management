@@ -43,9 +43,9 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.user.core.UserRealm;
-import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.tenant.Tenant;
@@ -60,6 +60,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -196,49 +197,35 @@ public class OrgApplicationMgtDAOImplTest {
         serviceProvider3.setDiscoverable(true);
         serviceProvider3.setAccessUrl("https://localhost:5000/test-app");
         applicationDAO.updateApplication(serviceProvider3, SHARED_ORG_ID_1);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
-                .thenReturn(true);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
-                .thenReturn(false);
+        when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
+                nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
         List<ApplicationBasicInfo> applicationBasicInfos =
                 orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
                         SUPER_ORG_ID);
         assertEquals(applicationBasicInfos.size(), 2);
-        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_1);
-        assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_2);
+        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_2);
+        assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_1);
     }
 
-    @Test(description = "Test retrieving discoverable apps when isUserInGroup throws an exception",
+    @Test(description = "Test retrieving discoverable apps when getUserGroupList throws an exception",
             dependsOnMethods = {"testDiscoverableAppsList"})
-    public void testDiscoverableAppsListWhenIsUserInGroupThrowsException()
-            throws UserStoreException, OrganizationManagementException {
+    public void testDiscoverableAppsListWhenGetUserGroupListThrowsException() throws UserStoreException {
 
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
-                .thenReturn(true);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
-                .thenThrow(new UserStoreClientException());
-        List<ApplicationBasicInfo> applicationBasicInfos =
-                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
-                        SUPER_ORG_ID);
-        assertEquals(applicationBasicInfos.size(), 2);
-        assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_1);
-        assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_2);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
-                .thenThrow(new UserStoreException());
+        when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
+                nullable(String.class))).thenThrow(new UserStoreException());
         assertThrows(OrganizationManagementException.class,
                 () -> orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null,
                         SHARED_ORG_ID_1, SUPER_ORG_ID));
     }
 
     @Test(description = "Test retrieving discoverable apps list with a filter",
-            dependsOnMethods = {"testDiscoverableAppsListWhenIsUserInGroupThrowsException"})
+            dependsOnMethods = {"testDiscoverableAppsListWhenGetUserGroupListThrowsException"})
     public void testDiscoverableAppsListWithFilter()
             throws UserStoreException, OrganizationManagementException {
 
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
-                .thenReturn(true);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
-                .thenReturn(true);
+        when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
+                nullable(String.class))).thenReturn(
+                Arrays.asList(new Group("test-group-id-0"), new Group("test-group-id-1")));
         List<ApplicationBasicInfo> applicationBasicInfos =
                 orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "medical*", null, null,
                         SHARED_ORG_ID_1, SUPER_ORG_ID);
@@ -251,10 +238,8 @@ public class OrgApplicationMgtDAOImplTest {
     public void testGetDiscoverableAppCount()
             throws UserStoreException, OrganizationManagementException {
 
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-0")))
-                .thenReturn(true);
-        when(mockAbstractUserStoreManager.isUserInGroup(eq(USER_ID), eq("test-group-id-1")))
-                .thenReturn(false);
+        when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
+                nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
         assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, SHARED_ORG_ID_1, SUPER_ORG_ID),
                 2);
         assertEquals(

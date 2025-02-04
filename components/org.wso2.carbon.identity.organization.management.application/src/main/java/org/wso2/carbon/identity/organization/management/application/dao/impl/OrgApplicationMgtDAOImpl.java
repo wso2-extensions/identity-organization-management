@@ -22,7 +22,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.NamedPreparedStatement;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
@@ -36,14 +35,13 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.JdbcUtils;
+import org.wso2.carbon.identity.organization.management.application.constant.SQLConstants;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.user.core.UserStoreClientException;
-import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.sql.Connection;
@@ -51,7 +49,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -323,23 +320,28 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         String filterResolvedForSQL = resolveSQLFilter(filter);
 
-        HashMap<Integer, ApplicationBasicInfo> applicationBasicInfos = new HashMap<>();
+        List<ApplicationBasicInfo> applicationBasicInfoList = new ArrayList<>();
 
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
             String databaseVendorType = connection.getMetaData().getDatabaseProductName();
+            String[] loggedInUserGroups = getLoggedInUserGroups();
+            String sqlStatement = buildDiscoverableGroupSQLCondition(
+                    getDBVendorSpecificDiscoverableSharedAppRetrievalQueryByAppName(databaseVendorType),
+                    loggedInUserGroups.length);
 
-            try (NamedPreparedStatement statement =
-                         new NamedPreparedStatement(connection,
-                                 getDBVendorSpecificDiscoverableSharedAppRetrievalQueryByAppName(databaseVendorType))) {
+            try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
-                statement.setInt(4, offset);
-                statement.setInt(5, limit);
+                for (int i = 0; i < loggedInUserGroups.length; i++) {
+                    statement.setString(i + 4, loggedInUserGroups[i]);
+                }
+                statement.setInt(loggedInUserGroups.length + 4, offset);
+                statement.setInt(loggedInUserGroups.length + 5, limit);
 
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
-                        buildDiscoverableAppBasicInfo(applicationBasicInfos, resultSet);
+                        applicationBasicInfoList.add(buildApplicationBasicInfo(resultSet));
                     }
                 }
             }
@@ -347,7 +349,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementException("Error while getting application basic information" +
                     " for discoverable applications in tenantDomain: " + tenantDomain, e);
         }
-        return Collections.unmodifiableList(new ArrayList<>(applicationBasicInfos.values()));
+        return Collections.unmodifiableList(applicationBasicInfoList);
     }
 
     @Override
@@ -366,20 +368,22 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         int count = 0;
         String filterResolvedForSQL = resolveSQLFilter(filter);
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+            String[] loggedInUserGroups = getLoggedInUserGroups();
+            String sqlStatement =
+                    buildDiscoverableGroupSQLCondition(LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT,
+                            loggedInUserGroups.length);
 
-            try (NamedPreparedStatement statement =
-                         new NamedPreparedStatement(connection,
-                                 LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT)) {
+            try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
+                for (int i = 0; i < loggedInUserGroups.length; i++) {
+                    statement.setString(i + 4, loggedInUserGroups[i]);
+                }
 
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
-                        if (groupId == null || checkLoggedInUserIsInGroup(groupId)) {
-                            count++;
-                        }
+                    if (resultSet.next()) {
+                        count = resultSet.getInt(1);
                     }
                 }
             }
@@ -408,19 +412,20 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         int count = 0;
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
+            String[] loggedInUserGroups = getLoggedInUserGroups();
+            String sqlStatement = buildDiscoverableGroupSQLCondition(LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT,
+                    loggedInUserGroups.length);
 
-            try (NamedPreparedStatement statement =
-                         new NamedPreparedStatement(connection,
-                                 LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT)) {
+            try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, rootOrgId);
+                for (int i = 0; i < loggedInUserGroups.length; i++) {
+                    statement.setString(i + 3, loggedInUserGroups[i]);
+                }
 
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
-                        if (groupId == null || checkLoggedInUserIsInGroup(groupId)) {
-                            count++;
-                        }
+                    if (resultSet.next()) {
+                        count = resultSet.getInt(1);
                     }
                 }
             }
@@ -435,22 +440,27 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                                                                            String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
 
-        HashMap<Integer, ApplicationBasicInfo> applicationBasicInfos = new HashMap<>();
+        List<ApplicationBasicInfo> applicationBasicInfoList = new ArrayList<>();
 
         try (Connection connection = IdentityDatabaseUtil.getDBConnection(false)) {
             String databaseVendorType = connection.getMetaData().getDatabaseProductName();
+            String[] loggedInUserGroups = getLoggedInUserGroups();
+            String sqlStatement = buildDiscoverableGroupSQLCondition(
+                    getDBVendorSpecificDiscoverableSharedAppRetrievalQuery(databaseVendorType),
+                    loggedInUserGroups.length);
 
-            try (NamedPreparedStatement statement =
-                         new NamedPreparedStatement(connection,
-                                 getDBVendorSpecificDiscoverableSharedAppRetrievalQuery(databaseVendorType))) {
+            try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
                 statement.setString(1, tenantDomain);
                 statement.setString(2, rootOrgId);
-                statement.setInt(3, offset);
-                statement.setInt(4, limit);
+                for (int i = 0; i < loggedInUserGroups.length; i++) {
+                    statement.setString(i + 3, loggedInUserGroups[i]);
+                }
+                statement.setInt(loggedInUserGroups.length + 3, offset);
+                statement.setInt(loggedInUserGroups.length + 4, limit);
 
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
-                        buildDiscoverableAppBasicInfo(applicationBasicInfos, resultSet);
+                        applicationBasicInfoList.add(buildApplicationBasicInfo(resultSet));
                     }
                 }
             }
@@ -458,64 +468,49 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw new OrganizationManagementException("Error while getting application basic information" +
                     " for discoverable applications in tenantDomain: " + tenantDomain, e);
         }
-        return Collections.unmodifiableList(new ArrayList<>(applicationBasicInfos.values()));
+        return Collections.unmodifiableList(applicationBasicInfoList);
     }
 
     /**
-     * Build the discoverable application basic information from the result set.
+     * Retrieve the group IDs list of the logged in user.
      *
-     * @param applicationBasicInfos HashMap to store the application basic information.
-     * @param resultSet             Current result set.
-     * @throws SQLException                           Error while reading the result set.
-     * @throws OrganizationManagementException Error while building the application basic information.
+     * @return The group IDs list.
+     * @throws OrganizationManagementException Error while retrieving the group IDs list.
      */
-    private void buildDiscoverableAppBasicInfo(HashMap<Integer, ApplicationBasicInfo> applicationBasicInfos,
-                                               ResultSet resultSet)
-            throws SQLException, OrganizationManagementException {
+    private String[] getLoggedInUserGroups() throws OrganizationManagementException {
 
-        int applicationId = resultSet.getInt(ApplicationConstants.ApplicationTableColumns.ID);
-        if (!applicationBasicInfos.containsKey(applicationId)) {
-            String groupId = resultSet.getString(ApplicationConstants.ApplicationTableColumns.GROUP_ID);
-            if (groupId == null) {
-                applicationBasicInfos.put(applicationId, buildApplicationBasicInfo(resultSet));
-                return;
-            }
-            if (checkLoggedInUserIsInGroup(groupId)) {
-                applicationBasicInfos.put(applicationId, buildApplicationBasicInfo(resultSet));
-            }
-        }
-    }
-
-    /**
-     * Check whether the logged-in user is in the provided group.
-     *
-     * @param groupId Group id to check whether the user is in.
-     * @return True if the user is in the group.
-     * @throws OrganizationManagementException Error while checking the user is in the group.
-     */
-    private boolean checkLoggedInUserIsInGroup(String groupId) throws OrganizationManagementException {
-
-        String loggedInUserId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         try {
-            AbstractUserStoreManager userStoreManager = ApplicationMgtUtil.getUserStoreManager(tenantDomain);
-            if (userStoreManager.isUserInGroup(loggedInUserId, groupId)) {
-                return true;
-            }
+            return ApplicationMgtUtil.getLoggedInUserGroupIDList();
         } catch (IdentityApplicationManagementException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
-        } catch (org.wso2.carbon.user.core.UserStoreException e) {
-            String msg = "Error while checking the user: " + loggedInUserId + " is in the group: " + groupId +
-                    " in tenant: " + tenantDomain;
-            if (e instanceof UserStoreClientException) {
-                if (log.isDebugEnabled()) {
-                    log.debug(msg, e);
-                }
-            } else {
-                throw new OrganizationManagementException(msg, e);
-            }
+            throw new OrganizationManagementServerException(e.getErrorCode(), e.getMessage(), e);
         }
-        return false;
+    }
+
+    /**
+     * Build the SQL condition for retrieving discoverable applications.
+     *
+     * @param sqlStatement   SQL statement to replace the group id condition.
+     * @param numberOfGroups Number of groups for the group id condition.
+     * @return SQL statement with the group id condition.
+     */
+    private String buildDiscoverableGroupSQLCondition(String sqlStatement, int numberOfGroups) {
+
+        String finalSqlStatement;
+        if (numberOfGroups == 0) {
+            finalSqlStatement = StringUtils.replace(sqlStatement,
+                    SQLConstants.SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER,
+                    SQLConstants.DISCOVERABLE_BY_ANY_USER);
+        } else {
+            String groupListNamedStatement = IntStream.range(0, numberOfGroups)
+                    .mapToObj(i -> "?")
+                    .collect(Collectors.joining(", "));
+            finalSqlStatement = StringUtils.replace(sqlStatement,
+                    SQLConstants.SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER,
+                    StringUtils.replace(SQLConstants.DISCOVERABLE_BY_USER_GROUPS,
+                            SQLConstants.SQLPlaceholders.GROUP_ID_LIST_PLACEHOLDER,
+                            groupListNamedStatement));
+        }
+        return finalSqlStatement;
     }
 
     /**
