@@ -28,9 +28,8 @@ public class SharedResult {
     private UserAssociation userAssociation;
     private SharingType sharingType;
     private RoleWithAudienceDO role;
-    private SharedStatus status;
-    private String statusDetail;
-    private Throwable error;
+    private StatusDetail statusDetail;
+    private ErrorDetail errorDetail;
 
     private SharedResult(Builder builder) {
 
@@ -38,9 +37,8 @@ public class SharedResult {
         this.userAssociation = builder.userAssociation;
         this.sharingType = builder.sharingType;
         this.role = builder.role;
-        this.status = builder.status;
         this.statusDetail = builder.statusDetail;
-        this.error = builder.error;
+        this.errorDetail = builder.errorDetail;
     }
 
     /**
@@ -53,9 +51,8 @@ public class SharedResult {
                 .userAssociation(this.userAssociation)
                 .sharingType(this.sharingType)
                 .role(this.role)
-                .status(this.status)
                 .statusDetail(this.statusDetail)
-                .error(this.error);
+                .errorDetail(this.errorDetail);
     }
 
     public int getId() {
@@ -99,34 +96,24 @@ public class SharedResult {
         this.role = role;
     }
 
-    public SharedStatus getStatus() {
-
-        return status;
-    }
-
-    public void setStatus(SharedStatus status) {
-
-        this.status = status;
-    }
-
-    public String getStatusDetail() {
+    public StatusDetail getStatusDetail() {
 
         return statusDetail;
     }
 
-    public void setStatusDetail(String statusDetail) {
+    public void setStatusDetail(StatusDetail statusDetail) {
 
         this.statusDetail = statusDetail;
     }
 
-    public Throwable getError() {
+    public ErrorDetail getErrorDetail() {
 
-        return error;
+        return errorDetail;
     }
 
-    public void setError(Throwable error) {
+    public void setErrorDetail(ErrorDetail errorDetail) {
 
-        this.error = error;
+        this.errorDetail = errorDetail;
     }
 
     /**
@@ -138,9 +125,8 @@ public class SharedResult {
         private UserAssociation userAssociation;
         private SharingType sharingType;
         private RoleWithAudienceDO role;
-        private SharedStatus status;
-        private String statusDetail;
-        private Throwable error;
+        private StatusDetail statusDetail;
+        private ErrorDetail errorDetail;
 
         public Builder id(int id) {
 
@@ -166,27 +152,71 @@ public class SharedResult {
             return this;
         }
 
-        public Builder status(SharedStatus status) {
-
-            this.status = status;
-            return this;
-        }
-
-        public Builder statusDetail(String statusDetail) {
+        public Builder statusDetail(StatusDetail statusDetail) {
 
             this.statusDetail = statusDetail;
             return this;
         }
 
-        public Builder error(Throwable error) {
+        public Builder errorDetail(ErrorDetail errorDetail) {
 
-            this.error = error;
+            this.errorDetail = errorDetail;
             return this;
         }
 
         public SharedResult build() {
 
             return new SharedResult(this);
+        }
+    }
+
+    /**
+     * Inner class to encapsulate status details.
+     */
+    public static class StatusDetail {
+
+        private final SharedStatus status;
+        private final String statusMessage;
+
+        public StatusDetail(SharedStatus status, String statusMessage) {
+
+            this.status = status;
+            this.statusMessage = statusMessage;
+        }
+
+        public SharedStatus getStatus() {
+
+            return status;
+        }
+
+        public String getStatusMessage() {
+
+            return statusMessage;
+        }
+    }
+
+    /**
+     * Inner class to encapsulate error details.
+     */
+    public static class ErrorDetail {
+
+        private final Throwable error;
+        private final String fixSuggestion;
+
+        public ErrorDetail(Throwable error, String fixSuggestion) {
+
+            this.error = error;
+            this.fixSuggestion = fixSuggestion;
+        }
+
+        public Throwable getError() {
+
+            return error;
+        }
+
+        public String getFixSuggestion() {
+
+            return fixSuggestion;
         }
     }
 
