@@ -32,6 +32,21 @@ public class UserAssociation {
     private String userResidentOrganizationId;
     private SharedType sharedType;
 
+    public UserAssociation() {
+
+    }
+
+    public UserAssociation(String userId, String organizationId, String associatedUserId,
+                           String userResidentOrganizationId,
+                           SharedType sharedType) {
+
+        this.userId = userId;
+        this.organizationId = organizationId;
+        this.associatedUserId = associatedUserId;
+        this.userResidentOrganizationId = userResidentOrganizationId;
+        this.sharedType = sharedType;
+    }
+
     public int getId() {
 
         return id;

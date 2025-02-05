@@ -17,7 +17,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 import java.util.ArrayList;
@@ -56,46 +56,46 @@ public class SelectiveUserShare extends BaseUserShare {
         private PolicyEnum policy;
         private List<String> roles;
 
-        public Builder withUserId(String userId) throws OrganizationManagementServerException {
+        public Builder userId(String userId) throws UserSharingMgtClientException {
 
             if (userId == null || userId.isEmpty()) {
-                throw new OrganizationManagementServerException(ERROR_CODE_USER_ID_MISSING.getMessage());
+                throw new UserSharingMgtClientException(ERROR_CODE_USER_ID_MISSING);
             }
             this.userId = userId;
             return this;
         }
 
-        public Builder withOrganizationId(String organizationId) throws OrganizationManagementServerException {
+        public Builder organizationId(String organizationId) throws UserSharingMgtClientException {
 
             if (organizationId == null || organizationId.isEmpty()) {
-                throw new OrganizationManagementServerException(ERROR_CODE_ORGANIZATION_ID_MISSING.getMessage());
+                throw new UserSharingMgtClientException(ERROR_CODE_ORGANIZATION_ID_MISSING);
             }
             this.organizationId = organizationId;
             return this;
         }
 
-        public Builder withPolicy(PolicyEnum policy) throws OrganizationManagementServerException {
+        public Builder policy(PolicyEnum policy) throws UserSharingMgtClientException {
 
             if (policy == null) {
-                throw new OrganizationManagementServerException(ERROR_CODE_POLICY_MISSING.getMessage());
+                throw new UserSharingMgtClientException(ERROR_CODE_POLICY_MISSING);
             }
             this.policy = policy;
             return this;
         }
 
-        public Builder withRoles(List<String> roles) throws OrganizationManagementServerException {
+        public Builder roles(List<String> roles) throws UserSharingMgtClientException {
 
             if (roles == null) {
-                throw new OrganizationManagementServerException(ERROR_CODE_ROLES_NULL.getMessage());
+                throw new UserSharingMgtClientException(ERROR_CODE_ROLES_NULL);
             }
             this.roles = roles;
             return this;
         }
 
-        public SelectiveUserShare build() throws OrganizationManagementServerException {
+        public SelectiveUserShare build() throws UserSharingMgtClientException {
 
             if (userId == null || organizationId == null || policy == null) {
-                throw new OrganizationManagementServerException(ERROR_CODE_BUILD_USER_SHARE.getMessage());
+                throw new UserSharingMgtClientException(ERROR_CODE_BUILD_USER_SHARE);
             }
             SelectiveUserShare selectiveUserShare = new SelectiveUserShare();
             selectiveUserShare.setUserId(userId);

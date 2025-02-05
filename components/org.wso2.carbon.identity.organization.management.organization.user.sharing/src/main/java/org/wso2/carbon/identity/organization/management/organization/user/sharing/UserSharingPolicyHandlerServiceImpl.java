@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.BaseUserShare;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.GeneralUserShare;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SelectiveUserShare;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SharedResult;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserUnshareDO;
@@ -52,8 +53,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.SharedResultLoggerUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
@@ -77,6 +78,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -87,8 +89,10 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ORGS_TO_SHARE_USER_WITH;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLE_WITH_AUDIENCE_BY_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_AUDIENCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
@@ -102,12 +106,9 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.RESULT_ERROR_FIX_SUGGESTION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
@@ -118,7 +119,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(1);
+    private final ConcurrentLinkedQueue<SharedResult> sharedResults = new ConcurrentLinkedQueue<>();
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
@@ -132,9 +134,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<SelectiveUserShareOrgDetailsDO> validOrganizations =
                 filterValidOrganizations(organizations, sharingInitiatedOrgId);
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(
-                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId),
+                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId,
+                                sharingInitiatedUsername),
                         EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective share processing.", ex);
@@ -152,8 +156,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         PolicyEnum policy = generalUserShareDO.getPolicy();
         List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the sharing logic asynchronously.
-        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId),
+        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId
+                                , sharingInitiatedUsername),
                         EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user share processing.", ex);
@@ -171,9 +177,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
         List<String> organizations = selectiveUserUnshareDO.getOrganizations();
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the unsharing logic asynchronously.
         CompletableFuture.runAsync(
-                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId), EXECUTOR)
+                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId,
+                                sharingInitiatedUsername),
+                        EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective unshare processing.", ex);
                     return null;
@@ -188,8 +197,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the unsharing logic asynchronously.
-        CompletableFuture.runAsync(() -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId), EXECUTOR)
+        CompletableFuture.runAsync(
+                        () -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId, sharingInitiatedUsername),
+                        EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user unshare processing.", ex);
                     return null;
@@ -245,7 +257,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
 
-            String usernameWithDomain = userIDResolver.getNameByID(userAssociation.getUserId(), tenantDomain);
+            String usernameWithDomain = getUserNameByUserID(userAssociation.getUserId(), tenantDomain);
             String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
             String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
@@ -275,108 +287,124 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
-                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUsername) {
+
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedOrgId);
+            sharedResults.clear();
             for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
-                populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
+                for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                    String criterionKey = criterion.getKey();
+                    UserCriteriaType criterionValues = criterion.getValue();
+                    switch (criterionKey) {
+                        case USER_IDS:
+                            if (criterionValues instanceof UserIdList) {
+                                selectiveUserShareByUserIds((UserIdList) criterionValues, organization,
+                                        sharingInitiatedOrgId);
+                            } else {
+                                LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                            }
+                            break;
+                        default:
+                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                    }
+                }
             }
             LOG.debug("Completed user selective share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
+            sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
-                                         List<String> roleIds, String sharingInitiatedOrgId) {
+                                         List<String> roleIds, String sharingInitiatedOrgId,
+                                         String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
+            sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
-
-                try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
-                                        sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
-                            }
-                            break;
-                        default:
+                switch (criterionKey) {
+                    case USER_IDS:
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
+                                    sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
-                    }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                        }
+                        break;
+                    default:
+                        LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                 }
             }
             LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
         } finally {
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
+            sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
     private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
-                                             String sharingInitiatedOrgId) {
+                                             String sharingInitiatedOrgId, String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
+            sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
-
-                try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
-                                        sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
-                            }
-                            break;
-                        default:
+                switch (criterionKey) {
+                    case USER_IDS:
+                        if (criterionValues instanceof UserIdList) {
+                            selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                    sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
-                    }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                        }
+                        break;
+                    default:
+                        LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
                 }
             }
             LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
+            sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
-    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
+            sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
-
-                try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
-                            }
-                            break;
-                        default:
+                switch (criterionKey) {
+                    case USER_IDS:
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
-                    }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                        }
+                        break;
+                    default:
+                        LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
                 }
             }
             LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
         } finally {
+            SharedResultLoggerUtil.logErroredSharedResults(new ArrayList<>(sharedResults));
+            sharedResults.clear();
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
@@ -403,62 +431,37 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return validOrganizations;
     }
 
-    private void populateSelectiveUserShareByCriteria(SelectiveUserShareOrgDetailsDO organization,
-                                                      Map<String, UserCriteriaType> userCriteria,
-                                                      String sharingInitiatedOrgId) {
-
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
-
-            try {
-                switch (criterionKey) {
-                    case USER_IDS:
-                        if (criterionValues instanceof UserIdList) {
-                            selectiveUserShareByUserIds((UserIdList) criterionValues, organization,
-                                    sharingInitiatedOrgId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
-                        }
-                        break;
-                    default:
-                        LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
-                }
-            } catch (UserSharingMgtException e) {
-                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS + " for org: " +
-                        organization.getOrganizationId(), e);
-            }
-        }
-    }
-
     private void selectiveUserShareByUserIds(UserIdList userIds, SelectiveUserShareOrgDetailsDO organization,
-                                             String sharingInitiatedOrgId)
-            throws UserSharingMgtException {
+                                             String sharingInitiatedOrgId) {
 
         for (String associatedUserId : userIds.getIds()) {
             try {
                 SelectiveUserShare selectiveUserShare = new SelectiveUserShare.Builder()
-                        .withUserId(associatedUserId)
-                        .withOrganizationId(organization.getOrganizationId())
-                        .withPolicy(organization.getPolicy())
-                        .withRoles(getRoleIds(organization.getRoles(), sharingInitiatedOrgId))
+                        .userId(associatedUserId)
+                        .organizationId(organization.getOrganizationId())
+                        .policy(organization.getPolicy())
+                        .roles(getRoleIds(organization.getRoles(), sharingInitiatedOrgId))
                         .build();
                 shareUser(selectiveUserShare, sharingInitiatedOrgId);
-            } catch (OrganizationManagementException | IdentityRoleManagementException |
-                     ResourceSharingPolicyMgtException e) {
-                String errorMessage =
-                        String.format(ERROR_SELECTIVE_SHARE.getMessage(), associatedUserId, e.getMessage());
-                throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
+            } catch (UserSharingMgtException e) {
+                UserAssociation userAssociation =
+                        new UserAssociation(null, organization.getOrganizationId(), associatedUserId,
+                                sharingInitiatedOrgId, SharedType.SHARED);
+                SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                        "An error occurred while creating a selective user share object.");
+                SharedResult.ErrorDetail errorDetail =
+                        new SharedResult.ErrorDetail(e, "Please verify the provided user ID and roles for accuracy.");
+                SharedResult sharedResult =
+                        buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null,
+                                statusDetail, errorDetail);
+                sharedResults.add(sharedResult);
             }
         }
     }
 
-    private void shareUser(BaseUserShare userShare, String sharingInitiatedOrgId)
-            throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
-            ResourceSharingPolicyMgtException {
+    private void shareUser(BaseUserShare userShare, String sharingInitiatedOrgId) {
 
         List<String> orgsToShareUserWith = getOrgsToShareUserWithBasedOnSharingType(userShare, sharingInitiatedOrgId);
-
         if (isUserAlreadyShared(userShare.getUserId(), sharingInitiatedOrgId)) {
             handleExistingSharedUser(userShare, sharingInitiatedOrgId, orgsToShareUserWith);
         } else {
@@ -467,19 +470,31 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private List<String> getOrgsToShareUserWithBasedOnSharingType(BaseUserShare userShare,
-                                                                  String sharingInitiatedOrgId)
-            throws OrganizationManagementException {
+                                                                  String sharingInitiatedOrgId) {
 
-        if (userShare instanceof SelectiveUserShare) {
-            return getOrgsToShareUserWith(((SelectiveUserShare) userShare).getOrganizationId(), userShare.getPolicy());
+        try {
+            if (userShare instanceof SelectiveUserShare) {
+                return getOrgsToShareUserWith(((SelectiveUserShare) userShare).getOrganizationId(),
+                        userShare.getPolicy());
+            }
+            return getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
+        } catch (UserSharingMgtException e) {
+            UserAssociation userAssociation =
+                    new UserAssociation(null, null, userShare.getUserId(), sharingInitiatedOrgId, SharedType.SHARED);
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    "An error occurred while retrieving organizations to share user with.");
+            SharedResult.ErrorDetail errorDetail =
+                    new SharedResult.ErrorDetail(e, "Please verify the provided sharing policy for accuracy.");
+            SharedResult sharedResult =
+                    buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null, statusDetail,
+                            errorDetail);
+            sharedResults.add(sharedResult);
         }
-        return getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
+        return new ArrayList<>();
     }
 
     private void handleExistingSharedUser(BaseUserShare userShare, String sharingInitiatedOrgId,
-                                          List<String> orgsToShareUserWith)
-            throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
-            ResourceSharingPolicyMgtException {
+                                          List<String> orgsToShareUserWith) {
 
         List<UserAssociation> userAssociations =
                 getSharedUserAssociationsOfGivenUser(userShare.getUserId(), sharingInitiatedOrgId);
@@ -498,16 +513,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         updateResourceSharingPolicy(userShare, sharingInitiatedOrgId);
     }
 
-    private void unshareUserFromPreviousOrg(UserAssociation association, String sharingInitiatedOrgId)
-            throws UserSharingMgtException {
+    private void unshareUserFromPreviousOrg(UserAssociation association, String sharingInitiatedOrgId) {
 
         selectiveUserUnshareByUserIds(new UserIdList(Collections.singletonList(association.getAssociatedUserId())),
                 Collections.singletonList(association.getOrganizationId()), sharingInitiatedOrgId);
     }
 
     private void shareWithNewOrganizations(BaseUserShare userShare, String sharingInitiatedOrgId,
-                                           List<String> orgsToShareUserWith, List<String> alreadySharedOrgs)
-            throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException {
+                                           List<String> orgsToShareUserWith, List<String> alreadySharedOrgs) {
 
         List<String> newlySharedOrgs = new ArrayList<>(orgsToShareUserWith);
         newlySharedOrgs.removeAll(alreadySharedOrgs);
@@ -518,9 +531,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void createNewUserShare(BaseUserShare userShare, String sharingInitiatedOrgId,
-                                    List<String> orgsToShareUserWith)
-            throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
-            ResourceSharingPolicyMgtException {
+                                    List<String> orgsToShareUserWith) {
 
         for (String orgId : orgsToShareUserWith) {
             shareAndAssignRolesIfPresent(orgId, userShare, sharingInitiatedOrgId);
@@ -544,22 +555,25 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
-                                           String sharingInitiatedOrgId)
-            throws UserSharingMgtException {
+                                           String sharingInitiatedOrgId) {
 
         for (String associatedUserId : userIds.getIds()) {
             try {
                 GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
-                        .withUserId(associatedUserId)
-                        .withPolicy(policy)
-                        .withRoles(roleIds)
+                        .userId(associatedUserId)
+                        .policy(policy)
+                        .roles(roleIds)
                         .build();
-
                 shareUser(generalUserShare, sharingInitiatedOrgId);
-            } catch (OrganizationManagementException | IdentityRoleManagementException |
-                     ResourceSharingPolicyMgtException e) {
-                String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
-                throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
+            } catch (UserSharingMgtException e) {
+                UserAssociation userAssociation =
+                        new UserAssociation(null, null, associatedUserId, sharingInitiatedOrgId, SharedType.SHARED);
+                SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                        "An error occurred while creating a general user share object.");
+                SharedResult.ErrorDetail errorDetail =
+                        new SharedResult.ErrorDetail(e, "Please verify the provided user ID and roles for accuracy.");
+                sharedResults.add(buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null,
+                        statusDetail, errorDetail));
             }
         }
     }
@@ -570,39 +584,53 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void updateRolesIfNecessary(UserAssociation userAssociation, List<String> roleIds,
-                                        String sharingInitiatedOrgId)
-            throws OrganizationManagementException, IdentityRoleManagementException, UserSharingMgtException {
+                                        String sharingInitiatedOrgId) {
 
-        List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
+        List<String> currentSharedRoleIds;
+        try {
+            currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
+        } catch (UserSharingMgtServerException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    "An error occurred while retrieving the current shared roles of the user.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            SharedResult sharedResult =
+                    buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null, statusDetail,
+                            errorDetail);
+            sharedResults.add(sharedResult);
+            return;
+        }
         List<String> newSharedRoleIds = getRolesToBeAddedAfterUpdate(userAssociation, currentSharedRoleIds, roleIds);
 
         if (hasRoleChanges(currentSharedRoleIds, newSharedRoleIds)) {
-            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds);
+            SharedResult sharedResult =
+                    buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null,
+                            null, null);
+            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds, sharedResult);
         }
     }
 
     private List<String> getCurrentSharedRoleIdsForSharedUser(UserAssociation userAssociation)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+            throws UserSharingMgtServerException {
 
-        String userId = userAssociation.getUserId();
-        String orgId = userAssociation.getOrganizationId();
-        String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+        try {
+            String userId = userAssociation.getUserId();
+            String orgId = userAssociation.getOrganizationId();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
-        List<String> allUserRolesOfSharedUser = getRoleManagementService().getRoleIdListOfUser(userId, tenantDomain);
+            List<String> allUserRolesOfSharedUser =
+                    getRoleManagementService().getRoleIdListOfUser(userId, tenantDomain);
 
-        return getOrganizationUserSharingService().getSharedUserRolesFromUserRoles(allUserRolesOfSharedUser,
-                tenantDomain);
+            return getOrganizationUserSharingService().getSharedUserRolesFromUserRoles(allUserRolesOfSharedUser,
+                    tenantDomain);
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
+        }
     }
 
-    private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
-            throws ResourceSharingPolicyMgtException {
-
-        ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
-                getResourceSharingPolicyHandlerService();
+    private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId) {
 
         //Delete old sharing policy.
-        resourceSharingPolicyHandlerService.deleteResourceSharingPolicyInOrgByResourceTypeAndId(
-                sharingInitiatedOrgId, ResourceType.USER, baseUserShare.getUserId(), sharingInitiatedOrgId);
+        deleteOldResourceSharingPolicy(baseUserShare, sharingInitiatedOrgId);
 
         //Create new sharing policy.
         if (isApplicableOrganizationScopeForSavingPolicy(baseUserShare.getPolicy())) {
@@ -610,30 +638,54 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void saveUserSharingPolicy(BaseUserShare userShare, String sharingInitiatedOrgId)
-            throws ResourceSharingPolicyMgtException {
+    private void deleteOldResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId) {
 
-        ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
-                getResourceSharingPolicyHandlerService();
-
-        ResourceSharingPolicy resourceSharingPolicy =
-                new ResourceSharingPolicy.Builder().withResourceType(ResourceType.USER)
-                        .withResourceId(userShare.getUserId())
-                        .withInitiatingOrgId(sharingInitiatedOrgId)
-                        .withPolicyHoldingOrgId(getPolicyHoldingOrgId(userShare, sharingInitiatedOrgId))
-                        .withSharingPolicy(userShare.getPolicy()).build();
-
-        List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
-        for (String roleId : userShare.getRoles()) {
-            SharedResourceAttribute sharedResourceAttribute =
-                    new SharedResourceAttribute.Builder().withSharedAttributeType(SharedAttributeType.ROLE)
-                            .withSharedAttributeId(roleId).build();
-            sharedResourceAttributes.add(sharedResourceAttribute);
+        try {
+            getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                    sharingInitiatedOrgId, ResourceType.USER, baseUserShare.getUserId(), sharingInitiatedOrgId);
+        } catch (ResourceSharingPolicyMgtException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    "Error occurred while deleting old user sharing policy.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            SharedResult sharedResult = buildOrUpdateSharedResult(null,
+                    new UserAssociation(null, null, baseUserShare.getUserId(), sharingInitiatedOrgId,
+                            SharedType.SHARED), SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
         }
+    }
 
-        resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
-                sharedResourceAttributes);
+    private void saveUserSharingPolicy(BaseUserShare userShare, String sharingInitiatedOrgId) {
 
+        try {
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
+                    getResourceSharingPolicyHandlerService();
+
+            ResourceSharingPolicy resourceSharingPolicy =
+                    new ResourceSharingPolicy.Builder().withResourceType(ResourceType.USER)
+                            .withResourceId(userShare.getUserId())
+                            .withInitiatingOrgId(sharingInitiatedOrgId)
+                            .withPolicyHoldingOrgId(getPolicyHoldingOrgId(userShare, sharingInitiatedOrgId))
+                            .withSharingPolicy(userShare.getPolicy()).build();
+
+            List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
+            for (String roleId : userShare.getRoles()) {
+                SharedResourceAttribute sharedResourceAttribute =
+                        new SharedResourceAttribute.Builder().withSharedAttributeType(SharedAttributeType.ROLE)
+                                .withSharedAttributeId(roleId).build();
+                sharedResourceAttributes.add(sharedResourceAttribute);
+            }
+
+            resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
+                    sharedResourceAttributes);
+        } catch (ResourceSharingPolicyMgtException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    "Error occurred while saving user sharing policy.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            SharedResult sharedResult = buildOrUpdateSharedResult(null,
+                    new UserAssociation(null, null, userShare.getUserId(), sharingInitiatedOrgId, SharedType.SHARED),
+                    SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
+        }
     }
 
     /**
@@ -663,27 +715,37 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare,
-                                              String sharingInitiatedOrgId)
-            throws OrganizationManagementException, IdentityRoleManagementException, UserSharingMgtException {
+                                              String sharingInitiatedOrgId) {
 
         String associatedUserId = baseUserShare.getUserId();
         List<String> roleIds = baseUserShare.getRoles();
-        UserAssociation userAssociation;
+
+        SharedResult sharedResult = buildOrUpdateSharedResult(null,
+                new UserAssociation(null, orgId, associatedUserId, sharingInitiatedOrgId, SharedType.SHARED),
+                SharedResult.SharingType.SHARE, null, null, null);
 
         try {
-            userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
+            UserAssociation userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
+            SharedResult.StatusDetail statusDetail =
+                    new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL, "User Shared Successfully.");
+            sharedResult =
+                    buildOrUpdateSharedResult(sharedResult, userAssociation, SharedResult.SharingType.SHARE, null,
+                            statusDetail, null);
+            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds, sharedResult);
         } catch (OrganizationManagementException e) {
-            String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
-            LOG.error(errorMessage, e);
-            return;
+            UserAssociation userAssociation =
+                    new UserAssociation(null, orgId, associatedUserId, sharingInitiatedOrgId, SharedType.SHARED);
+            SharedResult.StatusDetail statusDetail =
+                    new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "User Sharing Failed.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            sharedResult =
+                    buildOrUpdateSharedResult(sharedResult, userAssociation, SharedResult.SharingType.SHARE, null,
+                            statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
         }
-
-        //Assign roles if any are present.
-        assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
     }
 
-    private boolean isUserAlreadyShared(String associatedUserId, String associatedOrgId)
-            throws OrganizationManagementException {
+    private boolean isUserAlreadyShared(String associatedUserId, String associatedOrgId) {
 
         List<UserAssociation> userAssociationsOfGivenUser =
                 getSharedUserAssociationsOfGivenUser(associatedUserId, associatedOrgId);
@@ -691,16 +753,28 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return userAssociationsOfGivenUser != null && !userAssociationsOfGivenUser.isEmpty();
     }
 
-    private List<UserAssociation> getSharedUserAssociationsOfGivenUser(String associatedUserId, String associatedOrgId)
-            throws OrganizationManagementException {
+    private List<UserAssociation> getSharedUserAssociationsOfGivenUser(String associatedUserId,
+                                                                       String associatedOrgId) {
 
-        return getOrganizationUserSharingService().getUserAssociationsOfGivenUser(associatedUserId, associatedOrgId,
-                SharedType.SHARED);
+        try {
+            return getOrganizationUserSharingService().getUserAssociationsOfGivenUser(associatedUserId, associatedOrgId,
+                    SharedType.SHARED);
+        } catch (OrganizationManagementException e) {
+            UserAssociation userAssociation =
+                    new UserAssociation(null, null, associatedUserId, associatedOrgId, SharedType.SHARED);
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    "Error occurred while retrieving shared user associations.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            SharedResult sharedResult =
+                    buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE, null, statusDetail,
+                            errorDetail);
+            sharedResults.add(sharedResult);
+        }
+        return Collections.emptyList();
     }
 
     private List<String> getRolesToBeAddedAfterUpdate(UserAssociation userAssociation, List<String> currentRoleIds,
-                                                      List<String> newRoleIds)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+                                                      List<String> newRoleIds) {
 
         // Roles to be added are those in newRoleIds that are not in currentRoleIds.
         List<String> rolesToBeAdded = new ArrayList<>(newRoleIds);
@@ -710,66 +784,154 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<String> rolesToBeRemoved = new ArrayList<>(currentRoleIds);
         rolesToBeRemoved.removeAll(newRoleIds);
 
-        deleteOldSharedRoles(userAssociation, rolesToBeRemoved);
+        removeOldSharedRoles(userAssociation, rolesToBeRemoved);
         return rolesToBeAdded;
     }
 
-    private void deleteOldSharedRoles(UserAssociation userAssociation, List<String> rolesToBeRemoved)
-            throws OrganizationManagementException, IdentityRoleManagementException {
+    private void removeOldSharedRoles(UserAssociation userAssociation, List<String> rolesToBeRemoved) {
 
         String userId = userAssociation.getUserId();
         String orgId = userAssociation.getOrganizationId();
-        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+        OrganizationManager organizationManager = getOrganizationManager();
 
         for (String roleId : rolesToBeRemoved) {
-            getRoleManagementService().updateUserListOfRole(roleId, Collections.emptyList(),
-                    Collections.singletonList(userId), targetOrgTenantDomain);
+            SharedResult sharedResult;
+            try {
+                getRoleManagementService().updateUserListOfRole(roleId, Collections.emptyList(),
+                        Collections.singletonList(userId), organizationManager.resolveTenantDomain(orgId));
+                SharedResult.StatusDetail statusDetail =
+                        new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                                "Role unassigned successfully.");
+                sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE,
+                        getRoleWithAudienceByRoleId(roleId), statusDetail, null);
+                sharedResults.add(sharedResult);
+            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+                SharedResult.StatusDetail statusDetail =
+                        new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED, "Role unassignment failed.");
+                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+                sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.SHARE,
+                        getRoleWithAudienceByRoleId(roleId), statusDetail, errorDetail);
+                sharedResults.add(sharedResult);
+            }
         }
     }
 
     private void assignRolesIfPresent(UserAssociation userAssociation, String sharingInitiatedOrgId,
-                                      List<String> roleIds)
-            throws OrganizationManagementException, IdentityRoleManagementException, UserSharingMgtException {
+                                      List<String> roleIds, SharedResult sharedResult) {
 
-        if (!roleIds.isEmpty()) {
-            assignRolesToTheSharedUser(userAssociation, sharingInitiatedOrgId, roleIds);
+        if (roleIds.isEmpty()) {
+            SharedResult.StatusDetail statusDetail =
+                    new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                            sharedResult.getStatusDetail().getStatusMessage() + " No roles to assign.");
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), null, statusDetail, null);
+            sharedResults.add(sharedResult);
+            return;
         }
+        assignRolesToTheSharedUser(userAssociation, sharingInitiatedOrgId, roleIds, sharedResult);
     }
 
     private void assignRolesToTheSharedUser(UserAssociation userAssociation, String sharingInitiatedOrgId,
-                                            List<String> roleIds)
-            throws OrganizationManagementException, IdentityRoleManagementException, UserSharingMgtException {
+                                            List<String> roleIds, SharedResult sharedResult) {
 
-        String userId = userAssociation.getUserId();
-        String orgId = userAssociation.getOrganizationId();
-        String sharingInitiatedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
-        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+        try {
+            String userId = userAssociation.getUserId();
+            String orgId = userAssociation.getOrganizationId();
+            String sharingInitiatedOrgTenantDomain =
+                    getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
+            String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
 
-        String usernameWithDomain = userIDResolver.getNameByID(userId, targetOrgTenantDomain);
-        String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
-        String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
+            String usernameWithDomain = getUserNameByUserID(userId, targetOrgTenantDomain);
+            String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
+            String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
-        RoleManagementService roleManagementService = getRoleManagementService();
-        Map<String, String> sharedRoleToMainRoleMappingsBySubOrg =
-                roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(roleIds,
-                        sharingInitiatedOrgTenantDomain);
+            RoleManagementService roleManagementService = getRoleManagementService();
+            Map<String, String> sharedRoleToMainRoleMappingsBySubOrg =
+                    roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(roleIds,
+                            sharingInitiatedOrgTenantDomain);
 
-        List<String> mainRoles = new ArrayList<>();
-        for (String roleId : roleIds) {
-            mainRoles.add(sharedRoleToMainRoleMappingsBySubOrg.getOrDefault(roleId, roleId));
+            List<String> mainRoles = new ArrayList<>();
+            for (String roleId : roleIds) {
+                mainRoles.add(sharedRoleToMainRoleMappingsBySubOrg.getOrDefault(roleId, roleId));
+            }
+
+            Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
+                    roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(mainRoles, targetOrgTenantDomain);
+
+            for (String roleId : mainRoleToSharedRoleMappingsBySubOrg.values()) {
+
+                assignRoleAndAddEditRestriction(roleId, userId, username, targetOrgTenantDomain, domainName,
+                        sharingInitiatedOrgId, sharedResult);
+            }
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    sharedResult.getStatusDetail().getStatusMessage() + " Role assignment failed.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    SharedResult.SharingType.SHARE, null, statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
+        }
+    }
+
+    private void assignRoleAndAddEditRestriction(String roleId, String userId, String username, String tenantDomain,
+                                                 String domainName, String sharingInitiatedOrgId,
+                                                 SharedResult sharedResult) {
+
+        try {
+            getRoleManagementService().updateUserListOfRole(roleId, Collections.singletonList(userId),
+                    Collections.emptyList(), tenantDomain);
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                    sharedResult.getStatusDetail().getStatusMessage() + " Role assigned successfully.");
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), getRoleWithAudienceByRoleId(roleId), statusDetail, null);
+        } catch (IdentityRoleManagementException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    sharedResult.getStatusDetail().getStatusMessage() + " Role assignment failed.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), null, statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
         }
 
-        Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
-                roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(mainRoles, targetOrgTenantDomain);
+        addEditRestriction(roleId, username, tenantDomain, domainName, sharingInitiatedOrgId, sharedResult);
+    }
 
-        for (String role : mainRoleToSharedRoleMappingsBySubOrg.values()) {
-            roleManagementService.updateUserListOfRole(role, Collections.singletonList(userId),
-                    Collections.emptyList(), targetOrgTenantDomain);
-            roleManagementService.getRoleListOfUser(userId, targetOrgTenantDomain);
+    private void addEditRestriction(String roleId, String username, String tenantDomain, String domainName,
+                                    String sharingInitiatedOrgId, SharedResult sharedResult) {
 
-            getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(role, username,
-                    targetOrgTenantDomain, domainName, EditOperation.DELETE, sharingInitiatedOrgId);
+        try {
+            getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(roleId, username, tenantDomain,
+                    domainName, EditOperation.DELETE, sharingInitiatedOrgId);
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                    sharedResult.getStatusDetail().getStatusMessage() + " Role edit restrictions added successfully.");
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), getRoleWithAudienceByRoleId(roleId), statusDetail, null);
+            sharedResults.add(sharedResult);
+        } catch (UserSharingMgtException e) {
+            RoleWithAudienceDO role = getRoleWithAudienceByRoleId(roleId);
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    sharedResult.getStatusDetail().getStatusMessage() +
+                            " Error occurred while adding edit restrictions for shared user roleId: " + roleId);
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), role, statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
         }
+    }
+
+    private RoleWithAudienceDO getRoleWithAudienceByRoleId(String roleId) {
+
+        try {
+            Role role = getRoleManagementService().getRole(roleId);
+            RoleWithAudienceDO roleWithAudienceDO = new RoleWithAudienceDO();
+            roleWithAudienceDO.setRoleName(role.getName());
+            roleWithAudienceDO.setAudienceName(role.getAudienceName());
+            roleWithAudienceDO.setAudienceType(role.getAudience());
+            return roleWithAudienceDO;
+        } catch (IdentityRoleManagementException e) {
+            LOG.error(String.format(ERROR_CODE_GET_ROLE_WITH_AUDIENCE_BY_ROLE_ID.getMessage(), roleId));
+        }
+        return null;
     }
 
     private UserAssociation shareUserWithOrganization(String orgId, String associatedUserId, String associatedOrgId)
@@ -782,49 +944,51 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private List<String> getOrgsToShareUserWith(String policyHoldingOrgId, PolicyEnum policy)
-            throws OrganizationManagementException {
+            throws UserSharingMgtException {
 
         Set<String> orgsToShareUserWith = new HashSet<>();
 
-        switch (policy) {
-            case ALL_EXISTING_ORGS_ONLY:
-            case ALL_EXISTING_AND_FUTURE_ORGS:
-                orgsToShareUserWith.addAll(getOrganizationManager()
-                        .getChildOrganizationsIds(policyHoldingOrgId, true));
-                break;
+        try {
+            switch (policy) {
+                case ALL_EXISTING_ORGS_ONLY:
+                case ALL_EXISTING_AND_FUTURE_ORGS:
+                    orgsToShareUserWith.addAll(getOrganizationManager()
+                            .getChildOrganizationsIds(policyHoldingOrgId, true));
+                    break;
 
-            case IMMEDIATE_EXISTING_ORGS_ONLY:
-            case IMMEDIATE_EXISTING_AND_FUTURE_ORGS:
-                orgsToShareUserWith.addAll(getOrganizationManager()
-                        .getChildOrganizationsIds(policyHoldingOrgId, false));
-                break;
+                case IMMEDIATE_EXISTING_ORGS_ONLY:
+                case IMMEDIATE_EXISTING_AND_FUTURE_ORGS:
+                    orgsToShareUserWith.addAll(getOrganizationManager()
+                            .getChildOrganizationsIds(policyHoldingOrgId, false));
+                    break;
 
-            case SELECTED_ORG_ONLY:
-                orgsToShareUserWith.add(policyHoldingOrgId);
-                break;
+                case SELECTED_ORG_ONLY:
+                    orgsToShareUserWith.add(policyHoldingOrgId);
+                    break;
 
-            case SELECTED_ORG_WITH_ALL_EXISTING_CHILDREN_ONLY:
-            case SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN:
-                orgsToShareUserWith.add(policyHoldingOrgId);
-                orgsToShareUserWith.addAll(getOrganizationManager()
-                        .getChildOrganizationsIds(policyHoldingOrgId, true));
-                break;
+                case SELECTED_ORG_WITH_ALL_EXISTING_CHILDREN_ONLY:
+                case SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN:
+                    orgsToShareUserWith.add(policyHoldingOrgId);
+                    orgsToShareUserWith.addAll(getOrganizationManager()
+                            .getChildOrganizationsIds(policyHoldingOrgId, true));
+                    break;
 
-            case SELECTED_ORG_WITH_EXISTING_IMMEDIATE_CHILDREN_ONLY:
-            case SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN:
-                orgsToShareUserWith.add(policyHoldingOrgId);
-                orgsToShareUserWith.addAll(getOrganizationManager()
-                        .getChildOrganizationsIds(policyHoldingOrgId, false));
-                break;
+                case SELECTED_ORG_WITH_EXISTING_IMMEDIATE_CHILDREN_ONLY:
+                case SELECTED_ORG_WITH_EXISTING_IMMEDIATE_AND_FUTURE_CHILDREN:
+                    orgsToShareUserWith.add(policyHoldingOrgId);
+                    orgsToShareUserWith.addAll(getOrganizationManager()
+                            .getChildOrganizationsIds(policyHoldingOrgId, false));
+                    break;
 
-            case NO_SHARING:
-                break;
+                case NO_SHARING:
+                    break;
 
-            default:
-                throw new OrganizationManagementClientException(
-                        String.format(ERROR_CODE_INVALID_POLICY.getMessage(), policy.getPolicyName()),
-                        ERROR_CODE_INVALID_POLICY.getDescription(),
-                        ERROR_CODE_INVALID_POLICY.getCode());
+                default:
+                    throw new UserSharingMgtClientException(ERROR_CODE_INVALID_POLICY,
+                            String.format(ERROR_CODE_INVALID_POLICY.getMessage(), policy.getPolicyName()));
+            }
+        } catch (OrganizationManagementException e) {
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ORGS_TO_SHARE_USER_WITH);
         }
 
         return new ArrayList<>(orgsToShareUserWith);
@@ -904,31 +1068,91 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations,
-                                               String unsharingInitiatedOrgId)
-            throws UserSharingMgtServerException {
+                                               String unsharingInitiatedOrgId) {
 
         for (String associatedUserId : userIds.getIds()) {
-            try {
-                for (String organizationId : organizations) {
-
+            for (String organizationId : organizations) {
+                SharedResult sharedResult;
+                UserAssociation userAssociation =
+                        new UserAssociation(null, organizationId, associatedUserId, unsharingInitiatedOrgId,
+                                SharedType.SHARED);
+                try {
                     getOrganizationUserSharingService().unshareOrganizationUserInSharedOrganization(associatedUserId,
                             organizationId);
-
-                    //Delete resource sharing policy if it has been stored for future shares.
-                    deleteResourceSharingPolicyIfAny(organizationId, associatedUserId, unsharingInitiatedOrgId);
+                    SharedResult.StatusDetail statusDetail =
+                            new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                                    "User Unshared Successfully.");
+                    sharedResult =
+                            buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
+                                    statusDetail, null);
+                    deleteResourceSharingPolicyIfAny(organizationId, associatedUserId, unsharingInitiatedOrgId,
+                            sharedResult);
+                } catch (OrganizationManagementException e) {
+                    SharedResult.StatusDetail statusDetail =
+                            new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                                    "User selective unsharing failed.");
+                    SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+                    sharedResult =
+                            buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
+                                    statusDetail, errorDetail);
+                    sharedResults.add(sharedResult);
                 }
-            } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
         }
     }
 
     private void deleteResourceSharingPolicyIfAny(String organizationId, String associatedUserId,
-                                                  String unsharingInitiatedOrgId)
-            throws ResourceSharingPolicyMgtException {
+                                                  String unsharingInitiatedOrgId, SharedResult sharedResult) {
 
-        getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
-                organizationId, ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
+        try {
+            if (organizationId == null) {
+                getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
+                        ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
+            } else {
+                getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                        organizationId, ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
+            }
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                    sharedResult.getStatusDetail().getStatusMessage() +
+                            ". Resource sharing policy successfully removed, if applicable.");
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    SharedResult.SharingType.UNSHARE, null, statusDetail, null);
+            sharedResults.add(sharedResult);
+        } catch (ResourceSharingPolicyMgtException e) {
+            SharedResult.StatusDetail statusDetail = new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                    sharedResult.getStatusDetail().getStatusMessage() +
+                            ". Error occurred while deleting resource sharing policy.");
+            SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+            sharedResult = buildOrUpdateSharedResult(sharedResult, sharedResult.getUserAssociation(),
+                    sharedResult.getSharingType(), sharedResult.getRole(), statusDetail, errorDetail);
+            sharedResults.add(sharedResult);
+        }
+    }
+
+    private void generalUserUnshareByUserIds(UserIdList userIds, String unsharingInitiatedOrgId) {
+
+        for (String associatedUserId : userIds.getIds()) {
+            SharedResult sharedResult;
+            UserAssociation userAssociation = new UserAssociation(null, null, associatedUserId, unsharingInitiatedOrgId,
+                    SharedType.SHARED);
+            try {
+                getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
+                SharedResult.StatusDetail statusDetail =
+                        new SharedResult.StatusDetail(SharedResult.SharedStatus.SUCCESSFUL,
+                                "User Unshared Successfully.");
+                sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
+                        statusDetail, null);
+                deleteResourceSharingPolicyIfAny(null, associatedUserId, unsharingInitiatedOrgId, sharedResult);
+            } catch (OrganizationManagementException e) {
+                SharedResult.StatusDetail statusDetail =
+                        new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,
+                                "User general unsharing failed.");
+                SharedResult.ErrorDetail errorDetail = new SharedResult.ErrorDetail(e, RESULT_ERROR_FIX_SUGGESTION);
+                sharedResult = buildOrUpdateSharedResult(null, userAssociation, SharedResult.SharingType.UNSHARE, null,
+                        statusDetail, errorDetail);
+                sharedResults.add(sharedResult);
+            }
+        }
     }
 
     private String getOrganizationName(String organizationId) throws OrganizationManagementException {
@@ -936,25 +1160,31 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return getOrganizationManager().getOrganizationNameById(organizationId);
     }
 
+    private String getUserNameByUserID(String userId, String tenantDomain) throws IdentityRoleManagementException {
+
+        return userIDResolver.getNameByID(userId, tenantDomain);
+    }
+
     private String getRolesRef(String userId, String orgId) {
 
         return String.format(API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG, userId, orgId);
     }
 
-    private void generalUserUnshareByUserIds(UserIdList userIds, String unsharingInitiatedOrgId)
-            throws UserSharingMgtServerException {
+    private SharedResult buildOrUpdateSharedResult(SharedResult currentSharedResult, UserAssociation userAssociation,
+                                                   SharedResult.SharingType sharingType, RoleWithAudienceDO role,
+                                                   SharedResult.StatusDetail statusDetail,
+                                                   SharedResult.ErrorDetail errorDetail) {
 
-        for (String associatedUserId : userIds.getIds()) {
-            try {
-                getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
+        SharedResult.Builder builder =
+                (currentSharedResult != null) ? currentSharedResult.toBuilder() : new SharedResult.Builder();
 
-                //Delete resource sharing policy if it has been stored for future shares.
-                getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
-                        ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
-            } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
-            }
-        }
+        return builder.userAssociation(userAssociation)
+                .sharingType(sharingType)
+                .role(role)
+                .statusDetail(statusDetail)
+                .statusDetail(statusDetail)
+                .errorDetail(errorDetail)
+                .build();
     }
 
     //Validation methods.
@@ -1110,12 +1340,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
     }
 
-    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId) {
+    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId, String sharingInitiatedUsername) {
 
         try {
             String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharingInitiatedTenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharingInitiatedUsername);
         } catch (OrganizationManagementException e) {
             LOG.error("Error occurred while starting tenant flow from organization: " + sharingInitiatedOrgId, e);
         }
