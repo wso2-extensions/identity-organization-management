@@ -104,6 +104,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
             }
             try {
+                String parentOrgId = getOrganizationId();
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
@@ -112,7 +113,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                         .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                         .getUserId();
                 if (allowAssignConsoleAdministratorRole()) {
-                    assignUserToConsoleAppAdminRole(userId, tenantDomain);
+                    assignUserToConsoleAppAdminRole(userId, tenantDomain, parentOrgId);
                 }
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
@@ -141,7 +142,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
     }
 
-    private void assignUserToConsoleAppAdminRole(String userId, String tenantDomain)
+    private void assignUserToConsoleAppAdminRole(String userId, String tenantDomain, String parentOrgId)
             throws IdentityEventException {
 
         try {
@@ -154,7 +155,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             OrganizationUserSharingDataHolder.getInstance().getRoleManagementService()
                     .updateUserListOfRole(adminRoleId, Collections.singletonList(userId), Collections.emptyList(),
                             tenantDomain);
-            addEditRestrictionToOwner(adminRoleId, userId, tenantDomain);
+            addEditRestrictionToOwner(adminRoleId, userId, tenantDomain, parentOrgId);
         } catch (IdentityRoleManagementException e) {
             throw new IdentityEventException("An error occurred while assigning the user to the administrator role", e);
         } catch (IdentityApplicationManagementException e) {
@@ -174,7 +175,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
      * @throws UserSharingMgtException         User sharing management exception.
      * @throws IdentityRoleManagementException Identity role management exception.
      */
-    private void addEditRestrictionToOwner(String adminRoleId, String userId, String tenantDomain)
+    private void addEditRestrictionToOwner(String adminRoleId, String userId, String tenantDomain, String parentOrgId)
             throws UserSharingMgtException, IdentityRoleManagementException {
 
         String usernameWithDomain = userIDResolver.getNameByID(userId, tenantDomain);
@@ -182,7 +183,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
 
         getOrganizationUserSharingService().addEditRestrictionsForSharedUserRole(adminRoleId, username,
-                tenantDomain, domainName, EditOperation.DELETE, getOrganizationId());
+                tenantDomain, domainName, EditOperation.DELETE, parentOrgId);
     }
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {
