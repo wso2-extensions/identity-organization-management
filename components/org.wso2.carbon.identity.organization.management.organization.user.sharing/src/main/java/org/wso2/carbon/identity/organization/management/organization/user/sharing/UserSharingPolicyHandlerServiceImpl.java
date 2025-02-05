@@ -134,9 +134,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<SelectiveUserShareOrgDetailsDO> validOrganizations =
                 filterValidOrganizations(organizations, sharingInitiatedOrgId);
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(
-                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId),
+                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId,
+                                sharingInitiatedUsername),
                         EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective share processing.", ex);
@@ -154,8 +156,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         PolicyEnum policy = generalUserShareDO.getPolicy();
         List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the sharing logic asynchronously.
-        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId),
+        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId
+                                , sharingInitiatedUsername),
                         EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user share processing.", ex);
@@ -173,9 +177,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
         List<String> organizations = selectiveUserUnshareDO.getOrganizations();
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the unsharing logic asynchronously.
         CompletableFuture.runAsync(
-                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId), EXECUTOR)
+                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId,
+                                sharingInitiatedUsername),
+                        EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective unshare processing.", ex);
                     return null;
@@ -190,8 +197,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
 
+        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         // Run the unsharing logic asynchronously.
-        CompletableFuture.runAsync(() -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId), EXECUTOR)
+        CompletableFuture.runAsync(
+                        () -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId, sharingInitiatedUsername),
+                        EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user unshare processing.", ex);
                     return null;
@@ -277,10 +287,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
-                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedOrgId);
             sharedResults.clear();
             for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
                 for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
@@ -309,10 +320,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
-                                         List<String> roleIds, String sharingInitiatedOrgId) {
+                                         List<String> roleIds, String sharingInitiatedOrgId,
+                                         String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
             sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
@@ -339,10 +351,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
-                                             String sharingInitiatedOrgId) {
+                                             String sharingInitiatedOrgId, String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
             sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
@@ -368,10 +380,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUsername) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId);
+            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername);
             sharedResults.clear();
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
@@ -1327,12 +1340,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
     }
 
-    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId) {
+    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId, String sharingInitiatedUsername) {
 
         try {
             String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharingInitiatedTenantDomain, true);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharingInitiatedUsername);
         } catch (OrganizationManagementException e) {
             LOG.error("Error occurred while starting tenant flow from organization: " + sharingInitiatedOrgId, e);
         }
