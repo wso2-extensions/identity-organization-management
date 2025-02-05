@@ -72,6 +72,7 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -133,12 +134,21 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<SelectiveUserShareOrgDetailsDO> validOrganizations =
                 filterValidOrganizations(organizations, sharingInitiatedOrgId);
 
-        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        int sharingInitiatedTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+        // Capture thread-local properties before async execution
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         // Run the sharing logic asynchronously.
-        CompletableFuture.runAsync(
-                        () -> processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId,
-                                sharingInitiatedUsername, sharingInitiatedTenantId), EXECUTOR)
+        CompletableFuture.runAsync(() -> {
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId);
+                }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective share processing.", ex);
                     return null;
@@ -155,12 +165,21 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         PolicyEnum policy = generalUserShareDO.getPolicy();
         List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
 
-        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        int sharingInitiatedTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+        // Capture thread-local properties before async execution
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         // Run the sharing logic asynchronously.
-        CompletableFuture.runAsync(() -> processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId
-                                , sharingInitiatedUsername, sharingInitiatedTenantId),
-                        EXECUTOR)
+        CompletableFuture.runAsync(() -> {
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId);
+                }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user share processing.", ex);
                     return null;
@@ -177,13 +196,21 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
         List<String> organizations = selectiveUserUnshareDO.getOrganizations();
 
-        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        int sharingInitiatedTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+        // Capture thread-local properties before async execution
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         // Run the unsharing logic asynchronously.
-        CompletableFuture.runAsync(
-                        () -> processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId,
-                                sharingInitiatedUsername, sharingInitiatedTenantId),
-                        EXECUTOR)
+        CompletableFuture.runAsync(() -> {
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId);
+                }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective unshare processing.", ex);
                     return null;
@@ -198,13 +225,21 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
 
-        String sharingInitiatedUsername = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-        int sharingInitiatedTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+        // Capture thread-local properties before async execution
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         // Run the unsharing logic asynchronously.
-        CompletableFuture.runAsync(
-                        () -> processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId, sharingInitiatedUsername
-                                , sharingInitiatedTenantId),
-                        EXECUTOR)
+        CompletableFuture.runAsync(() -> {
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId);
+                }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user unshare processing.", ex);
                     return null;
@@ -290,11 +325,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> validOrganizations,
-                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
-                                           String sharingInitiatedUsername, int sharingInitiatedTenantId) {
+                                           Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername, sharingInitiatedTenantId);
-            IdentityUtil.threadLocalProperties.get().put("TenantNameFromContext", "carbon.super");
             for (SelectiveUserShareOrgDetailsDO organization : validOrganizations) {
                 populateSelectiveUserShareByCriteria(organization, userCriteria, sharingInitiatedOrgId);
             }
@@ -305,12 +338,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
-                                         List<String> roleIds, String sharingInitiatedOrgId,
-                                         String sharingInitiatedUsername, int sharingInitiatedTenantId) {
+                                         List<String> roleIds, String sharingInitiatedOrgId) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername, sharingInitiatedTenantId);
-            IdentityUtil.threadLocalProperties.get().put("TenantNameFromContext", "carbon.super");
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
@@ -339,12 +369,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
-                                             String sharingInitiatedOrgId, String sharingInitiatedUsername,
-                                             int sharingInitiatedTenantId) {
+                                             String sharingInitiatedOrgId) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername, sharingInitiatedTenantId);
-            IdentityUtil.threadLocalProperties.get().put("TenantNameFromContext", "carbon.super");
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
@@ -372,12 +399,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId,
-                                           String sharingInitiatedUsername, int sharingInitiatedTenantId) {
+    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
 
         try {
-            startTenantFlowFromOrganization(sharingInitiatedOrgId, sharingInitiatedUsername, sharingInitiatedTenantId);
-            IdentityUtil.threadLocalProperties.get().put("TenantNameFromContext", "carbon.super");
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
                 String criterionKey = criterion.getKey();
                 UserCriteriaType criterionValues = criterion.getValue();
@@ -1133,17 +1157,19 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
     }
 
-    private void startTenantFlowFromOrganization(String sharingInitiatedOrgId, String sharingInitiatedUsername,
-                                                 int sharingInitiatedTenantId) {
+    /**
+     * Restores thread-local properties for async execution.
+     */
+    private void restoreThreadLocalContext(String tenantDomain, int tenantId, String username,
+                                           Map<String, Object> threadLocalProperties) {
+        PrivilegedCarbonContext.startTenantFlow();
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
 
-        try {
-            String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
-            PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharingInitiatedTenantDomain, true);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(sharingInitiatedTenantId);
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(sharingInitiatedUsername);
-        } catch (OrganizationManagementException e) {
-            LOG.error("Error occurred while starting tenant flow from organization: " + sharingInitiatedOrgId, e);
-        }
+        carbonContext.setTenantDomain(tenantDomain, true);
+        carbonContext.setTenantId(tenantId);
+        carbonContext.setUsername(username);
+
+        // Restore all thread-local properties
+        IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
     }
 }
