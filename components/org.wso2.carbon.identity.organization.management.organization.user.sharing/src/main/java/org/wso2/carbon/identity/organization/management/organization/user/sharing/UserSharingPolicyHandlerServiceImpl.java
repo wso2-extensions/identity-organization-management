@@ -134,13 +134,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<SelectiveUserShareOrgDetailsDO> validOrganizations =
                 filterValidOrganizations(organizations, sharingInitiatedOrgId);
 
-        // Capture thread-local properties before async execution
+        // Capture thread-local properties before async execution.
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String sharingInitiatedUsername = carbonContext.getUsername();
         int sharingInitiatedTenantId = carbonContext.getTenantId();
         String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
 
-        // Capture additional thread-local properties
+        // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Run the sharing logic asynchronously.
@@ -165,13 +165,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         PolicyEnum policy = generalUserShareDO.getPolicy();
         List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
 
-        // Capture thread-local properties before async execution
+        // Capture thread-local properties before async execution.
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String sharingInitiatedUsername = carbonContext.getUsername();
         int sharingInitiatedTenantId = carbonContext.getTenantId();
         String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
 
-        // Capture additional thread-local properties
+        // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Run the sharing logic asynchronously.
@@ -196,13 +196,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
         List<String> organizations = selectiveUserUnshareDO.getOrganizations();
 
-        // Capture thread-local properties before async execution
+        // Capture thread-local properties before async execution.
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String sharingInitiatedUsername = carbonContext.getUsername();
         int sharingInitiatedTenantId = carbonContext.getTenantId();
         String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
 
-        // Capture additional thread-local properties
+        // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Run the unsharing logic asynchronously.
@@ -225,13 +225,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
 
-        // Capture thread-local properties before async execution
+        // Capture thread-local properties before async execution.
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String sharingInitiatedUsername = carbonContext.getUsername();
         int sharingInitiatedTenantId = carbonContext.getTenantId();
         String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
 
-        // Capture additional thread-local properties
+        // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Run the unsharing logic asynchronously.
@@ -1162,6 +1162,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      */
     private void restoreThreadLocalContext(String tenantDomain, int tenantId, String username,
                                            Map<String, Object> threadLocalProperties) {
+
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
 
@@ -1169,7 +1170,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         carbonContext.setTenantId(tenantId);
         carbonContext.setUsername(username);
 
-        // Restore all thread-local properties
+        // Restore all thread-local properties.
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
     }
 }
