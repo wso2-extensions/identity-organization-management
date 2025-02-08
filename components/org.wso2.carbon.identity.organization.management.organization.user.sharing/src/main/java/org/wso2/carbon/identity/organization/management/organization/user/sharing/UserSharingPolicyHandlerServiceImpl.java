@@ -490,7 +490,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
-                if (!isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                if (isNotResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
                     LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
                     continue;
                 }
@@ -606,7 +606,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
-                if (!isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                if (isNotResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
                     LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
                     continue;
                 }
@@ -1018,7 +1018,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private boolean isResidentUserInOrg(String userId, String orgId) {
+    private boolean isNotResidentUserInOrg(String userId, String orgId) {
 
         try {
             String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
@@ -1026,10 +1026,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
             String associatedOrgId =
                     OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userId);
-            return associatedOrgId == null;
+            return associatedOrgId != null;
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is a resident user in the organization.", e);
-            return false;
+            return true;
         }
     }
 
