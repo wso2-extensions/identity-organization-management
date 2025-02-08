@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
+
 /**
  * Attribute based organization discovery handler registry. This class holds the supported discovery attribute keys.
  */
@@ -34,6 +36,9 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistry {
 
     private AttributeBasedOrganizationDiscoveryHandlerRegistry() {
 
+        // Add the already supported email domain based self sign up attribute key since we don't register it as
+        // an OSGi service.
+        supportedDiscoveryAttributeKeys.add(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE);
     }
 
     /**
