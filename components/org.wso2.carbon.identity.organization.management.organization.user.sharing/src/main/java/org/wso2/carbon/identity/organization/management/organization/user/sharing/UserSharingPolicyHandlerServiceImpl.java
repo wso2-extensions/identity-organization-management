@@ -53,6 +53,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -68,6 +69,10 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
@@ -108,6 +113,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
@@ -484,6 +490,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
+                if (!isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                    LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
+                    continue;
+                }
                 SelectiveUserShare selectiveUserShare = new SelectiveUserShare.Builder()
                         .withUserId(associatedUserId)
                         .withOrganizationId(organization.getOrganizationId())
@@ -596,6 +606,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
+                if (!isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                    LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
+                    continue;
+                }
                 GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
                         .withUserId(associatedUserId)
                         .withPolicy(policy)
@@ -1001,6 +1015,32 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
+        }
+    }
+
+    private boolean isResidentUserInOrg(String userID, String orgId) {
+
+        try {
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+            String associatedOrgId =
+                    OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID);
+            return associatedOrgId == null;
+        } catch (UserStoreException | OrganizationManagementException e) {
+            LOG.error("Error occurred while checking if the user is a resident user in the organization.", e);
+            return false;
+        }
+    }
+
+    private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
+
+        try {
+            RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
+            UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+            return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            throw new UserStoreException("Error occurred while retrieving the user store manager.", e);
         }
     }
 
