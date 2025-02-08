@@ -61,6 +61,8 @@ public class UserSharingConstants {
 
     public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
             "Skipping user share for organizations that are not immediate children: %s";
+    public static final String LOG_WARN_NON_RESIDENT_USER =
+            "Skipping user share for user: %s since the user is not managed by the sharing initiated org: %s";
 
     public static final String DEFAULT_PROFILE = "default";
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
