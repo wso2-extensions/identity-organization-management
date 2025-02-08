@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -163,6 +163,28 @@ public class OrganizationConfigManagerImplTest {
         } catch (OrganizationConfigClientException e) {
             Assert.assertEquals(e.getMessage(), "No organization discovery configuration found.");
         }
+    }
+
+    @Test(priority = 5)
+    public void testAddDiscoveryConfigurationWithCustomAttribute() throws Exception {
+
+        AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance().addSupportedDiscoveryAttributeKey("custom");
+        AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance().addSupportedDiscoveryAttributeKey(
+                "emailDomain");
+        List<ConfigProperty> configProperties = new ArrayList<>();
+        configProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, FALSE));
+        configProperties.add(new ConfigProperty("custom.enable", TRUE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(configProperties);
+
+        organizationConfigManagerImpl.addDiscoveryConfiguration(discoveryConfig);
+        List<ConfigProperty> returnedConfigProperties =
+                organizationConfigManagerImpl.getDiscoveryConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedConfigProperties.size(), 2);
+        Assert.assertEquals(returnedConfigProperties.get(0).getKey(), EMAIL_DOMAIN_ENABLE);
+        Assert.assertEquals(returnedConfigProperties.get(1).getKey(), "custom.enable");
+        Assert.assertEquals(returnedConfigProperties.get(0).getValue(), FALSE);
+        Assert.assertEquals(returnedConfigProperties.get(1).getValue(), TRUE);
     }
 
     @AfterClass
