@@ -1018,14 +1018,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    private boolean isResidentUserInOrg(String userID, String orgId) {
+    private boolean isResidentUserInOrg(String userId, String orgId) {
 
         try {
             String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
             String associatedOrgId =
-                    OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID);
+                    OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userId);
             return associatedOrgId == null;
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is a resident user in the organization.", e);
