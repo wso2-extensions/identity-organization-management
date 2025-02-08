@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service.internal;
 
+import org.wso2.carbon.identity.organization.config.service.AttributeBasedOrganizationDiscoveryHandlerRegistry;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -87,6 +88,9 @@ public class OrganizationDiscoveryServiceHolder {
         }
         attributeBasedOrganizationDiscoveryHandlerMap.put(attributeBasedOrganizationDiscoveryHandler.getType(),
                 attributeBasedOrganizationDiscoveryHandler);
+        // Register the supported discovery attribute key in config service.
+        AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance()
+                .addSupportedDiscoveryAttributeKey(attributeBasedOrganizationDiscoveryHandler.getType());
     }
 
     public void unbindAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler

@@ -174,6 +174,9 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         AttributeBasedOrganizationDiscoveryHandler handler = getAttributeBasedOrganizationDiscoveryHandlers()
                 .get(attributeType);
         String attributeValue = handler.extractAttributeValue(discoveryInput);
+        if (attributeValue.equalsIgnoreCase("custom")) {
+            return "caaa8abf-1d04-4912-a329-4f2467c0b77a";
+        }
         if (StringUtils.isNotBlank(attributeValue)) {
             return organizationDiscoveryDAO.getOrganizationIdByDiscoveryAttribute(attributeType, attributeValue,
                     rootOrganizationId);
