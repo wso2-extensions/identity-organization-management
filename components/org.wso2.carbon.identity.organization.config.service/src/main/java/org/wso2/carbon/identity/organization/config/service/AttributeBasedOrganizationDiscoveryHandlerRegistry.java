@@ -28,7 +28,7 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
  */
 public class AttributeBasedOrganizationDiscoveryHandlerRegistry {
 
-    private static final AttributeBasedOrganizationDiscoveryHandlerRegistry instance = new
+    private static final AttributeBasedOrganizationDiscoveryHandlerRegistry INSTANCE = new
             AttributeBasedOrganizationDiscoveryHandlerRegistry();
     private static final String ENABLED_KEY = ".enable";
 
@@ -36,8 +36,8 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistry {
 
     private AttributeBasedOrganizationDiscoveryHandlerRegistry() {
 
-        // Add the already supported email domain based self sign up attribute key since we don't register it as
-        // an OSGi service.
+        /* Add the already supported email domain based self sign up attribute key since we don't register it as
+         an OSGi service.*/
         supportedDiscoveryAttributeKeys.add(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE);
     }
 
@@ -48,7 +48,7 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistry {
      */
     public static AttributeBasedOrganizationDiscoveryHandlerRegistry getInstance() {
 
-        return instance;
+        return INSTANCE;
     }
 
     /**

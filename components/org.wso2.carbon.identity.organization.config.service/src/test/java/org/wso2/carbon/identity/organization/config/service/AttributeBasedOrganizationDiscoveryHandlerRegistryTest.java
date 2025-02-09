@@ -33,16 +33,19 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistryTest {
 
     @BeforeMethod
     public void setUp() {
+
         registry = AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance();
     }
 
     @Test
     public void testGetInstance() {
+
         Assert.assertNotNull(registry, "Registry instance should not be null");
     }
 
     @Test
     public void testGetSupportedDiscoveryAttributeKeys() {
+
         List<String> supportedKeys = registry.getSupportedDiscoveryAttributeKeys();
         Assert.assertNotNull(supportedKeys, "Supported keys list should not be null");
         Assert.assertTrue(supportedKeys.contains("emailDomainBasedSelfSignup.enable"), 
@@ -51,6 +54,7 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistryTest {
 
     @Test
     public void testAddSupportedDiscoveryAttributeKey() {
+
         String newKey = "customAttribute";
         registry.addSupportedDiscoveryAttributeKey(newKey);
         List<String> supportedKeys = registry.getSupportedDiscoveryAttributeKeys();

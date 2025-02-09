@@ -206,8 +206,8 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             return true;
         }
 
-        // Now check if the key is registered in the registry by Iterating through registered discovery attribute keys
-        // from AttributeBasedOrganizationDiscoveryHandlerRegistry.
+        /* Now check if the key is registered in the registry by Iterating through registered discovery attribute keys
+         from AttributeBasedOrganizationDiscoveryHandlerRegistry.*/
         List<String> supportedDiscoveryAttributeKeys = AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance()
                 .getSupportedDiscoveryAttributeKeys();
         return configProperties.stream().allMatch(property -> supportedDiscoveryAttributeKeys.contains(
