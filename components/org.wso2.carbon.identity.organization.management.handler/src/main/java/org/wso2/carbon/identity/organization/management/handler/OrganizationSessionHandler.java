@@ -21,6 +21,8 @@ package org.wso2.carbon.identity.organization.management.handler;
 import com.nimbusds.jose.util.JSONObjectUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorStateInfo;
 import org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
@@ -51,6 +53,8 @@ import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCClaims.ID
  */
 public class OrganizationSessionHandler extends AbstractEventHandler {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationSessionHandler.class);
+
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
@@ -61,8 +65,7 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         }
     }
 
-    private void handleOrgSessionTerminate(Map<String, Object> eventProperties)
-            throws IdentityEventException {
+    private void handleOrgSessionTerminate(Map<String, Object> eventProperties) {
 
         try {
             UserSessionManagementService userSessionManagementService = OrganizationManagementHandlerDataHolder
@@ -107,11 +110,13 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                 userSessionManagementService.terminateSessionBySessionId(userId, sessionId);
             }
         } catch (SessionManagementException | UserIdNotFoundException e) {
-            throw new IdentityEventException("Error while terminating the org session.", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while terminating the org session.", e);
+            }
         }
     }
 
-    private String getSessionId(String idToken) throws IdentityEventException {
+    private String getSessionId(String idToken) {
 
         String base64Body = idToken.split("\\.")[1];
         byte[] decoded = Base64.getDecoder().decode(base64Body);
@@ -124,7 +129,9 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                 }
             }
         } catch (ParseException e) {
-            throw new IdentityEventException("Error while parsing the JWT token.", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while parsing the ID token.", e);
+            }
         }
         return null;
     }
