@@ -97,6 +97,7 @@ import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.MYAC
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DEFAULT_BACKCHANNEL_LOGOUT_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
@@ -612,7 +613,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             OAuthConsumerAppDTO createdOAuthApp;
             try {
                 String callbackUrl = resolveCallbackURL(ownerOrgId);
-                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+                String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
+                createdOAuthApp = createOAuthApplication(
+                        mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
                 if (isOAuthClientExistsError(e)) {
                     createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
@@ -810,7 +813,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             // Retry the app creation.
             String callbackUrl = resolveCallbackURL(ownerOrgId);
-            return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+            String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
+            return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
@@ -841,7 +845,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
     }
 
-    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String callbackUrl)
+    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String callbackUrl, String backChannelUrl)
             throws IdentityOAuthAdminException {
 
         OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
@@ -850,6 +854,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setOAuthVersion(OAuthConstants.OAuthVersions.VERSION_2);
         consumerApp.setGrantTypes(OAuthConstants.GrantTypes.AUTHORIZATION_CODE);
         consumerApp.setCallbackUrl(callbackUrl);
+        consumerApp.setBackChannelLogoutUrl(backChannelUrl);
         consumerApp.setApplicationName(mainAppName);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
@@ -864,6 +869,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String context =
                 String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
         return ServiceURLBuilder.create().addPath(context).setTenant(tenantDomain).build().getAbsolutePublicURL();
+    }
+
+    private String resolveBackChannelLogoutURL(String ownerOrgId)
+            throws URLBuilderException, OrganizationManagementException {
+
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
+        if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            return ServiceURLBuilder.create()
+                    .addPath(DEFAULT_BACKCHANNEL_LOGOUT_URL)
+                    .setTenant(tenantDomain).build().getAbsolutePublicURL();
+        }
+        String context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain)
+                + DEFAULT_BACKCHANNEL_LOGOUT_URL;
+        return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
     }
 
     private void removeOAuthApplication(OAuthConsumerAppDTO oauthApp)

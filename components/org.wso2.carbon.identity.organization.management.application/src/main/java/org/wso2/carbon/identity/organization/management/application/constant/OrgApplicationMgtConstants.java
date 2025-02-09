@@ -65,4 +65,5 @@ public class OrgApplicationMgtConstants {
     public static final String EVENT_PRE_GET_SHARED_APPLICATIONS = "PRE_GET_SHARED_APPLICATIONS";
     public static final String EVENT_POST_GET_SHARED_APPLICATIONS = "POST_GET_SHARED_APPLICATIONS";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
+    public static final String DEFAULT_BACKCHANNEL_LOGOUT_URL = "/identity/oidc/slo";
 }
