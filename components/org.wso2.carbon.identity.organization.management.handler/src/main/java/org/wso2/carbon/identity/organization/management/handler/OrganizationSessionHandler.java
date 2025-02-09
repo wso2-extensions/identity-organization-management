@@ -90,6 +90,7 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                         String idTokenHint = oidcStateInfo.getIdTokenHint();
                         // Resolve session ID by `isk` claim in ID token hint.
                         sessionId = getSessionId(idTokenHint);
+                        break;
                     }
                 }
             }
