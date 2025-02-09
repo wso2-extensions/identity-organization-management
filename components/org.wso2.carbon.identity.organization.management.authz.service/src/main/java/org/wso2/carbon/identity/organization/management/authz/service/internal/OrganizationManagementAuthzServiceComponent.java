@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2022-2025, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,15 +20,12 @@ package org.wso2.carbon.identity.organization.management.authz.service.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.authz.service.handler.AuthorizationHandler;
-import org.wso2.carbon.identity.organization.management.authz.service.handler.OrganizationManagementAuthzHandler;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -44,9 +41,6 @@ public class OrganizationManagementAuthzServiceComponent {
     @Activate
     protected void activate(ComponentContext componentContext) {
 
-        BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(AuthorizationHandler.class.getName(), new OrganizationManagementAuthzHandler(),
-                null);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Organization management authorization service component activated successfully.");
         }
