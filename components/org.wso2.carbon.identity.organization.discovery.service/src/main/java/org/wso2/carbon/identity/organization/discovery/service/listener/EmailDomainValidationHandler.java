@@ -58,9 +58,9 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ErrorMessages.ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ErrorMessages.INVALID_EMAIL_DOMAIN;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ErrorMessages.NO_EMAIL_ATTRIBUTE_FOUND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_EMAIL_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_NO_EMAIL_ATTRIBUTE_FOUND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES;
 
 /**
  * Responsible for validating the email domain of the user during the authentication flow.
@@ -163,13 +163,13 @@ public class EmailDomainValidationHandler extends AbstractPostAuthnHandler {
                         LOG.debug("Email address not found or is not in the correct format." +
                                 " Email domain validation failed for tenant: " + context.getTenantDomain());
                     }
-                    throw new PostAuthenticationFailedException(NO_EMAIL_ATTRIBUTE_FOUND.getCode(),
-                            NO_EMAIL_ATTRIBUTE_FOUND.getMessage());
+                    throw new PostAuthenticationFailedException(ERROR_CODE_NO_EMAIL_ATTRIBUTE_FOUND.getCode(),
+                            ERROR_CODE_NO_EMAIL_ATTRIBUTE_FOUND.getDescription());
                 }
 
                 if (!isValidEmailDomain(context, emailDomain.get())) {
-                    throw new PostAuthenticationFailedException(INVALID_EMAIL_DOMAIN.getCode(),
-                            String.format(INVALID_EMAIL_DOMAIN.getMessage(), context.getTenantDomain()));
+                    throw new PostAuthenticationFailedException(ERROR_CODE_INVALID_EMAIL_DOMAIN.getCode(),
+                            String.format(ERROR_CODE_INVALID_EMAIL_DOMAIN.getDescription(), context.getTenantDomain()));
                 }
             }
         }
@@ -220,7 +220,7 @@ public class EmailDomainValidationHandler extends AbstractPostAuthnHandler {
             LOG.error("Error while retrieving organization discovery attributes for tenant: " +
                     context.getTenantDomain(), e);
             throw new PostAuthenticationFailedException(ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES.getCode(),
-                    String.format(ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES.getMessage(),
+                    String.format(ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES.getDescription(),
                             context.getTenantDomain()), e);
         }
         return true;
