@@ -147,6 +147,7 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.central.log.mgt.*; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.recovery.*; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*; version="${carbon.identity.package.import.version.range}",
