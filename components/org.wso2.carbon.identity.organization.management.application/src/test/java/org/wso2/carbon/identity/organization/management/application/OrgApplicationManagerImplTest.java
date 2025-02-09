@@ -399,7 +399,8 @@ public class OrgApplicationManagerImplTest {
             // Get Domain Qualified Username.
             when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
                     .thenReturn(organizationUserResidentResolverService);
-            when(organizationUserResidentResolverService.resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId))
+            when(organizationUserResidentResolverService
+                    .resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId))
                     .thenReturn(Optional.of(mockUser));
             when(mockUser.getDomainQualifiedUsername()).thenReturn(domainQualifiedUserName);
             when(mainApplication.getOwner()).thenReturn(mockAppOwner);
