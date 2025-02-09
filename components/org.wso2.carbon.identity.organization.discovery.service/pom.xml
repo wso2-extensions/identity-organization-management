@@ -51,6 +51,14 @@
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.claim.metadata.mgt</artifactId>
+        </dependency>
 
         <!--Test Dependencies-->
         <dependency>
@@ -116,6 +124,16 @@
                             org.wso2.carbon.identity.organization.management.service.filter;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.model;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.handler.request; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.context; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.claim.metadata.mgt; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.claim.metadata.mgt.exception; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.user.core;version="${carbon.kernel.package.import.version.range}",

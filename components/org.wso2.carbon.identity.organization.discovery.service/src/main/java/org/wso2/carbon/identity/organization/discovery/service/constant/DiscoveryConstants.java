@@ -52,4 +52,51 @@ public class DiscoveryConstants {
         attributeMap.put(ORGANIZATION_NAME, VIEW_NAME_COLUMN);
         ATTRIBUTE_COLUMN_MAP = Collections.unmodifiableMap(attributeMap);
     }
+
+    /**
+     * Enum for error messages related to organization discovery.
+     */
+    public enum ErrorMessages {
+
+        ERROR_WHILE_RETRIEVING_ORG_DISCOVERY_ATTRIBUTES("80032", "Error while retrieving organization discovery "
+                + "attributes for tenantDomain: %s"),
+        INVALID_EMAIL_DOMAIN("80033",
+                "Email domain resolved from the authenticated federated IDP is not mapped to the organization: %s"),
+        NO_EMAIL_ATTRIBUTE_FOUND("80034", "No email attribute returned by the authenticated federated IDP");
+
+        private final String code;
+        private final String message;
+
+        /**
+         * Create an Error Message.
+         *
+         * @param code    Relevant error code.
+         * @param message Relevant error message.
+         */
+        ErrorMessages(String code, String message) {
+
+            this.code = code;
+            this.message = message;
+        }
+
+        /**
+         * To get the code of specific error.
+         *
+         * @return Error code.
+         */
+        public String getCode() {
+
+            return code;
+        }
+
+        /**
+         * To get the message of specific error.
+         *
+         * @return Error message.
+         */
+        public String getMessage() {
+
+            return message;
+        }
+    }
 }
