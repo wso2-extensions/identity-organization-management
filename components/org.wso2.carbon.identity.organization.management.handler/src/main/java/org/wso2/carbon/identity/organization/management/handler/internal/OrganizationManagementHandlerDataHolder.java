@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.handler.internal;
 
+import org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
@@ -43,6 +44,7 @@ public class OrganizationManagementHandlerDataHolder {
     private ApplicationManagementService applicationManagementService;
     private RealmService realmService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
+    private UserSessionManagementService userSessionManagementService;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -209,6 +211,26 @@ public class OrganizationManagementHandlerDataHolder {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Get {@link UserSessionManagementService}.
+     *
+     * @return UserSessionManagementService {@link UserSessionManagementService}.
+     */
+    public UserSessionManagementService getUserSessionManagementService() {
+
+        return userSessionManagementService;
+    }
+
+    /**
+     * Set {@link UserSessionManagementService}.
+     *
+     * @param userSessionManagementService Instance of {@link UserSessionManagementService}.
+     */
+    public void setUserSessionManagementService(UserSessionManagementService userSessionManagementService) {
+
+        this.userSessionManagementService = userSessionManagementService;
     }
 }
 

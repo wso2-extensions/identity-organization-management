@@ -81,6 +81,16 @@
                 <artifactId>pax-logging-api</artifactId>
                 <version>${pax.logging.api.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.orbit.com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbusds.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>${json-smart.version}</version>
+            </dependency>
 
             <!-- Kernel Dependencies -->
             <dependency>
@@ -250,6 +260,11 @@
                 <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth</artifactId>
                 <version>${identity.inbound.auth.oauth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.outbound.auth.oidc</groupId>
+                <artifactId>org.wso2.carbon.identity.application.authenticator.oidc</artifactId>
+                <version>${identity.outbound.auth.oidc.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon</groupId>
@@ -557,6 +572,11 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
 
+        <nimbusds.version>7.3.0.wso2v1</nimbusds.version>
+        <nimbusds.osgi.version.range>[7.3.0,8.0.0)</nimbusds.osgi.version.range>
+        <json-smart.version>2.4.9</json-smart.version>
+        <net.minidev.json.imp.pkg.version.range>[2.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
+
         <identity.organization.management.exp.pkg.version>${project.version}
         </identity.organization.management.exp.pkg.version>
         <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
@@ -578,8 +598,8 @@
         <identity.extension.utils.import.version.range>[1.0.8, 2.0.0)</identity.extension.utils.import.version.range>
         <identity.inbound.auth.oauth.version>7.0.155</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.import.version.range>[6.11.66, 8.0.0)</identity.inbound.auth.oauth.import.version.range>
-        <identity.outbound.auth.oidc.version>5.7.2</identity.outbound.auth.oidc.version>
-        <identity.outbound.auth.oidc.import.version.range>[5.7.2, 5.8.0)</identity.outbound.auth.oidc.import.version.range>
+        <identity.outbound.auth.oidc.version>5.12.15</identity.outbound.auth.oidc.version>
+        <identity.outbound.auth.oidc.import.version.range>[5.7.2, 6.0.0)</identity.outbound.auth.oidc.import.version.range>
         <org.wso2.carbon.identity.governance.version>1.8.39</org.wso2.carbon.identity.governance.version>
         <identity.governance.imp.pkg.version.range>[1.0.0,3.0.0)</identity.governance.imp.pkg.version.range>
 
