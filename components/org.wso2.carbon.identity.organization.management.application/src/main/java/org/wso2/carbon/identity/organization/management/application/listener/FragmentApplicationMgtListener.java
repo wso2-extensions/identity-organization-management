@@ -185,7 +185,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         /* If the application is a fragment application, only certain configurations are allowed to be updated since
         the organization login authenticator needs some configurations unchanged. Hence, the listener will override
         any configs changes that are required for organization login. */
-        if (isFragmentApp(existingApplication)) {
+        if (existingApplication != null && Arrays.stream(existingApplication.getSpProperties())
+                .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
             LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
@@ -261,7 +262,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                             String tenantDomain) throws IdentityApplicationManagementException {
 
         // If the application is a shared application, updates to the application are allowed
-        if (isFragmentApp(serviceProvider)) {
+        if (serviceProvider != null && Arrays.stream(serviceProvider.getSpProperties())
+                .anyMatch(p -> IS_FRAGMENT_APP.equalsIgnoreCase(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             Optional<MainApplicationDO> mainApplicationDO;
             try {
                 String sharedOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -321,50 +323,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         return super.doPostGetServiceProvider(serviceProvider, applicationName, tenantDomain);
-    }
-
-    /**
-     * If the provided application is a shared app and the main application is set as a discoverable app,
-     * inherit that configuration.
-     *
-     * @param serviceProvider The service provider.
-     * @param tenantDomain    The tenant domain.
-     * @return True if the operation is successful.
-     */
-    @Override
-    public boolean doPostGetApplicationWithRequiredAttributes(ServiceProvider serviceProvider, String tenantDomain)
-            throws IdentityApplicationManagementException {
-
-        try {
-            if (!OrganizationManagementUtil.isOrganization(tenantDomain) || !isFragmentApp(serviceProvider)) {
-                return true;
-            }
-            Optional<MainApplicationDO> mainApplicationDO;
-            String sharedOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-            mainApplicationDO = getOrgApplicationMgtDAO()
-                    .getMainApplication(serviceProvider.getApplicationResourceId(), sharedOrgId);
-            if (mainApplicationDO.isPresent()) {
-                String mainApplicationTenantDomain = getOrganizationManager().resolveTenantDomain(
-                        mainApplicationDO.get().getOrganizationId());
-                ServiceProvider mainApplication = getApplicationByResourceId(
-                        mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
-                inheritDiscoverabilityProperty(mainApplication, serviceProvider);
-                if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
-                    serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
-                }
-            }
-        } catch (OrganizationManagementException e) {
-            throw new IdentityApplicationManagementException(
-                    "Error while retrieving the fragment application details.", e);
-        }
-        return true;
-    }
-
-    private boolean isFragmentApp(ServiceProvider serviceProvider) {
-
-        return serviceProvider != null && Arrays.stream(serviceProvider.getSpProperties()).anyMatch(
-                property -> IS_FRAGMENT_APP.equalsIgnoreCase(property.getName()) &&
-                        Boolean.parseBoolean(property.getValue()));
     }
 
     private void inheritDiscoverabilityProperty(ServiceProvider mainApplication, ServiceProvider sharedApplication) {
