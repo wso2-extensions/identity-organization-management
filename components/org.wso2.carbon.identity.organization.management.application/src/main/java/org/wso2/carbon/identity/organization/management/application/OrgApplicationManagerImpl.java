@@ -93,11 +93,11 @@ import static org.wso2.carbon.identity.application.authentication.framework.util
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.DEFAULT_BACKCHANNEL_LOGOUT_URL;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.MYACCOUNT_PORTAL_PATH;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DEFAULT_BACKCHANNEL_LOGOUT_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
