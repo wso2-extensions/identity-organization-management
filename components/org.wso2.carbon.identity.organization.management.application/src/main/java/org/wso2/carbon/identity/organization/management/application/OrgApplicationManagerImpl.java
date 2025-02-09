@@ -647,7 +647,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             If the sharing main application is Console, Create the shared admin user in shared organization
             and assign the admin role.
         */
-        if (mainApplication.getApplicationName().equals("Console")) {
+        if ("Console".equals(mainApplication.getApplicationName())) {
             fireOrganizationCreatorSharingEvent(sharedOrgId);
         }
     }
