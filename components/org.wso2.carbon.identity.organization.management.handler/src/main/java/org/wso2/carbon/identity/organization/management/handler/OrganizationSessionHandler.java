@@ -83,7 +83,7 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
             }
             String sessionId = null;
             for (AuthenticatorConfig authenticator : authenticators) {
-                if (authenticator.getName().equals(FrameworkConstants.ORGANIZATION_AUTHENTICATOR)) {
+                if (FrameworkConstants.ORGANIZATION_AUTHENTICATOR.equals(authenticator.getName())) {
                     AuthenticatorStateInfo authenticatorStateInfo = authenticator.getAuthenticatorStateInfo();
                     if (authenticatorStateInfo instanceof OIDCStateInfo) {
                         OIDCStateInfo oidcStateInfo = (OIDCStateInfo) authenticatorStateInfo;
