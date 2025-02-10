@@ -624,7 +624,7 @@
 
         <mockito-core.version>5.3.1</mockito-core.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
-        <testng.version>6.9.10</testng.version>
+        <testng.version>7.10.1</testng.version>
         <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
         <h2database.version>2.2.224</h2database.version>
         <org.wso2.carbon.tenant.mgt.version>4.11.30</org.wso2.carbon.tenant.mgt.version>
