@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -34,6 +35,7 @@ import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
+import org.wso2.carbon.identity.organization.management.handler.OrganizationSessionHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharingPolicyCleanUpHandler;
 import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
@@ -67,6 +69,7 @@ public class OrganizationManagementHandlerServiceComponent {
             bundleContext.registerService(AbstractEventHandler.class, new SharedRoleMgtHandler(), null);
             bundleContext.registerService(ApplicationMgtListener.class.getName(), new SharedRoleMgtListener(), null);
             bundleContext.registerService(AbstractEventHandler.class, new SharingPolicyCleanUpHandler(), null);
+            bundleContext.registerService(AbstractEventHandler.class, new OrganizationSessionHandler(), null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);
@@ -212,5 +215,25 @@ public class OrganizationManagementHandlerServiceComponent {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         OrganizationManagementHandlerDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService",
+            service = org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetUserSessionManagementService"
+    )
+    protected void setUserSessionManagementService(UserSessionManagementService userSessionManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setUserSessionManagementService(
+                userSessionManagementService);
+        LOG.debug("UserSessionManagementService set in OrganizationManagementHandlerService bundle.");
+    }
+
+    protected void unsetUserSessionManagementService(UserSessionManagementService userSessionManagementService) {
+
+        OrganizationManagementHandlerDataHolder.getInstance().setUserSessionManagementService(null);
+        LOG.debug("UserSessionManagementService unset in OrganizationManagementHandlerService bundle.");
     }
 }
