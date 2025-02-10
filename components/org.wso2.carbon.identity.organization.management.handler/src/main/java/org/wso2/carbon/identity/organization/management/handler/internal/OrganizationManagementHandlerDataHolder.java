@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.handler.internal;
 
+import org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
@@ -43,6 +44,7 @@ public class OrganizationManagementHandlerDataHolder {
     private ApplicationManagementService applicationManagementService;
     private RealmService realmService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
+    private UserSessionManagementService userSessionManagementService;
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
@@ -209,6 +211,26 @@ public class OrganizationManagementHandlerDataHolder {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Get {@link UserSessionManagementService}.
+     *
+     * @return UserSessionManagementService {@link UserSessionManagementService}.
+     */
+    public UserSessionManagementService getUserSessionManagementService() {
+
+        return userSessionManagementService;
+    }
+
+    /**
+     * Set {@link UserSessionManagementService}.
+     *
+     * @param userSessionManagementService Instance of {@link UserSessionManagementService}.
+     */
+    public void setUserSessionManagementService(UserSessionManagementService userSessionManagementService) {
+
+        this.userSessionManagementService = userSessionManagementService;
     }
 }
 

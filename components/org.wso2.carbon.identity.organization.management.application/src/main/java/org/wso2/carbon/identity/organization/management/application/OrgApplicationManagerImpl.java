@@ -93,6 +93,7 @@ import static org.wso2.carbon.identity.application.authentication.framework.util
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.DEFAULT_BACKCHANNEL_LOGOUT_URL;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.MYACCOUNT_PORTAL_PATH;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
@@ -502,15 +503,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 authSteps = defaultAuthenticationConfig.getAuthenticationSteps();
             }
             // Change the authType to flow, since we are adding organization login authenticator.
-            LocalAndOutboundAuthenticationConfig tempOutboundAuthenticationConfig =
-                    new LocalAndOutboundAuthenticationConfig();
-            tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
-                    .isUseUserstoreDomainInLocalSubjectIdentifier());
-            tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
-                    .isUseUserstoreDomainInLocalSubjectIdentifier());
-            tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
-            tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
-            outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
             outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
         }
 
@@ -621,7 +613,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             OAuthConsumerAppDTO createdOAuthApp;
             try {
                 String callbackUrl = resolveCallbackURL(ownerOrgId);
-                createdOAuthApp = createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+                String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
+                createdOAuthApp = createOAuthApplication(
+                        mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
             } catch (URLBuilderException | IdentityOAuthAdminException e) {
                 if (isOAuthClientExistsError(e)) {
                     createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
@@ -653,7 +647,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             If the sharing main application is Console, Create the shared admin user in shared organization
             and assign the admin role.
         */
-        if (mainApplication.getApplicationName().equals("Console")) {
+        if ("Console".equals(mainApplication.getApplicationName())) {
             fireOrganizationCreatorSharingEvent(sharedOrgId);
         }
     }
@@ -819,7 +813,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             // Retry the app creation.
             String callbackUrl = resolveCallbackURL(ownerOrgId);
-            return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl);
+            String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
+            return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
@@ -850,7 +845,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOrgApplicationMgtDAO().getSharedApplicationResourceId(mainAppId, ownerOrgId, sharedOrgId);
     }
 
-    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String callbackUrl)
+    private OAuthConsumerAppDTO createOAuthApplication(String mainAppName, String callbackUrl, String backChannelUrl)
             throws IdentityOAuthAdminException {
 
         OAuthConsumerAppDTO consumerApp = new OAuthConsumerAppDTO();
@@ -859,6 +854,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setOAuthVersion(OAuthConstants.OAuthVersions.VERSION_2);
         consumerApp.setGrantTypes(OAuthConstants.GrantTypes.AUTHORIZATION_CODE);
         consumerApp.setCallbackUrl(callbackUrl);
+        consumerApp.setBackChannelLogoutUrl(backChannelUrl);
         consumerApp.setApplicationName(mainAppName);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
@@ -873,6 +869,20 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String context =
                 String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
         return ServiceURLBuilder.create().addPath(context).setTenant(tenantDomain).build().getAbsolutePublicURL();
+    }
+
+    private String resolveBackChannelLogoutURL(String ownerOrgId)
+            throws URLBuilderException, OrganizationManagementException {
+
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
+        if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+            return ServiceURLBuilder.create()
+                    .addPath(DEFAULT_BACKCHANNEL_LOGOUT_URL)
+                    .setTenant(tenantDomain).build().getAbsolutePublicURL();
+        }
+        String context = String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain)
+                + DEFAULT_BACKCHANNEL_LOGOUT_URL;
+        return ServiceURLBuilder.create().addPath(context).build().getAbsolutePublicURL();
     }
 
     private void removeOAuthApplication(OAuthConsumerAppDTO oauthApp)

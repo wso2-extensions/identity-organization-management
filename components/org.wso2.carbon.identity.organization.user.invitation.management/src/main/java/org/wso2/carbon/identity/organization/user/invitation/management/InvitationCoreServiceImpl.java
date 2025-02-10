@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -244,7 +245,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
 
                     String userId = getInvitedUserId(invitation);
                     getOrganizationUserSharingService().shareOrganizationUser(invitedOrganizationId, userId,
-                            invitation.getUserOrganizationId());
+                            invitation.getUserOrganizationId(), SharedType.INVITED);
                     String associatedUserId = getOrganizationUserSharingService()
                             .getUserAssociationOfAssociatedUserByOrgId(userId,
                                     invitedOrganizationId).getUserId();

@@ -414,6 +414,64 @@ public class SharedUserOperationEventListenerTest {
         }
     }
 
+    @DataProvider(name = "claimValuesForSharedUser")
+    public Object[][] claimValuesForSharedUser() {
+
+        Map<String, String> claimValuesWithOutCustomClaim = new HashMap<>();
+        claimValuesWithOutCustomClaim.put(GIVEN_NAME_CLAIM, "John");
+        claimValuesWithOutCustomClaim.put(GROUPS_CLAIM, "group1,group2");
+
+        Map<String, String> claimValuesWithCustomClaim = new HashMap<>();
+        claimValuesWithCustomClaim.put(GIVEN_NAME_CLAIM, StringUtils.EMPTY);
+        claimValuesWithCustomClaim.put(GROUPS_CLAIM, "group1,group2");
+        claimValuesWithCustomClaim.put(CUSTOM_CLAIM_1, "value1");
+
+        return new Object[][]{
+                /*
+                Only groups claim will be returned, because no value resolved from origin for
+                given name and custom claim.
+                 */
+                {claimValuesWithOutCustomClaim, null, 1},
+                /*
+                 Only groups claim and custom claim will be returned, because no value resolved from origin
+                 for given name.
+                 */
+                {claimValuesWithCustomClaim, "value1", 2},
+        };
+    }
+
+    @Test(dataProvider = "claimValuesForSharedUser")
+    public void testDoPostGetUserClaimValuesWithIDWithUnResolvedClaims(Map<String, String> claimValues,
+                                                                       String resolvedValueForCustomClaim,
+                                                                       int claimValuesAtTheEnd) throws Exception {
+
+        setUpClaims();
+        setUpUserSharing();
+        mockCarbonContextForTenant(L1_ORG_TENANT_DOMAIN, L1_ORG_ID, privilegedCarbonContext);
+        mockOrgIdResolverByTenantDomain();
+        organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
+                .thenReturn(true);
+        identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(tenantUserRealm);
+        when(tenantUserRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(orgResourceResolverService.getResourcesFromOrgHierarchy(anyString(), any(), any())).thenReturn(
+                resolvedValueForCustomClaim);
+        String[] claimsSet = {GIVEN_NAME_CLAIM, GROUPS_CLAIM, CUSTOM_CLAIM_1};
+
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockListenerEnabledStatus(true, true, identityUtil);
+            SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
+            boolean listenerStatus =
+                    sharedUserOperationEventListener.doPostGetUserClaimValuesWithID(SHARED_USER_OF_USER_1_IN_L1_ORG,
+                            claimsSet, DEFAULT_PROFILE,
+                            claimValues, userStoreManager);
+            verify(orgResourceResolverService, times(1)).getResourcesFromOrgHierarchy(
+                    anyString(), any(), any());
+            assertEquals(claimValues.size(), claimValuesAtTheEnd);
+            assertTrue(listenerStatus);
+        }
+    }
+
     @DataProvider(name = "dataProviderForTestDoPostGetUsersClaimValuesWithID")
     public Object[][] dataProviderForTestDoPostGetUsersClaimValuesWithID() {
 

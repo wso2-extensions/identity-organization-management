@@ -410,8 +410,10 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             for (BasicOrganization organization : childOrganizations) {
                 String sharedOrganizationTenantDomain = getOrganizationManager().
                         resolveTenantDomain(organization.getId());
-                getClaimMetadataManagementService().addClaimDialect(
-                        new ClaimDialect(claimDialectURI), sharedOrganizationTenantDomain);
+                if (!isDialectExists(claimDialectURI, sharedOrganizationTenantDomain)) {
+                    getClaimMetadataManagementService().addClaimDialect(
+                            new ClaimDialect(claimDialectURI), sharedOrganizationTenantDomain);
+                }
             }
         } catch (OrganizationManagementException e) {
             // This is to handle the scenario where the tenant is not modeled as an organization.

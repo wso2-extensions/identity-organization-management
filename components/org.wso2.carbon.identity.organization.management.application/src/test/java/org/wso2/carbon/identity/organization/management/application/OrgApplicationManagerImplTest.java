@@ -19,22 +19,42 @@
 package org.wso2.carbon.identity.organization.management.application;
 
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.base.CarbonBaseConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.core.ServiceURL;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
+import org.wso2.carbon.identity.core.URLBuilderException;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
+import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
+import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.user.api.RealmConfiguration;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.User;
+import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,9 +64,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
@@ -64,6 +88,25 @@ public class OrgApplicationManagerImplTest {
     private ApplicationManagementService applicationManagementService;
 
     private OrgApplicationManager orgApplicationManager;
+
+    @Mock
+    private ApplicationSharingManagerListener listener;
+    @Mock
+    private OrgApplicationMgtDataHolder orgApplicationMgtDataHolder;
+    @Mock
+    private RealmService realmService;
+    @Mock
+    private UserRealm userRealm;
+    @Mock
+    private RealmConfiguration realmConfiguration;
+    @Mock
+    private OrganizationUserResidentResolverService organizationUserResidentResolverService;
+    @Mock
+    private User mockUser;
+    @Mock
+    private org.wso2.carbon.identity.application.common.model.User mockAppOwner;
+    @Mock
+    private OAuthAdminServiceImpl oAuthAdminService;
 
     private static final Map<String, String> childAppIdMap = new HashMap<String, String>() {{
         put("99b701c6-e309-4241-b047-0c299c45d1a0", "56ef1d92-add6-449b-8a3c-fc308d2a4eac");
@@ -90,6 +133,13 @@ public class OrgApplicationManagerImplTest {
         OrgApplicationMgtDataHolder.getInstance().setApplicationManagementService(applicationManagementService);
 
         orgApplicationManager = new OrgApplicationManagerImpl();
+    }
+
+    private void startTenantFlow() {
+
+        String carbonHome = Paths.get(System.getProperty("user.dir"), "src/test/resources").toString();
+        System.setProperty(CarbonBaseConstants.CARBON_HOME, carbonHome);
+        PrivilegedCarbonContext.startTenantFlow();
     }
 
     @DataProvider(name = "parentAppIdRetrievalTestData")
@@ -309,5 +359,91 @@ public class OrgApplicationManagerImplTest {
 
         int actualCount = orgApplicationManager.getCountOfDiscoverableSharedApplications("*", "dummyTenant");
         assertEquals(expectedCount, actualCount);
+    }
+
+    @Test
+    public void testShareApplication() throws OrganizationManagementException, UserStoreException {
+
+        startTenantFlow();
+        // Arrange
+        String ownerOrgId = "ownerOrgId";
+        String sharedOrgId = "sharedOrgId";
+        ServiceProvider mainApplication = mock(ServiceProvider.class);
+        boolean shareWithAllChildren = true;
+        String sharedTenantDomain = "sharedTenantDomain";
+        int tenantId = 1;
+        String adminUserId = "adminUserId";
+        String domainQualifiedUserName = "domainQualifiedUserName";
+        String sharedApplicationId = "sharedApplicationId";
+        OAuthConsumerAppDTO createdOAuthApp = mock(OAuthConsumerAppDTO.class);
+        Optional<User> user = Optional.of(mockUser);
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+             MockedStatic<ServiceURLBuilder> serviceURLBuilder = mockStatic(ServiceURLBuilder.class);
+             MockedStatic<MultitenantUtils> multitenantUtilsMockedStatic = mockStatic(MultitenantUtils.class)) {
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(orgApplicationMgtDataHolder);
+            when(orgApplicationMgtDataHolder.getApplicationSharingManagerListener()).thenReturn(listener);
+            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(organizationManager.resolveTenantDomain(sharedOrgId)).thenReturn(sharedTenantDomain);
+            identityTenantUtilMockedStatic.when(
+                    () -> IdentityTenantUtil.getTenantId(sharedTenantDomain)).thenReturn(tenantId);
+            when(orgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            when(realmService.getTenantUserRealm(tenantId)).thenReturn(userRealm);
+            when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
+            when(realmConfiguration.getAdminUserId()).thenReturn(adminUserId);
+
+            // Get Domain Qualified Username.
+            when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            when(organizationUserResidentResolverService
+                    .resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId))
+                    .thenReturn(Optional.of(mockUser));
+            when(mockUser.getDomainQualifiedUsername()).thenReturn(domainQualifiedUserName);
+            when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername(null))
+                    .thenReturn(domainQualifiedUserName);
+
+            // Resolve Shared App.
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+
+            // Resolve Urls.
+            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(organizationManager.resolveTenantDomain(ownerOrgId)).thenReturn("ownerTenantDomain");
+
+            mockServiceURLBuilder("https://localhost:8080", serviceURLBuilder);
+
+            // Create Oauth Application.
+            when(orgApplicationMgtDataHolder.getOAuthAdminService()).thenReturn(oAuthAdminService);
+            when(oAuthAdminService.registerAndRetrieveOAuthApplicationData(any())).thenReturn(createdOAuthApp);
+
+            // Prepare shared application.
+            when(orgApplicationMgtDataHolder
+                    .getApplicationManagementService()).thenReturn(applicationManagementService);
+            when(applicationManagementService.createApplication(any(ServiceProvider.class), anyString(), anyString()))
+                    .thenReturn(sharedApplicationId);
+
+            // Fire organization creator sharing event
+
+            orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren);
+        } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void mockServiceURLBuilder(String url, MockedStatic<ServiceURLBuilder> serviceURLBuilder)
+            throws URLBuilderException {
+
+        ServiceURLBuilder mockServiceURLBuilder = mock(ServiceURLBuilder.class);
+        serviceURLBuilder.when(ServiceURLBuilder::create).thenReturn(mockServiceURLBuilder);
+        lenient().when(mockServiceURLBuilder.addPath(any())).thenReturn(mockServiceURLBuilder);
+        lenient().when(mockServiceURLBuilder.setTenant(any())).thenReturn(mockServiceURLBuilder);
+
+        ServiceURL serviceURL = mock(ServiceURL.class);
+        lenient().when(serviceURL.getAbsolutePublicURL()).thenReturn(url);
+        lenient().when(mockServiceURLBuilder.build()).thenReturn(serviceURL);
     }
 }

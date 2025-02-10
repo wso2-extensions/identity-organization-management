@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -22,7 +22,6 @@ import org.mockito.MockedStatic;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -32,10 +31,10 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
+import org.wso2.carbon.identity.organization.management.handler.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,7 +70,7 @@ public class SharedRoleMgtHandlerTest {
     @BeforeClass
     public void setUp() {
 
-        initPrivilegedCarbonContext();
+        TestUtils.initPrivilegedCarbonContext();
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(PARENT_ORG_TENANT_DOMAIN);
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(PARENT_ORG_USER_NAME);
 
@@ -191,15 +190,6 @@ public class SharedRoleMgtHandlerTest {
 
         SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
         sharedRoleMgtHandler.handleEvent(event);
-    }
-
-    private void initPrivilegedCarbonContext() {
-
-        System.setProperty(
-                CarbonBaseConstants.CARBON_HOME,
-                Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString()
-        );
-        PrivilegedCarbonContext.startTenantFlow();
     }
 
     private static Event createPreShareApplicationEvent() {

@@ -27,11 +27,13 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.application.authentication.framework.handler.request.PostAuthenticationHandler;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.EmailDomainBasedDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
+import org.wso2.carbon.identity.organization.discovery.service.listener.EmailDomainValidationHandler;
 import org.wso2.carbon.identity.organization.discovery.service.listener.OrganizationDiscoveryUserOperationListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
@@ -57,6 +59,8 @@ public class OrganizationDiscoveryServiceComponent {
                 null);
         bundleContext.registerService(UserOperationEventListener.class.getName(),
                 new OrganizationDiscoveryUserOperationListener(), null);
+        PostAuthenticationHandler emailDomainValidationHandler = EmailDomainValidationHandler.getInstance();
+        bundleContext.registerService(PostAuthenticationHandler.class.getName(), emailDomainValidationHandler, null);
         LOG.info("Organization discovery service component activated successfully.");
     }
 
