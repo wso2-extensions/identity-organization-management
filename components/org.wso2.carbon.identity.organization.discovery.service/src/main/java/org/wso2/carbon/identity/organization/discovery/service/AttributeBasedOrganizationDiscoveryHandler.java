@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -59,6 +59,9 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      *
      * @return the list of events.
      */
+    @Deprecated
+    // We don't need it anymore, if we (WSO2) or a any other user writes a custom org discovery handler, they need to
+    // write matching event listeners to it and register it in the system.
     List<String> requiredEventValidations();
 
     /**
