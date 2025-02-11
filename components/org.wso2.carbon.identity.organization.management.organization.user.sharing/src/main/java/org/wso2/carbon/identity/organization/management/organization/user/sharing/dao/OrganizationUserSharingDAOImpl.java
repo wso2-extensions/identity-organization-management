@@ -437,7 +437,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         String.join(", ", orgIdPlaceholders));
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-
         try {
             return namedJdbcTemplate.executeQuery(
                     fetchUserAssociationsQuery,
@@ -469,8 +468,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     @Override
     public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
             throws OrganizationManagementServerException {
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
 
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             namedJdbcTemplate.executeUpdate(
                     UPDATE_USER_ASSOCIATION_SHARED_TYPE,
@@ -482,5 +481,4 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
-
 }
