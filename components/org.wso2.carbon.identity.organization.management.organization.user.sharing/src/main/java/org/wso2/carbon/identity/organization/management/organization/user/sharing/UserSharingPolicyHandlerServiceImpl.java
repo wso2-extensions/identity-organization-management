@@ -540,6 +540,17 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return getOrgsToShareUserWith(sharingInitiatedOrgId, userShare.getPolicy());
     }
 
+    /**
+     * Retrieves the user associations of a given user within the organization tree.
+     * The root organization of the tree is the policy-holding organization.
+     * This method takes a base share object, which contains the policy-holding organization for the share,
+     * and retrieves the user associations for the organizations in that tree.
+     *
+     * @param userShare The user share object, which can be either selective or general.
+     * @param sharingInitiatedOrgId The ID of the organization from which the sharing request was initiated.
+     * @return A list of user associations within the organization tree.
+     * @throws OrganizationManagementException If an error occurs while retrieving the user associations.
+     */
     private List<UserAssociation> getUserAssociationsOfGivenUserOnOrgTree(BaseUserShare userShare,
                                                                           String sharingInitiatedOrgId)
             throws OrganizationManagementException {
