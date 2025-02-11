@@ -153,7 +153,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         CompletableFuture.runAsync(() -> {
                     restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                             sharingInitiatedUsername, threadLocalProperties);
-                    processSelectiveUserShare(validOrganizations, userCriteria, sharingInitiatedOrgId);
+                    processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId);
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective share processing.", ex);
@@ -330,6 +330,31 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
+    private void processSelectiveUserShare(Map<String, UserCriteriaType> userCriteria,
+                                           List<SelectiveUserShareOrgDetailsDO> organizations,
+                                           String sharingInitiatedOrgId) {
+
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
+
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
+                                sharingInitiatedOrgId);
+                    } else {
+                        LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                    }
+                } else {
+                    LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+            }
+        }
+    }
+
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
                                          List<String> roleIds, String sharingInitiatedOrgId) {
 
@@ -339,17 +364,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 UserCriteriaType criterionValues = criterion.getValue();
 
                 try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
-                                        sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
-                            }
-                            break;
-                        default:
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
+                                    sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
                     LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
@@ -370,17 +393,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 UserCriteriaType criterionValues = criterion.getValue();
 
                 try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
-                                        sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
-                            }
-                            break;
-                        default:
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                    sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
@@ -400,16 +421,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 UserCriteriaType criterionValues = criterion.getValue();
 
                 try {
-                    switch (criterionKey) {
-                        case USER_IDS:
-                            if (criterionValues instanceof UserIdList) {
-                                generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
-                            } else {
-                                LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
-                            }
-                            break;
-                        default:
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
+                        } else {
                             LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
                     }
                 } catch (UserSharingMgtException e) {
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
@@ -441,33 +460,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
 
         return validOrganizations;
-    }
-
-    private void processSelectiveUserShare(List<SelectiveUserShareOrgDetailsDO> organizations,
-                                                      Map<String, UserCriteriaType> userCriteria,
-                                                      String sharingInitiatedOrgId) {
-
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
-
-            try {
-                switch (criterionKey) {
-                    case USER_IDS:
-                        if (criterionValues instanceof UserIdList) {
-                            selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
-                                    sharingInitiatedOrgId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
-                        }
-                        break;
-                    default:
-                        LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
-                }
-            } catch (UserSharingMgtException e) {
-                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
-            }
-        }
     }
 
     private void selectiveUserShareByUserIds(UserIdList userIds, List<SelectiveUserShareOrgDetailsDO> organizations,
