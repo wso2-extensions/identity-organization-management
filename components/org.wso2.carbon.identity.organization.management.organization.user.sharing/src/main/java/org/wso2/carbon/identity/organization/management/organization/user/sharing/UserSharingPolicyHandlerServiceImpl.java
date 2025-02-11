@@ -563,8 +563,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<String> orgsInOrgTree = getOrganizationManager().getChildOrganizationsIds(orgId, true);
         orgsInOrgTree.add(orgId);
 
-        return getOrganizationUserSharingService()
-                .getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId, orgsInOrgTree, SharedType.SHARED);
+        return getOrganizationUserSharingService().getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId,
+                orgsInOrgTree);
     }
 
     private void cleanUpOldUserAssociationsIfExists(String associatedUserId, String sharingInitiatedOrgId,
@@ -610,6 +610,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 } else {
                     retainedSharedOrgs.add(association.getOrganizationId());
                     updateRolesIfNecessary(association, userShare.getRoles(), sharingInitiatedOrgId);
+                    updateSharedTypeOfExistingUserAssociation(association);
                 }
             }
 
@@ -618,6 +619,19 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
 
         cleanUpOldUserAssociationsIfExists(associatedUserId, sharingInitiatedOrgId, allOrgsToShareUserWith);
+    }
+
+    private void updateSharedTypeOfExistingUserAssociation(UserAssociation association) {
+
+        try {
+            if (SharedType.INVITED.equals(association.getSharedType())) {
+                getOrganizationUserSharingService().updateSharedTypeOfUserAssociation(association.getId(),
+                        SharedType.SHARED);
+            }
+        } catch (OrganizationManagementException e) {
+            LOG.error("Error occurred while converting the shared type of the user association of: " +
+                    association.getAssociatedUserId() + " from Invited to shared", e);
+        }
     }
 
     private void unshareUserFromPreviousOrg(UserAssociation association, String sharingInitiatedOrgId)
@@ -836,8 +850,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private List<UserAssociation> getSharedUserAssociationsOfGivenUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        return getOrganizationUserSharingService().getUserAssociationsOfGivenUser(associatedUserId, associatedOrgId,
-                SharedType.SHARED);
+        return getOrganizationUserSharingService().getUserAssociationsOfGivenUser(associatedUserId, associatedOrgId);
     }
 
     private List<String> getRolesToBeAddedAfterUpdate(UserAssociation userAssociation, List<String> currentRoleIds,

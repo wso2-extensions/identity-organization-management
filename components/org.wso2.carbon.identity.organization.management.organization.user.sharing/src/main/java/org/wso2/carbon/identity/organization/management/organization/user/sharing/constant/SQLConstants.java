@@ -114,8 +114,11 @@ public class SQLConstants {
             "SELECT UM_ID, UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
                     "FROM UM_ORG_USER_ASSOCIATION " +
                     "WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
-                    "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "AND UM_SHARED_TYPE = :" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + ";";
+                    "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ");";
+    public static final String UPDATE_USER_ASSOCIATION_SHARED_TYPE =
+            "UPDATE UM_ORG_USER_ASSOCIATION " +
+                    "SET UM_SHARED_TYPE = :" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + "; " +
+                    "WHERE UM_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ID + ";";
 
     /**
      * SQL placeholders related to organization user sharing SQL operations.

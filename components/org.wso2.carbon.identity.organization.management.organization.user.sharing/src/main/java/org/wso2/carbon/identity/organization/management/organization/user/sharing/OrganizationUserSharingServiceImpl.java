@@ -173,12 +173,17 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds,
-                                                                           SharedType sharedType)
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds)
             throws OrganizationManagementServerException {
 
-        return organizationUserSharingDAO.getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId, orgIds,
-                sharedType);
+        return organizationUserSharingDAO.getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId, orgIds);
+    }
+
+    @Override
+    public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        organizationUserSharingDAO.updateSharedTypeOfUserAssociation(id, sharedType);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

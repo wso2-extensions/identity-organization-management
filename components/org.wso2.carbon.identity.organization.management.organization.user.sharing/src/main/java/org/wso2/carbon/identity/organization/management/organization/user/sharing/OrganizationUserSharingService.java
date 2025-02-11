@@ -221,14 +221,26 @@ public interface OrganizationUserSharingService {
      *
      * @param associatedUserId The ID of the associated user.
      * @param orgIds           The list of organization IDs.
-     * @param sharedType       The type of sharing relationship to filter the associations.
      * @return The list of {@link UserAssociation}s for the given user in the specified organizations.
      * @throws OrganizationManagementServerException If an error occurs while retrieving the user associations.
      */
     default List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId,
-                                                                            List<String> orgIds, SharedType sharedType)
+                                                                            List<String> orgIds)
             throws OrganizationManagementServerException {
 
         throw new NotImplementedException("getUserAssociationsOfGivenUserOnGivenOrgs method is not implemented.");
+    }
+
+    /**
+     * Updates the shared type of user association.
+     *
+     * @param id         The ID of the user association.
+     * @param sharedType The new shared type to be set for the user association.
+     * @throws OrganizationManagementServerException If an error occurs while updating the shared type.
+     */
+    default void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("updateSharedTypeOfUserAssociation method is not implemented.");
     }
 }

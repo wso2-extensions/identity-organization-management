@@ -66,6 +66,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.UPDATE_USER_ASSOCIATION_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
@@ -416,8 +417,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         }
     }
 
-    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds,
-                                                                           SharedType sharedType)
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds)
             throws OrganizationManagementServerException {
 
         if (CollectionUtils.isEmpty(orgIds)) {
@@ -453,7 +454,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     },
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_SHARED_TYPE, sharedType.name());
                         int index = 1;
                         for (String orgId : orgIds) {
                             namedPreparedStatement.setString(orgIdPlaceholder + index, orgId);
@@ -464,4 +464,22 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
+
+    @Override
+    public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
+        try {
+            namedJdbcTemplate.executeUpdate(
+                    UPDATE_USER_ASSOCIATION_SHARED_TYPE,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setInt(COLUMN_NAME_UM_ID, id);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_SHARED_TYPE, sharedType.name());
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
 }
