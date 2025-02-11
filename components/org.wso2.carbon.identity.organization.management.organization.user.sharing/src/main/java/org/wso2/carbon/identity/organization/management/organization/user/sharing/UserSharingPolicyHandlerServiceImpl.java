@@ -336,24 +336,29 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                                            List<SelectiveUserShareOrgDetailsDO> organizations,
                                            String sharingInitiatedOrgId) {
 
-        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-            String criterionKey = criterion.getKey();
-            UserCriteriaType criterionValues = criterion.getValue();
+        try {
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
 
-            try {
-                if (USER_IDS.equals(criterionKey)) {
-                    if (criterionValues instanceof UserIdList) {
-                        selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
-                                sharingInitiatedOrgId);
+                try {
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
+                                    sharingInitiatedOrgId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                        }
                     } else {
                         LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
                     }
-                } else {
-                    LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
-            } catch (UserSharingMgtException e) {
-                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
             }
+            LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
@@ -442,6 +447,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
+    //Methods for sharing and unsharing users by user Ids.
+
     private void selectiveUserShareByUserIds(UserIdList userIds, List<SelectiveUserShareOrgDetailsDO> organizations,
                                              String sharingInitiatedOrgId)
             throws UserSharingMgtException {
@@ -471,8 +478,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
         }
     }
-
-    //Methods for sharing and unsharing users by user Ids.
 
     private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
                                            String sharingInitiatedOrgId)
