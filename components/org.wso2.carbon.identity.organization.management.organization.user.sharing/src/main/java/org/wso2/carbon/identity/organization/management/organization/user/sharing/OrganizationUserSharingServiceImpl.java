@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -169,6 +170,15 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             throws UserSharingMgtException {
 
         return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainName);
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds,
+                                                                           SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId, orgIds,
+                sharedType);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

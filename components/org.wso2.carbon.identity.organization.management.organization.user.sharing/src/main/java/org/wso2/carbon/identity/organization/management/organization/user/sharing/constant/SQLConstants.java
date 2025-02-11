@@ -110,6 +110,12 @@ public class SQLConstants {
                     "AND UHR.UM_DOMAIN_ID = (SELECT UM_DOMAIN_ID FROM UM_DOMAIN WHERE " +
                     "UM_TENANT_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID + "; " +
                     "AND UM_DOMAIN_NAME = :" + SQLPlaceholders.COLUMN_NAME_UM_DOMAIN_NAME + ";);";
+    public static final String GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS =
+            "SELECT UM_ID, UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
+                    "FROM UM_ORG_USER_ASSOCIATION " +
+                    "WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "AND UM_SHARED_TYPE = :" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + ";";
 
     /**
      * SQL placeholders related to organization user sharing SQL operations.
@@ -140,6 +146,7 @@ public class SQLConstants {
 
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
+        public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
     }
 
 }

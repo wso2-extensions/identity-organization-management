@@ -202,4 +202,20 @@ public interface OrganizationUserSharingDAO {
 
         throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented.");
     }
+
+    /**
+     * Get the user associations of the associated user in the given organizations.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param orgIds           The list of organization IDs.
+     * @param sharedType       The type of sharing relationship to filter the associations.
+     * @return The list of {@link UserAssociation}s for the given user in the specified organizations.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId,
+                                                                            List<String> orgIds, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("getUserAssociationsOfAssociatedUserOnGivenOrgs method is not implemented.");
+    }
 }
