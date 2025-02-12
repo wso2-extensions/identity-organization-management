@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.model.Claim;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.ClaimDialect;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.ExternalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
+import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -45,6 +46,8 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -294,8 +297,10 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                         }
                     }
                     if (!mappedAttributes.isEmpty()) {
+                        Map<String, String> filteredLocalClaimProperties =
+                                processLocalClaimProperties(localClaimProperties, primaryUserStoreDomain);
                         getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
-                                mappedAttributes, localClaimProperties), sharedOrganizationTenantDomain);
+                                mappedAttributes, filteredLocalClaimProperties), sharedOrganizationTenantDomain);
                     }
 
                 }
@@ -312,6 +317,43 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         } catch (ClaimMetadataException | UserStoreException e) {
             throw new IdentityEventException("An error occurred while updating the local claim " + localClaimURI, e);
         }
+    }
+
+    /**
+     * Processes the local claim properties to handle the excluded user stores property.
+     * If the property value contains the primary user store, the value is replaced with just the primary user store.
+     * Otherwise, the property is removed.
+     *
+     * @param localClaimProperties the original local claim properties.
+     * @param primaryUserStoreDomain the primary user store domain.
+     * @return a modified map of local claim properties with the excluded property handled.
+     */
+    private Map<String, String> processLocalClaimProperties(Map<String, String> localClaimProperties,
+                                                            String primaryUserStoreDomain) {
+
+        Map<String, String> modifiedProperties = new HashMap<>(localClaimProperties);
+        String propertyKey = ClaimConstants.EXCLUDED_USER_STORES_PROPERTY;
+        if (!modifiedProperties.containsKey(propertyKey)) {
+            return modifiedProperties;
+        }
+
+        String propertyValue = modifiedProperties.get(propertyKey);
+        if (StringUtils.isBlank(propertyValue)) {
+            modifiedProperties.remove(propertyKey);
+            return modifiedProperties;
+        }
+
+        List<String> userStores = Arrays.stream(propertyValue.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+        if (userStores.contains(primaryUserStoreDomain)) {
+            // If primary user store is present, update the property to share only that.
+            modifiedProperties.put(propertyKey, primaryUserStoreDomain);
+        } else {
+            // Otherwise, remove the property.
+            modifiedProperties.remove(propertyKey);
+        }
+        return modifiedProperties;
     }
 
     private void handleUpdateExternalClaim(Event event) throws IdentityEventException {
