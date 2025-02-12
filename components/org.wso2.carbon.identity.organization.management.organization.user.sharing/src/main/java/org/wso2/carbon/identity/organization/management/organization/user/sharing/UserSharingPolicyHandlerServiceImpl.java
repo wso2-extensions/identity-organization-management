@@ -917,10 +917,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private boolean isUserAlreadyShared(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        List<UserAssociation> userAssociationsOfGivenUser =
-                getSharedUserAssociationsOfGivenUser(associatedUserId, associatedOrgId);
-
-        return userAssociationsOfGivenUser != null && !userAssociationsOfGivenUser.isEmpty();
+        return getOrganizationUserSharingService().hasUserAssociations(associatedUserId, associatedOrgId);
     }
 
     /**

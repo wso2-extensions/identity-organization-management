@@ -114,6 +114,20 @@ public interface OrganizationUserSharingDAO {
     }
 
     /**
+     * Checks if the given user has any associations in the specified organization.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @return True if the user has associations in the specified organization.
+     * @throws OrganizationManagementServerException If an error occurs while checking user associations.
+     */
+    default boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("hasUserAssociations method is not implemented.");
+    }
+
+    /**
      * Get the organization user association of a given user in a given organization.
      *
      * @param associatedUserId ID of the associated user.
