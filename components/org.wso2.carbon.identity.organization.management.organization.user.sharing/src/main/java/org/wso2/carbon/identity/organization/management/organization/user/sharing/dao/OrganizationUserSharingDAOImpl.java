@@ -547,8 +547,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return dbQueryMap.get(DB_TYPE_ORACLE);
         } else if (isPostgreSqlDB()) {
             return dbQueryMap.get(DB_TYPE_POSTGRESQL);
-        } else {
-            return dbQueryMap.get(DB_TYPE_DEFAULT);
         }
+        return dbQueryMap.get(DB_TYPE_DEFAULT);
     }
 }

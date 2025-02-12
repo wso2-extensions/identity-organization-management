@@ -148,11 +148,11 @@ public interface OrganizationUserSharingService {
     }
 
     /**
-     * Checks if the given user has any associations in the specified organization.
+     * Checks if the given user has at least one association with any child organization.
      *
      * @param associatedUserId The ID of the associated user.
      * @param associatedOrgId  The organization ID where the user's identity is managed.
-     * @return True if the user has associations in the specified organization.
+     * @return True if the user has at least one association with any organization.
      * @throws OrganizationManagementServerException If an error occurs while checking user associations.
      */
     default boolean hasUserAssociations(String associatedUserId, String associatedOrgId)

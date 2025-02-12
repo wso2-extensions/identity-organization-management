@@ -176,12 +176,11 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";
         public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
         public static final String COLUMN_NAME_UM_ROLE_UUID = "UM_UUID";
+        public static final String HAS_USER_ASSOCIATIONS = "has_user_associations";
 
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
         public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
-
-        public static final String HAS_USER_ASSOCIATIONS = "has_user_associations";
     }
 
     /**
