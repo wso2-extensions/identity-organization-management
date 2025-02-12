@@ -46,6 +46,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_ROLES_OF_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ROLE_IN_TENANT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.INSERT_RESTRICTED_EDIT_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
@@ -63,7 +64,9 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.UPDATE_USER_ASSOCIATION_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
@@ -73,6 +76,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_OF_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
@@ -411,6 +415,70 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     });
         } catch (DataAccessException e) {
             throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
+        }
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds)
+            throws OrganizationManagementServerException {
+
+        if (CollectionUtils.isEmpty(orgIds)) {
+            return Collections.emptyList();
+        }
+
+        String orgIdPlaceholder = "ORG_ID_";
+        List<String> orgIdPlaceholders = new ArrayList<>();
+        for (int i = 1; i <= orgIds.size(); i++) {
+            orgIdPlaceholders.add(":" + orgIdPlaceholder + i + ";");
+        }
+
+        String fetchUserAssociationsQuery =
+                GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS.replace(PLACEHOLDER_ORG_IDS,
+                        String.join(", ", orgIdPlaceholders));
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(
+                    fetchUserAssociationsQuery,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
+                        return userAssociation;
+                    },
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                        int index = 1;
+                        for (String orgId : orgIds) {
+                            namedPreparedStatement.setString(orgIdPlaceholder + index, orgId);
+                            index++;
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
+    public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(
+                    UPDATE_USER_ASSOCIATION_SHARED_TYPE,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setInt(COLUMN_NAME_UM_ID, id);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_SHARED_TYPE, sharedType.name());
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
 }

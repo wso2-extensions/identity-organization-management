@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.List;
@@ -213,5 +214,33 @@ public interface OrganizationUserSharingService {
             throws UserSharingMgtException {
 
         throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented.");
+    }
+
+    /**
+     * Get the user associations of the associated user in the given organizations.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param orgIds           The list of organization IDs.
+     * @return The list of {@link UserAssociation}s for the given user in the specified organizations.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId,
+                                                                            List<String> orgIds)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("getUserAssociationsOfGivenUserOnGivenOrgs method is not implemented.");
+    }
+
+    /**
+     * Updates the shared type of user association.
+     *
+     * @param id         The ID of the user association.
+     * @param sharedType The new shared type to be set for the user association.
+     * @throws OrganizationManagementServerException If an error occurs while updating the shared type.
+     */
+    default void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("updateSharedTypeOfUserAssociation method is not implemented.");
     }
 }
