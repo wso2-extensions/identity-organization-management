@@ -148,6 +148,20 @@ public interface OrganizationUserSharingService {
     }
 
     /**
+     * Checks if the given user has at least one association with any child organization.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @return True if the user has at least one association with any organization.
+     * @throws OrganizationManagementServerException If an error occurs while checking user associations.
+     */
+    default boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("hasUserAssociations method is not implemented.");
+    }
+
+    /**
      * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
      * tenant domain, based on the permissions of the requesting organization.
      *

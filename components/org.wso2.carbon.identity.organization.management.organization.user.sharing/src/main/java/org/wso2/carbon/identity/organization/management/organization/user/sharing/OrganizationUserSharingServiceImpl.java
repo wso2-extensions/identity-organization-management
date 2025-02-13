@@ -140,6 +140,13 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
+    public boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        return organizationUserSharingDAO.hasUserAssociations(associatedUserId, associatedOrgId);
+    }
+
+    @Override
     public List<String> getNonDeletableUserRoleAssignments(String roleId,
                                                            List<String> deletedDomainQualifiedUserNamesList,
                                                            String tenantDomain, String requestingOrgId)

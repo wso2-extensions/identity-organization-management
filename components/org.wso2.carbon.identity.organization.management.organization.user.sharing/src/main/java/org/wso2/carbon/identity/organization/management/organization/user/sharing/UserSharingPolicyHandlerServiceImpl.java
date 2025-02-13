@@ -330,7 +330,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    //Asynchronous Processing Methods.
+    // Asynchronous Processing Methods.
 
     /**
      * Processes selective user sharing based on the provided user criteria and organization details.
@@ -479,7 +479,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    //User Sharing & Unsharing Helper Methods.
+    // User Sharing & Unsharing Helper Methods.
 
     /**
      * Shares a user with selected organizations based on the provided user list and sharing policies.
@@ -574,7 +574,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     getOrganizationUserSharingService().unshareOrganizationUserInSharedOrganization(associatedUserId,
                             organizationId);
 
-                    //Delete resource sharing policy if it has been stored for future shares.
+                    // Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyIfAny(organizationId, associatedUserId, unsharingInitiatedOrgId);
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
@@ -597,7 +597,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             try {
                 getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
 
-                //Delete resource sharing policy if it has been stored for future shares.
+                // Delete resource sharing policy if it has been stored for future shares.
                 getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
                         ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
@@ -606,7 +606,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    //Business Logic Methods.
+    // Business Logic Methods.
 
     /**
      * Shares a user with the specified organizations.
@@ -917,10 +917,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private boolean isUserAlreadyShared(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        List<UserAssociation> userAssociationsOfGivenUser =
-                getSharedUserAssociationsOfGivenUser(associatedUserId, associatedOrgId);
-
-        return userAssociationsOfGivenUser != null && !userAssociationsOfGivenUser.isEmpty();
+        return getOrganizationUserSharingService().hasUserAssociations(associatedUserId, associatedOrgId);
     }
 
     /**
@@ -1036,7 +1033,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
     }
 
-    //Resource Sharing Policy Management Methods.
+    // Resource Sharing Policy Management Methods.
 
     /**
      * Saves a new resource sharing policy for a user.
@@ -1080,10 +1077,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
-        //Delete old sharing policy.
+        // Delete old sharing policy.
         removeResourceSharingPolicy(baseUserShare, sharingInitiatedOrgId);
 
-        //Create new sharing policy.
+        // Create new sharing policy.
         if (isApplicableOrganizationScopeForSavingPolicy(baseUserShare.getPolicy())) {
             saveUserSharingPolicy(baseUserShare, sharingInitiatedOrgId);
         }
@@ -1167,7 +1164,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 organizationId, ResourceType.USER, associatedUserId, unsharingInitiatedOrgId);
     }
 
-    //Role Management Helper Methods.
+    // Role Management Helper Methods.
 
     /**
      * Retrieves a list of role IDs based on the provided role and audience details.
@@ -1354,7 +1351,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             return;
         }
 
-        //Assign roles if any are present.
+        // Assign roles if any are present.
         assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
     }
 
@@ -1477,7 +1474,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         return String.format(API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG, userId, orgId);
     }
 
-    //Validation Methods.
+    // Validation Methods.
 
     private <T extends UserCriteriaType> void validateUserShareInput(BaseUserShareDO<T> baseUserShareDO)
             throws UserSharingMgtClientException {
@@ -1605,7 +1602,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         throw new UserSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
     }
 
-    //Async helpers.
+    // Async helpers.
 
     /**
      * Restores thread-local properties for async execution.
@@ -1624,7 +1621,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
     }
 
-    //Service getters.
+    // Service getters.
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {
 

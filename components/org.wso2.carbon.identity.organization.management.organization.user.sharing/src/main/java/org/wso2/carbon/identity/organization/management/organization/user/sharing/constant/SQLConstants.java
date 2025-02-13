@@ -50,6 +50,36 @@ public class SQLConstants {
             "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
             "FROM UM_ORG_USER_ASSOCIATION WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ASSOCIATED_ORG_ID = ? AND " +
             "UM_SHARED_TYPE = ?";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS =
+            "SELECT EXISTS ( " +
+                    "    SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "    WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "    AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    ") AS has_user_associations;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_ORACLE =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM DUAL;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2 =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM SYSIBM.SYSDUMMY1;";
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG = "SELECT UM_ID, UM_USER_ID, " +
             "UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ORG_ID = ?";
@@ -150,10 +180,24 @@ public class SQLConstants {
         public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";
         public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
         public static final String COLUMN_NAME_UM_ROLE_UUID = "UM_UUID";
+        public static final String HAS_USER_ASSOCIATIONS = "has_user_associations";
 
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
         public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
+    }
+
+    /**
+     * Database types related to organization user sharing SQL operations.
+     */
+    public static final class DBTypes {
+
+        public static final String DB_TYPE_DB2 = "db2";
+        public static final String DB_TYPE_MSSQL = "mssql";
+        public static final String DB_TYPE_MYSQL = "mysql";
+        public static final String DB_TYPE_ORACLE = "oracle";
+        public static final String DB_TYPE_POSTGRESQL = "postgresql";
+        public static final String DB_TYPE_DEFAULT = "default";
     }
 
 }
