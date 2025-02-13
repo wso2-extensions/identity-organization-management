@@ -48,7 +48,6 @@ import org.wso2.carbon.user.core.UserCoreConstants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -287,20 +286,21 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             for (BasicOrganization organization : childOrganizations) {
                 String sharedOrganizationTenantDomain = getOrganizationManager().
                         resolveTenantDomain(organization.getId());
-                if (isExistingLocalClaimURI(localClaimURI, sharedOrganizationTenantDomain)) {
+                Optional<LocalClaim> existingLocalClaim =
+                        getExistingLocalClaimURI(localClaimURI, sharedOrganizationTenantDomain);
+
+                if (existingLocalClaim.isPresent()) {
                     String primaryUserStoreDomain = getPrimaryUserStoreDomain(tenantDomain);
-                    Iterator<AttributeMapping> iterator = mappedAttributes.iterator();
-                    while (iterator.hasNext()) {
-                        AttributeMapping attributeMapping = iterator.next();
-                        if (!primaryUserStoreDomain.equals(attributeMapping.getUserStoreDomain())) {
-                            iterator.remove();
-                        }
-                    }
-                    if (!mappedAttributes.isEmpty()) {
-                        Map<String, String> filteredLocalClaimProperties =
-                                processLocalClaimProperties(localClaimProperties, primaryUserStoreDomain);
+                    List<AttributeMapping> modifiedAttributeMappings = mergeAttributeMappings(
+                            existingLocalClaim.get().getMappedAttributes(), mappedAttributes, primaryUserStoreDomain);
+
+                    if (!modifiedAttributeMappings.isEmpty()) {
+                        Map<String, String> modifiedLocalClaimProperties = processLocalClaimProperties(
+                                existingLocalClaim.get().getClaimProperties(),
+                                localClaimProperties,
+                                primaryUserStoreDomain);
                         getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
-                                mappedAttributes, filteredLocalClaimProperties), sharedOrganizationTenantDomain);
+                                mappedAttributes, modifiedLocalClaimProperties), sharedOrganizationTenantDomain);
                     }
 
                 }
@@ -320,38 +320,73 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
     }
 
     /**
+     * Merges attribute mappings from the existing claim and the incoming update.
+     * Preserve all non-primary mappings from the existing claim and user primary mappings from the incoming update.
+     *
+     * @param existingMappings       the attribute mappings from the existing claim.
+     * @param incomingMappings       the attribute mappings from the incoming update.
+     * @param primaryUserStoreDomain the primary user store domain.
+     * @return a merged list of attribute mappings.
+     */
+    private List<AttributeMapping> mergeAttributeMappings(List<AttributeMapping> existingMappings,
+                                                          List<AttributeMapping> incomingMappings,
+                                                          String primaryUserStoreDomain) {
+
+        List<AttributeMapping> mergedMappings = new ArrayList<>();
+        existingMappings.stream()
+                .filter(mapping -> !StringUtils.equals(primaryUserStoreDomain, mapping.getUserStoreDomain()))
+                .forEach(mergedMappings::add);
+
+        Optional<AttributeMapping> incomingPrimary = incomingMappings.stream()
+                .filter(mapping -> StringUtils.equals(primaryUserStoreDomain, mapping.getUserStoreDomain()))
+                .findFirst();
+
+        incomingPrimary.ifPresent(mergedMappings::add);
+        return mergedMappings;
+    }
+
+    /**
      * Processes the local claim properties to handle the excluded user stores property.
      * If the property value contains the primary user store, the value is replaced with just the primary user store.
      * Otherwise, the property is removed.
      *
-     * @param localClaimProperties the original local claim properties.
+     * @param existingClaimProperties existing sub org local claim properties.
+     * @param incomingClaimProperties the updating local claim properties.
      * @param primaryUserStoreDomain the primary user store domain.
      * @return a modified map of local claim properties with the excluded property handled.
      */
-    private Map<String, String> processLocalClaimProperties(Map<String, String> localClaimProperties,
+    private Map<String, String> processLocalClaimProperties(Map<String, String> existingClaimProperties,
+                                                            Map<String, String> incomingClaimProperties,
                                                             String primaryUserStoreDomain) {
 
-        Map<String, String> modifiedProperties = new HashMap<>(localClaimProperties);
-        String propertyKey = ClaimConstants.EXCLUDED_USER_STORES_PROPERTY;
-        if (!modifiedProperties.containsKey(propertyKey)) {
-            return modifiedProperties;
-        }
+        Map<String, String> modifiedProperties = new HashMap<>(incomingClaimProperties);
+        String excludedUserStoresProperty = ClaimConstants.EXCLUDED_USER_STORES_PROPERTY;
 
-        String propertyValue = modifiedProperties.get(propertyKey);
-        if (StringUtils.isBlank(propertyValue)) {
-            modifiedProperties.remove(propertyKey);
-            return modifiedProperties;
-        }
+        String existingValue = existingClaimProperties.get(excludedUserStoresProperty);
+        String incomingValue = incomingClaimProperties.get(excludedUserStoresProperty);
 
-        List<String> userStores = Arrays.stream(propertyValue.split(","))
-                .map(String::trim)
-                .collect(Collectors.toList());
-        if (userStores.contains(primaryUserStoreDomain)) {
-            // If primary user store is present, update the property to share only that.
-            modifiedProperties.put(propertyKey, primaryUserStoreDomain);
+        List<String> existingExcludedUserStores = StringUtils.isNotBlank(existingValue)
+                ? new ArrayList<>(Arrays.asList(existingValue.split(","))) : new ArrayList<>();
+        List<String> incomingExcludedUserStores = StringUtils.isNotBlank(incomingValue)
+                ? new ArrayList<>(Arrays.asList(incomingValue.split(","))) : new ArrayList<>();
+
+        boolean isPrimaryUserStoreExcludedInExistingProperties = existingExcludedUserStores.stream()
+                .anyMatch(store -> StringUtils.equalsIgnoreCase(store, primaryUserStoreDomain));
+        boolean isPrimaryUserStoreExcludedInIncomingProperties = incomingExcludedUserStores.stream()
+                .anyMatch(store -> StringUtils.equalsIgnoreCase(store, primaryUserStoreDomain));
+
+        if (isPrimaryUserStoreExcludedInIncomingProperties) {
+            if (!isPrimaryUserStoreExcludedInExistingProperties) {
+                existingExcludedUserStores.add(primaryUserStoreDomain);
+            }
         } else {
-            // Otherwise, remove the property.
-            modifiedProperties.remove(propertyKey);
+            existingExcludedUserStores.remove(primaryUserStoreDomain);
+        }
+
+        if (existingExcludedUserStores.isEmpty()) {
+            modifiedProperties.remove(excludedUserStoresProperty);
+        } else {
+            modifiedProperties.put(excludedUserStoresProperty, String.join(",", existingExcludedUserStores));
         }
         return modifiedProperties;
     }
@@ -614,6 +649,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
     private OrgApplicationManager getOrgApplicationManager() {
 
         return new OrgApplicationManagerImpl();
+    }
+
+    private Optional<LocalClaim> getExistingLocalClaimURI(String localClaimURI, String tenantDomain)
+            throws ClaimMetadataException {
+
+        return getClaimMetadataManagementService().getLocalClaims(tenantDomain).stream().filter(
+                claim -> claim.getClaimURI().equalsIgnoreCase(localClaimURI)).findFirst();
     }
 
     private boolean isExistingLocalClaimURI(String localClaimURI, String tenantDomain) throws ClaimMetadataException {
