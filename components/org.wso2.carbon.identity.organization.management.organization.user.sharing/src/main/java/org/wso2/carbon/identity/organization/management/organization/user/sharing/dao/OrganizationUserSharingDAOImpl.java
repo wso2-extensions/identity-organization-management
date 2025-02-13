@@ -30,10 +30,13 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE;
@@ -279,48 +282,54 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedDomainQualifiedUserNames,
                                                            String tenantDomain, String permittedOrgId)
             throws IdentityRoleManagementException {
 
-        if (CollectionUtils.isEmpty(deletedUserNamesList)) {
+        if (CollectionUtils.isEmpty(deletedDomainQualifiedUserNames)) {
             return Collections.emptyList();
         }
 
-        String usernamePlaceholder = "USERNAME_";
-        List<String> usernamePlaceholders = new ArrayList<>();
-
-        for (int i = 1; i <= deletedUserNamesList.size(); i++) {
-            usernamePlaceholders.add(":" + usernamePlaceholder + i + ";");
-        }
-
-        String sqlStmt = GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG.replace(
-                PLACEHOLDER_NAME_USER_NAMES, String.join(", ", usernamePlaceholders));
-
+        Map<String, List<String>> domainToUserNamesMap = groupUsernamesByDomain(deletedDomainQualifiedUserNames);
+        List<String> nonDeletableUserNames = new ArrayList<>();
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
 
-        try {
-            return namedJdbcTemplate.executeQuery(
-                    sqlStmt,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_USER_NAME),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
-                        namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION, EditOperation.DELETE.name());
-                        int index = 1;
-                        for (String username : deletedUserNamesList) {
-                            namedPreparedStatement.setString(usernamePlaceholder + index, username);
-                            index++;
-                        }
-                    });
-        } catch (DataAccessException e) {
-            String errorMessage = String.format(
-                    "Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.",
-                    roleId, tenantDomain);
-            throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
+        for (Map.Entry<String, List<String>> entry : domainToUserNamesMap.entrySet()) {
+            String domainName = entry.getKey();
+            List<String> userNamesInDomain = entry.getValue();
+
+            String usernamePlaceholder = "USERNAME_";
+            List<String> usernamePlaceholders = new ArrayList<>();
+            for (int i = 1; i <= userNamesInDomain.size(); i++) {
+                usernamePlaceholders.add(":" + usernamePlaceholder + i + ";");
+            }
+            String sqlStatement = GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG.replace(
+                    PLACEHOLDER_NAME_USER_NAMES, String.join(", ", usernamePlaceholders));
+
+            try {
+                nonDeletableUserNames.addAll(namedJdbcTemplate.executeQuery(sqlStatement,
+                        (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_USER_NAME),
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
+                            namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION,
+                                    EditOperation.DELETE.name());
+                            for (int index = 1; index <= userNamesInDomain.size(); index++) {
+                                namedPreparedStatement.setString(usernamePlaceholder + index,
+                                        userNamesInDomain.get(index - 1));
+                            }
+                        }));
+            } catch (DataAccessException e) {
+                String errorMessage = String.format(
+                        "Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.", roleId,
+                        tenantDomain);
+                throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
+            }
         }
+        return nonDeletableUserNames;
     }
 
     @Override
@@ -480,5 +489,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
+    }
+
+    private Map<String, List<String>> groupUsernamesByDomain(List<String> deletedDomainQualifiedUserNames) {
+
+        Map<String, List<String>> domainToUserNamesMap = new HashMap<>();
+        for (String deletedDomainQualifiedUserName : deletedDomainQualifiedUserNames) {
+            String domainName = UserCoreUtil.extractDomainFromName(deletedDomainQualifiedUserName);
+            String username = UserCoreUtil.removeDomainFromName(deletedDomainQualifiedUserName);
+            domainToUserNamesMap.computeIfAbsent(domainName, k -> new ArrayList<>()).add(username);
+        }
+        return domainToUserNamesMap;
     }
 }

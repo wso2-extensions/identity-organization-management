@@ -151,15 +151,16 @@ public interface OrganizationUserSharingService {
      * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
      * tenant domain, based on the permissions of the requesting organization.
      *
-     * @param roleId               The role ID from which the users are to be removed.
-     * @param deletedUserNamesList The list of usernames intended for removal.
-     * @param tenantDomain         The tenant domain where the role assignment is available.
-     * @param requestingOrgId      The ID of the requesting organization performing the operation.
+     * @param roleId                              The role ID from which the users are to be removed.
+     * @param deletedDomainQualifiedUserNamesList The list of usernames with domain intended for removal.
+     * @param tenantDomain                        The tenant domain where the role assignment is available.
+     * @param requestingOrgId                     The ID of the requesting organization performing the operation.
      * @return A list of usernames that the requesting organization is not permitted to remove from the given role.
      * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
      *                                         eligible usernames.
      */
-    default List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+    default List<String> getNonDeletableUserRoleAssignments(String roleId,
+                                                            List<String> deletedDomainQualifiedUserNamesList,
                                                             String tenantDomain, String requestingOrgId)
             throws IdentityRoleManagementException {
 
