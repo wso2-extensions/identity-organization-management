@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
@@ -431,12 +432,12 @@ public class SharedUserOperationEventListenerTest {
                 Only groups claim will be returned, because no value resolved from origin for
                 given name and custom claim.
                  */
-                {claimValuesWithOutCustomClaim, null, 1},
+                {claimValuesWithOutCustomClaim, null, 2},
                 /*
                  Only groups claim and custom claim will be returned, because no value resolved from origin
                  for given name.
                  */
-                {claimValuesWithCustomClaim, "value1", 2},
+                {claimValuesWithCustomClaim, "value1", 3},
         };
     }
 
@@ -671,6 +672,7 @@ public class SharedUserOperationEventListenerTest {
         userAssociationOfUser1InOrgL1.setOrganizationId(L1_ORG_ID);
         userAssociationOfUser1InOrgL1.setAssociatedUserId(USER_1_IN_ROOT);
         userAssociationOfUser1InOrgL1.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL1.setSharedType(SharedType.SHARED);
         when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L1_ORG, L1_ORG_ID)).thenReturn(
                 userAssociationOfUser1InOrgL1);
 
@@ -679,8 +681,27 @@ public class SharedUserOperationEventListenerTest {
         userAssociationOfUser1InOrgL2.setOrganizationId(L2_ORG_ID);
         userAssociationOfUser1InOrgL2.setAssociatedUserId(USER_1_IN_ROOT);
         userAssociationOfUser1InOrgL2.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL2.setSharedType(SharedType.INVITED);
         when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L2_ORG, L2_ORG_ID)).thenReturn(
                 userAssociationOfUser1InOrgL2);
+
+        UserAssociation userAssociationOfUser1InOrgL3 = new UserAssociation();
+        userAssociationOfUser1InOrgL3.setUserId(SHARED_USER_OF_USER_1_IN_L1_ORG);
+        userAssociationOfUser1InOrgL3.setOrganizationId(L1_ORG_ID);
+        userAssociationOfUser1InOrgL3.setAssociatedUserId(USER_1_IN_ROOT);
+        userAssociationOfUser1InOrgL3.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL3.setSharedType(SharedType.SHARED);
+        when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L1_ORG, L1_ORG_ID)).thenReturn(
+                userAssociationOfUser1InOrgL3);
+
+        UserAssociation userAssociationOfUser1InOrgL4 = new UserAssociation();
+        userAssociationOfUser1InOrgL4.setUserId(SHARED_USER_OF_USER_1_IN_L2_ORG);
+        userAssociationOfUser1InOrgL4.setOrganizationId(L2_ORG_ID);
+        userAssociationOfUser1InOrgL4.setAssociatedUserId(USER_1_IN_ROOT);
+        userAssociationOfUser1InOrgL4.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL4.setSharedType(SharedType.NOT_SPECIFIED);
+        when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L2_ORG, L2_ORG_ID)).thenReturn(
+                userAssociationOfUser1InOrgL4);
 
         when(organizationUserSharingService.getUserAssociation(USER_1_IN_ROOT, ROOT_ORG_ID)).thenReturn(null);
     }
