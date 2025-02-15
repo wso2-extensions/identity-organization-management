@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.governance.IdentityGovernanceService;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.handler.FragmentApplicationMgtHandler;
 import org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandler;
 import org.wso2.carbon.identity.organization.management.handler.OrganizationSessionHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
@@ -70,6 +71,7 @@ public class OrganizationManagementHandlerServiceComponent {
             bundleContext.registerService(ApplicationMgtListener.class.getName(), new SharedRoleMgtListener(), null);
             bundleContext.registerService(AbstractEventHandler.class, new SharingPolicyCleanUpHandler(), null);
             bundleContext.registerService(AbstractEventHandler.class, new OrganizationSessionHandler(), null);
+            bundleContext.registerService(AbstractEventHandler.class, new FragmentApplicationMgtHandler(), null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);
