@@ -26,6 +26,7 @@
             <class name="org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImplTest"/>
             <class name="org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImplTest"/>
             <class name="org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListenerTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.application.handler.OrgClaimMgtHandlerTest"/>
         </classes>
     </test>
 </suite>

@@ -287,7 +287,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 String sharedOrganizationTenantDomain = getOrganizationManager().
                         resolveTenantDomain(organization.getId());
                 Optional<LocalClaim> existingLocalClaim =
-                        getExistingLocalClaimURI(localClaimURI, sharedOrganizationTenantDomain);
+                        getExistingLocalClaim(localClaimURI, sharedOrganizationTenantDomain);
 
                 if (existingLocalClaim.isPresent()) {
                     String primaryUserStoreDomain = getPrimaryUserStoreDomain(tenantDomain);
@@ -299,8 +299,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                                 existingLocalClaim.get().getClaimProperties(),
                                 localClaimProperties,
                                 primaryUserStoreDomain);
-                        getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
-                                mappedAttributes, modifiedLocalClaimProperties), sharedOrganizationTenantDomain);
+                        getClaimMetadataManagementService().updateLocalClaim(
+                                new LocalClaim(localClaimURI, modifiedAttributeMappings, modifiedLocalClaimProperties),
+                                sharedOrganizationTenantDomain);
                     }
 
                 }
@@ -651,7 +652,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         return new OrgApplicationManagerImpl();
     }
 
-    private Optional<LocalClaim> getExistingLocalClaimURI(String localClaimURI, String tenantDomain)
+    private Optional<LocalClaim> getExistingLocalClaim(String localClaimURI, String tenantDomain)
             throws ClaimMetadataException {
 
         return getClaimMetadataManagementService().getLocalClaims(tenantDomain).stream().filter(
