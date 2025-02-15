@@ -174,7 +174,7 @@ public class SQLConstants {
             SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER + "ORDER BY ID DESC SKIP ? LIMIT ?";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_TENANT =
-            "SELECT DISTINCT COUNT(sa_shared.UUID) FROM SP_SHARED_APP ssa " +
+            "SELECT COUNT(DISTINCT(sa_shared.UUID)) FROM SP_SHARED_APP ssa " +
             "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID " +
             "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE " +
@@ -182,7 +182,7 @@ public class SQLConstants {
             "sa_shared.IS_DISCOVERABLE = '1')" + SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER;
 
     public static final String LOAD_DISCOVERABLE_SHARED_APP_COUNT_BY_APP_NAME_AND_TENANT =
-            "SELECT DISTINCT COUNT(sa_shared.UUID) FROM SP_SHARED_APP ssa " +
+            "SELECT COUNT(DISTINCT(sa_shared.UUID)) FROM SP_SHARED_APP ssa " +
             "JOIN SP_APP sa_main ON ssa.MAIN_APP_ID = sa_main.UUID " +
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID " +
             "LEFT OUTER JOIN APP_GROUP_ASSOCIATION ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE " +
