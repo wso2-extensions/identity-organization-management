@@ -27,7 +27,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
-import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.AttributeMapping;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
@@ -35,7 +34,6 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
@@ -48,16 +46,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_UPDATE_LOCAL_CLAIM;
-import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.LOCAL_CLAIM_PROPERTIES;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.LOCAL_CLAIM_URI;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.MAPPED_ATTRIBUTES;
@@ -116,7 +110,8 @@ public class OrgClaimMgtHandlerTest {
                 .thenReturn(TEST_TENANT_ID);
 
         when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
-        when(orgApplicationMgtDataHolder.getClaimMetadataManagementService()).thenReturn(claimMetadataManagementService);
+        when(orgApplicationMgtDataHolder.getClaimMetadataManagementService())
+                .thenReturn(claimMetadataManagementService);
         when(orgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
 
         when(realmService.getTenantUserRealm(TEST_TENANT_ID)).thenReturn(userRealm);
@@ -189,12 +184,12 @@ public class OrgClaimMgtHandlerTest {
         LocalClaim updatedClaim = localClaimCaptor.getValue();
 
         Assert.assertEquals(updatedClaim.getClaimURI(), TEST_LOCAL_CLAIM_URI);
-        Assert.assertFalse(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY).contains(
-                rootOrgSecondaryUserStore));
-        Assert.assertTrue(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY).contains(
-                TEST_PRIMARY_USER_STORE));
-        Assert.assertTrue(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY).contains(
-                subOrgSecondaryUserStore));
+        Assert.assertFalse(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY)
+                .contains(rootOrgSecondaryUserStore));
+        Assert.assertTrue(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY)
+                .contains(TEST_PRIMARY_USER_STORE));
+        Assert.assertTrue(updatedClaim.getClaimProperties().get(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY)
+                .contains(subOrgSecondaryUserStore));
 
         List<AttributeMapping> updatedAttributeMappings = updatedClaim.getMappedAttributes();
         Assert.assertEquals(updatedAttributeMappings.size(), 2);
