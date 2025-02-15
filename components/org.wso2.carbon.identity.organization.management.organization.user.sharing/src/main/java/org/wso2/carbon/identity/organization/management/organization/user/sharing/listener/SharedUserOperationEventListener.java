@@ -54,17 +54,20 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SHARED_PROFILE_VALUE_RESOLVING_METHOD;
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_FIRST_FOUND_IN_HIERARCHY;
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_ORIGIN;
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SharedProfileValueResolvingMethod.FROM_SHARED_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_USER_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
@@ -171,6 +174,7 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             claimMap.putAll(resolvedClaimsFromOrigin);
             claimMap.putAll(resolvedClaimsFromHierarchy);
             claimMap.putAll(resolvedClaimsFromSharedProfile);
+            setRuntimeClaims(claimMap, Collections.singleton(CLAIM_USER_SHARED_TYPE), userAssociation);
         } catch (OrganizationManagementException | org.wso2.carbon.user.api.UserStoreException |
                  ClaimMetadataException | OrgResourceHierarchyTraverseException e) {
             throw new UserStoreException(e.getMessage(), e);
@@ -221,6 +225,8 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 aggregatedProfileClaims.putAll(resolvedClaimsFromOrigin);
                 aggregatedProfileClaims.putAll(resolvedClaimsFromHierarchy);
                 aggregatedProfileClaims.putAll(resolvedClaimsFromSharedProfile);
+                setRuntimeClaims(aggregatedProfileClaims, Collections.singleton(CLAIM_USER_SHARED_TYPE),
+                        userAssociation);
 
                 userClaimSearchEntry.setClaims(aggregatedProfileClaims);
                 UserClaimSearchEntry searchEntryObject = userClaimSearchEntry.getUserClaimSearchEntry();
@@ -330,6 +336,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     } finally {
                         IdentityUtil.threadLocalProperties.get().remove(INSIDE_CLAIM_RESOLVER_FLAG);
                     }
+                    break;
+                default:
+                    claimValue.clear();
+                    setRuntimeClaims(new HashMap<>(), Collections.singleton(CLAIM_USER_SHARED_TYPE), userAssociation);
                     break;
             }
         } catch (OrganizationManagementException | ClaimMetadataException |
@@ -574,5 +584,25 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
 
         return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService()
                 .getUserAssociation(userID, currentOrganizationId);
+    }
+
+    private void setRuntimeClaims(Map<String, String> claimMap, Set<String> claimURIs,
+                                  UserAssociation userAssociation) {
+
+        for (String claimURI : claimURIs) {
+            if (StringUtils.equals(claimURI, CLAIM_USER_SHARED_TYPE)) {
+                claimMap.put(CLAIM_USER_SHARED_TYPE, getClaimBasedOnSharedType(userAssociation));
+            }
+        }
+    }
+
+    private String getClaimBasedOnSharedType(UserAssociation userAssociation) {
+
+        SharedType sharedType = userAssociation.getSharedType();
+        if (!SharedType.NOT_SPECIFIED.equals(sharedType)) {
+            return sharedType.name();
+        } else {
+            return SharedType.INVITED.name(); // Considering invited as the shared type for all old shared users.
+        }
     }
 }
