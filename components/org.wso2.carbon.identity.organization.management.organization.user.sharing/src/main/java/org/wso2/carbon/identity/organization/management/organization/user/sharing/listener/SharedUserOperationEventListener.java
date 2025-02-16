@@ -174,7 +174,8 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             claimMap.putAll(resolvedClaimsFromOrigin);
             claimMap.putAll(resolvedClaimsFromHierarchy);
             claimMap.putAll(resolvedClaimsFromSharedProfile);
-            setRuntimeClaims(claimMap, Collections.singleton(CLAIM_USER_SHARED_TYPE), userAssociation);
+            // Set the shared type of the user to the claimMap.
+            claimMap.put(CLAIM_USER_SHARED_TYPE, getClaimBasedOnSharedType(userAssociation));
         } catch (OrganizationManagementException | org.wso2.carbon.user.api.UserStoreException |
                  ClaimMetadataException | OrgResourceHierarchyTraverseException e) {
             throw new UserStoreException(e.getMessage(), e);
@@ -225,8 +226,8 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 aggregatedProfileClaims.putAll(resolvedClaimsFromOrigin);
                 aggregatedProfileClaims.putAll(resolvedClaimsFromHierarchy);
                 aggregatedProfileClaims.putAll(resolvedClaimsFromSharedProfile);
-                setRuntimeClaims(aggregatedProfileClaims, Collections.singleton(CLAIM_USER_SHARED_TYPE),
-                        userAssociation);
+                // Set the shared type of the user to the claimMap.
+                aggregatedProfileClaims.put(CLAIM_USER_SHARED_TYPE, getClaimBasedOnSharedType(userAssociation));
 
                 userClaimSearchEntry.setClaims(aggregatedProfileClaims);
                 UserClaimSearchEntry searchEntryObject = userClaimSearchEntry.getUserClaimSearchEntry();
@@ -308,7 +309,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     claimValue.add(userClaimValueWithID);
                     break;
                 case FROM_SHARED_PROFILE:
-                    // Do nothing as the claim value is already set.
+                    // If the claim is shared type, set the claim value based on the shared type.
+                    if (CLAIM_USER_SHARED_TYPE.equals(claim)) {
+                        claimValue.clear();
+                        claimValue.add(getClaimBasedOnSharedType(userAssociation));
+                    }
+                    // Do nothing for the other claims.
                     break;
                 case FROM_FIRST_FOUND_IN_HIERARCHY:
                     /*
@@ -336,10 +342,6 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                     } finally {
                         IdentityUtil.threadLocalProperties.get().remove(INSIDE_CLAIM_RESOLVER_FLAG);
                     }
-                    break;
-                default:
-                    claimValue.clear();
-                    setRuntimeClaims(new HashMap<>(), Collections.singleton(CLAIM_USER_SHARED_TYPE), userAssociation);
                     break;
             }
         } catch (OrganizationManagementException | ClaimMetadataException |
@@ -586,23 +588,12 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
                 .getUserAssociation(userID, currentOrganizationId);
     }
 
-    private void setRuntimeClaims(Map<String, String> claimMap, Set<String> claimURIs,
-                                  UserAssociation userAssociation) {
-
-        for (String claimURI : claimURIs) {
-            if (StringUtils.equals(claimURI, CLAIM_USER_SHARED_TYPE)) {
-                claimMap.put(CLAIM_USER_SHARED_TYPE, getClaimBasedOnSharedType(userAssociation));
-            }
-        }
-    }
-
     private String getClaimBasedOnSharedType(UserAssociation userAssociation) {
 
         SharedType sharedType = userAssociation.getSharedType();
         if (!SharedType.NOT_SPECIFIED.equals(sharedType)) {
             return sharedType.name();
-        } else {
-            return SharedType.INVITED.name(); // Considering invited as the shared type for all old shared users.
         }
+        return SharedType.INVITED.name(); // Considering invited as the shared type for all old shared users.
     }
 }
