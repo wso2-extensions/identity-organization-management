@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -39,9 +39,13 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
@@ -50,6 +54,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -102,6 +107,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 break;
             case IdentityEventConstants.Event.POST_DELETE_CLAIM_DIALECT:
                 handleDeleteClaimDialect(event);
+                break;
+            case Constants.EVENT_POST_ADD_ORGANIZATION:
+                handlePostAddOrganization(event);
                 break;
             default:
                 break;
@@ -572,6 +580,76 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         } catch (ClaimMetadataException e) {
             throw new IdentityEventException(
                     "An error occurred while deleting the claim dialect " + claimDialectURI, e);
+        }
+    }
+
+    private void handlePostAddOrganization(Event event) throws IdentityEventException {
+
+        Organization createdOrganization =
+                (Organization) event.getEventProperties().get(Constants.EVENT_PROP_ORGANIZATION);
+        try {
+            if (!OrganizationManagementUtil.isOrganization(createdOrganization.getId())) {
+                return;
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityEventException(
+                    "Error while checking if the created organization is a sub organization.", e);
+        }
+
+        ParentOrganizationDO parentOrganization = createdOrganization.getParent();
+        if (parentOrganization != null) {
+            try {
+                String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganization.getId());
+                inheritClaimPropertiesAndAttributeMapping(createdOrganization.getId(), parentOrgTenantDomain);
+            } catch (OrganizationManagementException e) {
+                throw new IdentityEventException("Error retrieving the tenant domain of parent organization.", e);
+            }
+        }
+    }
+
+    private void inheritClaimPropertiesAndAttributeMapping(String createdOrgTenantDomain, String parentOrgTenantDomain)
+            throws IdentityEventException {
+
+        try {
+            List<LocalClaim> createdOrgLocalClaims =
+                    getClaimMetadataManagementService().getLocalClaims(createdOrgTenantDomain);
+            List<LocalClaim> parentOrgLocalClaims =
+                    getClaimMetadataManagementService().getLocalClaims(parentOrgTenantDomain);
+            Map<String, LocalClaim> parentClaimMap = parentOrgLocalClaims.stream()
+                    .collect(Collectors.toMap(LocalClaim::getClaimURI, claim -> claim));
+
+            // The custom local claims are not inherited as the created organization's claims are only updated.
+            for (LocalClaim createdOrgClaim : createdOrgLocalClaims) {
+                LocalClaim parentClaim = parentClaimMap.get(createdOrgClaim.getClaimURI());
+
+                if (parentClaim != null) {
+                    Map<String, String> updatedClaimProperties = new HashMap<>(parentClaim.getClaimProperties());
+
+                    // The ExcludedUserStores claim property is excluded when inheriting the properties.
+                    updatedClaimProperties.remove(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY);
+                    boolean isClaimPropertiesDifferent = !Objects.equals(
+                            createdOrgClaim.getClaimProperties(), updatedClaimProperties);
+
+                    // Only the PRIMARY user store attribute mapping gets inherited.
+                    List<AttributeMapping> primaryDomainParentMappedAttributes = parentClaim.getMappedAttributes()
+                            .stream().filter(attr -> UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME
+                                    .equals(attr.getUserStoreDomain()))
+                            .collect(Collectors.toList());
+                    boolean isMappedAttributesDifferent = !Objects.equals(
+                            createdOrgClaim.getMappedAttributes().get(0).getAttributeName(),
+                            primaryDomainParentMappedAttributes.get(0).getAttributeName());
+
+                    // If either the PRIMARY user store attribute mapping or any of the claim properties differ from
+                    // the parent organization, the claim is updated in the created organization.
+                    if (isClaimPropertiesDifferent || isMappedAttributesDifferent) {
+                        parentClaim.setClaimProperties(updatedClaimProperties);
+                        parentClaim.setMappedAttributes(primaryDomainParentMappedAttributes);
+                        getClaimMetadataManagementService().updateLocalClaim(parentClaim, createdOrgTenantDomain);
+                    }
+                }
+            }
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException("An error occurred while inheriting parent organization claims.", e);
         }
     }
 
