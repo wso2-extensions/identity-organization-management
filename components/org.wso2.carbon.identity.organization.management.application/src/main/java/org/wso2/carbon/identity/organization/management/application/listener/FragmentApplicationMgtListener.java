@@ -688,12 +688,12 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         if (LoggerUtils.isEnableV2AuditLogs()) {
                             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
                                     IdentityUtil.getInitiatorId(username, tenantDomain),
-                                    LoggerUtils.Target.Application.name(),
+                                    LoggerUtils.Target.User.name(),
                                     updatedApplicationName,
                                     LoggerUtils.Target.Application.name(),
                                     LogConstants.ApplicationManagement.UPDATE_APPLICATION_ACTION)
-                                    .data(buildAuditData(updatedApplicationName, sharedAppOrgId,
-                                            updatedApplicationName, sharedAppId, "Application conflict"));
+                                    .data(buildAuditData(updatedApplicationName, sharedAppOrgId, updatedApplicationName,
+                                            sharedAppId, "Application name conflict."));
                             LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         }
                         LOG.warn(String.format(
