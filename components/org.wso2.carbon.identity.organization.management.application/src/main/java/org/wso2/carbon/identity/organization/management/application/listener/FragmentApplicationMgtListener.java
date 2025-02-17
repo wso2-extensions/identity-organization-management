@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -41,6 +41,8 @@ import org.wso2.carbon.identity.application.common.model.script.AuthenticationSc
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -59,9 +61,11 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
+import org.wso2.carbon.utils.AuditLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -673,13 +677,32 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
         for (SharedApplicationDO sharedApplication : sharedApplications) {
             String sharedAppOrgId = sharedApplication.getOrganizationId();
+            String sharedAppId = sharedApplication.getFragmentApplicationId();
             CompletableFuture.runAsync(() -> {
                 try {
-                    updateFragmentApplication(sharedAppOrgId, sharedApplication.getFragmentApplicationId(),
-                            updatedApplicationName, username);
+                    updateFragmentApplication(sharedAppOrgId, sharedAppId, updatedApplicationName, username);
                 } catch (IdentityApplicationManagementException | OrganizationManagementException e) {
-                    LOG.error(String.format("Error in updating application: %s in organization: %s",
-                            applicationId, sharedAppOrgId), e);
+                    if (e instanceof IdentityApplicationManagementException &&
+                            OrgApplicationMgtConstants.APPLICATION_ALREADY_EXISTS_ERROR_CODE.equals((
+                                    (IdentityApplicationManagementException) e).getErrorCode())) {
+                        if (LoggerUtils.isEnableV2AuditLogs()) {
+                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                    IdentityUtil.getInitiatorId(username, tenantDomain),
+                                    LoggerUtils.Target.Application.name(),
+                                    updatedApplicationName,
+                                    LoggerUtils.Target.Application.name(),
+                                    LogConstants.ApplicationManagement.UPDATE_APPLICATION_ACTION)
+                                    .data(buildAuditData(updatedApplicationName, sharedAppOrgId,
+                                            updatedApplicationName, sharedAppId, "Application conflict"));
+                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+                        }
+                        LOG.warn(String.format(
+                                "Updated application name '%s' already exists in organization with ID: %s.",
+                                updatedApplicationName, sharedAppOrgId));
+                    } else {
+                        LOG.error(String.format("Error updating application: %s in organization: %s",
+                                applicationId, sharedAppOrgId), e);
+                    }
                 }
             }, executorService);
         }
@@ -828,5 +851,18 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         FederatedAuthenticatorConfig[] federatedAuthenticatorConfigs = idp.getFederatedAuthenticatorConfigs();
         return ArrayUtils.isNotEmpty(federatedAuthenticatorConfigs) &&
                 ORGANIZATION_LOGIN_AUTHENTICATOR.equals(federatedAuthenticatorConfigs[0].getName());
+    }
+
+    private Map<String, String> buildAuditData(String mainApplicationName, String sharedTenantDomain,
+                                               String conflictingOrgAppName, String conflictingOrgAppId,
+                                               String failureReason) {
+
+        Map<String, String> auditData = new HashMap<>();
+        auditData.put("parentAppName", mainApplicationName);
+        auditData.put("sharedTenantDomain", sharedTenantDomain);
+        auditData.put("conflictingAppName", conflictingOrgAppName);
+        auditData.put("conflictingAppId", conflictingOrgAppId);
+        auditData.put("failureReason", failureReason);
+        return auditData;
     }
 }
