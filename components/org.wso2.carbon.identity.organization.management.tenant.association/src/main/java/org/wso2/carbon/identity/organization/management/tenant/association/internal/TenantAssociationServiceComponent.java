@@ -49,7 +49,7 @@ public class TenantAssociationServiceComponent {
 
         TenantAssociationManagementListener tenantManagementListener = new TenantAssociationManagementListener();
         context.getBundleContext().registerService(TenantMgtListener.class.getName(), tenantManagementListener, null);
-        LOG.info("Organization management related TenantAssociationManagementListener registered successfully.");
+        LOG.debug("Organization management related TenantAssociationManagementListener registered successfully.");
     }
 
     @Deactivate

@@ -81,7 +81,7 @@ public class OrganizationUserSharingServiceComponent {
         UserSharingPolicyHandlerService userSharingPolicyHandlerService = new UserSharingPolicyHandlerServiceImpl();
         bundleContext.registerService(UserSharingPolicyHandlerService.class.getName(), userSharingPolicyHandlerService,
                 null);
-        LOG.info("OrganizationUserSharingServiceComponent activated successfully.");
+        LOG.debug("OrganizationUserSharingServiceComponent activated successfully.");
     }
 
     @Reference(
