@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
@@ -130,6 +131,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
+
+        AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+        asyncStatusMgtService.test("B2B User Sharing");
+        LOG.info("B2B User Sharing..");
 
         validateUserShareInput(selectiveUserShareDO);
         String sharingInitiatedOrgId = getOrganizationId();
@@ -1626,6 +1631,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private OrganizationUserSharingService getOrganizationUserSharingService() {
 
         return OrganizationUserSharingDataHolder.getInstance().getOrganizationUserSharingService();
+    }
+
+    private AsyncStatusMgtService getAsyncStatusMgtService(){
+        return OrganizationUserSharingDataHolder.getInstance().getAsyncStatusMgtService();
     }
 
     private ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {

@@ -86,6 +86,11 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.framework.async.status.mgt</artifactId>
+            <version>7.7.251-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
         </dependency>
         <dependency>
