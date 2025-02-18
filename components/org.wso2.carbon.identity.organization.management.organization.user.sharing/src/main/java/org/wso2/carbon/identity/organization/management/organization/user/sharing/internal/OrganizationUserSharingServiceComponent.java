@@ -82,7 +82,8 @@ public class OrganizationUserSharingServiceComponent {
         UserSharingPolicyHandlerService userSharingPolicyHandlerService = new UserSharingPolicyHandlerServiceImpl();
         bundleContext.registerService(UserSharingPolicyHandlerService.class.getName(), userSharingPolicyHandlerService,
                 null);
-        LOG.debug("OrganizationUserSharingServiceComponent activated successfully.");
+        LOG.info("OrganizationUserSharingServiceComponent activated successfully.");
+        LOG.info("Patch in action...");
     }
 
     @Reference(
@@ -232,7 +233,7 @@ public class OrganizationUserSharingServiceComponent {
             service = AsyncStatusMgtService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetResourceSharingPolicyHandlerService"
+            unbind = "unsetAsyncStatusMgtService"
     )
     protected void setAsyncStatusMgtService(
             AsyncStatusMgtService asyncStatusMgtService) {
