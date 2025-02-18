@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
-import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+//import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -44,7 +44,7 @@ public class OrganizationUserSharingDataHolder {
     private ClaimMetadataManagementService claimManagementService;
     private OrgResourceResolverService orgResourceResolverService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
-    private AsyncStatusMgtService asyncStatusMgtService;
+//    private AsyncStatusMgtService asyncStatusMgtService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -233,11 +233,11 @@ public class OrganizationUserSharingDataHolder {
         this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 
-    public AsyncStatusMgtService getAsyncStatusMgtService() {
-        return asyncStatusMgtService;
-    }
-
-    public void setAsyncStatusMgtService(AsyncStatusMgtService asyncStatusMgtService) {
-        this.asyncStatusMgtService = asyncStatusMgtService;
-    }
+//    public AsyncStatusMgtService getAsyncStatusMgtService() {
+//        return asyncStatusMgtService;
+//    }
+//
+//    public void setAsyncStatusMgtService(AsyncStatusMgtService asyncStatusMgtService) {
+//        this.asyncStatusMgtService = asyncStatusMgtService;
+//    }
 }
