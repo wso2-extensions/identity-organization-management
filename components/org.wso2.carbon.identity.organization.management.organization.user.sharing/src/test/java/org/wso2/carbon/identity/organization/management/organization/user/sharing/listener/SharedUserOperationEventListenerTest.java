@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
@@ -98,6 +99,7 @@ public class SharedUserOperationEventListenerTest {
     private static final String CUSTOM_CLAIM_1 = "http://wso2.org/claims/customAttribute1";
     private static final String CUSTOM_CLAIM_2 = "http://wso2.org/claims/customAttribute2";
     private static final String MANAGED_ORG_CLAIM = "http://wso2.org/claims/identity/managedOrg";
+    private static final String USER_SHARED_TYPE_CLAIM = "http://wso2.org/claims/identity/sharedType";
 
     @Mock
     OrganizationManager organizationManager;
@@ -349,6 +351,74 @@ public class SharedUserOperationEventListenerTest {
         }
     }
 
+    @DataProvider(name = "dataProviderForTestDoPostGetUserClaimValueWithIDForSharedType")
+    public Object[][] dataProviderForTestDoPostGetUserClaimValueWithIDForSharedType() {
+
+        return new Object[][]{
+                // If sharedType is NOT_SPECIFIED, expected sharedType should be INVITED.
+                {SHARED_USER_OF_USER_1_IN_L2_ORG, L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true, SharedType.NOT_SPECIFIED,
+                        SharedType.INVITED.name()},
+
+                // If sharedType is SHARED, expected sharedType should be SHARED.
+                {SHARED_USER_OF_USER_1_IN_L2_ORG, L2_ORG_TENANT_DOMAIN, L2_ORG_ID, true, SharedType.SHARED,
+                        SharedType.SHARED.name()},
+
+                // If sharedType is OWNER, expected sharedType should be OWNER.
+                {SHARED_USER_OF_USER_1_IN_L2_ORG, L1_ORG_TENANT_DOMAIN, L1_ORG_ID, true, SharedType.OWNER,
+                        SharedType.OWNER.name()},
+
+                // If sharedType is INVITED, expected sharedType should be INVITED.
+                {SHARED_USER_OF_USER_1_IN_L2_ORG, L2_ORG_TENANT_DOMAIN, L2_ORG_ID, true, SharedType.INVITED,
+                        SharedType.INVITED.name()},
+        };
+    }
+
+    @Test(dataProvider = "dataProviderForTestDoPostGetUserClaimValueWithIDForSharedType")
+    public void testDoPostGetUserClaimValueWithIDForSharedType(String userId, String tenantDomain,
+                                                               String organizationId, boolean isOrganization,
+                                                               SharedType sharedType, String expectedSharedType)
+            throws Exception {
+
+        setUpClaims();
+        setUpUserSharing();
+        mockCarbonContextForTenant(tenantDomain, organizationId, privilegedCarbonContext);
+        mockOrgIdResolverByTenantDomain();
+        organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(anyString()))
+                .thenReturn(isOrganization);
+        identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(1);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(tenantUserRealm);
+        when(tenantUserRealm.getUserStoreManager()).thenReturn(userStoreManager);
+
+        // Mock user association to return specified shared type
+        UserAssociation userAssociation = new UserAssociation();
+        userAssociation.setUserId(userId);
+        userAssociation.setOrganizationId(organizationId);
+        userAssociation.setSharedType(sharedType);
+        when(organizationUserSharingService.getUserAssociation(userId, organizationId)).thenReturn(userAssociation);
+
+        // Mock LocalClaim to return "FromSharedProfile" when getClaimProperty is called
+        LocalClaim mockLocalClaim = mock(LocalClaim.class);
+        when(mockLocalClaim.getClaimProperty(SHARED_PROFILE_VALUE_RESOLVING_METHOD))
+                .thenReturn("FromSharedProfile");
+
+        // Ensure claimManagementService.getLocalClaim(...) returns an Optional containing the mockLocalClaim
+        when(claimManagementService.getLocalClaim(anyString(), anyString()))
+                .thenReturn(Optional.of(mockLocalClaim));
+
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockListenerEnabledStatus(true, true, identityUtil);
+            SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
+            List<String> claimValues = new ArrayList<>();
+            boolean listenerStatus =
+                    sharedUserOperationEventListener.doPostGetUserClaimValueWithID(userId, USER_SHARED_TYPE_CLAIM,
+                            claimValues, DEFAULT_PROFILE, userStoreManager);
+
+            assertEquals(claimValues.size(), 1, "Expected exactly one claim value.");
+            assertEquals(claimValues.get(0), expectedSharedType, "SharedType claim value should match expected value.");
+            assertTrue(listenerStatus);
+        }
+    }
+
     @DataProvider(name = "dataProviderForTestDoPostGetUserClaimValuesWithID")
     public Object[][] dataProviderForTestDoPostGetUserClaimValuesWithID() {
 
@@ -428,15 +498,15 @@ public class SharedUserOperationEventListenerTest {
 
         return new Object[][]{
                 /*
-                Only groups claim will be returned, because no value resolved from origin for
+                Only groups claim and the shareType claim will be returned, because no value resolved from origin for
                 given name and custom claim.
                  */
-                {claimValuesWithOutCustomClaim, null, 1},
+                {claimValuesWithOutCustomClaim, null, 2},
                 /*
-                 Only groups claim and custom claim will be returned, because no value resolved from origin
-                 for given name.
+                 Only groups claim, custom claim and the shareType claim will be returned, because no value resolved
+                 from origin for given name.
                  */
-                {claimValuesWithCustomClaim, "value1", 2},
+                {claimValuesWithCustomClaim, "value1", 3},
         };
     }
 
@@ -671,6 +741,7 @@ public class SharedUserOperationEventListenerTest {
         userAssociationOfUser1InOrgL1.setOrganizationId(L1_ORG_ID);
         userAssociationOfUser1InOrgL1.setAssociatedUserId(USER_1_IN_ROOT);
         userAssociationOfUser1InOrgL1.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL1.setSharedType(SharedType.NOT_SPECIFIED);
         when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L1_ORG, L1_ORG_ID)).thenReturn(
                 userAssociationOfUser1InOrgL1);
 
@@ -679,6 +750,7 @@ public class SharedUserOperationEventListenerTest {
         userAssociationOfUser1InOrgL2.setOrganizationId(L2_ORG_ID);
         userAssociationOfUser1InOrgL2.setAssociatedUserId(USER_1_IN_ROOT);
         userAssociationOfUser1InOrgL2.setUserResidentOrganizationId(ROOT_ORG_ID);
+        userAssociationOfUser1InOrgL2.setSharedType(SharedType.SHARED);
         when(organizationUserSharingService.getUserAssociation(SHARED_USER_OF_USER_1_IN_L2_ORG, L2_ORG_ID)).thenReturn(
                 userAssociationOfUser1InOrgL2);
 

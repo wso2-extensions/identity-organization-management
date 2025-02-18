@@ -55,10 +55,10 @@ public class UserInvitationMgtServiceComponent {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(InvitationCoreService.class.getName(),
                     new InvitationCoreServiceImpl(), null);
-            LOG.info("Organization User Invitation Mgt component activated successfully.");
+            LOG.debug("Organization User Invitation Mgt component activated successfully.");
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     new UserInvitationEventHandler(), null);
-            LOG.info("Organization User Invitation Handler activated successfully.");
+            LOG.debug("Organization User Invitation Handler activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating Organization User Invitation Mgt Component", e);
         }
