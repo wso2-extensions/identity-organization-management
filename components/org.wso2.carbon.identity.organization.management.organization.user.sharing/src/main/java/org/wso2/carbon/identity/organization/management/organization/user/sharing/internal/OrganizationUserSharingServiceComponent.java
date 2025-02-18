@@ -30,6 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerService;
@@ -224,5 +225,27 @@ public class OrganizationUserSharingServiceComponent {
 
         OrganizationUserSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
         LOG.debug("Unset Resource Sharing Policy Handler Service.");
+    }
+
+    @Reference(
+            name = "async.status.mgt.service",
+            service = AsyncStatusMgtService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService"
+    )
+    protected void setAsyncStatusMgtService(
+            AsyncStatusMgtService asyncStatusMgtService) {
+
+        OrganizationUserSharingDataHolder.getInstance()
+                .setAsyncStatusMgtService(asyncStatusMgtService);
+        LOG.debug("Set Async Status Mgt Service.");
+    }
+
+    protected void unsetAsyncStatusMgtService(
+            AsyncStatusMgtService asyncStatusMgtService) {
+
+        OrganizationUserSharingDataHolder.getInstance().setAsyncStatusMgtService(null);
+        LOG.debug("Unset Async Status Mgt Service.");
     }
 }

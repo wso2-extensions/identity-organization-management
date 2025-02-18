@@ -44,7 +44,6 @@ public class OrganizationUserSharingDataHolder {
     private ClaimMetadataManagementService claimManagementService;
     private OrgResourceResolverService orgResourceResolverService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
-
     private AsyncStatusMgtService asyncStatusMgtService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
