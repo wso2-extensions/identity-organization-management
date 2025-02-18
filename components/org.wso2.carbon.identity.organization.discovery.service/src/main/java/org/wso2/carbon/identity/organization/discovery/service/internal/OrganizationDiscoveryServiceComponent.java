@@ -61,7 +61,7 @@ public class OrganizationDiscoveryServiceComponent {
                 new OrganizationDiscoveryUserOperationListener(), null);
         PostAuthenticationHandler emailDomainValidationHandler = EmailDomainValidationHandler.getInstance();
         bundleContext.registerService(PostAuthenticationHandler.class.getName(), emailDomainValidationHandler, null);
-        LOG.info("Organization discovery service component activated successfully.");
+        LOG.debug("Organization discovery service component activated successfully.");
     }
 
     @Reference(name = "identity.organization.management.component",
