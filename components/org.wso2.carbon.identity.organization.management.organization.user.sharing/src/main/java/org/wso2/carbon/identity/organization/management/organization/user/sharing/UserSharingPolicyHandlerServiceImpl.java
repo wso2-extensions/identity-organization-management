@@ -29,17 +29,16 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.SharingOperationDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.BaseUserShare;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.GeneralUserShare;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SelectiveUserShare;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.*;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareDO;
@@ -154,6 +153,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        // Pre sharing record creation.
+//        String latestSharingOperationId = new OrganizationUserSharingDAOImpl().getLatestSharingOperationOfResourceId()
+
+
 
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(() -> {
@@ -500,10 +504,24 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                                              String sharingInitiatedOrgId)
             throws UserSharingMgtException {
 
+        ArrayList<SharedResult> sharedResultList = new ArrayList<>();
+
         for (String associatedUserId : userIds.getIds()) {
             try {
+                SharedResult sharedResult = new SharedResult
+                        .Builder()
+                        .id(Integer.parseInt(associatedUserId))
+                        .sharingType(SharedResult.SharingType.SHARE)
+                        .errorDetail(new SharedResult.ErrorDetail(null, null))
+                        .build();
+
                 if (isNotResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
                     LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
+                    sharedResult
+                            .toBuilder()
+                            .statusDetail(new SharedResult.StatusDetail(SharedResult.SharedStatus.FAILED,String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId)))
+                            .build();
+
                     continue;
                 }
 

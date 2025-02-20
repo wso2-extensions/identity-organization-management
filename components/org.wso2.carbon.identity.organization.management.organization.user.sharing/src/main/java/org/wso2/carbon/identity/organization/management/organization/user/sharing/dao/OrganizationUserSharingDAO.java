@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.SharingOperationDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
@@ -244,5 +245,17 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException {
 
         throw new NotImplementedException("updateSharedTypeOfUserAssociation method is not implemented.");
+    }
+
+    /**
+     * Get the latest sharing operation of a resource.
+     *
+     * @param resourceId         The ID of the user association.
+     * @param creationTime The new shared type to be set for the user association.
+     */
+    default String getLatestSharingOperationOfResourceId(SharingOperationDO resourceId, String creationTime)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("getLatestSharingOperationOfResourceId method is not implemented.");
     }
 }
