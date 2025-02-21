@@ -67,10 +67,11 @@ public class SharedUserRoleGovernanceListener extends AbstractRoleManagementList
                 return;
             }
 
-            List<String> deletedUserNamesList = USER_ID_RESOLVER.getNamesByIDs(deletedUserIDList, tenantDomain);
+            List<String> deletedDomainQualifiedUserNamesList =
+                    USER_ID_RESOLVER.getNamesByIDs(deletedUserIDList, tenantDomain);
             List<String> nonDeletableUserNamesList =
-                    getOrganizationUserSharingService().getNonDeletableUserRoleAssignments(roleID, deletedUserNamesList,
-                            tenantDomain, Utils.getOrganizationId());
+                    getOrganizationUserSharingService().getNonDeletableUserRoleAssignments(roleID,
+                            deletedDomainQualifiedUserNamesList, tenantDomain, Utils.getOrganizationId());
 
             if (CollectionUtils.isNotEmpty(nonDeletableUserNamesList)) {
                 String errorMessage = String.format(

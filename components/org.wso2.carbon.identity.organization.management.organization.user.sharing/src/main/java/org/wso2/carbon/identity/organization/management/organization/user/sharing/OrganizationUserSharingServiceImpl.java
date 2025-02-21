@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -139,11 +140,20 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+    public boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        return organizationUserSharingDAO.hasUserAssociations(associatedUserId, associatedOrgId);
+    }
+
+    @Override
+    public List<String> getNonDeletableUserRoleAssignments(String roleId,
+                                                           List<String> deletedDomainQualifiedUserNamesList,
                                                            String tenantDomain, String requestingOrgId)
             throws IdentityRoleManagementException {
 
-        return organizationUserSharingDAO.getNonDeletableUserRoleAssignments(roleId, deletedUserNamesList,
+        return organizationUserSharingDAO.getNonDeletableUserRoleAssignments(roleId,
+                deletedDomainQualifiedUserNamesList,
                 tenantDomain, requestingOrgId);
     }
 
@@ -169,6 +179,20 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             throws UserSharingMgtException {
 
         return organizationUserSharingDAO.getRolesSharedWithUserInOrganization(username, tenantId, domainName);
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds)
+            throws OrganizationManagementServerException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfGivenUserOnGivenOrgs(associatedUserId, orgIds);
+    }
+
+    @Override
+    public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        organizationUserSharingDAO.updateSharedTypeOfUserAssociation(id, sharedType);
     }
 
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {

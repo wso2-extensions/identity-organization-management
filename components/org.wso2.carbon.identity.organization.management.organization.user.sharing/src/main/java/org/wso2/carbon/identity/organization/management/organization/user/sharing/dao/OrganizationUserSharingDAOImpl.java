@@ -30,13 +30,26 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_DB2;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_DEFAULT;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_MSSQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_MYSQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_ORACLE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_POSTGRESQL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER;
@@ -46,6 +59,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_ROLES_OF_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ROLE_IN_TENANT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.INSERT_RESTRICTED_EDIT_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
@@ -62,19 +76,29 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_USER_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.HAS_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.UPDATE_USER_ASSOCIATION_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_ORGANIZATION_USER_ASSOCIATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_OF_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isDB2DB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMySqlDB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isPostgreSqlDB;
 import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
 
 /**
@@ -217,6 +241,28 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
+    public boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociations();
+        String query = getDBSpecificQuery(dbQueryMap);
+        try {
+            Boolean result = namedJdbcTemplate.fetchSingleRecord(
+                    query,
+                    (resultSet, rowNumber) -> resultSet.getBoolean(HAS_USER_ASSOCIATIONS),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
+                    }
+                    );
+            return Boolean.TRUE.equals(result);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
     public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException {
 
@@ -275,48 +321,54 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+    public List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedDomainQualifiedUserNames,
                                                            String tenantDomain, String permittedOrgId)
             throws IdentityRoleManagementException {
 
-        if (CollectionUtils.isEmpty(deletedUserNamesList)) {
+        if (CollectionUtils.isEmpty(deletedDomainQualifiedUserNames)) {
             return Collections.emptyList();
         }
 
-        String usernamePlaceholder = "USERNAME_";
-        List<String> usernamePlaceholders = new ArrayList<>();
-
-        for (int i = 1; i <= deletedUserNamesList.size(); i++) {
-            usernamePlaceholders.add(":" + usernamePlaceholder + i + ";");
-        }
-
-        String sqlStmt = GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG.replace(
-                PLACEHOLDER_NAME_USER_NAMES, String.join(", ", usernamePlaceholders));
-
+        Map<String, List<String>> domainToUserNamesMap = groupUsernamesByDomain(deletedDomainQualifiedUserNames);
+        List<String> nonDeletableUserNames = new ArrayList<>();
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
 
-        try {
-            return namedJdbcTemplate.executeQuery(
-                    sqlStmt,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_USER_NAME),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
-                        namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
-                        namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION, EditOperation.DELETE.name());
-                        int index = 1;
-                        for (String username : deletedUserNamesList) {
-                            namedPreparedStatement.setString(usernamePlaceholder + index, username);
-                            index++;
-                        }
-                    });
-        } catch (DataAccessException e) {
-            String errorMessage = String.format(
-                    "Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.",
-                    roleId, tenantDomain);
-            throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
+        for (Map.Entry<String, List<String>> entry : domainToUserNamesMap.entrySet()) {
+            String domainName = entry.getKey();
+            List<String> userNamesInDomain = entry.getValue();
+
+            String usernamePlaceholder = "USERNAME_";
+            List<String> usernamePlaceholders = new ArrayList<>();
+            for (int i = 1; i <= userNamesInDomain.size(); i++) {
+                usernamePlaceholders.add(":" + usernamePlaceholder + i + ";");
+            }
+            String sqlStatement = GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG.replace(
+                    PLACEHOLDER_NAME_USER_NAMES, String.join(", ", usernamePlaceholders));
+
+            try {
+                nonDeletableUserNames.addAll(namedJdbcTemplate.executeQuery(sqlStatement,
+                        (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_USER_NAME),
+                        namedPreparedStatement -> {
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
+                            namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
+                            namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION,
+                                    EditOperation.DELETE.name());
+                            for (int index = 1; index <= userNamesInDomain.size(); index++) {
+                                namedPreparedStatement.setString(usernamePlaceholder + index,
+                                        userNamesInDomain.get(index - 1));
+                            }
+                        }));
+            } catch (DataAccessException e) {
+                String errorMessage = String.format(
+                        "Error while retrieving permitted usernames for role ID: %s in tenant domain: %s.", roleId,
+                        tenantDomain);
+                throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
+            }
         }
+        return nonDeletableUserNames;
     }
 
     @Override
@@ -412,5 +464,108 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         } catch (DataAccessException e) {
             throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
         }
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId, List<String> orgIds)
+            throws OrganizationManagementServerException {
+
+        if (CollectionUtils.isEmpty(orgIds)) {
+            return Collections.emptyList();
+        }
+
+        String orgIdPlaceholder = "ORG_ID_";
+        List<String> orgIdPlaceholders = new ArrayList<>();
+        for (int i = 1; i <= orgIds.size(); i++) {
+            orgIdPlaceholders.add(":" + orgIdPlaceholder + i + ";");
+        }
+
+        String fetchUserAssociationsQuery =
+                GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS.replace(PLACEHOLDER_ORG_IDS,
+                        String.join(", ", orgIdPlaceholders));
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(
+                    fetchUserAssociationsQuery,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
+                        return userAssociation;
+                    },
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                        int index = 1;
+                        for (String orgId : orgIds) {
+                            namedPreparedStatement.setString(orgIdPlaceholder + index, orgId);
+                            index++;
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
+    public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(
+                    UPDATE_USER_ASSOCIATION_SHARED_TYPE,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setInt(COLUMN_NAME_UM_ID, id);
+                        namedPreparedStatement.setString(COLUMN_NAME_UM_SHARED_TYPE, sharedType.name());
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    private Map<String, List<String>> groupUsernamesByDomain(List<String> deletedDomainQualifiedUserNames) {
+
+        Map<String, List<String>> domainToUserNamesMap = new HashMap<>();
+        for (String deletedDomainQualifiedUserName : deletedDomainQualifiedUserNames) {
+            String domainName = UserCoreUtil.extractDomainFromName(deletedDomainQualifiedUserName);
+            String username = UserCoreUtil.removeDomainFromName(deletedDomainQualifiedUserName);
+            domainToUserNamesMap.computeIfAbsent(domainName, k -> new ArrayList<>()).add(username);
+        }
+        return domainToUserNamesMap;
+    }
+
+    private Map<String, String> getDBQueryMapOfHasUserAssociations() {
+
+        Map<String, String> dbQueryMap = new HashMap<>();
+        dbQueryMap.put(DB_TYPE_DB2, CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2);
+        dbQueryMap.put(DB_TYPE_MSSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL);
+        dbQueryMap.put(DB_TYPE_MYSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS);
+        dbQueryMap.put(DB_TYPE_ORACLE, CHECK_USER_ORG_ASSOCIATION_EXISTS_ORACLE);
+        dbQueryMap.put(DB_TYPE_POSTGRESQL, CHECK_USER_ORG_ASSOCIATION_EXISTS);
+        dbQueryMap.put(DB_TYPE_DEFAULT, CHECK_USER_ORG_ASSOCIATION_EXISTS);
+        return dbQueryMap;
+    }
+
+    private String getDBSpecificQuery(Map<String, String> dbQueryMap) throws OrganizationManagementServerException {
+
+        if (isDB2DB()) {
+            return dbQueryMap.get(DB_TYPE_DB2);
+        } else if (isMSSqlDB()) {
+            return dbQueryMap.get(DB_TYPE_MSSQL);
+        }  else if (isMySqlDB()) {
+            return dbQueryMap.get(DB_TYPE_MYSQL);
+        } else if (isOracleDB()) {
+            return dbQueryMap.get(DB_TYPE_ORACLE);
+        } else if (isPostgreSqlDB()) {
+            return dbQueryMap.get(DB_TYPE_POSTGRESQL);
+        }
+        return dbQueryMap.get(DB_TYPE_DEFAULT);
     }
 }

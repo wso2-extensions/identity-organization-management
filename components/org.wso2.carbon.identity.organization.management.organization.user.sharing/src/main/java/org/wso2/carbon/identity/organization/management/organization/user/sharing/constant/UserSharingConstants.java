@@ -67,6 +67,7 @@ public class UserSharingConstants {
     public static final String DEFAULT_PROFILE = "default";
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
+    public static final String CLAIM_USER_SHARED_TYPE = "http://wso2.org/claims/identity/sharedType";
 
     public static final String ORG_MGT_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String ORG_ROLE_MGT_PERMISSION = "/permission/admin/manage/identity/rolemgt";
@@ -91,7 +92,7 @@ public class UserSharingConstants {
     public static final String APPLICATION_AUTHENTICATION_TYPE = "APPLICATION";
 
     public static final String API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG =
-            "/api/server/v1/users/%s/shared-roles?orgId=%s&after=&before=&limit=2&filter=&recursive=false";
+            "/api/server/v1/users/%s/shared-roles?orgId=%s";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,

@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.List;
@@ -147,18 +148,33 @@ public interface OrganizationUserSharingService {
     }
 
     /**
+     * Checks if the given user has at least one association with any child organization.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @return True if the user has at least one association with any organization.
+     * @throws OrganizationManagementServerException If an error occurs while checking user associations.
+     */
+    default boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("hasUserAssociations method is not implemented.");
+    }
+
+    /**
      * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
      * tenant domain, based on the permissions of the requesting organization.
      *
-     * @param roleId               The role ID from which the users are to be removed.
-     * @param deletedUserNamesList The list of usernames intended for removal.
-     * @param tenantDomain         The tenant domain where the role assignment is available.
-     * @param requestingOrgId      The ID of the requesting organization performing the operation.
+     * @param roleId                              The role ID from which the users are to be removed.
+     * @param deletedDomainQualifiedUserNamesList The list of usernames with domain intended for removal.
+     * @param tenantDomain                        The tenant domain where the role assignment is available.
+     * @param requestingOrgId                     The ID of the requesting organization performing the operation.
      * @return A list of usernames that the requesting organization is not permitted to remove from the given role.
      * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
      *                                         eligible usernames.
      */
-    default List<String> getNonDeletableUserRoleAssignments(String roleId, List<String> deletedUserNamesList,
+    default List<String> getNonDeletableUserRoleAssignments(String roleId,
+                                                            List<String> deletedDomainQualifiedUserNamesList,
                                                             String tenantDomain, String requestingOrgId)
             throws IdentityRoleManagementException {
 
@@ -213,5 +229,33 @@ public interface OrganizationUserSharingService {
             throws UserSharingMgtException {
 
         throw new NotImplementedException("getRolesSharedWithUserInOrganization method is not implemented.");
+    }
+
+    /**
+     * Get the user associations of the associated user in the given organizations.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param orgIds           The list of organization IDs.
+     * @return The list of {@link UserAssociation}s for the given user in the specified organizations.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfGivenUserOnGivenOrgs(String associatedUserId,
+                                                                            List<String> orgIds)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("getUserAssociationsOfGivenUserOnGivenOrgs method is not implemented.");
+    }
+
+    /**
+     * Updates the shared type of user association.
+     *
+     * @param id         The ID of the user association.
+     * @param sharedType The new shared type to be set for the user association.
+     * @throws OrganizationManagementServerException If an error occurs while updating the shared type.
+     */
+    default void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("updateSharedTypeOfUserAssociation method is not implemented.");
     }
 }

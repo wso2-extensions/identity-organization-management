@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.claim.metadata.mgt.model.Claim;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.ClaimDialect;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.ExternalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
+import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -38,16 +39,22 @@ import org.wso2.carbon.identity.organization.management.application.OrgApplicati
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -100,6 +107,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 break;
             case IdentityEventConstants.Event.POST_DELETE_CLAIM_DIALECT:
                 handleDeleteClaimDialect(event);
+                break;
+            case Constants.EVENT_POST_ADD_ORGANIZATION:
+                handlePostAddOrganization(event);
                 break;
             default:
                 break;
@@ -284,18 +294,22 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             for (BasicOrganization organization : childOrganizations) {
                 String sharedOrganizationTenantDomain = getOrganizationManager().
                         resolveTenantDomain(organization.getId());
-                if (isExistingLocalClaimURI(localClaimURI, sharedOrganizationTenantDomain)) {
+                Optional<LocalClaim> existingLocalClaim =
+                        getExistingLocalClaim(localClaimURI, sharedOrganizationTenantDomain);
+
+                if (existingLocalClaim.isPresent()) {
                     String primaryUserStoreDomain = getPrimaryUserStoreDomain(tenantDomain);
-                    Iterator<AttributeMapping> iterator = mappedAttributes.iterator();
-                    while (iterator.hasNext()) {
-                        AttributeMapping attributeMapping = iterator.next();
-                        if (!primaryUserStoreDomain.equals(attributeMapping.getUserStoreDomain())) {
-                            iterator.remove();
-                        }
-                    }
-                    if (!mappedAttributes.isEmpty()) {
-                        getClaimMetadataManagementService().updateLocalClaim(new LocalClaim(localClaimURI,
-                                mappedAttributes, localClaimProperties), sharedOrganizationTenantDomain);
+                    List<AttributeMapping> modifiedAttributeMappings = mergeAttributeMappings(
+                            existingLocalClaim.get().getMappedAttributes(), mappedAttributes, primaryUserStoreDomain);
+
+                    if (!modifiedAttributeMappings.isEmpty()) {
+                        Map<String, String> modifiedLocalClaimProperties = processLocalClaimProperties(
+                                existingLocalClaim.get().getClaimProperties(),
+                                localClaimProperties,
+                                primaryUserStoreDomain);
+                        getClaimMetadataManagementService().updateLocalClaim(
+                                new LocalClaim(localClaimURI, modifiedAttributeMappings, modifiedLocalClaimProperties),
+                                sharedOrganizationTenantDomain);
                     }
 
                 }
@@ -312,6 +326,78 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         } catch (ClaimMetadataException | UserStoreException e) {
             throw new IdentityEventException("An error occurred while updating the local claim " + localClaimURI, e);
         }
+    }
+
+    /**
+     * Merges attribute mappings from the existing claim and the incoming update.
+     * Preserve all non-primary mappings from the existing claim and user primary mappings from the incoming update.
+     *
+     * @param existingMappings       the attribute mappings from the existing claim.
+     * @param incomingMappings       the attribute mappings from the incoming update.
+     * @param primaryUserStoreDomain the primary user store domain.
+     * @return a merged list of attribute mappings.
+     */
+    private List<AttributeMapping> mergeAttributeMappings(List<AttributeMapping> existingMappings,
+                                                          List<AttributeMapping> incomingMappings,
+                                                          String primaryUserStoreDomain) {
+
+        List<AttributeMapping> mergedMappings = new ArrayList<>();
+        existingMappings.stream()
+                .filter(mapping -> !StringUtils.equals(primaryUserStoreDomain, mapping.getUserStoreDomain()))
+                .forEach(mergedMappings::add);
+
+        Optional<AttributeMapping> incomingPrimary = incomingMappings.stream()
+                .filter(mapping -> StringUtils.equals(primaryUserStoreDomain, mapping.getUserStoreDomain()))
+                .findFirst();
+
+        incomingPrimary.ifPresent(mergedMappings::add);
+        return mergedMappings;
+    }
+
+    /**
+     * Processes the local claim properties to handle the excluded user stores property.
+     * If the property value contains the primary user store, the value is replaced with just the primary user store.
+     * Otherwise, the property is removed.
+     *
+     * @param existingClaimProperties existing sub org local claim properties.
+     * @param incomingClaimProperties the updating local claim properties.
+     * @param primaryUserStoreDomain the primary user store domain.
+     * @return a modified map of local claim properties with the excluded property handled.
+     */
+    private Map<String, String> processLocalClaimProperties(Map<String, String> existingClaimProperties,
+                                                            Map<String, String> incomingClaimProperties,
+                                                            String primaryUserStoreDomain) {
+
+        Map<String, String> modifiedProperties = new HashMap<>(incomingClaimProperties);
+        String excludedUserStoresProperty = ClaimConstants.EXCLUDED_USER_STORES_PROPERTY;
+
+        String existingValue = existingClaimProperties.get(excludedUserStoresProperty);
+        String incomingValue = incomingClaimProperties.get(excludedUserStoresProperty);
+
+        List<String> existingExcludedUserStores = StringUtils.isNotBlank(existingValue)
+                ? new ArrayList<>(Arrays.asList(existingValue.split(","))) : new ArrayList<>();
+        List<String> incomingExcludedUserStores = StringUtils.isNotBlank(incomingValue)
+                ? new ArrayList<>(Arrays.asList(incomingValue.split(","))) : new ArrayList<>();
+
+        boolean isPrimaryUserStoreExcludedInExistingProperties = existingExcludedUserStores.stream()
+                .anyMatch(store -> StringUtils.equalsIgnoreCase(store, primaryUserStoreDomain));
+        boolean isPrimaryUserStoreExcludedInIncomingProperties = incomingExcludedUserStores.stream()
+                .anyMatch(store -> StringUtils.equalsIgnoreCase(store, primaryUserStoreDomain));
+
+        if (isPrimaryUserStoreExcludedInIncomingProperties) {
+            if (!isPrimaryUserStoreExcludedInExistingProperties) {
+                existingExcludedUserStores.add(primaryUserStoreDomain);
+            }
+        } else {
+            existingExcludedUserStores.remove(primaryUserStoreDomain);
+        }
+
+        if (existingExcludedUserStores.isEmpty()) {
+            modifiedProperties.remove(excludedUserStoresProperty);
+        } else {
+            modifiedProperties.put(excludedUserStoresProperty, String.join(",", existingExcludedUserStores));
+        }
+        return modifiedProperties;
     }
 
     private void handleUpdateExternalClaim(Event event) throws IdentityEventException {
@@ -497,6 +583,76 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         }
     }
 
+    private void handlePostAddOrganization(Event event) throws IdentityEventException {
+
+        Organization createdOrganization =
+                (Organization) event.getEventProperties().get(Constants.EVENT_PROP_ORGANIZATION);
+        try {
+            if (!OrganizationManagementUtil.isOrganization(createdOrganization.getId())) {
+                return;
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityEventException(
+                    "Error while checking if the created organization is a sub organization.", e);
+        }
+
+        ParentOrganizationDO parentOrganization = createdOrganization.getParent();
+        if (parentOrganization != null) {
+            try {
+                String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganization.getId());
+                inheritClaimPropertiesAndAttributeMapping(createdOrganization.getId(), parentOrgTenantDomain);
+            } catch (OrganizationManagementException e) {
+                throw new IdentityEventException("Error retrieving the tenant domain of parent organization.", e);
+            }
+        }
+    }
+
+    private void inheritClaimPropertiesAndAttributeMapping(String createdOrgTenantDomain, String parentOrgTenantDomain)
+            throws IdentityEventException {
+
+        try {
+            List<LocalClaim> createdOrgLocalClaims =
+                    getClaimMetadataManagementService().getLocalClaims(createdOrgTenantDomain);
+            List<LocalClaim> parentOrgLocalClaims =
+                    getClaimMetadataManagementService().getLocalClaims(parentOrgTenantDomain);
+            Map<String, LocalClaim> parentClaimMap = parentOrgLocalClaims.stream()
+                    .collect(Collectors.toMap(LocalClaim::getClaimURI, claim -> claim));
+
+            // The custom local claims are not inherited as the created organization's claims are only updated.
+            for (LocalClaim createdOrgClaim : createdOrgLocalClaims) {
+                LocalClaim parentClaim = parentClaimMap.get(createdOrgClaim.getClaimURI());
+
+                if (parentClaim != null) {
+                    Map<String, String> updatedClaimProperties = new HashMap<>(parentClaim.getClaimProperties());
+
+                    // The ExcludedUserStores claim property is excluded when inheriting the properties.
+                    updatedClaimProperties.remove(ClaimConstants.EXCLUDED_USER_STORES_PROPERTY);
+                    boolean isClaimPropertiesDifferent = !Objects.equals(
+                            createdOrgClaim.getClaimProperties(), updatedClaimProperties);
+
+                    // Only the PRIMARY user store attribute mapping gets inherited.
+                    List<AttributeMapping> primaryDomainParentMappedAttributes = parentClaim.getMappedAttributes()
+                            .stream().filter(attr -> UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME
+                                    .equals(attr.getUserStoreDomain()))
+                            .collect(Collectors.toList());
+                    boolean isMappedAttributesDifferent = !Objects.equals(
+                            createdOrgClaim.getMappedAttributes().get(0).getAttributeName(),
+                            primaryDomainParentMappedAttributes.get(0).getAttributeName());
+
+                    // If either the PRIMARY user store attribute mapping or any of the claim properties differ from
+                    // the parent organization, the claim is updated in the created organization.
+                    if (isClaimPropertiesDifferent || isMappedAttributesDifferent) {
+                        parentClaim.setClaimProperties(updatedClaimProperties);
+                        parentClaim.setMappedAttributes(primaryDomainParentMappedAttributes);
+                        getClaimMetadataManagementService().updateLocalClaim(parentClaim, createdOrgTenantDomain);
+                    }
+                }
+            }
+        } catch (ClaimMetadataException e) {
+            throw new IdentityEventException("An error occurred while inheriting parent organization claims.", e);
+        }
+    }
+
     private void addClaimsToSubOrganization(List<LocalClaim> parentOrgCustomLocalClaims,
                                             String sharedOrganizationTenantDomain,
                                             List<String> missingClaims, String parentTenantDomain)
@@ -572,6 +728,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
     private OrgApplicationManager getOrgApplicationManager() {
 
         return new OrgApplicationManagerImpl();
+    }
+
+    private Optional<LocalClaim> getExistingLocalClaim(String localClaimURI, String tenantDomain)
+            throws ClaimMetadataException {
+
+        return getClaimMetadataManagementService().getLocalClaims(tenantDomain).stream().filter(
+                claim -> claim.getClaimURI().equalsIgnoreCase(localClaimURI)).findFirst();
     }
 
     private boolean isExistingLocalClaimURI(String localClaimURI, String tenantDomain) throws ClaimMetadataException {
