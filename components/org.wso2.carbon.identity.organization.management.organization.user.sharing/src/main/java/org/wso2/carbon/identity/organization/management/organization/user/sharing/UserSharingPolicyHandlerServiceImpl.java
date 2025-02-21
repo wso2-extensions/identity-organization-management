@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.OperationContext;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.SharingOperationDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
@@ -57,6 +58,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -75,14 +77,8 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -131,10 +127,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
 
-        AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
-        asyncStatusMgtService.test("B2B User Sharing");
-        asyncStatusMgtService.testCheckDatabaseConnection();
-        LOG.info("B2B User Sharing..");
+//        AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+//        asyncStatusMgtService.testCheckDatabaseConnection();
+//        LOG.info("B2B User Sharing..");
 
         validateUserShareInput(selectiveUserShareDO);
         String sharingInitiatedOrgId = getOrganizationId();
@@ -155,7 +150,18 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Pre sharing record creation.
-//        String latestSharingOperationId = new OrganizationUserSharingDAOImpl().getLatestSharingOperationOfResourceId()
+        UserIdList userIdList = (UserIdList) userCriteria.get("userIds");
+        List<String> ids = userIdList.getIds();
+
+        AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+        OperationContext context = new OperationContext();
+//        asyncStatusMgtService.registerOperationStatus();
+        LOG.info("B2B User Sharing..");
+
+
+
+
+
 
 
 
@@ -1625,6 +1631,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         throw new UserSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
     }
+
 
     // Async helpers.
 

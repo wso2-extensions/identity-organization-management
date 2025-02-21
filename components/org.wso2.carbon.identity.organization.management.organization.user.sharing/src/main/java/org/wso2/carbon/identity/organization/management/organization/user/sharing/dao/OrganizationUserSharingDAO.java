@@ -99,7 +99,7 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
-     * Get all the user associations for a given user filtered by shared type.
+         * Get all the user associations for a given user filtered by shared type.
      *
      * @param associatedUserId Actual user ID of the user.
      * @param associatedOrgId  The organization ID where the user is managed.
@@ -251,9 +251,8 @@ public interface OrganizationUserSharingDAO {
      * Get the latest sharing operation of a resource.
      *
      * @param resourceId         The ID of the user association.
-     * @param creationTime The new shared type to be set for the user association.
      */
-    default String getLatestSharingOperationOfResourceId(SharingOperationDO resourceId, String creationTime)
+    default String getLatestSharingOperationOfResourceId(String resourceId)
             throws OrganizationManagementServerException {
 
         throw new NotImplementedException("getLatestSharingOperationOfResourceId method is not implemented.");

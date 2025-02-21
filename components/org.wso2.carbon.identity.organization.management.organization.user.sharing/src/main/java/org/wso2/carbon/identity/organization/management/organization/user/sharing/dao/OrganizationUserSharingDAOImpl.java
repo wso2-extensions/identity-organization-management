@@ -514,7 +514,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public String getLatestSharingOperationOfResourceId(SharingOperationDO resourceId, String creationTime)
+    public String getLatestSharingOperationOfResourceId(String resourceId)
             throws OrganizationManagementServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -523,7 +523,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     (resultSet, rowNumber) -> resultSet.getString("UM_SHARING_OPERATION_ID"),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(1, String.valueOf(resourceId));
-                        namedPreparedStatement.setString(2, creationTime);
                     });
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG, e);
