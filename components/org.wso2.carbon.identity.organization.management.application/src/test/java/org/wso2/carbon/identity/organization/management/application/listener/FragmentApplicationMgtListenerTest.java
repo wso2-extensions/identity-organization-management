@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2023-2024, WSO2 LLC. (https://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (https://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -43,12 +44,15 @@ import org.wso2.carbon.identity.organization.management.application.internal.Org
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
@@ -80,9 +84,12 @@ public class FragmentApplicationMgtListenerTest {
     private static final String tenantDomain = "sampleTenantDomain";
     private static final String userName = "sampleUser";
     private static final String applicationName = "sampleApp";
+    private static final String updatedApplicationName = "updatedSampleApp";
     private static final String applicationResourceID = "fcb0c1d7-28c0-46f7-bc2d-345678a1b23c";
     private static final String organizationID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private static final String sampleClaimURI = "http://wso2.org/claims/sampleClaim1";
+    private static final String TRUE = "true";
+    private static final String FALSE = "false";
 
     @BeforeMethod
     public void setUp() {
@@ -118,7 +125,7 @@ public class FragmentApplicationMgtListenerTest {
         when(organizationManager.getOrganizationDepthInHierarchy(organizationId)).thenReturn(hierarchyDepth);
         if (isSharedApp) {
             ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
-                    mockServiceProviderProperty(IS_FRAGMENT_APP, "true"),
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE),
             };
             when(serviceProvider.getSpProperties()).thenReturn(spProperties);
         }
@@ -170,7 +177,7 @@ public class FragmentApplicationMgtListenerTest {
         MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
         ServiceProvider sharedApplication = new ServiceProvider();
         ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
-                mockServiceProviderProperty(IS_FRAGMENT_APP, "true"),
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE),
                 mockServiceProviderProperty(IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME,
                         String.valueOf(isSharedAppAPIAuthEnabled))
         };
@@ -195,6 +202,54 @@ public class FragmentApplicationMgtListenerTest {
                 .doPostGetServiceProvider(sharedApplication, applicationName, tenantDomain);
         AssertJUnit.assertTrue(result);
         AssertJUnit.assertEquals(expectedResult, sharedApplication.isAPIBasedAuthenticationEnabled());
+    }
+
+    @DataProvider(name = "testSharedAppNameModificationDataProvider")
+    public Object[][] testSharedAppNameModificationDataProvider() {
+
+        return new Object[][]{
+                {TRUE, true}, {TRUE, false}, {FALSE, true}, {FALSE, false},
+        };
+    }
+
+    @Test(dataProvider = "testSharedAppNameModificationDataProvider")
+    public void testSharedAppNameModificationNotAllowed(String isSharedApp, boolean isAppNameUpdated)
+            throws IdentityApplicationManagementException {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class)) {
+
+            mockUtils(tenantDomain);
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+
+            ServiceProvider sharedApplication = new ServiceProvider();
+            sharedApplication.setApplicationName(isAppNameUpdated ? updatedApplicationName : applicationName);
+
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, isSharedApp)
+            };
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+            when(serviceProvider.getApplicationName()).thenReturn(applicationName);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString()))
+                    .thenReturn(serviceProvider);
+
+            if (Boolean.parseBoolean(isSharedApp) && isAppNameUpdated) {
+                IdentityApplicationManagementClientException thrownException =
+                        Assert.expectThrows(IdentityApplicationManagementClientException.class,
+                                () -> fragmentApplicationMgtListener
+                                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName));
+
+                assertEquals("Application name modification is not allowed for shared applications.",
+                        thrownException.getMessage());
+            } else {
+                sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+
+                boolean result = fragmentApplicationMgtListener
+                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName);
+                assertTrue(result);
+            }
+        }
     }
 
     private void mockClaimConfig(ServiceProvider mainApplication) {
