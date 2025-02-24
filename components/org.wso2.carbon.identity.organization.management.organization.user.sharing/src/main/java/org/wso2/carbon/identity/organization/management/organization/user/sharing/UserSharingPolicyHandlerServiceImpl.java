@@ -670,6 +670,24 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
             ResourceSharingPolicyMgtException {
 
+        processUserSharingUpdates(userSharingOrgsForEachUserShareObject, associatedUserId, sharingInitiatedOrgId);
+        updateResourceSharingPolicies(userSharingOrgsForEachUserShareObject.keySet(), associatedUserId,
+                sharingInitiatedOrgId);
+    }
+
+    /**
+     * Processes user sharing updates by updating existing associations, sharing with new organizations,
+     * and cleaning up old associations if necessary.
+     *
+     * @param associatedUserId                      The ID of the user to be shared.
+     * @param sharingInitiatedOrgId                 The ID of the organization initiating the sharing.
+     * @param userSharingOrgsForEachUserShareObject A map containing user share objects and their corresponding
+     *                                              organizations.
+     */
+    private void processUserSharingUpdates(Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject,
+                                           String associatedUserId, String sharingInitiatedOrgId)
+            throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException {
+
         List<String> userSharingAllOrgs = userSharingOrgsForEachUserShareObject.values()
                 .stream()
                 .flatMap(List::stream)
@@ -678,9 +696,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
             BaseUserShare baseUserShare = entry.getKey();
             List<String> userSharingOrgList = entry.getValue();
+            List<String> retainedSharedOrgs = new ArrayList<>();
             List<UserAssociation> userAssociations =
                     getUserAssociationsOfGivenUserOnOrgTree(baseUserShare, sharingInitiatedOrgId);
-            List<String> retainedSharedOrgs = new ArrayList<>();
 
             for (UserAssociation association : userAssociations) {
                 if (!userSharingOrgList.contains(association.getOrganizationId())) {
@@ -691,11 +709,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     updateSharedTypeOfExistingUserAssociation(association);
                 }
             }
-
             shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs);
         }
-        updateResourceSharingPolicies(userSharingOrgsForEachUserShareObject.keySet(), associatedUserId,
-                sharingInitiatedOrgId);
         cleanUpOldUserAssociationsIfExists(associatedUserId, sharingInitiatedOrgId, userSharingAllOrgs);
     }
 
