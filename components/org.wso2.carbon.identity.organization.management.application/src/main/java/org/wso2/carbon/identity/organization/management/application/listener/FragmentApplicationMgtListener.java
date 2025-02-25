@@ -519,7 +519,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                             .containsKey(DELETE_FRAGMENT_APPLICATION))) {
                         return true;
                     }
-                    return false;
+                    throw new IdentityApplicationManagementClientException(
+                            format("Cannot delete shared application with resource id: %s. Delete is allowed " +
+                                    "only when the main application is deleted, or its sharing is revoked.",
+                                    application.getApplicationResourceId()));
                 }
             } catch (OrganizationManagementException e) {
                 throw new IdentityApplicationManagementException(
