@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -58,7 +56,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrganizationUserSharingServiceImpl implements OrganizationUserSharingService {
 
-    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingServiceImpl.class);
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
 
     @Override
