@@ -215,15 +215,17 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        String userId = userAssociation.getUserId();
-        String organizationId = userAssociation.getOrganizationId();
-        String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        try {
-            AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-            deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
-        } catch (UserStoreException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
+        if (userAssociation != null) {
+            String userId = userAssociation.getUserId();
+            String organizationId = userAssociation.getOrganizationId();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            try {
+                AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
+                deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
+            } catch (UserStoreException e) {
+                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
+            }
         }
     }
 
