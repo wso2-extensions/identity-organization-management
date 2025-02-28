@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -77,13 +77,13 @@ public class OrgApplicationMgtDAOImplTest {
 
     private static final String DEFAULT_USER_STORE_DOMAIN = "PRIMARY";
     private static final String USERNAME = "test-user";
-    private static final String USER_ID = "test-user-id";
-    private static final String SUPER_ORG_ID = "test-super-org-id";
-    private static final String SHARED_ORG_ID_1 = "shared-org-id-1";
+    private static final String USER_ID = "42ef1d92-add6-449b-8a3c-fc308d2a4eac";
+    private static final String ROOT_ORG_ID = "72b81cba-51c7-4dc1-91be-b267e177c17a";
+    private static final String SHARED_ORG_ID_1 = "30b701c6-e309-4241-b047-0c299c45d1a0";
     private static final int SHARED_TENANT_ID_1 = 1;
-    private static final String SHARED_ORG_ID_2 = "shared-org-id-2";
+    private static final String SHARED_ORG_ID_2 = "93d996f9-a5ba-4275-a52b-adaad9eba869";
     private static final int SHARED_TENANT_ID_2 = 2;
-    private static final String UN_SHARED_ORG_ID = "unshared-org-id";
+    private static final String UN_SHARED_ORG_ID = "89d996f9-a5ba-4275-a52b-adaad9eba869";
     private static final int UN_SHARED_TENANT_ID = 3;
     private static final String SAMPLE_APP_1 = "test-app";
     private static final String SAMPLE_APP_2 = "scl-app";
@@ -166,7 +166,7 @@ public class OrgApplicationMgtDAOImplTest {
         String rootAppUUID =
                 applicationDAO.getApplication(SAMPLE_APP_1, SUPER_TENANT_DOMAIN_NAME).getApplicationResourceId();
         List<SharedApplicationDO> sharedApplications =
-                orgApplicationMgtDAO.getSharedApplications(rootAppUUID, SUPER_ORG_ID, sharedOrgIds);
+                orgApplicationMgtDAO.getSharedApplications(rootAppUUID, ROOT_ORG_ID, sharedOrgIds);
 
         Assert.assertNotNull(sharedApplications);
         Assert.assertEquals(sharedApplications.size(), expectedNumOfApps);
@@ -201,7 +201,7 @@ public class OrgApplicationMgtDAOImplTest {
                 nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
         List<ApplicationBasicInfo> applicationBasicInfos =
                 orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
-                        SUPER_ORG_ID);
+                        ROOT_ORG_ID);
         assertEquals(applicationBasicInfos.size(), 2);
         assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_2);
         assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_1);
@@ -215,7 +215,7 @@ public class OrgApplicationMgtDAOImplTest {
                 nullable(String.class))).thenThrow(new UserStoreException());
         assertThrows(OrganizationManagementException.class,
                 () -> orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null,
-                        SHARED_ORG_ID_1, SUPER_ORG_ID));
+                        SHARED_ORG_ID_1, ROOT_ORG_ID));
     }
 
     @Test(description = "Test retrieving discoverable apps list with a filter",
@@ -228,7 +228,7 @@ public class OrgApplicationMgtDAOImplTest {
                 Arrays.asList(new Group("test-group-id-0"), new Group("test-group-id-1")));
         List<ApplicationBasicInfo> applicationBasicInfos =
                 orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "medical*", null, null,
-                        SHARED_ORG_ID_1, SUPER_ORG_ID);
+                        SHARED_ORG_ID_1, ROOT_ORG_ID);
         assertEquals(applicationBasicInfos.size(), 1);
         assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_3);
     }
@@ -240,10 +240,10 @@ public class OrgApplicationMgtDAOImplTest {
 
         when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
                 nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
-        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, SHARED_ORG_ID_1, SUPER_ORG_ID),
+        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, SHARED_ORG_ID_1, ROOT_ORG_ID),
                 2);
         assertEquals(
-                orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("scl*", SHARED_ORG_ID_1, SUPER_ORG_ID),
+                orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("scl*", SHARED_ORG_ID_1, ROOT_ORG_ID),
                 1);
     }
 
@@ -288,7 +288,7 @@ public class OrgApplicationMgtDAOImplTest {
             sharedApp.setApplicationName(appName);
             sharedApp.setApplicationVersion("v1.0.0");
             applicationDAO.createApplication(sharedApp, sharedOrgId);
-            orgApplicationMgtDAO.addSharedApplication(application.getApplicationResourceId(), SUPER_ORG_ID,
+            orgApplicationMgtDAO.addSharedApplication(application.getApplicationResourceId(), ROOT_ORG_ID,
                     sharedApp.getApplicationResourceId(), sharedOrgId, false);
         }
     }
@@ -315,7 +315,7 @@ public class OrgApplicationMgtDAOImplTest {
 
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(SUPER_TENANT_DOMAIN_NAME)))
                 .thenReturn(SUPER_TENANT_ID);
-        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(SUPER_ORG_ID))
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(ROOT_ORG_ID))
                 .thenReturn(SUPER_TENANT_ID);
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SUPER_TENANT_ID)))
                 .thenReturn(SUPER_TENANT_DOMAIN_NAME);
