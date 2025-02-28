@@ -1210,10 +1210,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         }
 
         try {
-            if (StringUtils.equals(ORGANIZATION, role.getAudienceType())) {
+            if (StringUtils.equalsIgnoreCase(ORGANIZATION, role.getAudienceType())) {
                 return originalOrgId;
             }
-            if (StringUtils.equals(APPLICATION, role.getAudienceType())) {
+            if (StringUtils.equalsIgnoreCase(APPLICATION, role.getAudienceType())) {
                 return getApplicationResourceId(role.getAudienceName(), tenantDomain);
             }
             LOG.warn(String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getDescription(), role.getAudienceType()));
