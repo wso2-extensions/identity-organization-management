@@ -473,6 +473,9 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
     /**
      * Retrieve the group IDs list of the logged in user.
+     * This method uses the ApplicationMgtUtil.getLoggedInUserGroupIDList() method to retrieve the group IDs list.
+     * If there is an error while retrieving the group IDs list, this method converts the
+     * IdentityApplicationManagementException to OrganizationManagementServerException.
      *
      * @return The group IDs list.
      * @throws OrganizationManagementException Error while retrieving the group IDs list.
