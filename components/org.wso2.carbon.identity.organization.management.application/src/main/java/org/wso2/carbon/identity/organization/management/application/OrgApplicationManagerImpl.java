@@ -232,8 +232,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 //            }
 //        }
 
-        //%%%%%%%%%
-
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (BasicOrganization child : filteredChildOrgs) {
@@ -250,18 +248,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     }
                 }, executorService);
 
-                futures.add(future); // Collect futures
+                futures.add(future);
             }
         }
-
-// ✅ Wait for all async tasks to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-            Iterator<UnitOperationContext> iterator = asyncStatusQueue.getQueue().iterator();
-            while (iterator.hasNext()) {
-                UnitOperationContext context = iterator.next();
-                LOG.info("Operation Context: " + context.getOperationId());
-            }
-            asyncStatusQueue.clearQueue();
+//            Iterator<UnitOperationContext> iterator = asyncStatusQueue.getQueue().iterator();
+//            while (iterator.hasNext()) {
+//                UnitOperationContext context = iterator.next();
+//                LOG.info("Operation Context: " + context.getOperationId());
+//            }
             ResponseUnitOperationContext unitOperationContext = new ResponseUnitOperationContext(
                     ASYNC_OPERATION_ID.get(),
                     "application_share",
@@ -269,8 +264,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     "",
                     ""
             );
-
             asyncStatusMgtService.registerBulkUnitOperationStatus(unitOperationContext);
+            asyncStatusQueue.clearQueue();
         }).join();
     }
 
@@ -694,8 +689,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharedApplicationId, shareWithAllChildren);
         } finally {
 
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, "Fail", "Application sharing for the app id:"+mainApplication.getApplicationResourceId()+" failed.");
-
+            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, "Fail", "App sharing for:"+mainApplication.getApplicationResourceId()+" failed.");
             asyncStatusQueue.addOperationStatus(operationStatus);
 
             PrivilegedCarbonContext.endTenantFlow();
