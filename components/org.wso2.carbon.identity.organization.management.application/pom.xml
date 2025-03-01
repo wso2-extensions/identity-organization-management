@@ -48,6 +48,11 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.framework.async.status.mgt</artifactId>
+            <version>7.7.253</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.core</artifactId>
             <exclusions>
                 <exclusion>
@@ -202,6 +207,8 @@
                             org.wso2.carbon.identity.event.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.status.mgt;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.status.mgt.models.dos;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",

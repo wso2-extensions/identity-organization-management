@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application.internal;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
@@ -49,6 +50,7 @@ public class OrgApplicationMgtDataHolder {
     private IdentityEventService identityEventService;
     private ClaimMetadataManagementService claimMetadataManagementService;
     private RoleManagementService roleManagementServiceV2;
+    private AsyncStatusMgtService asyncStatusMgtService;
 
     private OrgApplicationMgtDataHolder() {
 
@@ -269,5 +271,13 @@ public class OrgApplicationMgtDataHolder {
     public void setRoleManagementServiceV2(RoleManagementService roleManagementServiceV2) {
 
         this.roleManagementServiceV2 = roleManagementServiceV2;
+    }
+
+    public AsyncStatusMgtService getAsyncStatusMgtService() {
+        return asyncStatusMgtService;
+    }
+
+    public void setAsyncStatusMgtService(AsyncStatusMgtService asyncStatusMgtService) {
+        this.asyncStatusMgtService = asyncStatusMgtService;
     }
 }
