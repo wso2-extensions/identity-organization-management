@@ -220,8 +220,7 @@ public class OrgApplicationMgtDAOImplTest {
 
     @Test(description = "Test retrieving discoverable apps list with a filter",
             dependsOnMethods = {"testDiscoverableAppsListWhenGetUserGroupListThrowsException"})
-    public void testDiscoverableAppsListWithFilter()
-            throws UserStoreException, OrganizationManagementException {
+    public void testDiscoverableAppsListWithFilter() throws UserStoreException, OrganizationManagementException {
 
         when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
                 nullable(String.class))).thenReturn(
@@ -235,8 +234,7 @@ public class OrgApplicationMgtDAOImplTest {
 
     @Test(description = "Test getting count of discoverable applications", dependsOnMethods = {
             "testDiscoverableAppsListWithFilter"})
-    public void testGetDiscoverableAppCount()
-            throws UserStoreException, OrganizationManagementException {
+    public void testGetDiscoverableAppCount() throws UserStoreException, OrganizationManagementException {
 
         when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
                 nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
