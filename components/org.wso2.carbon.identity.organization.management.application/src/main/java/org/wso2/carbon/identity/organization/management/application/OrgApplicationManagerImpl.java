@@ -48,6 +48,7 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.ResponseOperationContext;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.ResponseUnitOperationContext;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationContext;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
@@ -61,6 +62,7 @@ import org.wso2.carbon.identity.organization.management.application.listener.App
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.util.AsyncOperationProducer;
 import org.wso2.carbon.identity.organization.management.application.util.AsyncOperationStatusHolderQueue;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -164,6 +166,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ASYNC_OPERATION_ID.set(operationId);
         LOG.info("ASYNC_OPERATION_ID:"+ASYNC_OPERATION_ID.get());
         LOG.info("Application registered with id:"+operationId);
+        ResponseOperationContext operationContext = asyncStatusMgtService.getLatestAsyncOperationStatus("10084a8d-113f-4211-a0d5-efe36b082211","23d7ab3f-023e-43ba-980b-c0fd59aeacf9","application_share","53c191dd-3f9f-454b-8a56-9ad72b5e4f30");
+        LOG.info("Fetched:"+operationContext.getOperationId());
+
+        //fetching.....
+//        LOG.info("Rabbit start to fetch");
+//        AsyncOperationProducer.publishMessage("data_sync", "Sub-operation started for data synchronization.");
+//        LOG.info("Rabbit finished fetch");
+
+
 
         validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
@@ -252,11 +263,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-//            Iterator<UnitOperationContext> iterator = asyncStatusQueue.getQueue().iterator();
-//            while (iterator.hasNext()) {
-//                UnitOperationContext context = iterator.next();
-//                LOG.info("Operation Context: " + context.getOperationId());
-//            }
+            String operationStatus = null;
+            Iterator<UnitOperationContext> iterator = asyncStatusQueue.getQueue().iterator();
+            while (iterator.hasNext()) {
+                UnitOperationContext context = iterator.next();
+                LOG.info("Operation Context: " + context.getOperationId());
+            }
             ResponseUnitOperationContext unitOperationContext = new ResponseUnitOperationContext(
                     ASYNC_OPERATION_ID.get(),
                     "application_share",
@@ -265,6 +277,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     ""
             );
             asyncStatusMgtService.registerBulkUnitOperationStatus(unitOperationContext);
+            asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), "Success");
             asyncStatusQueue.clearQueue();
         }).join();
     }
@@ -619,7 +632,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     @Override
     public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                                  boolean shareWithAllChildren) throws OrganizationManagementException {
-
+        String statusMessage = "";
+        String status = "Success";
         try {
             getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     shareWithAllChildren);
@@ -629,7 +643,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
-//            UnitOperationContext operationContext = new UnitOperationContext();
 
             try {
                 String adminUserId =
@@ -648,6 +661,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(domainQualifiedUserName);
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
             } catch (UserStoreException e) {
+                status = "Fail";
+                statusMessage = "UserStoreException: " + e.getMessage();
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
@@ -668,6 +683,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 if (isOAuthClientExistsError(e)) {
                     createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
                 } else {
+                    status = "Fail";
+                    statusMessage = "OAuth App Creation Error: " + e.getMessage();
                     throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                             mainApplication.getApplicationResourceId(), sharedOrgId);
                 }
@@ -682,6 +699,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         sharedApplicationId, sharedOrgId, shareWithAllChildren);
             } catch (IdentityApplicationManagementException e) {
                 removeOAuthApplication(createdOAuthApp);
+                status = "Fail";
+                statusMessage = "IdentityApplicationManagementException: " + e.getMessage();
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
@@ -689,7 +708,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharedApplicationId, shareWithAllChildren);
         } finally {
 
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, "Fail", "App sharing for:"+mainApplication.getApplicationResourceId()+" failed.");
+            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
             asyncStatusQueue.addOperationStatus(operationStatus);
 
             PrivilegedCarbonContext.endTenantFlow();
