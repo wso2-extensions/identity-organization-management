@@ -145,8 +145,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private static final AsyncOperationStatusHolderQueue asyncStatusQueue = new AsyncOperationStatusHolderQueue();
-    private static final InheritableThreadLocal<String> ASYNC_OPERATION_ID = new InheritableThreadLocal<>();
-
+    private final InheritableThreadLocal<String> ASYNC_OPERATION_ID = new InheritableThreadLocal<>();
 
     @Override
     public void shareOrganizationApplication(String ownerOrgId, String originalAppId, boolean shareWithAllChildren,
@@ -280,6 +279,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), "Success");
             asyncStatusQueue.clearQueue();
         }).join();
+        ASYNC_OPERATION_ID.remove();
     }
 
     @Override
