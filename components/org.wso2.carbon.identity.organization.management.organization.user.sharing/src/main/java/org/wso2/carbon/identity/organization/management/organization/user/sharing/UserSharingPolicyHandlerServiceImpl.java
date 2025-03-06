@@ -496,22 +496,23 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
-                if (isNotResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
-                    LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
-                    continue;
-                }
+                if (isExistingUser(associatedUserId, sharingInitiatedOrgId) &&
+                        isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
 
-                List<BaseUserShare> selectiveUserShareObjectsInRequest = new ArrayList<>();
-                for (SelectiveUserShareOrgDetailsDO organization : organizations) {
-                    SelectiveUserShare selectiveUserShare = new SelectiveUserShare.Builder()
-                            .withUserId(associatedUserId)
-                            .withOrganizationId(organization.getOrganizationId())
-                            .withPolicy(organization.getPolicy())
-                            .withRoles(getRoleIds(organization.getRoles(), sharingInitiatedOrgId))
-                            .build();
-                    selectiveUserShareObjectsInRequest.add(selectiveUserShare);
+                    List<BaseUserShare> selectiveUserShareObjectsInRequest = new ArrayList<>();
+                    for (SelectiveUserShareOrgDetailsDO organization : organizations) {
+                        SelectiveUserShare selectiveUserShare = new SelectiveUserShare.Builder()
+                                .withUserId(associatedUserId)
+                                .withOrganizationId(organization.getOrganizationId())
+                                .withPolicy(organization.getPolicy())
+                                .withRoles(getRoleIds(organization.getRoles(), sharingInitiatedOrgId))
+                                .build();
+                        selectiveUserShareObjectsInRequest.add(selectiveUserShare);
+                    }
+                    shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId);
+                } else {
+                    LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
                 }
-                shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage =
@@ -536,17 +537,16 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
-                if (isNotResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
-                    LOG.warn(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
-                    continue;
+                if (isExistingUser(associatedUserId, sharingInitiatedOrgId) &&
+                        isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                    GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
+                            .withUserId(associatedUserId)
+                            .withPolicy(policy)
+                            .withRoles(roleIds)
+                            .build();
+                    List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
+                    shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId);
                 }
-                GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
-                        .withUserId(associatedUserId)
-                        .withPolicy(policy)
-                        .withRoles(roleIds)
-                        .build();
-                List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
-                shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -994,13 +994,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     }
 
     /**
-     * Checks if the specified user is a non-resident user in the given organization.
+     * Checks if the specified user is a resident user in the given organization.
      *
      * @param userId The ID of the user.
      * @param orgId  The ID of the organization.
-     * @return {@code true} if the user is not a resident user, {@code false} otherwise.
+     * @return {@code true} if the user is a resident user, {@code false} otherwise.
      */
-    private boolean isNotResidentUserInOrg(String userId, String orgId) {
+    private boolean isResidentUserInOrg(String userId, String orgId) {
 
         try {
             String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
@@ -1008,10 +1008,30 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
             String associatedOrgId =
                     OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userId);
-            return associatedOrgId != null;
+            return associatedOrgId == null;
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is a resident user in the organization.", e);
-            return true;
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the specified user is an existing user in the given organization.
+     *
+     * @param userId The ID of the user.
+     * @param orgId  The ID of the organization.
+     * @return {@code true} if the user is an exiting user in the given organization, {@code false} otherwise.
+     */
+    private boolean isExistingUser(String userId, String orgId) {
+
+        try {
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+            return userStoreManager.isExistingUserWithID(userId);
+        } catch (UserStoreException | OrganizationManagementException e) {
+            LOG.error("Error occurred while checking if the user is an existing user.", e);
+            return false;
         }
     }
 
@@ -1040,7 +1060,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 .collect(Collectors.toList());
 
         if (!skippedOrganizations.isEmpty()) {
-            LOG.warn(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
+            LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
         }
 
         return validOrganizations;
