@@ -1029,7 +1029,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
             return userStoreManager.isExistingUserWithID(userId);
-
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is an existing user.", e);
             return false;
