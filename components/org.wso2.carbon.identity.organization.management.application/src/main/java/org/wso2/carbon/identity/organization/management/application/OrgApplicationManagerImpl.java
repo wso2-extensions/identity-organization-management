@@ -56,6 +56,9 @@ import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthAppRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
+import org.wso2.carbon.identity.organization.management.application.constant.ShareOperationType;
+import org.wso2.carbon.identity.organization.management.application.constant.SharePolicy;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
@@ -158,13 +161,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
 
-        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord("application_share", originalAppId, "application_share", "selective_user_share", ownerOrgId, userID), true);
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(ShareOperationType.APPLICATION_SHARE.getValue(), originalAppId, OrgApplicationMgtConstants.B2B_APPLICATION, SharePolicy.SELECTIVE_SHARE.getValue(), ownerOrgId, userID), true);
 
         ASYNC_OPERATION_ID.set(operationId);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId,statusQueue);
 
-        ResponseOperationContext operationContext = asyncStatusMgtService.getLatestAsyncOperationStatus("application_share", originalAppId);
+        ResponseOperationContext operationContext = asyncStatusMgtService.getLatestAsyncOperationStatus(OrgApplicationMgtConstants.B2B_APPLICATION, originalAppId);
         LOG.info("Fetched:getLatestAsyncOperationStatus:"+operationContext.getOperationId());
 
         validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
@@ -228,7 +231,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     try {
                         ASYNC_OPERATION_ID.set(asyncOperationId);
                         shareApplication(organization.getId(), childOrg.getId(), rootApplication, shareWithAllChildren);
-                        ASYNC_OPERATION_ID.remove();
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to organization: %s",
                                 rootApplication.getApplicationID(), childOrg.getId()), e);
@@ -239,12 +241,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-            String operationStatus = null;
-            Iterator<UnitOperationRecord> iterator = asyncStatusQueue.getQueue().iterator();
-            while (iterator.hasNext()) {
-                UnitOperationRecord context = iterator.next();
-                LOG.info("Operation Context: " + context.getOperationId());
-            }
             asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), getOperationStatus(ASYNC_OPERATION_ID.get()));
         }).join();
         ASYNC_OPERATION_ID.remove();

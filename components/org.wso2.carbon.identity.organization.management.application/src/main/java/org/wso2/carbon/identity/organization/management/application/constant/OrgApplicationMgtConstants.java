@@ -65,6 +65,6 @@ public class OrgApplicationMgtConstants {
     public static final String EVENT_PRE_GET_SHARED_APPLICATIONS = "PRE_GET_SHARED_APPLICATIONS";
     public static final String EVENT_POST_GET_SHARED_APPLICATIONS = "POST_GET_SHARED_APPLICATIONS";
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
-
     public static final String APPLICATION_ALREADY_EXISTS_ERROR_CODE = "APP-60007";
+    public static final String B2B_APPLICATION = "B2B_APPLICATION";
 }
