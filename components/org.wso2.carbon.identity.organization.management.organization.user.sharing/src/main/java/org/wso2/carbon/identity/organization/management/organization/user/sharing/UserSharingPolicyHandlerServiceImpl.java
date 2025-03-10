@@ -30,7 +30,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.ResponseUnitOperationContext;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationContext;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.AsyncOperationStatus;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
@@ -1084,11 +1084,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
                     sharedResourceAttributes);
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.SUCCESS.toString(), "");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.SUCCESS.toString(), "");
 
         } catch (ResourceSharingPolicyMgtException e) {
             // TODO - new attribute for storing the unit operation type.
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.FAILED.toString(), "Policy Sharing for the organization id:"+sharingInitiatedOrgId+" failed.");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.FAILED.toString(), "Policy Sharing for the organization id:"+sharingInitiatedOrgId+" failed.");
             throw new RuntimeException(e);
         }
 
@@ -1377,7 +1377,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
             LOG.error(errorMessage, e);
 
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.FAILED.toString(), "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.FAILED.toString(), "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.");
 
             asyncStatusQueue.addOperationStatus(operationStatus);
             LOG.info("Unit Operation Failed and added.");
@@ -1388,14 +1388,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         try{
             assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
 
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.SUCCESS.toString(), "");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.SUCCESS.toString(), "");
 
             asyncStatusQueue.addOperationStatus(operationStatus);
             LOG.info("Unit Operation Success and added.");
 
         }catch(OrganizationManagementException | IdentityRoleManagementException | UserSharingMgtException e){
 
-            UnitOperationContext operationStatus = new UnitOperationContext(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.PARTIAL.toString(), "User shared without role assignment.");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.PARTIAL.toString(), "User shared without role assignment.");
 
             asyncStatusQueue.addOperationStatus(operationStatus);
             LOG.info("Unit Operation Partially Completed and added.");

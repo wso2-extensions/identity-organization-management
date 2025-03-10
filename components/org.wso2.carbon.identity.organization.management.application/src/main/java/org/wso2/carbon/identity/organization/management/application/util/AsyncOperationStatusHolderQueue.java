@@ -1,14 +1,14 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationContext;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationContext> {
-    private final ConcurrentLinkedQueue<UnitOperationContext> queue;
+public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRecord> {
+    private final ConcurrentLinkedQueue<UnitOperationRecord> queue;
 
-    public ConcurrentLinkedQueue<UnitOperationContext> getQueue() {
+    public ConcurrentLinkedQueue<UnitOperationRecord> getQueue() {
         return queue;
     }
 
@@ -21,7 +21,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationCo
      *
      * @param context The async operation context to add.
      */
-    public void addOperationStatus(UnitOperationContext context) {
+    public void addOperationStatus(UnitOperationRecord context) {
         queue.add(context);
     }
 
@@ -30,7 +30,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationCo
      *
      * @return The next async operation context or null if the queue is empty.
      */
-    public UnitOperationContext pollOperationContext() {
+    public UnitOperationRecord pollOperationContext() {
         return queue.poll();
     }
 
@@ -39,7 +39,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationCo
      *
      * @return The next async operation context or null if the queue is empty.
      */
-    public UnitOperationContext peekOperationContext() {
+    public UnitOperationRecord peekOperationContext() {
         return queue.peek();
     }
 
@@ -48,7 +48,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationCo
      *
      * @return Iterator for the queue.
      */
-    public Iterator<UnitOperationContext> iterator() {
+    public Iterator<UnitOperationRecord> iterator() {
         return queue.iterator();
     }
 
