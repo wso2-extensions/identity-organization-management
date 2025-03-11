@@ -144,7 +144,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
-    private static final AsyncOperationStatusHolderQueue asyncStatusQueue = new AsyncOperationStatusHolderQueue();
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
     private final InheritableThreadLocal<String> ASYNC_OPERATION_ID = new InheritableThreadLocal<>();
 
@@ -161,8 +160,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
 
-        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(ShareOperationType.APPLICATION_SHARE.getValue(), originalAppId, OrgApplicationMgtConstants.B2B_APPLICATION, SharePolicy.SELECTIVE_SHARE.getValue(), ownerOrgId, userID), true);
-
+        String sharePolicy = shareWithAllChildren ? SharePolicy.SHARE_WITH_ALL.getValue() : SharePolicy.SELECTIVE_SHARE.getValue();
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(ShareOperationType.APPLICATION_SHARE.getValue(), originalAppId, OrgApplicationMgtConstants.B2B_APPLICATION, sharePolicy, ownerOrgId, userID), true);
         ASYNC_OPERATION_ID.set(operationId);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId,statusQueue);
@@ -259,6 +258,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         validateFragmentApplicationAccess(getOrganizationId(), organizationId);
         ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
 
+        String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(ShareOperationType.APPLICATION_UNSHARE.getValue(), applicationId, OrgApplicationMgtConstants.B2B_APPLICATION, SharePolicy.DO_NOT_SHARE.getValue(), organizationId, userID), true);
+        ASYNC_OPERATION_ID.set(operationId);
+
         if (sharedOrganizationId == null) {
             getListener().preDeleteAllSharedApplications(organizationId, applicationId);
             // Unshare application for all shared organizations.
@@ -321,6 +325,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         sharedApplicationId.get());
             }
         }
+        asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), "SUCCESS");
     }
 
     private void revokeSharedAppAccessTokens(String rootOrganizationId, String rootApplicationId,
@@ -680,7 +685,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } finally {
             UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
 
-//            asyncStatusQueue.addOperationStatus(operationStatus);
             asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
             asyncOperationStatusList.get(ASYNC_OPERATION_ID.get()).add(new SubOperationStatusObject(status));
 

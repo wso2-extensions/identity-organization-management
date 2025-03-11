@@ -29,8 +29,11 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.OperationRecord;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.ResponseUnitOperationContext;
 import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusObject;
+import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusQueue;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.AsyncOperationStatus;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
@@ -78,9 +81,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
@@ -122,8 +123,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
-    private static final AsyncOperationStatusHolderQueue asyncStatusQueue = new AsyncOperationStatusHolderQueue();
-    private static final ThreadLocal<String> ASYNC_OPERATION_ID = new ThreadLocal<>();
+    AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+    private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
+    private final InheritableThreadLocal<String> ASYNC_OPERATION_ID = new InheritableThreadLocal<>();
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
@@ -146,28 +148,34 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         // Pre sharing record creation.
-        AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
         String sharingInitiatedUserId = carbonContext.getUserId();
-        String operationId = asyncStatusMgtService.registerOperationStatus("user_share", sharingInitiatedOrgId, "user", "selective_user_share", sharingInitiatedOrgId, sharingInitiatedUserId);
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord("user_share", sharingInitiatedOrgId, "user", "selective_user_share", sharingInitiatedOrgId, sharingInitiatedUserId), false);
+        ASYNC_OPERATION_ID.set(operationId);
+        SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+        asyncOperationStatusList.put(operationId,statusQueue);
 
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(() -> {
-                    try{
-                        restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
-                                sharingInitiatedUsername, threadLocalProperties);
-                        ASYNC_OPERATION_ID.set(operationId);
-                        String currentOperationId = ASYNC_OPERATION_ID.get();
-                        LOG.info("Processing async task for Operation ID: " + currentOperationId);
-
-                        processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId);
-                    }finally {
-                        ASYNC_OPERATION_ID.remove();
-                    }
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async user selective share processing.", ex);
-                    return null;
-                });
+            try{
+                restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                        sharingInitiatedUsername, threadLocalProperties);
+                ASYNC_OPERATION_ID.set(operationId);
+                processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId);
+            }finally {
+                asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), getOperationStatus(ASYNC_OPERATION_ID.get()));
+                ASYNC_OPERATION_ID.remove();
+            }
+        }, EXECUTOR)
+        .exceptionally(ex -> {
+            LOG.error("Error occurred during async user selective share processing.", ex);
+            return null;
+        });
+    }
+    private String getOperationStatus(String operationId){
+        SubOperationStatusQueue list = asyncOperationStatusList.get(operationId);
+        String status = list.getOperationStatus();
+        asyncOperationStatusList.remove(operationId);
+        return status;
     }
 
     @Override
@@ -189,16 +197,29 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         // Capture additional thread-local properties.
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
+        // Pre sharing record creation.
+        String sharingInitiatedUserId = carbonContext.getUserId();
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord("USER_SHARE", sharingInitiatedOrgId, "USER", "GENERAL_USER_SHARE", sharingInitiatedOrgId, sharingInitiatedUserId), false);
+        ASYNC_OPERATION_ID.set(operationId);
+        SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+        asyncOperationStatusList.put(operationId,statusQueue);
+
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(() -> {
+                try{
                     restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                             sharingInitiatedUsername, threadLocalProperties);
+                    ASYNC_OPERATION_ID.set(operationId);
                     processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId);
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general user share processing.", ex);
-                    return null;
-                });
+                }finally {
+                    asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), getOperationStatus(ASYNC_OPERATION_ID.get()));
+                    ASYNC_OPERATION_ID.remove();
+                }
+            }, EXECUTOR)
+            .exceptionally(ex -> {
+                LOG.error("Error occurred during async general user share processing.", ex);
+                return null;
+            });
     }
 
     @Override
@@ -376,17 +397,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
 
         } finally {
-            ResponseUnitOperationContext unitOperationContext = new ResponseUnitOperationContext(
-                    "123",
-                    "user-share",
-                    asyncStatusQueue.getQueue(),
-                    "",
-                    ""
-            );
-
-            AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
-            asyncStatusMgtService.registerBulkUnitOperationStatus(unitOperationContext);
-
             PrivilegedCarbonContext.endTenantFlow();
         }
     }
@@ -667,13 +677,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             ResourceSharingPolicyMgtException {
 
         for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
-            for (String orgId : entry.getValue()) {
-                shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId);
-
-            }
-
             if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
                 saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId);
+            }
+
+            for (String orgId : entry.getValue()) {
+                shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId);
             }
         }
     }
@@ -1363,43 +1372,37 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param baseUserShare         The base user share object containing user and role information.
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      */
-    private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare,
-                                              String sharingInitiatedOrgId)
-              {
+    private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare, String sharingInitiatedOrgId) {
 
-        String associatedUserId = baseUserShare.getUserId();
-        List<String> roleIds = baseUserShare.getRoles();
-        UserAssociation userAssociation;
+        String status = AsyncOperationStatus.SUCCESS.toString();
+        String statusMessage = "";
+      try{
+          String associatedUserId = baseUserShare.getUserId();
+          List<String> roleIds = baseUserShare.getRoles();
+          UserAssociation userAssociation;
 
-        try {
-            userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
-        } catch (OrganizationManagementException e) {
-            String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
-            LOG.error(errorMessage, e);
+          try {
+              userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
+          } catch (OrganizationManagementException e) {
+              String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
+              LOG.error(errorMessage, e);
+              status = AsyncOperationStatus.FAILED.toString();
+              statusMessage = "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.";
+              return;
+          }
+          // Assign roles if any are present.
+          try{
+              assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
+          }catch(OrganizationManagementException | IdentityRoleManagementException | UserSharingMgtException e){
+              status = AsyncOperationStatus.FAILED.toString();
+              statusMessage = "User shared without role assignment.";
+          }
+      }finally {
+          UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, status, statusMessage);
 
-            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.FAILED.toString(), "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.");
-
-            asyncStatusQueue.addOperationStatus(operationStatus);
-            LOG.info("Unit Operation Failed and added.");
-            return;
-        }
-
-        // Assign roles if any are present.
-        try{
-            assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
-
-            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.SUCCESS.toString(), "");
-
-            asyncStatusQueue.addOperationStatus(operationStatus);
-            LOG.info("Unit Operation Success and added.");
-
-        }catch(OrganizationManagementException | IdentityRoleManagementException | UserSharingMgtException e){
-
-            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, AsyncOperationStatus.PARTIAL.toString(), "User shared without role assignment.");
-
-            asyncStatusQueue.addOperationStatus(operationStatus);
-            LOG.info("Unit Operation Partially Completed and added.");
-        }
+          asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
+          asyncOperationStatusList.get(ASYNC_OPERATION_ID.get()).add(new SubOperationStatusObject(status));
+      }
     }
 
     /**

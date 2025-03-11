@@ -4,9 +4,9 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
  * Enum representing the types of asynchronous operation type.
  */
 public enum AsyncOperationStatus {
-    SUCCESS("success"),
-    FAILED("failed"),
-    PARTIAL("partial");
+    SUCCESS("SUCCESS"),
+    FAILED("FAIL"),
+    PARTIAL("PARTIAL");
 
     private final String value;
 
