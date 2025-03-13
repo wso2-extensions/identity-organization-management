@@ -434,6 +434,12 @@ public class OrgApplicationManagerImplTest {
         }
     }
 
+    @Test
+    public void testShareOrganizationApplication() throws OrganizationManagementException {
+        startTenantFlow();
+
+    }
+
     private void mockServiceURLBuilder(String url, MockedStatic<ServiceURLBuilder> serviceURLBuilder)
             throws URLBuilderException {
 

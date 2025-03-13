@@ -23,7 +23,6 @@ import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.SharingOperationDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
@@ -512,23 +511,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
-
-    @Override
-    public String getLatestSharingOperationOfResourceId(String resourceId)
-            throws OrganizationManagementServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            return namedJdbcTemplate.fetchSingleRecord(GET_LATEST_RECORD_BY_RESIDENT_RESOURCE_ID,
-                    (resultSet, rowNumber) -> resultSet.getString("UM_SHARING_OPERATION_ID"),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setString(1, String.valueOf(resourceId));
-                    });
-        } catch (DataAccessException e) {
-            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATION_FOR_USER_AT_SHARED_ORG, e);
-        }
-    }
-
     private Map<String, List<String>> groupUsernamesByDomain(List<String> deletedDomainQualifiedUserNames) {
 
         Map<String, List<String>> domainToUserNamesMap = new HashMap<>();
@@ -540,9 +522,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         return domainToUserNamesMap;
     }
 
-    private Map<String, String> getDBQueryMapOfHasUserAssociations()
-    {
-
+    private Map<String, String> getDBQueryMapOfHasUserAssociations() {
         Map<String, String> dbQueryMap = new HashMap<>();
         dbQueryMap.put(DB_TYPE_DB2, CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2);
         dbQueryMap.put(DB_TYPE_MSSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL);

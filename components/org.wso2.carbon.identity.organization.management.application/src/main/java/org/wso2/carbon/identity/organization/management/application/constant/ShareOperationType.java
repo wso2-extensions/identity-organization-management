@@ -1,8 +1,8 @@
 package org.wso2.carbon.identity.organization.management.application.constant;
 
 public enum ShareOperationType {
-    APPLICATION_SHARE("APPLICATION_SHARE"),
-    APPLICATION_UNSHARE("APPLICATION_UNSHARE");
+    APPLICATION_SHARE("B2B_APPLICATION_SHARE"),
+    APPLICATION_UNSHARE("B2B_APPLICATION_UNSHARE");
 
     private final String value;
 
