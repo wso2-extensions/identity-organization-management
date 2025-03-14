@@ -100,6 +100,9 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.VALIDATE_MSG_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.VALIDATE_MSG_SHARED_USER_ID;
 
+/**
+ * Unit tests for UserSharingPolicyHandlerServiceImpl.
+ */
 public class UserSharingPolicyHandlerServiceImplTest {
 
     @InjectMocks
