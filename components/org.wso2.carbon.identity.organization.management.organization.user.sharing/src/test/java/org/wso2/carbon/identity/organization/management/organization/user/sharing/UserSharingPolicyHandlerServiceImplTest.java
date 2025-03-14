@@ -108,28 +108,32 @@ public class UserSharingPolicyHandlerServiceImplTest {
     @InjectMocks
     private UserSharingPolicyHandlerServiceImpl userSharingPolicyHandlerService;
 
-    private MockedStatic<UserSharingPolicyHandlerServiceImpl> userSharingPolicyHandlerServiceMock;
-    private MockedStatic<OrganizationUserSharingDataHolder> dataHolderMock;
+    private MockedStatic<UserSharingPolicyHandlerServiceImpl> userSharingPolicyHandlerServiceMockStatic;
+    private MockedStatic<OrganizationUserSharingDataHolder> dataHolderMockStatic;
     private MockedStatic<Utils> utilsMockedStatic;
+    private MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic;
+    private MockedStatic<UserCoreUtil> userCoreUtilMockedStatic;
 
     @BeforeMethod
     public void setUp() {
 
         openMocks(this);
-        userSharingPolicyHandlerServiceMock = mockStatic(UserSharingPolicyHandlerServiceImpl.class);
-        dataHolderMock = mockStatic(OrganizationUserSharingDataHolder.class);
+        userSharingPolicyHandlerServiceMockStatic = mockStatic(UserSharingPolicyHandlerServiceImpl.class);
+        dataHolderMockStatic = mockStatic(OrganizationUserSharingDataHolder.class);
         utilsMockedStatic = mockStatic(Utils.class);
+        identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+        userCoreUtilMockedStatic = mockStatic(UserCoreUtil.class);
     }
 
     @AfterMethod
     public void tearDown() {
 
-        userSharingPolicyHandlerServiceMock.close();
-        dataHolderMock.close();
+        userSharingPolicyHandlerServiceMockStatic.close();
+        dataHolderMockStatic.close();
         utilsMockedStatic.close();
+        identityTenantUtilMockedStatic.close();
+        userCoreUtilMockedStatic.close();
     }
-
-    // Tests for GET Shared Orgs.
 
     @DataProvider(name = "getSharedOrgsDataProvider")
     public Object[][] getSharedOrgsDataProvider() {
@@ -137,7 +141,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
         return new Object[][]{
                 {USER_1_ID, setExpectedResultsForGetSharedOrgsTestCase1()},
                 {USER_2_ID, setExpectedResultsForGetSharedOrgsTestCase2()},
-                {USER_3_ID, setExpectedResultsForGetSharedOrgsTestCase3()}
+                {USER_3_ID, Collections.emptyMap()}
         };
     }
 
@@ -187,7 +191,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
     }
 
     @Test(expectedExceptions = UserSharingMgtClientException.class)
-    public void testGetSharedOrganizationsOfUser_ExceptionHandling() throws Exception {
+    public void testGetSharedOrganizationsOfUserWithClientException() throws Exception {
 
         utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
 
@@ -203,8 +207,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
         userSharingPolicyHandlerService.getSharedOrganizationsOfUser(USER_1_ID, null, null, null, null, false);
     }
 
-    // Tests for GET Shared Roles.
-
     @DataProvider(name = "roleSharingDataProvider")
     public Object[][] roleSharingDataProvider() {
 
@@ -214,7 +216,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
                 {USER_3_ID, ORG_3_ID, setExpectedResultsForGetSharedRolesTestCase3()},
                 {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase4()},
                 {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase5()},
-                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase6()}
+                {USER_1_ID, ORG_1_ID, Collections.emptyList()}
         };
     }
 
@@ -222,65 +224,59 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public void testGetRolesSharedWithUserInOrganization(String userId, String orgId,
                                                          List<Role> expectedRoles) throws Exception {
 
-        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
-             MockedStatic<UserCoreUtil> mockUserCoreUtil = mockStatic(UserCoreUtil.class)) {
+        List<String> sharedRoleIds = expectedRoles.stream().map(Role::getId).collect(Collectors.toList());
 
-            List<String> sharedRoleIds = expectedRoles.stream().map(Role::getId).collect(Collectors.toList());
+        OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
+        when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
+        OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
+        when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
+        RoleManagementService mockRoleMgtService = mock(RoleManagementService.class);
+        when(dataHolder.getRoleManagementService()).thenReturn(mockRoleMgtService);
+        OrganizationManager mockOrgManager = mock(OrganizationManager.class);
+        when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
 
-            OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
-            when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
-            OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
-            when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
-            RoleManagementService mockRoleMgtService = mock(RoleManagementService.class);
-            when(dataHolder.getRoleManagementService()).thenReturn(mockRoleMgtService);
-            OrganizationManager mockOrgManager = mock(OrganizationManager.class);
-            when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
+        UserIDResolver mockUserIDResolver = mock(UserIDResolver.class);
+        Field field = UserSharingPolicyHandlerServiceImpl.class.getDeclaredField(FIELD_USER_ID_RESOLVER);
+        field.setAccessible(true);
+        field.set(userSharingPolicyHandlerService, mockUserIDResolver);
 
-            UserIDResolver mockUserIDResolver = mock(UserIDResolver.class);
-            Field field = UserSharingPolicyHandlerServiceImpl.class.getDeclaredField(FIELD_USER_ID_RESOLVER);
-            field.setAccessible(true);
-            field.set(userSharingPolicyHandlerService, mockUserIDResolver);
+        UserAssociation userAssociation = createUserAssociation(userId, orgId);
+        when(mockOrgUserSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, orgId)).thenReturn(
+                userAssociation);
 
-            UserAssociation userAssociation = createUserAssociation(userId, orgId);
-            when(mockOrgUserSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, orgId)).thenReturn(
-                    userAssociation);
+        when(mockOrgManager.resolveTenantDomain(anyString())).thenReturn(TENANT_DOMAIN);
+        identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(TENANT_DOMAIN)).thenReturn(TENANT_ID);
 
-            when(mockOrgManager.resolveTenantDomain(anyString())).thenReturn(TENANT_DOMAIN);
-            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(TENANT_DOMAIN))
-                    .thenReturn(TENANT_ID);
+        String domainQualifiedUserName = USER_NAME_PREFIX + USER_DOMAIN_PRIMARY + PATH_SEPARATOR + userId;
+        String userName = USER_NAME_PREFIX + userId;
+        when(mockUserIDResolver.getNameByID(userId, TENANT_DOMAIN)).thenReturn(domainQualifiedUserName);
+        userCoreUtilMockedStatic.when(() -> UserCoreUtil.removeDomainFromName(domainQualifiedUserName))
+                .thenReturn(userName);
+        userCoreUtilMockedStatic.when(() -> UserCoreUtil.extractDomainFromName(domainQualifiedUserName))
+                .thenReturn(USER_DOMAIN_PRIMARY);
 
-            String domainQualifiedUserName = getDomainQualifiedUserName(userId);
-            String userName = getUserName(userId);
-            when(mockUserIDResolver.getNameByID(userId, TENANT_DOMAIN)).thenReturn(domainQualifiedUserName);
-            mockUserCoreUtil.when(() -> UserCoreUtil.removeDomainFromName(domainQualifiedUserName))
-                    .thenReturn(userName);
-            mockUserCoreUtil.when(() -> UserCoreUtil.extractDomainFromName(domainQualifiedUserName))
-                    .thenReturn(USER_DOMAIN_PRIMARY);
+        when(mockOrgUserSharingService.getRolesSharedWithUserInOrganization(any(), anyInt(), any())).thenReturn(
+                sharedRoleIds);
 
-            when(mockOrgUserSharingService.getRolesSharedWithUserInOrganization(any(), anyInt(), any())).thenReturn(
-                    sharedRoleIds);
+        for (Role role : expectedRoles) {
+            when(mockRoleMgtService.getRole(role.getId(), TENANT_DOMAIN)).thenReturn(role);
+        }
 
-            for (Role role : expectedRoles) {
-                when(mockRoleMgtService.getRole(role.getId(), TENANT_DOMAIN)).thenReturn(role);
-            }
+        // Call the method.
+        ResponseSharedRolesDO response =
+                userSharingPolicyHandlerService.getRolesSharedWithUserInOrganization(userId, orgId, null, null, null,
+                        null, false);
 
-            // Call the method.
-            ResponseSharedRolesDO response =
-                    userSharingPolicyHandlerService.getRolesSharedWithUserInOrganization(userId, orgId, null, null,
-                            null, null, false);
-
-            // Validate response.
-            assertNotNull(response, VALIDATE_MSG_RESPONSE);
-            assertEquals(response.getSharedRoles().size(), expectedRoles.size(),
-                    VALIDATE_MSG_RESPONSE_SHARED_ROLES_COUNT);
-            for (int i = 0; i < expectedRoles.size(); i++) {
-                assertEquals(response.getSharedRoles().get(i).getRoleName(), expectedRoles.get(i).getName(),
-                        VALIDATE_MSG_SHARED_ROLE_NAME);
-                assertEquals(response.getSharedRoles().get(i).getAudienceName(), expectedRoles.get(i).getAudienceName(),
-                        VALIDATE_MSG_SHARED_ROLE_AUDIENCE_NAME);
-                assertEquals(response.getSharedRoles().get(i).getAudienceType(), expectedRoles.get(i).getAudience(),
-                        VALIDATE_MSG_SHARED_ROLE_AUDIENCE_TYPE);
-            }
+        // Validate response.
+        assertNotNull(response, VALIDATE_MSG_RESPONSE);
+        assertEquals(response.getSharedRoles().size(), expectedRoles.size(), VALIDATE_MSG_RESPONSE_SHARED_ROLES_COUNT);
+        for (int i = 0; i < expectedRoles.size(); i++) {
+            assertEquals(response.getSharedRoles().get(i).getRoleName(), expectedRoles.get(i).getName(),
+                    VALIDATE_MSG_SHARED_ROLE_NAME);
+            assertEquals(response.getSharedRoles().get(i).getAudienceName(), expectedRoles.get(i).getAudienceName(),
+                    VALIDATE_MSG_SHARED_ROLE_AUDIENCE_NAME);
+            assertEquals(response.getSharedRoles().get(i).getAudienceType(), expectedRoles.get(i).getAudience(),
+                    VALIDATE_MSG_SHARED_ROLE_AUDIENCE_TYPE);
         }
     }
 
@@ -288,8 +284,8 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public Object[][] roleSharingForUnSharedUserDataProvider() {
 
         return new Object[][]{
-                {USER_4_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase6()},
-                {USER_5_ID, ORG_2_ID, setExpectedResultsForGetSharedRolesTestCase6()}
+                {USER_4_ID, ORG_1_ID, Collections.emptyList()},
+                {USER_5_ID, ORG_2_ID, Collections.emptyList()}
         };
     }
 
@@ -322,7 +318,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
     }
 
     @Test(expectedExceptions = UserSharingMgtClientException.class)
-    public void testGetRolesSharedWithUserInOrganization_OrgException() throws Exception {
+    public void testGetRolesSharedWithUserInOrganizationWithClientException() throws Exception {
 
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
         when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
@@ -361,11 +357,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
         Map<String, UserAssociation> expectedResults = new HashMap<>();
         expectedResults.put(ORG_1_NAME, createUserAssociation(USER_3_ID, ORG_1_ID));
         return expectedResults;
-    }
-
-    private Map<String, UserAssociation> setExpectedResultsForGetSharedOrgsTestCase3() {
-
-        return new HashMap<>(); // No shared orgs for this test case.
     }
 
     private static List<Role> setExpectedResultsForGetSharedRolesTestCase1() {
@@ -441,11 +432,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
         return Arrays.asList(role1, role2);
     }
 
-    private static List<Role> setExpectedResultsForGetSharedRolesTestCase6() {
-
-        return Collections.emptyList(); // No roles shared for this test case.
-    }
-
     // Helper Methods.
 
     private UserAssociation createUserAssociation(String userId, String organizationId) {
@@ -455,15 +441,5 @@ public class UserSharingPolicyHandlerServiceImplTest {
         userAssociation.setOrganizationId(organizationId);
         userAssociation.setSharedType(SharedType.SHARED);
         return userAssociation;
-    }
-
-    private String getDomainQualifiedUserName(String userId) {
-
-        return USER_NAME_PREFIX + USER_DOMAIN_PRIMARY + PATH_SEPARATOR + userId;
-    }
-
-    private String getUserName(String userId) {
-
-        return USER_NAME_PREFIX + userId;
     }
 }

@@ -31,10 +31,6 @@ public class TestUserSharingConstants {
     public static final String USER_NAME_PREFIX = "username-of-";
     public static final String PATH_SEPARATOR = "/";
 
-    // Mocks.
-    public static final String MOCKED_DATA_ACCESS_EXCEPTION = "Mocked DataAccessException";
-    public static final String MOCKED_TRANSACTION_EXCEPTION = "Mocked TransactionException";
-
     // Organizations.
     public static final String ORG_SUPER_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     public static final String ORG_1_ID = "c524c30a-cbd4-4169-ac9d-1ee3edf1bf16";
