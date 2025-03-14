@@ -139,9 +139,9 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public Object[][] getSharedOrgsDataProvider() {
 
         return new Object[][]{
-                {USER_1_ID, setExpectedResultsForGetSharedOrgsTestCase1()},
-                {USER_2_ID, setExpectedResultsForGetSharedOrgsTestCase2()},
-                {USER_3_ID, Collections.emptyMap()}
+                {USER_1_ID, setExpectedResultsForGetSharedOrgsTestCase1()}, // Having many shared orgs.
+                {USER_2_ID, setExpectedResultsForGetSharedOrgsTestCase2()}, // Having a single shared org.
+                {USER_3_ID, Collections.emptyMap()} // Having no shared orgs.
         };
     }
 
@@ -211,12 +211,12 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public Object[][] roleSharingDataProvider() {
 
         return new Object[][]{
-                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase1()},
-                {USER_2_ID, ORG_2_ID, setExpectedResultsForGetSharedRolesTestCase2()},
-                {USER_3_ID, ORG_3_ID, setExpectedResultsForGetSharedRolesTestCase3()},
-                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase4()},
-                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase5()},
-                {USER_1_ID, ORG_1_ID, Collections.emptyList()}
+                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase1()}, // Having many shared App Roles.
+                {USER_2_ID, ORG_2_ID, setExpectedResultsForGetSharedRolesTestCase2()}, // Having one shared App Role.
+                {USER_3_ID, ORG_3_ID, setExpectedResultsForGetSharedRolesTestCase3()}, // Having many shared Org Roles.
+                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase4()}, // Having one shared Org Role.
+                {USER_1_ID, ORG_1_ID, setExpectedResultsForGetSharedRolesTestCase5()}, // Having many App and Org Roles.
+                {USER_1_ID, ORG_1_ID, Collections.emptyList()} // Having no shared roles.
         };
     }
 
@@ -284,8 +284,8 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public Object[][] roleSharingForUnSharedUserDataProvider() {
 
         return new Object[][]{
-                {USER_4_ID, ORG_1_ID, Collections.emptyList()},
-                {USER_5_ID, ORG_2_ID, Collections.emptyList()}
+                {USER_4_ID, ORG_1_ID, Collections.emptyList()}, // Having no shared user association in Org 1.
+                {USER_5_ID, ORG_2_ID, Collections.emptyList()} // Having no shared user association in Org 2.
         };
     }
 
