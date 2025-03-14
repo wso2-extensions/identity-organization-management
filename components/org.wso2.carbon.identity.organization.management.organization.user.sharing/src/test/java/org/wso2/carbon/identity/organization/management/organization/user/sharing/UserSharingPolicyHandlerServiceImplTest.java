@@ -145,10 +145,8 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public void testGetSharedOrganizationsOfUser(String associatedUserId, Map<String, UserAssociation> expectedResults)
             throws Exception {
 
-        // Mock getOrganizationId() from the Utils class.
         utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
 
-        // Mock the data holder and return the mock service.
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
         when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
         OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
@@ -156,7 +154,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
         OrganizationManager mockOrgManager = mock(OrganizationManager.class);
         when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
 
-        // Mock organization names dynamically.
         List<UserAssociation> mockUserAssociations = new ArrayList<>();
         for (Map.Entry<String, UserAssociation> entry : expectedResults.entrySet()) {
             String orgName = entry.getKey();
@@ -192,16 +189,13 @@ public class UserSharingPolicyHandlerServiceImplTest {
     @Test(expectedExceptions = UserSharingMgtClientException.class)
     public void testGetSharedOrganizationsOfUser_ExceptionHandling() throws Exception {
 
-        // Mock getOrganizationId() from the Utils class.
         utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
 
-        // Mock the data holder and return the mock service.
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
         when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
         OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
         when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
 
-        // Force an exception when calling getUserAssociationsOfGivenUser.
         when(mockOrgUserSharingService.getUserAssociationsOfGivenUser(anyString(), anyString())).thenThrow(
                 new OrganizationManagementException(VALIDATE_MSG_EXCEPTION));
 
@@ -231,10 +225,8 @@ public class UserSharingPolicyHandlerServiceImplTest {
         try (MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
              MockedStatic<UserCoreUtil> mockUserCoreUtil = mockStatic(UserCoreUtil.class)) {
 
-            // Extract shared role IDs dynamically from expected roles.
             List<String> sharedRoleIds = expectedRoles.stream().map(Role::getId).collect(Collectors.toList());
 
-            // Mock the data holder and dependencies.
             OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
             when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
             OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
@@ -249,7 +241,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
             field.setAccessible(true);
             field.set(userSharingPolicyHandlerService, mockUserIDResolver);
 
-            // Mock user association.
             UserAssociation userAssociation = createUserAssociation(userId, orgId);
             when(mockOrgUserSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, orgId)).thenReturn(
                     userAssociation);
@@ -306,7 +297,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
     public void testGetRolesSharedWithUserForUnSharedUserInOrganization(String userId, String orgId,
                                                                         List<Role> expectedRoles) throws Exception {
 
-        // Mock the data holder and dependencies.
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
         when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
         OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
@@ -334,7 +324,6 @@ public class UserSharingPolicyHandlerServiceImplTest {
     @Test(expectedExceptions = UserSharingMgtClientException.class)
     public void testGetRolesSharedWithUserInOrganization_OrgException() throws Exception {
 
-        // Mock the data holder and dependencies.
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
         when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
 
@@ -344,12 +333,10 @@ public class UserSharingPolicyHandlerServiceImplTest {
         OrganizationManager mockOrgManager = mock(OrganizationManager.class);
         when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
 
-        // Mock user association.
         UserAssociation userAssociation = createUserAssociation(USER_1_ID, ORG_1_ID);
         when(mockOrgUserSharingService.getUserAssociationOfAssociatedUserByOrgId(USER_1_ID, ORG_1_ID)).thenReturn(
                 userAssociation);
 
-        // Force OrganizationManagementException.
         when(mockOrgManager.resolveTenantDomain(anyString())).thenThrow(
                 new OrganizationManagementException(VALIDATE_MSG_EXCEPTION));
 
