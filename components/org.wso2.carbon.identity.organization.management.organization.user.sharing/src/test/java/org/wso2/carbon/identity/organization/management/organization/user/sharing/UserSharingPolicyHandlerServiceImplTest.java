@@ -57,6 +57,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.APPLICATION_AUDIENCE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.APP_1_NAME;
@@ -190,7 +191,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
         }
     }
 
-    @Test(expectedExceptions = UserSharingMgtClientException.class)
+    @Test
     public void testGetSharedOrganizationsOfUserWithClientException() throws Exception {
 
         utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
@@ -203,8 +204,10 @@ public class UserSharingPolicyHandlerServiceImplTest {
         when(mockOrgUserSharingService.getUserAssociationsOfGivenUser(anyString(), anyString())).thenThrow(
                 new OrganizationManagementException(VALIDATE_MSG_EXCEPTION));
 
-        // Invoke the method (expected to throw an exception).
-        userSharingPolicyHandlerService.getSharedOrganizationsOfUser(USER_1_ID, null, null, null, null, false);
+        // Assert that the expected exception is thrown
+        assertThrows(UserSharingMgtClientException.class,
+                () -> userSharingPolicyHandlerService.getSharedOrganizationsOfUser(USER_1_ID, null, null, null, null,
+                        false));
     }
 
     @DataProvider(name = "roleSharingDataProvider")
@@ -317,7 +320,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
         assertEquals(response.getSharedRoles().size(), expectedRoles.size(), VALIDATE_MSG_RESPONSE_SHARED_ROLES_COUNT);
     }
 
-    @Test(expectedExceptions = UserSharingMgtClientException.class)
+    @Test
     public void testGetRolesSharedWithUserInOrganizationWithClientException() throws Exception {
 
         OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
@@ -336,9 +339,10 @@ public class UserSharingPolicyHandlerServiceImplTest {
         when(mockOrgManager.resolveTenantDomain(anyString())).thenThrow(
                 new OrganizationManagementException(VALIDATE_MSG_EXCEPTION));
 
-        // Invoke the method (expected to throw an exception).
-        userSharingPolicyHandlerService.getRolesSharedWithUserInOrganization(USER_1_ID, ORG_1_ID, null, null, null,
-                null, false);
+        // Assert that the expected exception is thrown
+        assertThrows(UserSharingMgtClientException.class,
+                () -> userSharingPolicyHandlerService.getRolesSharedWithUserInOrganization(USER_1_ID, ORG_1_ID, null,
+                        null, null, null, false));
     }
 
     // Test case Builders.
