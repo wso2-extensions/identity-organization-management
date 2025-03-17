@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -58,7 +56,6 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrganizationUserSharingServiceImpl implements OrganizationUserSharingService {
 
-    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingServiceImpl.class);
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
 
     @Override
@@ -215,15 +212,17 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     private void removeSharedUser(UserAssociation userAssociation) throws OrganizationManagementException {
 
-        String userId = userAssociation.getUserId();
-        String organizationId = userAssociation.getOrganizationId();
-        String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        try {
-            AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
-            deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
-        } catch (UserStoreException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
+        if (userAssociation != null) {
+            String userId = userAssociation.getUserId();
+            String organizationId = userAssociation.getOrganizationId();
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            try {
+                AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
+                deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
+            } catch (UserStoreException e) {
+                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
+            }
         }
     }
 

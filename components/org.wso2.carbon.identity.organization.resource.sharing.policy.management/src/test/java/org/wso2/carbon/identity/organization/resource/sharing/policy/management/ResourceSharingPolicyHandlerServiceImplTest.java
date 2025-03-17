@@ -78,6 +78,9 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constants.TestResourceSharingConstants.UM_ID_RESOURCE_ATTRIBUTE_2;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.util.TestUtils.closeH2Base;
 
+/**
+ * Unit tests for ResourceSharingPolicyHandlerServiceImpl.
+ */
 public class ResourceSharingPolicyHandlerServiceImplTest {
 
     private ResourceSharingPolicyHandlerServiceImpl resourceSharingPolicyHandlerService;
