@@ -709,8 +709,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 }
             }
 
-            shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs, operationId);
             updateResourceSharingPolicy(entry.getKey(), sharingInitiatedOrgId, operationId);
+            shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs, operationId);
         }
         cleanUpOldUserAssociationsIfExists(associatedUserId, sharingInitiatedOrgId, userSharingAllOrgs);
     }
