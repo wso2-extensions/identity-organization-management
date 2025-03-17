@@ -604,8 +604,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                  boolean shareWithAllChildren, String operationId) throws OrganizationManagementException {
 
         // Asynchronous application sharing. operationId is used to track the operation status.
-        String statusMessage = "";
-        String status = "SUCCESS";
+        String statusMessage = null;
+        String status = null;
+
+        if (operationId != null){
+            statusMessage = "";
+            status = "SUCCESS";
+        }
         try {
             getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     shareWithAllChildren);
@@ -633,8 +638,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(domainQualifiedUserName);
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
             } catch (UserStoreException e) {
-                status = "FAIL";
-                statusMessage = "UserStoreException: " + e.getMessage();
+                if (operationId != null){
+                    status = "FAIL";
+                    statusMessage = "UserStoreException: " + e.getMessage();
+                }
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
@@ -655,8 +662,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 if (isOAuthClientExistsError(e)) {
                     createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
                 } else {
-                    status = "FAIL";
-                    statusMessage = "OAuth App Creation Error: " + e.getMessage();
+                    if (operationId != null){
+                        status = "FAIL";
+                        statusMessage = "OAuth App Creation Error: " + e.getMessage();
+                    }
                     throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                             mainApplication.getApplicationResourceId(), sharedOrgId);
                 }
@@ -671,18 +680,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         sharedApplicationId, sharedOrgId, shareWithAllChildren);
             } catch (IdentityApplicationManagementException e) {
                 removeOAuthApplication(createdOAuthApp);
-                status = "FAIL";
-                statusMessage = "IdentityApplicationManagementException: " + e.getMessage();
+                if (operationId != null){
+                    status = "FAIL";
+                    statusMessage = "IdentityApplicationManagementException: " + e.getMessage();
+                }
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
             getListener().postShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     sharedApplicationId, shareWithAllChildren);
         } finally {
-            UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
+            if (operationId != null){
+                UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
 
-            asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-            asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));
+                asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
+                asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));
+            }
             PrivilegedCarbonContext.endTenantFlow();
         }
 
