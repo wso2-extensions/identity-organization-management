@@ -92,6 +92,11 @@
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.framework.async.status.mgt</artifactId>
+            <version>7.7.253</version>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -151,6 +156,9 @@
                             org.wso2.carbon.identity.role.v2.mgt.core.listener;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.status.mgt;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.status.mgt.models.dos;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.status.mgt.queue;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",

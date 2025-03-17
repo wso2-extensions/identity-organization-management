@@ -90,12 +90,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER_SHARING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
@@ -680,13 +684,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             ResourceSharingPolicyMgtException {
 
         for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
+            if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
+                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId, operationId);
+            }
             for (String orgId : entry.getValue()) {
                 shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId);
             }
 
-            if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
-                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId);
-            }
         }
     }
 
@@ -968,7 +972,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         newlySharedOrgs.removeAll(alreadySharedOrgs);
 
         for (String orgId : newlySharedOrgs) {
-            shareAndAssignRolesIfPresent(orgId, baseUserShare, sharingInitiatedOrgId, operationId);
+            shareAndAssignRolesIfPresent(orgId, baseUserShare, sharingInitiatedOrgId);
         }
     }
 
