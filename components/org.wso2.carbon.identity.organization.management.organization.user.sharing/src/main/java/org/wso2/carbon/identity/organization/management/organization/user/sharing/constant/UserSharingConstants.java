@@ -91,6 +91,7 @@ public class UserSharingConstants {
     public static final String AUTHENTICATION_TYPE = "authenticationType";
     public static final String APPLICATION_AUTHENTICATION_TYPE = "APPLICATION";
     public static final String B2B_USER_SHARING = "B2B_USER_SHARING";
+    public static final String B2B_USER = "USER";
 
     public static final String API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG =
             "/api/server/v1/users/%s/shared-roles?orgId=%s";

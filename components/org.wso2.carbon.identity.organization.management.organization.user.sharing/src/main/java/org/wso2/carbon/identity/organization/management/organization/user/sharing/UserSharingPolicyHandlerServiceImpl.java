@@ -118,7 +118,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
     AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
-    private final InheritableThreadLocal<String> ASYNC_OPERATION_ID = new InheritableThreadLocal<>();
 
     @Override
     public void populateSelectiveUserShare(SelectiveUserShareDO selectiveUserShareDO) throws UserSharingMgtException {
@@ -142,8 +141,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         // Pre sharing record creation.
         String sharingInitiatedUserId = carbonContext.getUserId();
-        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(B2B_USER_SHARING, sharingInitiatedOrgId, sharingInitiatedOrgId, sharingInitiatedUserId, "SELECTIVE_USER_SHARE"), false);
-        ASYNC_OPERATION_ID.set(operationId);
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(B2B_USER_SHARING, B2B_USER, sharingInitiatedOrgId, sharingInitiatedOrgId, sharingInitiatedUserId, "SELECTIVE_USER_SHARE"), false);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId,statusQueue);
 
@@ -152,11 +150,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             try{
                 restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                         sharingInitiatedUsername, threadLocalProperties);
-                ASYNC_OPERATION_ID.set(operationId);
-                processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId);
+                processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId, operationId);
             }finally {
-                asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), getOperationStatus(ASYNC_OPERATION_ID.get()));
-                ASYNC_OPERATION_ID.remove();
+                asyncStatusMgtService.updateOperationStatus(operationId, getOperationStatus(operationId));
             }
         }, EXECUTOR)
         .exceptionally(ex -> {
@@ -192,8 +188,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         // Pre sharing record creation.
         String sharingInitiatedUserId = carbonContext.getUserId();
-        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(B2B_USER_SHARING, sharingInitiatedOrgId, sharingInitiatedOrgId, sharingInitiatedUserId, "GENERAL_USER_SHARE"), false);
-        ASYNC_OPERATION_ID.set(operationId);
+        String operationId = asyncStatusMgtService.registerOperationStatus(new OperationRecord(B2B_USER_SHARING, B2B_USER, sharingInitiatedOrgId, sharingInitiatedOrgId, sharingInitiatedUserId, "GENERAL_USER_SHARE"), false);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId,statusQueue);
 
@@ -202,11 +197,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 try{
                     restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                             sharingInitiatedUsername, threadLocalProperties);
-                    ASYNC_OPERATION_ID.set(operationId);
-                    processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId);
+                    processGeneralUserShare(userCriteria, policy, roleIds, sharingInitiatedOrgId, operationId);
                 }finally {
-                    asyncStatusMgtService.updateOperationStatus(ASYNC_OPERATION_ID.get(), getOperationStatus(ASYNC_OPERATION_ID.get()));
-                    ASYNC_OPERATION_ID.remove();
+                    asyncStatusMgtService.updateOperationStatus(operationId, getOperationStatus(operationId));
                 }
             }, EXECUTOR)
             .exceptionally(ex -> {
@@ -365,7 +358,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      */
     private void processSelectiveUserShare(Map<String, UserCriteriaType> userCriteria,
                                            List<SelectiveUserShareOrgDetailsDO> organizations,
-                                           String sharingInitiatedOrgId) {
+                                           String sharingInitiatedOrgId, String operationId) {
 
         try {
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
@@ -376,7 +369,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (USER_IDS.equals(criterionKey)) {
                         if (criterionValues instanceof UserIdList) {
                             selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
-                                    sharingInitiatedOrgId);
+                                    sharingInitiatedOrgId, operationId);
                         } else {
                             LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
                         }
@@ -404,7 +397,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId The ID of the organization that initiated the user sharing.
      */
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
-                                         List<String> roleIds, String sharingInitiatedOrgId) {
+                                         List<String> roleIds, String sharingInitiatedOrgId, String operationId) {
 
         try {
             for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
@@ -415,7 +408,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     if (USER_IDS.equals(criterionKey)) {
                         if (criterionValues instanceof UserIdList) {
                             generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds,
-                                    sharingInitiatedOrgId);
+                                    sharingInitiatedOrgId, operationId);
                         } else {
                             LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                         }
@@ -515,7 +508,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      */
     private void selectiveUserShareByUserIds(UserIdList userIds, List<SelectiveUserShareOrgDetailsDO> organizations,
-                                             String sharingInitiatedOrgId)
+                                             String sharingInitiatedOrgId, String operationId)
             throws UserSharingMgtException {
         for (String associatedUserId : userIds.getIds()) {
             try {
@@ -534,7 +527,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             .build();
                     selectiveUserShareObjectsInRequest.add(selectiveUserShare);
                 }
-                shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId);
+                shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId, operationId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage =
@@ -554,7 +547,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      */
     private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
-                                           String sharingInitiatedOrgId)
+                                           String sharingInitiatedOrgId, String operationId)
             throws UserSharingMgtException {
 
         for (String associatedUserId : userIds.getIds()) {
@@ -569,7 +562,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         .withRoles(roleIds)
                         .build();
                 List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
-                shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId);
+                shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId, operationId);
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -639,7 +632,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId  The ID of the organization initiating the sharing.
      */
     private void shareUser(String associatedUserId, List<BaseUserShare> baseUserShareObjects,
-                           String sharingInitiatedOrgId)
+                           String sharingInitiatedOrgId, String operationId)
             throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
             ResourceSharingPolicyMgtException {
 
@@ -649,9 +642,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             if (isUserAlreadyShared(associatedUserId, sharingInitiatedOrgId)) {
                 handleExistingSharedUser(associatedUserId, sharingInitiatedOrgId,
-                        userSharingOrgsForEachUserShareObject);
+                        userSharingOrgsForEachUserShareObject, operationId);
             } else {
-                createNewUserShare(sharingInitiatedOrgId, userSharingOrgsForEachUserShareObject);
+                createNewUserShare(sharingInitiatedOrgId, userSharingOrgsForEachUserShareObject, operationId);
             }
         }
     }
@@ -665,17 +658,17 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      *                                              organizations.
      */
     private void createNewUserShare(String sharingInitiatedOrgId,
-                                    Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject)
+                                    Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject, String operationId)
             throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException,
             ResourceSharingPolicyMgtException {
 
         for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
             if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
-                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId);
+                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId, operationId);
             }
 
             for (String orgId : entry.getValue()) {
-                shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId);
+                shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId, operationId);
             }
         }
     }
@@ -690,7 +683,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      *                                              organizations.
      */
     private void handleExistingSharedUser(String associatedUserId, String sharingInitiatedOrgId,
-                                          Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject)
+                                          Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject, String operationId)
             throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
             ResourceSharingPolicyMgtException {
 
@@ -716,8 +709,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 }
             }
 
-            shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs);
-            updateResourceSharingPolicy(entry.getKey(), sharingInitiatedOrgId);
+            shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs, operationId);
+            updateResourceSharingPolicy(entry.getKey(), sharingInitiatedOrgId, operationId);
         }
         cleanUpOldUserAssociationsIfExists(associatedUserId, sharingInitiatedOrgId, userSharingAllOrgs);
     }
@@ -919,14 +912,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param alreadySharedOrgs     The list of organizations the user is already shared with.
      */
     private void shareWithNewOrganizations(BaseUserShare baseUserShare, String sharingInitiatedOrgId,
-                                           List<String> userSharingOrgList, List<String> alreadySharedOrgs)
+                                           List<String> userSharingOrgList, List<String> alreadySharedOrgs, String operationId)
             throws OrganizationManagementException, UserSharingMgtException, IdentityRoleManagementException {
 
         List<String> newlySharedOrgs = new ArrayList<>(userSharingOrgList);
         newlySharedOrgs.removeAll(alreadySharedOrgs);
 
         for (String orgId : newlySharedOrgs) {
-            shareAndAssignRolesIfPresent(orgId, baseUserShare, sharingInitiatedOrgId);
+            shareAndAssignRolesIfPresent(orgId, baseUserShare, sharingInitiatedOrgId, operationId);
         }
     }
 
@@ -1064,7 +1057,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param baseUserShare          The user share details containing policy information.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
      */
-    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
+    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId, String operationId)
     {
         try {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
@@ -1086,11 +1079,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
                     sharedResourceAttributes);
-            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.SUCCESS.toString(), "");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.SUCCESS.toString(), "");
 
         } catch (ResourceSharingPolicyMgtException e) {
             // TODO - new attribute for storing the unit operation type.
-            UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.FAILED.toString(), "Policy Sharing for the organization id:"+sharingInitiatedOrgId+" failed.");
+            UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, AsyncOperationStatus.FAILED.toString(), "Policy Sharing for the organization id:"+sharingInitiatedOrgId+" failed.");
             throw new RuntimeException(e);
         }
 
@@ -1103,7 +1096,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param baseUserShare          The user share details containing policy information.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
      */
-    private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
+    private void updateResourceSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId, String operationId)
             throws ResourceSharingPolicyMgtException {
 
         // Delete old sharing policy.
@@ -1111,7 +1104,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         // Create new sharing policy.
         if (isApplicableOrganizationScopeForSavingPolicy(baseUserShare.getPolicy())) {
-            saveUserSharingPolicy(baseUserShare, sharingInitiatedOrgId);
+            saveUserSharingPolicy(baseUserShare, sharingInitiatedOrgId, operationId);
         }
     }
 
@@ -1366,9 +1359,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      */
     private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare, String sharingInitiatedOrgId) {
+        shareAndAssignRolesIfPresent(orgId, baseUserShare, sharingInitiatedOrgId, null);
+    }
 
-        String status = AsyncOperationStatus.SUCCESS.toString();
-        String statusMessage = "";
+    /**
+     * Shares a user with a specified organization and assigns roles if present.
+     * This is where the user association will be created, and roles will be assigned to the shared user if any
+     * roles are present.
+     * It attempts to share the user with the specified organization and assigns roles accordingly.
+     *
+     * @param orgId                 The ID of the organization to share the user with.
+     * @param baseUserShare         The base user share object containing user and role information.
+     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param operationId           The ID of the asynchronous operation.
+     */
+    private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare, String sharingInitiatedOrgId, String operationId) {
+        String status = null;
+        String statusMessage = null;
+        if(operationId != null){
+            status = AsyncOperationStatus.SUCCESS.toString();
+            statusMessage = "";
+        }
       try{
           String associatedUserId = baseUserShare.getUserId();
           List<String> roleIds = baseUserShare.getRoles();
@@ -1379,22 +1390,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
           } catch (OrganizationManagementException e) {
               String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
               LOG.error(errorMessage, e);
-              status = AsyncOperationStatus.FAILED.toString();
-              statusMessage = "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.";
+              if(operationId != null){
+                  status = AsyncOperationStatus.FAILED.toString();
+                  statusMessage = "User Sharing for the user id:"+baseUserShare.getUserId()+" failed.";
+              }
               return;
           }
           // Assign roles if any are present.
           try{
               assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
           }catch(OrganizationManagementException | IdentityRoleManagementException | UserSharingMgtException e){
-              status = AsyncOperationStatus.FAILED.toString();
-              statusMessage = "User shared without role assignment.";
+              if(operationId != null){
+                  status = AsyncOperationStatus.FAILED.toString();
+                  statusMessage = "User shared without role assignment.";
+              }
           }
       }finally {
-          UnitOperationRecord operationStatus = new UnitOperationRecord(ASYNC_OPERATION_ID.get(), "user_share", baseUserShare.getUserId(), orgId, status, statusMessage);
-
-          asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-          asyncOperationStatusList.get(ASYNC_OPERATION_ID.get()).add(new SubOperationStatusObject(status));
+          if(operationId != null){
+              UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "user_share", baseUserShare.getUserId(), orgId, status, statusMessage);
+              asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
+              asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));
+          }
       }
     }
 

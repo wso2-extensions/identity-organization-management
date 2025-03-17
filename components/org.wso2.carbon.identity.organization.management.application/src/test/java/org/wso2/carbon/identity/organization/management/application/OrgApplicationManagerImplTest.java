@@ -25,6 +25,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertNotNull;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -36,6 +37,11 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtServiceImpl;
+import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.OperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusQueue;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
@@ -53,6 +59,8 @@ import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -62,16 +70,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
@@ -428,16 +443,10 @@ public class OrgApplicationManagerImplTest {
 
             // Fire organization creator sharing event
 
-            orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren);
+            orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren, null);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Test
-    public void testShareOrganizationApplication() throws OrganizationManagementException {
-        startTenantFlow();
-
     }
 
     private void mockServiceURLBuilder(String url, MockedStatic<ServiceURLBuilder> serviceURLBuilder)
@@ -452,4 +461,83 @@ public class OrgApplicationManagerImplTest {
         lenient().when(serviceURL.getAbsolutePublicURL()).thenReturn(url);
         lenient().when(mockServiceURLBuilder.build()).thenReturn(serviceURL);
     }
+
+//    @Test
+//    public void testShareOrganizationApplication() throws OrganizationManagementException, IdentityApplicationManagementException {
+//        // Arrange
+//        String ownerOrgId = "ownerOrgId";
+//        String originalAppId = "originalAppId";
+//        boolean shareWithAllChildren = true;
+//        List<String> sharedOrgs = new ArrayList<>();
+//        String requestInvokingOrganizationId = "requestInvokingOrgId";
+//        String userID = "userID";
+//        String ownerTenantDomain = "ownerTenantDomain";
+//        String authenticatedUsername = "authenticatedUsername";
+//        AsyncStatusMgtService asyncStatusMgtService = new AsyncStatusMgtServiceImpl();
+//        ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
+//
+//        ServiceProvider rootApplication = mock(ServiceProvider.class);
+//        Organization organization = mock(Organization.class);
+//        BasicOrganization childOrg1 = mock(BasicOrganization.class);
+//        Organization childOrg1Detail = mock(Organization.class);
+//        BasicOrganization childOrg2 = mock(BasicOrganization.class);
+//        Organization childOrg2Detail = mock(Organization.class);
+//
+//        List<BasicOrganization> childOrganizations = Arrays.asList(childOrg1, childOrg2);
+//
+//        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic = mockStatic(OrgApplicationMgtDataHolder.class);
+//             MockedStatic<PrivilegedCarbonContext> privilegedCarbonContextMockedStatic = mockStatic(PrivilegedCarbonContext.class);
+//             MockedStatic<IdentityUtil> identityUtilMockedStatic = mockStatic(IdentityUtil.class)) {
+//
+//            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance).thenReturn(orgApplicationMgtDataHolder);
+//            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+//            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+//            when(orgApplicationMgtDataHolder.getApplicationManagementService()).thenReturn(applicationManagementService);
+//            when(orgApplicationMgtDataHolder.getAsyncStatusMgtService()).thenReturn(asyncStatusMgtService);
+//
+//            privilegedCarbonContextMockedStatic.when(PrivilegedCarbonContext::getThreadLocalCarbonContext).thenReturn(PrivilegedCarbonContext.getThreadLocalCarbonContext());
+//            when(PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId()).thenReturn(requestInvokingOrganizationId);
+//            when(PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId()).thenReturn(userID);
+//            when(PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain()).thenReturn(ownerTenantDomain);
+//            when(PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername()).thenReturn(authenticatedUsername);
+//
+//            when(organizationManager.getOrganization(ownerOrgId, false, false)).thenReturn(organization);
+//            when(organizationManager.getChildOrganizations(ownerOrgId, true)).thenReturn(childOrganizations);
+//            when(organizationManager.getOrganization(childOrg1.getId(), false, false)).thenReturn(childOrg1Detail);
+//            when(organizationManager.getOrganization(childOrg2.getId(), false, false)).thenReturn(childOrg2Detail);
+//
+//            when(childOrg1.getId()).thenReturn("childOrg1Id");
+//            when(childOrg2.getId()).thenReturn("childOrg2Id");
+//            when(childOrg1Detail.getType()).thenReturn("TENANT");
+//            when(childOrg2Detail.getType()).thenReturn("TENANT");
+//
+//            when(orgApplicationMgtDAO.getMainApplication(originalAppId, ownerOrgId)).thenReturn(null);
+//            when(applicationManagementService.getApplicationByResourceId(originalAppId, ownerTenantDomain)).thenReturn(rootApplication);
+//
+//            doNothing().when(orgApplicationMgtDAO).updateShareWithAllChildren(anyString(), anyString(), anyBoolean());
+//            doNothing().when(applicationManagementService).updateApplication(any(ServiceProvider.class), anyString(), anyString());
+//
+//            when(asyncStatusMgtService.registerOperationStatus(any(
+//                    OperationRecord.class), anyBoolean())).thenReturn("operationId");
+////            when(asyncStatusMgtService.updateOperationStatus(anyString(), any(
+////                    SubOperationStatusQueue.class))).thenReturn(true);
+//
+//            identityUtilMockedStatic.when(IdentityUtil::threadLocalProperties).thenReturn(new HashMap<>());
+//            ThreadLocal<Map<String, Object>> threadLocalMap = ThreadLocal.withInitial(HashMap::new);
+//            identityUtilMockedStatic.when(IdentityUtil::threadLocalProperties).thenReturn(threadLocalMap);
+//
+//            // Mock CompletableFuture
+//            CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+//            when(executorService.submit(any(Runnable.class))).thenReturn(future);
+//            when(future.thenRun(any(Runnable.class))).thenReturn(future);
+//
+//            // Act
+//            orgApplicationManager.shareOrganizationApplication(ownerOrgId, originalAppId, shareWithAllChildren, sharedOrgs);
+//
+//            // Assert
+//            verify(asyncStatusMgtService, times(1)).registerOperationStatus(any(OperationRecord.class), anyBoolean());
+//            verify(asyncStatusMgtService, times(1)).updateOperationStatus(anyString(), any(SubOperationStatusQueue.class));
+//            verify(applicationManagementService, times(2)).updateApplication(any(ServiceProvider.class), anyString(), anyString());
+//        }
+//    }
 }
