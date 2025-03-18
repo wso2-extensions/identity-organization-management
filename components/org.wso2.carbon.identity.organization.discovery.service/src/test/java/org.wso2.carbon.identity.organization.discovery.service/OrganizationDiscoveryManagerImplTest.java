@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -26,6 +27,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
@@ -41,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -379,6 +382,9 @@ public class OrganizationDiscoveryManagerImplTest {
         when(attributeBasedOrganizationDiscoveryHandler.getType()).thenReturn(DISCOVERY_ATTRIBUTE_TYPE);
         when(attributeBasedOrganizationDiscoveryHandler.areAttributeValuesInValidFormat(anyList())).thenReturn(true);
         when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("wso2.lk");
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
+                any(AuthenticationContext.class)))
+                .thenThrow(new NotImplementedException("extractAttributeValue method is not implemented"));
 
         String organizationId =
                 organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
