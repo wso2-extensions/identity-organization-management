@@ -3,14 +3,14 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 /**
  * Enum representing the types of asynchronous operation type.
  */
-public enum AsyncOperationStatus {
+public enum ShareOperationStatus {
     SUCCESS("SUCCESS"),
     FAILED("FAIL"),
     PARTIAL("PARTIAL");
 
     private final String value;
 
-    AsyncOperationStatus(String value) {
+    ShareOperationStatus(String value) {
         this.value = value;
     }
 
@@ -27,17 +27,17 @@ public enum AsyncOperationStatus {
     /**
      * Custom method to get the enum from a string value, handling spaces.
      *
-     * @param stringValueOfAsyncOperationStatus The string value of AsyncOperationStatus.
-     * @return The corresponding AsyncOperationStatus enum.
+     * @param stringValueOfAsyncOperationStatus The string value of ShareOperationStatus.
+     * @return The corresponding ShareOperationStatus enum.
      * @throws IllegalArgumentException if the value does not match any enum.
      */
-    public static AsyncOperationStatus fromString(String stringValueOfAsyncOperationStatus) {
+    public static ShareOperationStatus fromString(String stringValueOfAsyncOperationStatus) {
 
-        for (AsyncOperationStatus status : AsyncOperationStatus.values()) {
+        for (ShareOperationStatus status : ShareOperationStatus.values()) {
             if (status.value.equalsIgnoreCase(stringValueOfAsyncOperationStatus)) {
                 return status;
             }
         }
-        throw new IllegalArgumentException("Invalid AsyncOperationStatus value: " + stringValueOfAsyncOperationStatus);
+        throw new IllegalArgumentException("Invalid ShareOperationStatus value: " + stringValueOfAsyncOperationStatus);
     }
 }
