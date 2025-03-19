@@ -691,7 +691,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharedApplicationId, shareWithAllChildren);
         } finally {
             if (operationId != null){
-                UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "application_share", mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
+                UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(), sharedOrgId, status, statusMessage);
 
                 asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
                 asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));

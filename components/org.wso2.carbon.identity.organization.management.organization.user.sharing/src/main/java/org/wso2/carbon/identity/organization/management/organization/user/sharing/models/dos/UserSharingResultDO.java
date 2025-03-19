@@ -2,16 +2,18 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 public class UserSharingResultDO {
     private String operationId;
+    private String associatedUserId;
     private boolean isUserSharedSuccess;
     private boolean isUserRoleAssignedIfPresentSuccess;
     private String operationStatus;
     private String operationStatusMessage;
 
-    public UserSharingResultDO(String operationId, boolean isUserSharedSuccess,
+    public UserSharingResultDO(String operationId, String associatedUserId, boolean isUserSharedSuccess,
                                boolean isUserRoleAssignedIfPresentSuccess,
                                String operationStatus, String operationStatusMessage) {
 
         this.operationId = operationId;
+        this.associatedUserId = associatedUserId;
         this.isUserSharedSuccess = isUserSharedSuccess;
         this.isUserRoleAssignedIfPresentSuccess = isUserRoleAssignedIfPresentSuccess;
         this.operationStatus = operationStatus;
@@ -66,5 +68,15 @@ public class UserSharingResultDO {
     public void setOperationStatusMessage(String operationStatusMessage) {
 
         this.operationStatusMessage = operationStatusMessage;
+    }
+
+    public String getAssociatedUserId() {
+
+        return associatedUserId;
+    }
+
+    public void setAssociatedUserId(String associatedUserId) {
+
+        this.associatedUserId = associatedUserId;
     }
 }

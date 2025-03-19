@@ -745,7 +745,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     unshareUserFromPreviousOrg(association, sharingInitiatedOrgId);
                 } else {
                     retainedSharedOrgs.add(association.getOrganizationId());
-                    UserSharingResultDO resultDO = new UserSharingResultDO(operationId, true, false, "SUCCESS", "");
+                    UserSharingResultDO resultDO = new UserSharingResultDO(operationId, associatedUserId, true, false, "SUCCESS", "");
                     updateRolesIfNecessary(association, baseUserShare.getRoles(), sharingInitiatedOrgId, resultDO);
                     updateSharedTypeOfExistingUserAssociation(association);
                 }
@@ -1133,32 +1133,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      */
     private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
-    try {
-        ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
-                getResourceSharingPolicyHandlerService();
 
-        ResourceSharingPolicy resourceSharingPolicy =
-                new ResourceSharingPolicy.Builder().withResourceType(ResourceType.USER)
-                        .withResourceId(baseUserShare.getUserId())
-                        .withInitiatingOrgId(sharingInitiatedOrgId)
-                        .withPolicyHoldingOrgId(getPolicyHoldingOrgId(baseUserShare, sharingInitiatedOrgId))
-                        .withSharingPolicy(baseUserShare.getPolicy()).build();
+    ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
+            getResourceSharingPolicyHandlerService();
 
-        List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
-        for (String roleId : baseUserShare.getRoles()) {
-            SharedResourceAttribute sharedResourceAttribute =
-                    new SharedResourceAttribute.Builder().withSharedAttributeType(SharedAttributeType.ROLE)
-                            .withSharedAttributeId(roleId).build();
-            sharedResourceAttributes.add(sharedResourceAttribute);
-        }
+    ResourceSharingPolicy resourceSharingPolicy =
+            new ResourceSharingPolicy.Builder().withResourceType(ResourceType.USER)
+                    .withResourceId(baseUserShare.getUserId())
+                    .withInitiatingOrgId(sharingInitiatedOrgId)
+                    .withPolicyHoldingOrgId(getPolicyHoldingOrgId(baseUserShare, sharingInitiatedOrgId))
+                    .withSharingPolicy(baseUserShare.getPolicy()).build();
 
-        resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
-                sharedResourceAttributes);
-//        UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, ShareOperationStatus.SUCCESS.toString(), "");
-    }finally {
-//        // TODO - new attribute for storing the unit operation type.
-//        UnitOperationRecord operationStatus = new UnitOperationRecord(operationId, "policy_sharing", baseUserShare.getUserId(), sharingInitiatedOrgId, ShareOperationStatus.FAILED.toString(), "Policy Sharing for the organization id:"+sharingInitiatedOrgId+" failed.");
+    List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
+    for (String roleId : baseUserShare.getRoles()) {
+        SharedResourceAttribute sharedResourceAttribute =
+                new SharedResourceAttribute.Builder().withSharedAttributeType(SharedAttributeType.ROLE)
+                        .withSharedAttributeId(roleId).build();
+        sharedResourceAttributes.add(sharedResourceAttribute);
     }
+
+    resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
+            sharedResourceAttributes);
     }
 
     /**
@@ -1188,7 +1183,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
                 policyHoldingOrgId, ResourceType.USER, associatedUserId, sharingInitiatedOrgId);
-        //TODO - handling delete
     }
 
     /**
@@ -1363,7 +1357,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds, resultDO);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            UnitOperationRecord operationStatus = new UnitOperationRecord(resultDO.getOperationId(), "user_share", userAssociation.getUserId(), sharingInitiatedOrgId, "PARTIAL", "Existing Shared User Role Update Failed. " + e.getMessage());
+            UnitOperationRecord operationStatus = new UnitOperationRecord(resultDO.getOperationId(), userAssociation.getUserId(), sharingInitiatedOrgId, "PARTIAL", "Existing Shared User Role Update Failed. " + e.getMessage());
             asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
             asyncOperationStatusList.get(resultDO.getOperationId()).add(new SubOperationStatusObject("PARTIAL"));
             throw new RuntimeException(e);
@@ -1409,7 +1403,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         List<String> roleIds = baseUserShare.getRoles();
         UserAssociation userAssociation;
 
-        UserSharingResultDO resultDO = new UserSharingResultDO(operationId, false, false, ShareOperationStatus.SUCCESS.toString(), "");
+        UserSharingResultDO resultDO = new UserSharingResultDO(operationId, associatedUserId, false, false, ShareOperationStatus.SUCCESS.toString(), "");
 
         try {
             userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
@@ -1420,7 +1414,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             LOG.error(errorMessage, e);
 
             // Both User Share and Role Assignment Failed.
-            UnitOperationRecord operationRecord = new UnitOperationRecord(operationId, "user_share", associatedUserId, orgId, ShareOperationStatus.FAILED.toString(), errorMessage);
+            UnitOperationRecord operationRecord = new UnitOperationRecord(operationId, associatedUserId, orgId, ShareOperationStatus.FAILED.toString(), errorMessage);
             asyncStatusMgtService.registerUnitOperationStatus(operationRecord);
             asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(
                     ShareOperationStatus.FAILED.toString()));
@@ -1490,10 +1484,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         UnitOperationRecord operationStatus;
         if (!roleIds.isEmpty()) {
             UserSharingResultDO responseResultDO = assignRolesToTheSharedUser(userAssociation, sharingInitiatedOrgId, roleIds, resultDO);
-            operationStatus = new UnitOperationRecord(resultDO.getOperationId(), "user_share", userAssociation.getUserId(), userAssociation.getOrganizationId(), responseResultDO.getOperationStatus(), responseResultDO.getOperationStatusMessage());
+            operationStatus = new UnitOperationRecord(resultDO.getOperationId(), resultDO.getAssociatedUserId(), userAssociation.getOrganizationId(), responseResultDO.getOperationStatus(), responseResultDO.getOperationStatusMessage());
             asyncOperationStatusList.get(resultDO.getOperationId()).add(new SubOperationStatusObject(responseResultDO.getOperationStatus()));
         }else{
-            operationStatus = new UnitOperationRecord(resultDO.getOperationId(), "user_share", userAssociation.getUserId(), userAssociation.getOrganizationId(), resultDO.getOperationStatus(), resultDO.getOperationStatusMessage());
+            operationStatus = new UnitOperationRecord(resultDO.getOperationId(), resultDO.getAssociatedUserId(), userAssociation.getOrganizationId(), resultDO.getOperationStatus(), resultDO.getOperationStatusMessage());
             asyncOperationStatusList.get(resultDO.getOperationId()).add(new SubOperationStatusObject(resultDO.getOperationStatus()));
         }
         asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
