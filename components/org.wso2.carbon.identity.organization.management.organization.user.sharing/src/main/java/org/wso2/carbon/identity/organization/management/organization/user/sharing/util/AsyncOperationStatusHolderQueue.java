@@ -5,23 +5,30 @@ import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperat
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * Utility class for storing asynchronous operation status.
+ */
 public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRecord> {
+
     private final ConcurrentLinkedQueue<UnitOperationRecord> queue;
 
     public ConcurrentLinkedQueue<UnitOperationRecord> getQueue() {
+
         return queue;
     }
 
     public AsyncOperationStatusHolderQueue() {
+
         this.queue = new ConcurrentLinkedQueue<>();
     }
-    
+
     /**
      * Add a new operation context to the queue.
      *
      * @param context The async operation context to add.
      */
     public void addOperationStatus(UnitOperationRecord context) {
+
         queue.add(context);
     }
 
@@ -31,6 +38,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      * @return The next async operation context or null if the queue is empty.
      */
     public UnitOperationRecord pollOperationContext() {
+
         return queue.poll();
     }
 
@@ -40,6 +48,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      * @return The next async operation context or null if the queue is empty.
      */
     public UnitOperationRecord peekOperationContext() {
+
         return queue.peek();
     }
 
@@ -49,6 +58,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      * @return Iterator for the queue.
      */
     public Iterator<UnitOperationRecord> iterator() {
+
         return queue.iterator();
     }
 
@@ -58,6 +68,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      * @return true if the queue is empty, false otherwise.
      */
     public boolean isEmpty() {
+
         return queue.isEmpty();
     }
 }

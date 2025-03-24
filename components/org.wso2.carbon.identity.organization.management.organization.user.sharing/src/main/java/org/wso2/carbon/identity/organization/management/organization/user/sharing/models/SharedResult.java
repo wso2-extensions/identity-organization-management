@@ -17,8 +17,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleWithAudienceDO;
-
 /**
  * Model that represent each shared result with shared status.
  */

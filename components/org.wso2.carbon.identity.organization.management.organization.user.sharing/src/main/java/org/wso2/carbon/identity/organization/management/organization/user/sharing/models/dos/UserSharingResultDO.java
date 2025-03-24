@@ -1,5 +1,8 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
+/**
+ * Model that contains the user sharing result.
+ */
 public class UserSharingResultDO {
     private String operationId;
     private String associatedUserId;

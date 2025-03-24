@@ -176,7 +176,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String sharePolicy =
                 shareWithAllChildren ? SharePolicy.SHARE_WITH_ALL.getValue() : SharePolicy.SELECTIVE_SHARE.getValue();
         String operationId = asyncStatusMgtService.registerOperationStatus(
-                new OperationRecord(ShareOperationType.APPLICATION_SHARE.getValue(), B2B_APPLICATION, originalAppId,
+                new OperationRecord(UUID.randomUUID().toString(), ShareOperationType.APPLICATION_SHARE.getValue(), B2B_APPLICATION, originalAppId,
                         ownerOrgId, userID, sharePolicy), true);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId, statusQueue);
