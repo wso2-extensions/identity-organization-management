@@ -1,7 +1,8 @@
 package org.wso2.carbon.identity.organization.management.application.constant;
 
-import java.util.List;
-
+/**
+ * Enum representing the types of share policies.
+ */
 public enum SharePolicy {
 
     DO_NOT_SHARE("DO_NOT_SHARE"),
@@ -11,10 +12,12 @@ public enum SharePolicy {
     private final String value;
 
     SharePolicy(String value) {
+
         this.value = value;
     }
 
     public String getValue() {
+
         return value;
     }
 }
