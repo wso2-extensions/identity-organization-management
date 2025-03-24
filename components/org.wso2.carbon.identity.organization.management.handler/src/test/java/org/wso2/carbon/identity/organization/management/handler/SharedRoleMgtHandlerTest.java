@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.handler;
 
 import org.mockito.MockedStatic;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -76,6 +77,13 @@ public class SharedRoleMgtHandlerTest {
 
         loggerUtils = mockStatic(LoggerUtils.class);
         identityUtil = mockStatic(IdentityUtil.class);
+    }
+
+    @AfterClass
+    public void tearDown() {
+
+        loggerUtils.close();
+        identityUtil.close();
     }
 
     @DataProvider(name = "v2AuditLogsEnabled")
