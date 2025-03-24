@@ -176,8 +176,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String sharePolicy =
                 shareWithAllChildren ? SharePolicy.SHARE_WITH_ALL.getValue() : SharePolicy.SELECTIVE_SHARE.getValue();
         String operationId = asyncStatusMgtService.registerOperationStatus(
-                new OperationRecord(UUID.randomUUID().toString(), ShareOperationType.APPLICATION_SHARE.getValue(), B2B_APPLICATION, originalAppId,
-                        ownerOrgId, userID, sharePolicy), true);
+                new OperationRecord(UUID.randomUUID().toString(), ShareOperationType.APPLICATION_SHARE.getValue(),
+                        B2B_APPLICATION, originalAppId, ownerOrgId, userID, sharePolicy), true);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId, statusQueue);
 
@@ -1117,14 +1117,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         /* If shareWithAllChildren is true and in the main application it is set as false,
         then the value should be updated. */
         if (shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
-                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && !Boolean.parseBoolean(p.getValue()))) {
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())
+                        && !Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
         /* If shareWithAllChildren is false and in the main application it is set as true,
         then the value should be updated. */
         if (!shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
-                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())
+                        && Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
