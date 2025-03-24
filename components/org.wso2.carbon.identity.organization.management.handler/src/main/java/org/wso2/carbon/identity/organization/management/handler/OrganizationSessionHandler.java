@@ -59,7 +59,6 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
     private static final Log LOG = LogFactory.getLog(OrganizationSessionHandler.class);
     private static final String AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE = "org_id";
 
-
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
