@@ -444,7 +444,7 @@ public class SharedRoleMgtListenerTest {
 
         when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
                 Collections.singletonList(SAMPLE_ROLE_ID), SAMPLE_SHARED_APP_TENANT_DOMAIN))
-                .thenReturn(Collections.emptyMap());
+                .thenReturn(new HashMap<>());
 
         RoleBasicInfo sharedRoleBasicInfo = new RoleBasicInfo();
         sharedRoleBasicInfo.setAudience(RoleConstants.ORGANIZATION);
