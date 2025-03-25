@@ -368,7 +368,7 @@ public class SharedRoleMgtListenerTest {
         when(mockedOrganizationManager.resolveTenantDomain(SAMPLE_SHARED_APP_ORG_ID)).thenReturn(
                 SAMPLE_SHARED_APP_TENANT_DOMAIN);
         when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
-                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(Boolean.TRUE);
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(true);
         when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
                 Collections.singletonList(SAMPLE_ROLE_ID), SAMPLE_SHARED_APP_TENANT_DOMAIN)).
                 thenReturn(new HashMap<>());
@@ -410,7 +410,7 @@ public class SharedRoleMgtListenerTest {
                 SAMPLE_SHARED_APP_TENANT_DOMAIN);
 
         when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
-                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(Boolean.TRUE);
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(true);
 
         SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
         sharedRoleMgtListener.doPostUpdateApplication(mainServiceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
@@ -440,7 +440,7 @@ public class SharedRoleMgtListenerTest {
                 SAMPLE_SHARED_APP_TENANT_DOMAIN);
 
         when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
-                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(Boolean.FALSE);
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(false);
 
         when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
                 Collections.singletonList(SAMPLE_ROLE_ID), SAMPLE_SHARED_APP_TENANT_DOMAIN))
