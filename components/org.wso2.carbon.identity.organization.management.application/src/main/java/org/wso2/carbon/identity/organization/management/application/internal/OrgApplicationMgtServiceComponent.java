@@ -271,13 +271,17 @@ public class OrgApplicationMgtServiceComponent {
 
         OrgApplicationMgtDataHolder.getInstance()
                 .setAsyncStatusMgtService(asyncStatusMgtService);
-        log.debug("Set Async Status Mgt Service On Application Management Component.");
+        if (log.isDebugEnabled()) {
+            log.debug("Set Async Status Mgt Service On Application Management Component.");
+        }
     }
 
     protected void unsetAsyncStatusMgtService(
             AsyncStatusMgtService asyncStatusMgtService) {
 
         OrgApplicationMgtDataHolder.getInstance().setAsyncStatusMgtService(null);
-        log.debug("Unset Async Status Mgt Service On Application Management Component.");
+        if (log.isDebugEnabled()) {
+            log.debug("Unset Async Status Mgt Service On Application Management Component.");
+        }
     }
 }
