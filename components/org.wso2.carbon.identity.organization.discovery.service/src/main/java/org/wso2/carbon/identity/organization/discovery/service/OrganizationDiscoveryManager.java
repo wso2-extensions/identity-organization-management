@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -134,4 +135,21 @@ public interface OrganizationDiscoveryManager {
      */
     String getOrganizationIdByDiscoveryAttribute(String attributeType, String discoveryInput, String rootOrganizationId)
             throws OrganizationManagementException;
+
+    /**
+     * Get the organization ID by discovery attribute in the hierarchy.
+     *
+     * @param attributeType      The organization discovery attribute type.
+     * @param discoveryInput     The organization discovery input.
+     * @param rootOrganizationId The root organization ID.
+     * @param context            The authentication context.
+     * @return The organization ID.
+     * @throws OrganizationManagementException The server exception thrown when fetching the organization ID.
+     */
+    default String getOrganizationIdByDiscoveryAttribute(String attributeType, String discoveryInput,
+                                                         String rootOrganizationId, AuthenticationContext context)
+            throws OrganizationManagementException {
+
+        return getOrganizationIdByDiscoveryAttribute(attributeType, discoveryInput, rootOrganizationId);
+    }
 }
