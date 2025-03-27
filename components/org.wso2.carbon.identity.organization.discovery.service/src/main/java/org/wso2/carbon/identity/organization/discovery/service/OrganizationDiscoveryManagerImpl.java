@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAOImpl;
@@ -174,6 +175,21 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         AttributeBasedOrganizationDiscoveryHandler handler = getAttributeBasedOrganizationDiscoveryHandlers()
                 .get(attributeType);
         String attributeValue = handler.extractAttributeValue(discoveryInput);
+        if (StringUtils.isNotBlank(attributeValue)) {
+            return organizationDiscoveryDAO.getOrganizationIdByDiscoveryAttribute(attributeType, attributeValue,
+                    rootOrganizationId);
+        }
+        return null;
+    }
+
+    @Override
+    public String getOrganizationIdByDiscoveryAttribute(String attributeType, String discoveryInput,
+                                                        String rootOrganizationId, AuthenticationContext context)
+            throws OrganizationManagementException {
+
+        AttributeBasedOrganizationDiscoveryHandler handler = getAttributeBasedOrganizationDiscoveryHandlers()
+                .get(attributeType);
+        String attributeValue = handler.extractAttributeValue(discoveryInput, context);
         if (StringUtils.isNotBlank(attributeValue)) {
             return organizationDiscoveryDAO.getOrganizationIdByDiscoveryAttribute(attributeType, attributeValue,
                     rootOrganizationId);
