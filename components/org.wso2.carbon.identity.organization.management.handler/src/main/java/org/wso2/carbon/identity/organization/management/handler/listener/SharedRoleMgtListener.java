@@ -30,6 +30,8 @@ import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -45,10 +47,12 @@ import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
+import org.wso2.carbon.utils.AuditLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -392,12 +396,24 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             boolean roleRelationshipExistsInSharedOrg =
                     MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
             if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
-                // Add relationship between main role and shared role.
-                String roleIdInSharedOrg =
-                        roleManagementService.getRoleIdByName(role.getName(), RoleConstants.ORGANIZATION,
-                                sharedAppOrgId, sharedAppTenantDomain);
-                roleManagementService.addMainRoleToSharedRoleRelationship(role.getId(),
-                        roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
+                /*
+                 This is considered as a conflict of roles. Hence, we are logging the conflict and move forward
+                 with other roles.
+                */
+                if (LoggerUtils.isEnableV2AuditLogs()) {
+                    String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                    String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                            getTenantDomain();
+                    AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                            IdentityUtil.getInitiatorId(username, tenantDomain),
+                            LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
+                            LogConstants.UserManagement.ADD_ROLE_ACTION)
+                            .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain),
+                                    null, sharedAppOrgId, role.getName(), role.getId(), "Role conflict"));
+                    LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+                }
+                LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
+                        sharedAppOrgId, role.getName()));
             } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
                 // Create the role in the shared org.
                 RoleBasicInfo sharedRole = roleManagementService.addRole(role.getName(), Collections.emptyList(),
@@ -676,5 +692,19 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         return Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                         Boolean.parseBoolean(property.getValue()));
+    }
+
+    private Map<String, String> buildAuditData(String parentOrganizationId, String parentApplicationId,
+                                               String sharedOrganizationId, String roleName, String roleId,
+                                               String failureReason) {
+
+        Map<String, String> auditData = new HashMap<>();
+        auditData.put(RoleConstants.PARENT_ORG_ID, parentOrganizationId);
+        auditData.put(RoleConstants.PARENT_APP_ID, parentApplicationId);
+        auditData.put(RoleConstants.SHARED_ORG_ID, sharedOrganizationId);
+        auditData.put(RoleConstants.CONFLICT_ROLE_ID, roleId);
+        auditData.put(RoleConstants.CONFLICT_ROLE_NAME, roleName);
+        auditData.put(RoleConstants.FAILURE_REASON, failureReason);
+        return auditData;
     }
 }
