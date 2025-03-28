@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
-import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -64,7 +63,7 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      */
     default String extractAttributeValue(String discoveryInput, AuthenticationContext context) {
 
-        throw new NotImplementedException("extractAttributeValue method is not implemented");
+        return extractAttributeValue(discoveryInput);
     }
 
     /**

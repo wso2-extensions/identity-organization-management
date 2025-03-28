@@ -28,7 +28,6 @@ import org.wso2.carbon.identity.organization.discovery.service.internal.Organiza
 import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.filter.ExpressionNode;
@@ -190,12 +189,7 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
 
         AttributeBasedOrganizationDiscoveryHandler handler = getAttributeBasedOrganizationDiscoveryHandlers()
                 .get(attributeType);
-        String attributeValue;
-        try {
-            attributeValue = handler.extractAttributeValue(discoveryInput, context);
-        } catch (NotImplementedException e) {
-            attributeValue = handler.extractAttributeValue(discoveryInput);
-        }
+        String attributeValue = handler.extractAttributeValue(discoveryInput, context);
         if (StringUtils.isNotBlank(attributeValue)) {
             return organizationDiscoveryDAO.getOrganizationIdByDiscoveryAttribute(attributeType, attributeValue,
                     rootOrganizationId);

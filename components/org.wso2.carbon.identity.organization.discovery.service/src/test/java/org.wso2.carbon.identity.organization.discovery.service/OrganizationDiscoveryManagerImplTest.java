@@ -35,7 +35,6 @@ import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOr
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.discovery.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 
 import java.util.ArrayList;
@@ -386,21 +385,27 @@ public class OrganizationDiscoveryManagerImplTest {
         when(attributeBasedOrganizationDiscoveryHandler.isDiscoveryConfigurationEnabled(SUPER_ORG_ID)).thenReturn(true);
         when(attributeBasedOrganizationDiscoveryHandler.getType()).thenReturn(DISCOVERY_ATTRIBUTE_TYPE);
         when(attributeBasedOrganizationDiscoveryHandler.areAttributeValuesInValidFormat(anyList())).thenReturn(true);
-        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("wso2.lk");
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).
+                thenReturn(DISCOVERY_ATTRIBUTE_VALUE);
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
+                any(AuthenticationContext.class))).thenReturn(DISCOVERY_ATTRIBUTE_VALUE);
 
         String organizationId =
                 organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                         DISCOVERY_INPUT, SUPER_ORG_ID);
         Assert.assertEquals(organizationId, WSO2_ORG_ID);
 
-        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
-                any(AuthenticationContext.class)))
-                .thenThrow(new NotImplementedException("extractAttributeValue method is not implemented"));
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertEquals(organizationId, WSO2_ORG_ID);
 
         when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("");
+        organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
+                DISCOVERY_INPUT, SUPER_ORG_ID);
+        Assert.assertNull(organizationId);
+
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
+                any(AuthenticationContext.class))).thenReturn("");
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
