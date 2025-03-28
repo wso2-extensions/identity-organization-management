@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -36,6 +35,7 @@ import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOr
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
 import org.wso2.carbon.identity.organization.discovery.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 
 import java.util.ArrayList;
@@ -46,16 +46,20 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 
 public class OrganizationDiscoveryManagerImplTest {
 
     private static final String DISCOVERY_ATTRIBUTE_TYPE = "emailDomain";
+    private static final String DISCOVERY_ATTRIBUTE_VALUE = "wso2.lk";
+    private static final String DISCOVERY_INPUT = "dewni@wso2.lk";
     private static final String WSO2_ORG_ID = "20084a8d-113f-4211-a0d5-efe36b082212";
     private static final String ABC_ORG_ID = "30084a8d-113f-4211-a0d5-efe36b082213";
     private static final String XYZ_ORG_ID = "40084a8d-113f-4211-a0d5-efe36b082214";
     private final OrganizationDiscoveryDAO organizationDiscoveryDAO = new OrganizationDiscoveryDAOImpl();
+    private AuthenticationContext mockAuthenticationContext;
 
     @InjectMocks
     private OrganizationDiscoveryManagerImpl organizationDiscoveryManager;
@@ -73,6 +77,7 @@ public class OrganizationDiscoveryManagerImplTest {
     public void setUp() throws Exception {
 
         MockitoAnnotations.openMocks(this);
+        mockAuthenticationContext = mock(AuthenticationContext.class);
 
         TestUtils.initiateH2Base();
         TestUtils.mockDataSource();
@@ -382,13 +387,22 @@ public class OrganizationDiscoveryManagerImplTest {
         when(attributeBasedOrganizationDiscoveryHandler.getType()).thenReturn(DISCOVERY_ATTRIBUTE_TYPE);
         when(attributeBasedOrganizationDiscoveryHandler.areAttributeValuesInValidFormat(anyList())).thenReturn(true);
         when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("wso2.lk");
-        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
-                any(AuthenticationContext.class)))
-                .thenThrow(new NotImplementedException("extractAttributeValue method is not implemented"));
 
         String organizationId =
                 organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
-                        "dewni@wso2.lk", SUPER_ORG_ID);
+                        DISCOVERY_INPUT, SUPER_ORG_ID);
         Assert.assertEquals(organizationId, WSO2_ORG_ID);
+
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
+                any(AuthenticationContext.class)))
+                .thenThrow(new NotImplementedException("extractAttributeValue method is not implemented"));
+        organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
+                DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
+        Assert.assertEquals(organizationId, WSO2_ORG_ID);
+
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("");
+        organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
+                DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
+        Assert.assertNull(organizationId);
     }
 }
