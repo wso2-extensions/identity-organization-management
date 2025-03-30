@@ -256,7 +256,8 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
                                                         SharedType sharedType) throws OrganizationManagementException {
 
         try {
-            startTenantFlow(getOrganizationManager().resolveTenantDomain(orgId));
+            String suborgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            startTenantFlow(suborgTenantDomain);
             IdentityUtil.threadLocalProperties.get().put(PROCESS_ADD_SHARED_USER, true);
             int associatedUserTenantId =
                     IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
@@ -268,7 +269,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             userClaims.put(ID_CLAIM_READ_ONLY, "true");
             UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
 
-            int tenantId = IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(orgId));
+            int tenantId = IdentityTenantUtil.getTenantId(suborgTenantDomain);
             String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
             userStoreManager = getAbstractUserStoreManager(tenantId);
 
