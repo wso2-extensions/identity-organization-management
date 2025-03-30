@@ -28,19 +28,23 @@ import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 
 import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SHARED_PROFILE_VALUE_RESOLVING_METHOD;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PROCESS_ADD_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 
 /**
@@ -80,7 +84,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
          */
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
 
-        if (!isSharedUserProfile(userID, currentTenantDomain)) {
+        if (!isSharedUserProfile((AbstractUserStoreManager) userStoreManager, userID, currentTenantDomain)) {
             return true;
         }
         ClaimMetadataManagementService claimManagementService =
@@ -133,7 +137,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
          */
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
 
-        if (!isSharedUserProfile(userID, currentTenantDomain)) {
+        if (!isSharedUserProfile((AbstractUserStoreManager) userStoreManager, userID, currentTenantDomain)) {
             return true;
         }
         try {
@@ -160,14 +164,20 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         return true;
     }
 
+    private static boolean isSharedUserProfile(AbstractUserStoreManager userStoreManager, String userID,
+                                               String currentTenantDomain) throws UserStoreException {
 
-    private static boolean isSharedUserProfile(String userID, String currentTenantDomain)
+        return hasUserAssociation(userID, currentTenantDomain) ||
+                hasManagedOrgClaim(userStoreManager, userID, currentTenantDomain);
+    }
+
+    private static boolean hasUserAssociation(String userID, String currentTenantDomain)
             throws UserStoreClientException {
 
         String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
-            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
-                // There is no shared users in root organizations. Hence, return false.
+            // There is no shared users in root organizations. Hence, return false.
+            if (isRootOrg(userID, currentTenantDomain)) {
                 return false;
             }
             if (StringUtils.isBlank(currentOrganizationId)) {
@@ -187,5 +197,42 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                             currentOrganizationId, e);
         }
         return true;
+    }
+
+    private static boolean hasManagedOrgClaim(AbstractUserStoreManager userStoreManager, String userID,
+                                              String currentTenantDomain) throws UserStoreException {
+
+        // Root organization users cannot have managedOrg claim.
+        if (isRootOrg(userID, currentTenantDomain)) {
+            return false;
+        }
+        String managedOrgClaim = OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID);
+        return StringUtils.isNotEmpty(managedOrgClaim) || isSharedUserAddProcess();
+    }
+
+    private static boolean isRootOrg(String userID, String currentTenantDomain) throws UserStoreClientException {
+
+        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
+        try {
+            return !OrganizationManagementUtil.isOrganization(currentTenantDomain);
+        } catch (OrganizationManagementException e) {
+            throw new UserStoreClientException(
+                    "Error while checking the user association of the user: " + userID + " with the organization: " +
+                            currentOrganizationId, e);
+        }
+    }
+
+    /**
+     * Checks if the current flow is a shared user addition process.
+     * During the shared user addition flow, the thread has the {@code PROCESS_ADD_SHARED_USER} property set to
+     * {@code true}.
+     * This method verifies that the property is present and evaluates to {@code true} to determine whether the flow
+     * is a shared user addition process.
+     *
+     * @return {@code true} if the current flow is a shared user addition process, otherwise {@code false}.
+     */
+    private static boolean isSharedUserAddProcess() {
+
+        return Boolean.TRUE.equals(IdentityUtil.threadLocalProperties.get().get(PROCESS_ADD_SHARED_USER));
     }
 }

@@ -47,6 +47,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PROCESS_ADD_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
@@ -255,6 +256,8 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
                                                         SharedType sharedType) throws OrganizationManagementException {
 
         try {
+            startTenantFlow(getOrganizationManager().resolveTenantDomain(orgId));
+            IdentityUtil.threadLocalProperties.get().put(PROCESS_ADD_SHARED_USER, true);
             int associatedUserTenantId =
                     IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
@@ -303,6 +306,9 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             }
         } catch (UserStoreException | InterruptedException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(PROCESS_ADD_SHARED_USER);
+            endTenantFlow();
         }
     }
 }
