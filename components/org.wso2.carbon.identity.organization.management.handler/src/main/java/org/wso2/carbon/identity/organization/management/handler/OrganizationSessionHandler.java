@@ -227,17 +227,15 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         if (params.containsKey(FrameworkConstants.AnalyticsAttributes.SESSION_ID)) {
             rootOrgSessionId = (String) params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID);
         } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Root organization session ID not found in the event properties.");
-            }
+            LOG.debug("Root organization session ID not found in the event properties.");
             return;
         }
 
         Map<String, AuthenticatedIdPData> authenticatedIdPs = sessionContext.getAuthenticatedIdPs();
         if (authenticatedIdPs == null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Authenticated IdPs not found in the session context." +
-                        " Hence, handling root org session remember me option is not needed.");
+                LOG.debug("Authenticated IdPs not found in the session context for session: " + rootOrgSessionId +
+                        ". Hence, handling root org session remember me option is not needed.");
             }
             return;
         }
@@ -270,8 +268,10 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         }
 
         if (StringUtils.isBlank(subOrgSessionId) || StringUtils.isBlank(subOrgId)) {
-            LOG.debug("Organization authenticator not found in the authenticators list or " +
-                    "Session ID / org ID not found in the ID token.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Organization authenticator not found in the authenticators list or " +
+                        "Session ID / org ID not found in the ID token.");
+            }
             return;
         }
         String subOrgTenantDomain;
@@ -303,13 +303,14 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
 
         // Get the sub organization session context.
         SessionContext orgSessionContext = sessionContextCacheEntry.getContext();
-
-        // Set the remember me option of the sub organization session to the root organization session.
-        sessionContext.setRememberMe(orgSessionContext.isRememberMe());
-
-        // Add the root organization session context to the cache.
-        FrameworkUtils.addSessionContextToCache(rootOrgSessionId, sessionContext, subOrgTenantDomain,
-                context.getLoginTenantDomain());
+        boolean subOrgSessionRememberMe = orgSessionContext.isRememberMe();
+        if (subOrgSessionRememberMe) {
+            // Set the remember me option of the sub organization session to the root organization session.
+            sessionContext.setRememberMe(orgSessionContext.isRememberMe());
+            // Add the root organization session context to the cache.
+            FrameworkUtils.addSessionContextToCache(rootOrgSessionId, sessionContext, subOrgTenantDomain,
+                    context.getLoginTenantDomain());
+        }
     }
 
     private String getClaimFromJWT(String idToken, String claimname) {
