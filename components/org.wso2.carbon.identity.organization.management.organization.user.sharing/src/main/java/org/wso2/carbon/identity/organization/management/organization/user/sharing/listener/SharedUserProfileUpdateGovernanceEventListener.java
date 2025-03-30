@@ -177,7 +177,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             // There is no shared users in root organizations. Hence, return false.
-            if (isRootOrg(userID, currentTenantDomain)) {
+            if (isRootOrg(currentTenantDomain)) {
                 return false;
             }
             if (StringUtils.isBlank(currentOrganizationId)) {
@@ -203,22 +203,20 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                                               String currentTenantDomain) throws UserStoreException {
 
         // Root organization users cannot have managedOrg claim.
-        if (isRootOrg(userID, currentTenantDomain)) {
+        if (isRootOrg(currentTenantDomain)) {
             return false;
         }
         String managedOrgClaim = OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID);
         return StringUtils.isNotEmpty(managedOrgClaim) || isSharedUserAddProcess();
     }
 
-    private static boolean isRootOrg(String userID, String currentTenantDomain) throws UserStoreClientException {
+    private static boolean isRootOrg(String currentTenantDomain) throws UserStoreClientException {
 
-        String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
             return !OrganizationManagementUtil.isOrganization(currentTenantDomain);
         } catch (OrganizationManagementException e) {
             throw new UserStoreClientException(
-                    "Error while checking the user association of the user: " + userID + " with the organization: " +
-                            currentOrganizationId, e);
+                    "Error occurred while checking if the organization is a root organization.", e);
         }
     }
 
