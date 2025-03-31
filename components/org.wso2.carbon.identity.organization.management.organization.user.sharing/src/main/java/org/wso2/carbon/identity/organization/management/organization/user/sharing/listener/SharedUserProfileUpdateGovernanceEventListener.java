@@ -28,16 +28,19 @@ import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -217,14 +220,8 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         if (isRootOrg(currentTenantDomain)) {
             return false;
         }
-        AbstractUserStoreManager userStoreManager = null;
-        try {
-            userStoreManager =
-                    (AbstractUserStoreManager) PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserRealm()
-                            .getUserStoreManager();
-        } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            throw new UserStoreException(e);
-        }
+        int currentTenantId = IdentityTenantUtil.getTenantId(currentTenantDomain);
+        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(currentTenantId);
         return StringUtils.isNotEmpty(
                 OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
     }
@@ -256,5 +253,16 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
     private boolean isResolvingMethodNeutralClaimForSharedUser(String claimURI) {
 
         return resolvingMethodNeutralClaimsForSharedUser.contains(claimURI);
+    }
+
+    private static AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
+
+        try {
+            RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
+            UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+            return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            throw new UserStoreException(e);
+        }
     }
 }
