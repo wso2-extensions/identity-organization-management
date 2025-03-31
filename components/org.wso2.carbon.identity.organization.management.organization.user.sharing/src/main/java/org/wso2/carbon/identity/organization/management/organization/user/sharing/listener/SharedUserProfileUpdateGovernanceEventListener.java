@@ -168,7 +168,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                                                String currentTenantDomain) throws UserStoreException {
 
         return hasUserAssociation(userID, currentTenantDomain) ||
-                isSharedUserProfileCheck(userStoreManager, userID, currentTenantDomain);
+                hasManagedOrgClaim(userStoreManager, userID, currentTenantDomain) || isSharedUserAddProcess();
     }
 
     private static boolean hasUserAssociation(String userID, String currentTenantDomain)
@@ -199,14 +199,15 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         return true;
     }
 
-    private static boolean isSharedUserProfileCheck(AbstractUserStoreManager userStoreManager, String userID,
+    private static boolean hasManagedOrgClaim(AbstractUserStoreManager userStoreManager, String userID,
                                               String currentTenantDomain) throws UserStoreException {
 
         // Root organization users cannot have managedOrg claim.
         if (isRootOrg(currentTenantDomain)) {
             return false;
         }
-        return hasManagedOrgClaim(userStoreManager, userID) || isSharedUserAddProcess();
+        return StringUtils.isNotEmpty(
+                OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
     }
 
     private static boolean isRootOrg(String currentTenantDomain) throws UserStoreClientException {
@@ -217,13 +218,6 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
             throw new UserStoreClientException(
                     "Error occurred while checking if the organization is a root organization.", e);
         }
-    }
-
-    private static boolean hasManagedOrgClaim(AbstractUserStoreManager userStoreManager, String userID)
-            throws UserStoreException {
-
-        return StringUtils.isNotEmpty(
-                OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
     }
 
     /**
