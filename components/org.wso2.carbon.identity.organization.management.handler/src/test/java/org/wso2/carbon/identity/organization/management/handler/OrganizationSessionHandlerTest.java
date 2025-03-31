@@ -66,6 +66,19 @@ public class OrganizationSessionHandlerTest {
     private final String testTenant = "dummyTenant1";
     private final String testSessionId = "dummySessionId";
     private final String testOrgTenant = "dummyOrgTenant";
+    private final String testIdTokenHint =
+            "eyJhbGciOiJSUzI1NiIsImtpZCI6ImRlbW8ta2lkLTEyMzQ1IiwidHlwIjoiSldUIiwieDV0IjoiZGVtby14NXQtNjc4OTAifQ" +
+                    ".eyJpc2siOiI4M2I0ZTY0NGE3MmM4MmEzNDkwNTljZTNmY2FhMDc2YzZkODc4MWE0ZWZhNWJlZjBmZTA2ZmMxY2Y5M" +
+                    "2IwMDliIiwic3ViIjoiNTUwM2VkNmYtNTA3Yi00ZTA1LTk0MTUtZDZlMjE5MGY5YWQyIiwiaXNzIjoiaHR0cHM6Ly9" +
+                    "sb2NhbGhvc3Q6OTQ0My9vL2ZhY2RlYWIxLWNjMGEtNDU5MC04MGVjLTYxMDViMzgyNjgwMi9vYXV0aDIvdG9rZW4iL" +
+                    "CJhdWQiOiJjZGJmZGM5OS1iN2M2LTQ0MjMtOGJkYy1lNWFiMzcwMThlMWQiLCJjbGllbnRfaWQiOiJjZGJmZGM5OS1" +
+                    "iN2M2LTQ0MjMtOGJkYy1lNWFiMzcwMThlMWQiLCJleHAiOjE3NDMzNDQ4MjgsImlhdCI6MTc0MzM0MTIyOCwianRpI" +
+                    "joiMDVmZmM2MDgtMjQyNy00M2U5LTkxYzEtNjI0OTIwY2M5YzY1Iiwib3JnX25hbWUiOiJkdW1teW9yZzEiLCJvcmd" +
+                    "faWQiOiJmYWNkZWFiMS1jYzBhLTQ1OTAtODBlYy02MTA1YjM4MjY4MDIiLCJ1c2VybmFtZSI6ImR1bW15dXNlciJ9." +
+                    "ODglE3IUFsKpZqGGj2nLCLDqjS52lv4hcA8cFkMtmgI6Se0_b857fx4xuqNTEaDyCkY_9uy4UGt_yngl11Rnx_0PqO" +
+                    "LZG5Fysw7Zktg4cBchywWLfIeyn1zovBN5Q6t5JxkwJG6XvTnt_BUXRdHH5wFo_ErEn74fNoFIKhDneS-IiVUnwxGz" +
+                    "hZKpPnhJZllmlJlZenqSRRaMK_mLsmb218zEj_zAn8bbaI1eG9TqNXZwmjmftxhrqGqMyLhyZrTCXXLtO893n4qpA0" +
+                    "lPgM23X1HeTPN_59SUwqhI7clnDRb6eZ-RDIgWAoixdR4I9r-UJfvNfqAEv4xwTf3zaNTt4g";
     private AutoCloseable closeable;
 
     @Mock
@@ -164,19 +177,7 @@ public class OrganizationSessionHandlerTest {
 
         SessionContext sessionContext = new SessionContext();
         OIDCStateInfo oidcStateInfo = new OIDCStateInfo();
-        oidcStateInfo.setIdTokenHint(
-                "eyJhbGciOiJSUzI1NiIsImtpZCI6ImRlbW8ta2lkLTEyMzQ1IiwidHlwIjoiSldUIiwieDV0IjoiZGVtby14NXQtNjc4OTAifQ" +
-                        ".eyJpc2siOiI4M2I0ZTY0NGE3MmM4MmEzNDkwNTljZTNmY2FhMDc2YzZkODc4MWE0ZWZhNWJlZjBmZTA2ZmMxY2Y5M" +
-                        "2IwMDliIiwic3ViIjoiNTUwM2VkNmYtNTA3Yi00ZTA1LTk0MTUtZDZlMjE5MGY5YWQyIiwiaXNzIjoiaHR0cHM6Ly9" +
-                        "sb2NhbGhvc3Q6OTQ0My9vL2ZhY2RlYWIxLWNjMGEtNDU5MC04MGVjLTYxMDViMzgyNjgwMi9vYXV0aDIvdG9rZW4iL" +
-                        "CJhdWQiOiJjZGJmZGM5OS1iN2M2LTQ0MjMtOGJkYy1lNWFiMzcwMThlMWQiLCJjbGllbnRfaWQiOiJjZGJmZGM5OS1" +
-                        "iN2M2LTQ0MjMtOGJkYy1lNWFiMzcwMThlMWQiLCJleHAiOjE3NDMzNDQ4MjgsImlhdCI6MTc0MzM0MTIyOCwianRpI" +
-                        "joiMDVmZmM2MDgtMjQyNy00M2U5LTkxYzEtNjI0OTIwY2M5YzY1Iiwib3JnX25hbWUiOiJkdW1teW9yZzEiLCJvcmd" +
-                        "faWQiOiJmYWNkZWFiMS1jYzBhLTQ1OTAtODBlYy02MTA1YjM4MjY4MDIiLCJ1c2VybmFtZSI6ImR1bW15dXNlciJ9." +
-                        "ODglE3IUFsKpZqGGj2nLCLDqjS52lv4hcA8cFkMtmgI6Se0_b857fx4xuqNTEaDyCkY_9uy4UGt_yngl11Rnx_0PqO" +
-                        "LZG5Fysw7Zktg4cBchywWLfIeyn1zovBN5Q6t5JxkwJG6XvTnt_BUXRdHH5wFo_ErEn74fNoFIKhDneS-IiVUnwxGz" +
-                        "hZKpPnhJZllmlJlZenqSRRaMK_mLsmb218zEj_zAn8bbaI1eG9TqNXZwmjmftxhrqGqMyLhyZrTCXXLtO893n4qpA0" +
-                        "lPgM23X1HeTPN_59SUwqhI7clnDRb6eZ-RDIgWAoixdR4I9r-UJfvNfqAEv4xwTf3zaNTt4g");
+        oidcStateInfo.setIdTokenHint(testIdTokenHint);
         // Initialize authenticator config.
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
         authenticatorConfig.setName(ORGANIZATION_AUTHENTICATOR);
@@ -229,6 +230,58 @@ public class OrganizationSessionHandlerTest {
 
     @Test
     public void testHandleOrgSessionCreationForNonRememberMeSession() throws Exception {
+
+        SessionContext sessionContext = new SessionContext();
+        OIDCStateInfo oidcStateInfo = new OIDCStateInfo();
+        oidcStateInfo.setIdTokenHint(testIdTokenHint);
+        // Initialize authenticator config.
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        authenticatorConfig.setName(ORGANIZATION_AUTHENTICATOR);
+        authenticatorConfig.setAuthenticatorStateInfo(oidcStateInfo);
+        // Initialize authenticated IdPs.
+        Map<String, AuthenticatedIdPData> authenticatedIdPs = new HashMap<>();
+        AuthenticatedIdPData authenticatedIdPData = new AuthenticatedIdPData();
+        authenticatedIdPData.setIdpName(ORGANIZATION_LOGIN_IDP_NAME);
+        authenticatedIdPs.put(ORGANIZATION_LOGIN_IDP_NAME, authenticatedIdPData);
+        authenticatedIdPData.setAuthenticators(List.of(authenticatorConfig));
+        sessionContext.setAuthenticatedIdPs(authenticatedIdPs);
+
+        sessionContext.setRememberMe(false);
+
+        AuthenticationContext authenticationContext = new AuthenticationContext();
+        authenticationContext.setTenantDomain(testTenant);
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(SESSION_CONTEXT, sessionContext);
+        eventProperties.put(CONTEXT, authenticationContext);
+        Map<String, Object> params = new HashMap<>();
+        params.put(FrameworkConstants.AnalyticsAttributes.SESSION_ID, testSessionId);
+        params.put(FrameworkConstants.AnalyticsAttributes.USER, "dummyuser");
+        eventProperties.put(PARAMS, params);
+        Event event = new Event(SESSION_CREATE.name(), eventProperties);
+
+        when(organizationManager.resolveTenantDomain(anyString())).thenReturn(testOrgTenant);
+        sessionContextCacheMockedStatic.when(SessionContextCache::getInstance).thenReturn(sessionContextCache);
+
+        SessionContextCacheEntry sessionContextCacheEntry = new SessionContextCacheEntry();
+        SessionContext orgSessionContext = new SessionContext();
+        orgSessionContext.setRememberMe(false);
+        sessionContextCacheEntry.setContext(orgSessionContext);
+        when(sessionContextCache.getSessionContextCacheEntry(any(), anyString())).thenReturn(sessionContextCacheEntry);
+
+        frameworkUtilsMockedStatic.when(() -> FrameworkUtils.addSessionContextToCache(anyString(), any(), anyString(),
+                anyString())).thenAnswer(invocation -> null);
+
+        OrganizationSessionHandler organizationSessionHandler = new OrganizationSessionHandler();
+        // Execute the method.
+        organizationSessionHandler.handleEvent(event);
+
+        frameworkUtilsMockedStatic.verify(() ->
+                FrameworkUtils.addSessionContextToCache(anyString(), any(), anyString(), anyString()), times(0));
+    }
+
+    @Test
+    public void testHandleOrgSessionCreationForNonOrganizationSSOScenario() throws Exception {
 
         SessionContext sessionContext = new SessionContext();
         // Initialize authenticator config.
