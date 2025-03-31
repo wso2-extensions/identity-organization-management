@@ -168,7 +168,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                                                String currentTenantDomain) throws UserStoreException {
 
         return hasUserAssociation(userID, currentTenantDomain) ||
-                hasManagedOrgClaim(userStoreManager, userID, currentTenantDomain);
+                isSharedUserProfileCheck(userStoreManager, userID, currentTenantDomain);
     }
 
     private static boolean hasUserAssociation(String userID, String currentTenantDomain)
@@ -199,15 +199,14 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         return true;
     }
 
-    private static boolean hasManagedOrgClaim(AbstractUserStoreManager userStoreManager, String userID,
+    private static boolean isSharedUserProfileCheck(AbstractUserStoreManager userStoreManager, String userID,
                                               String currentTenantDomain) throws UserStoreException {
 
         // Root organization users cannot have managedOrg claim.
         if (isRootOrg(currentTenantDomain)) {
             return false;
         }
-        String managedOrgClaim = OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID);
-        return StringUtils.isNotEmpty(managedOrgClaim) || isSharedUserAddProcess();
+        return hasManagedOrgClaim(userStoreManager, userID) || isSharedUserAddProcess();
     }
 
     private static boolean isRootOrg(String currentTenantDomain) throws UserStoreClientException {
@@ -218,6 +217,13 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
             throw new UserStoreClientException(
                     "Error occurred while checking if the organization is a root organization.", e);
         }
+    }
+
+    private static boolean hasManagedOrgClaim(AbstractUserStoreManager userStoreManager, String userID)
+            throws UserStoreException {
+
+        return StringUtils.isNotEmpty(
+                OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
     }
 
     /**
