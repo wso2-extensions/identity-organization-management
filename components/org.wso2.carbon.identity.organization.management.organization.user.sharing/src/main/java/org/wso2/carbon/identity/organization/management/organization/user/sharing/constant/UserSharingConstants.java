@@ -68,6 +68,8 @@ public class UserSharingConstants {
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
     public static final String CLAIM_USER_SHARED_TYPE = "http://wso2.org/claims/identity/sharedType";
+    public static final String CLAIM_LAST_PASSWORD_UPDATE_TIME =
+            "http://wso2.org/claims/identity/lastPasswordUpdateTime";
 
     public static final String ORG_MGT_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String ORG_ROLE_MGT_PERMISSION = "/permission/admin/manage/identity/rolemgt";
