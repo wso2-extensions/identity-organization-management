@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.apache.commons.lang.StringUtils;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -399,13 +400,14 @@ public class OrganizationDiscoveryManagerImplTest {
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertEquals(organizationId, WSO2_ORG_ID);
 
-        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).thenReturn("");
+        when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString())).
+        thenReturn(StringUtils.EMPTY);
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID);
         Assert.assertNull(organizationId);
 
         when(attributeBasedOrganizationDiscoveryHandler.extractAttributeValue(anyString(),
-                any(AuthenticationContext.class))).thenReturn("");
+                any(AuthenticationContext.class))).thenReturn(StringUtils.EMPTY);
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
