@@ -44,6 +44,7 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.lang.reflect.Method;
@@ -70,16 +71,21 @@ public class SharedRoleMgtListenerTest {
     private static final int SAMPLE_TENANT_ID = 12345;
     private static final String SAMPLE_USERNAME = "sampleUsername";
     private static final String SAMPLE_ROLE_NAME = "sampleRoleName";
+    private static final String SAMPLE_APP_AUD_ROLE_NAME = "sampleAppAudRoleName";
+    private static final String SAMPLE_ORG_AUD_ROLE_NAME = "sampleOrgAudRoleName";
     private static final String SAMPLE_MAIN_APP_ID = "main-app-id";
     private static final String SAMPLE_SHARED_APP_ID = "shared-app-id";
     private static final String SAMPLE_SHARED_APP_ORG_ID = "shared-app-org-id";
     private static final String SAMPLE_SHARED_APP_TENANT_DOMAIN = "shared-app-tenant-domain";
     private static final String SAMPLE_ORG_ID = "org-id";
     private static final String SAMPLE_ROLE_ID = "role-id";
+    private static final String SAMPLE_APP_AUD_ROLE_ID = "app-aud-role-id";
+    private static final String SAMPLE_ORG_AUD_ROLE_ID = "org-aud-role-id";
     private static final String SAMPLE_SHARED_ROLE_ID = "shared-role-id";
     private static final String IS_FRAGMENT_APP = "isFragmentApp";
     private static final String ORGANIZATION_AUD = "organization";
     private static final String APPLICATION_AUD = "application";
+    private static final String REMOVED_APPLICATION_AUDIENCE_ROLES = "removedApplicationAudienceRoles";
     private static final String REMOVED_ORGANIZATION_AUDIENCE_ROLES = "removedOrganizationAudienceRoles";
     private static final String ADDED_APPLICATION_AUDIENCE_ROLES = "addedApplicationAudienceRoles";
     private static final String ADDED_ORGANIZATION_AUDIENCE_ROLES = "addedOrganizationAudienceRoles";
@@ -217,6 +223,32 @@ public class SharedRoleMgtListenerTest {
         };
     }
 
+@DataProvider(name = "testDoPreUpdateAppWithAssociatedRolesDataProvider")
+    public Object[][] testDoPreUpdateAppWithAssociatedRolesDataProvider() {
+
+        ServiceProvider updatedAppAudienceServiceProvider = new ServiceProvider();
+        updatedAppAudienceServiceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+        AssociatedRolesConfig appAudienceAssociatedRolesConfig = new AssociatedRolesConfig();
+        appAudienceAssociatedRolesConfig.setAllowedAudience(APPLICATION_AUD);
+        RoleV2 applicationRole = new RoleV2();
+        applicationRole.setName(SAMPLE_APP_AUD_ROLE_NAME);
+        applicationRole.setId(SAMPLE_APP_AUD_ROLE_ID);
+        appAudienceAssociatedRolesConfig.setRoles(new RoleV2[]{applicationRole});
+        updatedAppAudienceServiceProvider.setAssociatedRolesConfig(appAudienceAssociatedRolesConfig);
+
+        ServiceProvider updatedOrgAudienceServiceProvider = new ServiceProvider();
+        updatedOrgAudienceServiceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+        AssociatedRolesConfig orgAudienceAssociatedRolesConfig = new AssociatedRolesConfig();
+        orgAudienceAssociatedRolesConfig.setAllowedAudience(ORGANIZATION_AUD);
+        updatedOrgAudienceServiceProvider.setAssociatedRolesConfig(orgAudienceAssociatedRolesConfig);
+
+        return new Object[][] {
+                {updatedAppAudienceServiceProvider, ORGANIZATION_AUD},
+                {updatedOrgAudienceServiceProvider, APPLICATION_AUD},
+                {updatedAppAudienceServiceProvider, APPLICATION_AUD}
+        };
+    }
+
     @Test(dataProvider = "organizationTypeDataProvider")
     public void testDoPreDeleteApplicationInOrgTypes(boolean isOrganization, ServiceProvider serviceProvider,
                                                      boolean expected) throws Exception {
@@ -314,6 +346,85 @@ public class SharedRoleMgtListenerTest {
 
         SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
         sharedRoleMgtListener.doPreUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test(description = "Test the scenario where the existing role audience and the updating role audience are same " +
+            "and it is equal to ORGANIZATION.")
+    public void testDoPreUpdateApplicationWithOrgAudience() throws Exception {
+
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+        AssociatedRolesConfig associatedRolesConfig = new AssociatedRolesConfig();
+        associatedRolesConfig.setAllowedAudience(ORGANIZATION_AUD);
+        serviceProvider.setAssociatedRolesConfig(associatedRolesConfig);
+
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(
+                SAMPLE_MAIN_APP_ID, SAMPLE_TENANT_DOMAIN)).thenReturn(ORGANIZATION_AUD);
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        assertTrue(sharedRoleMgtListener.doPreUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN,
+                SAMPLE_USERNAME));
+    }
+
+    @Test(dataProvider = "testDoPreUpdateAppWithAssociatedRolesDataProvider")
+    public void testDoPreUpdateApplicationWithAssociatedRoles(ServiceProvider serviceProvider,
+                                                              String existingRoleAudience) throws Exception {
+
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(
+                SAMPLE_MAIN_APP_ID, SAMPLE_TENANT_DOMAIN)).thenReturn(existingRoleAudience);
+
+        identityUtil.when(IdentityUtil::getMaximumItemPerPage).thenReturn(2);
+
+        if (serviceProvider.getAssociatedRolesConfig().getAllowedAudience().equals(ORGANIZATION_AUD)) {
+            RoleV2 applicationRole = new RoleV2();
+            applicationRole.setName(SAMPLE_APP_AUD_ROLE_NAME);
+            applicationRole.setId(SAMPLE_APP_AUD_ROLE_ID);
+            when(mockedApplicationManagementService.getAssociatedRolesOfApplication(
+                    SAMPLE_MAIN_APP_ID, SAMPLE_TENANT_DOMAIN)).thenReturn(Collections.singletonList(applicationRole));
+
+            RoleBasicInfo orgAudroleBasicInfo = new RoleBasicInfo();
+            orgAudroleBasicInfo.setId(SAMPLE_ORG_AUD_ROLE_ID);
+            orgAudroleBasicInfo.setAudience(ORGANIZATION_AUD);
+            when(mockedRoleManagementService.getRoles(RoleConstants.AUDIENCE + " " + RoleConstants.EQ + " " +
+                            RoleConstants.ORGANIZATION, 2, 1, null, null,
+                    SAMPLE_TENANT_DOMAIN)).thenReturn(Collections.singletonList(orgAudroleBasicInfo));
+
+            Role organizationRole = new Role();
+            organizationRole.setId(SAMPLE_ORG_AUD_ROLE_ID);
+            organizationRole.setName(SAMPLE_ORG_AUD_ROLE_NAME);
+            when(mockedRoleManagementService.getRole(SAMPLE_ORG_AUD_ROLE_ID, SAMPLE_TENANT_DOMAIN)).
+                    thenReturn(organizationRole);
+        } else {
+            RoleV2 organizationRole = new RoleV2();
+            organizationRole.setId(SAMPLE_ORG_AUD_ROLE_ID);
+            organizationRole.setName(SAMPLE_ORG_AUD_ROLE_NAME);
+            when(mockedApplicationManagementService.getAssociatedRolesOfApplication(
+                    SAMPLE_MAIN_APP_ID, SAMPLE_TENANT_DOMAIN)).thenReturn(Collections.singletonList(organizationRole));
+        }
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        boolean preUpdateAppDecision = sharedRoleMgtListener.doPreUpdateApplication(serviceProvider,
+                SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+        if (serviceProvider.getAssociatedRolesConfig().getAllowedAudience().equals(ORGANIZATION_AUD)) {
+            Object finalUpdatedAssociatedRolesList = IdentityUtil.threadLocalProperties.get().
+                    get(ADDED_ORGANIZATION_AUDIENCE_ROLES);
+            List<RoleV2> addedOrgRolesList = (List<RoleV2>) finalUpdatedAssociatedRolesList;
+            assertEquals(addedOrgRolesList.size(), 1);
+            assertEquals(addedOrgRolesList.get(0).getName(), SAMPLE_ORG_AUD_ROLE_NAME);
+
+            Object removedOrgAudienceRoles = IdentityUtil.threadLocalProperties.get().
+                    get(REMOVED_APPLICATION_AUDIENCE_ROLES);
+            List<RoleV2> removedAppRolesList = (List<RoleV2>) removedOrgAudienceRoles;
+            assertEquals(removedAppRolesList.size(), 1);
+            assertEquals(removedAppRolesList.get(0).getName(), SAMPLE_APP_AUD_ROLE_NAME);
+            assertTrue(preUpdateAppDecision);
+        } else {
+            Object removedOrgAudienceRoles = IdentityUtil.threadLocalProperties.get().
+                    get(REMOVED_ORGANIZATION_AUDIENCE_ROLES);
+            List<RoleV2> removedOrgRolesList = (List<RoleV2>) removedOrgAudienceRoles;
+            assertEquals(removedOrgRolesList.size(), 1);
+            assertEquals(removedOrgRolesList.get(0).getName(), SAMPLE_ORG_AUD_ROLE_NAME);
+            assertTrue(preUpdateAppDecision);
+        }
     }
 
     @Test(dataProvider = "updateApplicationDataProvider")
