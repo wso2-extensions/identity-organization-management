@@ -69,7 +69,8 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
                     organizationID = UUID.randomUUID().toString();
                 }
                 organization.setId(organizationID);
-                organization.setName(tenantInfo.getTenantDomain());
+                organization.setName(tenantInfo.getName());
+                organization.setOrganizationHandle(tenantInfo.getTenantDomain());
                 organization.setStatus(OrganizationManagementConstants.OrganizationStatus.ACTIVE.name());
                 organization.setType(OrganizationManagementConstants.OrganizationTypes.TENANT.name());
                 getOrganizationManager().addRootOrganization(tenant.getId(), organization);
