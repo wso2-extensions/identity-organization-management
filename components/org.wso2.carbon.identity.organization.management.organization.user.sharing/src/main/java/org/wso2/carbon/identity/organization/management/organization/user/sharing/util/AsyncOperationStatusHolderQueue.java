@@ -17,7 +17,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
+
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;

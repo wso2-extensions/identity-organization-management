@@ -48,11 +48,15 @@ import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.OperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusObject;
-import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusObject;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.exception.AsyncStatusMgtClientException;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.exception.AsyncStatusMgtServerException;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.OperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.ResponseOperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.ResponseUnitOperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.service.AsyncStatusMgtService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
@@ -156,7 +160,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private static final Log LOG = LogFactory.getLog(OrgApplicationManagerImpl.class);
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
-    AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+    private final AsyncStatusMgtService
+            asyncStatusMgtService = OrgApplicationMgtDataHolder.getInstance().getAsyncStatusMgtService();
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
 
     @Override
@@ -180,6 +185,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         B2B_APPLICATION, originalAppId, ownerOrgId, userID, sharePolicy), true);
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId, statusQueue);
+
+        //testing
+        try {
+            List<ResponseUnitOperationRecord> records = asyncStatusMgtService.getUnitOperationStatusRecords("2", "", "", 4, "UNIT_OPERATION_STATUS eq FAIL");
+            LOG.info(records);
+        } catch (AsyncStatusMgtClientException | AsyncStatusMgtServerException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            List<ResponseOperationRecord> records = asyncStatusMgtService.getOperationStatusRecords("APPLICATION", "56a1c223-744e-4d2e-b34d-f3e6d434ba63", "B2B_APPLICATION_SHARE", "", "", 1, "OPERATION_STATUS eq SUCCESS");
+            LOG.info(records);
+        } catch (AsyncStatusMgtClientException | AsyncStatusMgtServerException e) {
+            throw new RuntimeException(e);
+        }
+        //----
 
         validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);

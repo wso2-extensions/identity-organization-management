@@ -18,13 +18,14 @@
 
 package org.wso2.carbon.identity.organization.management.application.util;
 
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
+
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * This data structure holds status of unit share operations, in order to determine
+ * This class holds status of unit share operations, in order to determine
  * the overall status of the asynchronous operation.
  */
 public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRecord> {

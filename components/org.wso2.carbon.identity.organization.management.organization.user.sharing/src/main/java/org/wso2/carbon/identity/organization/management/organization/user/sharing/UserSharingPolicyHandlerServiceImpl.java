@@ -28,11 +28,11 @@ import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.framework.async.status.mgt.AsyncStatusMgtService;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.OperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.models.dos.UnitOperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusObject;
-import org.wso2.carbon.identity.framework.async.status.mgt.queue.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusObject;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.OperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
+import org.wso2.carbon.identity.framework.async.status.mgt.api.service.AsyncStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.ShareOperationStatus;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
@@ -139,7 +139,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
-    AsyncStatusMgtService asyncStatusMgtService = getAsyncStatusMgtService();
+    private final AsyncStatusMgtService asyncStatusMgtService = OrganizationUserSharingDataHolder.getInstance()
+            .getAsyncStatusMgtService();
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
 
     @Override

@@ -177,7 +177,7 @@ public class FragmentApplicationMgtListenerTest {
         MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
         ServiceProvider sharedApplication = new ServiceProvider();
         ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
-                mockServiceProviderProperty(IS_FRAGMENT_APP, "true"),
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE),
                 mockServiceProviderProperty(IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME,
                         String.valueOf(isSharedAppAPIAuthEnabled))
         };
