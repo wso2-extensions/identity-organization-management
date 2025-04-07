@@ -149,6 +149,18 @@ public interface OrgApplicationManager {
                           boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
+     * Share the application to an organization.
+     *
+     * @param ownerOrgId           Identifier of the organization owning the application.
+     * @param sharedOrgId          Identifier of the organization to which the application being shared to.
+     * @param mainApplication      The application which is shared with the child organizations.
+     * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
+     * @throws OrganizationManagementException on errors when sharing the application.
+     */
+    void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
+                          boolean shareWithAllChildren, String operationId) throws OrganizationManagementException;
+
+    /**
      * Get the shared ancestor application IDs for the given child application ID of the given child organization.
      *
      * @param childAppId The unique ID of the shared child application.

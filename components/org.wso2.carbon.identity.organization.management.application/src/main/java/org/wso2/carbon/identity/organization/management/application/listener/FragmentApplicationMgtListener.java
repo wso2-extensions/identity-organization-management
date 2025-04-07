@@ -176,10 +176,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     IdentityUtil.threadLocalProperties.get().put(IS_APP_NAME_UPDATED, true);
                 }
             } else if (!isInternalProcess(tenantDomain)) {
-                if (isFragmentApp(existingApplication) &&
+                if (existingApplication != null &&
                         !existingApplication.getApplicationName().equals(serviceProvider.getApplicationName())) {
                     throw new IdentityApplicationManagementClientException(
-                            "Application name modification is not allowed for shared applications.");
+                            "Application name modification is not allowed for this organization.");
                 }
             }
         } catch (OrganizationManagementException e) {

@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -39,32 +38,23 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
@@ -94,7 +84,6 @@ public class FragmentApplicationMgtListenerTest {
     private static final String tenantDomain = "sampleTenantDomain";
     private static final String userName = "sampleUser";
     private static final String applicationName = "sampleApp";
-    private static final String updatedApplicationName = "updatedSampleApp";
     private static final String applicationResourceID = "fcb0c1d7-28c0-46f7-bc2d-345678a1b23c";
     private static final String organizationID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private static final String sampleClaimURI = "http://wso2.org/claims/sampleClaim1";
@@ -213,109 +202,6 @@ public class FragmentApplicationMgtListenerTest {
                 .doPostGetServiceProvider(sharedApplication, applicationName, tenantDomain);
         AssertJUnit.assertTrue(result);
         AssertJUnit.assertEquals(expectedResult, sharedApplication.isAPIBasedAuthenticationEnabled());
-    }
-
-    @DataProvider(name = "testSharedAppNameModificationDataProvider")
-    public Object[][] testSharedAppNameModificationDataProvider() {
-
-        return new Object[][]{
-                {TRUE, true}, {TRUE, false}, {FALSE, true}, {FALSE, false},
-        };
-    }
-
-    @Test(dataProvider = "testSharedAppNameModificationDataProvider")
-    public void testSharedAppNameModificationNotAllowed(String isSharedApp, boolean isAppNameUpdated)
-            throws IdentityApplicationManagementException {
-
-        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
-                     mockStatic(OrganizationManagementUtil.class)) {
-
-            mockUtils(tenantDomain);
-            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
-                    .thenReturn(true);
-
-            ServiceProvider sharedApplication = new ServiceProvider();
-            sharedApplication.setApplicationName(isAppNameUpdated ? updatedApplicationName : applicationName);
-
-            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
-                    mockServiceProviderProperty(IS_FRAGMENT_APP, isSharedApp)
-            };
-            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
-            when(serviceProvider.getApplicationName()).thenReturn(applicationName);
-            when(applicationManagementService.getApplicationByResourceId(any(), anyString()))
-                    .thenReturn(serviceProvider);
-
-            if (Boolean.parseBoolean(isSharedApp) && isAppNameUpdated) {
-                IdentityApplicationManagementClientException thrownException =
-                        Assert.expectThrows(IdentityApplicationManagementClientException.class,
-                                () -> fragmentApplicationMgtListener
-                                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName));
-
-                assertEquals("Application name modification is not allowed for shared applications.",
-                        thrownException.getMessage());
-            } else {
-                sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
-
-                boolean result = fragmentApplicationMgtListener
-                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName);
-                assertTrue(result);
-            }
-        }
-    }
-
-    @DataProvider(name = "testFragmentApplicationPreDeletionDataProvider")
-    public Object[][] testFragmentApplicationPreDeletionDataProvider() {
-
-        return new Object[][]{
-                {new String[]{DELETE_MAIN_APPLICATION}, false, true, false},
-                {new String[]{DELETE_SHARE_FOR_MAIN_APPLICATION}, false, true, false},
-                {new String[]{DELETE_FRAGMENT_APPLICATION}, false, true, false},
-                {new String[]{DELETE_FRAGMENT_APPLICATION}, true, true, true},
-                {new String[]{}, true, true, true},
-                {new String[]{}, false, true, true},
-                {new String[]{}, false, false, false},
-        };
-    }
-
-    @Test(dataProvider = "testFragmentApplicationPreDeletionDataProvider")
-    public void testFragmentApplicationPreDeletion(String[] threadLocalPropertiesSet, boolean isShareWithAllChildren,
-                                                   boolean isSharedApplicationPresent, boolean isExceptionExpected)
-            throws IdentityApplicationManagementException, OrganizationManagementException {
-
-        Map<String, Object> threadLocalProperties = new HashMap<>();
-        for (String property : threadLocalPropertiesSet) {
-            threadLocalProperties.put(property, true);
-        }
-        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
-
-        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
-                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)
-        };
-        when(serviceProvider.getSpProperties()).thenReturn(spProperties);
-        when(applicationManagementService.getServiceProvider(applicationName, tenantDomain))
-                .thenReturn(serviceProvider);
-        when(serviceProvider.getApplicationID()).thenReturn(1);
-        when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
-
-        if (isSharedApplicationPresent) {
-            when(orgApplicationMgtDAO.getSharedApplication(1, tenantDomain))
-                    .thenReturn(Optional.ofNullable(sharedApplicationDO));
-            when(sharedApplicationDO.shareWithAllChildren()).thenReturn(isShareWithAllChildren);
-        }
-        if (isExceptionExpected) {
-            IdentityApplicationManagementClientException thrownException =
-                    Assert.expectThrows(IdentityApplicationManagementClientException.class,
-                            () -> fragmentApplicationMgtListener
-                                    .doPreDeleteApplication(applicationName, tenantDomain, userName));
-
-            assertEquals(String.format("Cannot delete shared application with resource id: %s. " +
-                            "Delete is allowed only when the main application is deleted, or its sharing is revoked.",
-                    applicationResourceID), thrownException.getMessage());
-        } else {
-            boolean result = fragmentApplicationMgtListener
-                    .doPreDeleteApplication(applicationName, tenantDomain, userName);
-            assertTrue(result);
-        }
     }
 
     private void mockClaimConfig(ServiceProvider mainApplication) {

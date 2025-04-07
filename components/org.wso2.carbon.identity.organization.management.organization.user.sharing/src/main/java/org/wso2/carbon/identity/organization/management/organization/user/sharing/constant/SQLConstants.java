@@ -154,6 +154,17 @@ public class SQLConstants {
                     "SET UM_SHARED_TYPE = :" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + "; " +
                     "WHERE UM_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ID + ";";
 
+    public static final String GET_LATEST_RECORD_BY_RESIDENT_RESOURCE_ID =
+            "SELECT UM_SHARING_OPERATION_ID FROM UM_SHARING_OPERATION " +
+                    "WHERE " + SQLPlaceholders.COLUMN_NAME_RESIDENT_RESOURCE_ID + " = ? " +
+                    "AND " + SQLPlaceholders.COLUMN_NAME_CREATED_TIME + " = (" +
+                    "    SELECT MAX(" + SQLPlaceholders.COLUMN_NAME_CREATED_TIME + ") " +
+                    "    FROM UM_SHARING_OPERATION " +
+                    "    WHERE " + SQLPlaceholders.COLUMN_NAME_RESIDENT_RESOURCE_ID + " = ?" +
+                    ") " +
+                    "ORDER BY " + SQLPlaceholders.COLUMN_NAME_CREATED_TIME + " DESC " +
+                    "LIMIT 1;";
+
     /**
      * SQL placeholders related to organization user sharing SQL operations.
      */
@@ -185,6 +196,12 @@ public class SQLConstants {
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
         public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
+
+        /**
+         * SQL column names for resource sharing status management.
+         */
+        public static final String COLUMN_NAME_RESIDENT_RESOURCE_ID = "UM_RESIDENT_RESOURCE_ID";
+        public static final String COLUMN_NAME_CREATED_TIME = "UM_CREATED_TIME";
     }
 
     /**

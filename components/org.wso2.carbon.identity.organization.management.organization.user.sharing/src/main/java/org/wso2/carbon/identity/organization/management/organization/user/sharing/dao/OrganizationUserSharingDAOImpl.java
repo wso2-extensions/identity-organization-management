@@ -529,7 +529,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             throw handleServerException(ERROR_CODE_ERROR_UPDATE_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
-
     private Map<String, List<String>> groupUsernamesByDomain(List<String> deletedDomainQualifiedUserNames) {
 
         Map<String, List<String>> domainToUserNamesMap = new HashMap<>();
@@ -542,7 +541,6 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     private Map<String, String> getDBQueryMapOfHasUserAssociations() {
-
         Map<String, String> dbQueryMap = new HashMap<>();
         dbQueryMap.put(DB_TYPE_DB2, CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2);
         dbQueryMap.put(DB_TYPE_MSSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL);
