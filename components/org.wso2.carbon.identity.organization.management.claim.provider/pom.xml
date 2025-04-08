@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -47,6 +47,14 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
         </dependency>
     </dependencies>
 
