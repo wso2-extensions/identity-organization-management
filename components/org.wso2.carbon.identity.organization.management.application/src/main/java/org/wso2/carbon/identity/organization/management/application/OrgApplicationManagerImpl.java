@@ -266,7 +266,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 asyncStatusMgtService.updateOperationStatus(operationId, getOperationStatus(operationId));
             } catch (AsyncStatusMgtException e) {
                 try {
-                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e, originalAppId); //TODO: verify
+                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
                 } catch (OrganizationManagementServerException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -653,7 +653,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     shareWithAllChildren);
-            setThreadLocalUserNameAndUserId(sharedTenantDomain, sharedOrgId, mainApplication, operationId, tenantId);
+            setThreadLocalContextForApplicationShare(sharedTenantDomain, sharedOrgId, mainApplication, operationId, tenantId);
 
             Optional<String> mayBeSharedAppId = resolveSharedApp(
                     mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
@@ -717,8 +717,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private void setThreadLocalUserNameAndUserId(String sharedTenantDomain, String sharedOrgId,
-                                                 ServiceProvider mainApplication, String operationId, int tenantId)
+    private void setThreadLocalContextForApplicationShare(String sharedTenantDomain, String sharedOrgId,
+                                                          ServiceProvider mainApplication, String operationId, int tenantId)
             throws OrganizationManagementException {
 
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
