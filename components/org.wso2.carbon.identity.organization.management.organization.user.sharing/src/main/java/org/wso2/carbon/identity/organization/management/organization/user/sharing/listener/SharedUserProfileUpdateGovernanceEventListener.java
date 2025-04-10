@@ -28,19 +28,30 @@ import org.wso2.carbon.identity.claim.metadata.mgt.model.LocalClaim;
 import org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SHARED_PROFILE_VALUE_RESOLVING_METHOD;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_LAST_PASSWORD_UPDATE_TIME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PROCESS_ADD_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 
 /**
@@ -49,6 +60,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIdentityUserOperationEventListener {
 
     private static final Log LOG = LogFactory.getLog(SharedUserProfileUpdateGovernanceEventListener.class);
+    private final Set<String> resolvingMethodNeutralClaimsForSharedUser =
+            new HashSet<>(Collections.singletonList(CLAIM_LAST_PASSWORD_UPDATE_TIME));
 
     @Override
     public int getExecutionOrderId() {
@@ -86,11 +99,15 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         ClaimMetadataManagementService claimManagementService =
                 OrganizationUserSharingDataHolder.getInstance().getClaimManagementService();
         for (Map.Entry<String, String> claim : claims.entrySet()) {
+            String claimURI = claim.getKey();
             try {
+                if (isResolvingMethodNeutralClaimForSharedUser(claimURI)) {
+                    continue;
+                }
                 Optional<LocalClaim> localClaim =
-                        claimManagementService.getLocalClaim(claim.getKey(), currentTenantDomain);
+                        claimManagementService.getLocalClaim(claimURI, currentTenantDomain);
                 if (!localClaim.isPresent()) {
-                    LOG.debug(String.format("Claim: %s is not available in the tenant: %s", claim.getKey(),
+                    LOG.debug(String.format("Claim: %s is not available in the tenant: %s", claimURI,
                             currentTenantDomain));
                     continue;
                 }
@@ -100,13 +117,13 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                         StringUtils.equals(ClaimConstants.SharedProfileValueResolvingMethod.FROM_ORIGIN.getName(),
                                 sharedProfileValueResolvingMethod)) {
                     throw new UserStoreClientException(
-                            String.format("Claim: %s is not allowed to be updated for shared users.", claim.getKey()));
+                            String.format("Claim: %s is not allowed to be updated for shared users.", claimURI));
                 }
             } catch (ClaimMetadataException e) {
                 throw new UserStoreClientException(
                         String.format(
                                 "Error while checking the SharedProfileValueResolvingMethod value of the claim: %s",
-                                claim.getKey()), e);
+                                claimURI), e);
             }
         }
         return true;
@@ -137,6 +154,9 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
             return true;
         }
         try {
+            if (isResolvingMethodNeutralClaimForSharedUser(claimURI)) {
+                return true;
+            }
             ClaimMetadataManagementService claimManagementService =
                     OrganizationUserSharingDataHolder.getInstance().getClaimManagementService();
             Optional<LocalClaim> localClaim = claimManagementService.getLocalClaim(claimURI, currentTenantDomain);
@@ -160,14 +180,19 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
         return true;
     }
 
+    private static boolean isSharedUserProfile(String userID, String currentTenantDomain) throws UserStoreException {
 
-    private static boolean isSharedUserProfile(String userID, String currentTenantDomain)
+        return hasUserAssociation(userID, currentTenantDomain) ||
+                hasManagedOrgClaim(userID, currentTenantDomain) || isSharedUserAddProcess();
+    }
+
+    private static boolean hasUserAssociation(String userID, String currentTenantDomain)
             throws UserStoreClientException {
 
         String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
-            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
-                // There is no shared users in root organizations. Hence, return false.
+            // There is no shared users in root organizations. Hence, return false.
+            if (isRootOrg(currentTenantDomain)) {
                 return false;
             }
             if (StringUtils.isBlank(currentOrganizationId)) {
@@ -187,5 +212,57 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                             currentOrganizationId, e);
         }
         return true;
+    }
+
+    private static boolean hasManagedOrgClaim(String userID, String currentTenantDomain) throws UserStoreException {
+
+        // Root organization users cannot have managedOrg claim.
+        if (isRootOrg(currentTenantDomain)) {
+            return false;
+        }
+        int currentTenantId = IdentityTenantUtil.getTenantId(currentTenantDomain);
+        AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(currentTenantId);
+        return StringUtils.isNotEmpty(
+                OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
+    }
+
+    private static boolean isRootOrg(String currentTenantDomain) throws UserStoreClientException {
+
+        try {
+            return !OrganizationManagementUtil.isOrganization(currentTenantDomain);
+        } catch (OrganizationManagementException e) {
+            throw new UserStoreClientException(
+                    "Error occurred while checking if the organization is a root organization.", e);
+        }
+    }
+
+    /**
+     * Checks if the current flow is a shared user addition process.
+     * During the shared user addition flow, the thread has the {@code PROCESS_ADD_SHARED_USER} property set to
+     * {@code true}.
+     * This method verifies that the property is present and evaluates to {@code true} to determine whether the flow
+     * is a shared user addition process.
+     *
+     * @return {@code true} if the current flow is a shared user addition process, otherwise {@code false}.
+     */
+    private static boolean isSharedUserAddProcess() {
+
+        return Boolean.TRUE.equals(IdentityUtil.threadLocalProperties.get().get(PROCESS_ADD_SHARED_USER));
+    }
+
+    private boolean isResolvingMethodNeutralClaimForSharedUser(String claimURI) {
+
+        return resolvingMethodNeutralClaimsForSharedUser.contains(claimURI);
+    }
+
+    private static AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
+
+        try {
+            RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
+            UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+            return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            throw new UserStoreException(e);
+        }
     }
 }

@@ -157,8 +157,11 @@ public interface OrgApplicationManager {
      * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
      * @throws OrganizationManagementException on errors when sharing the application.
      */
-    void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
-                          boolean shareWithAllChildren, String operationId) throws OrganizationManagementException;
+    default void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
+                          boolean shareWithAllChildren, String operationId) throws OrganizationManagementException{
+        throw new NotImplementedException(
+                "getAncestorAppIds method is not implemented in " + this.getClass().getName());
+    };
 
     /**
      * Get the shared ancestor application IDs for the given child application ID of the given child organization.

@@ -68,6 +68,8 @@ public class UserSharingConstants {
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
     public static final String CLAIM_USER_SHARED_TYPE = "http://wso2.org/claims/identity/sharedType";
+    public static final String CLAIM_LAST_PASSWORD_UPDATE_TIME =
+            "http://wso2.org/claims/identity/lastPasswordUpdateTime";
 
     public static final String ORG_MGT_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
     public static final String ORG_ROLE_MGT_PERMISSION = "/permission/admin/manage/identity/rolemgt";
@@ -97,6 +99,8 @@ public class UserSharingConstants {
     public static final String API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG =
             "/api/server/v1/users/%s/shared-roles?orgId=%s";
 
+    public static final String PROCESS_ADD_SHARED_USER = "processAddSharedUser";
+
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
     IDP sections.
@@ -107,6 +111,10 @@ public class UserSharingConstants {
                             USER_STORE_CONFIG_VIEW_PERMISSION, USER_MGT_VIEW_PERMISSION, USER_MGT_LIST_PERMISSION,
                             APPLICATION_MGT_VIEW_PERMISSION, CORS_CONFIG_MGT_VIEW_PERMISSION, IDP_MGT_VIEW_PERMISSION,
                             CLAIM_META_DATA_MGT_VIEW_PERMISSION));
+
+    public static final String EXISTING_USER_UNSHARE_SUCCESS = "Existing User Unshared Successfully. ";
+    public static final String EXISTING_USER_UNSHARE_FAIL = "Existing User Unshare Failed. ";
+    public static final String ROLE_UPDATE_FOR_EXISTING_SHARED_USER_FAIL = "Role Update For Existing Shared User Failed. ";
 
     /**
      * Enum for assignmentType.

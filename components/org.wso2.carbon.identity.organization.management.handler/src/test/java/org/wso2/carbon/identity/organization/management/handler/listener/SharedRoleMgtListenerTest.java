@@ -26,11 +26,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
@@ -39,15 +41,21 @@ import org.wso2.carbon.identity.organization.management.handler.internal.Organiz
 import org.wso2.carbon.identity.organization.management.handler.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -65,6 +73,7 @@ public class SharedRoleMgtListenerTest {
     private static final String SAMPLE_MAIN_APP_ID = "main-app-id";
     private static final String SAMPLE_SHARED_APP_ID = "shared-app-id";
     private static final String SAMPLE_SHARED_APP_ORG_ID = "shared-app-org-id";
+    private static final String SAMPLE_SHARED_APP_TENANT_DOMAIN = "shared-app-tenant-domain";
     private static final String SAMPLE_ORG_ID = "org-id";
     private static final String SAMPLE_ROLE_ID = "role-id";
     private static final String SAMPLE_SHARED_ROLE_ID = "shared-role-id";
@@ -72,6 +81,11 @@ public class SharedRoleMgtListenerTest {
     private static final String ORGANIZATION_AUD = "organization";
     private static final String APPLICATION_AUD = "application";
     private static final String REMOVED_ORGANIZATION_AUDIENCE_ROLES = "removedOrganizationAudienceRoles";
+    private static final String ADDED_APPLICATION_AUDIENCE_ROLES = "addedApplicationAudienceRoles";
+    private static final String ADDED_ORGANIZATION_AUDIENCE_ROLES = "addedOrganizationAudienceRoles";
+    private static final String PARENT_ORG_USER_NAME = "parent-org-user";
+    private static MockedStatic<LoggerUtils> loggerUtils = null;
+    private static MockedStatic<IdentityUtil> identityUtil = null;
 
     @Mock
     private ApplicationManagementService mockedApplicationManagementService;
@@ -93,11 +107,15 @@ public class SharedRoleMgtListenerTest {
 
         TestUtils.initPrivilegedCarbonContext();
         MockitoAnnotations.openMocks(this);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(SAMPLE_TENANT_DOMAIN);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(PARENT_ORG_USER_NAME);
         OrganizationManagementHandlerDataHolder.getInstance().
                 setApplicationManagementService(mockedApplicationManagementService);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(mockedOrgApplicationManager);
         OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+        loggerUtils = mockStatic(LoggerUtils.class);
+        identityUtil = mockStatic(IdentityUtil.class);
         organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
         identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
     }
@@ -107,6 +125,8 @@ public class SharedRoleMgtListenerTest {
 
         organizationManagementUtilMockedStatic.close();
         identityTenantUtilMockedStatic.close();
+        loggerUtils.close();
+        identityUtil.close();
     }
 
     @DataProvider(name = "organizationTypeDataProvider")
@@ -167,6 +187,33 @@ public class SharedRoleMgtListenerTest {
         return new Object[][] {
                 {fragmentServiceProvider},
                 {mainServiceProvider}
+        };
+    }
+
+    @DataProvider(name = "mainRoleProvider")
+    public Object[][] mainRoleProvider() {
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> addedAppRoles = Collections.singletonList(roleV2);
+
+        List<RoleV2> addedEmptyAppRoles = Collections.emptyList();
+
+        return new Object[][] {
+                {addedAppRoles},
+                {addedEmptyAppRoles}
+        };
+    }
+
+    @DataProvider(name = "createSharedRolesWithOrgAudienceDataProvider")
+    public Object[][] createSharedRolesWithOrgAudienceDataProvider() {
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> addedOrgRoleList = Collections.singletonList(roleV2);
+
+        return new Object[][] {
+                {null, false, 0},
+                {addedOrgRoleList, false, 1},
+                {addedOrgRoleList, true, 2}
         };
     }
 
@@ -274,5 +321,161 @@ public class SharedRoleMgtListenerTest {
 
         SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
         sharedRoleMgtListener.doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test(dataProvider = "mainRoleProvider")
+    public void testDoPostUpdateApplicationWithAddedAppRoles(List<RoleV2> addedAppRoles) throws Exception {
+
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+
+        SharedApplication sharedApp1 = new SharedApplication(SAMPLE_SHARED_APP_ID, SAMPLE_SHARED_APP_ORG_ID);
+
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        threadLocalProperties.put(ADDED_APPLICATION_AUDIENCE_ROLES, addedAppRoles);
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        if (!addedAppRoles.isEmpty()) {
+            when(mockedOrganizationManager.resolveOrganizationId(SAMPLE_TENANT_DOMAIN)).thenReturn(SAMPLE_ORG_ID);
+            when(mockedOrgApplicationManager.getSharedApplications(SAMPLE_ORG_ID, SAMPLE_MAIN_APP_ID)).
+                    thenReturn(Collections.singletonList(sharedApp1));
+            when(mockedOrganizationManager.resolveTenantDomain(SAMPLE_SHARED_APP_ORG_ID)).
+                    thenReturn(SAMPLE_SHARED_APP_TENANT_DOMAIN);
+
+            RoleBasicInfo sharedRoleBasicInfo = new RoleBasicInfo();
+            sharedRoleBasicInfo.setId(SAMPLE_SHARED_ROLE_ID);
+            sharedRoleBasicInfo.setAudience(RoleConstants.ORGANIZATION);
+            sharedRoleBasicInfo.setAudienceId(SAMPLE_SHARED_APP_ORG_ID);
+            when(mockedRoleManagementService.addRole(addedAppRoles.get(0).getName(), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION,
+                    sharedApp1.getSharedApplicationId(), SAMPLE_SHARED_APP_TENANT_DOMAIN)).
+                    thenReturn(sharedRoleBasicInfo);
+            doNothing().when(mockedRoleManagementService).addMainRoleToSharedRoleRelationship(anyString(), anyString(),
+                    anyString(), anyString());
+        }
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        sharedRoleMgtListener.doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test(description = "Test the scenario where an organization role is trying to be created in the sub " +
+            "organization but the sub organization have an organization role with the same name.",
+            dataProvider = "createSharedRolesWithOrgAudienceDataProvider")
+    public void testCreateSharedRolesWithOrgAudienceWithOrgAudienceRoleConflict(List<RoleV2> addedOrgRoleList,
+                                                                       boolean isV2AuditLogsEnabled,
+                                                                       int expectedInvocations) throws Exception {
+
+        when(mockedOrganizationManager.resolveTenantDomain(SAMPLE_SHARED_APP_ORG_ID)).thenReturn(
+                SAMPLE_SHARED_APP_TENANT_DOMAIN);
+        when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(true);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList(SAMPLE_ROLE_ID), SAMPLE_SHARED_APP_TENANT_DOMAIN)).
+                thenReturn(new HashMap<>());
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        Method createSharedRolesWithOrgAudiencePrivateMethod = SharedRoleMgtListener.class.
+                getDeclaredMethod("createSharedRolesWithOrgAudience", List.class, String.class, String.class);
+        createSharedRolesWithOrgAudiencePrivateMethod.setAccessible(true);
+
+        loggerUtils.when(LoggerUtils::isEnableV2AuditLogs).thenReturn(isV2AuditLogsEnabled);
+        createSharedRolesWithOrgAudiencePrivateMethod.invoke(sharedRoleMgtListener, addedOrgRoleList,
+                SAMPLE_TENANT_DOMAIN, SAMPLE_SHARED_APP_ORG_ID);
+
+        loggerUtils.verify(LoggerUtils::isEnableV2AuditLogs, times(expectedInvocations));
+    }
+
+    @Test(description = "Test the scenario where the organization roles are trying to be created in the sub " +
+            "organization but the sub organization have an organization role with the same name.")
+    public void testDoPostUpdateApplicationWithOrgAudienceRoleConflict() throws Exception {
+
+        ServiceProvider mainServiceProvider = new ServiceProvider();
+        mainServiceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> addedOrgRoleList = Collections.singletonList(roleV2);
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        threadLocalProperties.put(ADDED_ORGANIZATION_AUDIENCE_ROLES, addedOrgRoleList);
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        when(mockedRoleManagementService.getRoleNameByRoleId(SAMPLE_ROLE_ID, SAMPLE_TENANT_DOMAIN)).
+                thenReturn(SAMPLE_ROLE_NAME);
+
+        SharedApplication sharedApplication = new SharedApplication(SAMPLE_SHARED_APP_ID, SAMPLE_SHARED_APP_ORG_ID);
+        List<SharedApplication> sharedApplications = Collections.singletonList(sharedApplication);
+        when(mockedOrgApplicationManager.getSharedApplications(null, SAMPLE_MAIN_APP_ID))
+                .thenReturn(sharedApplications);
+
+        when(mockedOrganizationManager.resolveTenantDomain(SAMPLE_SHARED_APP_ORG_ID)).thenReturn(
+                SAMPLE_SHARED_APP_TENANT_DOMAIN);
+
+        when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(true);
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        sharedRoleMgtListener.doPostUpdateApplication(mainServiceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test
+    public void testDoPostUpdateApplicationWithoutOrgAudienceRoleConflict() throws Exception {
+
+        ServiceProvider mainServiceProvider = new ServiceProvider();
+        mainServiceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> addedOrgRoleList = Collections.singletonList(roleV2);
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        threadLocalProperties.put(ADDED_ORGANIZATION_AUDIENCE_ROLES, addedOrgRoleList);
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        when(mockedRoleManagementService.getRoleNameByRoleId(SAMPLE_ROLE_ID, SAMPLE_TENANT_DOMAIN)).
+                thenReturn(SAMPLE_ROLE_NAME);
+
+        SharedApplication sharedApplication = new SharedApplication(SAMPLE_SHARED_APP_ID, SAMPLE_SHARED_APP_ORG_ID);
+        List<SharedApplication> sharedApplications = Collections.singletonList(sharedApplication);
+        when(mockedOrgApplicationManager.getSharedApplications(null, SAMPLE_MAIN_APP_ID))
+                .thenReturn(sharedApplications);
+
+        when(mockedOrganizationManager.resolveTenantDomain(SAMPLE_SHARED_APP_ORG_ID)).thenReturn(
+                SAMPLE_SHARED_APP_TENANT_DOMAIN);
+
+        when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, ORGANIZATION_AUD,
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(false);
+
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList(SAMPLE_ROLE_ID), SAMPLE_SHARED_APP_TENANT_DOMAIN))
+                .thenReturn(new HashMap<>());
+
+        RoleBasicInfo sharedRoleBasicInfo = new RoleBasicInfo();
+        sharedRoleBasicInfo.setAudience(RoleConstants.ORGANIZATION);
+        sharedRoleBasicInfo.setAudienceId(SAMPLE_SHARED_APP_ORG_ID);
+        when(mockedRoleManagementService.addRole(roleV2.getName(), Collections.emptyList(),
+                Collections.emptyList(), Collections.emptyList(), RoleConstants.ORGANIZATION,
+                SAMPLE_SHARED_APP_ORG_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(sharedRoleBasicInfo);
+        doNothing().when(mockedRoleManagementService).addMainRoleToSharedRoleRelationship(anyString(), anyString(),
+                anyString(), anyString());
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        sharedRoleMgtListener.doPostUpdateApplication(mainServiceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
+    }
+
+    @Test(priority = 100)
+    public void testDoPostUpdateApplicationWithRoleMgtExceptions() throws Exception {
+
+        ServiceProvider mainServiceProvider = new ServiceProvider();
+        mainServiceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
+
+        RoleV2 roleV2 = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
+        List<RoleV2> addedOrgRoleList = Collections.singletonList(roleV2);
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        threadLocalProperties.put(ADDED_ORGANIZATION_AUDIENCE_ROLES, addedOrgRoleList);
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        when(mockedRoleManagementService.getRoleNameByRoleId(roleV2.getId(), SAMPLE_TENANT_DOMAIN)).
+                thenThrow(IdentityRoleManagementException.class);
+
+        SharedRoleMgtListener sharedRoleMgtListener = new SharedRoleMgtListener();
+        assertTrue(sharedRoleMgtListener.doPostUpdateApplication(mainServiceProvider, SAMPLE_TENANT_DOMAIN,
+                SAMPLE_USERNAME));
     }
 }

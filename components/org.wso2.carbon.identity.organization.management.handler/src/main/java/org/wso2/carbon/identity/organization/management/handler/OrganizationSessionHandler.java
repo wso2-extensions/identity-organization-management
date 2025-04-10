@@ -18,13 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.handler;
 
-import com.nimbusds.jose.util.JSONObjectUtils;
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorStateInfo;
 import org.wso2.carbon.identity.application.authentication.framework.UserSessionManagementService;
+import org.wso2.carbon.identity.application.authentication.framework.cache.SessionContextCache;
+import org.wso2.carbon.identity.application.authentication.framework.cache.SessionContextCacheEntry;
+import org.wso2.carbon.identity.application.authentication.framework.cache.SessionContextCacheKey;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.SessionContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
@@ -32,19 +35,19 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.s
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedIdPData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.model.OIDCStateInfo;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCClaims.IDP_SESSION_KEY;
 
@@ -54,6 +57,7 @@ import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCClaims.ID
 public class OrganizationSessionHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationSessionHandler.class);
+    private static final String AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE = "org_id";
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -62,6 +66,8 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         if (IdentityEventConstants.EventName.SESSION_TERMINATE.name().equals(eventName)) {
             handleOrgSessionTerminate(eventProperties);
+        } else if (IdentityEventConstants.Event.SESSION_EXTENSION.equals(eventName)) {
+            handleOrgSessionExtend(eventProperties);
         }
     }
 
@@ -92,7 +98,7 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                         OIDCStateInfo oidcStateInfo = (OIDCStateInfo) authenticatorStateInfo;
                         String idTokenHint = oidcStateInfo.getIdTokenHint();
                         // Resolve session ID by `isk` claim in ID token hint.
-                        sessionId = getSessionId(idTokenHint);
+                        sessionId = getClaimFromJWT(idTokenHint, IDP_SESSION_KEY);
                         break;
                     }
                 }
@@ -116,23 +122,109 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         }
     }
 
-    private String getSessionId(String idToken) {
+    private void handleOrgSessionExtend(Map<String, Object> eventProperties) throws IdentityEventException {
 
-        String base64Body = idToken.split("\\.")[1];
-        byte[] decoded = Base64.getDecoder().decode(base64Body);
-        try {
-            Set<Map.Entry<String, Object>> jwtAttributeSet =
-                    JSONObjectUtils.parse(new String(decoded, StandardCharsets.UTF_8)).entrySet();
-            for (Map.Entry<String, Object> entry : jwtAttributeSet) {
-                if (StringUtils.equals(IDP_SESSION_KEY, entry.getKey())) {
-                    return String.valueOf(entry.getValue());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Extending associated sub organization session for root organization session: " +
+                    eventProperties.get(
+                            IdentityEventConstants.EventProperty.SESSION_CONTEXT_ID));
+        }
+        SessionContext sessionContext = (SessionContext) eventProperties.get(
+                IdentityEventConstants.EventProperty.SESSION_CONTEXT);
+        Map<String, AuthenticatedIdPData> authenticatedIdPs = sessionContext.getAuthenticatedIdPs();
+        if (authenticatedIdPs == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Authenticated IdPs not found in the session context." +
+                        " Hence, sub org session extension is not applicable.");
+            }
+            return;
+        }
+        String sessionId = null;
+        String orgId = null;
+        authenticatedIdPsLoop:
+        for (Map.Entry<String, AuthenticatedIdPData> entry : authenticatedIdPs.entrySet()) {
+            if (entry.getValue() == null) {
+                continue;
+            }
+            List<AuthenticatorConfig> authenticators = entry.getValue().getAuthenticators();
+            if (CollectionUtils.isEmpty(authenticators)) {
+                continue;
+            }
+            for (AuthenticatorConfig authenticator : authenticators) {
+                if (FrameworkConstants.ORGANIZATION_AUTHENTICATOR.equals(authenticator.getName())) {
+                    AuthenticatorStateInfo authenticatorStateInfo = authenticator.getAuthenticatorStateInfo();
+                    if (authenticatorStateInfo instanceof OIDCStateInfo) {
+                        OIDCStateInfo oidcStateInfo = (OIDCStateInfo) authenticatorStateInfo;
+                        String idTokenHint = oidcStateInfo.getIdTokenHint();
+                        // Resolve session ID by `isk` claim in ID token hint.
+                        sessionId = getClaimFromJWT(idTokenHint, IDP_SESSION_KEY);
+                        // Resolve org ID by `org_id` claim in ID token hint.
+                        orgId = getClaimFromJWT(idTokenHint, AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE);
+                        break authenticatedIdPsLoop;
+                    }
                 }
             }
+        }
+        if (StringUtils.isBlank(sessionId) || StringUtils.isBlank(orgId)) {
+            LOG.debug("Organization authenticator not found in the authenticators list or " +
+                    "Session ID / org ID not found in the ID token.");
+            return;
+        }
+        String tenantDomain;
+        try {
+            tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            if (StringUtils.isBlank(tenantDomain)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Tenant ID not found for the organization ID: " + orgId);
+                }
+                return;
+            }
+        } catch (OrganizationManagementException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while resolving the tenant ID for the organization ID: " + orgId, e);
+            }
+            throw new IdentityEventException("Error while extending session for session ID: " + sessionId, e);
+        }
+
+        SessionContextCacheKey sessionContextCacheKey = new SessionContextCacheKey(sessionId);
+        SessionContextCacheEntry sessionContextCacheEntry = SessionContextCache.getInstance()
+                .getSessionContextCacheEntry(sessionContextCacheKey, tenantDomain);
+
+        if (sessionContextCacheEntry == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No session available for requested session identifier: " + sessionId);
+            }
+            return;
+        }
+
+        SessionContext orgSessionContext = sessionContextCacheEntry.getContext();
+        boolean isSessionExpired = SessionContextCache.getInstance().
+                isSessionExpired(sessionContextCacheKey, sessionContextCacheEntry);
+        if (isSessionExpired) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Session already expired for provided session cache entry with session ID: " + sessionId);
+            }
+            return;
+        }
+        long currentTime = System.currentTimeMillis();
+        FrameworkUtils.updateSessionLastAccessTimeMetadata(sessionId, currentTime);
+        FrameworkUtils.addSessionContextToCache(sessionId, orgSessionContext, tenantDomain, tenantDomain);
+    }
+
+    private String getClaimFromJWT(String idToken, String claimname) {
+
+        try {
+            return String.valueOf(SignedJWT.parse(idToken).getJWTClaimsSet().getClaim(claimname));
         } catch (ParseException e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error while parsing the ID token.", e);
             }
         }
         return null;
+    }
+
+    private static OrganizationManager getOrganizationManager() {
+
+        return OrganizationManagementHandlerDataHolder.getInstance().getOrganizationManager();
     }
 }
