@@ -112,6 +112,10 @@ public class UserSharingConstants {
                             APPLICATION_MGT_VIEW_PERMISSION, CORS_CONFIG_MGT_VIEW_PERMISSION, IDP_MGT_VIEW_PERMISSION,
                             CLAIM_META_DATA_MGT_VIEW_PERMISSION));
 
+    public static final String EXISTING_USER_UNSHARE_SUCCESS = "Existing User Unshared Successfully. ";
+    public static final String EXISTING_USER_UNSHARE_FAIL = "Existing User Unshare Failed. ";
+    public static final String ROLE_UPDATE_FOR_EXISTING_SHARED_USER_FAIL = "Role Update For Existing Shared User Failed. ";
+
     /**
      * Enum for assignmentType.
      */

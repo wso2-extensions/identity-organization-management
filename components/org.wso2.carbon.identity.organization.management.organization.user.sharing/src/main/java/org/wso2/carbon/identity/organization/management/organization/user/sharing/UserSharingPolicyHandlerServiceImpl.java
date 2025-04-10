@@ -103,6 +103,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.EXISTING_USER_UNSHARE_FAIL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.EXISTING_USER_UNSHARE_SUCCESS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
@@ -129,6 +131,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_FOR_EXISTING_SHARED_USER_FAIL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
@@ -786,14 +789,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         UnitOperationRecord operationStatus =
                                 new UnitOperationRecord(operationId, association.getUserId(),
                                         sharingInitiatedOrgId, ShareOperationStatus.SUCCESS.toString(),
-                                        "Existing User Unshared Successfully.");
+                                        EXISTING_USER_UNSHARE_SUCCESS);
                         asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
                         asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(ShareOperationStatus.SUCCESS.toString()));
                     } catch (UserSharingMgtException e) {
                         UnitOperationRecord operationStatus =
                                 new UnitOperationRecord(operationId, association.getUserId(),
                                         sharingInitiatedOrgId, ShareOperationStatus.PARTIAL.toString(),
-                                        "Existing User Unshare Failed. " + e.getMessage());
+                                        EXISTING_USER_UNSHARE_FAIL + e.getMessage());
                         asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
                         asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(ShareOperationStatus.PARTIAL.toString()));
                         throw e;
@@ -1424,7 +1427,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             UnitOperationRecord operationStatus =
                     new UnitOperationRecord(resultDO.getOperationId(), userAssociation.getUserId(),
                             sharingInitiatedOrgId, ShareOperationStatus.PARTIAL.toString(),
-                            "Role Update For Existing Shared User Failed. " + e.getMessage());
+                            ROLE_UPDATE_FOR_EXISTING_SHARED_USER_FAIL + e.getMessage());
             asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
             asyncOperationStatusList.get(resultDO.getOperationId()).add(new SubOperationStatusObject(ShareOperationStatus.PARTIAL.toString()));
             throw e;
