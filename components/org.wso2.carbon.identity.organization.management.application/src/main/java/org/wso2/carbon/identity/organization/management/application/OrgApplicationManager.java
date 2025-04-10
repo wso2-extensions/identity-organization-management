@@ -157,6 +157,7 @@ public interface OrgApplicationManager {
      * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
      * @throws OrganizationManagementException on errors when sharing the application.
      */
+    //TODO: change it to default
     void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                           boolean shareWithAllChildren, String operationId) throws OrganizationManagementException;
 
