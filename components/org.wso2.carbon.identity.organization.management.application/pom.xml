@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2022-2023, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2022-2025, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.4.119-SNAPSHOT</version>
+        <version>1.4.133-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -131,7 +131,11 @@
             <artifactId>mockito-inline</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.testutil</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

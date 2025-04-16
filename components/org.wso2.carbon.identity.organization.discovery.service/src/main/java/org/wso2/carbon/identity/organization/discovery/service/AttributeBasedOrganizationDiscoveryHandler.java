@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.discovery.service;
 
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 import java.util.List;
@@ -52,6 +53,18 @@ public interface AttributeBasedOrganizationDiscoveryHandler {
      * @return The extracted attribute value.
      */
     String extractAttributeValue(String discoveryInput);
+
+    /**
+     * Extract the attribute value from the given organization discovery input.
+     *
+     * @param discoveryInput The discovery input provided by the user.
+     * @param context        The authentication context.
+     * @return The extracted attribute value.
+     */
+    default String extractAttributeValue(String discoveryInput, AuthenticationContext context) {
+
+        return extractAttributeValue(discoveryInput);
+    }
 
     /**
      * Get the list of validations that are required for events triggered during organization discovery related

@@ -40,7 +40,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.user.core.UserStoreException;
-import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -85,7 +85,7 @@ public class SharedUserProfileUpdateGovernanceEventListenerTest {
     @Mock
     OrganizationUserSharingService organizationUserSharingService;
     @Mock
-    private UserStoreManager userStoreManager;
+    private AbstractUserStoreManager userStoreManager;
     @Mock
     IdentityEventListenerConfig identityEventListenerConfig;
     private MockedStatic<OrganizationManagementUtil> organizationManagementUtilMockedStatic;
