@@ -501,6 +501,16 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         if (application == null) {
             return false;
         }
+        String organizationId;
+        try {
+            organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            if (organizationId == null) {
+                organizationId = SUPER_ORG_ID;
+            }
+        } catch (OrganizationManagementException e) {
+            throw new IdentityApplicationManagementClientException(
+                    format("Error retrieving organization ID for tenant", application.getApplicationResourceId()));
+        }
 
         // If the application is a fragment application and the main application is shared with all its descendants,
         // the application can be deleted only if the main application is being deleted or if main application delete
@@ -510,7 +520,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             Optional<SharedApplicationDO> sharedApplicationDO;
             try {
                 sharedApplicationDO = getOrgApplicationMgtDAO().getSharedApplication(application.getApplicationID(),
-                        tenantDomain);
+                        organizationId);
                 if (sharedApplicationDO.isPresent()) {
                     if (IdentityUtil.threadLocalProperties.get().containsKey(DELETE_MAIN_APPLICATION) ||
                             IdentityUtil.threadLocalProperties.get().containsKey(DELETE_SHARE_FOR_MAIN_APPLICATION) ||
@@ -533,11 +543,6 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         try {
             // If an application has fragment applications, delete all its fragment applications.
             if (getOrgApplicationMgtDAO().hasFragments(application.getApplicationResourceId())) {
-                String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-                if (organizationId == null) {
-                    organizationId = SUPER_ORG_ID;
-                }
-
                 List<SharedApplicationDO> sharedApplications = getOrgApplicationMgtDAO().getSharedApplications(
                         organizationId, application.getApplicationResourceId());
                 IdentityUtil.threadLocalProperties.get().put(DELETE_MAIN_APPLICATION, true);

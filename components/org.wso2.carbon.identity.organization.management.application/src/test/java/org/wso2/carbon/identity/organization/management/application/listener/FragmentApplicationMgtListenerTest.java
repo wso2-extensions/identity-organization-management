@@ -296,9 +296,10 @@ public class FragmentApplicationMgtListenerTest {
                 .thenReturn(serviceProvider);
         when(serviceProvider.getApplicationID()).thenReturn(1);
         when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
 
         if (isSharedApplicationPresent) {
-            when(orgApplicationMgtDAO.getSharedApplication(1, tenantDomain))
+            when(orgApplicationMgtDAO.getSharedApplication(1, organizationID))
                     .thenReturn(Optional.ofNullable(sharedApplicationDO));
             when(sharedApplicationDO.shareWithAllChildren()).thenReturn(isShareWithAllChildren);
         }
