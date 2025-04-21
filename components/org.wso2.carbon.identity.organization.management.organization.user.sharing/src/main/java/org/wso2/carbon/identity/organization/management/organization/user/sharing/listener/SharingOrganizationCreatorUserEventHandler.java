@@ -117,9 +117,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             if (StringUtils.isEmpty(associatedOrgId)) {
                 associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
             }
-            String associatedTenantDomain =
-                    OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
-                            .resolveTenantDomain(associatedOrgId);
+            String associatedTenantDomain = OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                    .resolveTenantDomain(associatedOrgId);
             try {
                 String parentOrgId = getOrganizationId();
                 PrivilegedCarbonContext.startTenantFlow();
@@ -160,7 +159,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
 
         String[] userRolesAssociatedWithConsole = getConsoleRolesForLocalUser(userId, tenantDomain);
         if (userRolesAssociatedWithConsole.length > 0) {
-            return true; // Allow if the user already has Console roles.
+            return true; // Allow if the user already has Console access.
         }
 
         // Retrieve the authenticated service provider from thread-local context.
@@ -241,8 +240,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     /**
      * Get console roles for local user for given app.
      *
-     * @param userId        userID.
-     * @param tenantDomain  Tenant domain.
+     * @param userId       userID.
+     * @param tenantDomain Tenant domain.
      * @return Console roles for local user.
      * @throws IdentityEventException If an error occurred while getting console roles for local user.
      */
@@ -269,10 +268,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             throws IdentityEventException {
 
         try {
-            ServiceProvider consoleAppInfo =
-                    OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService()
-                            .getApplicationExcludingFileBasedSPs(ApplicationConstants.CONSOLE_APPLICATION_NAME,
-                                    tenantDomain);
+            ServiceProvider consoleAppInfo = getApplicationManagementService().getApplicationExcludingFileBasedSPs(
+                    ApplicationConstants.CONSOLE_APPLICATION_NAME, tenantDomain);
             return getApplicationManagementService().getAssociatedRolesOfApplication(
                     consoleAppInfo.getApplicationResourceId(), tenantDomain);
         } catch (IdentityApplicationManagementException e) {
@@ -283,7 +280,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     /**
      * Get all roles of the local user.
      *
-     * @param userId       UserID.
+     * @param userId       User ID.
      * @param tenantDomain Tenant domain.
      * @return All the roles assigned to the local user.
      * @throws IdentityEventException If an error occurred while getting all roles of a local user.
@@ -305,7 +302,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     /**
      * Get the groups of the local authenticated user.
      *
-     * @param userId       UserID.
+     * @param userId       User ID.
      * @param tenantDomain Tenant domain.
      * @return Groups of the local user.
      * @throws IdentityEventException If an error occurred while getting groups of the local user.
