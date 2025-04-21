@@ -84,17 +84,9 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
-            if (claims != null && claims.containsKey(CLAIM_MANAGED_ORGANIZATION)
-                    && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
+
+            if (isSharedUser(claims)) {
                 return true;
-            }
-            UserIdentityClaim userIdentityClaims = (UserIdentityClaim)
-                    IdentityUtil.threadLocalProperties.get().get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
-            if (userIdentityClaims != null) {
-                if (StringUtils.isNotBlank(
-                        userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION))) {
-                    return true;
-                }
             }
 
             String organizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
@@ -177,5 +169,29 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
+    }
+
+    /**
+     * Check whether the user is a shared user or not.
+     *
+     * @return true if the user is a shared user, false otherwise.
+     */
+    private boolean isSharedUser(Map<String, String> claims) {
+
+        if (claims != null && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
+            return true;
+        }
+
+        Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
+        if (threadLocalProperties == null) {
+            return false;
+        }
+        Object claimProp = threadLocalProperties.get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
+        if (!(claimProp instanceof UserIdentityClaim)) {
+            return false;
+        }
+        UserIdentityClaim userIdentityClaims = (UserIdentityClaim) claimProp;
+        String orgClaim = userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION);
+        return StringUtils.isNotBlank(orgClaim);
     }
 }
