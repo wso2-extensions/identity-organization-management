@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -23,8 +23,10 @@ import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -44,17 +46,29 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.api.UserStoreManager;
+import org.wso2.carbon.user.core.NotImplementedException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.Group;
+import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.InternalRoleDomains.APPLICATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
+import static org.wso2.carbon.user.mgt.UserMgtConstants.INTERNAL_ROLE;
 
 /**
  * The event handler for sharing the organization creator to the child organization.
@@ -103,6 +117,9 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             if (StringUtils.isEmpty(associatedOrgId)) {
                 associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
             }
+            String associatedTenantDomain =
+                    OrganizationUserSharingDataHolder.getInstance().getOrganizationManager()
+                            .resolveTenantDomain(associatedOrgId);
             try {
                 String parentOrgId = getOrganizationId();
                 PrivilegedCarbonContext.startTenantFlow();
@@ -112,7 +129,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                 String userId = userSharingService
                         .getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId)
                         .getUserId();
-                if (allowAssignConsoleAdministratorRole()) {
+                if (isConsoleAdministratorRoleAssignmentAllowed(associatedUserId, associatedTenantDomain)) {
                     assignUserToConsoleAppAdminRole(userId, tenantDomain, parentOrgId);
                 }
             } finally {
@@ -125,21 +142,37 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     }
 
     /**
-     * The users authenticated via either console application or API invoked with basic auth option is allowed to be
-     * assigned the shared console Administrator role.
+     * Determines whether the shared Console Administrator role can be assigned to a user.
+     * <p>
+     * Role assignment is permitted if any of the following conditions are met:
+     * <ul>
+     *     <li>The user already has any role with the Console application's audience.</li>
+     *     <li>The user is authenticated using Basic Auth (i.e., no service provider is set).</li>
+     * </ul>
      *
-     * @return Whether console role is allowed to be assigned.
+     * @param userId       ID of the user being evaluated.
+     * @param tenantDomain Tenant domain of the user.
+     * @return {@code true} if assigning the Console Administrator role is allowed; {@code false} otherwise.
+     * @throws IdentityEventException If an error occurs during role or application retrieval.
      */
-    private boolean allowAssignConsoleAdministratorRole() {
+    private boolean isConsoleAdministratorRoleAssignmentAllowed(String userId, String tenantDomain)
+            throws IdentityEventException {
 
+        String[] userRolesAssociatedWithConsole = getConsoleRolesForLocalUser(userId, tenantDomain);
+        if (userRolesAssociatedWithConsole.length > 0) {
+            return true; // Allow if the user already has Console roles.
+        }
+
+        // Retrieve the authenticated service provider from thread-local context.
         Object authenticatedAppFromThreadLocal = IdentityUtil.threadLocalProperties.get()
                 .get(FrameworkConstants.SERVICE_PROVIDER);
+        // Allow if no service provider is set (indicates Basic Auth usage).
         if (!(authenticatedAppFromThreadLocal instanceof String)) {
             // When organization creation is initiated via basic auth, SP is not set in the thread local.
             return true;
         }
-        String authenticatedApp = (String) authenticatedAppFromThreadLocal;
-        return FrameworkConstants.Application.CONSOLE_APP.equals(authenticatedApp);
+
+        return false;
     }
 
     private void assignUserToConsoleAppAdminRole(String userId, String tenantDomain, String parentOrgId)
@@ -203,5 +236,161 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
         }
         return organization.getAttributes().stream()
                 .anyMatch(x -> x.getKey().equals(OrganizationManagementConstants.CREATOR_ID));
+    }
+
+    /**
+     * Get console roles for local user for given app.
+     *
+     * @param userId        userID.
+     * @param tenantDomain  Tenant domain.
+     * @return Console roles for local user.
+     * @throws IdentityEventException If an error occurred while getting console roles for local user.
+     */
+    private String[] getConsoleRolesForLocalUser(String userId, String tenantDomain)
+            throws IdentityEventException {
+
+        Set<String> userRoleIds = getAllRolesOfLocalUser(userId, tenantDomain);
+        List<RoleV2> rolesAssociatedWithConsoleApp = getRolesAssociatedWithConsoleApplication(tenantDomain);
+
+        return rolesAssociatedWithConsoleApp.stream()
+                .filter(role -> userRoleIds.contains(role.getId()))
+                .map(RoleV2::getName)
+                .toArray(String[]::new);
+    }
+
+    /**
+     * Get roles associated with the console application.
+     *
+     * @param tenantDomain  Tenant domain.
+     * @return Roles associated with the console application.
+     * @throws IdentityEventException If an error occurred while getting roles associated with the console application.
+     */
+    private List<RoleV2> getRolesAssociatedWithConsoleApplication(String tenantDomain)
+            throws IdentityEventException {
+
+        try {
+            ServiceProvider consoleAppInfo =
+                    OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService()
+                            .getApplicationExcludingFileBasedSPs(ApplicationConstants.CONSOLE_APPLICATION_NAME,
+                                    tenantDomain);
+            return getApplicationManagementService().getAssociatedRolesOfApplication(
+                    consoleAppInfo.getApplicationResourceId(), tenantDomain);
+        } catch (IdentityApplicationManagementException e) {
+            throw new IdentityEventException("Error while retrieving console application roles", e);
+        }
+    }
+
+    /**
+     * Get all roles of the local user.
+     *
+     * @param userId       UserID.
+     * @param tenantDomain Tenant domain.
+     * @return All the roles assigned to the local user.
+     * @throws IdentityEventException If an error occurred while getting all roles of a local user.
+     */
+    private Set<String> getAllRolesOfLocalUser(String userId, String tenantDomain)
+            throws IdentityEventException {
+
+        try {
+            List<String> userGroups = getUserGroups(userId, tenantDomain);
+            List<String> roleIdsFromUserGroups = getRoleIdsOfGroups(userGroups, tenantDomain);
+            List<String> roleIdsFromUser = getRoleIdsOfUser(userId, tenantDomain);
+
+            return new HashSet<>(CollectionUtils.union(roleIdsFromUserGroups, roleIdsFromUser));
+        } catch (IdentityRoleManagementException e) {
+            throw new IdentityEventException("Error while retrieving application roles", e);
+        }
+    }
+
+    /**
+     * Get the groups of the local authenticated user.
+     *
+     * @param userId       UserID.
+     * @param tenantDomain Tenant domain.
+     * @return Groups of the local user.
+     * @throws IdentityEventException If an error occurred while getting groups of the local user.
+     */
+    private List<String> getUserGroups(String userId, String tenantDomain) throws IdentityEventException {
+
+        List<String> userGroups = new ArrayList<>();
+
+        RealmService realmService = UserCoreUtil.getRealmService();
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            UserStoreManager userStoreManager = realmService.getTenantUserRealm(tenantId).getUserStoreManager();
+            List<Group> groups = ((AbstractUserStoreManager) userStoreManager)
+                    .getGroupListOfUser(userId, null, null);
+            // Exclude internal and application groups from the list.
+            for (Group group : groups) {
+                String groupName = group.getGroupName();
+                if (!StringUtils.containsIgnoreCase(groupName, INTERNAL_ROLE) &&
+                        !StringUtils.containsIgnoreCase(groupName, APPLICATION_DOMAIN)) {
+                    userGroups.add(group.getGroupID());
+                }
+            }
+        } catch (UserStoreException e) {
+            if (isDoGetGroupListOfUserNotImplemented(e)) {
+                return userGroups;
+            }
+            throw new IdentityEventException("Error while retrieving local user groups", e);
+        }
+        return userGroups;
+    }
+
+    /**
+     * Check if the UserStoreException occurred due to the doGetGroupListOfUser method not being implemented.
+     *
+     * @param e UserStoreException.
+     * @return true if the UserStoreException was caused by the doGetGroupListOfUser method not being implemented,
+     * false otherwise.
+     */
+    private boolean isDoGetGroupListOfUserNotImplemented(UserStoreException e) {
+
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause instanceof NotImplementedException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * Get Role IDs assigned to user through groups.
+     *
+     * @param userGroups   User groups.
+     * @param tenantDomain Tenant domain.
+     * @return Role IDs assigned to user through groups.
+     * @throws IdentityRoleManagementException If an error occurred while getting role IDs assigned through groups.
+     */
+    private List<String> getRoleIdsOfGroups(List<String> userGroups, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        return getRoleManagementService().getRoleIdListOfGroups(userGroups, tenantDomain);
+    }
+
+    /**
+     * Get Role IDs assigned to user directly.
+     *
+     * @param userId       User ID.
+     * @param tenantDomain Tenant domain.
+     * @return Role IDs assigned to user directly.
+     * @throws IdentityRoleManagementException If an error occurred while getting role IDs assigned directly.
+     */
+    private List<String> getRoleIdsOfUser(String userId, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        return getRoleManagementService().getRoleIdListOfUser(userId, tenantDomain);
+    }
+
+    private ApplicationManagementService getApplicationManagementService() {
+
+        return OrganizationUserSharingDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    private RoleManagementService getRoleManagementService() {
+
+        return OrganizationUserSharingDataHolder.getInstance().getRoleManagementService();
     }
 }
