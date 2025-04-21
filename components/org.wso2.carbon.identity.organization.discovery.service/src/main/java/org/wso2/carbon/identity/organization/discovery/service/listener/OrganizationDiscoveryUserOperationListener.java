@@ -25,6 +25,9 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
+import org.wso2.carbon.identity.governance.model.UserIdentityClaim;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
@@ -85,6 +88,15 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
                     && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
                 return true;
             }
+            UserIdentityClaim userIdentityClaims = (UserIdentityClaim)
+                    IdentityUtil.threadLocalProperties.get().get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
+            if (userIdentityClaims != null) {
+                if (StringUtils.isNotBlank(
+                        userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION))) {
+                    return true;
+                }
+            }
+
             String organizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
             if (StringUtils.isBlank(organizationId)) {
                 organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
