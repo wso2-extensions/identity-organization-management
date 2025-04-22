@@ -182,6 +182,8 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
             return true;
         }
 
+        // In IdentityStoreEventListener#doPreAddUser, temporarily cache the identity claim in a ThreadLocal
+        // and remove it from the claims list to defer further processing.
         Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
         if (threadLocalProperties == null) {
             return false;
