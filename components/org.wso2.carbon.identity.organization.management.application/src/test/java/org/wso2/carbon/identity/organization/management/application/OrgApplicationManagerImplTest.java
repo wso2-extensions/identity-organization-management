@@ -452,7 +452,7 @@ public class OrgApplicationManagerImplTest {
 
     @Test(dataProvider = "shareOrganizationApplicationTestData")
     public void testShareOrganizationApplication(String applicationName, boolean useMappedLocalSubject)
-            throws IdentityApplicationManagementException, OrganizationManagementException {
+            throws Exception {
 
         boolean shareWithAllChildren = true;
         List<String> sharedOrgs = new ArrayList<>();
