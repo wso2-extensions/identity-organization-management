@@ -29,6 +29,10 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -47,6 +51,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -74,6 +79,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 
 /**
  * Unit tests for OrgApplicationManagerImpl.
@@ -431,6 +437,60 @@ public class OrgApplicationManagerImplTest {
             orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @DataProvider(name = "shareOrganizationApplicationTestData")
+    public Object[][] getShareOrganizationApplicationTestData() {
+
+        return new Object[][]{
+                {"RandomApplication", false},
+                {"Console", true},
+                {"My Account", true}
+        };
+    }
+
+    @Test(dataProvider = "shareOrganizationApplicationTestData")
+    public void testShareOrganizationApplication(String applicationName, boolean useMappedLocalSubject)
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+
+        boolean shareWithAllChildren = true;
+        List<String> sharedOrgs = new ArrayList<>();
+
+        try (MockedStatic<Utils> mockedUtils = mockStatic(Utils.class)) {
+            mockedUtils.when(() -> Utils.getOrganizationId()).thenReturn(ROOT_ORG_ID);
+
+            ServiceProvider mainApplication = mock(ServiceProvider.class);
+            when(mainApplication.getApplicationName()).thenReturn(applicationName);
+            ServiceProviderProperty isFragmentAppProperty = new ServiceProviderProperty();
+            isFragmentAppProperty.setName(IS_FRAGMENT_APP);
+            isFragmentAppProperty.setValue("false");
+            when(mainApplication.getSpProperties()).thenReturn(new ServiceProviderProperty[]{isFragmentAppProperty});
+
+            LocalAndOutboundAuthenticationConfig localAndOutboundAuthenticationConfig
+                    = mock(LocalAndOutboundAuthenticationConfig.class);
+            when(mainApplication.getLocalAndOutBoundAuthenticationConfig())
+                    .thenReturn(localAndOutboundAuthenticationConfig);
+            when(localAndOutboundAuthenticationConfig.getAuthenticationSteps()).thenReturn(null);
+
+            when(orgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            ClaimConfig claimConfig = new ClaimConfig();
+            when(mainApplication.getClaimConfig()).thenReturn(claimConfig);
+            when(applicationManagementService.getApplicationByResourceId(any(), any())).thenReturn(mainApplication);
+
+            IdentityProvider ssoIdp = mock(IdentityProvider.class);
+            when(applicationManagementService.getAllIdentityProviders(any()))
+                    .thenReturn(new IdentityProvider[]{ssoIdp});
+            FederatedAuthenticatorConfig federatedAuthenticatorConfig = mock(FederatedAuthenticatorConfig.class);
+            when(federatedAuthenticatorConfig.getName()).thenReturn(ORGANIZATION_LOGIN_AUTHENTICATOR);
+            when(ssoIdp.getFederatedAuthenticatorConfigs())
+                    .thenReturn(new FederatedAuthenticatorConfig[]{federatedAuthenticatorConfig});
+
+            orgApplicationManager.shareOrganizationApplication(ROOT_ORG_ID, ROOT_APP_ID,
+                    shareWithAllChildren, sharedOrgs);
+
+            assertEquals(useMappedLocalSubject, mainApplication.getClaimConfig().isAlwaysSendMappedLocalSubjectId());
         }
     }
 
