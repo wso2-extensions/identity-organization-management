@@ -37,6 +37,7 @@ public class UserSharingConstants {
     public static final String APPLICATION = "application";
     public static final String USER = "User";
     public static final String BLANK = "";
+    public static final String CORRELATION_ID_MDC = "Correlation-ID";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";
@@ -114,7 +115,11 @@ public class UserSharingConstants {
 
     public static final String EXISTING_USER_UNSHARE_SUCCESS = "Existing User Unshared Successfully. ";
     public static final String EXISTING_USER_UNSHARE_FAIL = "Existing User Unshare Failed. ";
-    public static final String ROLE_UPDATE_FOR_EXISTING_SHARED_USER_FAIL = "Role Update For Existing Shared User Failed. ";
+    public static final String ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER =
+            "Role Update Success For The Shared User. ";
+    public static final String ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER =
+            "Role Update For Existing Shared User Failed. ";
+    public static final String ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER = "Role Update For Shared User Failed. ";
 
     /**
      * Enum for assignmentType.

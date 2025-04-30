@@ -32,7 +32,7 @@ import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.service.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
@@ -260,28 +260,28 @@ public class OrgApplicationMgtServiceComponent {
     }
 
     @Reference(
-            name = "async.status.mgt.service",
-            service = AsyncStatusMgtService.class,
+            name = "async.operation.status.mgt.service",
+            service = AsyncOperationStatusMgtService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetAsyncStatusMgtService"
     )
     protected void setAsyncStatusMgtService(
-            AsyncStatusMgtService asyncStatusMgtService) {
+            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrgApplicationMgtDataHolder.getInstance()
-                .setAsyncStatusMgtService(asyncStatusMgtService);
+                .setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
         if (log.isDebugEnabled()) {
-            log.debug("Set Async Status Mgt Service On Application Management Component.");
+            log.debug("Set Async Operation Status Mgt Service On Application Management Component.");
         }
     }
 
     protected void unsetAsyncStatusMgtService(
-            AsyncStatusMgtService asyncStatusMgtService) {
+            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
-        OrgApplicationMgtDataHolder.getInstance().setAsyncStatusMgtService(null);
+        OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
         if (log.isDebugEnabled()) {
-            log.debug("Unset Async Status Mgt Service On Application Management Component.");
+            log.debug("Unset Async Operation Status Mgt Service On Application Management Component.");
         }
     }
 }

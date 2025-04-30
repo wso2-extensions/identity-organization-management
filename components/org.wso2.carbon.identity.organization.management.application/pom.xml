@@ -106,8 +106,8 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.framework.async.status.mgt</artifactId>
-            <version>7.7.253</version>
+            <artifactId>org.wso2.carbon.identity.framework.async.operation.status.mgt</artifactId>
+            <version>7.8.68</version>
         </dependency>
         <!--Test Dependencies-->
         <dependency>
@@ -178,7 +178,7 @@
                             org.wso2.carbon.identity.application.common.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt.listener; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.framework.async.status.mgt.api.*;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.framework.async.operation.status.mgt.api.*;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.claim.metadata.mgt; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.claim.metadata.mgt.exception; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.claim.metadata.mgt.model; version="${carbon.identity.package.import.version.range}",

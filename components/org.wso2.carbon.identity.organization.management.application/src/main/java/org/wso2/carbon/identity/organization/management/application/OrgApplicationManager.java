@@ -158,9 +158,9 @@ public interface OrgApplicationManager {
      * @throws OrganizationManagementException on errors when sharing the application.
      */
     default void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
-                          boolean shareWithAllChildren, String operationId) throws OrganizationManagementException{
+                          boolean shareWithAllChildren, String operationId) throws OrganizationManagementException {
         throw new NotImplementedException(
-                "getAncestorAppIds method is not implemented in " + this.getClass().getName());
+                "shareApplication method is not implemented in " + this.getClass().getName());
     };
 
     /**

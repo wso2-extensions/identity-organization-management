@@ -27,6 +27,7 @@ public class OrgApplicationMgtConstants {
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
     public static final String SHARE_WITH_ALL_CHILDREN = "shareWithAllChildren";
+    public static final String CORRELATION_ID_MDC = "Correlation-ID";
 
     public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
     public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
@@ -70,4 +71,45 @@ public class OrgApplicationMgtConstants {
     public static final String SUCCESS = "SUCCESS";
     public static final String FAIL = "FAIL";
 
+    /**
+     * Enum representing the types of share policies.
+     */
+    public enum SharePolicy {
+
+        DO_NOT_SHARE("DO_NOT_SHARE"),
+        SELECTIVE_SHARE("SELECTIVE_SHARE"),
+        SHARE_WITH_ALL("SHARE_WITH_ALL");
+
+        private final String value;
+
+        SharePolicy(String value) {
+
+            this.value = value;
+        }
+
+        public String getValue() {
+
+            return value;
+        }
+    }
+
+    /**
+     * Enum representing the types of share operations.
+     */
+    public enum ShareOperationType {
+        APPLICATION_SHARE("B2B_APPLICATION_SHARE"),
+        APPLICATION_UNSHARE("B2B_APPLICATION_UNSHARE");
+
+        private final String value;
+
+        ShareOperationType(String value) {
+
+            this.value = value;
+        }
+
+        public String getValue() {
+
+            return value;
+        }
+    }
 }

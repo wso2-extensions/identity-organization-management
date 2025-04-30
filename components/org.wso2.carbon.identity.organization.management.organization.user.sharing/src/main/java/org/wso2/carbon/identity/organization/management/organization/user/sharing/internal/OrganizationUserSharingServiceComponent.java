@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.service.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerService;
@@ -82,8 +82,6 @@ public class OrganizationUserSharingServiceComponent {
         UserSharingPolicyHandlerService userSharingPolicyHandlerService = new UserSharingPolicyHandlerServiceImpl();
         bundleContext.registerService(UserSharingPolicyHandlerService.class.getName(), userSharingPolicyHandlerService,
                 null);
-        LOG.info("OrganizationUserSharingServiceComponent activated successfully.");
-        LOG.info("Patch in action...");
     }
 
     @Reference(
@@ -229,24 +227,24 @@ public class OrganizationUserSharingServiceComponent {
     }
 
     @Reference(
-            name = "async.status.mgt.service",
-            service = AsyncStatusMgtService.class,
+            name = "async.operation.status.mgt.service",
+            service = AsyncOperationStatusMgtService.class,
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetAsyncStatusMgtService"
+            unbind = "unsetAsyncOperationStatusMgtService"
     )
-    protected void setAsyncStatusMgtService(
-            AsyncStatusMgtService asyncStatusMgtService) {
+    protected void setAsyncOperationStatusMgtService(
+            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrganizationUserSharingDataHolder.getInstance()
-                .setAsyncStatusMgtService(asyncStatusMgtService);
-        LOG.debug("Set Async Status Mgt Service.");
+                .setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
+        LOG.debug("Set Async Operation Status Mgt Service.");
     }
 
-    protected void unsetAsyncStatusMgtService(
-            AsyncStatusMgtService asyncStatusMgtService) {
+    protected void unsetAsyncOperationStatusMgtService(
+            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
-        OrganizationUserSharingDataHolder.getInstance().setAsyncStatusMgtService(null);
-        LOG.debug("Unset Async Status Mgt Service.");
+        OrganizationUserSharingDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
+        LOG.debug("Unset Async Operation Status Mgt Service.");
     }
 }

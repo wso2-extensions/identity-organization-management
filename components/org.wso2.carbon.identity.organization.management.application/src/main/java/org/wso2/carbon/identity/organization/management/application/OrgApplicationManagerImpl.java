@@ -23,6 +23,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.MDC;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
@@ -48,19 +49,18 @@ import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusObject;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.buffer.SubOperationStatusQueue;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.exception.AsyncStatusMgtException;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.models.OperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
-import org.wso2.carbon.identity.framework.async.status.mgt.api.service.AsyncStatusMgtService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusObject;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.exception.AsyncOperationStatusMgtException;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.models.OperationInitDTO;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.models.UnitOperationInitDTO;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.dto.OAuthAppRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
-import org.wso2.carbon.identity.organization.management.application.constant.ShareOperationType;
-import org.wso2.carbon.identity.organization.management.application.constant.SharePolicy;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
@@ -89,6 +89,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -99,7 +100,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
-
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OAUTH2;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
@@ -111,6 +111,7 @@ import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.oauth.Error.DUPLICATE_OAUTH_CLIENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.AUTH_TYPE_OAUTH_2;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.B2B_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.FAIL;
@@ -118,6 +119,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SUCCESS;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ShareOperationType.APPLICATION_SHARE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
@@ -133,12 +135,13 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_TENANT_DOMAIN_FROM_ORGANIZATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REVOKING_SHARED_APP_TOKENS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_DELETE_SHARE_REQUEST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE;
@@ -157,10 +160,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private static final Log LOG = LogFactory.getLog(OrgApplicationManagerImpl.class);
-
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
-    private final AsyncStatusMgtService
-            asyncStatusMgtService = OrgApplicationMgtDataHolder.getInstance().getAsyncStatusMgtService();
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
 
     @Override
@@ -174,22 +174,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (requestInvokingOrganizationId == null) {
             requestInvokingOrganizationId = SUPER_ORG_ID;
         }
-
-        String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-
-        String sharePolicy =
-                shareWithAllChildren ? SharePolicy.SHARE_WITH_ALL.getValue() : SharePolicy.SELECTIVE_SHARE.getValue();
-        String operationId;
-        try {
-            operationId = asyncStatusMgtService.registerOperationStatus(
-                    new OperationRecord(UUID.randomUUID().toString(), ShareOperationType.APPLICATION_SHARE.getValue(),
-                            B2B_APPLICATION, originalAppId, ownerOrgId, userID, sharePolicy), true);
-        } catch (AsyncStatusMgtException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e, originalAppId);
-        }
-        SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
-        asyncOperationStatusList.put(operationId, statusQueue);
-
         validateApplicationShareAccess(requestInvokingOrganizationId, ownerOrgId);
         Organization organization = getOrganizationManager().getOrganization(ownerOrgId, false, false);
         String ownerTenantDomain = getTenantDomain();
@@ -241,6 +225,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     rootApplication.getApplicationResourceId());
         }
 
+        String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
+        String sharePolicy =
+                shareWithAllChildren ? OrgApplicationMgtConstants.SharePolicy.SHARE_WITH_ALL.getValue() :
+                        OrgApplicationMgtConstants.SharePolicy.SELECTIVE_SHARE.getValue();
+        String operationId = getOperationId(originalAppId, ownerOrgId, userID, sharePolicy);
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (BasicOrganization child : filteredChildOrgs) {
@@ -263,8 +252,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
 
             try {
-                asyncStatusMgtService.updateOperationStatus(operationId, getOperationStatus(operationId));
-            } catch (AsyncStatusMgtException e) {
+                getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+            } catch (AsyncOperationStatusMgtException e) {
                 try {
                     throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
                 } catch (OrganizationManagementServerException ex) {
@@ -275,12 +264,43 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }).join();
     }
 
+    private String getOperationId(String originalAppId, String ownerOrgId, String userID, String sharePolicy)
+            throws OrganizationManagementServerException {
+
+        try {
+            String operationId = getAsyncStatusMgtService().registerOperationStatus(
+                    new OperationInitDTO(getCorrelation(), APPLICATION_SHARE.getValue(), B2B_APPLICATION,
+                            originalAppId, ownerOrgId, userID, sharePolicy), true);
+            SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+            asyncOperationStatusList.put(operationId, statusQueue);
+            return operationId;
+        } catch (AsyncOperationStatusMgtException e) {
+            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e, originalAppId);
+        }
+    }
+
     private String getOperationStatus(String operationId) {
 
         SubOperationStatusQueue list = asyncOperationStatusList.get(operationId);
         String status = list.getOperationStatus();
         asyncOperationStatusList.remove(operationId);
         return status;
+    }
+
+    private String getCorrelation() {
+
+        String ref;
+        if (isCorrelationIDPresent()) {
+            ref = MDC.get(CORRELATION_ID_MDC);
+        } else {
+            ref = UUID.randomUUID().toString();
+        }
+        return ref;
+    }
+
+    private boolean isCorrelationIDPresent() {
+
+        return MDC.get(CORRELATION_ID_MDC) != null;
     }
 
     @Override
@@ -433,8 +453,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         getListener().preGetApplicationSharedOrganizations(organizationId, applicationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
-        List<SharedApplicationDO> sharedApps =
-                getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
+        List<SharedApplicationDO> sharedApps = getOrgApplicationMgtDAO().getSharedApplications(organizationId,
+                application.getApplicationResourceId());
 
         List<String> sharedOrganizationIds = sharedApps.stream().map(SharedApplicationDO::getOrganizationId).collect(
                 Collectors.toList());
@@ -653,58 +673,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
             getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     shareWithAllChildren);
-            setThreadLocalContextForApplicationShare(sharedTenantDomain, sharedOrgId, mainApplication, operationId, tenantId);
+            setThreadLocalContextForApplicationShare(sharedTenantDomain, sharedOrgId, mainApplication, operationId,
+                    tenantId);
 
             Optional<String> mayBeSharedAppId = resolveSharedApp(
                     mainApplication.getApplicationResourceId(), ownerOrgId, sharedOrgId);
             if (mayBeSharedAppId.isPresent()) {
                 return;
             }
-            String sharedApplicationId = createOAuthConsumerAppAndShareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren, sharedTenantDomain, operationId);
+            String sharedApplicationId = createOAuthConsumerAppAndShareApplication(ownerOrgId, sharedOrgId,
+                    mainApplication, shareWithAllChildren, sharedTenantDomain, operationId);
 
             getListener().postShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     sharedApplicationId, shareWithAllChildren);
-            if (StringUtils.isNotBlank(operationId)) {
-                UnitOperationRecord operationStatus =
-                        new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                                SUCCESS, StringUtils.EMPTY);
-                try {
-                    asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-                } catch (AsyncStatusMgtException e) {
-                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
-                }
-                asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(SUCCESS));
-            }
+            processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
+                    SUCCESS, StringUtils.EMPTY);
         } catch (OrganizationManagementException e) {
-            if (StringUtils.isNotBlank(operationId)) {
-                Throwable cause1 = e.getCause();
-                if (cause1 instanceof IdentityEventException) {
-                    Throwable cause2 = cause1.getCause();
-                    if (cause2 instanceof IdentityApplicationManagementClientException) {
-                        IdentityApplicationManagementClientException appException =
-                                (IdentityApplicationManagementClientException) cause2;
-                        String errorCode = appException.getErrorCode();
-                        String sharedApplicationName = appException.getDescription();
-
-                        if (errorCode != null &&
-                                errorCode.contains("Organization %s has a non shared application with name %s")) {
-                            if (StringUtils.isNotBlank(operationId)) {
-                                UnitOperationRecord operationStatus =
-                                        new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                                                FAIL, String.format("Organization has a non shared application with name %s.",
-                                                sharedApplicationName));
-                                try {
-                                    asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-                                } catch (AsyncStatusMgtException ex) {
-                                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
-                                }
-                                asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(FAIL));
-                            }
-                        }
-                    }
-                }
-            }
-            throw e;
+            handleShareApplicationException(operationId, e, mainApplication.getApplicationResourceId(),
+                    sharedOrgId);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -717,9 +703,34 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private void setThreadLocalContextForApplicationShare(String sharedTenantDomain, String sharedOrgId,
-                                                          ServiceProvider mainApplication, String operationId, int tenantId)
+    private void handleShareApplicationException(String operationId, OrganizationManagementException e,
+                                                 String initiatedResourceId, String targetOrgId)
             throws OrganizationManagementException {
+
+        if (StringUtils.isNotBlank(operationId)) {
+            Throwable cause1 = e.getCause();
+            if (cause1 instanceof IdentityEventException) {
+                Throwable cause2 = cause1.getCause();
+                if (cause2 instanceof IdentityApplicationManagementClientException) {
+                    IdentityApplicationManagementClientException appException =
+                            (IdentityApplicationManagementClientException) cause2;
+                    String errorCode = appException.getErrorCode();
+                    String sharedApplicationName = appException.getDescription();
+
+                    if (Objects.equals(errorCode, ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode())) {
+                        processUnitOperationStatus(operationId, initiatedResourceId,
+                                targetOrgId, FAIL, String.format("Organization has a non shared " +
+                                        "application with name %s.", sharedApplicationName));
+                    }
+                }
+            }
+        }
+        throw e;
+    }
+
+    private void setThreadLocalContextForApplicationShare(String sharedTenantDomain, String sharedOrgId,
+                                                          ServiceProvider mainApplication, String operationId,
+                                                          int tenantId) throws OrganizationManagementException {
 
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
         try {
@@ -739,17 +750,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(domainQualifiedUserName);
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
         } catch (UserStoreException | OrganizationManagementException e) {
-            if (StringUtils.isNotBlank(operationId)) {
-                UnitOperationRecord operationStatus =
-                        new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                                FAIL, "UserStoreException: " + e.getMessage());
-                try {
-                    asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-                } catch (AsyncStatusMgtException ex) {
-                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
-                }
-                asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(FAIL));
-            }
+            processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
+                    FAIL, "UserStoreException: " + e.getMessage());
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
         }
@@ -772,17 +774,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (isOAuthClientExistsError(e)) {
                 createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
             } else {
-                if (StringUtils.isNotBlank(operationId)) {
-                    UnitOperationRecord operationStatus =
-                            new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(),
-                                    sharedOrgId, FAIL, "OAuth App Creation Error: " + e.getMessage());
-                    try {
-                        asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-                    } catch (AsyncStatusMgtException ex) {
-                        throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
-                    }
-                    asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(FAIL));
-                }
+                processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(),
+                        sharedOrgId, FAIL, "OAuth App Creation Error: " + e.getMessage());
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
@@ -797,21 +790,28 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharedApplicationId, sharedOrgId, shareWithAllChildren);
         } catch (IdentityApplicationManagementException e) {
             removeOAuthApplication(createdOAuthApp);
-            if (StringUtils.isNotBlank(operationId)) {
-                UnitOperationRecord operationStatus =
-                        new UnitOperationRecord(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                                FAIL, "IdentityApplicationManagementException: " + e.getMessage());
-                try {
-                    asyncStatusMgtService.registerUnitOperationStatus(operationStatus);
-                } catch (AsyncStatusMgtException ex) {
-                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
-                }
-                asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(FAIL));
-            }
+            processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId, FAIL,
+                    "IdentityApplicationManagementException: " + e.getMessage());
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
         }
         return sharedApplicationId;
+    }
+
+    private void processUnitOperationStatus(String operationId, String initiatedResourceId,
+                                            String targetOrgId, String status, String statusMessage)
+            throws OrganizationManagementServerException {
+
+        if (StringUtils.isNotBlank(operationId)) {
+            UnitOperationInitDTO dto =
+                    new UnitOperationInitDTO(operationId, initiatedResourceId, targetOrgId, status, statusMessage);
+            try {
+                getAsyncStatusMgtService().registerUnitOperationStatus(dto);
+            } catch (AsyncOperationStatusMgtException ex) {
+                throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
+            }
+            asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));
+        }
     }
 
     @Override
@@ -1253,8 +1253,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return OrgApplicationMgtDataHolder.getInstance().getApplicationSharingManagerListener();
     }
 
-    private AsyncStatusMgtService getAsyncStatusMgtService() {
+    private AsyncOperationStatusMgtService getAsyncStatusMgtService() {
 
-        return OrgApplicationMgtDataHolder.getInstance().getAsyncStatusMgtService();
+        return OrgApplicationMgtDataHolder.getInstance().getAsyncOperationStatusMgtService();
     }
 }

@@ -18,7 +18,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.util;
 
 
-import org.wso2.carbon.identity.framework.async.status.mgt.api.models.UnitOperationRecord;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.models.UnitOperationInitDTO;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -26,11 +26,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Utility class for storing asynchronous operation status.
  */
-public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRecord> {
+public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationInitDTO> {
 
-    private final ConcurrentLinkedQueue<UnitOperationRecord> queue;
+    private final ConcurrentLinkedQueue<UnitOperationInitDTO> queue;
 
-    public ConcurrentLinkedQueue<UnitOperationRecord> getQueue() {
+    public ConcurrentLinkedQueue<UnitOperationInitDTO> getQueue() {
 
         return queue;
     }
@@ -45,7 +45,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      *
      * @param context The async operation context to add.
      */
-    public void addOperationStatus(UnitOperationRecord context) {
+    public void addOperationStatus(UnitOperationInitDTO context) {
 
         queue.add(context);
     }
@@ -55,7 +55,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      *
      * @return The next async operation context or null if the queue is empty.
      */
-    public UnitOperationRecord pollOperationContext() {
+    public UnitOperationInitDTO pollOperationContext() {
 
         return queue.poll();
     }
@@ -65,7 +65,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      *
      * @return The next async operation context or null if the queue is empty.
      */
-    public UnitOperationRecord peekOperationContext() {
+    public UnitOperationInitDTO peekOperationContext() {
 
         return queue.peek();
     }
@@ -75,7 +75,7 @@ public class AsyncOperationStatusHolderQueue implements Iterable<UnitOperationRe
      *
      * @return Iterator for the queue.
      */
-    public Iterator<UnitOperationRecord> iterator() {
+    public Iterator<UnitOperationInitDTO> iterator() {
 
         return queue.iterator();
     }

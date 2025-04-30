@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.application;
 
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -47,6 +48,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -432,6 +434,27 @@ public class OrgApplicationManagerImplTest {
                     null);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @DataProvider(name = "applicationShareAsyncStatusTestData")
+    public Object[][] getApplicationShareAsyncStatusTestData() {
+
+        List<String> childOrgIds = new ArrayList<>(childAppIdMap.keySet());
+
+        return new Object[][]{
+                {ROOT_ORG_ID, ROOT_APP_ID, true, childOrgIds},
+        };
+    }
+
+    @Test(dataProvider = "applicationShareAsyncStatusTestData")
+    public void testApplicationShareAsyncStatus(String ownerOrgId, String originalAppId, boolean shareWithAllChildren,
+                                                List<String> sharedOrgs) throws OrganizationManagementException {
+
+
+        try (MockedStatic<Utils> utilities = Mockito.mockStatic(Utils.class)) {
+            utilities.when(Utils::getOrganizationId).thenReturn(ownerOrgId);
+
         }
     }
 
