@@ -60,6 +60,10 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
     private static final String LAST_MODIFIED_TIME = "LastModifiedTime";
     private static final String CREATED_TIME = "CreatedTime";
     private static final String ATTRIBUTES = "Attributes";
+    private static final String CREATOR = "Creator";
+    private static final String CREATOR_ID = "Id";
+    private static final String CREATOR_USERNAME = "Username";
+    private static final String CREATOR_EMAIL = "Email";
 
     private static final String PATCH_ADDED = "Added";
     private static final String PATCH_REPLACED = "Replaced";
@@ -182,6 +186,14 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         data.put(LAST_MODIFIED_TIME, organization.getLastModified().toString());
         data.put(CREATED_TIME, organization.getCreated().toString());
         data.put(ATTRIBUTES, getAttributesMap(organization));
+        if (organization.getCreatorId() != null || organization.getCreatorUsername() != null ||
+                organization.getCreatorEmail() != null) {
+            Map<String, String> creatorDataMap = new HashMap<>();
+            creatorDataMap.put(CREATOR_ID, organization.getCreatorId());
+            creatorDataMap.put(CREATOR_USERNAME, LoggerUtils.getMaskedContent(organization.getCreatorUsername()));
+            creatorDataMap.put(CREATOR_EMAIL, LoggerUtils.getMaskedContent(organization.getCreatorEmail()));
+            data.put(CREATOR, creatorDataMap);
+        }
 
         return data;
     }

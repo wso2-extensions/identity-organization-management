@@ -64,6 +64,9 @@ public class OrganizationManagementAuditLogHandlerTest {
     private static final String TEST_PARENT_ID = "10084a8d-113f-4211-a0d5-efe36b082211";
     private static final Instant TEST_CREATED_TIME = Instant.now();
     private static final Instant TEST_LAST_MODIFIED_TIME = TEST_CREATED_TIME.plusSeconds(5);
+    private static final String TEST_CREATOR_ID = "e4d6337c-e6f6-459a-9d46-3c7d983b447e";
+    private static final String TEST_CREATOR_USERNAME = "alex";
+    private static final String TEST_CREATOR_EMAIL = "alex@abc.com";
     private static final String TEST_ATTRIBUTE_KEY_1 = "TEST_ATTRIBUTE_KEY_1";
     private static final String TEST_ATTRIBUTE_VALUE_1 = "TEST_ATTRIBUTE_VALUE_1";
     private static final String TEST_ATTRIBUTE_KEY_2 = "TEST_ATTRIBUTE_KEY_2";
@@ -83,6 +86,10 @@ public class OrganizationManagementAuditLogHandlerTest {
     private static final String LAST_MODIFIED_TIME = "LastModifiedTime";
     private static final String CREATED_TIME = "CreatedTime";
     private static final String ATTRIBUTES = "Attributes";
+    private static final String CREATOR = "Creator";
+    private static final String CREATOR_ID = "Id";
+    private static final String CREATOR_USERNAME = "Username";
+    private static final String CREATOR_EMAIL = "Email";
 
     private static final String PATCH_ADDED = "Added";
     private static final String PATCH_REPLACED = "Replaced";
@@ -128,6 +135,9 @@ public class OrganizationManagementAuditLogHandlerTest {
         organization.setParent(parentOrganization);
         organization.setCreated(TEST_CREATED_TIME);
         organization.setLastModified(TEST_LAST_MODIFIED_TIME);
+        organization.setCreatorId(TEST_CREATOR_ID);
+        organization.setCreatorUsername(TEST_CREATOR_USERNAME);
+        organization.setCreatorEmail(TEST_CREATOR_EMAIL);
         OrganizationAttribute attribute1 = new OrganizationAttribute();
         attribute1.setKey(TEST_ATTRIBUTE_KEY_1);
         attribute1.setValue(TEST_ATTRIBUTE_VALUE_1);
@@ -173,6 +183,13 @@ public class OrganizationManagementAuditLogHandlerTest {
         Assert.assertEquals(dataMap.get(CREATED_TIME).toString(), TEST_CREATED_TIME.toString());
         Assert.assertEquals(dataMap.get(LAST_MODIFIED_TIME).toString(), TEST_LAST_MODIFIED_TIME.toString());
 
+        Map<String, Object> creator = (Map<String, Object>) dataMap.get(CREATOR);
+        Assert.assertEquals(creator.get(CREATOR_ID).toString(), TEST_CREATOR_ID);
+        Assert.assertEquals(creator.get(CREATOR_USERNAME).toString(),
+                LoggerUtils.getMaskedContent(TEST_CREATOR_USERNAME));
+        Assert.assertEquals(creator.get(CREATOR_EMAIL).toString(),
+                LoggerUtils.getMaskedContent(TEST_CREATOR_EMAIL));
+
         Map<String, Object> attributes = (Map<String, Object>) dataMap.get(ATTRIBUTES);
         Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_1).toString(),
                 LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_1));
@@ -183,6 +200,10 @@ public class OrganizationManagementAuditLogHandlerTest {
     @Test
     public void testLogUpdateOrganization() throws IdentityEventException, NoSuchFieldException,
             IllegalAccessException {
+
+        organization.setCreatorId(null);
+        organization.setCreatorUsername(null);
+        organization.setCreatorEmail(null);
 
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, TEST_ID);
@@ -206,6 +227,7 @@ public class OrganizationManagementAuditLogHandlerTest {
         Assert.assertEquals(dataMap.get(PARENT_ORG_ID).toString(), TEST_PARENT_ID);
         Assert.assertEquals(dataMap.get(CREATED_TIME).toString(), TEST_CREATED_TIME.toString());
         Assert.assertEquals(dataMap.get(LAST_MODIFIED_TIME).toString(), TEST_LAST_MODIFIED_TIME.toString());
+        Assert.assertNull(dataMap.get(CREATOR));
 
         Map<String, Object> attributes = (Map<String, Object>) dataMap.get(ATTRIBUTES);
         Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_1).toString(),
