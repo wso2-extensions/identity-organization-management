@@ -52,6 +52,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REPLACE;
 
+/**
+ * Organization management V2 audit logger test class.
+ */
 @WithCarbonHome
 public class OrganizationManagementAuditLogHandlerTest {
 
