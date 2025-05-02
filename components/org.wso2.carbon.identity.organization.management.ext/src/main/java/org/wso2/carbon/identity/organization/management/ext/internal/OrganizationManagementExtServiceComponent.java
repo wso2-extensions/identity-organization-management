@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,10 +27,8 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.organization.management.ext.OrganizationManagerListenerImpl;
-import org.wso2.carbon.identity.organization.management.ext.listener.OrganizationManagementAuditLogHandler;
 import org.wso2.carbon.identity.organization.management.service.listener.OrganizationManagerListener;
 
 /**
@@ -56,8 +54,6 @@ public class OrganizationManagementExtServiceComponent {
             BundleContext bundleContext = componentContext.getBundleContext();
             bundleContext.registerService(OrganizationManagerListener.class.getName(),
                     new OrganizationManagerListenerImpl(), null);
-            bundleContext.registerService(AbstractEventHandler.class.getName(),
-                    OrganizationManagementAuditLogHandler.getInstance(), null);
 
             if (log.isDebugEnabled()) {
                 log.debug("Organization management ext component activated successfully.");
