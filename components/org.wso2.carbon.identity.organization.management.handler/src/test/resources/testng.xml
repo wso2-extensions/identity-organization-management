@@ -26,6 +26,7 @@
             <class name="org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.SharingPolicyCleanUpHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.OrganizationSessionHandlerTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.handler.OrganizationManagementAuditLogHandlerTest"/>
         </classes>
     </test>
 </suite>
