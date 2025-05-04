@@ -37,6 +37,7 @@ public class UserSharingConstants {
     public static final String APPLICATION = "application";
     public static final String USER = "User";
     public static final String BLANK = "";
+    public static final String CORRELATION_ID_MDC = "Correlation-ID";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";
@@ -92,6 +93,9 @@ public class UserSharingConstants {
     public static final String PRIMARY_DOMAIN = "PRIMARY";
     public static final String AUTHENTICATION_TYPE = "authenticationType";
     public static final String APPLICATION_AUTHENTICATION_TYPE = "APPLICATION";
+    public static final String B2B_USER_SHARE = "B2B_USER_SHARE";
+    public static final String B2B_USER_UNSHARE = "B2B_USER_UNSHARE";
+    public static final String B2B_USER = "USER";
 
     public static final String API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG =
             "/api/server/v1/users/%s/shared-roles?orgId=%s";
@@ -108,6 +112,14 @@ public class UserSharingConstants {
                             USER_STORE_CONFIG_VIEW_PERMISSION, USER_MGT_VIEW_PERMISSION, USER_MGT_LIST_PERMISSION,
                             APPLICATION_MGT_VIEW_PERMISSION, CORS_CONFIG_MGT_VIEW_PERMISSION, IDP_MGT_VIEW_PERMISSION,
                             CLAIM_META_DATA_MGT_VIEW_PERMISSION));
+
+    public static final String EXISTING_USER_UNSHARE_SUCCESS = "Existing User Unshared Successfully. ";
+    public static final String EXISTING_USER_UNSHARE_FAIL = "Existing User Unshare Failed. ";
+    public static final String ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER =
+            "Role Update Success For The Shared User. ";
+    public static final String ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER =
+            "Role Update For Existing Shared User Failed. ";
+    public static final String ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER = "Role Update For Shared User Failed. ";
 
     /**
      * Enum for assignmentType.

@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -43,6 +44,7 @@ public class OrganizationUserSharingDataHolder {
     private ClaimMetadataManagementService claimManagementService;
     private OrgResourceResolverService orgResourceResolverService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
+    private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
 
     public static OrganizationUserSharingDataHolder getInstance() {
 
@@ -229,5 +231,26 @@ public class OrganizationUserSharingDataHolder {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Get the async operation status management service.
+     *
+     * @return AsyncOperationStatusMgtService async operation status management service.
+     */
+    public AsyncOperationStatusMgtService getAsyncOperationStatusMgtService() {
+
+        return asyncOperationStatusMgtService;
+    }
+
+    /**
+     * Set the async operation status management service.
+     *
+     * @param asyncOperationStatusMgtService AsyncOperationStatusMgtService async operation
+     *                                          status management service.
+     */
+    public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
+        this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
     }
 }
