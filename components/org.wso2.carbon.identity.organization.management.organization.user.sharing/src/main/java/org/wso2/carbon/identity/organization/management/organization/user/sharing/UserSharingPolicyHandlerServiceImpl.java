@@ -31,12 +31,12 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusObject;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusQueue;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.constants.OperationStatus;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.exception.AsyncOperationStatusMgtException;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.models.OperationInitDTO;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.models.UnitOperationInitDTO;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.ShareOperationStatus;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
@@ -774,17 +774,17 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     try {
                         unshareUserFromPreviousOrg(association, sharingInitiatedOrgId);
                         registerOperationStatusUnit(operationId, association.getUserId(), sharingInitiatedOrgId,
-                                ShareOperationStatus.SUCCESS.toString(), EXISTING_USER_UNSHARE_SUCCESS);
+                                OperationStatus.SUCCESS.toString(), EXISTING_USER_UNSHARE_SUCCESS);
                     } catch (UserSharingMgtException e) {
                         registerOperationStatusUnit(operationId, association.getUserId(), sharingInitiatedOrgId,
-                                ShareOperationStatus.PARTIAL.toString(), EXISTING_USER_UNSHARE_FAIL +
+                                OperationStatus.PARTIALLY_COMPLETED.toString(), EXISTING_USER_UNSHARE_FAIL +
                                         e.getMessage());
                         throw e;
                     }
                 } else {
                     retainedSharedOrgs.add(association.getOrganizationId());
                     UserSharingResultDO resultDO = new UserSharingResultDO(operationId, associatedUserId, true, false,
-                            ShareOperationStatus.SUCCESS.toString(), StringUtils.EMPTY);
+                            OperationStatus.SUCCESS.toString(), StringUtils.EMPTY);
                     updateRolesIfNecessary(association, baseUserShare.getRoles(), sharingInitiatedOrgId, resultDO);
                     updateSharedTypeOfExistingUserAssociation(association);
                 }
@@ -1437,7 +1437,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             registerOperationStatusUnit(resultDO.getOperationId(), userAssociation.getUserId(), sharingInitiatedOrgId,
-                    ShareOperationStatus.PARTIAL.toString(),
+                    OperationStatus.PARTIALLY_COMPLETED.toString(),
                     ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER + e.getMessage());
             throw e;
         }
@@ -1481,7 +1481,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         UserAssociation userAssociation;
 
         UserSharingResultDO resultDO = new UserSharingResultDO(operationId, associatedUserId, false, false,
-                ShareOperationStatus.SUCCESS.toString(), StringUtils.EMPTY);
+                OperationStatus.SUCCESS.toString(), StringUtils.EMPTY);
 
         try {
             userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
@@ -1492,7 +1492,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             LOG.error(errorMessage, e);
 
             // Both User Share and Role Assignment Failed.
-            registerOperationStatusUnit(operationId, associatedUserId, orgId, ShareOperationStatus.FAILED.toString(),
+            registerOperationStatusUnit(operationId, associatedUserId, orgId, OperationStatus.FAILED.toString(),
                     errorMessage);
             return;
         }
@@ -1629,15 +1629,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 }
             }
             if (!failedAssignedRoles.isEmpty()) {
-                resultDO.setOperationStatus(ShareOperationStatus.PARTIAL.toString());
+                resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED.toString());
                 resultDO.setOperationStatusMessage(buildPartialResultMessageForFailedRoles(failedAssignedRoles));
             } else if (resultDO.isUserSharedSuccess()) {
-                resultDO.setOperationStatus(ShareOperationStatus.SUCCESS.toString());
+                resultDO.setOperationStatus(OperationStatus.SUCCESS.toString());
                 resultDO.setOperationStatusMessage(ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER);
             }
             return resultDO;
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            resultDO.setOperationStatus(ShareOperationStatus.PARTIAL.toString());
+            resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED.toString());
             resultDO.setOperationStatusMessage(ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER + e);
             resultDO.setUserRoleAssignedIfPresentSuccess(false);
             return resultDO;

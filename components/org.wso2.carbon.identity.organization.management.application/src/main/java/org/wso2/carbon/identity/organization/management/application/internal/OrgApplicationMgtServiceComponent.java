@@ -266,8 +266,7 @@ public class OrgApplicationMgtServiceComponent {
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetAsyncStatusMgtService"
     )
-    protected void setAsyncStatusMgtService(
-            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+    protected void setAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrgApplicationMgtDataHolder.getInstance()
                 .setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
@@ -276,8 +275,7 @@ public class OrgApplicationMgtServiceComponent {
         }
     }
 
-    protected void unsetAsyncStatusMgtService(
-            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+    protected void unsetAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
         if (log.isDebugEnabled()) {

@@ -68,8 +68,6 @@ public class OrgApplicationMgtConstants {
     public static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
     public static final String APPLICATION_ALREADY_EXISTS_ERROR_CODE = "APP-60007";
     public static final String B2B_APPLICATION = "APPLICATION";
-    public static final String SUCCESS = "SUCCESS";
-    public static final String FAIL = "FAIL";
 
     /**
      * Enum representing the types of share policies.
@@ -97,6 +95,7 @@ public class OrgApplicationMgtConstants {
      * Enum representing the types of share operations.
      */
     public enum ShareOperationType {
+
         APPLICATION_SHARE("B2B_APPLICATION_SHARE"),
         APPLICATION_UNSHARE("B2B_APPLICATION_UNSHARE");
 

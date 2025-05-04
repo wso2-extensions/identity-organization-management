@@ -273,11 +273,23 @@ public class OrgApplicationMgtDataHolder {
         this.roleManagementServiceV2 = roleManagementServiceV2;
     }
 
+    /**
+     * Get {@link AsyncOperationStatusMgtService}.
+     *
+     * @return AsyncOperationStatusMgtService.
+     */
     public AsyncOperationStatusMgtService getAsyncOperationStatusMgtService() {
+
         return asyncOperationStatusMgtService;
     }
 
+    /**
+     * Set {@link AsyncOperationStatusMgtService}.
+     *
+     * @param asyncOperationStatusMgtService Instance of {@link AsyncOperationStatusMgtService}.
+     */
     public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
         this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
     }
 }

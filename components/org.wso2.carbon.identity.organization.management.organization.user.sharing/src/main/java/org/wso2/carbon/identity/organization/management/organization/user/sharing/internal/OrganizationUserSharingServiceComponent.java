@@ -233,16 +233,14 @@ public class OrganizationUserSharingServiceComponent {
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetAsyncOperationStatusMgtService"
     )
-    protected void setAsyncOperationStatusMgtService(
-            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+    protected void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrganizationUserSharingDataHolder.getInstance()
                 .setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
         LOG.debug("Set Async Operation Status Mgt Service.");
     }
 
-    protected void unsetAsyncOperationStatusMgtService(
-            AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+    protected void unsetAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrganizationUserSharingDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
         LOG.debug("Unset Async Operation Status Mgt Service.");

@@ -233,11 +233,24 @@ public class OrganizationUserSharingDataHolder {
         this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 
+    /**
+     * Get the async operation status management service.
+     *
+     * @return AsyncOperationStatusMgtService async operation status management service.
+     */
     public AsyncOperationStatusMgtService getAsyncOperationStatusMgtService() {
+
         return asyncOperationStatusMgtService;
     }
 
+    /**
+     * Set the async operation status management service.
+     *
+     * @param asyncOperationStatusMgtService AsyncOperationStatusMgtService async operation
+     *                                          status management service.
+     */
     public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
         this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
     }
 }
