@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal;
 
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -31,7 +30,6 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
             new OrgResourceHierarchyTraverseServiceDataHolder();
 
     private OrganizationManager organizationManager;
-    private ApplicationManagementService applicationManagementService;
 
     private OrgResourceHierarchyTraverseServiceDataHolder() {
 
@@ -65,25 +63,5 @@ public class OrgResourceHierarchyTraverseServiceDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
-    }
-
-    /**
-     * Retrieves the current instance of the ApplicationManagementService.
-     *
-     * @return The current ApplicationManagementService instance responsible for managing applications.
-     */
-    public ApplicationManagementService getApplicationManagementService() {
-
-        return applicationManagementService;
-    }
-
-    /**
-     * Sets the ApplicationManagementService instance.
-     *
-     * @param applicationManagementService The ApplicationManagementService instance to be set.
-     */
-    public void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        this.applicationManagementService = applicationManagementService;
     }
 }
