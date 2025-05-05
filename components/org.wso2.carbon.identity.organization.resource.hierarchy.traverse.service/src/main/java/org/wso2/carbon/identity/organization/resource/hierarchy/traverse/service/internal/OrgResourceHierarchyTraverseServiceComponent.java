@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,7 +27,6 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverServiceImpl;
@@ -105,35 +104,6 @@ public class OrgResourceHierarchyTraverseServiceComponent {
 
         OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setOrganizationManager(null);
         LOG.debug("OrganizationManager unset in OrgResourceManagementServiceComponent bundle.");
-    }
-
-    /**
-     * Sets the ApplicationManagementService instance in the OrgResourceHierarchyTraverseServiceDataHolder.
-     *
-     * @param applicationManagementService The ApplicationManagementService instance to be assigned.
-     */
-    @Reference(
-            name = "org.wso2.carbon.identity.application.mgt",
-            service = ApplicationManagementService.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetApplicationManagementService")
-    protected void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        OrgResourceHierarchyTraverseServiceDataHolder.getInstance()
-                .setApplicationManagementService(applicationManagementService);
-        LOG.debug("ApplicationManagementService set in OrgResourceManagementServiceComponent bundle.");
-    }
-
-    /**
-     * Unsets the ApplicationManagementService instance in the OrgResourceHierarchyTraverseServiceDataHolder.
-     *
-     * @param applicationManagementService The ApplicationManagementService instance to be removed.
-     */
-    protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
-
-        OrgResourceHierarchyTraverseServiceDataHolder.getInstance().setApplicationManagementService(null);
-        LOG.debug("ApplicationManagementService unset in OrgResourceManagementServiceComponent bundle.");
     }
 }
 
