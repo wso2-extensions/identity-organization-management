@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -17,25 +17,23 @@
   ~ under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.4.142-SNAPSHOT</version>
+        <version>1.4.132</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</artifactId>
-    <name>WSO2 - Organization Resource Hierarchy Traverse Service</name>
+    <artifactId>org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</artifactId>
+    <name>WSO2 - Organization Application Resource Hierarchy Traverse Service</name>
     <packaging>bundle</packaging>
 
     <dependencies>
-        <dependency>
-            <groupId>org.wso2.carbon</groupId>
-            <artifactId>org.wso2.carbon.utils</artifactId>
-        </dependency>
         <dependency>
             <groupId>commons-collections.wso2</groupId>
             <artifactId>commons-collections</artifactId>
@@ -45,8 +43,16 @@
             <artifactId>pax-logging-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
@@ -72,11 +78,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
-            <scope>test</scope>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>20030203.000129</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <build>
         <plugins>
@@ -89,9 +102,7 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util
+                            org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service.internal
                         </Private-Package>
                         <Import-Package>
                             org.apache.commons.lang; version="${org.apache.commons.lang.imp.pkg.version.range}",
@@ -101,20 +112,27 @@
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
 
+                            org.wso2.carbon.identity.application.mgt;
+                            version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common;
+                            version="${carbon.identity.package.import.version.range}",
+
                             org.wso2.carbon.identity.organization.management.service;
                             version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;
                             version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.util;
-                            version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}"
+                            version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
+
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant,
-                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.internal,
-                            !org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception,
-                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy;
+                            org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service,
                             version="${project.version}"
                         </Export-Package>
                     </instructions>
@@ -146,12 +164,8 @@
                 <version>${jacoco.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/constant/*.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/exception/*.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/internal/*.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/strategy/AggregationStrategy.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/strategy/MergeAllAggregationStrategy.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/OrgResourceResolverService.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/application/resource/hierarchy/traverse/service/internal/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/application/resource/hierarchy/traverse/service/OrgAppResourceResolverService.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
