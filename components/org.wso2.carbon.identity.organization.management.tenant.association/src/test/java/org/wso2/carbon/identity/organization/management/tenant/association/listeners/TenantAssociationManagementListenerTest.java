@@ -30,17 +30,14 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder;
 import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
-import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.tenant.Tenant;
 import org.wso2.carbon.user.core.tenant.TenantManager;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 public class TenantAssociationManagementListenerTest {
 
