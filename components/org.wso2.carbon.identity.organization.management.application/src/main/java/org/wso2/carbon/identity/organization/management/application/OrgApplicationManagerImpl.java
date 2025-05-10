@@ -49,7 +49,6 @@ import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
-import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusObject;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusQueue;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.constants.OperationStatus;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.exception.AsyncOperationStatusMgtException;
@@ -278,10 +277,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private String getOperationStatus(String operationId) {
+    private OperationStatus getOperationStatus(String operationId) {
 
         SubOperationStatusQueue list = asyncOperationStatusList.get(operationId);
-        String status = list.getOperationStatus();
+        OperationStatus status = list.getOperationStatus();
         asyncOperationStatusList.remove(operationId);
         return status;
     }
@@ -686,7 +685,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             getListener().postShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     sharedApplicationId, shareWithAllChildren);
             processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                    OperationStatus.SUCCESS.toString(), StringUtils.EMPTY);
+                    OperationStatus.SUCCESS, StringUtils.EMPTY);
         } catch (OrganizationManagementException e) {
             handleShareApplicationException(operationId, e, mainApplication.getApplicationResourceId(),
                     sharedOrgId);
@@ -718,7 +717,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
                     if (Objects.equals(errorCode, ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode())) {
                         processUnitOperationStatus(operationId, initiatedResourceId,
-                                targetOrgId, OperationStatus.FAILED.toString(), String.format("Organization has " +
+                                targetOrgId, OperationStatus.FAILED, String.format("Organization has " +
                                         "a non shared application with name %s.", sharedApplicationName));
                     }
                 }
@@ -750,7 +749,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(adminUserId);
         } catch (UserStoreException | OrganizationManagementException e) {
             processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                    OperationStatus.FAILED.toString(), "UserStoreException: " + e.getMessage());
+                    OperationStatus.FAILED, "UserStoreException: " + e.getMessage());
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
         }
@@ -774,7 +773,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 createdOAuthApp = handleOAuthClientExistsError(ownerOrgId, sharedOrgId, mainApplication);
             } else {
                 processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(),
-                        sharedOrgId, OperationStatus.FAILED.toString(), e.getMessage());
+                        sharedOrgId, OperationStatus.FAILED, e.getMessage());
                 throw handleServerException(ERROR_CODE_ERROR_CREATING_OAUTH_APP, e,
                         mainApplication.getApplicationResourceId(), sharedOrgId);
             }
@@ -790,7 +789,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } catch (IdentityApplicationManagementException e) {
             removeOAuthApplication(createdOAuthApp);
             processUnitOperationStatus(operationId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                    OperationStatus.FAILED.toString(), e.getMessage());
+                    OperationStatus.FAILED, e.getMessage());
             throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e,
                     mainApplication.getApplicationResourceId(), sharedOrgId);
         }
@@ -798,7 +797,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     private void processUnitOperationStatus(String operationId, String initiatedResourceId,
-                                            String targetOrgId, String status, String statusMessage)
+                                            String targetOrgId, OperationStatus status, String statusMessage)
             throws OrganizationManagementServerException {
 
         if (StringUtils.isNotBlank(operationId)) {
@@ -809,7 +808,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             } catch (AsyncOperationStatusMgtException ex) {
                 throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
             }
-            asyncOperationStatusList.get(operationId).add(new SubOperationStatusObject(status));
+            asyncOperationStatusList.get(operationId).add(status);
         }
     }
 

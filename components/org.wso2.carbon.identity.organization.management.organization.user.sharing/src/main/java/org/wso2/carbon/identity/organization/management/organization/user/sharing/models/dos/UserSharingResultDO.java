@@ -17,6 +17,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.constants.OperationStatus;
+
 /**
  * Model that contains the user sharing result.
  */
@@ -25,12 +27,12 @@ public class UserSharingResultDO {
     private String associatedUserId;
     private boolean isUserSharedSuccess;
     private boolean isUserRoleAssignedIfPresentSuccess;
-    private String operationStatus;
+    private OperationStatus operationStatus;
     private String operationStatusMessage;
 
     public UserSharingResultDO(String operationId, String associatedUserId, boolean isUserSharedSuccess,
                                boolean isUserRoleAssignedIfPresentSuccess,
-                               String operationStatus, String operationStatusMessage) {
+                               OperationStatus operationStatus, String operationStatusMessage) {
 
         this.operationId = operationId;
         this.associatedUserId = associatedUserId;
@@ -70,12 +72,12 @@ public class UserSharingResultDO {
         isUserRoleAssignedIfPresentSuccess = userRoleAssignedIfPresentSuccess;
     }
 
-    public String getOperationStatus() {
+    public OperationStatus getOperationStatus() {
 
         return operationStatus;
     }
 
-    public void setOperationStatus(String operationStatus) {
+    public void setOperationStatus(OperationStatus operationStatus) {
 
         this.operationStatus = operationStatus;
     }
