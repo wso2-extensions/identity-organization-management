@@ -26,6 +26,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
+import org.wso2.carbon.identity.governance.model.UserIdentityClaim;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.discovery.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -37,6 +40,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.tenant.Tenant;
 import org.wso2.carbon.user.core.tenant.TenantManager;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,5 +123,31 @@ public class OrganizationDiscoveryUserOperationListenerTest {
         } else {
             assertFalse(result, "Expected false when CLAIM_MANAGED_ORGANIZATION claim is missing.");
         }
+    }
+
+    @Test
+    public void testSkipEmailDomainValidationForSharedUserCreation()
+            throws UserStoreException, OrganizationManagementException {
+
+        String testOrgId = "10084a8d-efe36b082211";
+        when(organizationManager.resolveOrganizationId(TEST_TENANT_DOMAIN))
+                .thenThrow(new OrganizationManagementException("Validation not skipped."));
+
+        // Case 1: CLAIM_MANAGED_ORGANIZATION is present in threadLocalProperties.
+        Map<String, String> identityData = Collections.singletonMap(CLAIM_MANAGED_ORGANIZATION, testOrgId);
+        IdentityUtil.threadLocalProperties.get().put(
+                IdentityMgtConstants.USER_IDENTITY_CLAIMS, new UserIdentityClaim(TEST_USER, identityData));
+
+        boolean result = organizationDiscoveryUserOperationListener.doPreAddUserWithID(TEST_USER, TEST_CREDENTIALS,
+                new String[]{}, new HashMap<>(), DEFAULT_PROFILE, userStoreManager);
+        assertTrue(result, "Email domain validation should be skipped for shared user creation.");
+
+        // Case 2: CLAIM_MANAGED_ORGANIZATION is not present in threadLocalProperties.
+        IdentityUtil.threadLocalProperties.get().put(
+                        IdentityMgtConstants.USER_IDENTITY_CLAIMS, new UserIdentityClaim(TEST_USER, null));
+
+        result = organizationDiscoveryUserOperationListener.doPreAddUserWithID(TEST_USER, TEST_CREDENTIALS,
+                new String[]{}, new HashMap<>(), DEFAULT_PROFILE, userStoreManager);
+        assertFalse(result, "Expected false when CLAIM_MANAGED_ORGANIZATION claim is missing.");
     }
 }
