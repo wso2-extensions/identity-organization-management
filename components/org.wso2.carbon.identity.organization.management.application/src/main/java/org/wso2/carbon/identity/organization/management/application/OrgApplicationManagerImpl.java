@@ -187,8 +187,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         }
 
-        // Skip adding the SSO if there are no sub orgs.
-        if (childOrganizations.isEmpty()) {
+        // Skip adding the SSO if there are no sub orgs except for console and my account.
+        if (childOrganizations.isEmpty() &&
+                !ApplicationMgtUtil.isConsoleOrMyAccount(rootApplication.getApplicationName())) {
             return;
         }
 
