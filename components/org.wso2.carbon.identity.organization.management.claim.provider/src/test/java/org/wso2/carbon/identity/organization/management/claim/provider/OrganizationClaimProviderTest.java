@@ -36,6 +36,9 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+/**
+ * Unit test class for OrganizationClaimProvider.
+ */
 public class OrganizationClaimProviderTest {
 
     private static final String USER_ORG_ID = "userOrgId";
