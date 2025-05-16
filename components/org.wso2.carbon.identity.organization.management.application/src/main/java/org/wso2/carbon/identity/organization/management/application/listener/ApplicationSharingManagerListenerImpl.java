@@ -27,6 +27,9 @@ import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.ApplicationShareUpdateOperation;
+import org.wso2.carbon.identity.organization.management.application.model.RoleSharingConfig;
+import org.wso2.carbon.identity.organization.management.application.model.RoleWithAudienceDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
@@ -61,12 +64,40 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         fireEvent(OrgApplicationMgtConstants.EVENT_PRE_SHARE_APPLICATION, eventProperties);
     }
 
+    /**
+     * Pre listener of sharing an application.
+     * @param mainApplicationId This will be the main application id that resides in the root organization.
+     * @param sharedOrganizationId This will be the sub-organization id which the application will be shared to.
+     * @param roleSharingConfig This will be the role sharing configuration (How the roles are shared).
+     * @throws OrganizationManagementException When error occurred during pre application event firing.
+     */
+    @Override
+    public void preShareApplication(String mainOrganizationId, String mainApplicationId,
+                                     String sharedOrganizationId, RoleSharingConfig roleSharingConfig)
+            throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_APPLICATION_ID, mainApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_SHARING_CONFIG, roleSharingConfig);
+        // Adding these two properties to keep the other places that use the event properties intact.
+        // Ideally, we should remove these two properties from the event properties.
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID, mainApplicationId);
+
+        fireEvent(OrgApplicationMgtConstants.EVENT_PRE_SHARE_APPLICATION, eventProperties);
+    }
+
+
     @Override
     public void postShareApplication(String parentOrganizationId, String parentApplicationId,
                                      String sharedOrganizationId, String sharedApplicationId,
                                      boolean shareWithAllChildren) throws OrganizationManagementException {
 
         Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, parentOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_APPLICATION_ID, parentApplicationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID, parentOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID, parentApplicationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
@@ -76,6 +107,67 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
                 getSharedUserAttributes(sharedApplicationId));
         fireEvent(OrgApplicationMgtConstants.EVENT_POST_SHARE_APPLICATION, eventProperties);
     }
+
+    @Override
+    public void postShareApplication(String mainOrganizationId, String mainApplicationId, String sharedOrganizationId,
+                                     String sharedApplicationId, RoleSharingConfig roleSharingConfig,
+                                     int resourceSharingPolicyId) throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_APPLICATION_ID, mainApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_SHARING_CONFIG, roleSharingConfig);
+        if (resourceSharingPolicyId != -1) {
+            // When this is present, that mean this is a FUTURE sharing application.
+            eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID, resourceSharingPolicyId);
+        }
+
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_USER_ATTRIBUTES,
+                getSharedUserAttributes(sharedApplicationId));
+
+        // Adding these two properties to keep the other places that use the event properties intact.
+        // Ideally, we should remove these two properties from the event properties.
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_PARENT_APPLICATION_ID, mainApplicationId);
+        fireEvent(OrgApplicationMgtConstants.EVENT_POST_SHARE_APPLICATION, eventProperties);
+    }
+
+    @Override
+    public void preUpdateRolesOfSharedApplication(String mainOrganizationId, String mainApplicationId,
+                                                  String sharedOrganizationId,
+                                                  ApplicationShareUpdateOperation.Operation operation,
+                                                  List<RoleWithAudienceDO> roleChanges)
+            throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_APPLICATION_ID, mainApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_AUDIENCES, roleChanges);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_UPDATE_OPERATION, operation);
+        fireEvent(OrgApplicationMgtConstants.EVENT_PRE_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
+    }
+
+    @Override
+    public void postUpdateRolesOfSharedApplication(String mainOrganizationId, String mainApplicationId,
+                                                   String sharedOrganizationId, String sharedApplicationId,
+                                                   ApplicationShareUpdateOperation.Operation operation,
+                                                   List<RoleWithAudienceDO> roleChanges)
+            throws OrganizationManagementException {
+
+        Map<String, Object> eventProperties = new HashMap<>();
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, mainOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_APPLICATION_ID, mainApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_AUDIENCES, roleChanges);
+        eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_UPDATE_OPERATION, operation);
+        fireEvent(OrgApplicationMgtConstants.EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
+    }
+
+
 
     @Override
     public void preDeleteSharedApplication(String parentOrganizationId, String parentApplicationId,
