@@ -27,6 +27,7 @@ public class OrgApplicationMgtConstants {
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
     public static final String SHARE_WITH_ALL_CHILDREN = "shareWithAllChildren";
+    public static final String ROLE_SHARING_MODE = "roleSharingMode";
 
     public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
     public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
@@ -45,15 +46,25 @@ public class OrgApplicationMgtConstants {
 
     // Event constants related to shared application management.
     public static final String EVENT_PROP_PARENT_ORGANIZATION_ID = "PARENT_ORGANIZATION_ID";
+    public static final String EVENT_PROP_MAIN_ORGANIZATION_ID = "MAIN_ORGANIZATION_ID";
     public static final String EVENT_PROP_SHARED_ORGANIZATION_ID = "SHARED_ORGANIZATION_ID";
     public static final String EVENT_PROP_PARENT_APPLICATION_ID = "PARENT_APPLICATION_ID";
+    public static final String EVENT_PROP_MAIN_APPLICATION_ID = "MAIN_APPLICATION_ID";
     public static final String EVENT_PROP_SHARED_APPLICATION_ID = "SHARED_APPLICATION_ID";
     public static final String EVENT_PROP_SHARED_APPLICATIONS_DATA = "SHARED_APPLICATIONS_DATA";
     public static final String EVENT_PROP_SHARE_WITH_ALL_CHILDREN = "SHARE_WITH_ALL_CHILDREN";
     public static final String EVENT_PROP_SHARED_ORGANIZATIONS = "SHARED_ORGANIZATIONS";
     public static final String EVENT_PROP_SHARED_USER_ATTRIBUTES = "SHARED_USER_ATTRIBUTES";
+    public static final String EVENT_PROP_ROLE_SHARING_CONFIG = "ROLE_SHARING_CONFIG";
+    public static final String EVENT_PROP_ROLE_AUDIENCES = "ROLE_AUDIENCES";
+    public static final String EVENT_PROP_UPDATE_OPERATION = "UPDATE_OPERATION";
+    public static final String EVENT_PROP_RESOURCE_SHARING_POLICY_ID = "RESOURCE_SHARING_POLICY_ID";
     public static final String EVENT_PRE_SHARE_APPLICATION = "PRE_SHARE_APPLICATION";
     public static final String EVENT_POST_SHARE_APPLICATION = "POST_SHARE_APPLICATION";
+    public static final String EVENT_PRE_UPDATE_ROLES_OF_SHARED_APPLICATION =
+            "EVENT_PRE_UPDATE_ROLES_OF_SHARED_APPLICATION";
+    public static final String EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION =
+            "EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION";
     public static final String EVENT_PRE_DELETE_SHARED_APPLICATION = "PRE_DELETE_SHARED_APPLICATION";
     public static final String EVENT_POST_DELETE_SHARED_APPLICATION = "POST_DELETE_SHARED_APPLICATION";
     public static final String EVENT_PRE_DELETE_ALL_SHARED_APPLICATIONS = "PRE_DELETE_ALL_SHARED_APPLICATIONS";

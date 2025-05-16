@@ -20,10 +20,15 @@ package org.wso2.carbon.identity.organization.management.application;
 
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.organization.management.application.model.ApplicationShareUpdateOperation;
+import org.wso2.carbon.identity.organization.management.application.model.GeneralApplicationShare;
+import org.wso2.carbon.identity.organization.management.application.model.RoleSharingConfig;
+import org.wso2.carbon.identity.organization.management.application.model.SelectiveApplicationShare;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +49,50 @@ public interface OrgApplicationManager {
      */
     void shareOrganizationApplication(String ownerOrgId, String mainAppId, boolean shareWithAllChildren,
                                       List<String> sharedOrgs) throws OrganizationManagementException;
+
+    default void selectiveShareOrganizationApplication(String applicationId,
+                                                       List<SelectiveApplicationShare> selectiveApplicationShareList)
+            throws OrganizationManagementException {
+        throw new NotImplementedException(
+                "selectiveShareOrganizationApplication method is not implemented in " + this.getClass().getName());
+    }
+
+    default void generalOrganizationApplicationShare(String applicationId, GeneralApplicationShare
+            generalApplicationShare) throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "generalOrganizationApplicationShare method is not implemented in " + this.getClass().getName());
+    }
+
+    default void shareApplicationWithPolicy(String ownerOrgId, String sharingOrgId,
+                                           ServiceProvider mainApplication, PolicyEnum policyEnum,
+                                           RoleSharingConfig roleSharingConfig)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "shareApplicationWithPolicy method is not implemented in " + this.getClass().getName());
+    }
+
+
+    default void unshareApplication(String applicationId, List<String> sharedOrganizationList)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "unshareApplication method is not implemented in " + this.getClass().getName());
+    }
+
+    default void unshareAllApplications(String applicationId) throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "unshareAllApplications method is not implemented in " + this.getClass().getName());
+    }
+
+    default void updateSharedApplication(String applicationId, List<ApplicationShareUpdateOperation>
+            updateOperationList) throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "updateSharedApplication method is not implemented in " + this.getClass().getName());
+    }
 
     /**
      * Remove the shared (fragment) application for given organization to stop sharing the business application.

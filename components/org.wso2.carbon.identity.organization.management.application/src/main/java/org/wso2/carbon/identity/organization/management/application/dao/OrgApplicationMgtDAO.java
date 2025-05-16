@@ -46,6 +46,22 @@ public interface OrgApplicationMgtDAO {
             boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
+     * Creates new entry for shared applications across organizations. Here we don't use the shareWithAllChildren
+     * parameter since with the new implementation, we handle it by policy management.
+     *
+     * @param mainAppResourceId  Unique identifier of the main application.
+     * @param ownerOrgId         The unique ID corresponding to the organization where the main application resides.
+     * @param shareAppResourceId Unique identifier of the shared application.
+     * @param sharedOrgId        The unique ID of the organization, to whom the application is shared.
+     * @throws OrganizationManagementException the server exception is thrown in a failure to create the entry.
+     */
+    default void addSharedApplication(String mainAppResourceId, String ownerOrgId, String shareAppResourceId,
+                                      String sharedOrgId) throws OrganizationManagementException {
+
+        addSharedApplication(mainAppResourceId, ownerOrgId, shareAppResourceId, sharedOrgId, false);
+    }
+
+    /**
      * Retrieve the list of shared applications entries for a given application.
      *
      * @param organizationId The unique ID corresponding to the organization where the main application resides.

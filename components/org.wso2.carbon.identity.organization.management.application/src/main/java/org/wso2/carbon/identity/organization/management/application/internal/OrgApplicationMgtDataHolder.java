@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -49,6 +50,7 @@ public class OrgApplicationMgtDataHolder {
     private IdentityEventService identityEventService;
     private ClaimMetadataManagementService claimMetadataManagementService;
     private RoleManagementService roleManagementServiceV2;
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     private OrgApplicationMgtDataHolder() {
 
@@ -269,5 +271,26 @@ public class OrgApplicationMgtDataHolder {
     public void setRoleManagementServiceV2(RoleManagementService roleManagementServiceV2) {
 
         this.roleManagementServiceV2 = roleManagementServiceV2;
+    }
+
+    /**
+     * Get {@link ResourceSharingPolicyHandlerService}.
+     *
+     * @return ResourceSharingPolicyHandlerService {@link ResourceSharingPolicyHandlerService}.
+     */
+    public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
+
+        return resourceSharingPolicyHandlerService;
+    }
+
+    /**
+     * Set {@link ResourceSharingPolicyHandlerService}.
+     *
+     * @param resourceSharingPolicyHandlerService Instance of {@link ResourceSharingPolicyHandlerService}.
+     */
+    public void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
     }
 }
