@@ -18,8 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.application.listener;
 
+import org.wso2.carbon.identity.organization.management.application.model.ApplicationShareUpdateOperation;
+import org.wso2.carbon.identity.organization.management.application.model.RoleSharingConfig;
+import org.wso2.carbon.identity.organization.management.application.model.RoleWithAudienceDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 
@@ -42,7 +46,17 @@ public interface ApplicationSharingManagerListener {
     void preShareApplication(String parentOrganizationId, String parentApplicationId, String sharedOrganizationId,
                              boolean shareWithAllChildren) throws OrganizationManagementException;
 
+
+    default void preShareApplication(String parentOrganizationId, String parentApplicationId,
+                                     String sharedOrganizationId, RoleSharingConfig roleSharingConfig)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException();
+    }
+
     /**
+     * @Deprecated
+     * Use @link preShareApplication TODO: Check how we can link the below new function.
      * Post listener of sharing an application.
      *
      * @param parentOrganizationId Parent application residing organization id.
@@ -52,9 +66,34 @@ public interface ApplicationSharingManagerListener {
      * @param shareWithAllChildren Whether the application is shared with all children or not.
      * @throws OrganizationManagementException When error occurred during post application sharing actions.
      */
+    @Deprecated
     void postShareApplication(String parentOrganizationId, String parentApplicationId, String sharedOrganizationId,
                               String sharedApplicationId, boolean shareWithAllChildren)
             throws OrganizationManagementException;
+
+    default void postShareApplication(String mainOrganizationId, String mainApplicationId, String sharedOrganizationId,
+                                      String sharedApplicationId, RoleSharingConfig roleSharingConfig,
+                                      int resourceSharingPolicyId) throws OrganizationManagementException {
+        throw new NotImplementedException();
+    }
+
+    default void preUpdateRolesOfSharedApplication(String mainOrganizationId, String mainApplicationId,
+                                                   String sharedOrganizationId,
+                                                   ApplicationShareUpdateOperation.Operation operation,
+                                                   List<RoleWithAudienceDO> roleChanges)
+        throws OrganizationManagementException {
+
+        throw new NotImplementedException();
+    }
+
+    default void postUpdateRolesOfSharedApplication(String mainOrganizationId, String mainApplicationId,
+                                                    String sharedOrganizationId, String sharedApplicationId,
+                                                    ApplicationShareUpdateOperation.Operation operation,
+                                                    List<RoleWithAudienceDO> roleChanges)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException();
+    }
 
     /**
      * Pre listener of deleting shared application.
