@@ -382,9 +382,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * Processes selective user sharing based on the provided user criteria and organization details.
      * This method iterates over the user criteria map and shares users selectively with the specified organizations.
      *
-     * @param userCriteria          A map containing user criteria, such as user IDs.
-     * @param organizations         A list of organizations to which users will be shared selectively.
-     * @param sharingInitiatedOrgId The ID of the organization that initiated the user sharing.
+     * @param userCriteria           A map containing user criteria, such as user IDs.
+     * @param organizations          A list of organizations to which users will be shared selectively.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the user sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
      */
     private void processSelectiveUserShare(Map<String, UserCriteriaType> userCriteria,
                                            List<SelectiveUserShareOrgDetailsDO> organizations,
@@ -421,10 +423,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * Processes general user sharing based on the provided user criteria and sharing policy.
      * This method iterates over the user criteria map and shares users according to the specified policy.
      *
-     * @param userCriteria          A map containing user criteria, such as user IDs.
-     * @param policy                The sharing policy defining the scope of sharing.
-     * @param roleIds               A list of role IDs to be assigned during sharing.
-     * @param sharingInitiatedOrgId The ID of the organization that initiated the user sharing.
+     * @param userCriteria           A map containing user criteria, such as user IDs.
+     * @param policy                 The sharing policy defining the scope of sharing.
+     * @param roleIds                A list of role IDs to be assigned during sharing.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the user sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
      */
     private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
                                          List<String> roleIds, String sharingInitiatedOrgId,
@@ -534,9 +538,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * If the user is not a resident user in the initiating organization, the sharing is skipped.
      * Each organization is processed with the appropriate role and policy before sharing.
      *
-     * @param userIds               The list of user IDs to be selectively shared.
-     * @param organizations         The list of organizations where the user should be shared.
-     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param userIds                The list of user IDs to be selectively shared.
+     * @param organizations          The list of organizations where the user should be shared.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
      */
     private void selectiveUserShareByUserIds(UserIdList userIds, List<SelectiveUserShareOrgDetailsDO> organizations,
                                              String sharingInitiatedOrgId, String sharingInitiatedUserId,
@@ -575,10 +581,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * Shares a user with all applicable organizations based on the provided policy.
      * If the user is not a resident user in the initiating organization, the sharing is skipped.
      *
-     * @param userIds               The list of user IDs to be shared.
-     * @param policy                The policy defining the scope of sharing.
-     * @param roleIds               The list of role IDs to be assigned during sharing.
-     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param userIds                The list of user IDs to be shared.
+     * @param policy                 The policy defining the scope of sharing.
+     * @param roleIds                The list of role IDs to be assigned during sharing.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
      */
     private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
                                            String sharingInitiatedOrgId, String sharingInitiatedUserId,
@@ -660,9 +668,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     /**
      * Shares a user with the specified organizations.
      *
-     * @param associatedUserId      The ID of the user to be shared.
-     * @param baseUserShareObjects  The list of user share objects containing sharing details.
-     * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
+     * @param associatedUserId       The ID of the user to be shared.
+     * @param baseUserShareObjects   The list of user share objects containing sharing details.
+     * @param sharingInitiatedOrgId  The ID of the organization initiating the sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
      */
     private void shareUser(String associatedUserId, List<BaseUserShare> baseUserShareObjects,
                            String sharingInitiatedOrgId, String sharingInitiatedUserId, String correlationId)
@@ -694,6 +704,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId                 The ID of the organization initiating the sharing.
      * @param userSharingOrgsForEachUserShareObject A map containing user share objects and their corresponding
      *                                              organizations.
+     * @param sharingInitiatedUserId                The ID of the user that initiated the user sharing.
+     * @param correlationId                         The correlation ID to track down the user sharing.
      */
     private void createNewUserShare(String sharingInitiatedOrgId, Map<BaseUserShare,
             List<String>> userSharingOrgsForEachUserShareObject, String sharingInitiatedUserId, String correlationId)
@@ -721,6 +733,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId                 The ID of the organization initiating the sharing.
      * @param userSharingOrgsForEachUserShareObject A map containing user share objects and their corresponding
      *                                              organizations.
+     * @param sharingInitiatedUserId                The ID of the user that initiated the user sharing.
+     * @param correlationId                         The correlation ID to track down the user sharing.
      */
     private void handleExistingSharedUser(String associatedUserId, String sharingInitiatedOrgId, Map<BaseUserShare,
             List<String>> userSharingOrgsForEachUserShareObject, String sharingInitiatedUserId, String correlationId)
@@ -742,6 +756,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId                 The ID of the organization initiating the sharing.
      * @param userSharingOrgsForEachUserShareObject A map containing user share objects and their corresponding
      *                                              organizations.
+     * @param sharingInitiatedUserId                The ID of the user that initiated the user sharing.
+     * @param correlationId                         The correlation ID to track down the user sharing.
      */
     private void processUserSharingUpdates(Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject,
                                            String associatedUserId, String sharingInitiatedOrgId,
@@ -1035,6 +1051,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
      * @param userSharingOrgList    The list of organizations to share the user with.
      * @param alreadySharedOrgs     The list of organizations the user is already shared with.
+     * @param operationId           The ID of the sharing operation.
      */
     private void shareWithNewOrganizations(BaseUserShare baseUserShare, String sharingInitiatedOrgId,
                                            List<String> userSharingOrgList, List<String> alreadySharedOrgs,
@@ -1312,7 +1329,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                         getRoleIdFromAudience(roleWithAudienceDO.getRoleName(), roleWithAudienceDO.getAudienceType(),
                                 audienceId, sharingInitiatedTenantDomain);
                 if (!roleId.isPresent()) {
-                    //TODO: role not in parent org.
                     continue;
                 }
                 list.add(roleId.get());
@@ -1418,6 +1434,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param userAssociation       The user association object containing user and organization details.
      * @param roleIds               The list of role IDs to be updated.
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param resultDO              The result data object containing sharing result details.
      */
     private void updateRolesIfNecessary(UserAssociation userAssociation, List<String> roleIds,
                                         String sharingInitiatedOrgId, UserSharingResultDO resultDO)
@@ -1466,6 +1483,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param orgId                 The ID of the organization to share the user with.
      * @param baseUserShare         The base user share object containing user and role information.
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param operationId           The ID of the sharing operation.
      */
     private void shareAndAssignRolesIfPresent(String orgId, BaseUserShare baseUserShare,
                                               String sharingInitiatedOrgId, String operationId)
@@ -1548,6 +1566,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param userAssociation       The user association object containing user and organization details.
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      * @param roleIds               The list of role IDs to be assigned.
+     * @param resultDO              The result data object containing sharing result details.
      */
     private void assignRolesIfPresent(UserAssociation userAssociation, String sharingInitiatedOrgId,
                                       List<String> roleIds, UserSharingResultDO resultDO)
@@ -1575,6 +1594,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @param userAssociation       The user association object containing user and organization details.
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
      * @param roleIds               The list of role IDs to be assigned.
+     * @param resultDO              The result data object containing sharing result details.
      */
     private UserSharingResultDO assignRolesToTheSharedUser(UserAssociation userAssociation,
                                                            String sharingInitiatedOrgId,
@@ -1620,13 +1640,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             targetOrgTenantDomain, domainName, EditOperation.DELETE, sharingInitiatedOrgId);
                 } catch (IdentityRoleManagementException | UserSharingMgtException e) {
                     failedAssignedRoles.add(role);
-                    resultDO.setUserRoleAssignedIfPresentSuccess(false);
+                    resultDO.setIsUserRoleAssignedIfPresentSuccess(false);
                 }
             }
             if (!failedAssignedRoles.isEmpty()) {
                 resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED);
                 resultDO.setOperationStatusMessage(buildPartialResultMessageForFailedRoles(failedAssignedRoles));
-            } else if (resultDO.isUserSharedSuccess()) {
+            } else if (resultDO.getIsUserSharedSuccess()) {
                 resultDO.setOperationStatus(OperationStatus.SUCCESS);
                 resultDO.setOperationStatusMessage(ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER);
             }
@@ -1634,7 +1654,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED);
             resultDO.setOperationStatusMessage(ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER + e);
-            resultDO.setUserRoleAssignedIfPresentSuccess(false);
+            resultDO.setIsUserRoleAssignedIfPresentSuccess(false);
             return resultDO;
         }
     }

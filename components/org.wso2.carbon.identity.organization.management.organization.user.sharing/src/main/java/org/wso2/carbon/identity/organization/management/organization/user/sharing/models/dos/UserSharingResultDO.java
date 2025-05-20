@@ -23,6 +23,7 @@ import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.constan
  * Model that contains the user sharing result.
  */
 public class UserSharingResultDO {
+
     private String operationId;
     private String associatedUserId;
     private boolean isUserSharedSuccess;
@@ -52,24 +53,24 @@ public class UserSharingResultDO {
         this.operationId = operationId;
     }
 
-    public boolean isUserSharedSuccess() {
+    public boolean getIsUserSharedSuccess() {
 
         return isUserSharedSuccess;
     }
 
-    public void setUserSharedSuccess(boolean userSharedSuccess) {
+    public void setIsUserSharedSuccess(boolean userSharedSuccess) {
 
-        isUserSharedSuccess = userSharedSuccess;
+        this.isUserSharedSuccess = userSharedSuccess;
     }
 
-    public boolean isUserRoleAssignedIfPresentSuccess() {
+    public boolean getIsUserRoleAssignedIfPresentSuccess() {
 
         return isUserRoleAssignedIfPresentSuccess;
     }
 
-    public void setUserRoleAssignedIfPresentSuccess(boolean userRoleAssignedIfPresentSuccess) {
+    public void setIsUserRoleAssignedIfPresentSuccess(boolean isUserRoleAssignedIfPresentSuccess) {
 
-        isUserRoleAssignedIfPresentSuccess = userRoleAssignedIfPresentSuccess;
+        this.isUserRoleAssignedIfPresentSuccess = isUserRoleAssignedIfPresentSuccess;
     }
 
     public OperationStatus getOperationStatus() {
