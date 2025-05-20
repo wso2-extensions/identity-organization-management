@@ -471,7 +471,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         getListener().preGetSharedApplications(organizationId, applicationId);
-        ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
+        String tenantDomain = getTenantDomain();
+        if (organizationId != null) {
+            tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+        }
+        ServiceProvider application = getOrgApplication(applicationId, tenantDomain);
         List<SharedApplicationDO> sharedApplicationDOList =
                 getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
         List<SharedApplication> sharedApplications = sharedApplicationDOList.stream()

@@ -204,6 +204,110 @@ public class FragmentApplicationMgtListenerTest {
         AssertJUnit.assertEquals(expectedResult, sharedApplication.isAPIBasedAuthenticationEnabled());
     }
 
+    @DataProvider(name = "testSharedAppNameModificationDataProvider")
+    public Object[][] testSharedAppNameModificationDataProvider() {
+
+        return new Object[][]{
+                {TRUE, true}, {TRUE, false}, {FALSE, true}, {FALSE, false},
+        };
+    }
+
+    @Test(dataProvider = "testSharedAppNameModificationDataProvider")
+    public void testSharedAppNameModificationNotAllowed(String isSharedApp, boolean isAppNameUpdated)
+            throws IdentityApplicationManagementException {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class)) {
+
+            mockUtils(tenantDomain);
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+
+            ServiceProvider sharedApplication = new ServiceProvider();
+            sharedApplication.setApplicationName(isAppNameUpdated ? updatedApplicationName : applicationName);
+
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, isSharedApp)
+            };
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+            when(serviceProvider.getApplicationName()).thenReturn(applicationName);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString()))
+                    .thenReturn(serviceProvider);
+
+            if (Boolean.parseBoolean(isSharedApp) && isAppNameUpdated) {
+                IdentityApplicationManagementClientException thrownException =
+                        Assert.expectThrows(IdentityApplicationManagementClientException.class,
+                                () -> fragmentApplicationMgtListener
+                                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName));
+
+                assertEquals("Application name modification is not allowed for shared applications.",
+                        thrownException.getMessage());
+            } else {
+                sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+
+                boolean result = fragmentApplicationMgtListener
+                        .doPreUpdateApplication(sharedApplication, tenantDomain, userName);
+                assertTrue(result);
+            }
+        }
+    }
+
+    @DataProvider(name = "testFragmentApplicationPreDeletionDataProvider")
+    public Object[][] testFragmentApplicationPreDeletionDataProvider() {
+
+        return new Object[][]{
+                {new String[]{DELETE_MAIN_APPLICATION}, false, true, false},
+                {new String[]{DELETE_SHARE_FOR_MAIN_APPLICATION}, false, true, false},
+                {new String[]{DELETE_FRAGMENT_APPLICATION}, false, true, false},
+                {new String[]{DELETE_FRAGMENT_APPLICATION}, true, true, true},
+                {new String[]{}, true, true, true},
+                {new String[]{}, false, true, true},
+                {new String[]{}, false, false, false},
+        };
+    }
+
+    @Test(dataProvider = "testFragmentApplicationPreDeletionDataProvider")
+    public void testFragmentApplicationPreDeletion(String[] threadLocalPropertiesSet, boolean isShareWithAllChildren,
+                                                   boolean isSharedApplicationPresent, boolean isExceptionExpected)
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+
+        Map<String, Object> threadLocalProperties = new HashMap<>();
+        for (String property : threadLocalPropertiesSet) {
+            threadLocalProperties.put(property, true);
+        }
+        IdentityUtil.threadLocalProperties.set(threadLocalProperties);
+
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)
+        };
+        when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+        when(applicationManagementService.getServiceProvider(applicationName, tenantDomain))
+                .thenReturn(serviceProvider);
+        when(serviceProvider.getApplicationID()).thenReturn(1);
+        when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+
+        if (isSharedApplicationPresent) {
+            when(orgApplicationMgtDAO.getSharedApplication(1, organizationID))
+                    .thenReturn(Optional.ofNullable(sharedApplicationDO));
+            when(sharedApplicationDO.shareWithAllChildren()).thenReturn(isShareWithAllChildren);
+        }
+        if (isExceptionExpected) {
+            IdentityApplicationManagementClientException thrownException =
+                    Assert.expectThrows(IdentityApplicationManagementClientException.class,
+                            () -> fragmentApplicationMgtListener
+                                    .doPreDeleteApplication(applicationName, tenantDomain, userName));
+
+            assertEquals(String.format("Cannot delete shared application with resource id: %s. " +
+                            "Delete is allowed only when the main application is deleted, or its sharing is revoked.",
+                    applicationResourceID), thrownException.getMessage());
+        } else {
+            boolean result = fragmentApplicationMgtListener
+                    .doPreDeleteApplication(applicationName, tenantDomain, userName);
+            assertTrue(result);
+        }
+    }
+
     private void mockClaimConfig(ServiceProvider mainApplication) {
 
         ClaimConfig claimConfig = mock(ClaimConfig.class);

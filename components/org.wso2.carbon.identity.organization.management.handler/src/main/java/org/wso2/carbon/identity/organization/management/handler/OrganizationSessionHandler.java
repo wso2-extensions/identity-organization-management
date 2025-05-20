@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.application.authentication.framework.cache.Sessi
 import org.wso2.carbon.identity.application.authentication.framework.cache.SessionContextCacheEntry;
 import org.wso2.carbon.identity.application.authentication.framework.cache.SessionContextCacheKey;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.context.SessionContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.session.mgt.SessionManagementException;
@@ -68,6 +69,8 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
             handleOrgSessionTerminate(eventProperties);
         } else if (IdentityEventConstants.Event.SESSION_EXTENSION.equals(eventName)) {
             handleOrgSessionExtend(eventProperties);
+        } else if (IdentityEventConstants.EventName.SESSION_CREATE.name().equals(eventName)) {
+            handleOrgSessionCreation(eventProperties);
         }
     }
 
@@ -209,6 +212,105 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         long currentTime = System.currentTimeMillis();
         FrameworkUtils.updateSessionLastAccessTimeMetadata(sessionId, currentTime);
         FrameworkUtils.addSessionContextToCache(sessionId, orgSessionContext, tenantDomain, tenantDomain);
+    }
+
+    private void handleOrgSessionCreation(Map<String, Object> eventProperties) {
+
+        SessionContext sessionContext = (SessionContext) eventProperties.get(
+                IdentityEventConstants.EventProperty.SESSION_CONTEXT);
+        AuthenticationContext context = (AuthenticationContext) eventProperties.get(
+                IdentityEventConstants.EventProperty.CONTEXT);
+        Map<String, Object> params = (Map<String, Object>) eventProperties.get(
+                IdentityEventConstants.EventProperty.PARAMS);
+
+        String rootOrgSessionId;
+        if (params.containsKey(FrameworkConstants.AnalyticsAttributes.SESSION_ID)) {
+            rootOrgSessionId = (String) params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID);
+        } else {
+            LOG.debug("Root organization session ID not found in the event properties.");
+            return;
+        }
+
+        Map<String, AuthenticatedIdPData> authenticatedIdPs = sessionContext.getAuthenticatedIdPs();
+        if (authenticatedIdPs == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Authenticated IdPs not found in the session context for session: " + rootOrgSessionId +
+                        ". Hence, handling root org session remember me option is not needed.");
+            }
+            return;
+        }
+
+        String subOrgSessionId = null;
+        String subOrgId = null;
+        authenticatedIdPsLoop:
+        for (Map.Entry<String, AuthenticatedIdPData> entry : authenticatedIdPs.entrySet()) {
+            if (entry.getValue() == null) {
+                continue;
+            }
+            List<AuthenticatorConfig> authenticators = entry.getValue().getAuthenticators();
+            if (CollectionUtils.isEmpty(authenticators)) {
+                continue;
+            }
+            for (AuthenticatorConfig authenticator : authenticators) {
+                if (FrameworkConstants.ORGANIZATION_AUTHENTICATOR.equals(authenticator.getName())) {
+                    AuthenticatorStateInfo authenticatorStateInfo = authenticator.getAuthenticatorStateInfo();
+                    if (authenticatorStateInfo instanceof OIDCStateInfo) {
+                        OIDCStateInfo oidcStateInfo = (OIDCStateInfo) authenticatorStateInfo;
+                        String idTokenHint = oidcStateInfo.getIdTokenHint();
+                        // Resolve session ID by `isk` claim in ID token hint.
+                        subOrgSessionId = getClaimFromJWT(idTokenHint, IDP_SESSION_KEY);
+                        // Resolve org ID by `org_id` claim in ID token hint.
+                        subOrgId = getClaimFromJWT(idTokenHint, AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE);
+                        break authenticatedIdPsLoop;
+                    }
+                }
+            }
+        }
+
+        if (StringUtils.isBlank(subOrgSessionId) || StringUtils.isBlank(subOrgId)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Organization authenticator not found in the authenticators list or " +
+                        "Session ID / org ID not found in the ID token.");
+            }
+            return;
+        }
+        String subOrgTenantDomain;
+        try {
+            subOrgTenantDomain = getOrganizationManager().resolveTenantDomain(subOrgId);
+            if (StringUtils.isBlank(subOrgTenantDomain)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Tenant domain not found for the organization ID: " + subOrgId);
+                }
+                return;
+            }
+        } catch (OrganizationManagementException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while handling root org session remember me option for sub org session: " +
+                        subOrgId, e);
+            }
+            return;
+        }
+
+        SessionContextCacheKey sessionContextCacheKey = new SessionContextCacheKey(subOrgSessionId);
+        SessionContextCacheEntry sessionContextCacheEntry = SessionContextCache.getInstance()
+                .getSessionContextCacheEntry(sessionContextCacheKey, subOrgTenantDomain);
+        if (sessionContextCacheEntry == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No session available for requested session identifier: " + subOrgSessionId);
+            }
+            return;
+        }
+
+        // Get the sub organization session context.
+        SessionContext orgSessionContext = sessionContextCacheEntry.getContext();
+        boolean subOrgSessionRememberMe = orgSessionContext.isRememberMe();
+        if (subOrgSessionRememberMe) {
+            // Set the remember me option of the sub organization session to the root organization session.
+            sessionContext.setRememberMe(orgSessionContext.isRememberMe());
+            // Add the root organization session context to the cache.
+            FrameworkUtils.addSessionContextToCache(rootOrgSessionId, sessionContext, subOrgTenantDomain,
+                    context.getLoginTenantDomain());
+        }
     }
 
     private String getClaimFromJWT(String idToken, String claimname) {

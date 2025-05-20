@@ -23,16 +23,15 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
-import org.wso2.carbon.identity.organization.management.handler.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 
@@ -53,6 +52,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 /**
  * Unit tests for SharedRoleMgtHandler.
  */
+@WithCarbonHome
 public class SharedRoleMgtHandlerTest {
 
     private static final String PARENT_ORG_TENANT_DOMAIN = "parent-org-tenant-domain";
@@ -70,10 +70,6 @@ public class SharedRoleMgtHandlerTest {
 
     @BeforeClass
     public void setUp() {
-
-        TestUtils.initPrivilegedCarbonContext();
-        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(PARENT_ORG_TENANT_DOMAIN);
-        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(PARENT_ORG_USER_NAME);
 
         loggerUtils = mockStatic(LoggerUtils.class);
         identityUtil = mockStatic(IdentityUtil.class);
