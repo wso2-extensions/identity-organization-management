@@ -95,7 +95,6 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.framework.async.operation.status.mgt</artifactId>
-            <version>7.8.68</version>
         </dependency>
         <!--Test Dependencies-->
         <dependency>

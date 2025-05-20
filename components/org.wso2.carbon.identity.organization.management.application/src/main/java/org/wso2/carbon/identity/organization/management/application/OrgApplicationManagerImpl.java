@@ -268,7 +268,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             String operationId = getAsyncStatusMgtService().registerOperationStatus(
                     new OperationInitDTO(getCorrelation(), APPLICATION_SHARE.getValue(), B2B_APPLICATION,
-                            originalAppId, ownerOrgId, userID, sharePolicy), true);
+                            originalAppId, ownerOrgId, userID, sharePolicy), false);
             SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
             asyncOperationStatusList.put(operationId, statusQueue);
             return operationId;
@@ -649,8 +649,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     @Override
-    public void
-    shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
+    public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                      boolean shareWithAllChildren) throws OrganizationManagementException {
 
         // Synchronous application sharing. Calls the asynchronous method with operationId as null.

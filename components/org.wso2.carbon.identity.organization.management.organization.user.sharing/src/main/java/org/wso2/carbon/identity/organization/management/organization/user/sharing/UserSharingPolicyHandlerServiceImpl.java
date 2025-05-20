@@ -803,12 +803,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             operationId = getAsyncStatusMgtService().registerOperationStatus(
                     new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
                             selectiveUserShare.getOrganizationId(), sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), true);
+                            entry.getKey().getPolicy().getValue()), false);
         } else {
             operationId = getAsyncStatusMgtService().registerOperationStatus(
                     new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
                             sharingInitiatedOrgId, sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), true);
+                            entry.getKey().getPolicy().getValue()), false);
         }
         SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
         asyncOperationStatusList.put(operationId, statusQueue);

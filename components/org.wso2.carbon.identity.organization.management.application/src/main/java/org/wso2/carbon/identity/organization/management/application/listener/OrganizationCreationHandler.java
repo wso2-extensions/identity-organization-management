@@ -138,7 +138,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                                 mainApplication, true);
                     }
                 }
-            } else { //TODO
+            } else {
                 ServiceProvider mainApplication;
                 mainApplication = getApplicationManagementService().getServiceProvider(
                         applicationBasicInfo.getApplicationId());

@@ -159,6 +159,7 @@ public interface OrgApplicationManager {
      */
     default void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                           boolean shareWithAllChildren, String operationId) throws OrganizationManagementException {
+
         throw new NotImplementedException(
                 "shareApplication method is not implemented in " + this.getClass().getName());
     };
