@@ -50,16 +50,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                                                    OAuth2AuthorizeRespDTO oAuth2AuthorizeRespDTO)
             throws IdentityOAuth2Exception {
 
-        String userResidentOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
-                .getUserResidentOrganization();
-        String authorizedOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
-                .getAccessingOrganization();
-        if (StringUtils.isEmpty(authorizedOrgId)) {
-            String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-            authorizedOrgId = resolveOrganizationId(tenantDomain);
-        }
-
-        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
+        return getAdditionalClaims(oAuthAuthzReqMessageContext);
     }
 
     @Override
