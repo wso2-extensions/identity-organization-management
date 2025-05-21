@@ -268,18 +268,13 @@ public class OrgApplicationMgtServiceComponent {
     )
     protected void setAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
-        OrgApplicationMgtDataHolder.getInstance()
-                .setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
-        if (log.isDebugEnabled()) {
-            log.debug("Set Async Operation Status Mgt Service On Application Management Component.");
-        }
+        OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
+        log.debug("Set Async Operation Status Mgt Service On Application Management Component.");
     }
 
     protected void unsetAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
-        if (log.isDebugEnabled()) {
-            log.debug("Unset Async Operation Status Mgt Service On Application Management Component.");
-        }
+        log.debug("Unset Async Operation Status Mgt Service On Application Management Component.");
     }
 }

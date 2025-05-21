@@ -657,7 +657,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                      boolean shareWithAllChildren) throws OrganizationManagementException {
 
         // Synchronous application sharing. Calls the asynchronous method with operationId as null.
-        shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren, StringUtils.EMPTY);
+        shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren, null);
     }
 
     @Override
@@ -668,12 +668,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
             // loaded, tenant domain will be derived from the user who created the application.
+            getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
+                    shareWithAllChildren);
             PrivilegedCarbonContext.startTenantFlow();
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
 
-            getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
-                    shareWithAllChildren);
             setThreadLocalContextForApplicationShare(sharedTenantDomain, sharedOrgId, mainApplication, operationId,
                     tenantId);
 
