@@ -51,9 +51,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                                                    OAuth2AuthorizeRespDTO oAuth2AuthorizeRespDTO)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        String organizationId = resolveOrganizationId(tenantDomain);
-        return buildOrganizationInformation(organizationId, organizationId);
+        return getAdditionalClaims(oAuthAuthzReqMessageContext);
     }
 
     @Override
@@ -73,9 +71,16 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
     public Map<String, Object> getAdditionalClaims(OAuthAuthzReqMessageContext oAuthAuthzReqMessageContext)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        String organizationId = resolveOrganizationId(tenantDomain);
-        return buildOrganizationInformation(organizationId, organizationId);
+        String userResidentOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
+                .getUserResidentOrganization();
+        String authorizedOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
+                .getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
+            authorizedOrgId = resolveOrganizationId(tenantDomain);
+        }
+
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
     @Override
