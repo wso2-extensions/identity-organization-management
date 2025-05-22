@@ -85,6 +85,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -332,9 +333,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 IdentityUtil.threadLocalProperties.get().remove(DELETE_SHARE_FOR_MAIN_APPLICATION);
             }
             getListener().postDeleteAllSharedApplications(organizationId, applicationId, sharedApplicationDOList);
-            boolean isSharedWithAllChildren = stream(serviceProvider.getSpProperties())
+            boolean isSharedWithAllChildren = Arrays.stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
-            boolean isAppShared = stream(serviceProvider.getSpProperties())
+            boolean isAppShared = Arrays.stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> IS_APP_SHARED.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
             if (isSharedWithAllChildren || isAppShared) {
                 setShareWithAllChildrenProperty(serviceProvider, false);
@@ -351,7 +352,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         } else {
             getListener().preDeleteSharedApplication(organizationId, applicationId, sharedOrganizationId);
-            if (stream(serviceProvider.getSpProperties())
+            if (Arrays.stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 throw handleClientException(ERROR_CODE_INVALID_DELETE_SHARE_REQUEST,
                         serviceProvider.getApplicationResourceId(), sharedOrganizationId);
@@ -457,8 +458,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         getListener().preGetApplicationSharedOrganizations(organizationId, applicationId);
         ServiceProvider application = getOrgApplication(applicationId, getTenantDomain());
-        List<SharedApplicationDO> sharedApps = getOrgApplicationMgtDAO().getSharedApplications(organizationId,
-                application.getApplicationResourceId());
+        List<SharedApplicationDO> sharedApps =
+                getOrgApplicationMgtDAO().getSharedApplications(organizationId, application.getApplicationResourceId());
 
         List<String> sharedOrganizationIds = sharedApps.stream().map(SharedApplicationDO::getOrganizationId).collect(
                 Collectors.toList());
@@ -660,7 +661,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
     public void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
-                     boolean shareWithAllChildren) throws OrganizationManagementException {
+                                 boolean shareWithAllChildren) throws OrganizationManagementException {
 
         // Synchronous application sharing. Calls the asynchronous method with operationId as null.
         shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren, null);
@@ -875,8 +876,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     @Override
     public List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset, String filter,
-                                                                                String sortOrder, String sortBy,
-                                                                                String tenantDomain)
+                                                                          String sortOrder, String sortBy,
+                                                                          String tenantDomain)
             throws OrganizationManagementException {
 
         String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
@@ -921,7 +922,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         if (serviceProvider != null) {
-            boolean isFragmentApp = stream(serviceProvider.getSpProperties())
+            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
                     .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                             Boolean.parseBoolean(property.getValue()));
             if (!isFragmentApp) {
@@ -936,7 +937,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * This method checks whether the exception is thrown due to the OAuth client already existing.
      *
      * @param e The IdentityException thrown upon OAuth app creation failure.
-     * @return Boolean indicating whether the exception is thrown due to the OAuth client already existing.
+     * @return  Boolean indicating whether the exception is thrown due to the OAuth client already existing.
      */
     private boolean isOAuthClientExistsError(IdentityException e) {
 
@@ -948,10 +949,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * It is possible that the error is due to stale data, hence a retry mechanism is implemented to check
      * whether it is a stale app and if so, delete the stale app and retry the oauth app creation.
      *
-     * @param ownerOrgId      ID of the owner organization.
-     * @param sharedOrgId     ID of the shared sub organization.
-     * @param mainApplication The application that is being shared.
-     * @return OAuth app that is created.
+     * @param ownerOrgId       ID of the owner organization.
+     * @param sharedOrgId      ID of the shared sub organization.
+     * @param mainApplication  The application that is being shared.
+     * @return                 OAuth app that is created.
      * @throws OrganizationManagementException Throws exception if there are any exceptions in the retry mechanism.
      */
     private OAuthConsumerAppDTO handleOAuthClientExistsError(
@@ -1143,7 +1144,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private boolean isAlreadySharedApplication(ServiceProvider serviceProvider) {
 
-        return serviceProvider.getSpProperties() != null && stream(serviceProvider.getSpProperties())
+        return serviceProvider.getSpProperties() != null && Arrays.stream(serviceProvider.getSpProperties())
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                         Boolean.parseBoolean(property.getValue()));
     }
@@ -1186,16 +1187,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         /* If shareWithAllChildren is true and in the main application it is set as false,
         then the value should be updated. */
         if (shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
-                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())
-                        && !Boolean.parseBoolean(p.getValue()))) {
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && !Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
         /* If shareWithAllChildren is false and in the main application it is set as true,
         then the value should be updated. */
         if (!shareWithAllChildren && stream(mainApplication.getSpProperties()).anyMatch(
-                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName())
-                        && Boolean.parseBoolean(p.getValue()))) {
+                p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
             return true;
         }
 
