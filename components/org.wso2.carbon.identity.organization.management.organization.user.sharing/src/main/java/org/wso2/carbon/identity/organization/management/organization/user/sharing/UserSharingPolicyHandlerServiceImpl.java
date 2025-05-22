@@ -721,7 +721,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             for (String orgId : entry.getValue()) {
                 shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId, operationId);
             }
-            getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+            if (StringUtils.isNotBlank(operationId)) {
+                getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+            }
         }
     }
 
@@ -803,7 +805,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             shareWithNewOrganizations(baseUserShare, sharingInitiatedOrgId, userSharingOrgList, retainedSharedOrgs,
                     operationId);
-            getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+            if (StringUtils.isNotBlank(operationId)) {
+                getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+            }
         }
         cleanUpOldUserAssociationsIfExists(associatedUserId, sharingInitiatedOrgId, userSharingAllOrgs);
     }
@@ -826,14 +830,21 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             sharingInitiatedOrgId, sharingInitiatedUserId,
                             entry.getKey().getPolicy().getValue()), false);
         }
-        SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
-        asyncOperationStatusList.put(operationId, statusQueue);
+        if (StringUtils.isNotBlank(operationId)) {
+            // Registering an operation requires a valid operation ID.
+            SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+            asyncOperationStatusList.put(operationId, statusQueue);
+        }
         return operationId;
     }
 
     private void registerOperationStatusUnit(String operationId, String resourceId, String targetOrgId, OperationStatus
                                                      status, String message) throws AsyncOperationStatusMgtException {
 
+        if (StringUtils.isBlank(operationId)) {
+            // Skipping registering of unit operations since the operationId is null.
+            return;
+        }
         UnitOperationInitDTO statusDTO = new UnitOperationInitDTO(operationId, resourceId, targetOrgId, status,
                 message);
         getAsyncStatusMgtService().registerUnitOperationStatus(statusDTO);

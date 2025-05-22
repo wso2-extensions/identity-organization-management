@@ -247,19 +247,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 futures.add(future);
             }
         }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
+        if (StringUtils.isNotBlank(operationId)) {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
 
-            try {
-                getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
-            } catch (AsyncOperationStatusMgtException e) {
                 try {
-                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
-                } catch (OrganizationManagementServerException ex) {
-                    throw new RuntimeException(ex);
+                    getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
+                } catch (AsyncOperationStatusMgtException e) {
+                    try {
+                        throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
+                    } catch (OrganizationManagementServerException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
-            }
 
-        }).join();
+            }).join();
+        }
     }
 
     private String getOperationId(String originalAppId, String ownerOrgId, String userID, String sharePolicy)
@@ -269,8 +271,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String operationId = getAsyncStatusMgtService().registerOperationStatus(
                     new OperationInitDTO(getCorrelation(), APPLICATION_SHARE.getValue(), B2B_APPLICATION,
                             originalAppId, ownerOrgId, userID, sharePolicy), false);
-            SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
-            asyncOperationStatusList.put(operationId, statusQueue);
+
+            // If Async Operation Status persistence is disabled, operationId will not be returned.
+            if (StringUtils.isNotBlank(operationId)) {
+                SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+                asyncOperationStatusList.put(operationId, statusQueue);
+            }
             return operationId;
         } catch (AsyncOperationStatusMgtException e) {
             throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e, originalAppId);
