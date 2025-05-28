@@ -254,11 +254,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 try {
                     getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
                 } catch (AsyncOperationStatusMgtException e) {
-                    try {
-                        throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, e);
-                    } catch (OrganizationManagementServerException ex) {
-                        throw new RuntimeException(ex);
-                    }
+                    LOG.error(String.format("Failed to update operation status for operationId %s", operationId), e);
                 }
             });
         }
