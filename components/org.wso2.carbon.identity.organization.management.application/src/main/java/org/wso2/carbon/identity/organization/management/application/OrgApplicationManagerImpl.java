@@ -139,6 +139,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_REVOKING_SHARED_APP_TOKENS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
@@ -249,8 +250,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         }
         if (StringUtils.isNotBlank(operationId)) {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).whenComplete((result, throwable) -> {
                 try {
                     getAsyncStatusMgtService().updateOperationStatus(operationId, getOperationStatus(operationId));
                 } catch (AsyncOperationStatusMgtException e) {
@@ -260,8 +260,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         throw new RuntimeException(ex);
                     }
                 }
-
-            }).join();
+            });
         }
     }
 
@@ -673,15 +672,16 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         try {
-            // Use tenant of the organization to whom the application getting shared. When the consumer application is
-            // loaded, tenant domain will be derived from the user who created the application.
             getListener().preShareApplication(ownerOrgId, mainApplication.getApplicationResourceId(), sharedOrgId,
                     shareWithAllChildren);
-            PrivilegedCarbonContext.startTenantFlow();
+            // Use tenant of the organization to whom the application getting shared. When the consumer application is
+            // loaded, tenant domain will be derived from the user who created the application.
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
             int tenantId = IdentityTenantUtil.getTenantId(sharedTenantDomain);
 
-            setThreadLocalContextForApplicationShare(sharedTenantDomain, sharedOrgId, mainApplication, operationId,
+            setThreadLocalContextForApplicationShare(sharedOrgId, mainApplication, operationId,
                     tenantId);
 
             Optional<String> mayBeSharedAppId = resolveSharedApp(
@@ -718,17 +718,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (StringUtils.isNotBlank(operationId)) {
             Throwable cause1 = e.getCause();
             if (cause1 instanceof IdentityEventException) {
+                IdentityEventException identityEventException = (IdentityEventException) cause1;
+                if (identityEventException.getErrorCode() != null && identityEventException.getErrorCode()
+                        .equals(ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getCode())) {
+                    processUnitOperationStatus(operationId, initiatedResourceId, targetOrgId,
+                            OperationStatus.FAILED, cause1.getLocalizedMessage());
+                }
                 Throwable cause2 = cause1.getCause();
                 if (cause2 instanceof IdentityApplicationManagementClientException) {
                     IdentityApplicationManagementClientException appException =
                             (IdentityApplicationManagementClientException) cause2;
                     String errorCode = appException.getErrorCode();
-                    String sharedApplicationName = appException.getDescription();
 
                     if (Objects.equals(errorCode, ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode())) {
                         processUnitOperationStatus(operationId, initiatedResourceId,
-                                targetOrgId, OperationStatus.FAILED, String.format("Organization has " +
-                                        "a non shared application with name %s.", sharedApplicationName));
+                                targetOrgId, OperationStatus.FAILED, cause2.getLocalizedMessage());
                     }
                 }
             }
@@ -736,11 +740,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         throw e;
     }
 
-    private void setThreadLocalContextForApplicationShare(String sharedTenantDomain, String sharedOrgId,
-                                                          ServiceProvider mainApplication, String operationId,
-                                                          int tenantId) throws OrganizationManagementException {
+    private void setThreadLocalContextForApplicationShare(String sharedOrgId, ServiceProvider mainApplication,
+                                                          String operationId, int tenantId)
+            throws OrganizationManagementException {
 
-        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedTenantDomain, true);
         try {
             String adminUserId =
                     getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration().getAdminUserId();

@@ -816,20 +816,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                                            String sharingInitiatedUserId, String correlationId)
             throws AsyncOperationStatusMgtException {
 
-        BaseUserShare baseUserShare = entry.getKey();
-        String operationId;
-        if (baseUserShare instanceof SelectiveUserShare) {
-            SelectiveUserShare selectiveUserShare = (SelectiveUserShare) baseUserShare;
-            operationId = getAsyncStatusMgtService().registerOperationStatus(
-                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
-                            selectiveUserShare.getOrganizationId(), sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), false);
-        } else {
-            operationId = getAsyncStatusMgtService().registerOperationStatus(
-                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
-                            sharingInitiatedOrgId, sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), false);
-        }
+        String operationId = getAsyncStatusMgtService().registerOperationStatus(new OperationInitDTO(correlationId,
+                B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(), sharingInitiatedOrgId, sharingInitiatedUserId,
+                entry.getKey().getPolicy().getValue()), false);
+
         if (StringUtils.isNotBlank(operationId)) {
             // Registering an operation requires a valid operation ID.
             SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
@@ -1460,6 +1450,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds, resultDO);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            // Catch exceptions when getting the current shared role ids and the roles to be added after update.
             registerOperationStatusUnit(resultDO.getOperationId(), userAssociation.getUserId(), sharingInitiatedOrgId,
                     OperationStatus.PARTIALLY_COMPLETED, ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER + e.getMessage());
             throw e;
@@ -1874,7 +1865,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private String buildPartialResultMessageForFailedRoles(List<String> failedAssignedRoles) {
 
-        StringBuilder error = new StringBuilder("User shared and Failed assigning roles: ");
+        StringBuilder error = new StringBuilder("User shared but failed to assign roles: ");
         for (int i = 0; i < failedAssignedRoles.size(); i++) {
             error.append(failedAssignedRoles.get(i));
             if (i < failedAssignedRoles.size() - 1) {
