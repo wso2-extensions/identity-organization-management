@@ -815,6 +815,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             try {
                 getAsyncStatusMgtService().registerUnitOperationStatus(dto);
             } catch (AsyncOperationStatusMgtException ex) {
+                LOG.error("Error in registering application shared access status.", ex);
                 throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_APPLICATION_SHARED_ACCESS_STATUS, ex);
             }
             asyncOperationStatusList.get(operationId).add(status);
