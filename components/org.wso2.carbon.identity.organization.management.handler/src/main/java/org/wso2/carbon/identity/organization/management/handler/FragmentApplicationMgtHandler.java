@@ -109,10 +109,10 @@ public class FragmentApplicationMgtHandler extends AbstractEventHandler {
                         }
                         LOG.warn(String.format("Organization %s has a non shared application with name %s.",
                                 sharedOrganizationId, parentApp.getApplicationName()));
+                        String error = String.format(ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getMessage(),
+                                sharedOrganizationId, parentApp.getApplicationName());
                         throw new IdentityApplicationManagementClientException(
-                                ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode(),
-                                String.format(ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getMessage(),
-                                        parentApp.getApplicationName(), sharedOrganizationId));
+                                ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode(), error, error);
                     }
                 }
             }
