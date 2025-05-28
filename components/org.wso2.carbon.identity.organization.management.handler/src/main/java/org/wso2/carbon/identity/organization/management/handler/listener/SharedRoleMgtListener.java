@@ -548,9 +548,10 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                        .setTenantDomain(mainApplicationTenantDomain, true);
-                associatedApplicationsIds = roleManagementService.getAssociatedApplicationByRoleId(mainAppRoleId,
-                        mainApplicationTenantDomain);
+                        .setTenantDomain(sharedAppTenantDomain, true);
+                String subOrgRoleId = mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId);
+                associatedApplicationsIds = roleManagementService.getAssociatedApplicationByRoleId(subOrgRoleId,
+                        sharedAppTenantDomain);
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
@@ -672,19 +673,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
         return true;
 
-    }
-
-    private String resolveEveryoneOrganizationRole(String tenantDomain) throws IdentityRoleManagementException {
-
-        try {
-            String internalEveryoneRole = OrganizationManagementHandlerDataHolder.getInstance().getRealmService()
-                    .getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain)).getRealmConfiguration()
-                    .getEveryOneRoleName();
-            return UserCoreUtil.removeDomainFromName(internalEveryoneRole);
-        } catch (UserStoreException e) {
-            throw new IdentityRoleManagementException(String.format(
-                    "Error while fetching the internal everyone role of the tenant with: %s.", tenantDomain), e);
-        }
     }
 
     private static boolean isFragmentApp(ServiceProvider serviceProvider) {

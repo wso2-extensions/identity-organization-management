@@ -56,7 +56,7 @@ public interface ApplicationSharingManagerListener {
 
     /**
      * @Deprecated
-     * Use @link preShareApplication TODO: Check how we can link the below new function.
+     * Use@ {@link #preShareApplication(String, String, String, RoleSharingConfig)} instead.
      * Post listener of sharing an application.
      *
      * @param parentOrganizationId Parent application residing organization id.

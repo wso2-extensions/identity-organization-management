@@ -22,6 +22,8 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER;
+
 /**
  * Utility class to parse SCIM-like filter strings for organization management.
  * This class is specifically designed to handle filters in the format:
@@ -31,7 +33,7 @@ import java.util.regex.Pattern;
  * The class enforces a strict format and provides a method to extract the organization ID
  * and an optional path attribute (e.g., ".roles").
  */
-public class OrganizationScimFilterParser {
+public class OrgApplicationScimFilterParser {
 
     /**
      * Holds the parsed results from the SCIM-like filter string.
@@ -115,32 +117,25 @@ public class OrganizationScimFilterParser {
     public static ParsedFilterResult parseFilter(String filterString) throws OrganizationManagementClientException {
 
         if (filterString == null || filterString.trim().isEmpty()) {
-            // TODO: Add error code.
-            throw new OrganizationManagementClientException("Invalid filter string format", "Filter string cannot be null or empty.", "ERRORCODE");
+            throw new OrganizationManagementClientException("Invalid filter string format", "Filter string cannot" +
+                    " be null or empty.", ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER.getCode());
         }
-
         Matcher matcher = FILTER_PATTERN.matcher(filterString);
-
         if (matcher.matches()) {
-            String organizationId = matcher.group(1); // Extract the orgId from the first capturing group
-            String fullPathWithDot = matcher.group(2);   // Extract the optional ".roles" part (Group 2)
-
+            String organizationId = matcher.group(1); // Extract the orgId from the first capturing group.
+            String fullPathWithDot = matcher.group(2);   // Extract the optional ".roles" part (Group 2).
             String pathAttribute = null;
             if (fullPathWithDot != null) {
                 // If group 2 matched, it means ".roles" was present.
                 // We want to return "roles" without the leading dot.
                 pathAttribute = fullPathWithDot.substring(1);
             }
-
             return new ParsedFilterResult(organizationId, pathAttribute);
         } else {
             // The string does not match the strict pattern.
-            // TODO: Add error code.
             throw new OrganizationManagementClientException("Invalid filter string format",
-                    "Invalid filter string format. Expected format: " +
-                            "'organizations[orgId eq \"<orgid>\"]' or " +
-                            "'organizations[orgId eq \"<orgid>\"].roles'. " +
-                            "Input was: \"" + filterString + "\"", "ERROR CODE");
+                    ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER.getDescription(),
+                    ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER.getCode());
         }
     }
 }

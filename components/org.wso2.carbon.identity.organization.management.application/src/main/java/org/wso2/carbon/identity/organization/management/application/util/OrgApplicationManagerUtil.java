@@ -30,8 +30,10 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.RoleSharingConfig;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
@@ -246,5 +248,24 @@ public class OrgApplicationManagerUtil {
         } catch (IdentityApplicationManagementException e) {
             throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
         }
+    }
+
+    public static OrganizationManagementClientException handleClientException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error) {
+        return new OrganizationManagementClientException(error.getMessage(), error.getDescription(), error.getCode());
+    }
+
+    /**
+     * Throw an OrganizationManagementServerException upon server side error in organization management.
+     *
+     * @param error The error enum.
+     * @param e     The error.
+     * @return OrganizationManagementServerException
+     */
+    public static OrganizationManagementServerException handleServerException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error, Throwable e) {
+
+        String description = error.getDescription();
+        return new OrganizationManagementServerException(error.getMessage(), description, error.getCode(), e);
     }
 }

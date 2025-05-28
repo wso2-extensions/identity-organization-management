@@ -23,8 +23,9 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.organization.management.application.model.ApplicationShareUpdateOperation;
 import org.wso2.carbon.identity.organization.management.application.model.GeneralApplicationShare;
 import org.wso2.carbon.identity.organization.management.application.model.RoleSharingConfig;
-import org.wso2.carbon.identity.organization.management.application.model.SelectiveApplicationShare;
+import org.wso2.carbon.identity.organization.management.application.model.SelectiveShareApplication;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
+import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationOrganizationNodePage;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -51,7 +52,7 @@ public interface OrgApplicationManager {
                                       List<String> sharedOrgs) throws OrganizationManagementException;
 
     default void selectiveShareOrganizationApplication(String applicationId,
-                                                       List<SelectiveApplicationShare> selectiveApplicationShareList)
+                                                       List<SelectiveShareApplication> selectiveShareApplicationList)
             throws OrganizationManagementException {
         throw new NotImplementedException(
                 "selectiveShareOrganizationApplication method is not implemented in " + this.getClass().getName());
@@ -115,6 +116,14 @@ public interface OrgApplicationManager {
      */
     List<BasicOrganization> getApplicationSharedOrganizations(String ownerOrgId, String mainAppId)
             throws OrganizationManagementException;
+
+    default SharedApplicationOrganizationNodePage getApplicationSharedOrganizations(String mainApplicationId, String
+            filter, String after, String before, String excludedAttributes, int limit, boolean recursive)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "getApplicationSharedOrganizations method is not implemented in " + this.getClass().getName());
+    }
 
     /**
      * Returns the shared applications list of a given primary application, along with their organizations.

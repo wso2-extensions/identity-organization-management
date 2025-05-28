@@ -18,7 +18,7 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
-import org.wso2.carbon.identity.organization.management.application.model.SelectiveApplicationShare;
+import org.wso2.carbon.identity.organization.management.application.model.SelectiveShareApplication;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationNode;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * Utility class to process organization shares ordered by hierarchy.
  */
-public class OrganizationShareProcessor {
+public class OrgApplicationShareProcessor {
 
     // Helper structure to hold results from BFS traversal
     private static class HierarchyInfo {
@@ -113,8 +113,8 @@ public class OrganizationShareProcessor {
      * @param mainOrganizationId The ID of the organization to process.
      * @return A sorted List<OrganizationShareConfig> reflecting hierarchy, policy propagation, and prioritization.
      */
-    public static List<SelectiveApplicationShare> processAndSortOrganizationShares(
-            List<SelectiveApplicationShare> inputConfigs, String mainOrganizationId)
+    public static List<SelectiveShareApplication> processAndSortOrganizationShares(
+            List<SelectiveShareApplication> inputConfigs, String mainOrganizationId)
             throws OrganizationManagementException {
 
         List<OrganizationNode> topLevelNodes = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager()
@@ -130,9 +130,9 @@ public class OrganizationShareProcessor {
         }
 
         // 2. Validate Initial Configs (Filter out invalid org IDs).
-        Map<String, SelectiveApplicationShare> validatedInputConfigs = new HashMap<>();
+        Map<String, SelectiveShareApplication> validatedInputConfigs = new HashMap<>();
         if (inputConfigs != null) {
-            for (SelectiveApplicationShare config : inputConfigs) {
+            for (SelectiveShareApplication config : inputConfigs) {
                 if (config != null && allValidNodes.containsKey(config.getOrganizationId())) {
                     // Only add if the org ID is valid according to the hierarchy
                     // If duplicate orgIDs exist in input, the last one wins here.
@@ -143,7 +143,7 @@ public class OrganizationShareProcessor {
 
 
         // 3. Determine Effective Configuration & Apply Policy.
-        Map<String, SelectiveApplicationShare> effectiveConfigs = new HashMap<>();
+        Map<String, SelectiveShareApplication> effectiveConfigs = new HashMap<>();
         Set<String> processedOrgIds = new HashSet<>(); // Tracks orgs whose fate is decided.
 
         for (String currentOrgId : bfsOrder) {
@@ -152,7 +152,7 @@ public class OrganizationShareProcessor {
                 continue; // Already handled by an ancestor's overriding policy.
             }
 
-            SelectiveApplicationShare explicitConfig = validatedInputConfigs.get(currentOrgId);
+            SelectiveShareApplication explicitConfig = validatedInputConfigs.get(currentOrgId);
 
             if (explicitConfig != null) {
                 // Found the highest-level explicit config for this org/branch
@@ -169,7 +169,7 @@ public class OrganizationShareProcessor {
                             // Create inherited config ONLY IF descendant not already explicitly defined higher up
                             // (which shouldn't happen because of BFS order, but check is safe)
                             if (!effectiveConfigs.containsKey(descendantId)) {
-                                SelectiveApplicationShare inheritedConfig = new SelectiveApplicationShare(
+                                SelectiveShareApplication inheritedConfig = new SelectiveShareApplication(
                                         descendantId,
                                         explicitConfig.getPolicy(), // Inherit policy
                                         explicitConfig.getRoleSharing() // Inherit RoleSharingConfig
@@ -191,7 +191,7 @@ public class OrganizationShareProcessor {
         }
 
         // 4. Generate Sorted Output List
-        List<SelectiveApplicationShare> sortedFinalConfigs = new ArrayList<>();
+        List<SelectiveShareApplication> sortedFinalConfigs = new ArrayList<>();
         for (String orgIdInOrder : bfsOrder) {
             if (effectiveConfigs.containsKey(orgIdInOrder)) {
                 sortedFinalConfigs.add(effectiveConfigs.get(orgIdInOrder));

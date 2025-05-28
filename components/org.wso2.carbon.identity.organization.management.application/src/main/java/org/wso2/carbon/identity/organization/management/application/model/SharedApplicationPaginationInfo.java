@@ -17,24 +17,28 @@
 
 package org.wso2.carbon.identity.organization.management.application.model;
 
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
-
 /**
- * This class represents the selective application share.
+ * Represents pagination information for shared applications.
  */
-public class SelectiveApplicationShare extends ApplicationShare {
+public class SharedApplicationPaginationInfo {
 
-        private final String organizationId;
+    private final String nextToken;
+    private final String prevToken;
 
-        public SelectiveApplicationShare(String organizationId, PolicyEnum policy,
-                                         RoleSharingConfig roleSharingConfig) {
 
-            super(policy, roleSharingConfig);
-            this.organizationId = organizationId;
-        }
+    public SharedApplicationPaginationInfo(String nextToken, String prevToken) {
 
-        public String getOrganizationId() {
-
-            return organizationId;
-        }
+        this.nextToken = nextToken;
+        this.prevToken = prevToken;
     }
+
+    public String getNextToken() {
+
+        return nextToken;
+    }
+
+    public String getPrevToken() {
+
+        return prevToken;
+    }
+}

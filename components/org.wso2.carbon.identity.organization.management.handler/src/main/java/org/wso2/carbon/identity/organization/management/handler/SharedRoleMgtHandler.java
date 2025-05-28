@@ -924,25 +924,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         return Optional.empty();
     }
 
-    private void createSharedRolesWithAppAudience(String mainAppId, String mainAppTenantDomain, String sharedAppId,
-                                                  String sharedAppTenantDomain) throws IdentityRoleManagementException {
-
-        // Get parent organization's roles which has application audience.
-        String filter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + mainAppId;
-        List<RoleBasicInfo> parentOrgRoles =
-                getRoleManagementServiceV2().getRoles(filter, null, 0, null, null, mainAppTenantDomain);
-        for (RoleBasicInfo parentOrgRole : parentOrgRoles) {
-            String parentOrgRoleName = parentOrgRole.getName();
-            // Create the role in the shared org.
-            RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(parentOrgRoleName, Collections.emptyList(),
-                    Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION, sharedAppId,
-                    sharedAppTenantDomain);
-            // Add relationship between main role and the shared role.
-            getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(parentOrgRole.getId(), subOrgRole.getId(),
-                    mainAppTenantDomain, sharedAppTenantDomain);
-        }
-    }
-
     private void createSharedRolesOnNewRoleCreation(Map<String, Object> eventProperties)
             throws IdentityEventException {
 

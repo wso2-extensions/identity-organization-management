@@ -121,7 +121,8 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_SHARING_CONFIG, roleSharingConfig);
         if (resourceSharingPolicyId != -1) {
             // When this is present, that mean this is a FUTURE sharing application.
-            eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID, resourceSharingPolicyId);
+            eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID,
+                    resourceSharingPolicyId);
         }
 
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_USER_ATTRIBUTES,
@@ -166,8 +167,6 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_UPDATE_OPERATION, operation);
         fireEvent(OrgApplicationMgtConstants.EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
     }
-
-
 
     @Override
     public void preDeleteSharedApplication(String parentOrganizationId, String parentApplicationId,

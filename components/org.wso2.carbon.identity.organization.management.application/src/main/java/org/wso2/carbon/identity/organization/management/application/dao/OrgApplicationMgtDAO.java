@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.application.dao;
 
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
@@ -150,6 +151,29 @@ public interface OrgApplicationMgtDAO {
      */
     default List<SharedApplicationDO> getSharedApplications(String mainAppId, String ownerOrgId,
                                                             List<String> sharedOrgIds)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "getSharedApplications method is not implemented in " + this.getClass().getName());
+    }
+
+    /**
+     * Returns the unique identifiers of shared applications associated with the given main application
+     * within the given shared organizations.
+     *
+     * @param ownerOrgId       The main organizationId that the original application belongs to.
+     * @param mainApplicationId The app resource ID of the main application.
+     * @param sharedOrgIds     The list of app shared organization IDs.
+     * @param expressionNodes  The list of expression nodes to filter the results.
+     * @param sortOder         The order in which to sort the results.
+     * @param limit            The maximum number of results to return.
+     * @return The list of shared application IDs within the given shared organizations.
+     * @throws OrganizationManagementException The server exception is thrown in a failure
+     *                                         when retrieving the shared apps.
+     */
+    default List<SharedApplicationDO> getSharedApplications(String ownerOrgId, String mainApplicationId,
+                                                           List<String> sharedOrgIds, List<ExpressionNode>
+                                                                   expressionNodes, String sortOder, int limit)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(
