@@ -18,8 +18,11 @@
 
 package org.wso2.carbon.identity.organization.management.handler;
 
+import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -30,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 import org.wso2.carbon.utils.AuditLog;
+import org.wso2.carbon.utils.CarbonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,6 +55,10 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
 
     private static final OrganizationManagementAuditLogHandler INSTANCE = new OrganizationManagementAuditLogHandler();
 
+    private static final Log LOG = CarbonConstants.AUDIT_LOG;
+    private static final String V1_TEMPLATE =
+            "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : Success";
+
     private static final String ID = "Id";
     private static final String NAME = "Name";
     private static final String DESCRIPTION = "Description";
@@ -68,6 +76,8 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
     private static final String PATCH_ADDED = "Added";
     private static final String PATCH_REPLACED = "Replaced";
     private static final String PATCH_REMOVED = "Removed";
+
+    private static final Gson GSON = new Gson();
 
     private OrganizationManagementAuditLogHandler() {
 
@@ -132,7 +142,14 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
     public void logOrganizationCreation(Map<String, Object> eventProperties) {
 
         Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
-        triggerAuditLogEvent(organization.getId(), Action.ADD_ORGANIZATION, getDataMap(organization));
+        Map<String, Object> dataMap = getDataMap(organization);
+        if (isV1LogsEnabled()) {
+            LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.ADD_ORGANIZATION.value(), organization.getId(),
+                    GSON.toJson(dataMap)));
+        }
+        if (isV2LogsEnabled()) {
+            triggerAuditLogEvent(organization.getId(), Action.ADD_ORGANIZATION, dataMap);
+        }
     }
 
     /**
@@ -143,7 +160,14 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
     public void logUpdateOrganization(Map<String, Object> eventProperties) {
 
         Organization updatedOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
-        triggerAuditLogEvent(updatedOrganization.getId(), Action.UPDATE_ORGANIZATION, getDataMap(updatedOrganization));
+        Map<String, Object> dataMap = getDataMap(updatedOrganization);
+        if (isV1LogsEnabled()) {
+            LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.UPDATE_ORGANIZATION.value(),
+                    updatedOrganization.getId(), GSON.toJson(dataMap)));
+        }
+        if (isV2LogsEnabled()) {
+            triggerAuditLogEvent(updatedOrganization.getId(), Action.UPDATE_ORGANIZATION, dataMap);
+        }
     }
 
     /**
@@ -156,7 +180,14 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         String organizationId = eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID).toString();
         List<PatchOperation> patchOperations =
                 (List<PatchOperation>) eventProperties.get(Constants.EVENT_PROP_PATCH_OPERATIONS);
-        triggerAuditLogEvent(organizationId, Action.UPDATE_ORGANIZATION, getDataMap(organizationId, patchOperations));
+        Map<String, Object> dataMap = getDataMap(organizationId, patchOperations);
+        if (isV1LogsEnabled()) {
+            LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.UPDATE_ORGANIZATION.value(),
+                    organizationId, GSON.toJson(dataMap)));
+        }
+        if (isV2LogsEnabled()) {
+            triggerAuditLogEvent(organizationId, Action.UPDATE_ORGANIZATION, dataMap);
+        }
     }
 
     /**
@@ -169,7 +200,13 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         String organizationId = eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID).toString();
         Map<String, Object> data = new HashMap<>();
         data.put(ID, organizationId);
-        triggerAuditLogEvent(organizationId, Action.DELETE_ORGANIZATION, data);
+        if (isV1LogsEnabled()) {
+            LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.DELETE_ORGANIZATION.value(),
+                    organizationId, GSON.toJson(data)));
+        }
+        if (isV2LogsEnabled()) {
+            triggerAuditLogEvent(organizationId, Action.DELETE_ORGANIZATION, data);
+        }
     }
 
     private Map<String, Object> getDataMap(Organization organization) {
@@ -291,5 +328,15 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         }
 
         return StringUtils.isNotBlank(initiator) ? initiator : LoggerUtils.getMaskedContent(username);
+    }
+    
+    private boolean isV1LogsEnabled() {
+        
+        return !CarbonUtils.isLegacyAuditLogsDisabled();
+    }
+    
+    private boolean isV2LogsEnabled() {
+
+        return LoggerUtils.isEnableV2AuditLogs();
     }
 }
