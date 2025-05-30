@@ -49,7 +49,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_PATH_ORG_STATUS;
 
 /**
- * Organization management V2 audit logger class.
+ * Organization management audit logger class.
  */
 public class OrganizationManagementAuditLogHandler extends AbstractEventHandler {
 
