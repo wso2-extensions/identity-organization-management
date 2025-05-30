@@ -143,11 +143,11 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
 
         Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
         Map<String, Object> dataMap = getDataMap(organization);
-        if (isV1LogsEnabled()) {
+        if (isV1AuditLogsEnabled()) {
             LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.ADD_ORGANIZATION.value(), organization.getId(),
                     GSON.toJson(dataMap)));
         }
-        if (isV2LogsEnabled()) {
+        if (isV2AuditLogsEnabled()) {
             triggerAuditLogEvent(organization.getId(), Action.ADD_ORGANIZATION, dataMap);
         }
     }
@@ -161,11 +161,11 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
 
         Organization updatedOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
         Map<String, Object> dataMap = getDataMap(updatedOrganization);
-        if (isV1LogsEnabled()) {
+        if (isV1AuditLogsEnabled()) {
             LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.UPDATE_ORGANIZATION.value(),
                     updatedOrganization.getId(), GSON.toJson(dataMap)));
         }
-        if (isV2LogsEnabled()) {
+        if (isV2AuditLogsEnabled()) {
             triggerAuditLogEvent(updatedOrganization.getId(), Action.UPDATE_ORGANIZATION, dataMap);
         }
     }
@@ -181,11 +181,11 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         List<PatchOperation> patchOperations =
                 (List<PatchOperation>) eventProperties.get(Constants.EVENT_PROP_PATCH_OPERATIONS);
         Map<String, Object> dataMap = getDataMap(organizationId, patchOperations);
-        if (isV1LogsEnabled()) {
+        if (isV1AuditLogsEnabled()) {
             LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.UPDATE_ORGANIZATION.value(),
                     organizationId, GSON.toJson(dataMap)));
         }
-        if (isV2LogsEnabled()) {
+        if (isV2AuditLogsEnabled()) {
             triggerAuditLogEvent(organizationId, Action.UPDATE_ORGANIZATION, dataMap);
         }
     }
@@ -200,11 +200,11 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         String organizationId = eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID).toString();
         Map<String, Object> data = new HashMap<>();
         data.put(ID, organizationId);
-        if (isV1LogsEnabled()) {
+        if (isV1AuditLogsEnabled()) {
             LOG.info(String.format(V1_TEMPLATE, getInitiatorId(), Action.DELETE_ORGANIZATION.value(),
                     organizationId, GSON.toJson(data)));
         }
-        if (isV2LogsEnabled()) {
+        if (isV2AuditLogsEnabled()) {
             triggerAuditLogEvent(organizationId, Action.DELETE_ORGANIZATION, data);
         }
     }
@@ -330,12 +330,12 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
         return StringUtils.isNotBlank(initiator) ? initiator : LoggerUtils.getMaskedContent(username);
     }
     
-    private boolean isV1LogsEnabled() {
+    private boolean isV1AuditLogsEnabled() {
         
         return !CarbonUtils.isLegacyAuditLogsDisabled();
     }
     
-    private boolean isV2LogsEnabled() {
+    private boolean isV2AuditLogsEnabled() {
 
         return LoggerUtils.isEnableV2AuditLogs();
     }
