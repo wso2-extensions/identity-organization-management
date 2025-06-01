@@ -25,6 +25,9 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
+import org.wso2.carbon.identity.governance.model.UserIdentityClaim;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
@@ -81,10 +84,11 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
             if (!OrganizationManagementUtil.isOrganization(tenantDomain)) {
                 return true;
             }
-            if (claims != null && claims.containsKey(CLAIM_MANAGED_ORGANIZATION)
-                    && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
+
+            if (isSharedUser(claims)) {
                 return true;
             }
+
             String organizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
             if (StringUtils.isBlank(organizationId)) {
                 organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -165,5 +169,31 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
+    }
+
+    /**
+     * Check whether the user is a shared user or not.
+     *
+     * @return true if the user is a shared user, false otherwise.
+     */
+    private boolean isSharedUser(Map<String, String> claims) {
+
+        if (claims != null && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
+            return true;
+        }
+
+        // In IdentityStoreEventListener#doPreAddUser, temporarily cache the identity claim in a ThreadLocal
+        // and remove it from the claims list to defer further processing.
+        Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
+        if (threadLocalProperties == null) {
+            return false;
+        }
+        Object claimProp = threadLocalProperties.get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
+        if (!(claimProp instanceof UserIdentityClaim)) {
+            return false;
+        }
+        UserIdentityClaim userIdentityClaims = (UserIdentityClaim) claimProp;
+        String orgClaim = userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION);
+        return StringUtils.isNotBlank(orgClaim);
     }
 }

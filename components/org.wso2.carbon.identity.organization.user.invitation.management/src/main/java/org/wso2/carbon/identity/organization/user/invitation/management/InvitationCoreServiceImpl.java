@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -73,6 +73,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
@@ -765,9 +766,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         List<RoleBasicInfo> roleListFromUserGroups =
                 getRoleManagementService().getRoleListOfGroups(groupList, tenantDomain);
 
-        if (!roleListFromUserGroups.isEmpty()) {
-            roleList.addAll(roleListFromUserGroups);
-        }
+        Optional.ofNullable(roleListFromUserGroups).ifPresent(roleList::addAll);
 
         return roleList.stream().anyMatch(p ->
                 FrameworkConstants.Application.CONSOLE_APP.equals(p.getAudienceName()));
@@ -791,8 +790,8 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         for (Group group : groups) {
             String groupName = group.getGroupName();
             String groupDomainName = UserCoreUtil.extractDomainFromName(groupName);
-            if (!INTERNAL_DOMAIN.equalsIgnoreCase(groupDomainName) &&
-                    !APPLICATION_DOMAIN.equalsIgnoreCase(groupDomainName)) {
+            if (!StringUtils.equalsIgnoreCase(INTERNAL_DOMAIN, groupDomainName) &&
+                    !StringUtils.equalsIgnoreCase(APPLICATION_DOMAIN, groupDomainName)) {
                 userGroups.add(group.getGroupID());
             }
         }

@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT;
 
 /**
  * This class is responsible for handling the events related to the organization application management.
@@ -109,8 +110,9 @@ public class FragmentApplicationMgtHandler extends AbstractEventHandler {
                         LOG.warn(String.format("Organization %s has a non shared application with name %s.",
                                 sharedOrganizationId, parentApp.getApplicationName()));
                         throw new IdentityApplicationManagementClientException(
-                                "Organization %s has a non shared application with name %s.",
-                                sharedOrganizationId, parentApp.getApplicationName());
+                                ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getCode(),
+                                String.format(ERROR_CODE_ERROR_SHARING_APPLICATION_NAME_CONFLICT.getMessage(),
+                                        parentApp.getApplicationName(), sharedOrganizationId));
                     }
                 }
             }

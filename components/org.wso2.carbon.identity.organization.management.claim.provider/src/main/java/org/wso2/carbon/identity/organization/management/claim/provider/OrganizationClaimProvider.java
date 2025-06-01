@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -43,6 +43,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
     private static final String AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE = "org_id";
     private static final String AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE = "org_name";
+    private static final String AUTHORIZED_ORGANIZATION_HANDLE_ATTRIBUTE = "org_handle";
     private static final String USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "user_org";
 
     @Override
@@ -50,9 +51,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                                                    OAuth2AuthorizeRespDTO oAuth2AuthorizeRespDTO)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        String organizationId = resolveOrganizationId(tenantDomain);
-        return buildOrganizationInformation(organizationId, organizationId);
+        return getAdditionalClaims(oAuthAuthzReqMessageContext);
     }
 
     @Override
@@ -72,9 +71,16 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
     public Map<String, Object> getAdditionalClaims(OAuthAuthzReqMessageContext oAuthAuthzReqMessageContext)
             throws IdentityOAuth2Exception {
 
-        String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
-        String organizationId = resolveOrganizationId(tenantDomain);
-        return buildOrganizationInformation(organizationId, organizationId);
+        String userResidentOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
+                .getUserResidentOrganization();
+        String authorizedOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
+                .getAccessingOrganization();
+        if (StringUtils.isEmpty(authorizedOrgId)) {
+            String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
+            authorizedOrgId = resolveOrganizationId(tenantDomain);
+        }
+
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId);
     }
 
     @Override
@@ -100,9 +106,11 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
         try {
             if (StringUtils.isNotBlank(authorizedOrgId)) {
                 String authorizedOrgName = getOrganizationManager().getOrganizationNameById(authorizedOrgId);
+                String authorizedOrgHandle = getOrganizationManager().resolveTenantDomain(authorizedOrgId);
                 additionalClaims.put(USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE, userResideOrgId);
                 additionalClaims.put(AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE, authorizedOrgId);
                 additionalClaims.put(AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE, authorizedOrgName);
+                additionalClaims.put(AUTHORIZED_ORGANIZATION_HANDLE_ATTRIBUTE, authorizedOrgHandle);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityOAuth2Exception("Error while resolving organization name by ID.", e);

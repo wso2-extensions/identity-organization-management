@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>1.4.133-SNAPSHOT</version>
+        <version>2.0.2-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -43,10 +43,6 @@
         <dependency>
             <groupId>org.ops4j.pax.logging</groupId>
             <artifactId>pax-logging-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
@@ -75,6 +71,11 @@
             <artifactId>mockito-inline</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -99,11 +100,6 @@
 
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
-
-                            org.wso2.carbon.identity.application.mgt;
-                            version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.application.common;
-                            version="${carbon.identity.package.import.version.range}",
 
                             org.wso2.carbon.identity.organization.management.service;
                             version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
@@ -154,6 +150,7 @@
                         <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/exception/*.class</exclude>
                         <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/internal/*.class</exclude>
                         <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/strategy/AggregationStrategy.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/strategy/MergeAllAggregationStrategy.class</exclude>
                         <exclude>org/wso2/carbon/identity/organization/resource/hierarchy/traverse/service/OrgResourceResolverService.class</exclude>
                     </excludes>
                 </configuration>
