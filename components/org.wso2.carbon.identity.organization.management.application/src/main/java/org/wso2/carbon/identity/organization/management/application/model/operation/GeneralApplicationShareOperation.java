@@ -15,17 +15,18 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.model;
+package org.wso2.carbon.identity.organization.management.application.model.operation;
 
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 /**
  * This class represents the general application share.
  */
-public class GeneralApplicationShare extends ApplicationShare {
+public class GeneralApplicationShareOperation extends ApplicationShareOperation {
 
-    public GeneralApplicationShare(PolicyEnum policy, RoleSharingConfig roleSharingConfig) {
+    public GeneralApplicationShareOperation(PolicyEnum policy,
+                                            ApplicationShareRolePolicy applicationShareRolePolicy) {
 
-        super(policy, roleSharingConfig);
+        super(policy, applicationShareRolePolicy);
     }
 }

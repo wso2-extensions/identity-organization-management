@@ -15,31 +15,26 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.model;
+package org.wso2.carbon.identity.organization.management.application.model.operation;
 
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 /**
- * This is the base class for application share.
+ * This class represents the selective application share.
  */
-public abstract class ApplicationShare {
+public class SelectiveShareApplicationOperation extends ApplicationShareOperation {
 
-    private final PolicyEnum policy;
-    private final RoleSharingConfig roleSharingConfig;
+        private final String organizationId;
 
-    public ApplicationShare(PolicyEnum policy, RoleSharingConfig roleSharingConfig) {
+        public SelectiveShareApplicationOperation(String organizationId, PolicyEnum policy,
+                                                  ApplicationShareRolePolicy applicationShareRolePolicy) {
 
-        this.policy = policy;
-        this.roleSharingConfig = roleSharingConfig;
+            super(policy, applicationShareRolePolicy);
+            this.organizationId = organizationId;
+        }
+
+        public String getOrganizationId() {
+
+            return organizationId;
+        }
     }
-
-    public PolicyEnum getPolicy() {
-
-        return policy;
-    }
-
-    public RoleSharingConfig getRoleSharing() {
-
-        return roleSharingConfig;
-    }
-}

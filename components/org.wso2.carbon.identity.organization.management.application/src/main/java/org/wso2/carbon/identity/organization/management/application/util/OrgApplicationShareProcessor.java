@@ -18,7 +18,7 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
-import org.wso2.carbon.identity.organization.management.application.model.SelectiveApplicationShare;
+import org.wso2.carbon.identity.organization.management.application.model.operation.SelectiveShareApplicationOperation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationNode;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -35,10 +35,11 @@ import java.util.Set;
 /**
  * Utility class to process organization shares ordered by hierarchy.
  */
-public class OrganizationShareProcessor {
+public class OrgApplicationShareProcessor {
 
     // Helper structure to hold results from BFS traversal
     private static class HierarchyInfo {
+
         final Map<String, OrganizationNode> allNodesById = new HashMap<>();
         final List<String> bfsOrder = new ArrayList<>();
     }
@@ -107,97 +108,170 @@ public class OrganizationShareProcessor {
     }
 
     /**
+     * Builds a map of organization IDs to their parent IDs.
+     * This allows us to trace ancestry up the hierarchy.
+     */
+    private static Map<String, String> buildParentMap(Map<String, OrganizationNode> allNodesById) {
+        Map<String, String> parentMap = new HashMap<>();
+
+        // For each node, map all its children to itself (as their parent)
+        for (OrganizationNode node : allNodesById.values()) {
+            List<OrganizationNode> children = node.getChildren();
+            if (children != null) {
+                for (OrganizationNode child : children) {
+                    if (child != null) {
+                        parentMap.put(child.getId(), node.getId());
+                    }
+                }
+            }
+        }
+
+        return parentMap;
+    }
+
+    /**
+     * Checks if all ancestors of an organization are present in the provided set.
+     * If you want to include an organization, all its ancestors must be included too.
+     */
+    private static boolean hasCompleteHierarchyPath(String orgId, Set<String> availableOrgIds,
+                                                  Map<String, String> parentMap) {
+        String currentId = orgId;
+        while (parentMap.containsKey(currentId)) {
+            currentId = parentMap.get(currentId);
+            // If any ancestor is not in the available set, return false
+            if (!availableOrgIds.contains(currentId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Processes and sorts OrganizationShareConfig based on hierarchy and policies.
+     * Ensures that all organizations have their complete parent hierarchy available.
      *
-     * @param inputConfigs       Raw list of share configurations.
+     * @param selectiveShareApplicationList       Raw list of share configurations.
      * @param mainOrganizationId The ID of the organization to process.
      * @return A sorted List<OrganizationShareConfig> reflecting hierarchy, policy propagation, and prioritization.
      */
-    public static List<SelectiveApplicationShare> processAndSortOrganizationShares(
-            List<SelectiveApplicationShare> inputConfigs, String mainOrganizationId)
+    public static List<SelectiveShareApplicationOperation> processAndSortOrganizationShares(
+            List<SelectiveShareApplicationOperation> selectiveShareApplicationList, String mainOrganizationId)
             throws OrganizationManagementException {
 
+        // Early exit if no input configurations.
+        if (selectiveShareApplicationList == null || selectiveShareApplicationList.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 1. Get organization hierarchy information.
         List<OrganizationNode> topLevelNodes = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager()
                 .getChildOrganizationGraph(mainOrganizationId, true);
 
-        // 1. Get Hierarchy Info (Valid Nodes and BFS Order).
         HierarchyInfo hierarchyInfo = getAllNodesAndBfsOrder(topLevelNodes);
         Map<String, OrganizationNode> allValidNodes = hierarchyInfo.allNodesById;
         List<String> bfsOrder = hierarchyInfo.bfsOrder;
 
         if (allValidNodes.isEmpty()) {
-            return new ArrayList<>(); // No valid orgs, return empty list.
+            return new ArrayList<>(); // No valid organizations, return empty list.
         }
 
-        // 2. Validate Initial Configs (Filter out invalid org IDs).
-        Map<String, SelectiveApplicationShare> validatedInputConfigs = new HashMap<>();
-        if (inputConfigs != null) {
-            for (SelectiveApplicationShare config : inputConfigs) {
-                if (config != null && allValidNodes.containsKey(config.getOrganizationId())) {
-                    // Only add if the org ID is valid according to the hierarchy
-                    // If duplicate orgIDs exist in input, the last one wins here.
-                    validatedInputConfigs.put(config.getOrganizationId(), config);
-                }
+        // 2. Build parent-child relationship map for ancestry checking.
+        Map<String, String> parentMap = buildParentMap(allValidNodes);
+
+        // 3. Collect valid organization IDs and validate complete hierarchy paths.
+        Set<String> availableOrgIds = new HashSet<>(selectiveShareApplicationList.size());
+        Map<String, SelectiveShareApplicationOperation> orgIdToConfigMap = new HashMap<>(
+                selectiveShareApplicationList.size());
+
+        // First pass: collect all valid organization IDs.
+        for (SelectiveShareApplicationOperation config : selectiveShareApplicationList) {
+            if (config != null && allValidNodes.containsKey(config.getOrganizationId())) {
+                availableOrgIds.add(config.getOrganizationId());
+                // Store the mapping - if duplicates, the last one wins.
+                orgIdToConfigMap.put(config.getOrganizationId(), config);
             }
         }
 
+        // Second pass: validate complete hierarchy paths.
+        Map<String, SelectiveShareApplicationOperation> validatedInputConfigs = new HashMap<>();
+        for (String orgId : availableOrgIds) {
+            if (hasCompleteHierarchyPath(orgId, availableOrgIds, parentMap)) {
+                validatedInputConfigs.put(orgId, orgIdToConfigMap.get(orgId));
+            }
+        }
 
-        // 3. Determine Effective Configuration & Apply Policy.
-        Map<String, SelectiveApplicationShare> effectiveConfigs = new HashMap<>();
-        Set<String> processedOrgIds = new HashSet<>(); // Tracks orgs whose fate is decided.
+        // 4. Process organizations in BFS order and apply policies.
+        Map<String, SelectiveShareApplicationOperation> effectiveConfigs = new HashMap<>();
+        Set<String> processedOrgIds = new HashSet<>();
 
         for (String currentOrgId : bfsOrder) {
-
+            // Skip if already processed by an ancestor.
             if (processedOrgIds.contains(currentOrgId)) {
-                continue; // Already handled by an ancestor's overriding policy.
+                continue;
             }
 
-            SelectiveApplicationShare explicitConfig = validatedInputConfigs.get(currentOrgId);
+            SelectiveShareApplicationOperation explicitConfig = validatedInputConfigs.get(currentOrgId);
 
             if (explicitConfig != null) {
-                // Found the highest-level explicit config for this org/branch
+                // Apply configuration for this organization.
                 effectiveConfigs.put(currentOrgId, explicitConfig);
-                processedOrgIds.add(currentOrgId); // Mark as processed
+                processedOrgIds.add(currentOrgId);
 
-                // --- Check for the special policy ---
+                // Handle special policy for children if applicable.
                 if (explicitConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
-
-                    Set<String> descendantIds = getDescendantIds(currentOrgId, allValidNodes);
-
-                    for (String descendantId : descendantIds) {
-                        if (!processedOrgIds.contains(descendantId)) {
-                            // Create inherited config ONLY IF descendant not already explicitly defined higher up
-                            // (which shouldn't happen because of BFS order, but check is safe)
-                            if (!effectiveConfigs.containsKey(descendantId)) {
-                                SelectiveApplicationShare inheritedConfig = new SelectiveApplicationShare(
-                                        descendantId,
-                                        explicitConfig.getPolicy(), // Inherit policy
-                                        explicitConfig.getRoleSharing() // Inherit RoleSharingConfig
-                                );
-                                effectiveConfigs.put(descendantId, inheritedConfig);
-                            }
-                        }
-                        // Crucially, mark descendant as processed EVEN IF it had an explicit config lower down.
-                        // The ancestor's policy overrides it.
-                        processedOrgIds.add(descendantId);
-                    }
+                    processDescendantsWithInheritedPolicy(
+                        currentOrgId,
+                        explicitConfig,
+                        allValidNodes,
+                        processedOrgIds,
+                        effectiveConfigs
+                    );
                 }
             } else {
-                // No explicit config found at this level, mark as processed so lower explicit configs are ignored
-                // if an ancestor policy covers this later (though BFS should handle this)
-                // This case mainly handles nodes that have no config and aren't covered by policy.
+                // Mark as processed so lower organizations don't override.
                 processedOrgIds.add(currentOrgId);
             }
         }
 
-        // 4. Generate Sorted Output List
-        List<SelectiveApplicationShare> sortedFinalConfigs = new ArrayList<>();
+        // 5. Build final sorted result list
+        List<SelectiveShareApplicationOperation> sortedFinalConfigs = new ArrayList<>(effectiveConfigs.size());
         for (String orgIdInOrder : bfsOrder) {
-            if (effectiveConfigs.containsKey(orgIdInOrder)) {
-                sortedFinalConfigs.add(effectiveConfigs.get(orgIdInOrder));
+            SelectiveShareApplicationOperation config = effectiveConfigs.get(orgIdInOrder);
+            if (config != null) {
+                sortedFinalConfigs.add(config);
             }
         }
+
         return sortedFinalConfigs;
+    }
+
+    /**
+     * Helper method to process descendants with inherited policy.
+     * This improves readability by extracting the descendant processing logic.
+     */
+    private static void processDescendantsWithInheritedPolicy(
+            String orgId,
+            SelectiveShareApplicationOperation parentConfig,
+            Map<String, OrganizationNode> allValidNodes,
+            Set<String> processedOrgIds,
+            Map<String, SelectiveShareApplicationOperation> effectiveConfigs) {
+
+        Set<String> descendantIds = getDescendantIds(orgId, allValidNodes);
+
+        for (String descendantId : descendantIds) {
+            // Mark as processed even if already processed
+            processedOrgIds.add(descendantId);
+
+            // Only create inherited config if not already in effectiveConfigs
+            if (!effectiveConfigs.containsKey(descendantId)) {
+                SelectiveShareApplicationOperation inheritedConfig = new SelectiveShareApplicationOperation(
+                    descendantId,
+                    parentConfig.getPolicy(),
+                    parentConfig.getRoleSharing()
+                );
+                effectiveConfigs.put(descendantId, inheritedConfig);
+            }
+        }
     }
 
     /**
@@ -364,6 +438,83 @@ public class OrganizationShareProcessor {
         }
 
         return sortedResult;
+    }
+
+    /**
+     * Finds a specific organization node within a given organization graph (list of top-level nodes
+     * and their children) and then returns a list of its sub-organization IDs in BFS order.
+     *
+     * @param targetOrgId       The ID of the organization whose sub-organizations are to be listed.
+     * @param organizationGraph A list of {@link OrganizationNode} representing the graph (or a portion of it)
+     *                          to search within. This list typically contains top-level nodes of the hierarchy
+     *                          segment of interest.
+     * @return A {@link List} of {@link String} containing the IDs of the sub-organizations of the
+     *         {@code targetOrgId} in BFS order. Returns an empty list if the {@code targetOrgId} is not found,
+     *         if it has no children, or if the input {@code organizationGraph} is null or empty.
+     */
+    public static List<String> getSubOrganizationIdsInBfsOrder(String targetOrgId,
+                                                               List<OrganizationNode> organizationGraph) {
+
+        if (organizationGraph == null || organizationGraph.isEmpty() || targetOrgId == null) {
+            return new ArrayList<>();
+        }
+
+        // Traverse the provided graph to find the targetOrgId node.
+        // We can use a queue for BFS traversal of the input graph.
+        Queue<OrganizationNode> queue = new LinkedList<>(organizationGraph);
+        OrganizationNode targetNode = null;
+
+        // Temporary map to avoid reprocessing nodes if the input graph has shared references
+        // (though typically each node instance would be unique in a tree/DAG structure).
+        Set<String> visitedInSearch = new HashSet<>();
+
+        while (!queue.isEmpty()) {
+            OrganizationNode current = queue.poll();
+
+            if (current == null || !visitedInSearch.add(current.getId())) {
+                continue; // Skip null nodes or already visited nodes in this search pass
+            }
+
+            if (targetOrgId.equals(current.getId())) {
+                targetNode = current;
+                break; // Found the target node
+            }
+
+            if (current.getChildren() != null) {
+                for (OrganizationNode child : current.getChildren()) {
+                    if (child != null) { // Add non-null children to the queue
+                        queue.offer(child);
+                    }
+                }
+            }
+        }
+
+        // If the target node was not found, or if it has no children, return an empty list.
+        if (targetNode == null || targetNode.getChildren() == null || targetNode.getChildren().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Now that we have the target node, get the BFS order of its children.
+        // The getAllNodesAndBfsOrder method can be used directly by passing the children of the targetNode.
+        HierarchyInfo subHierarchyInfo = getAllNodesAndBfsOrder(targetNode.getChildren());
+
+        return subHierarchyInfo.bfsOrder;
+    }
+
+    /**
+     * Takes a list of organization nodes (potentially representing multiple disconnected sub-graphs or top-level nodes)
+     * and returns a single list of all organization IDs from these nodes and their descendants, in BFS order.
+     *
+     * @param organizationNodes A list of {@link OrganizationNode} objects.
+     * @return A {@link List} of {@link String} containing all organization IDs in BFS order.
+     *         Returns an empty list if the input list is null or empty.
+     */
+    public static List<String> getOrganizationIdsInBfsOrder(List<OrganizationNode> organizationNodes) {
+        if (organizationNodes == null || organizationNodes.isEmpty()) {
+            return new ArrayList<>();
+        }
+        HierarchyInfo hierarchyInfo = getAllNodesAndBfsOrder(organizationNodes);
+        return hierarchyInfo.bfsOrder;
     }
 
     private static List<String> getReversedSortedList(List<String> bfsOrder, Set<String> finalOrgIdsToInclude) {

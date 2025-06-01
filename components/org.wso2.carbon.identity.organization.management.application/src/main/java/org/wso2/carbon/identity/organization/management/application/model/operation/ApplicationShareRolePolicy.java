@@ -15,19 +15,21 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.model;
+package org.wso2.carbon.identity.organization.management.application.model.operation;
+
+import org.wso2.carbon.identity.organization.management.application.model.RoleWithAudienceDO;
 
 import java.util.List;
 
 /**
  * This class represents the role sharing configuration.
  */
-public class RoleSharingConfig {
+public class ApplicationShareRolePolicy {
 
     private final List<RoleWithAudienceDO> roleWithAudienceDOList;
     private final Mode mode;
 
-    private RoleSharingConfig(Mode mode, List<RoleWithAudienceDO> roleWithAudienceDOList) {
+    private ApplicationShareRolePolicy(Mode mode, List<RoleWithAudienceDO> roleWithAudienceDOList) {
 
         this.mode = mode;
         this.roleWithAudienceDOList = roleWithAudienceDOList;
@@ -81,19 +83,18 @@ public class RoleSharingConfig {
             return this;
         }
 
-        public RoleSharingConfig build() {
+        public ApplicationShareRolePolicy build() {
 
             if (mode == null) {
                 throw new IllegalStateException("Mode must be set.");
             }
-            if (mode.ordinal() == Mode.SELECTED.ordinal() && (roleWithAudienceDOList == null ||
-                    roleWithAudienceDOList.isEmpty())) {
+            if (mode.ordinal() == Mode.SELECTED.ordinal() && (roleWithAudienceDOList == null)) {
                 throw new IllegalStateException("roleWithAudienceDOList must be set when mode is SELECTED.");
             }
             if (mode.ordinal() != Mode.SELECTED.ordinal() && roleWithAudienceDOList != null) {
                 throw new IllegalStateException("roleWithAudienceDOList should only be set when mode is SELECTED.");
             }
-            return new RoleSharingConfig(mode, roleWithAudienceDOList);
+            return new ApplicationShareRolePolicy(mode, roleWithAudienceDOList);
         }
     }
 }

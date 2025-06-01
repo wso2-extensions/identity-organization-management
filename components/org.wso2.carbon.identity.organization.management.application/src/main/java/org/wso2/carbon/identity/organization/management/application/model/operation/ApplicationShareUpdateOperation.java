@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.application.model;
+package org.wso2.carbon.identity.organization.management.application.model.operation;
 
 /**
  * This class represents the application share update operation.
