@@ -359,7 +359,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                             sharedOrganizationId, roleV2.getName(), roleV2.getId(), "Role conflict"));
                             LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         }
-                        String errorMessage = String.format(ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getMessage(),
+                        String errorMessage = String.format(
+                                ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getMessage(),
                                 sharedOrganizationId, roleV2.getName());
                         throw new IdentityEventException(ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getCode(),
                                 errorMessage);
