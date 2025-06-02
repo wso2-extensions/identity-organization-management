@@ -82,6 +82,22 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
 
             SessionContext sessionContext = (SessionContext) eventProperties.get(
                     IdentityEventConstants.EventProperty.SESSION_CONTEXT);
+            AuthenticationContext context = (AuthenticationContext) eventProperties.get(
+                    IdentityEventConstants.EventProperty.CONTEXT);
+
+            if (context != null && context.isLogoutRequest()) {
+                /*
+                This means that the event is triggered during the execution of logout handler. Since the logout handler
+                sends RP initiated logout request to the sub organization, sub org session termination is not needed to
+                handle with this handler.
+                 */
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Session termination event triggered during the execution of logout handler. " +
+                            "Hence, skipping the sub org session termination.");
+                }
+                return;
+            }
+
             Map<String, AuthenticatedIdPData> authenticatedIdPs = sessionContext.getAuthenticatedIdPs();
             if (authenticatedIdPs == null ||
                     !authenticatedIdPs.containsKey(FrameworkConstants.ORGANIZATION_LOGIN_IDP_NAME)) {
