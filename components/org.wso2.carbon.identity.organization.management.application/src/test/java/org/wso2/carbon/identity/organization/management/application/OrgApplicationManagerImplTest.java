@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
@@ -47,6 +48,10 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -86,6 +91,10 @@ public class OrgApplicationManagerImplTest {
     private OrganizationManager organizationManager;
     @Mock
     private ApplicationManagementService applicationManagementService;
+    @Mock
+    private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
+    @Mock
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
 
     private OrgApplicationManager orgApplicationManager;
 
@@ -414,6 +423,14 @@ public class OrgApplicationManagerImplTest {
             when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
             when(organizationManager.resolveTenantDomain(ownerOrgId)).thenReturn("ownerTenantDomain");
 
+            Organization mockSubOrg = new Organization();
+            mockSubOrg.setId(sharedOrgId);
+            ParentOrganizationDO parentOrganizationDO = new ParentOrganizationDO();
+            parentOrganizationDO.setId(ownerOrgId);
+            mockSubOrg.setParent(parentOrganizationDO);
+            when(organizationManager.getOrganization(sharedOrgId, false, false))
+                    .thenReturn(mockSubOrg);
+
             mockServiceURLBuilder("https://localhost:8080", serviceURLBuilder);
 
             // Create Oauth Application.
@@ -426,11 +443,18 @@ public class OrgApplicationManagerImplTest {
             when(applicationManagementService.createApplication(any(ServiceProvider.class), anyString(), anyString()))
                     .thenReturn(sharedApplicationId);
 
-            // Fire organization creator sharing event
+            when(orgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService()).thenReturn(
+                    resourceSharingPolicyHandlerService);
+//            when(resourceSharingPolicyHandlerService.deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+//                    anyString(), any(), anyString(), anyString())).thenReturn()
+            lenient().doNothing().when(resourceSharingPolicyHandlerService)
+                    .deleteResourceSharingPolicyInOrgByResourceTypeAndId(anyString(), any(), anyString(), anyString());
 
+            // Fire organization creator sharing event
             orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren,
                     null);
-        } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
+        } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException |
+                 ResourceSharingPolicyMgtException e) {
             throw new RuntimeException(e);
         }
     }

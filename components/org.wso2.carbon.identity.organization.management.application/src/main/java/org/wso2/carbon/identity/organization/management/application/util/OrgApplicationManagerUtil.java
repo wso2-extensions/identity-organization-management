@@ -30,7 +30,10 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
@@ -41,6 +44,7 @@ import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_SSO_IDP_IMAGE_URL;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
@@ -85,6 +89,34 @@ public class OrgApplicationManagerUtil {
             shareWithAllChildrenProperty.setName(SHARE_WITH_ALL_CHILDREN);
             shareWithAllChildrenProperty.setValue(Boolean.TRUE.toString());
             newSpProperties[spProperties.length] = shareWithAllChildrenProperty;
+
+            serviceProvider.setSpProperties(newSpProperties);
+        }
+    }
+
+    /**
+     * Set property value to service provider indicating the role sharing mode of the application. We only set the
+     * property if the role sharing mode is ALL.
+     * @param serviceProvider The application that the property should be set.
+     * @param mode The role sharing mode of the application.
+     */
+    public static void setAppAssociatedRoleSharingMode(ServiceProvider serviceProvider,
+                                                       ApplicationShareRolePolicy.Mode mode) {
+
+        Optional<ServiceProviderProperty> roleSharingMode = Arrays.stream(serviceProvider.getSpProperties())
+                .filter(p -> ROLE_SHARING_MODE.equals(p.getName()))
+                .findFirst();
+        if (roleSharingMode.isPresent()) {
+            roleSharingMode.get().setValue(mode.toString());
+        } else {
+            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
+            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
+
+            ServiceProviderProperty roleSharingModeProperty = new ServiceProviderProperty();
+            roleSharingModeProperty.setName(ROLE_SHARING_MODE);
+            roleSharingModeProperty.setValue(mode.toString());
+            newSpProperties[spProperties.length] = roleSharingModeProperty;
 
             serviceProvider.setSpProperties(newSpProperties);
         }
@@ -217,5 +249,24 @@ public class OrgApplicationManagerUtil {
         } catch (IdentityApplicationManagementException e) {
             throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
         }
+    }
+
+    public static OrganizationManagementClientException handleClientException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error) {
+        return new OrganizationManagementClientException(error.getMessage(), error.getDescription(), error.getCode());
+    }
+
+    /**
+     * Throw an OrganizationManagementServerException upon server side error in organization management.
+     *
+     * @param error The error enum.
+     * @param e     The error.
+     * @return OrganizationManagementServerException
+     */
+    public static OrganizationManagementServerException handleServerException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error, Throwable e) {
+
+        String description = error.getDescription();
+        return new OrganizationManagementServerException(error.getMessage(), description, error.getCode(), e);
     }
 }
