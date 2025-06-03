@@ -241,7 +241,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         mainTenantDomain);
             }
             getOrgApplicationManager().shareApplicationWithPolicy(mainOrganizationId, mainApplicationFromSharedApp,
-                    organization.getId(), sharingPolicy, roleSharingConfigBuilder.build());
+                    organization.getId(), sharingPolicy, roleSharingConfigBuilder.build(), null);
             alreadyHandledSharedAppIds.add(sharedAppId);
 
             if (isMainOrganization) {
@@ -254,6 +254,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
             }
         }
 
+        // NOTE: The below code is to handle the backward compatibility of the applications that are shared with
+        // all children organizations using the `shareWithAllChildren` property.
 
         ApplicationBasicInfo[] applicationBasicInfos;
         applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
@@ -281,8 +283,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                                 .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
                                         tenantDomain);
                         String ownerOrgIdOfMainApplication = mainApplicationDO.get().getOrganizationId();
-                        getOrgApplicationManager().shareApplication(ownerOrgIdOfMainApplication, organization.getId(),
-                                mainApplication, true);
+                        getOrgApplicationManager().shareApplicationWithPolicy(ownerOrgIdOfMainApplication,
+                                mainApplication, organization.getId(),
+                                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN,
+                                new ApplicationShareRolePolicy.Builder()
+                                        .mode(ApplicationShareRolePolicy.Mode.ALL).build(), null);
                     }
                 }
             } else {
@@ -293,8 +298,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                         .anyMatch(serviceProviderProperty -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
                                 serviceProviderProperty.getName()) && Boolean.parseBoolean(
                                         serviceProviderProperty.getValue()))) {
-                    getOrgApplicationManager().shareApplication(parentOrgId, organization.getId(),
-                            mainApplication, true);
+                    getOrgApplicationManager().shareApplicationWithPolicy(parentOrgId,
+                            mainApplication, organization.getId(),
+                            PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN,
+                            new ApplicationShareRolePolicy.Builder()
+                                    .mode(ApplicationShareRolePolicy.Mode.ALL).build(), null);
                     // Check whether the application is shared with any child organization using `isAppShared` property.
                     boolean isAppShared = isAppShared(mainApplication);
                     if (!isAppShared) {
