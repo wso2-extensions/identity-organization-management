@@ -108,7 +108,6 @@ public interface OrgApplicationManager {
                 "generalOrganizationApplicationShare method is not implemented in " + this.getClass().getName());
     }
 
-
     /**
      * Shares an application with a specific organization using the given policy.
      * <p>
@@ -119,27 +118,28 @@ public interface OrgApplicationManager {
      * - Use this method ONLY for single organization sharing with a specific policy
      * - For sharing with multiple organizations: use {@link #selectiveShareOrganizationApplication}
      * - For sharing with all children: use {@link #generalOrganizationApplicationShare}
-     *
+     * <p>
      * Hierarchical requirements:
      * - The application must already be shared with the parent organization
      * - The shared roles must be available in the parent organization
      *
-     * @param ownerOrgId The organization ID that owns the application
-     * @param mainApplication The application to be shared
-     * @param sharingOrgId The organization ID to share the application with
-     * @param policyEnum The sharing policy to apply
-     * @param applicationShareRolePolicy The role sharing configuration
+     * @param ownerOrgId                 The organization ID that owns the application.
+     * @param mainApplication            The application to be shared.
+     * @param sharingOrgId               The organization ID to share the application with.
+     * @param policyEnum                 The sharing policy to apply.
+     * @param applicationShareRolePolicy The role sharing configuration.
+     * @param operationId                (Optional) The async operation ID for tracking the sharing operation.
+     *                                   Keep it null if you do not want to track the operation.
      * @throws OrganizationManagementException If the sharing operation fails
      */
     default void shareApplicationWithPolicy(String ownerOrgId, ServiceProvider mainApplication,
                                             String sharingOrgId, PolicyEnum policyEnum,
-                                            ApplicationShareRolePolicy applicationShareRolePolicy)
+                                            ApplicationShareRolePolicy applicationShareRolePolicy, String operationId)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(
                 "shareApplicationWithPolicy method is not implemented in " + this.getClass().getName());
     }
-
 
     /**
      * Un-share the application from a list of organizations.
@@ -314,6 +314,9 @@ public interface OrgApplicationManager {
     }
 
     /**
+     * Use {@link #shareApplicationWithPolicy(String, ServiceProvider, String, PolicyEnum,
+     * ApplicationShareRolePolicy, String)}
+     * instead.
      * Share the application to an organization.
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
@@ -322,10 +325,13 @@ public interface OrgApplicationManager {
      * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
      * @throws OrganizationManagementException on errors when sharing the application.
      */
+    @Deprecated
     void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                           boolean shareWithAllChildren) throws OrganizationManagementException;
 
     /**
+     * Use {@link #shareApplicationWithPolicy(String, ServiceProvider, String, PolicyEnum, ApplicationShareRolePolicy,
+     * String)} instead.
      * Share the application to an organization.
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
@@ -334,6 +340,7 @@ public interface OrgApplicationManager {
      * @param shareWithAllChildren Boolean attribute indicating if the application is shared with all sub-organizations.
      * @throws OrganizationManagementException on errors when sharing the application.
      */
+    @Deprecated
     default void shareApplication(String ownerOrgId, String sharedOrgId, ServiceProvider mainApplication,
                           boolean shareWithAllChildren, String operationId) throws OrganizationManagementException {
 
