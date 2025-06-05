@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.organization.config.service;
 
 import java.util.ArrayList;
@@ -69,5 +70,15 @@ public class AttributeBasedOrganizationDiscoveryHandlerRegistry {
     public void addSupportedDiscoveryAttributeKey(String key) {
 
         supportedDiscoveryAttributeKeys.add(key + ENABLED_KEY);
+    }
+
+    /**
+     * Add a supported config discovery attribute key.
+     *
+     * @param key Supported config discovery attribute key.
+     */
+    public void addSupportedConfigDiscoveryAttributeKey(String key) {
+
+        supportedDiscoveryAttributeKeys.add(key);
     }
 }
