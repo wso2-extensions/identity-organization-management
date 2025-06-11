@@ -422,9 +422,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             }
             if (!roleAvailableInMainOrg) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("The role '" + criterion.getRoleName() + "' with audience '" + criterion.getAudienceName() +
-                            "' (type: APPLICATION) specified in selection criteria is not available in the main org. " +
-                            "So it will not be shared.");
+                    LOG.debug("The role '" + criterion.getRoleName() + "' with audience '" +
+                            criterion.getAudienceName() + "' (type: APPLICATION) specified in selection criteria is" +
+                            " not available in the main org. So it will not be shared.");
                 }
             }
         }
@@ -899,8 +899,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 orgRolesToShareCandidates.add(mainOrgRoleOpt.get());
             } else {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("The org role '" + roleCriterion.getRoleName() + "' specified in newRoles is not available " +
-                            "as an associated role of the main application '" + mainAppId + "'. So it will not be shared.");
+                    LOG.debug("The org role '" + roleCriterion.getRoleName() + "' specified in newRoles is not " +
+                            "available as an associated role of the main application '" + mainAppId + "'. So it will" +
+                            " not be shared.");
                 }
             }
         }

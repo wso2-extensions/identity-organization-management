@@ -123,6 +123,24 @@ public class OrgApplicationManagerUtil {
     }
 
     /**
+     * Get the role sharing mode of the application associated with the service provider.
+     * If the property is not set, it will return ALL as the default mode. For all the applications that shared with
+     * new Role Sharing feature, the role sharing mode will be added to sp properties. If it's not available, it means
+     * the application is shared with the old way, which is sharing all the roles with all child organizations.
+     *
+     * @param serviceProvider The service provider of the application.
+     * @return The role sharing mode of the application.
+     */
+    public static ApplicationShareRolePolicy.Mode getAppAssociatedRoleSharingMode(ServiceProvider serviceProvider) {
+
+        Optional<ServiceProviderProperty> roleSharingMode = Arrays.stream(serviceProvider.getSpProperties())
+                .filter(p -> ROLE_SHARING_MODE.equals(p.getName()))
+                .findFirst();
+        return roleSharingMode.map(serviceProviderProperty -> ApplicationShareRolePolicy.Mode.valueOf(
+                serviceProviderProperty.getValue())).orElse(ApplicationShareRolePolicy.Mode.ALL);
+    }
+
+    /**
      * Set property value to service provider indicating if the app is shared with any child organizations.
      *
      * @param serviceProvider The main application.

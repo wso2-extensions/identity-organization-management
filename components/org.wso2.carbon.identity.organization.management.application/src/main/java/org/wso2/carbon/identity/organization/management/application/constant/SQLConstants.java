@@ -23,6 +23,9 @@ package org.wso2.carbon.identity.organization.management.application.constant;
  */
 public class SQLConstants {
 
+    public static final String ID_COLUMN_NAME = "ID";
+    public static final String SHARED_ORG_ID_COLUMN_NAME = "SHARED_ORG_ID";
+
     public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (MAIN_APP_ID, OWNER_ORG_ID, " +
             "SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";, :" +

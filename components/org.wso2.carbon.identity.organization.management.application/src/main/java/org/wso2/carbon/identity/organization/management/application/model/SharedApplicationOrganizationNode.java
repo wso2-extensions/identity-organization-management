@@ -27,7 +27,9 @@ public class SharedApplicationOrganizationNode {
     private final String applicationResourceId;
     private final String organizationId;
     private final String organizationName;
+    private final String organizationHandle;
     private final String organizationStatus;
+    private final String parentOrganizationId;
     private final List<RoleWithAudienceDO> roleWithAudienceDOList;
     private final boolean hasChildren;
     private final int depthFromRoot;
@@ -35,13 +37,16 @@ public class SharedApplicationOrganizationNode {
 
     public SharedApplicationOrganizationNode(String applicationResourceId, String organizationId,
                                              String organizationName, String organizationStatus,
+                                             String parentOrganizationId, String organizationHandle,
                                              List<RoleWithAudienceDO> roleWithAudienceDOList, boolean hasChildren,
                                              int depthFromRoot) {
 
         this.applicationResourceId = applicationResourceId;
         this.organizationId = organizationId;
         this.organizationName = organizationName;
+        this.organizationHandle = organizationHandle;
         this.organizationStatus = organizationStatus;
+        this.parentOrganizationId = parentOrganizationId;
         this.roleWithAudienceDOList = roleWithAudienceDOList;
         this.hasChildren = hasChildren;
         this.depthFromRoot = depthFromRoot;
@@ -60,6 +65,16 @@ public class SharedApplicationOrganizationNode {
     public String getOrganizationName() {
 
         return organizationName;
+    }
+
+    public String getOrganizationHandle() {
+
+        return organizationHandle;
+    }
+
+    public String getParentOrganizationId() {
+
+        return parentOrganizationId;
     }
 
     public String getOrganizationStatus() {

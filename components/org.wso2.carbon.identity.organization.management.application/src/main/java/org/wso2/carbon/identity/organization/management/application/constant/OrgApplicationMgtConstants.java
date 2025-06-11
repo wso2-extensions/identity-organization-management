@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application.constant;
 
-import org.wso2.carbon.identity.api.resource.mgt.constant.SQLConstants;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,14 +33,16 @@ public class OrgApplicationMgtConstants {
 
     public static final String BEFORE = "before";
     public static final String AFTER = "after";
+    public static final String ORGANIZATION_ID = "id";
+    public static final String PARENT_ORGANIZATION_ID = "parentId";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
     public static final Map<String, String> SP_SHARED_ATTRIBUTE_COLUMN_MAP =
             Collections.unmodifiableMap(attributeColumnMap);
 
-
     static {
         attributeColumnMap.put(BEFORE, SQLConstants.ID_COLUMN_NAME);
         attributeColumnMap.put(AFTER, SQLConstants.ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
     }
 
     public static final String SP_SHARED_ROLE_EXCLUDED_KEY = "roles";
@@ -175,7 +177,29 @@ public class OrgApplicationMgtConstants {
         ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY("60009",
                 "Invalid organization hierarchy.", "The provided organization hierarchy is" +
                 " invalid. Ensure that the organization IDs are valid and provided a correct hierarchy. Cannot " +
-                "have child organizations without a parent organization in the list");
+                "have child organizations without a parent organization in the list"),
+        ERROR_CODE_INVALID_SHARING_ORG_ID("60010",
+                "Invalid sharing organization ID.",
+                "Organization id is not provided or invalid. Ensure that the organization ID is valid."),
+        ERROR_CODE_INVALID_SELECTIVE_SHARING_POLICY("60011",
+                "Empty or invalid sharing policy.", "Provided sharing policy is empty or " +
+                "invalid. Ensure that the sharing policy is " + PolicyEnum.SELECTED_ORG_ONLY.getValue() + " or " +
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN.getValue() + "."),
+        ERROR_CODE_INVALID_ORGANIZATION_SHARE_CONFIGURATION("60012",
+                "Invalid organization share configuration.",
+                "Organization share configuration is invalid. Ensure that the organization share configuration is " +
+                        "valid and provided a correct hierarchy."),
+        ERROR_CODE_INVALID_ROLE_SHARING_MODE("60013",
+                "Invalid role sharing mode.",
+                "Role sharing mode is invalid. Ensure that the role sharing policy is " +
+                        "either ALL, NONE or SELECTED."),
+        ERROR_CODE_INVALID_ROLE_SHARING_OPERATION("60014",
+                "Invalid role sharing operation.",
+                "Role sharing operation is invalid. Ensure that the role sharing operation is provided with valid " +
+                        "role sharing mode and role with audience list.");
+
+
+
 
         private final String code;
         private final String message;

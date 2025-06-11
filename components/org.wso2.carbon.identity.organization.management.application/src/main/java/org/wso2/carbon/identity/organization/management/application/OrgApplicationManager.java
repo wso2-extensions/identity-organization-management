@@ -40,8 +40,8 @@ import java.util.Map;
 public interface OrgApplicationManager {
 
     /**
-     * Use {@link #selectiveShareOrganizationApplication(String, String, List)} or
-     * {@link #generalOrganizationApplicationShare(String, String, GeneralApplicationShareOperation)}
+     * Use {@link #shareApplicationWithSelectedOrganizations(String, String, List)} or
+     * {@link #shareApplicationWithAllOrganizations(String, String, GeneralApplicationShareOperation)}
      * Share the application to all the child organizations or to a list of child organizations based on the user input.
      *
      * @param ownerOrgId           Identifier of the organization owning the application.
@@ -53,7 +53,6 @@ public interface OrgApplicationManager {
     @Deprecated
     void shareOrganizationApplication(String ownerOrgId, String mainAppId, boolean shareWithAllChildren,
                                       List<String> sharedOrgs) throws OrganizationManagementException;
-
 
     /**
      * Selectively shares an application with specific sub-organizations.
@@ -76,7 +75,7 @@ public interface OrgApplicationManager {
      *                                      both A.1 and A.1.1 in the list (order doesn't matter).
      * @throws OrganizationManagementException If any error occurs during the sharing process
      */
-    default void selectiveShareOrganizationApplication(String mainOrganizationId, String mainApplicationId,
+    default void shareApplicationWithSelectedOrganizations(String mainOrganizationId, String mainApplicationId,
                                                        List<SelectiveShareApplicationOperation>
                                                                selectiveShareApplicationList)
             throws OrganizationManagementException {
@@ -100,7 +99,7 @@ public interface OrgApplicationManager {
      *                                organizations.
      * @throws OrganizationManagementException If the sharing operation fails.
      */
-    default void generalOrganizationApplicationShare(String mainOrganizationId, String mainApplicationId,
+    default void shareApplicationWithAllOrganizations(String mainOrganizationId, String mainApplicationId,
                                                      GeneralApplicationShareOperation generalApplicationShare)
             throws OrganizationManagementException {
 
@@ -116,8 +115,8 @@ public interface OrgApplicationManager {
      * <p>
      * When to use this method:
      * - Use this method ONLY for single organization sharing with a specific policy
-     * - For sharing with multiple organizations: use {@link #selectiveShareOrganizationApplication}
-     * - For sharing with all children: use {@link #generalOrganizationApplicationShare}
+     * - For sharing with multiple organizations: use {@link #shareApplicationWithSelectedOrganizations}
+     * - For sharing with all children: use {@link #shareApplicationWithAllOrganizations}
      * <p>
      * Hierarchical requirements:
      * - The application must already be shared with the parent organization
@@ -149,7 +148,7 @@ public interface OrgApplicationManager {
      * @param sharedOrganizationList List of organization IDs to un-share the application from.
      * @throws OrganizationManagementException on errors when un-sharing the application.
      */
-    default void unshareApplication(String mainOrganizationId, String mainApplicationId,
+    default void unshareApplicationFromSelectedOrganizations(String mainOrganizationId, String mainApplicationId,
                                     List<String> sharedOrganizationList) throws OrganizationManagementException {
 
         throw new NotImplementedException(
@@ -163,31 +162,36 @@ public interface OrgApplicationManager {
      * @param mainApplicationId ID of the primary application.
      * @throws OrganizationManagementException on errors when un-sharing the application.
      */
-    default void unshareAllApplications(String mainOrganizationId, String mainApplicationId)
+    default void unshareAllApplicationFromAllOrganizations(String mainOrganizationId, String mainApplicationId)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(
                 "unshareAllApplications method is not implemented in " + this.getClass().getName());
     }
 
+
     /**
      * Update the shared application with the given update operations.
+     * As of now, this method supports updating the roles of the shared application.
+     * You cannot use this to share the application with new organizations.
      *
-     * @param applicationId       Main application ID that needs to be updated.
+     * @param mainOrganizationId  Main organization ID that owns the primary application.
+     * @param mainApplicationId   Main application ID that needs to be updated.
      * @param updateOperationList List of update operations to be performed on the shared application. You have to
      *                            specify the operation type, path and values to be updated.
      * @throws OrganizationManagementException on errors when updating the shared application.
      */
-    default void updateSharedApplication(String applicationId, List<ApplicationShareUpdateOperation>
-            updateOperationList) throws OrganizationManagementException {
+    default void updateSharedApplication(String mainOrganizationId, String mainApplicationId,
+                                         List<ApplicationShareUpdateOperation> updateOperationList)
+            throws OrganizationManagementException {
 
         throw new NotImplementedException(
                 "updateSharedApplication method is not implemented in " + this.getClass().getName());
     }
 
     /**
-     * @deprecated Use {@link #unshareApplication(String, String, List)} or
-     * {@link #unshareAllApplications(String, String)} instead.
+     * @deprecated Use {@link #unshareApplicationFromSelectedOrganizations(String, String, List)} or
+     * {@link #unshareAllApplicationFromAllOrganizations(String, String)} instead.
      * Remove the shared (fragment) application for given organization to stop sharing the business application.
      *
      * @param organizationId       ID of the organization owning the primary application.
@@ -215,11 +219,12 @@ public interface OrgApplicationManager {
      * filtering, pagination and other options to retrieve the shared organizations.
      * Currently, this has the support to filter applications by organization id and name.
      *
-     * @param mainApplicationId  Resource ID of the main application.
      * @param mainOrganizationId ID of the main organization owning the main application.
+     * @param mainApplicationId  Resource ID of the main application.
      * @param filter             (Optional) Filter to search for shared applications (optional). Currently, supports
-     *                           filtering by organization id and name.
-     *                           Ex: `id eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5` or `name eq "Finance"`.
+     *                           filtering by organization id and parent organization id.
+     *                           Ex: `id eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5` or
+     *                           `parentId eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5`
      * @param beforeToken        (Optional) The before cursor token to get the previous page of results. This should
      *                           be the shared application id. NOTE: We always prioritize the before token over the
      *                           after cursor. Value cannot be 0.
@@ -235,9 +240,12 @@ public interface OrgApplicationManager {
      * with the next and previous cursor values
      * @throws OrganizationManagementException on errors occurred while retrieving the list of shared organizations.
      */
-    default SharedApplicationOrganizationNodePage getApplicationSharedOrganizations(String mainApplicationId, String
-            mainOrganizationId, String filter, int beforeToken, int afterCursor, String excludedAttributes, int limit,
-                                                                                    boolean recursive)
+    default SharedApplicationOrganizationNodePage getApplicationSharedOrganizations(String mainOrganizationId,
+                                                                                    String mainApplicationId,
+                                                                                    String filter, int beforeToken,
+                                                                                    int afterCursor,
+                                                                                    String excludedAttributes,
+                                                                                    int limit, boolean recursive)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(

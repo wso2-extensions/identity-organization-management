@@ -150,24 +150,20 @@ public class OrgApplicationShareProcessor {
      * Processes and sorts OrganizationShareConfig based on hierarchy and policies.
      * Ensures that all organizations have their complete parent hierarchy available.
      *
-     * @param selectiveShareApplicationList       Raw list of share configurations.
-     * @param mainOrganizationId The ID of the organization to process.
+     * @param childOrganizationGraph        The graph of child organizations to process.
+     * @param selectiveShareApplicationList Raw list of share configurations.
      * @return A sorted List<OrganizationShareConfig> reflecting hierarchy, policy propagation, and prioritization.
      */
     public static List<SelectiveShareApplicationOperation> processAndSortOrganizationShares(
-            List<SelectiveShareApplicationOperation> selectiveShareApplicationList, String mainOrganizationId)
-            throws OrganizationManagementException {
+            List<OrganizationNode> childOrganizationGraph, List<SelectiveShareApplicationOperation>
+            selectiveShareApplicationList) {
 
         // Early exit if no input configurations.
         if (selectiveShareApplicationList == null || selectiveShareApplicationList.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // 1. Get organization hierarchy information.
-        List<OrganizationNode> topLevelNodes = OrgApplicationMgtDataHolder.getInstance().getOrganizationManager()
-                .getChildOrganizationGraph(mainOrganizationId, true);
-
-        HierarchyInfo hierarchyInfo = getAllNodesAndBfsOrder(topLevelNodes);
+        HierarchyInfo hierarchyInfo = getAllNodesAndBfsOrder(childOrganizationGraph);
         Map<String, OrganizationNode> allValidNodes = hierarchyInfo.allNodesById;
         List<String> bfsOrder = hierarchyInfo.bfsOrder;
 

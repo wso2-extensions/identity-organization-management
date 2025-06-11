@@ -29,6 +29,10 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
+import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -44,14 +48,24 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.model.RoleWithAudienceDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
+import org.wso2.carbon.identity.organization.management.application.model.operation.GeneralApplicationShareOperation;
+import org.wso2.carbon.identity.organization.management.application.model.operation.SelectiveShareApplicationOperation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.model.OrganizationNode;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
+import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -76,8 +90,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 
 /**
@@ -116,6 +133,10 @@ public class OrgApplicationManagerImplTest {
     private org.wso2.carbon.identity.application.common.model.User mockAppOwner;
     @Mock
     private OAuthAdminServiceImpl oAuthAdminService;
+    @Mock
+    private IdpManager idpManager;
+    @Mock
+    private OrgApplicationMgtDataHolder mockOrgApplicationMgtDataHolder;
 
     private static final Map<String, String> childAppIdMap = new HashMap<String, String>() {{
         put("99b701c6-e309-4241-b047-0c299c45d1a0", "56ef1d92-add6-449b-8a3c-fc308d2a4eac");
@@ -140,6 +161,7 @@ public class OrgApplicationManagerImplTest {
         OrgApplicationMgtDataHolder.getInstance().setOrgApplicationMgtDAO(orgApplicationMgtDAO);
         OrgApplicationMgtDataHolder.getInstance().setOrganizationManager(organizationManager);
         OrgApplicationMgtDataHolder.getInstance().setApplicationManagementService(applicationManagementService);
+        OrgApplicationMgtDataHolder.getInstance().setIdpManager(idpManager); // Ensure IdpManager is set
 
         orgApplicationManager = new OrgApplicationManagerImpl();
     }
@@ -470,5 +492,942 @@ public class OrgApplicationManagerImplTest {
         ServiceURL serviceURL = mock(ServiceURL.class);
         lenient().when(serviceURL.getAbsolutePublicURL()).thenReturn(url);
         lenient().when(mockServiceURLBuilder.build()).thenReturn(serviceURL);
+    }
+
+    // ========================================
+    // Test Methods for shareApplicationWithSelectedOrganizations
+    // ========================================
+
+    @Test
+    public void testShareApplicationWithSelectedOrganizations_SingleOrganization_AllRolesPolicy() throws Exception {
+
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        String originalCarbonHome = System.getProperty("carbon.home");
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL)
+                    .build();
+
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId,
+                    PolicyEnum.SELECTED_ORG_ONLY,
+                    allRolesPolicy
+            );
+            List<SelectiveShareApplicationOperation> shareOperations = Arrays.asList(shareOperation);
+
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            // Crucial mock for getAllIdentityProviders
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock for IdP creation if flow reaches there
+            IdentityProvider mockCreatedIdp = mock(IdentityProvider.class);
+            lenient().when(idpManager.addIdPWithResourceId(any(IdentityProvider.class), eq("main-tenant-domain")))
+                    .thenReturn(mockCreatedIdp);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            Organization childOrg = createMockOrganization(childOrgId, "TENANT");
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId, shareOperations);
+
+            verify(organizationManager).resolveTenantDomain(mainOrgId);
+            verify(organizationManager, times(1)).getChildOrganizationGraph(mainOrgId, true);
+            verify(organizationManager).getOrganization(childOrgId, false, false);
+            verify(applicationManagementService).getApplicationByResourceId(mainAppId, "main-tenant-domain");
+            verify(applicationManagementService).getAllIdentityProviders("main-tenant-domain");
+        }
+    }
+
+    @Test
+    public void testShareApplicationWithSelectedOrganizations_MultipleOrganizations_HierarchyRespected()
+            throws Exception {
+        
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            // Setup hierarchy: Main -> Child1 -> GrandChild1, Main -> Child2
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String child1OrgId = "child1-org-id";
+            String grandChild1OrgId = "grandchild1-org-id";
+            String child2OrgId = "child2-org-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL)
+                    .build();
+
+            List<SelectiveShareApplicationOperation> shareOperations = Arrays.asList(
+                    new SelectiveShareApplicationOperation(child1OrgId, PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy),
+                    new SelectiveShareApplicationOperation(grandChild1OrgId, PolicyEnum.SELECTED_ORG_ONLY,
+                            allRolesPolicy),
+                    new SelectiveShareApplicationOperation(child2OrgId, PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy)
+            );
+
+            // Mock setup.
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            // Crucial mock for getAllIdentityProviders.
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock for IdP creation if flow reaches there.
+            IdentityProvider mockCreatedIdp = mock(IdentityProvider.class);
+            lenient().when(idpManager.addIdPWithResourceId(any(IdentityProvider.class), eq("main-tenant-domain")))
+                    .thenReturn(mockCreatedIdp);
+
+            // Mock complex organization graph.
+            List<OrganizationNode> childGraph = createMockComplexOrganizationGraph(child1OrgId, grandChild1OrgId,
+                    child2OrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            // Mock organization details for all orgs.
+            when(organizationManager.getOrganization(child1OrgId, false, false))
+                    .thenReturn(createMockOrganization(child1OrgId, "TENANT"));
+            when(organizationManager.getOrganization(grandChild1OrgId, false, false))
+                    .thenReturn(createMockOrganization(grandChild1OrgId, "TENANT"));
+            when(organizationManager.getOrganization(child2OrgId, false, false))
+                    .thenReturn(createMockOrganization(child2OrgId, "TENANT"));
+
+            // Execute
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId, shareOperations);
+
+            // Verify all organizations were processed
+            verify(organizationManager).getOrganization(child1OrgId, false, false);
+            verify(organizationManager).getOrganization(grandChild1OrgId, false, false);
+            verify(organizationManager).getOrganization(child2OrgId, false, false);
+        }
+    }
+
+    @Test
+    public void testShareApplicationWithSelectedOrganizations_SelectedRolesPolicy() throws Exception {
+
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            // Create specific roles for sharing
+            List<RoleWithAudienceDO> specificRoles = Arrays.asList(
+                    createMockRoleWithAudience("admin-role", "APPLICATION", mainAppId),
+                    createMockRoleWithAudience("user-role", "APPLICATION", mainAppId)
+            );
+
+            ApplicationShareRolePolicy selectedRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.SELECTED)
+                    .roleWithAudienceDOList(specificRoles)
+                    .build();
+
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId,
+                    PolicyEnum.SELECTED_ORG_ONLY,
+                    selectedRolesPolicy
+            );
+
+            // Mock setup
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            // Crucial mock for getAllIdentityProviders
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock for IdP creation if flow reaches there
+            IdentityProvider mockCreatedIdp = mock(IdentityProvider.class);
+            lenient().when(idpManager.addIdPWithResourceId(any(IdentityProvider.class), eq("main-tenant-domain")))
+                    .thenReturn(mockCreatedIdp);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            Organization childOrg = createMockOrganization(childOrgId, "TENANT");
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            // Execute
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                    Arrays.asList(shareOperation));
+
+            // Verify the selected roles policy was used
+            verify(organizationManager).resolveTenantDomain(mainOrgId);
+            verify(organizationManager).getOrganization(childOrgId, false, false);
+            verify(applicationManagementService).getApplicationByResourceId(mainAppId, "main-tenant-domain");
+            verify(applicationManagementService).getAllIdentityProviders("main-tenant-domain");
+        }
+    }
+
+    @Test
+    public void testShareApplicationWithSelectedOrganizations_NoRolesPolicy() throws Exception {
+
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            ApplicationShareRolePolicy noRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.NONE)
+                    .build();
+
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId,
+                    PolicyEnum.SELECTED_ORG_ONLY,
+                    noRolesPolicy
+            );
+
+            // Mock setup
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            // Crucial mock for getAllIdentityProviders
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock for IdP creation if flow reaches there
+            IdentityProvider mockCreatedIdp = mock(IdentityProvider.class);
+            lenient().when(idpManager.addIdPWithResourceId(any(IdentityProvider.class), eq("main-tenant-domain")))
+                    .thenReturn(mockCreatedIdp);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            Organization childOrg = createMockOrganization(childOrgId, "TENANT");
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            // Execute
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                    Arrays.asList(shareOperation));
+
+            // Verify sharing occurred without role propagation
+            verify(organizationManager).getOrganization(childOrgId, false, false);
+        }
+    }
+
+    // ========================================
+    // Error Path Tests for shareApplicationWithSelectedOrganizations
+    // ========================================
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class,
+          expectedExceptionsMessageRegExp = ".*Invalid organization share configuration.*")
+    public void testShareApplicationWithSelectedOrganizations_NullConfigList() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId, null);
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class,
+          expectedExceptionsMessageRegExp = ".*Invalid sharing organization ID.*")
+    public void testShareApplicationWithSelectedOrganizations_BlankOrganizationId() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        ApplicationShareRolePolicy rolePolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                "", // blank organization ID.
+                PolicyEnum.SELECTED_ORG_ONLY,
+                rolePolicy
+        );
+
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                Arrays.asList(shareOperation));
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class,
+          expectedExceptionsMessageRegExp = ".*Empty or invalid sharing policy.*")
+    public void testShareApplicationWithSelectedOrganizations_NullPolicy() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+        String childOrgId = "child-org-id";
+
+        ApplicationShareRolePolicy rolePolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                childOrgId,
+                null, // null policy.
+                rolePolicy
+        );
+
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                Arrays.asList(shareOperation));
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class,
+          expectedExceptionsMessageRegExp = ".*Invalid role sharing operation.*")
+    public void testShareApplicationWithSelectedOrganizations_NullRoleSharing() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+        String childOrgId = "child-org-id";
+
+        SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                childOrgId,
+                PolicyEnum.SELECTED_ORG_ONLY,
+                null // null role sharing.
+        );
+
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                Arrays.asList(shareOperation));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = ".*Role sharing mode must be set.*")
+    public void testShareApplicationWithSelectedOrganizations_NullRoleSharingMode() throws Exception {
+
+        // Create role policy with null mode (this would fail during builder validation).
+        ApplicationShareRolePolicy invalidRolePolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(null) // This should cause builder to fail.
+                .build();
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testShareApplicationWithSelectedOrganizations_AlreadySharedApplication() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+        String childOrgId = "child-org-id";
+
+        ApplicationShareRolePolicy rolePolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                childOrgId,
+                PolicyEnum.SELECTED_ORG_ONLY,
+                rolePolicy
+        );
+
+        // Mock setup
+        when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+        // Create already shared application (fragment app)
+        ServiceProvider sharedApplication = createMockServiceProvider("shared-app", true);
+        when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                .thenReturn(sharedApplication);
+
+        // Execute - should throw exception
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId, 
+                Arrays.asList(shareOperation));
+    }
+
+    @Test
+    public void testShareApplicationWithSelectedOrganizations_EmptyConfigList() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        // Mock setup
+        when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+        ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+        when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                .thenReturn(mainApplication);
+
+        // Execute with empty list - should return early without error
+        orgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId, Collections.emptyList());
+
+        // Verify minimal interactions occurred
+        verify(organizationManager).resolveTenantDomain(mainOrgId);
+        verify(applicationManagementService).getApplicationByResourceId(mainAppId, "main-tenant-domain");
+    }
+
+    // ========================================
+    // Test Methods for shareApplicationWithAllOrganizations
+    // ========================================
+
+    @Test
+    public void testShareApplicationWithAllOrganizations_AllExistingAndFutureOrgs() throws Exception {
+
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        GeneralApplicationShareOperation generalOperation = new GeneralApplicationShareOperation(
+                PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
+                allRolesPolicy
+        );
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic = 
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            // Mock setup
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock child organizations list (required for the implementation flow)
+            List<BasicOrganization> childOrganizations = Arrays.asList(
+                    createMockBasicOrganization("child1-org-id", "child1-name")
+            );
+            when(organizationManager.getChildOrganizations(mainOrgId, true)).thenReturn(childOrganizations);
+
+            // Mock child organization graph
+            List<OrganizationNode> childGraph = createMockOrganizationGraph("child1-org-id");
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            // Mock organization details
+            Organization childOrg = createMockOrganization("child1-org-id", "TENANT");
+            when(organizationManager.getOrganization("child1-org-id", false, false)).thenReturn(childOrg);
+
+            // Execute
+            testOrgApplicationManager.shareApplicationWithAllOrganizations(mainOrgId, mainAppId, generalOperation);
+
+            // Verify interactions
+            verify(organizationManager).getChildOrganizations(mainOrgId, true);
+            verify(organizationManager).getOrganization("child1-org-id", false, false);
+        }
+    }
+
+    @Test
+    public void testShareApplicationWithAllOrganizations_AllExistingOrgsOnly() throws Exception {
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        GeneralApplicationShareOperation generalOperation = new GeneralApplicationShareOperation(
+                PolicyEnum.ALL_EXISTING_ORGS_ONLY,
+                allRolesPolicy
+        );
+
+        // Mock setup
+        when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+        ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+        when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                .thenReturn(mainApplication);
+
+        // Mock empty child organizations
+        when(organizationManager.getChildOrganizations(mainOrgId, true)).thenReturn(Collections.emptyList());
+
+        // Execute - should return early without error
+        orgApplicationManager.shareApplicationWithAllOrganizations(mainOrgId, mainAppId, generalOperation);
+
+        // Verify minimal interactions
+        verify(organizationManager).resolveTenantDomain(mainOrgId);
+        verify(organizationManager).getChildOrganizations(mainOrgId, true);
+        verify(applicationManagementService).getApplicationByResourceId(mainAppId, "main-tenant-domain");
+    }
+
+    @Test(expectedExceptions = OrganizationManagementClientException.class)
+    public void testShareApplicationWithAllOrganizations_AlreadySharedApplication() throws Exception {
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        GeneralApplicationShareOperation generalOperation = new GeneralApplicationShareOperation(
+                PolicyEnum.ALL_EXISTING_ORGS_ONLY,
+                allRolesPolicy
+        );
+
+        // Mock setup
+        when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+        // Create already shared application (fragment app)
+        ServiceProvider sharedApplication = createMockServiceProvider("shared-app", true);
+        when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                .thenReturn(sharedApplication);
+
+        // Execute - should throw exception
+        orgApplicationManager.shareApplicationWithAllOrganizations(mainOrgId, mainAppId, generalOperation);
+    }
+
+    @Test
+    public void testShareApplicationWithAllOrganizations_RolePolicyVariations() throws Exception {
+
+        // Set carbon.home system property to prevent CarbonUtils initialization issues
+        System.setProperty("carbon.home", "/tmp/carbon");
+
+        String mainOrgId = "main-org-id";
+        String mainAppId = "main-app-id";
+
+        // Test NONE role policy.
+        ApplicationShareRolePolicy noneRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.NONE)
+                .build();
+
+        GeneralApplicationShareOperation generalOperation = new GeneralApplicationShareOperation(
+                PolicyEnum.ALL_EXISTING_ORGS_ONLY,
+                noneRolesPolicy
+        );
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic = 
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = 
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            // Setup OrgApplicationMgtDataHolder mock BEFORE creating the instance
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            
+            // Mock Utils.getAuthenticatedUsername to prevent CarbonUtils initialization
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername)
+                    .thenReturn("test-user");
+            
+            // Mock Utils.getOrganizationId as well since it might be called
+            utilsMockedStatic.when(Utils::getOrganizationId)
+                    .thenReturn("test-org-id");
+            
+            // Mock IdentityTenantUtil methods that might be called
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("test-tenant"))
+                    .thenReturn(-1234);
+            
+            // Set up all required mocks on the data holder
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2())
+                    .thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder
+                    .getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            // Mock OrgApplicationMgtDAO methods that are called during the test
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            // Create the orgApplicationManager instance
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+
+            // Mock setup
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            when(applicationManagementService.getAllIdentityProviders("main-tenant-domain"))
+                    .thenReturn(new IdentityProvider[0]);
+
+            // Mock child organizations list (required for the implementation flow)
+            List<BasicOrganization> childOrganizations = Arrays.asList(
+                    createMockBasicOrganization("child1-org-id", "child1-name")
+            );
+            when(organizationManager.getChildOrganizations(mainOrgId, true)).thenReturn(childOrganizations);
+
+            // Mock child organization graph
+            List<OrganizationNode> childGraph = createMockOrganizationGraph("child1-org-id");
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+
+            // Mock organization details
+            Organization childOrg = createMockOrganization("child1-org-id", "TENANT");
+            when(organizationManager.getOrganization("child1-org-id", false, false)).thenReturn(childOrg);
+
+            // Execute
+            testOrgApplicationManager.shareApplicationWithAllOrganizations(mainOrgId, mainAppId, generalOperation);
+
+            // Verify sharing occurred with NONE role policy.
+            verify(organizationManager).getOrganization("child1-org-id", false, false);
+        }
+    }
+
+    // ========================================
+    // Helper Methods for Test Setup
+    // ========================================
+
+    private ServiceProvider createMockServiceProvider(String appName, boolean isFragmentApp) {
+        ServiceProvider serviceProvider = mock(ServiceProvider.class);
+        when(serviceProvider.getApplicationName()).thenReturn(appName);
+        when(serviceProvider.getApplicationResourceId()).thenReturn(appName + "-resource-id");
+
+        // Set up properties to indicate if it's a fragment app
+        ServiceProviderProperty isFragmentProperty = new ServiceProviderProperty();
+        isFragmentProperty.setName(IS_FRAGMENT_APP);
+        isFragmentProperty.setValue(String.valueOf(isFragmentApp));
+
+        when(serviceProvider.getSpProperties()).thenReturn(new ServiceProviderProperty[]{isFragmentProperty});
+
+        // Mock LocalAndOutboundAuthenticationConfig for modifyRootApplication method
+        LocalAndOutboundAuthenticationConfig authConfig = mock(LocalAndOutboundAuthenticationConfig.class);
+        when(authConfig.getAuthenticationType()).thenReturn(AUTH_TYPE_DEFAULT);
+        when(authConfig.getAuthenticationSteps()).thenReturn(new AuthenticationStep[0]);
+        when(serviceProvider.getLocalAndOutBoundAuthenticationConfig()).thenReturn(authConfig);
+
+        // Mock ClaimConfig for modifyRootApplication method
+        ClaimConfig claimConfig = mock(ClaimConfig.class);
+        when(serviceProvider.getClaimConfig()).thenReturn(claimConfig);
+
+        return serviceProvider;
+    }
+
+    private List<OrganizationNode> createMockOrganizationGraph(String childOrgId) {
+        OrganizationNode childNode = mock(OrganizationNode.class);
+        when(childNode.getId()).thenReturn(childOrgId);
+        when(childNode.getName()).thenReturn("Child Organization");
+        when(childNode.getChildren()).thenReturn(Collections.emptyList());
+
+        return Arrays.asList(childNode);
+    }
+
+    private List<OrganizationNode> createMockComplexOrganizationGraph(String child1Id, String grandChild1Id,
+                                                                       String child2Id) {
+        // Create grandchild node
+        OrganizationNode grandChildNode = mock(OrganizationNode.class);
+        when(grandChildNode.getId()).thenReturn(grandChild1Id);
+        when(grandChildNode.getName()).thenReturn("GrandChild Organization");
+        when(grandChildNode.getChildren()).thenReturn(Collections.emptyList());
+
+        // Create child1 node with grandchild
+        OrganizationNode child1Node = mock(OrganizationNode.class);
+        when(child1Node.getId()).thenReturn(child1Id);
+        when(child1Node.getName()).thenReturn("Child1 Organization");
+        when(child1Node.getChildren()).thenReturn(Arrays.asList(grandChildNode));
+
+        // Create child2 node (no children)
+        OrganizationNode child2Node = mock(OrganizationNode.class);
+        when(child2Node.getId()).thenReturn(child2Id);
+        when(child2Node.getName()).thenReturn("Child2 Organization");
+        when(child2Node.getChildren()).thenReturn(Collections.emptyList());
+
+        return Arrays.asList(child1Node, child2Node);
+    }
+
+    private Organization createMockOrganization(String orgId, String type) {
+        Organization organization = new Organization();
+        organization.setId(orgId);
+        organization.setName("Organization " + orgId);
+        organization.setType(type);
+        return organization;
+    }
+
+    private BasicOrganization createMockBasicOrganization(String orgId, String name) {
+        BasicOrganization basicOrg = new BasicOrganization();
+        basicOrg.setId(orgId);
+        basicOrg.setName(name);
+        return basicOrg;
+    }
+
+    private RoleWithAudienceDO createMockRoleWithAudience(String roleName, String audienceType, String audienceName) {
+        RoleWithAudienceDO role = mock(RoleWithAudienceDO.class);
+        when(role.getRoleName()).thenReturn(roleName);
+        when(role.getAudienceType()).thenReturn(RoleWithAudienceDO.AudienceType.fromValue(audienceType));
+        when(role.getAudienceName()).thenReturn(audienceName);
+        return role;
     }
 }
