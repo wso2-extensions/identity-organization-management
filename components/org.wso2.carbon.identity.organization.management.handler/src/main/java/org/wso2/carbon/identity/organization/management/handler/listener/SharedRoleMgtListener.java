@@ -546,10 +546,9 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             try {
                 PrivilegedCarbonContext.startTenantFlow();
                 PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                        .setTenantDomain(sharedAppTenantDomain, true);
-                String subOrgRoleId = mainRoleToSharedRoleMappingsInSubOrg.get(mainAppRoleId);
-                associatedApplicationsIds = roleManagementService.getAssociatedApplicationByRoleId(subOrgRoleId,
-                        sharedAppTenantDomain);
+                        .setTenantDomain(mainApplicationTenantDomain, true);
+                associatedApplicationsIds = roleManagementService.getAssociatedApplicationByRoleId(mainAppRoleId,
+                        mainApplicationTenantDomain);
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
