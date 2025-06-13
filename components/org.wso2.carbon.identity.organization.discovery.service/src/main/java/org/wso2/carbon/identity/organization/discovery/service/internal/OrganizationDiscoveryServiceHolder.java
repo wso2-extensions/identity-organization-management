@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.DEFAULT_PARAM;
-
 /**
  * Organization discovery data holder.
  */
@@ -90,12 +88,9 @@ public class OrganizationDiscoveryServiceHolder {
         }
         attributeBasedOrganizationDiscoveryHandlerMap.put(attributeBasedOrganizationDiscoveryHandler.getType(),
                 attributeBasedOrganizationDiscoveryHandler);
-
         // Register the supported discovery attribute key in config service.
         AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance()
                 .addSupportedDiscoveryAttributeKey(attributeBasedOrganizationDiscoveryHandler.getType());
-        AttributeBasedOrganizationDiscoveryHandlerRegistry.getInstance()
-                .addSupportedConfigDiscoveryAttributeKey(DEFAULT_PARAM);
     }
 
     public void unbindAttributeBasedOrganizationDiscoveryHandler(AttributeBasedOrganizationDiscoveryHandler
