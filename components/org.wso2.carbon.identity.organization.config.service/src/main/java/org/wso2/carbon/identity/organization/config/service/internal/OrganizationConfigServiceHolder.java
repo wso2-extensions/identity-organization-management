@@ -62,8 +62,7 @@ public class OrganizationConfigServiceHolder {
         return organizationConfigManager;
     }
 
-    public void setOrganizationConfigManager(
-            OrganizationConfigManager organizationConfigManager) {
+    public void setOrganizationConfigManager(OrganizationConfigManager organizationConfigManager) {
 
         this.organizationConfigManager = organizationConfigManager;
     }

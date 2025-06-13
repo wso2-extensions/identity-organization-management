@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.config.service.constant;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Contains constants related to organization configuration management.
@@ -32,6 +33,7 @@ public class OrganizationConfigConstants {
     public static final String DEFAULT_PARAM = "defaultParam";
     public static final String ORG_HANDLE = "orgHandle";
     public static final String ORG_NAME = "orgName";
+    public static final String ORG_PARAMETER = "org";
 
     @Deprecated
     /* Do not use this constant to register new discovery types. The
@@ -39,7 +41,10 @@ public class OrganizationConfigConstants {
      types.*/
     public static final List<String> SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS =
             List.of(EMAIL_DOMAIN_ENABLE, EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE, DEFAULT_PARAM);
-    public static final List<String> SUPPORTED_DEFAULT_PARAM_VALUES = List.of(ORG_HANDLE, ORG_NAME);
+    public static final List<String> ALLOWED_DEFAULT_DISCOVERY_CONFIG_KEYS = List.of(DEFAULT_PARAM);
+    public static final Map<String, String> SUPPORTED_DEFAULT_PARAMETER_MAPPINGS = Map.of(
+            ORG_NAME, ORG_PARAMETER, ORG_HANDLE, ORG_HANDLE);
+
     private static final String ORGANIZATION_CONFIGURATION_ERROR_CODE_PREFIX = "OCM-";
 
     /**

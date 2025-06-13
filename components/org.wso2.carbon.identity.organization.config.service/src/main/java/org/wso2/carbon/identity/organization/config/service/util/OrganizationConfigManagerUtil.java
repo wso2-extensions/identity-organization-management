@@ -29,6 +29,7 @@ import java.util.List;
 
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.DEFAULT_PARAM;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DEFAULT_PARAMETER_MAPPINGS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_GETTING_ORGANIZATION_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationDiscoveryDefaultParam;
 
@@ -37,10 +38,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrganizationConfigManagerUtil {
 
-    public static final String ORGANIZATION_NAME = "orgName";
-    public static final String ORG_PARAMETER = "org";
-
-    public static String resolveTheDiscoveryDefaultParam() throws OrganizationConfigException {
+    public static String resolveDefaultDiscoveryParam() throws OrganizationConfigException {
 
         // Priority is given to the tenant-level configuration over the system-level config.
         try {
@@ -51,24 +49,17 @@ public class OrganizationConfigManagerUtil {
             for (ConfigProperty configProperty : configProperties) {
                 if (DEFAULT_PARAM.equals(configProperty.getKey())
                         && StringUtils.isNotBlank(configProperty.getValue())) {
-                    return mapToOrgParam(configProperty.getValue());
+                    return SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.get(configProperty.getValue());
                 }
             }
         } catch (OrganizationConfigException e) {
             if (ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST.getCode().equals(e.getErrorCode())) {
-                return mapToOrgParam(getOrganizationDiscoveryDefaultParam());
+                return SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.get(getOrganizationDiscoveryDefaultParam());
             }
             throw new OrganizationConfigException(ERROR_CODE_ERROR_GETTING_ORGANIZATION_DISCOVERY_CONFIG.getCode(),
                     ERROR_CODE_ERROR_GETTING_ORGANIZATION_DISCOVERY_CONFIG.getMessage(),
                     ERROR_CODE_ERROR_GETTING_ORGANIZATION_DISCOVERY_CONFIG.getDescription());
         }
-        return mapToOrgParam(getOrganizationDiscoveryDefaultParam());
-    }
-
-    private static String mapToOrgParam(String param) {
-        if (ORGANIZATION_NAME.equals(param)) {
-            return ORG_PARAMETER;
-        }
-        return param;
+        return SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.get(getOrganizationDiscoveryDefaultParam());
     }
 }
