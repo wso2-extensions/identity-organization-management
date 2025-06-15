@@ -571,7 +571,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         Map<String, List<RoleWithAudienceDO>> updateOperationPerEachOrg = new HashMap<>();
         List<String> organizationsToBeUpdated = new ArrayList<>();
-
+        Map<String, ApplicationShareUpdateOperation.Operation> organizationIdToOperationMap = new HashMap<>();
         for (ApplicationShareUpdateOperation updateOperation : updateOperationList) {
             if (!(ApplicationShareUpdateOperation.Operation.ADD.ordinal() == updateOperation.getOperation().ordinal() ||
                     ApplicationShareUpdateOperation.Operation.REMOVE.ordinal() == updateOperation.getOperation()
@@ -586,6 +586,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 continue;
             }
             organizationsToBeUpdated.add(parsedFilterResult.getOrganizationId());
+            organizationIdToOperationMap.put(parsedFilterResult.getOrganizationId(), updateOperation.getOperation());
             List<RoleWithAudienceDO> roleChanges = (List<RoleWithAudienceDO>) updateOperation.getValues();
             updateOperationPerEachOrg.put(parsedFilterResult.getOrganizationId(), roleChanges);
         }
@@ -599,7 +600,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 CompletableFuture.runAsync(() -> {
                     try {
                         updateRolesOfSharedApplication(mainApplication, mainOrganizationId, sharedOrganizationId,
-                                updateOperationList.get(0).getOperation(),
+                                organizationIdToOperationMap.get(sharedOrganizationId),
                                 updateOperationPerEachOrg.get(sharedOrganizationId), username, userID);
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in updating roles of application: %s for organization: %s",
@@ -701,7 +702,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                    List<String> sharedOrganizationList) throws OrganizationManagementException {
 
         String mainTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
-        ServiceProvider mainApplication = getOrgApplication(mainOrganizationId, mainTenantDomain);
+        ServiceProvider mainApplication = getOrgApplication(mainApplicationId, mainTenantDomain);
         List<String> validOrganizationsInReverseBfsOrder = getValidOrganizationsInReverseBfsOrder(mainOrganizationId,
                 sharedOrganizationList);
         for (String sharedOrganizationId : validOrganizationsInReverseBfsOrder) {

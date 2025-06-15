@@ -225,7 +225,7 @@ public interface OrgApplicationManager {
      *                           filtering by organization id and parent organization id.
      *                           Ex: `id eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5` or
      *                           `parentId eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5`
-     * @param beforeToken        (Optional) The before cursor token to get the previous page of results. This should
+     * @param beforeCursor        (Optional) The before cursor to get the previous page of results. This should
      *                           be the shared application id. NOTE: We always prioritize the before token over the
      *                           after cursor. Value cannot be 0.
      * @param afterCursor        (Optional) The after cursor to get the next page of results. This should be a shared
@@ -242,7 +242,7 @@ public interface OrgApplicationManager {
      */
     default SharedApplicationOrganizationNodePage getApplicationSharedOrganizations(String mainOrganizationId,
                                                                                     String mainApplicationId,
-                                                                                    String filter, int beforeToken,
+                                                                                    String filter, int beforeCursor,
                                                                                     int afterCursor,
                                                                                     String excludedAttributes,
                                                                                     int limit, boolean recursive)

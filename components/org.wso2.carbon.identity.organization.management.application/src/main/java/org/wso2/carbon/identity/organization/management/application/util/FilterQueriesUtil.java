@@ -202,6 +202,6 @@ public class FilterQueriesUtil {
     }
 
     private FilterQueriesUtil() {
-        // To hide the public constructor
+        // To hide the public constructor.
     }
 }

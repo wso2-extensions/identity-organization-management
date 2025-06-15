@@ -223,7 +223,6 @@
                             org.wso2.carbon.identity.role.v2.mgt.core.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
-                            *;resolution:=optional,
                         </Import-Package>
                     </instructions>
                 </configuration>
