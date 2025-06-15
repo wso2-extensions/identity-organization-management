@@ -43,6 +43,7 @@ import org.wso2.carbon.identity.organization.management.application.listener.Fra
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -276,5 +277,24 @@ public class OrgApplicationMgtServiceComponent {
 
         OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
         log.debug("Unset Async Operation Status Mgt Service On Application Management Component.");
+    }
+
+    @Reference(
+            name = "ResourceSharingPolicyHandlerService",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService")
+    protected void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrgApplicationMgtDataHolder.getInstance()
+                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        OrgApplicationMgtDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
     }
 }

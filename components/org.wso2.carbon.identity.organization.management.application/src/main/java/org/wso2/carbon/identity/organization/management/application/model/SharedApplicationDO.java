@@ -18,8 +18,11 @@
 
 package org.wso2.carbon.identity.organization.management.application.model;
 
+
 /**
  * This class contains the fragment application id and its organization id.
+ * Use this to access the shared application info with DAO layer.
+ * Always prioritize {@link SharedApplicationOrganizationNode} for accessing shared application info with service level.
  */
 public class SharedApplicationDO {
 
@@ -29,17 +32,36 @@ public class SharedApplicationDO {
 
     boolean shareWithAllChildren;
 
+    Integer appId;
+
     public SharedApplicationDO(String organizationId, String fragmentApplicationId) {
 
         this.organizationId = organizationId;
         this.fragmentApplicationId = fragmentApplicationId;
     }
 
+    public SharedApplicationDO(String organizationId, String fragmentApplicationId, Integer appId) {
+
+        this.organizationId = organizationId;
+        this.fragmentApplicationId = fragmentApplicationId;
+        this.appId = appId;
+    }
+
+
     public SharedApplicationDO(String organizationId, String fragmentApplicationId, boolean shareWithAllChildren) {
 
         this.organizationId = organizationId;
         this.fragmentApplicationId = fragmentApplicationId;
         this.shareWithAllChildren = shareWithAllChildren;
+    }
+
+    public SharedApplicationDO(String organizationId, String fragmentApplicationId, boolean shareWithAllChildren,
+                               Integer appId) {
+
+        this.organizationId = organizationId;
+        this.fragmentApplicationId = fragmentApplicationId;
+        this.shareWithAllChildren = shareWithAllChildren;
+        this.appId = appId;
     }
 
     public String getOrganizationId() {
@@ -55,5 +77,10 @@ public class SharedApplicationDO {
     public boolean shareWithAllChildren() {
 
         return this.shareWithAllChildren;
+    }
+
+    public Integer getAppId() {
+
+        return appId;
     }
 }
