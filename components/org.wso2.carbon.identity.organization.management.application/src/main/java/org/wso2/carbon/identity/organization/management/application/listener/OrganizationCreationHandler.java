@@ -115,6 +115,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         }
 
         ApplicationBasicInfo[] applicationBasicInfos;
+        // Retrieve all the applications which are to be shared to the new organization.
         applicationBasicInfos = getApplicationManagementService().getApplicationBasicInfoBySPProperty(
                 getOrganizationManager().resolveTenantDomain(primaryOrganizationId), getAuthenticatedUsername(),
                 SHARE_WITH_ALL_CHILDREN, "true");
