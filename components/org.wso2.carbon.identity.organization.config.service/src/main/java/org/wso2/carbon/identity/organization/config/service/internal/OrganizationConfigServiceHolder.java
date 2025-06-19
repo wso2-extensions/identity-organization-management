@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.config.service.internal;
 
 import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
+import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
 /**
@@ -29,6 +30,7 @@ public class OrganizationConfigServiceHolder {
     private static final OrganizationConfigServiceHolder instance = new OrganizationConfigServiceHolder();
     private ConfigurationManager configurationManager = null;
     private OrganizationManager organizationManager = null;
+    private OrganizationConfigManager organizationConfigManager = null;
 
     public static OrganizationConfigServiceHolder getInstance() {
 
@@ -53,5 +55,15 @@ public class OrganizationConfigServiceHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    public OrganizationConfigManager getOrganizationConfigManager() {
+
+        return organizationConfigManager;
+    }
+
+    public void setOrganizationConfigManager(OrganizationConfigManager organizationConfigManager) {
+
+        this.organizationConfigManager = organizationConfigManager;
     }
 }
