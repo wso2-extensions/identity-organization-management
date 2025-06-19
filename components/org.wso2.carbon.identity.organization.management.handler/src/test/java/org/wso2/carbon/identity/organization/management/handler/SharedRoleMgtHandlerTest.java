@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.management.handler;
 import org.mockito.MockedStatic;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -82,18 +81,9 @@ public class SharedRoleMgtHandlerTest {
         identityUtil.close();
     }
 
-    @DataProvider(name = "v2AuditLogsEnabled")
-    public Object[][] v2AuditLogsEnabled() {
-
-        return new Object[][]{
-                {false},
-                {true}
-        };
-    }
-
-    @Test(dataProvider = "v2AuditLogsEnabled", expectedExceptions = IdentityEventException.class,
+    @Test(expectedExceptions = IdentityEventException.class,
             expectedExceptionsMessageRegExp = ".*has a non shared role with.*")
-    public void testHandleEventForPreShareApplicationEventWithConflictingRoles(boolean isV2AuditLogsEnabled)
+    public void testHandleEventForPreShareApplicationEventWithConflictingRoles()
             throws Exception {
 
         Event event = createPreShareApplicationEvent();
@@ -126,7 +116,6 @@ public class SharedRoleMgtHandlerTest {
         lenient().when(roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
                 Collections.singletonList(role.getId()), SHARED_ORG_TENANT_DOMAIN)).thenReturn(new HashMap<>());
 
-        loggerUtils.when(LoggerUtils::isEnableV2AuditLogs).thenReturn(isV2AuditLogsEnabled);
         identityUtil.when(() -> IdentityUtil.getInitiatorId(PARENT_ORG_USER_NAME, PARENT_ORG_TENANT_DOMAIN)).
                 thenReturn(PARENT_ORG_USER_ID);
 

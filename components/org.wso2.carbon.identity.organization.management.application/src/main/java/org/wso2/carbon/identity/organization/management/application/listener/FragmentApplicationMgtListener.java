@@ -693,17 +693,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     if (e instanceof IdentityApplicationManagementException &&
                             OrgApplicationMgtConstants.APPLICATION_ALREADY_EXISTS_ERROR_CODE.equals((
                                     (IdentityApplicationManagementException) e).getErrorCode())) {
-                        if (LoggerUtils.isEnableV2AuditLogs()) {
-                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                                    IdentityUtil.getInitiatorId(username, tenantDomain),
-                                    LoggerUtils.Target.User.name(),
-                                    updatedApplicationName,
-                                    LoggerUtils.Target.Application.name(),
-                                    LogConstants.ApplicationManagement.UPDATE_APPLICATION_ACTION)
-                                    .data(buildAuditData(updatedApplicationName, sharedAppOrgId, updatedApplicationName,
-                                            sharedAppId, "Application name conflict."));
-                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                        }
+                        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                IdentityUtil.getInitiatorId(username, tenantDomain),
+                                LoggerUtils.Target.User.name(),
+                                updatedApplicationName,
+                                LoggerUtils.Target.Application.name(),
+                                LogConstants.ApplicationManagement.UPDATE_APPLICATION_ACTION)
+                                .data(buildAuditData(updatedApplicationName, sharedAppOrgId, updatedApplicationName,
+                                        sharedAppId, "Application name conflict."));
+                        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         LOG.warn(String.format(
                                 "Updated application name '%s' already exists in organization with ID: %s.",
                                 updatedApplicationName, sharedAppOrgId));
