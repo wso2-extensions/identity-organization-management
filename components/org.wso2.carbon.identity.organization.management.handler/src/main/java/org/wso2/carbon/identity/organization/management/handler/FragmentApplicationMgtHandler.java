@@ -94,19 +94,17 @@ public class FragmentApplicationMgtHandler extends AbstractEventHandler {
                                     property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                                             Boolean.parseBoolean(property.getValue()));
                     if (!isFragmentApp) {
-                        if (LoggerUtils.isEnableV2AuditLogs()) {
-                            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                                    IdentityUtil.getInitiatorId(username, parentAppTenantDomain),
-                                    LoggerUtils.Target.Application.name(),
-                                    parentApp.getApplicationName(),
-                                    LoggerUtils.Target.Application.name(),
-                                    LogConstants.ApplicationManagement.CREATE_APPLICATION_ACTION)
-                                    .data(buildAuditData(parentApp.getApplicationName(), sharedAppTenantDomain,
-                                            orgApp.getApplicationName(), orgApp.getApplicationResourceId(),
-                                            "Application conflict"));
-                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                        }
+                        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                IdentityUtil.getInitiatorId(username, parentAppTenantDomain),
+                                LoggerUtils.Target.Application.name(),
+                                parentApp.getApplicationName(),
+                                LoggerUtils.Target.Application.name(),
+                                LogConstants.ApplicationManagement.CREATE_APPLICATION_ACTION)
+                                .data(buildAuditData(parentApp.getApplicationName(), sharedAppTenantDomain,
+                                        orgApp.getApplicationName(), orgApp.getApplicationResourceId(),
+                                        "Application conflict"));
+                        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         LOG.warn(String.format("Organization %s has a non shared application with name %s.",
                                 sharedOrganizationId, parentApp.getApplicationName()));
                         throw new IdentityApplicationManagementClientException(
