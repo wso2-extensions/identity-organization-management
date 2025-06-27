@@ -58,6 +58,14 @@
             <artifactId>org.wso2.carbon.user.api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.idp.mgt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.role.management.service</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
         </dependency>
@@ -159,6 +167,7 @@
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.util;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
@@ -174,6 +183,8 @@
                             org.wso2.carbon.identity.role.v2.mgt.core.*; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.application.*;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.idp.mgt;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt.dao;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.*;
