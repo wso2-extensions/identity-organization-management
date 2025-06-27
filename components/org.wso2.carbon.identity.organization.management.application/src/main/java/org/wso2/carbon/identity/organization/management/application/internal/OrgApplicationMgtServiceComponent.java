@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
@@ -256,5 +257,24 @@ public class OrgApplicationMgtServiceComponent {
 
         OrgApplicationMgtDataHolder.getInstance().setRoleManagementServiceV2(null);
         log.debug("RoleManagementServiceV2 unset in OrgApplicationMgtServiceComponent bundle.");
+    }
+
+    @Reference(
+            name = "async.operation.status.mgt.service",
+            service = AsyncOperationStatusMgtService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetAsyncStatusMgtService"
+    )
+    protected void setAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
+        OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(asyncOperationStatusMgtService);
+        log.debug("Set Async Operation Status Mgt Service On Application Management Component.");
+    }
+
+    protected void unsetAsyncStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
+        OrgApplicationMgtDataHolder.getInstance().setAsyncOperationStatusMgtService(null);
+        log.debug("Unset Async Operation Status Mgt Service On Application Management Component.");
     }
 }

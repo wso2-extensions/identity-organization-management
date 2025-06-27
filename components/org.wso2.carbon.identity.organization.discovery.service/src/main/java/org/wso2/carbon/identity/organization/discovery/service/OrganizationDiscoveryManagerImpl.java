@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationD
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -157,8 +158,17 @@ public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryMa
         limit = validateLimit(limit);
         offset = validateOffset(offset);
         List<ExpressionNode> expressionNodes = getExpressionNodes(filter);
-        return organizationDiscoveryDAO.getOrganizationsDiscoveryAttributes(limit,
-                offset, getOrganizationId(), expressionNodes);
+        DiscoveryOrganizationsResult discoveryOrganizationsResult = organizationDiscoveryDAO
+                .getOrganizationsDiscoveryAttributes(limit, offset, getOrganizationId(), expressionNodes);
+
+        // Iterate through the organization list and set the organization handle.
+        if (discoveryOrganizationsResult.getOrganizations() != null) {
+            for (OrganizationDiscovery organization : discoveryOrganizationsResult.getOrganizations()) {
+                organization.setOrganizationHandle(getOrganizationManager()
+                        .resolveTenantDomain(organization.getOrganizationId()));
+            }
+        }
+        return discoveryOrganizationsResult;
     }
 
     @Override

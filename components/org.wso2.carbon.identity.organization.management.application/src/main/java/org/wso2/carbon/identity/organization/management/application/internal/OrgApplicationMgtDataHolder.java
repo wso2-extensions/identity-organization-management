@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application.internal;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.event.services.IdentityEventService;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
@@ -49,6 +50,7 @@ public class OrgApplicationMgtDataHolder {
     private IdentityEventService identityEventService;
     private ClaimMetadataManagementService claimMetadataManagementService;
     private RoleManagementService roleManagementServiceV2;
+    private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
 
     private OrgApplicationMgtDataHolder() {
 
@@ -269,5 +271,25 @@ public class OrgApplicationMgtDataHolder {
     public void setRoleManagementServiceV2(RoleManagementService roleManagementServiceV2) {
 
         this.roleManagementServiceV2 = roleManagementServiceV2;
+    }
+
+    /**
+     * Get {@link AsyncOperationStatusMgtService}.
+     *
+     * @return AsyncOperationStatusMgtService.
+     */
+    public AsyncOperationStatusMgtService getAsyncOperationStatusMgtService() {
+
+        return asyncOperationStatusMgtService;
+    }
+
+    /**
+     * Set {@link AsyncOperationStatusMgtService}.
+     *
+     * @param asyncOperationStatusMgtService Instance of {@link AsyncOperationStatusMgtService}.
+     */
+    public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
+
+        this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
     }
 }
