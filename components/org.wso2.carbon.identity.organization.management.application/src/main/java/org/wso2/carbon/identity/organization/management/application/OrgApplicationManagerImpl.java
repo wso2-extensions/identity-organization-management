@@ -101,6 +101,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.Application.CONSOLE_APP;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.Application.MY_ACCOUNT_APP;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OAUTH2;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.ORGANIZATION_CONTEXT_PREFIX;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.TENANT_CONTEXT_PREFIX;
@@ -774,7 +776,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Create Oauth consumer app to redirect login to shared (fragment) application.
         OAuthConsumerAppDTO createdOAuthApp;
         try {
-            String callbackUrl = resolveCallbackURL(ownerOrgId);
+            String callbackUrl = resolveCallbackURL(ownerOrgId, mainApplication.getApplicationName());
             String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
             createdOAuthApp = createOAuthApplication(
                     mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
@@ -983,7 +985,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             removeOAuthApplication(existingOAuthApp);
 
             // Retry the app creation.
-            String callbackUrl = resolveCallbackURL(ownerOrgId);
+            String callbackUrl = resolveCallbackURL(ownerOrgId, mainApplication.getApplicationName());
             String backChannelLogoutUrl = resolveBackChannelLogoutURL(ownerOrgId);
             return createOAuthApplication(mainApplication.getApplicationName(), callbackUrl, backChannelLogoutUrl);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
@@ -1030,16 +1032,23 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
-    private String resolveCallbackURL(String ownerOrgId) throws URLBuilderException, OrganizationManagementException {
+    private String resolveCallbackURL(String ownerOrgId, String applicationName)
+            throws URLBuilderException, OrganizationManagementException {
 
         String tenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
+        ServiceURLBuilder serviceURLBuilder;
         if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-            return ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).setTenant(tenantDomain).build()
-                    .getAbsolutePublicURL();
+            serviceURLBuilder =
+                    ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).setTenant(tenantDomain);
+        } else {
+            String context =
+                    String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
+            serviceURLBuilder =  ServiceURLBuilder.create().addPath(context).setTenant(tenantDomain);
         }
-        String context =
-                String.format(TENANT_CONTEXT_PATH_COMPONENT, tenantDomain) + "/" + FrameworkConstants.COMMONAUTH;
-        return ServiceURLBuilder.create().addPath(context).setTenant(tenantDomain).build().getAbsolutePublicURL();
+        if ((MY_ACCOUNT_APP.equals(applicationName) || CONSOLE_APP.equals(applicationName))) {
+            serviceURLBuilder.setSkipDomainBranding(true);
+        }
+        return serviceURLBuilder.build().getAbsolutePublicURL();
     }
 
     private String resolveBackChannelLogoutURL(String ownerOrgId)
