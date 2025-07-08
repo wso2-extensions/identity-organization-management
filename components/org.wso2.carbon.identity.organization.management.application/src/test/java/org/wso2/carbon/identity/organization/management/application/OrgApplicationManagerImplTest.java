@@ -434,7 +434,8 @@ public class OrgApplicationManagerImplTest {
 
             // Fire organization creator sharing event
 
-            orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren);
+            orgApplicationManager.shareApplication(ownerOrgId, sharedOrgId, mainApplication, shareWithAllChildren,
+                    null);
         } catch (URLBuilderException | IdentityOAuthAdminException | IdentityApplicationManagementException e) {
             throw new RuntimeException(e);
         }

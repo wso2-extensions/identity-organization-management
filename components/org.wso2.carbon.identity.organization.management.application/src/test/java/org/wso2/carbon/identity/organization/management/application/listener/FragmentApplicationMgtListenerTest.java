@@ -47,6 +47,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -296,9 +297,10 @@ public class FragmentApplicationMgtListenerTest {
                 .thenReturn(serviceProvider);
         when(serviceProvider.getApplicationID()).thenReturn(1);
         when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
 
         if (isSharedApplicationPresent) {
-            when(orgApplicationMgtDAO.getSharedApplication(1, tenantDomain))
+            when(orgApplicationMgtDAO.getSharedApplication(1, organizationID))
                     .thenReturn(Optional.ofNullable(sharedApplicationDO));
             when(sharedApplicationDO.shareWithAllChildren()).thenReturn(isShareWithAllChildren);
         }
@@ -355,6 +357,81 @@ public class FragmentApplicationMgtListenerTest {
     private void mockUtils(String requestInitiatedDomain) {
 
         mockedUtilities.when(() -> IdentityTenantUtil.getTenantDomainFromContext()).thenReturn(requestInitiatedDomain);
+    }
+
+    @DataProvider(name = "testClaimConfigInheritanceDataProvider")
+    public Object[][] testClaimConfigInheritanceDataProvider() {
+
+        return new Object[][] {
+                // supportApplicationRoles, alwaysSendMappedLocalSubjectId, mappedLocalSubjectMandatory
+                {true, true, false},
+                {false, false, true}
+        };
+    }
+
+    @Test(dataProvider = "testClaimConfigInheritanceDataProvider")
+    public void testClaimConfigInheritance(boolean supportAppRoles, boolean alwaysSendMappedLocalSubjectId,
+                                           boolean mappedLocalSubjectMandatory) throws Exception {
+
+        try (MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class)) {
+
+            utilsMockedStatic.when(Utils::isB2BApplicationRoleSupportEnabled).thenReturn(supportAppRoles);
+            ServiceProvider sharedSP = new ServiceProvider();
+            sharedSP.setApplicationResourceId(applicationResourceID);
+            sharedSP.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[] {
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)
+            };
+            sharedSP.setSpProperties(spProperties);
+
+            ClaimMapping[] claimMappings = {
+                    ClaimMapping.build("http://wso2.org/claims/email", null, null, false),
+                    ClaimMapping.build("http://wso2.org/claims/runtime/temp", null, null, false)
+            };
+            ClaimConfig mainClaimConfig = new ClaimConfig();
+            mainClaimConfig.setClaimMappings(claimMappings);
+            mainClaimConfig.setAlwaysSendMappedLocalSubjectId(alwaysSendMappedLocalSubjectId);
+            mainClaimConfig.setMappedLocalSubjectMandatory(mappedLocalSubjectMandatory);
+
+            MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
+
+            ServiceProvider mainSp = new ServiceProvider();
+            mainSp.setClaimConfig(mainClaimConfig);
+            mainSp.setSpProperties(new ServiceProviderProperty[0]);
+
+            when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+            when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID)).thenReturn(
+                    Optional.of(mainApplicationDO));
+            when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString())).thenReturn(mainSp);
+
+            fragmentApplicationMgtListener.doPostGetServiceProvider(sharedSP, applicationName, tenantDomain);
+
+            ClaimConfig resultClaimConfig = sharedSP.getClaimConfig();
+            Assert.assertNotNull(resultClaimConfig);
+
+            // Filter runtime claim.
+            Assert.assertEquals(resultClaimConfig.getClaimMappings()[0].getLocalClaim().getClaimUri(),
+                                "http://wso2.org/claims/email");
+
+            if (supportAppRoles) {
+                Assert.assertEquals(resultClaimConfig.getClaimMappings().length, 3);
+                // Verify adding the application roles claim.
+                Assert.assertEquals(resultClaimConfig.getClaimMappings()[1].getLocalClaim().getClaimUri(),
+                                    "http://wso2.org/claims/applicationRoles");
+                // Verify adding the roles claim.
+                Assert.assertEquals(resultClaimConfig.getClaimMappings()[2].getLocalClaim().getClaimUri(),
+                                    "http://wso2.org/claims/roles");
+            } else {
+                Assert.assertEquals(resultClaimConfig.getClaimMappings().length, 2);
+                // Verify adding the roles claim.
+                Assert.assertEquals(resultClaimConfig.getClaimMappings()[1].getLocalClaim().getClaimUri(),
+                                    "http://wso2.org/claims/roles");
+            }
+
+            Assert.assertEquals(resultClaimConfig.isAlwaysSendMappedLocalSubjectId(), alwaysSendMappedLocalSubjectId);
+            Assert.assertEquals(resultClaimConfig.isMappedLocalSubjectMandatory(), mappedLocalSubjectMandatory);
+        }
     }
 
     @AfterMethod

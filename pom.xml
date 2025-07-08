@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>1.4.135-SNAPSHOT</version>
+    <version>2.0.6-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -56,6 +56,7 @@
         <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
+        <module>components/org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</module>
     </modules>
 
     <dependencyManagement>
@@ -210,6 +211,12 @@
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -300,6 +307,11 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.framework.async.operation.status.mgt</artifactId>
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
 
@@ -542,7 +554,7 @@
     <properties>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.10.25</carbon.kernel.version>
+        <carbon.kernel.version>4.10.48</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
 
@@ -579,18 +591,18 @@
 
         <identity.organization.management.exp.pkg.version>${project.version}
         </identity.organization.management.exp.pkg.version>
-        <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,2.0.0)
+        <org.wso2.identity.organization.mgt.imp.pkg.version.range>[1.0.0,3.0.0)
         </org.wso2.identity.organization.mgt.imp.pkg.version.range>
 
-        <identity.organization.management.core.version>1.1.23</identity.organization.management.core.version>
+        <identity.organization.management.core.version>1.1.31</identity.organization.management.core.version>
         <org.wso2.identity.organization.mgt.core.imp.pkg.version.range>[1.0.0,2.0.0)
         </org.wso2.identity.organization.mgt.core.imp.pkg.version.range>
 
-        <carbon.multitenancy.version>4.11.31</carbon.multitenancy.version>
+        <carbon.multitenancy.version>4.11.37</carbon.multitenancy.version>
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <carbon.identity.framework.version>7.8.79</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.8.234</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 
