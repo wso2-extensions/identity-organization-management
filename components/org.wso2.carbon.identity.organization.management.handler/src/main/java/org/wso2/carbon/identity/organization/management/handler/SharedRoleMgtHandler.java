@@ -124,45 +124,23 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         ApplicationShareRolePolicy applicationShareRolePolicy = (ApplicationShareRolePolicy) eventProperties.get(
                 OrgApplicationMgtConstants.EVENT_PROP_ROLE_SHARING_CONFIG);
         try {
-
             String mainAppTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
             String allowedAudienceForRoleAssociationInMainApp =
                     getApplicationMgtService().getAllowedAudienceForRoleAssociation(mainApplicationId,
                             mainAppTenantDomain);
 
-            List<String> addedRoles;
             if (StringUtils.equalsIgnoreCase(allowedAudienceForRoleAssociationInMainApp.toLowerCase(),
                     RoleConstants.APPLICATION)) {
-                addedRoles = createSharedAppRolesSelectively(mainApplicationId, mainOrganizationId,
-                        sharedApplicationId, sharedOrganizationId, applicationShareRolePolicy);
-            } else {
-                addedRoles = createSharedOrgRoleSelectively(mainOrganizationId, mainApplicationId,
+                createSharedAppRolesSelectively(mainApplicationId, mainOrganizationId, sharedApplicationId,
                         sharedOrganizationId, applicationShareRolePolicy);
+            } else {
+                createSharedOrgRoleSelectively(mainOrganizationId, mainApplicationId, sharedOrganizationId,
+                        applicationShareRolePolicy);
             }
-
-            if (!eventProperties.containsKey(OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID)) {
-                return;
-            }
-            int resourceSharingPolicyId = (int) eventProperties.get(
-                    OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID);
-            List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
-            for (String roleId : addedRoles) {
-                SharedResourceAttribute sharedResourceAttribute = SharedResourceAttribute.builder()
-                        .withSharedAttributeId(roleId)
-                        .withResourceSharingPolicyId(resourceSharingPolicyId)
-                        .withSharedAttributeType(SharedAttributeType.ROLE)
-                        .build();
-                sharedResourceAttributes.add(sharedResourceAttribute);
-            }
-            getResourceSharingPolicyHandlerService().addSharedResourceAttributes(sharedResourceAttributes);
         } catch (OrganizationManagementException | IdentityRoleManagementException |
                  IdentityApplicationManagementException e) {
             throw new IdentityEventException(
                     String.format("Error while sharing roles related to application %s.", sharedApplicationId), e);
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw new IdentityEventException(
-                    String.format("Error while adding shared resource attributes for application %s.",
-                            sharedApplicationId), e);
         }
     }
 
@@ -447,6 +425,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                                                      String mainOrganizationId,
                                                                      Organization subOrg)
             throws IdentityRoleManagementException, OrganizationManagementException {
+
         if (appRolesFromMainOrg.isEmpty()) {
             return Collections.emptyList();
         }

@@ -125,111 +125,90 @@ public class OrgApplicationShareProcessor {
                 }
             }
         }
-
         return parentMap;
     }
 
     /**
-     * Checks if all ancestors of an organization are present in the provided set.
-     * If you want to include an organization, all its ancestors must be included too.
-     */
-    private static boolean hasCompleteHierarchyPath(String orgId, Set<String> availableOrgIds,
-                                                  Map<String, String> parentMap) {
-        String currentId = orgId;
-        while (parentMap.containsKey(currentId)) {
-            currentId = parentMap.get(currentId);
-            // If any ancestor is not in the available set, return false
-            if (!availableOrgIds.contains(currentId)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Processes and sorts OrganizationShareConfig based on hierarchy and policies.
-     * Ensures that all organizations have their complete parent hierarchy available.
+     * This method prioritizes explicit role attribute configurations provided in the input list.
+     * If an organization does not have an explicit configuration, it will inherit the configuration
+     * from its nearest ancestor with the 'SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN' policy.
      *
      * @param childOrganizationGraph        The graph of child organizations to process.
      * @param selectiveShareApplicationList Raw list of share configurations.
-     * @return A sorted List<OrganizationShareConfig> reflecting hierarchy, policy propagation, and prioritization.
+     * @return A sorted List<SelectiveShareApplicationOperation> reflecting hierarchy and correct prioritization.
      */
     public static List<SelectiveShareApplicationOperation> processAndSortOrganizationShares(
-            List<OrganizationNode> childOrganizationGraph, List<SelectiveShareApplicationOperation>
-            selectiveShareApplicationList) {
+            List<OrganizationNode> childOrganizationGraph,
+            List<SelectiveShareApplicationOperation> selectiveShareApplicationList) {
 
-        // Early exit if no input configurations.
         if (selectiveShareApplicationList == null || selectiveShareApplicationList.isEmpty()) {
             return new ArrayList<>();
         }
 
+        // --- Step 1: Get Full Hierarchy Info ---
         HierarchyInfo hierarchyInfo = getAllNodesAndBfsOrder(childOrganizationGraph);
         Map<String, OrganizationNode> allValidNodes = hierarchyInfo.allNodesById;
         List<String> bfsOrder = hierarchyInfo.bfsOrder;
 
         if (allValidNodes.isEmpty()) {
-            return new ArrayList<>(); // No valid organizations, return empty list.
+            return new ArrayList<>();
         }
 
-        // 2. Build parent-child relationship map for ancestry checking.
-        Map<String, String> parentMap = buildParentMap(allValidNodes);
-
-        // 3. Collect valid organization IDs and validate complete hierarchy paths.
-        Set<String> availableOrgIds = new HashSet<>(selectiveShareApplicationList.size());
-        Map<String, SelectiveShareApplicationOperation> orgIdToConfigMap = new HashMap<>(
-                selectiveShareApplicationList.size());
-
-        // First pass: collect all valid organization IDs.
+        // --- Step 2: Validate Input and Identify PolicyHolders ---
+        Map<String, SelectiveShareApplicationOperation> validatedInputConfigs = new HashMap<>();
         for (SelectiveShareApplicationOperation config : selectiveShareApplicationList) {
             if (config != null && allValidNodes.containsKey(config.getOrganizationId())) {
-                availableOrgIds.add(config.getOrganizationId());
-                // Store the mapping - if duplicates, the last one wins.
-                orgIdToConfigMap.put(config.getOrganizationId(), config);
+                validatedInputConfigs.put(config.getOrganizationId(), config);
             }
         }
 
-        // Second pass: validate complete hierarchy paths.
-        Map<String, SelectiveShareApplicationOperation> validatedInputConfigs = new HashMap<>();
-        for (String orgId : availableOrgIds) {
-            if (hasCompleteHierarchyPath(orgId, availableOrgIds, parentMap)) {
-                validatedInputConfigs.put(orgId, orgIdToConfigMap.get(orgId));
-            }
-        }
-
-        // 4. Process organizations in BFS order and apply policies.
+        // --- Step 3: Multi-Pass Processing for Prioritization and Inheritance ---
         Map<String, SelectiveShareApplicationOperation> effectiveConfigs = new HashMap<>();
-        Set<String> processedOrgIds = new HashSet<>();
+        Set<String> orgsWithAllChildrenPolicy = new HashSet<>();
 
-        for (String currentOrgId : bfsOrder) {
-            // Skip if already processed by an ancestor.
-            if (processedOrgIds.contains(currentOrgId)) {
-                continue;
-            }
-
-            SelectiveShareApplicationOperation explicitConfig = validatedInputConfigs.get(currentOrgId);
-
+        // --- Step 4: Apply Inherited Configs from Nearest Ancestor with Cascading Policy ---
+        Map<String, String> parentMap = buildParentMap(allValidNodes);
+        for (String orgId : bfsOrder) {
+            SelectiveShareApplicationOperation explicitConfig = validatedInputConfigs.get(orgId);
             if (explicitConfig != null) {
-                // Apply configuration for this organization.
-                effectiveConfigs.put(currentOrgId, explicitConfig);
-                processedOrgIds.add(currentOrgId);
-
-                // Handle special policy for children if applicable.
-                if (explicitConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
-                    processDescendantsWithInheritedPolicy(
-                        currentOrgId,
-                        explicitConfig,
-                        allValidNodes,
-                        processedOrgIds,
-                        effectiveConfigs
-                    );
+                if (!orgsWithAllChildrenPolicy.isEmpty()) {
+                    String sourceId = findInheritanceSource(orgId, parentMap, orgsWithAllChildrenPolicy);
+                    if (sourceId != null) {
+                        SelectiveShareApplicationOperation inheritedConfig = new SelectiveShareApplicationOperation(
+                                orgId,
+                                PolicyEnum.SELECTED_ORG_ONLY,
+                                explicitConfig.getRoleSharing()
+                        );
+                        effectiveConfigs.put(orgId, inheritedConfig);
+                    } else {
+                        effectiveConfigs.put(orgId, explicitConfig);
+                        if (explicitConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN)
+                        {
+                            orgsWithAllChildrenPolicy.add(orgId);
+                        }
+                    }
+                } else {
+                    effectiveConfigs.put(orgId, explicitConfig);
+                    if (explicitConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
+                        orgsWithAllChildrenPolicy.add(orgId);
+                    }
                 }
             } else {
-                // Mark as processed so lower organizations don't override.
-                processedOrgIds.add(currentOrgId);
+                if (!orgsWithAllChildrenPolicy.isEmpty()) {
+                    String sourceId = findInheritanceSource(orgId, parentMap, orgsWithAllChildrenPolicy);
+                    if (sourceId != null) {
+                        SelectiveShareApplicationOperation inheritedConfig = new SelectiveShareApplicationOperation(
+                                orgId,
+                                PolicyEnum.SELECTED_ORG_ONLY,
+                                effectiveConfigs.get(sourceId).getRoleSharing()
+                        );
+                        effectiveConfigs.put(orgId, inheritedConfig);
+                    }
+                }
             }
         }
 
-        // 5. Build final sorted result list
+        // --- Step 5: Build Final Sorted Result List ---
         List<SelectiveShareApplicationOperation> sortedFinalConfigs = new ArrayList<>(effectiveConfigs.size());
         for (String orgIdInOrder : bfsOrder) {
             SelectiveShareApplicationOperation config = effectiveConfigs.get(orgIdInOrder);
@@ -237,37 +216,28 @@ public class OrgApplicationShareProcessor {
                 sortedFinalConfigs.add(config);
             }
         }
-
         return sortedFinalConfigs;
     }
 
     /**
-     * Helper method to process descendants with inherited policy.
-     * This improves readability by extracting the descendant processing logic.
+     * Traverses up the hierarchy from a given organization to find the nearest ancestor
+     * that has the 'ALL_CHILDREN' policy.
+     *
+     * @param orgId                     The ID of the organization to start the upward search from.
+     * @param parentMap                 A map of child IDs to their parent IDs.
+     * @param orgsWithAllChildrenPolicy A set of organization IDs that have the cascading policy.
+     * @return The ID of the nearest ancestor with the policy, or null if none is found.
      */
-    private static void processDescendantsWithInheritedPolicy(
-            String orgId,
-            SelectiveShareApplicationOperation parentConfig,
-            Map<String, OrganizationNode> allValidNodes,
-            Set<String> processedOrgIds,
-            Map<String, SelectiveShareApplicationOperation> effectiveConfigs) {
-
-        Set<String> descendantIds = getDescendantIds(orgId, allValidNodes);
-
-        for (String descendantId : descendantIds) {
-            // Mark as processed even if already processed
-            processedOrgIds.add(descendantId);
-
-            // Only create inherited config if not already in effectiveConfigs
-            if (!effectiveConfigs.containsKey(descendantId)) {
-                SelectiveShareApplicationOperation inheritedConfig = new SelectiveShareApplicationOperation(
-                    descendantId,
-                    parentConfig.getPolicy(),
-                    parentConfig.getRoleSharing()
-                );
-                effectiveConfigs.put(descendantId, inheritedConfig);
+    private static String findInheritanceSource(String orgId, Map<String, String> parentMap,
+                                                Set<String> orgsWithAllChildrenPolicy) {
+        String currentParentId = parentMap.get(orgId);
+        while (currentParentId != null) {
+            if (orgsWithAllChildrenPolicy.contains(currentParentId)) {
+                return currentParentId; // Found the closest ancestor with the policy.
             }
+            currentParentId = parentMap.get(currentParentId); // Move up one level.
         }
+        return null; // No ancestor with the policy was found.
     }
 
     /**

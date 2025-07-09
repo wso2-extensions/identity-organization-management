@@ -90,12 +90,12 @@ public interface ApplicationSharingManagerListener {
      * @param sharedOrganizationId       Sub-organization id which the application will be shared to.
      * @param sharedApplicationId        Shared application id.
      * @param applicationShareRolePolicy Role sharing policy to be applied for the shared application.
-     * @param resourceSharingPolicyId    Resource sharing policy id to be applied for the shared application.
      * @throws OrganizationManagementException When error occurred during post application sharing actions.
      */
     default void postShareApplication(String mainOrganizationId, String mainApplicationId, String sharedOrganizationId,
-                                      String sharedApplicationId, ApplicationShareRolePolicy applicationShareRolePolicy,
-                                      int resourceSharingPolicyId) throws OrganizationManagementException {
+                                      String sharedApplicationId, ApplicationShareRolePolicy applicationShareRolePolicy)
+            throws OrganizationManagementException {
+
         throw new NotImplementedException();
     }
 

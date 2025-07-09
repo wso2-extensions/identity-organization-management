@@ -110,8 +110,8 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
 
     @Override
     public void postShareApplication(String mainOrganizationId, String mainApplicationId, String sharedOrganizationId,
-                                     String sharedApplicationId, ApplicationShareRolePolicy applicationShareRolePolicy,
-                                     int resourceSharingPolicyId) throws OrganizationManagementException {
+                                     String sharedApplicationId, ApplicationShareRolePolicy applicationShareRolePolicy)
+            throws OrganizationManagementException {
 
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_MAIN_ORGANIZATION_ID, mainOrganizationId);
@@ -119,12 +119,6 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_SHARING_CONFIG, applicationShareRolePolicy);
-        if (resourceSharingPolicyId != -1) {
-            // When this is present, that mean this is a FUTURE sharing application.
-            eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_RESOURCE_SHARING_POLICY_ID,
-                    resourceSharingPolicyId);
-        }
-
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_USER_ATTRIBUTES,
                 getSharedUserAttributes(sharedApplicationId));
 
