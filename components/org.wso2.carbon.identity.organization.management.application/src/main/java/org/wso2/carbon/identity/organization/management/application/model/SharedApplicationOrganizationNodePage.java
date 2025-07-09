@@ -25,14 +25,17 @@ import java.util.List;
 public class SharedApplicationOrganizationNodePage {
 
     private final List<SharedApplicationOrganizationNode> sharedApplicationOrganizationNodes;
+    private final SharingInitiationModeDO sharingInitiationModeDO;
     private final int nextPageCursor;
     private final int previousPageCursor;
 
     public SharedApplicationOrganizationNodePage(List<SharedApplicationOrganizationNode>
-                                                         sharedApplicationOrganizationNodes, int nextPageCursor,
-                                                 int previousPageCursor) {
+                                                         sharedApplicationOrganizationNodes,
+                                                 SharingInitiationModeDO sharingInitiationModeDO,
+                                                 int nextPageCursor, int previousPageCursor) {
 
         this.sharedApplicationOrganizationNodes = sharedApplicationOrganizationNodes;
+        this.sharingInitiationModeDO = sharingInitiationModeDO;
         this.nextPageCursor = nextPageCursor;
         this.previousPageCursor = previousPageCursor;
     }
@@ -50,5 +53,10 @@ public class SharedApplicationOrganizationNodePage {
     public int getPreviousPageCursor() {
 
         return previousPageCursor;
+    }
+
+    public SharingInitiationModeDO getSharingInitiationModeDO() {
+
+        return sharingInitiationModeDO;
     }
 }

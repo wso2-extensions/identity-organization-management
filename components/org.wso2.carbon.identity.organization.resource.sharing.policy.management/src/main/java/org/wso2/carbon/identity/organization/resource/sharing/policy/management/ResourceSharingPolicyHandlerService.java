@@ -312,4 +312,26 @@ public interface ResourceSharingPolicyHandlerService {
                 "deleteResourceSharingPoliciesAndAttributesByOrganizationId method is not implemented in " +
                         this.getClass());
     }
+
+    /**
+     * Retrieves a map of resource sharing policies and their associated shared resource attributes
+     * for a given initiating organization ID, resource type, and resource ID.
+     *
+     * @param initiatingOrganizationId The ID of the organization initiating the resource sharing. Must be a valid ID.
+     * @param resourceType             The type of the resource being shared. Must not be {@code null}.
+     * @param resourceId               The unique identifier of the resource being shared. Must not be {@code null}.
+     * @return A map where:
+     * - The key is the {@link ResourceSharingPolicy} applicable to the initiating organization for the given resource.
+     * - The value is a list of {@link SharedResourceAttribute} associated with the policy.
+     * If no matching policies or attributes are found, an empty map will be returned.
+     * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing
+     *                                           policies or shared attributes.
+     */
+    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
+    getResourceSharingPolicyByInitiatingOrgId(String initiatingOrganizationId, String resourceType, String resourceId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPolicyByInitiatingOrgId method is not implemented in " + this.getClass());
+    }
 }
