@@ -407,67 +407,6 @@ public class OrgApplicationShareProcessor {
     }
 
     /**
-     * Finds a specific organization node within a given organization graph (list of top-level nodes
-     * and their children) and then returns a list of its sub-organization IDs in BFS order.
-     *
-     * @param targetOrgId       The ID of the organization whose sub-organizations are to be listed.
-     * @param organizationGraph A list of {@link OrganizationNode} representing the graph (or a portion of it)
-     *                          to search within. This list typically contains top-level nodes of the hierarchy
-     *                          segment of interest.
-     * @return A {@link List} of {@link String} containing the IDs of the sub-organizations of the
-     *         {@code targetOrgId} in BFS order. Returns an empty list if the {@code targetOrgId} is not found,
-     *         if it has no children, or if the input {@code organizationGraph} is null or empty.
-     */
-    public static List<String> getSubOrganizationIdsInBfsOrder(String targetOrgId,
-                                                               List<OrganizationNode> organizationGraph) {
-
-        if (organizationGraph == null || organizationGraph.isEmpty() || targetOrgId == null) {
-            return new ArrayList<>();
-        }
-
-        // Traverse the provided graph to find the targetOrgId node.
-        // We can use a queue for BFS traversal of the input graph.
-        Queue<OrganizationNode> queue = new LinkedList<>(organizationGraph);
-        OrganizationNode targetNode = null;
-
-        // Temporary map to avoid reprocessing nodes if the input graph has shared references
-        // (though typically each node instance would be unique in a tree/DAG structure).
-        Set<String> visitedInSearch = new HashSet<>();
-
-        while (!queue.isEmpty()) {
-            OrganizationNode current = queue.poll();
-
-            if (current == null || !visitedInSearch.add(current.getId())) {
-                continue; // Skip null nodes or already visited nodes in this search pass
-            }
-
-            if (targetOrgId.equals(current.getId())) {
-                targetNode = current;
-                break; // Found the target node
-            }
-
-            if (current.getChildren() != null) {
-                for (OrganizationNode child : current.getChildren()) {
-                    if (child != null) { // Add non-null children to the queue
-                        queue.offer(child);
-                    }
-                }
-            }
-        }
-
-        // If the target node was not found, or if it has no children, return an empty list.
-        if (targetNode == null || targetNode.getChildren() == null || targetNode.getChildren().isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        // Now that we have the target node, get the BFS order of its children.
-        // The getAllNodesAndBfsOrder method can be used directly by passing the children of the targetNode.
-        HierarchyInfo subHierarchyInfo = getAllNodesAndBfsOrder(targetNode.getChildren());
-
-        return subHierarchyInfo.bfsOrder;
-    }
-
-    /**
      * Takes a list of organization nodes (potentially representing multiple disconnected sub-graphs or top-level nodes)
      * and returns a single list of all organization IDs from these nodes and their descendants, in BFS order.
      *

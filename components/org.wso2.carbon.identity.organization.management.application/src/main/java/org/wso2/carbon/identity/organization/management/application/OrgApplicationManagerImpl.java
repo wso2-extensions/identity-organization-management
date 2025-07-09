@@ -177,7 +177,6 @@ import static org.wso2.carbon.identity.organization.management.application.util.
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationScimFilterParser.parseFilter;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.getAllOrganizationIdsInBfsOrder;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.getOrganizationIdsInBfsOrder;
-import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.getSubOrganizationIdsInBfsOrder;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.getValidOrganizationsInReverseBfsOrder;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.processAndSortOrganizationShares;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationShareProcessor.sortOrganizationsByHierarchy;
@@ -313,21 +312,19 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         // Filter only valid child org configs that exist in the owner's child orgs using the map (O(1) lookups).
         List<SelectiveShareApplicationOperation> filteredChildOrgConfigs = selectiveShareApplicationList.stream()
-                .filter(config -> subOrganizationIdsSet.contains(config.getOrganizationId()))
-                .collect(Collectors.toList());
+                .filter(config -> {
+                    String organizationId = config.getOrganizationId();
+                    boolean isValid = subOrganizationIdsSet.contains(organizationId);
+                    if (!isValid && LOG.isDebugEnabled() && organizationId != null) {
+                        LOG.error("Application can only be shared with child organizations within the hierarchy. " +
+                                "Provided organization ID: " + organizationId + " is not found within the hierarchy.");
+                    }
+                    return isValid;
+                }).collect(Collectors.toList());
 
         if (filteredChildOrgConfigs.isEmpty()) {
             return;
         }
-
-        // Get all currently shared organizations for this app.
-        List<SharedApplicationDO> sharedApplications = getOrgApplicationMgtDAO()
-                .getSharedApplications(mainOrganizationId, mainApplication.getApplicationResourceId());
-
-        // Create a set of org IDs from filtered configs for faster lookup.
-        Set<String> configOrgIds = filteredChildOrgConfigs.stream()
-                .map(SelectiveShareApplicationOperation::getOrganizationId)
-                .collect(Collectors.toSet());
 
         // Process and sort organization shares.
         // Here we arrange the organizations in a way that the parent organizations are shared first,
@@ -339,39 +336,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw new OrganizationManagementClientException(ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getMessage(),
                     ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getDescription(),
                     ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getCode());
-        }
-
-        // Find organizations that are no longer in the share config and need to be unshared.
-        List<SharedApplicationDO> orgsThatOmitted = sharedApplications.stream()
-                .filter(sharedApp -> !configOrgIds.contains(sharedApp.getOrganizationId()))
-                .collect(Collectors.toList());
-
-        Set<String> orgsThatOmittedIds = new HashSet<>();
-        for (SharedApplicationDO sharedApplicationDO : orgsThatOmitted) {
-            String organizationId = sharedApplicationDO.getOrganizationId();
-            // Add the omitted organization itself.
-            orgsThatOmittedIds.add(organizationId);
-            // Getting all the child organizations of the omitted organization.
-            Set<String> childOrgIds = new HashSet<>(getSubOrganizationIdsInBfsOrder(organizationId,
-                    childOrganizationGraph));
-
-            // Add child organization IDs to the set if there's a shared app in the child org as well.
-            for (SharedApplicationDO appInSharedOrgs : sharedApplications) {
-                if (childOrgIds.contains(appInSharedOrgs.getOrganizationId())) {
-                    orgsThatOmittedIds.add(appInSharedOrgs.getOrganizationId());
-                }
-            }
-        }
-
-        // Unshare the application from omitted organizations.
-        for (String unSharingApplicationOrgId : orgsThatOmittedIds) {
-            Optional<String> optionalSharedApplicationId =
-                    resolveSharedApp(mainApplicationId, mainOrganizationId, unSharingApplicationOrgId);
-            if (!optionalSharedApplicationId.isPresent()) {
-                continue;
-            }
-            deleteExistingSharedApplication(mainOrganizationId, unSharingApplicationOrgId, mainApplication,
-                    optionalSharedApplicationId.get());
         }
 
         // If there are valid orgs to share with, update the root application with the org login IDP.
