@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.EMAIL_DOMAIN_DISCOVERY_TYPE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ENABLE_CONFIG;
 
 /**
@@ -76,7 +77,7 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
         } else if (StringUtils.isNotBlank(orgDiscoveryInput.getLoginHint())) {
             String loginHint = orgDiscoveryInput.getLoginHint();
             String orgDiscoveryType = StringUtils.isNotBlank(orgDiscoveryInput.getOrgDiscoveryType()) ?
-                    orgDiscoveryInput.getOrgDiscoveryType() : "emailDomain";
+                    orgDiscoveryInput.getOrgDiscoveryType() : EMAIL_DOMAIN_DISCOVERY_TYPE;
             return handleOrgDiscoveryByLoginHint(loginHint, appId, mainAppOrgId, orgDiscoveryType, context);
         } else {
             //TODO: Need to handle the default this based on the default parameter.
@@ -201,15 +202,15 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                 StringUtils.isNotBlank(orgDiscoveryInput.getOrgName());
     }
 
-    private Optional<String> getSharedApplicationId(String appName, String appResideOrgId, String sharedOrgId)
+    private Optional<String> getSharedApplicationId(String appId, String appResideOrgId, String sharedOrgId)
             throws FrameworkException {
 
         String sharedAppId;
         try {
             sharedAppId = OrganizationDiscoveryServiceHolder.getInstance().getApplicationManagementService()
-                    .getSharedAppId(appName, appResideOrgId, sharedOrgId);
+                    .getSharedAppId(appId, appResideOrgId, sharedOrgId);
         } catch (IdentityApplicationManagementException e) {
-            throw new FrameworkException("Error while retrieving shared application id: " + appName
+            throw new FrameworkException("Error while retrieving shared application id: " + appId
                     + " for organization ID: " + sharedOrgId, e);
         }
         return Optional.ofNullable(sharedAppId);

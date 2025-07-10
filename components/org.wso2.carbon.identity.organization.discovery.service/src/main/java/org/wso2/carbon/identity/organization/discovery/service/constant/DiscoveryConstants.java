@@ -39,6 +39,7 @@ public class DiscoveryConstants {
     public static final String ENABLE_CONFIG = ".enable";
     public static final String PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE = "PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE";
     public static final String ORGANIZATION_NAME = "organizationName";
+    public static final String EMAIL_DOMAIN_DISCOVERY_TYPE = "emailDomain";
     public static final Set<String> SUPPORTED_OPERATIONS;
     public static final Map<String, String> ATTRIBUTE_COLUMN_MAP;
 
