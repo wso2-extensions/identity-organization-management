@@ -23,6 +23,7 @@
         <classes>
             <class name="org.wso2.carbon.identity.organization.discovery.service.listener.OrganizationDiscoveryUserOperationListenerTest"/>
             <class name="org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImplTest"/>
+            <class name="org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryHandlerImplTest"/>
         </classes>
     </test>
 </suite>
