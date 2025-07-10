@@ -118,14 +118,17 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
         try {
             orgId = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
                     .resolveOrganizationId(orgHandle);
-            if (StringUtils.isBlank(orgId)) {
+        } catch (OrganizationManagementException e) {
+            if (e instanceof OrganizationManagementClientException &&
+                    OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode()
+                            .equals(e.getErrorCode())) {
                 return OrganizationDiscoveryResult.failure(
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getMessage());
+            } else {
+                throw new FrameworkException("Error while resolving organization ID for organization handle: "
+                        + orgHandle, e);
             }
-        } catch (OrganizationManagementException e) {
-            throw new FrameworkException("Error while resolving organization ID for organization handle: "
-                    + orgHandle, e);
         }
         return handleOrgDiscoveryByOrgId(orgId, appId, mainAppOrgId);
     }

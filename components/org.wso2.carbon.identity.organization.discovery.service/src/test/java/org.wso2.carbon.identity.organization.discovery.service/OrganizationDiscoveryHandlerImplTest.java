@@ -188,6 +188,7 @@ public class OrganizationDiscoveryHandlerImplTest {
         return new Object[][]{
                 {null, null, null, null, null, VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getCode()},
                 {INVALID_ORG_ID, null, null, null, null, ORGANIZATION_NOT_FOUND.getCode()},
+                {null, INVALID_ORG_HANDLE, null, null, null, ORGANIZATION_NOT_FOUND.getCode()},
                 {null, null, INVALID_ORG_NAME, null, null, ORGANIZATION_NOT_FOUND.getCode()},
                 {null, null, null, INVALID_LOGIN_HINT, ORG_DISCOVERY_TYPE, ORGANIZATION_NOT_FOUND.getCode()},
                 {null, null, null, LOGIN_HINT, INVALID_ORG_DISCOVERY_TYPE,
