@@ -27,10 +27,13 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.application.authentication.framework.handler.orgdiscovery.OrganizationDiscoveryHandler;
 import org.wso2.carbon.identity.application.authentication.framework.handler.request.PostAuthenticationHandler;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.discovery.service.AttributeBasedOrganizationDiscoveryHandler;
 import org.wso2.carbon.identity.organization.discovery.service.EmailDomainBasedDiscoveryHandler;
+import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryHandlerImpl;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager;
 import org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManagerImpl;
 import org.wso2.carbon.identity.organization.discovery.service.listener.EmailDomainValidationHandler;
@@ -52,8 +55,9 @@ public class OrganizationDiscoveryServiceComponent {
     protected void activate(ComponentContext componentContext) {
 
         BundleContext bundleContext = componentContext.getBundleContext();
-        bundleContext.registerService(OrganizationDiscoveryManager.class.getName(),
-                new OrganizationDiscoveryManagerImpl(), null);
+        OrganizationDiscoveryManagerImpl organizationDiscoveryManagerImpl = new OrganizationDiscoveryManagerImpl();
+        bundleContext.registerService(OrganizationDiscoveryManager.class.getName(), organizationDiscoveryManagerImpl,
+                null);
         AttributeBasedOrganizationDiscoveryHandler emailDomainDiscovery = new EmailDomainBasedDiscoveryHandler();
         bundleContext.registerService(AttributeBasedOrganizationDiscoveryHandler.class.getName(), emailDomainDiscovery,
                 null);
@@ -61,6 +65,10 @@ public class OrganizationDiscoveryServiceComponent {
                 new OrganizationDiscoveryUserOperationListener(), null);
         PostAuthenticationHandler emailDomainValidationHandler = EmailDomainValidationHandler.getInstance();
         bundleContext.registerService(PostAuthenticationHandler.class.getName(), emailDomainValidationHandler, null);
+        bundleContext.registerService(
+                OrganizationDiscoveryHandler.class.getName(), new OrganizationDiscoveryHandlerImpl(), null);
+        OrganizationDiscoveryServiceHolder.getInstance()
+                .setOrganizationDiscoveryManager(organizationDiscoveryManagerImpl);
         LOG.debug("Organization discovery service component activated successfully.");
     }
 
@@ -113,5 +121,20 @@ public class OrganizationDiscoveryServiceComponent {
 
         OrganizationDiscoveryServiceHolder.getInstance().unbindAttributeBasedOrganizationDiscoveryHandler
                 (attributeBasedOrganizationDiscoveryHandler);
+    }
+
+    @Reference(name = "identity.application.management.component",
+            service = ApplicationManagementService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetApplicationManagementService")
+    protected void setApplicationManagementService(ApplicationManagementService applicationManagementService) {
+
+        OrganizationDiscoveryServiceHolder.getInstance().setApplicationManagementService(applicationManagementService);
+    }
+
+    protected void unsetApplicationManagementService(ApplicationManagementService applicationManagementService) {
+
+        OrganizationDiscoveryServiceHolder.getInstance().setApplicationManagementService(null);
     }
 }
