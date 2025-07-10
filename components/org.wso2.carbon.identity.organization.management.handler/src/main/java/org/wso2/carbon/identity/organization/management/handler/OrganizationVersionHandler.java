@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.organization.management.handler;
 
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
@@ -32,8 +31,7 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
-import org.wso2.carbon.idp.mgt.dao.CacheBackedIdPMgtDAO;
-import org.wso2.carbon.idp.mgt.dao.IdPManagementDAO;
+import org.wso2.carbon.idp.mgt.util.IdPManagementUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -43,13 +41,20 @@ import java.util.Map;
  */
 public class OrganizationVersionHandler extends AbstractEventHandler {
 
-
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
         String eventName = event.getEventName();
         Map<String, Object> eventProperties = event.getEventProperties();
 
+        /*
+         * This handler clears the resident IdP cache when the organization version changes between v0.0.0 and v1.0.0
+         * or higher. Between these versions, the inheritance of resident IdP properties is toggled, so cache clearance
+         * ensures the correct properties are loaded. The handler listens to PRE_UPDATE and PRE_PATCH events to capture
+         * both the previous and new version of the updated organization.
+         * Since only cache clearance occurs here, there is no adverse effect if the organization update fails
+         * after this handler executes.
+         */
         if (Constants.EVENT_PRE_UPDATE_ORGANIZATION.equals(eventName)) {
             handlePreUpdateOrganization(eventProperties);
         } else if (Constants.EVENT_PRE_PATCH_ORGANIZATION.equals(eventName)) {
@@ -73,7 +78,7 @@ public class OrganizationVersionHandler extends AbstractEventHandler {
                     organizationId, false, false).getVersion();
             String newOrgVersion = null;
 
-            for (PatchOperation patchOperation: patchOperations) {
+            for (PatchOperation patchOperation : patchOperations) {
                 if (OrganizationManagementConstants.PATCH_PATH_ORG_VERSION.equals(patchOperation.getPath())) {
                     newOrgVersion = patchOperation.getValue();
                     break;
@@ -85,9 +90,8 @@ public class OrganizationVersionHandler extends AbstractEventHandler {
             }
         } catch (OrganizationManagementException | IdentityProviderManagementException e) {
             throw new IdentityEventException(String.format(
-                    "Error while handling pre-update organization event in %s for organization ID: %s", this.getName(),
+                    "Error while handling pre-patch organization event in %s for organization ID: %s", this.getName(),
                     organizationId), e);
-
         }
     }
 
@@ -114,7 +118,6 @@ public class OrganizationVersionHandler extends AbstractEventHandler {
             throw new IdentityEventException(String.format(
                     "Error while handling pre-update organization event in %s for organization ID: %s", this.getName(),
                     organizationId), e);
-
         }
     }
 
@@ -122,18 +125,15 @@ public class OrganizationVersionHandler extends AbstractEventHandler {
      * Clear the IDP cache for the resident IDP of the organization and all child organizations.
      *
      * @param organizationId Organization ID.
-     * @throws OrganizationManagementException If an error occurs while retrieving tenant information.
+     * @throws OrganizationManagementException     If an error occurs while retrieving tenant information.
      * @throws IdentityProviderManagementException If an error occurs while clearing the IDP cache.
      */
     private void clearIdpCache(String organizationId)
             throws OrganizationManagementException, IdentityProviderManagementException {
 
-        CacheBackedIdPMgtDAO dao = new CacheBackedIdPMgtDAO(new IdPManagementDAO());
-        dao.clearIdpCache(
+        IdPManagementUtil.clearIdPCache(
                 IdentityApplicationConstants.RESIDENT_IDP_RESERVED_NAME,
-                IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(organizationId)),
                 getOrganizationManager().resolveTenantDomain(organizationId));
-
     }
 
     private static OrganizationManager getOrganizationManager() {

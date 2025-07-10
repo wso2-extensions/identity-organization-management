@@ -62,10 +62,6 @@
             <artifactId>org.wso2.carbon.idp.mgt</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.identity.organization.management</groupId>
-            <artifactId>org.wso2.carbon.identity.organization.management.role.management.service</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.wso2.carbon.identity.organization.management.core</groupId>
             <artifactId>org.wso2.carbon.identity.organization.management.service</artifactId>
         </dependency>
@@ -194,7 +190,7 @@
                             org.wso2.carbon.identity.organization.management.application.*;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.idp.mgt;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.idp.mgt.dao;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt.util;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.*;

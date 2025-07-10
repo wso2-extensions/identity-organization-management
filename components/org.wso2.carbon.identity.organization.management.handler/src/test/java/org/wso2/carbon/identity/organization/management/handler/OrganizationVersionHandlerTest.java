@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.organization.management.handler;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -35,7 +34,7 @@ import org.wso2.carbon.identity.organization.management.service.constant.Organiz
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
-import org.wso2.carbon.idp.mgt.dao.CacheBackedIdPMgtDAO;
+import org.wso2.carbon.idp.mgt.util.IdPManagementUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,13 +43,11 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Unit tests for OrganizationVersionHandler.
@@ -65,8 +62,8 @@ public class OrganizationVersionHandlerTest {
     private OrganizationVersionHandler handler;
     private AutoCloseable autoCloseable;
     private MockedStatic<OrganizationManagementUtil> organizationManagementUtilMockedStatic;
+    private MockedStatic<IdPManagementUtil> idPManagementUtilMockedStatic;
     private MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic;
-    private MockedConstruction<CacheBackedIdPMgtDAO> mockedDaoConstruction;
 
     private static final String ORGANIZATION_ID = "org1";
     private static final String TENANT_DOMAIN = "carbon.super";
@@ -83,12 +80,10 @@ public class OrganizationVersionHandlerTest {
         organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
         organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(any()))
                 .thenReturn(false);
-        mockedDaoConstruction = mockConstruction(CacheBackedIdPMgtDAO.class);
-
+        idPManagementUtilMockedStatic = mockStatic(IdPManagementUtil.class);
         identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
         identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(any()))
                 .thenReturn(TENANT_ID);
-
     }
 
     @AfterMethod
@@ -96,8 +91,8 @@ public class OrganizationVersionHandlerTest {
 
         autoCloseable.close();
         organizationManagementUtilMockedStatic.close();
+        idPManagementUtilMockedStatic.close();
         identityTenantUtilMockedStatic.close();
-        mockedDaoConstruction.close();
     }
 
     @Test
@@ -113,9 +108,10 @@ public class OrganizationVersionHandlerTest {
 
         Event event = new Event(Constants.EVENT_PRE_UPDATE_ORGANIZATION, props);
         handler.handleEvent(event);
-        // Checking that the CacheBackedIdPMgtDAO is not constructed to verify that no cache clearing is attempted.
-        assertTrue(mockedDaoConstruction.constructed().isEmpty(), "CacheBackedIdPMgtDAO should not be constructed");
 
+        // Check if the IdPManagementUtil.clearIdPCache method is not called to clear the cache.
+        idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
+                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(0));
     }
 
     @Test
@@ -131,8 +127,10 @@ public class OrganizationVersionHandlerTest {
 
         Event event = new Event(Constants.EVENT_PRE_UPDATE_ORGANIZATION, props);
         handler.handleEvent(event);
-        // Checking that the CacheBackedIdPMgtDAO is constructed to verify that cache clearing is attempted.
-        assertNotNull(mockedDaoConstruction, "CacheBackedIdPMgtDAO should be constructed.");
+
+        // Check if the IdPManagementUtil.clearIdPCache method is called to clear the cache.
+        idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
+                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(1));
     }
 
     @Test
@@ -152,8 +150,10 @@ public class OrganizationVersionHandlerTest {
 
         Event event = new Event(Constants.EVENT_PRE_PATCH_ORGANIZATION, props);
         handler.handleEvent(event);
-        // Checking that the CacheBackedIdPMgtDAO is constructed to verify that cache clearing is attempted.
-        assertNotNull(mockedDaoConstruction, "CacheBackedIdPMgtDAO should be constructed.");
+
+        // Check if the IdPManagementUtil.clearIdPCache method is called to clear the cache.
+        idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
+                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(1));
     }
 
     @Test
@@ -173,7 +173,9 @@ public class OrganizationVersionHandlerTest {
 
         Event event = new Event(Constants.EVENT_PRE_PATCH_ORGANIZATION, props);
         handler.handleEvent(event);
-        // Checking that the CacheBackedIdPMgtDAO is not constructed to verify that no cache clearing is attempted.
-        assertTrue(mockedDaoConstruction.constructed().isEmpty(), "CacheBackedIdPMgtDAO should not be constructed");
+
+        // Check if the IdPManagementUtil.clearIdPCache method is not called to clear the cache.
+        idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
+                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(0));
     }
 }
