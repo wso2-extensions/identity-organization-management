@@ -349,4 +349,22 @@ public interface ResourceSharingPolicyHandlerDAO {
         throw new NotImplementedException(
                 "getResourceSharingPolicyByInitiatingOrgId method is not implemented in " + this.getClass());
     }
+
+    /**
+     * Retrieves a list of resource sharing policies associated with the given policy holding organization IDs
+     * for a given resource type.
+     *
+     * @param policyHoldingOrganizationIds  A list of organization IDs whose policies need to be retrieved.
+     *                                      Must not be {@code null} or empty.
+     * @param resourceType                  The type of the resource being shared. Must not be {@code null}.
+     * @return A list of {@link ResourceSharingPolicy} objects for the specified organization IDs.
+     * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policies.
+     */
+    default List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(
+            List<String> policyHoldingOrganizationIds, String resourceType)
+            throws ResourceSharingPolicyMgtServerException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPoliciesByResourceType method is not implemented in " + this.getClass());
+    }
 }

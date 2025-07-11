@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -26,7 +26,6 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -41,6 +40,7 @@ import org.wso2.carbon.identity.organization.management.application.model.MainAp
 import org.wso2.carbon.identity.organization.management.application.model.RoleWithAudienceDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
+import org.wso2.carbon.identity.organization.management.application.model.operation.GeneralApplicationShareOperation;
 import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -67,8 +67,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.isShareWithAllChildren;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
@@ -129,72 +129,48 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         if (parentOrgId == null) {
             parentOrgId = SUPER_ORG_ID;
         }
+        String orgId = organization.getId();
+        List<String> ancestorOrganizationIds = getOrganizationManager().getAncestorOrganizationIds(orgId);
         List<String> alreadyHandledSharedAppIds = new ArrayList<>();
-
-        // Get applications from the parent organization that are avaialble on policy table
-        // In Each service provider,
-        // Get the roleMode
-        // Get parent org shared Roles, if the mode is not none (Which is available on the attribute table, it has
-        // the main role IDs, so get associations with the parent org)
-        // Create the RoleSharing Object.
-        // Invoke application sharing with policy
-        List<String> parentOrgList = new ArrayList<>();
-        parentOrgList.add(parentOrgId);
         List<ResourceSharingPolicy> resourceSharingPolicies = getResourceSharingPolicyHandlerService()
-                .getResourceSharingPolicies(parentOrgList);
+                .getResourceSharingPoliciesByResourceType(ancestorOrganizationIds, ResourceType.APPLICATION.name());
 
         for (ResourceSharingPolicy resourceSharingPolicy : resourceSharingPolicies) {
-            if (ResourceType.APPLICATION.ordinal() != resourceSharingPolicy.getResourceType().ordinal()) {
-                // Only need to handle application sharing policies.
+            PolicyEnum sharingPolicy = resourceSharingPolicy.getSharingPolicy();
+            if (!isValidApplicationSharePolicy(sharingPolicy)) {
+                // This will only become false for the one ancestor organization holding a future sharing policy.
+                // Since no other child organization below it could override it by having their own future policy.
                 continue;
             }
+            // Check whether the shared application is present in the immediate parent organization.
             String mainOrganizationId = resourceSharingPolicy.getInitiatingOrgId();
             String mainTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
             String mainApplicationId = resourceSharingPolicy.getResourceId();
             String sharedAppId;
             if (mainOrganizationId.equals(parentOrgId)) {
-                // That mean original application is available in the parent org. Not a fragment application.
+                // That means the original application is available in the parent org. Not a fragment application.
                 sharedAppId = mainApplicationId;
             } else {
                 Optional<String> sharedAppIdOptional = resolveSharedApp(mainApplicationId, mainOrganizationId,
                         parentOrgId);
                 if (!sharedAppIdOptional.isPresent()) {
-                    // No shared application found for the main application.
                     // TODO: Should we throw an error here and fail org creation?
                     continue;
                 }
                 sharedAppId = sharedAppIdOptional.get();
             }
-            String sharedOrgId = resourceSharingPolicy.getPolicyHoldingOrgId();
-            String sharedOrgName = getOrganizationManager().resolveTenantDomain(sharedOrgId);
+            String parentOrgHandle = getOrganizationManager().resolveTenantDomain(parentOrgId);
             ServiceProvider sharedApplication = getApplicationManagementService().getApplicationByResourceId(
-                    sharedAppId, sharedOrgName);
-            PolicyEnum sharingPolicy = resourceSharingPolicy.getSharingPolicy();
-            boolean validApplicationSharePolicy = isValidApplicationSharePolicy(sharingPolicy);
-            if (!validApplicationSharePolicy) {
-                // TODO: Add notification
-                // Only handle selected organization with all existing and future children and all existing and
-                // future organizations.
-                LOG.warn("Invalid application sharing policy: " + sharingPolicy + " for application: " +
-                        mainApplicationId + " in organization: " + sharedOrgName);
-                continue;
-            }
+                    sharedAppId, parentOrgHandle);
+
             List<RoleWithAudienceDO> roleWithAudienceDOs = new ArrayList<>();
             List<SharedResourceAttribute> sharedResourceAttributes =
                     getResourceSharingPolicyHandlerService().getSharedResourceAttributesBySharingPolicyId(
                             resourceSharingPolicy.getResourceSharingPolicyId());
 
-            ApplicationShareRolePolicy.Mode roleSharingMode = ApplicationShareRolePolicy.Mode.ALL;
-            for (ServiceProviderProperty spProperty : sharedApplication.getSpProperties()) {
-                if (ROLE_SHARING_MODE.equalsIgnoreCase(spProperty.getName())) {
-                    String roleSharingModeString = spProperty.getValue();
-                    roleSharingMode = ApplicationShareRolePolicy.Mode.valueOf(roleSharingModeString);
-                    break;
-                }
-            }
+            ApplicationShareRolePolicy.Mode roleSharingMode = getAppAssociatedRoleSharingMode(sharedApplication);
             if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == roleSharingMode.ordinal()) {
 
-                // That mean the original application is available in the parent org. Not a fragment application.
                 for (SharedResourceAttribute sharedResourceAttribute : sharedResourceAttributes) {
                     if (SharedAttributeType.ROLE.ordinal() != sharedResourceAttribute.getSharedAttributeType()
                             .ordinal()) {
@@ -219,44 +195,39 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                     }
                 }
             }
-
             ApplicationShareRolePolicy.Builder roleSharingConfigBuilder = new ApplicationShareRolePolicy.Builder()
                     .mode(roleSharingMode);
             if (roleSharingMode == ApplicationShareRolePolicy.Mode.SELECTED) {
                 roleSharingConfigBuilder = roleSharingConfigBuilder.roleWithAudienceDOList(roleWithAudienceDOs);
             }
-            ServiceProvider mainApplicationFromSharedApp;
-            boolean isMainOrganization = false;
-            if (sharedOrgId != null) {
-                byte[] sharedOrgIdBytes = sharedOrgId.getBytes(StandardCharsets.UTF_8);
-                byte[] mainOrganizationIdBytes = mainOrganizationId.getBytes(StandardCharsets.UTF_8);
-                isMainOrganization = MessageDigest.isEqual(sharedOrgIdBytes, mainOrganizationIdBytes);
-            }
+            ServiceProvider mainApplication;
+            byte[] sharedOrgIdBytes = parentOrgId.getBytes(StandardCharsets.UTF_8);
+            byte[] mainOrganizationIdBytes = mainOrganizationId.getBytes(StandardCharsets.UTF_8);
+            boolean isMainOrganization = MessageDigest.isEqual(sharedOrgIdBytes, mainOrganizationIdBytes);
             if (isMainOrganization) {
-                // This happen only with future sharing policies. When new organization is added as immediate
+                // This happens only with future sharing policies. When new organization is added as immediate
                 // children of the main organization.
-                mainApplicationFromSharedApp = sharedApplication;
+                mainApplication = sharedApplication;
             } else {
-                mainApplicationFromSharedApp = getMainApplicationFromSharedApp(sharedAppId, sharedOrgId,
-                        mainTenantDomain);
+                mainApplication = getApplicationManagementService().getApplicationByResourceId(
+                        mainApplicationId, mainTenantDomain);
             }
-            getOrgApplicationManager().shareApplicationWithPolicy(mainOrganizationId, mainApplicationFromSharedApp,
-                    organization.getId(), sharingPolicy, roleSharingConfigBuilder.build(), null);
+            getOrgApplicationManager().shareApplicationWithPolicy(mainOrganizationId, mainApplication,
+                    organization.getId(), PolicyEnum.SELECTED_ORG_ONLY, roleSharingConfigBuilder.build(), null);
             alreadyHandledSharedAppIds.add(sharedAppId);
 
             if (isMainOrganization) {
-                boolean isAppShared = isAppShared(mainApplicationFromSharedApp);
+                boolean isAppShared = isAppShared(mainApplication);
                 if (!isAppShared) {
                     // Update the `isAppShared` property of the main application to true if it hasn't been shared
                     // previously.
-                    updateApplicationWithIsAppSharedProperty(true, mainApplicationFromSharedApp);
+                    updateApplicationWithIsAppSharedProperty(true, mainApplication);
                 }
             }
         }
 
         // NOTE: The below code is to handle the backward compatibility of the applications that are shared with
         // all children organizations using the `shareWithAllChildren` property.
-
         ApplicationBasicInfo[] applicationBasicInfos;
         applicationBasicInfos = getApplicationManagementService().getAllApplicationBasicInfo(
                 getOrganizationManager().resolveTenantDomain(parentOrgId), getAuthenticatedUsername());
@@ -277,32 +248,32 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                             sharedApplicationDO.get().getFragmentApplicationId(),
                             sharedApplicationDO.get().getOrganizationId());
                     if (mainApplicationDO.isPresent()) {
-                        String tenantDomain = getOrganizationManager().resolveTenantDomain(
-                                mainApplicationDO.get().getOrganizationId());
-                        ServiceProvider mainApplication = getApplicationManagementService()
-                                .getApplicationByResourceId(mainApplicationDO.get().getMainApplicationId(),
-                                        tenantDomain);
                         String ownerOrgIdOfMainApplication = mainApplicationDO.get().getOrganizationId();
-                        getOrgApplicationManager().shareApplicationWithPolicy(ownerOrgIdOfMainApplication,
-                                mainApplication, organization.getId(),
-                                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN,
-                                new ApplicationShareRolePolicy.Builder()
-                                        .mode(ApplicationShareRolePolicy.Mode.ALL).build(), null);
+                        ApplicationShareRolePolicy applicationShareRolePolicy = new ApplicationShareRolePolicy.Builder()
+                                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                                .build();
+                        GeneralApplicationShareOperation shareWithAllChildrenWithAllRoles
+                                = new GeneralApplicationShareOperation(
+                                PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS, applicationShareRolePolicy);
+                        getOrgApplicationManager().shareApplicationWithAllOrganizations(ownerOrgIdOfMainApplication,
+                                mainApplicationDO.get().getMainApplicationId(), shareWithAllChildrenWithAllRoles);
                     }
                 }
             } else {
                 ServiceProvider mainApplication;
                 mainApplication = getApplicationManagementService().getServiceProvider(
                         applicationBasicInfo.getApplicationId());
-                if (mainApplication != null && Arrays.stream(mainApplication.getSpProperties())
-                        .anyMatch(serviceProviderProperty -> SHARE_WITH_ALL_CHILDREN.equalsIgnoreCase(
-                                serviceProviderProperty.getName()) && Boolean.parseBoolean(
-                                        serviceProviderProperty.getValue()))) {
-                    getOrgApplicationManager().shareApplicationWithPolicy(parentOrgId,
-                            mainApplication, organization.getId(),
-                            PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN,
-                            new ApplicationShareRolePolicy.Builder()
-                                    .mode(ApplicationShareRolePolicy.Mode.ALL).build(), null);
+                if (mainApplication != null && isShareWithAllChildren(mainApplication.getSpProperties())) {
+                    String mainOrganizationId = getOrganizationManager()
+                            .resolveOrganizationId(mainApplication.getTenantDomain());
+                    ApplicationShareRolePolicy applicationShareRolePolicy = new ApplicationShareRolePolicy.Builder()
+                            .mode(ApplicationShareRolePolicy.Mode.ALL)
+                            .build();
+                    GeneralApplicationShareOperation shareWithAllChildrenWithAllRoles
+                            = new GeneralApplicationShareOperation(
+                            PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS, applicationShareRolePolicy);
+                    getOrgApplicationManager().shareApplicationWithAllOrganizations(mainOrganizationId,
+                            mainApplication.getApplicationResourceId(), shareWithAllChildrenWithAllRoles);
                     // Check whether the application is shared with any child organization using `isAppShared` property.
                     boolean isAppShared = isAppShared(mainApplication);
                     if (!isAppShared) {
@@ -316,23 +287,11 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     }
 
     private boolean isValidApplicationSharePolicy(PolicyEnum policyEnum) {
+
         // Use constants to avoid direct ordinal comparison which can trigger security warnings.
         return PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN.equals(policyEnum) ||
                PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.equals(policyEnum);
         // As of now these are the only two FUTURE sharing policies supported for application sharing.
-    }
-
-    private ServiceProvider getMainApplicationFromSharedApp(String sharedAppId, String sharedOrgId, String mainOrgName)
-            throws OrganizationManagementException, IdentityApplicationManagementException {
-
-        Optional<MainApplicationDO> mainApplicationDO = getOrgApplicationMgtDAO().getMainApplication(sharedAppId,
-                sharedOrgId);
-        if (!mainApplicationDO.isPresent()) {
-            throw new OrganizationManagementException("Main application not found for the shared application: " +
-                    sharedAppId);
-        }
-        String mainAppId = mainApplicationDO.get().getMainApplicationId();
-        return getApplicationManagementService().getApplicationByResourceId(mainAppId, mainOrgName);
     }
 
     private void handleMainApplicationUpdateForPreDeleteOrganization(String organizationId)

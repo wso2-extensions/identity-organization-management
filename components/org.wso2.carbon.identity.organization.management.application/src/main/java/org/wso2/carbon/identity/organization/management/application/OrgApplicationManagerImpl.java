@@ -1797,8 +1797,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ApplicationShareRolePolicy applicationShareRolePolicy = new ApplicationShareRolePolicy.Builder()
                 .mode(ApplicationShareRolePolicy.Mode.ALL)
                 .build();
-        shareApplicationWithPolicy(ownerOrgId, mainApplication, sharedOrgId,
-                PolicyEnum.SELECTED_ORG_ONLY, applicationShareRolePolicy, operationId);
+        PolicyEnum policyEnum = PolicyEnum.SELECTED_ORG_ONLY;
+        if (shareWithAllChildren) {
+            policyEnum = PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN;
+        }
+        shareApplicationWithPolicy(ownerOrgId, mainApplication, sharedOrgId, policyEnum, applicationShareRolePolicy,
+                operationId);
     }
 
     private void handleShareApplicationException(String operationId, OrganizationManagementException e,

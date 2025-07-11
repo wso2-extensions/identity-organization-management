@@ -60,6 +60,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.DELETE_SHARED_RESOURCE_ATTRIBUTE_BY_ATTRIBUTE_TYPE_AND_ID_AT_ATTRIBUTE_DELETION;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_BY_RESOURCE_TYPE_TAIL;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_WITH_INITIATING_ORG_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICY_BY_ID;
@@ -120,20 +121,35 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
     public List<ResourceSharingPolicy> getResourceSharingPolicies(List<String> policyHoldingOrganizationIds)
             throws ResourceSharingPolicyMgtServerException {
 
+        return getResourceSharingPoliciesByResourceType(policyHoldingOrganizationIds, null);
+    }
+
+    @Override
+    public List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(
+            List<String> policyHoldingOrganizationIds, String resourceType)
+            throws ResourceSharingPolicyMgtServerException {
+
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
 
-        // Dynamically build placeholders for the query
+        // Dynamically build placeholders for the query.
         String placeholders = policyHoldingOrganizationIds.stream()
                 .map(id -> "?")
                 .collect(Collectors.joining(","));
         String query = GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD + "(" + placeholders + ")";
 
+        if (resourceType != null) {
+            query = query + GET_RESOURCE_SHARING_POLICIES_BY_RESOURCE_TYPE_TAIL;
+        }
         try {
             return namedJdbcTemplate.executeQuery(query,
                     (resultSet, rowNumber) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
                     preparedStatement -> {
-                        for (int i = 0; i < policyHoldingOrganizationIds.size(); i++) {
-                            preparedStatement.setString(i + 1, policyHoldingOrganizationIds.get(i));
+                        int index = 1;
+                        for (String orgId : policyHoldingOrganizationIds) {
+                            preparedStatement.setString(index++, orgId);
+                        }
+                        if (resourceType != null) {
+                            preparedStatement.setString(index, resourceType);
                         }
                     });
         } catch (DataAccessException e) {
