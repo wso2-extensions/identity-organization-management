@@ -30,7 +30,6 @@ import org.wso2.carbon.identity.organization.config.service.exception.Organizati
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
-import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -43,6 +42,9 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.EMAIL_DOMAIN_DISCOVERY_TYPE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ENABLE_CONFIG;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ACCESS;
 
 /**
  * Implementation of the Organization Discovery Handler.
@@ -121,8 +123,7 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                     .resolveOrganizationId(orgHandle);
         } catch (OrganizationManagementException e) {
             if (e instanceof OrganizationManagementClientException &&
-                    OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode()
-                            .equals(e.getErrorCode())) {
+                    ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode().equals(e.getErrorCode())) {
                 return OrganizationDiscoveryResult.failure(
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getMessage());
@@ -225,8 +226,8 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                     .getOrganizationManager().getOrganization(orgId, false, false);
         } catch (OrganizationManagementException e) {
             if (e instanceof OrganizationManagementClientException &&
-                    OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION.getCode()
-                            .equals(e.getErrorCode())) {
+                    (ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode()) ||
+                            ERROR_CODE_UNAUTHORIZED_ORG_ACCESS.getCode().equals(e.getErrorCode()))) {
                 return Optional.empty();
             } else {
                 throw new FrameworkException("Error while retrieving organization details for organization ID: "

@@ -46,8 +46,8 @@ import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_DISCOVERY_TYPE_NOT_ENABLED_OR_SUPPORTED;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND;
-import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_ORG_ACCESS;
 
 /**
  * Test class for Organization Discovery Handler Implementation.
@@ -107,9 +107,9 @@ public class OrganizationDiscoveryHandlerImplTest {
                 .thenReturn(organization);
         when(organizationManager.getOrganization(INVALID_ORG_ID, false, false))
                 .thenThrow(new OrganizationManagementClientException(
-                        ERROR_CODE_INVALID_ORGANIZATION.getMessage(),
-                        ERROR_CODE_INVALID_ORGANIZATION.getDescription(),
-                        ERROR_CODE_INVALID_ORGANIZATION.getCode()));
+                        ERROR_CODE_UNAUTHORIZED_ORG_ACCESS.getMessage(),
+                        ERROR_CODE_UNAUTHORIZED_ORG_ACCESS.getDescription(),
+                        ERROR_CODE_UNAUTHORIZED_ORG_ACCESS.getCode()));
 
         when(organizationManager.resolveOrganizationId(ORG_HANDLE)).thenReturn(ORG_ID);
         when(organizationManager.resolveOrganizationId(INVALID_ORG_HANDLE))
