@@ -56,6 +56,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT;
+
 /**
  * Event handler to manage shared roles in sub-organizations.
  */
@@ -357,8 +359,11 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                             sharedOrganizationId, roleV2.getName(), roleV2.getId(), "Role conflict"));
                             LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         }
-                        throw new IdentityEventException(String.format("Organization %s has a non shared role with " +
-                                "name %s, ", sharedOrganizationId, roleV2.getName()));
+                        String errorMessage = String.format(
+                                ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getMessage(),
+                                sharedOrganizationId, roleV2.getName());
+                        throw new IdentityEventException(ERROR_CODE_ERROR_SHARING_APPLICATION_ROLE_CONFLICT.getCode(),
+                                errorMessage);
                     }
                 }
             }
