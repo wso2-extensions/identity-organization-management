@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfi
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 
 import java.util.List;
@@ -98,7 +97,7 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
     private OrganizationDiscoveryResult handleOrgDiscoveryByOrgId(String orgId, String appId, String mainAppOrgId)
             throws FrameworkException {
 
-        Optional<BasicOrganization> organization = getBasicOrganizationDetails(orgId);
+        Optional<Organization> organization = getOrganization(orgId);
         if (!organization.isPresent()) {
             return OrganizationDiscoveryResult.failure(
                     FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
@@ -176,7 +175,7 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getMessage());
             }
-            Optional<BasicOrganization> organization = getBasicOrganizationDetails(orgId);
+            Optional<Organization> organization = getOrganization(orgId);
             if (!organization.isPresent()) {
                 return OrganizationDiscoveryResult.failure(
                         FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
@@ -217,13 +216,12 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
         return Optional.ofNullable(sharedAppId);
     }
 
-    private Optional<BasicOrganization> getBasicOrganizationDetails(String orgId) throws FrameworkException {
+    private Optional<Organization> getOrganization(String orgId) throws FrameworkException {
 
-        Organization organization;
         try {
-            //TODO: Need to introduce a new method to get basic organization details.
-            organization = OrganizationDiscoveryServiceHolder.getInstance()
+            Organization organization = OrganizationDiscoveryServiceHolder.getInstance()
                     .getOrganizationManager().getOrganization(orgId, false, false);
+            return Optional.of(organization);
         } catch (OrganizationManagementException e) {
             if (e instanceof OrganizationManagementClientException &&
                     (ERROR_CODE_INVALID_ORGANIZATION.getCode().equals(e.getErrorCode()) ||
@@ -234,11 +232,6 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                         + orgId, e);
             }
         }
-        BasicOrganization basicOrganization = new BasicOrganization();
-        basicOrganization.setId(orgId);
-        basicOrganization.setName(organization.getName());
-        basicOrganization.setOrganizationHandle(organization.getOrganizationHandle());
-        return Optional.of(basicOrganization);
     }
 
     private boolean isOrganizationDiscoveryTypeEnabled(String discoveryType) throws FrameworkException {
