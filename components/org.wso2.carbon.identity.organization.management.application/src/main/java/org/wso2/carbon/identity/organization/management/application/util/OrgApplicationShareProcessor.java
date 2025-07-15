@@ -182,8 +182,8 @@ public class OrgApplicationShareProcessor {
                         effectiveConfigs.put(orgId, inheritedConfig);
                     } else {
                         effectiveConfigs.put(orgId, explicitConfig);
-                        if (explicitConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN)
-                        {
+                        if (explicitConfig.getPolicy()
+                                == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
                             orgsWithAllChildrenPolicy.add(orgId);
                         }
                     }

@@ -342,8 +342,8 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing
      *                                           policies or shared attributes.
      */
-    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
-    getResourceSharingPolicyByInitiatingOrgId(String initiatingOrganizationId, String resourceType, String resourceId)
+    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>> getResourceSharingPolicyByInitiatingOrgId(
+            String initiatingOrganizationId, String resourceType, String resourceId)
             throws ResourceSharingPolicyMgtException {
 
         throw new NotImplementedException(

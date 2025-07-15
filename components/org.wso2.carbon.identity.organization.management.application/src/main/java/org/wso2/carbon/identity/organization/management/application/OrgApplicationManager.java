@@ -141,6 +141,37 @@ public interface OrgApplicationManager {
     }
 
     /**
+     * Adds or updates the sharing policy for organizations for a given application.
+     * <p>
+     * This method is used to define or modify the policy that governs how a specific application is
+     * shared with a particular organization;s future children.
+     * <p>
+     * When to use this method:
+     * - Use this when a policy needs to be initially added or an existing policy updated
+     *   for an already-shared application
+     * <p>
+     * Hierarchical requirements:
+     * - The application must already be shared with the target organization
+     * - Roles involved in the policy must be valid and resolvable within the owner's tenant domain
+     *
+     * @param mainApplicationId            The ID of the main application being shared.
+     * @param requestInitiatingOrgId       The ID of the organization initiating the policy update.
+     * @param sharedOrgId                  The ID of the organization the application is shared with.
+     * @param ownerTenantDomain            The tenant domain that owns the application.
+     * @param applicationSharePolicy       The policy to be added or updated.
+     * @param applicationShareRolePolicy   The role-sharing configuration associated with the policy.
+     * @throws OrganizationManagementException If the operation to add or update the policy fails.
+     */
+     default void addOrUpdatePolicy(String mainApplicationId, String requestInitiatingOrgId, String sharedOrgId,
+                                    String ownerTenantDomain, PolicyEnum applicationSharePolicy,
+                                    ApplicationShareRolePolicy applicationShareRolePolicy)
+             throws OrganizationManagementException {
+
+        throw new NotImplementedException(
+                "addOrUpdatePolicy method is not implemented in " + this.getClass().getName());
+    }
+
+    /**
      * Un-share the application from a list of organizations.
      *
      * @param mainOrganizationId     ID of the organization owning the primary application.

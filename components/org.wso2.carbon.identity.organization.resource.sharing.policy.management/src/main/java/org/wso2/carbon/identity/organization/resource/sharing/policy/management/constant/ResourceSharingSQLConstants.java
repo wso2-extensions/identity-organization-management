@@ -46,8 +46,7 @@ public class ResourceSharingSQLConstants {
                     " UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY WHERE UM_POLICY_HOLDING_ORG_ID IN ";
 
     // SQL tail for resource type filter.
-    public static final String GET_RESOURCE_SHARING_POLICIES_BY_RESOURCE_TYPE_TAIL =
-            " AND UM_RESOURCE_TYPE = ?";
+    public static final String RESOURCE_TYPE_FILTER = " AND UM_RESOURCE_TYPE = ?";
 
     public static final String GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD =
             "SELECT rsp.UM_POLICY_HOLDING_ORG_ID, " +

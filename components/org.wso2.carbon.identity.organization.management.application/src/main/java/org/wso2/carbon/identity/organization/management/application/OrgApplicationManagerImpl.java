@@ -74,7 +74,7 @@ import org.wso2.carbon.identity.organization.management.application.model.Shared
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationOrganizationNode;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationOrganizationNodePage;
-import org.wso2.carbon.identity.organization.management.application.model.SharingInitiationModeDO;
+import org.wso2.carbon.identity.organization.management.application.model.SharingModeDO;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareUpdateOperation;
 import org.wso2.carbon.identity.organization.management.application.model.operation.GeneralApplicationShareOperation;
@@ -183,6 +183,7 @@ import static org.wso2.carbon.identity.organization.management.application.util.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ASC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.DESC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ADDING_SHARED_RESOURCE_ATTRIBUTES_FAILED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_BLOCK_SHARING_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATING_OAUTH_APP;
@@ -316,7 +317,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     String organizationId = config.getOrganizationId();
                     boolean isValid = subOrganizationIdsSet.contains(organizationId);
                     if (!isValid && LOG.isDebugEnabled() && organizationId != null) {
-                        LOG.error("Application can only be shared with child organizations within the hierarchy. " +
+                        LOG.debug("Application can only be shared with child organizations within the hierarchy. " +
                                 "Provided organization ID: " + organizationId + " is not found within the hierarchy.");
                     }
                     return isValid;
@@ -1039,11 +1040,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             nextToken = lastItem.getAppId();
         }
         String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
-        SharingInitiationModeDO sharingInitiationModeDO = resolveSharingInitiationMode(mainOrganizationId,
-                mainOrganizationId, mainApplicationId, mainApplicationId, mainOrgHandle);
+        SharingModeDO sharingModeDO = resolveSharingMode(mainOrganizationId, mainOrganizationId, mainApplicationId,
+                mainApplicationId, mainOrgHandle);
 
         return new SharedApplicationOrganizationNodePage(
-                applicationSharedOrganizationsList, sharingInitiationModeDO, nextToken, previousToken);
+                applicationSharedOrganizationsList, sharingModeDO, nextToken, previousToken);
     }
 
     private List<String> getExcludedAttributes(String excludedAttributes) {
@@ -1093,26 +1094,25 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String organizationHandle = organization.getOrganizationHandle();
         String parentOrganizationId = organization.getParent().getId();
         int depthFromRoot = getOrganizationManager().getOrganizationDepthInHierarchy(subOrgId);
-        SharingInitiationModeDO sharingInitiationModeDO =
-                resolveSharingInitiationMode(mainOrgId, subOrgId, mainApplicationId, sharedAppResourceId, subOrgHandle);
+        SharingModeDO sharingModeDO = resolveSharingMode(mainOrgId, subOrgId, mainApplicationId,
+                sharedAppResourceId, subOrgHandle);
 
         if (!excludedAttributesList.contains(SP_SHARED_ROLE_EXCLUDED_KEY)) {
             List<RoleWithAudienceDO> sharedAppRoles = getSharedAppRoles(mainOrgHandle, mainApplicationId, subOrgId,
                     sharedApplicationDO.getFragmentApplicationId());
             return new SharedApplicationOrganizationNode(sharedAppResourceId, subOrgId, subOrgName, organizationStatus,
                     parentOrganizationId, organizationHandle, sharedAppRoles, hasChildren, depthFromRoot,
-                    sharingInitiationModeDO);
+                    sharingModeDO);
         }
         // If roles are excluded, we do not need to fetch roles and returning null so it will differentiate
         // not having any roles and not need to fetch roles.
         return new SharedApplicationOrganizationNode(sharedAppResourceId, subOrgId, subOrgName, organizationStatus,
                 parentOrganizationId, organizationHandle, null, hasChildren, depthFromRoot,
-                sharingInitiationModeDO);
+                sharingModeDO);
     }
 
-    private SharingInitiationModeDO resolveSharingInitiationMode(String initiatingOrgId, String orgId,
-                                                                 String mainAppId, String appId, String orgHandle)
-            throws OrganizationManagementException {
+    private SharingModeDO resolveSharingMode(String initiatingOrgId, String orgId, String mainAppId, String appId,
+                                             String orgHandle) throws OrganizationManagementException {
 
         try {
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result = getResourceSharingPolicyHandlerService()
@@ -1131,20 +1131,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 if ((resourceSharingPolicy.getSharingPolicy()
                         == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN
                         && isPolicyHolderOrg) ||
-                        (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
-                                || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties()))) {
+                        resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
+                                || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
 
-                    //Get Role MODE.
                     ApplicationShareRolePolicy.Mode mode =
                             OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
 
                     ApplicationShareRolePolicy applicationShareRolePolicy;
                     if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == mode.ordinal()) {
-                        List<RoleWithAudienceDO> roleWithAudienceDOList = null;
+                        List<RoleWithAudienceDO> roleWithAudienceDOList = new ArrayList<>();
 
-                        //Get the list of Roles.
                         if (resourceAttributes != null && resourceAttributes.get(0) != null) {
-                            roleWithAudienceDOList = new ArrayList<>();
                             String roleAudience = getApplicationManagementService()
                                     .getAllowedAudienceForRoleAssociation(appId, orgHandle);
                             RoleWithAudienceDO.AudienceType audienceType =
@@ -1161,10 +1158,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                             roleWithAudienceDOList.add(new RoleWithAudienceDO(
                                                     role.getName(), role.getAudienceName(), audienceType));
                                         }
-                                    } catch (Exception e) {
-                                        if (LOG.isDebugEnabled()) {
-                                            LOG.debug("Empty or blank attribute found in excluded attributes.");
-                                        }
+                                    } catch (IdentityRoleManagementException e) {
+                                        LOG.error("Failed to retrieve role for shared attribute ID: "
+                                                + attribute.getSharedAttributeId(), e);
                                     }
                                 }
                             }
@@ -1178,8 +1174,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                 .mode(mode)
                                 .build();
                     }
-                    return new SharingInitiationModeDO(resourceSharingPolicy.getSharingPolicy(),
-                            applicationShareRolePolicy);
+                    return new SharingModeDO(resourceSharingPolicy.getSharingPolicy(), applicationShareRolePolicy);
                 }
             }
         } catch (ResourceSharingPolicyMgtException e) {
@@ -1534,8 +1529,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     @Override
     public void shareApplicationWithPolicy(String ownerOrgId, ServiceProvider mainApplication, String sharingOrgId,
                                            PolicyEnum policyEnum, ApplicationShareRolePolicy applicationShareRolePolicy,
-                                           String operationId)
-            throws OrganizationManagementException {
+                                           String operationId) throws OrganizationManagementException {
 
         String mainApplicationId = mainApplication.getApplicationResourceId();
         if (StringUtils.equals(ownerOrgId, sharingOrgId)) {
@@ -1543,10 +1537,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     + ownerOrgId);
             return;
         }
-
         try {
-            getListener().preShareApplication(ownerOrgId, mainApplicationId, sharingOrgId,
-                    applicationShareRolePolicy);
+            getListener().preShareApplication(ownerOrgId, mainApplicationId, sharingOrgId, applicationShareRolePolicy);
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
             // loaded, tenant domain will be derived from the user who created the application.
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingOrgId);
@@ -1669,7 +1661,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private void addOrUpdatePolicy(String mainApplicationId, String requestInitiatingOrgId, String sharedOrgId,
+    public void addOrUpdatePolicy(String mainApplicationId, String requestInitiatingOrgId, String sharedOrgId,
                                    String ownerTenantDomain, PolicyEnum applicationSharePolicy,
                                    ApplicationShareRolePolicy applicationShareRolePolicy)
             throws OrganizationManagementException {
@@ -1750,10 +1742,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 LOG.debug("Resource sharing attributes added for the Application: " + mainApplicationId +
                         " with policy id: " + resourceSharingPolicyId);
             }
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
-        } catch (IdentityRoleManagementException e) {
-            throw new RuntimeException(e);
+        } catch (ResourceSharingPolicyMgtException | IdentityRoleManagementException e) {
+            throw handleServerException(ERROR_CODE_ADDING_SHARED_RESOURCE_ATTRIBUTES_FAILED, e,
+                    String.valueOf(resourceSharingPolicyId));
         }
     }
 

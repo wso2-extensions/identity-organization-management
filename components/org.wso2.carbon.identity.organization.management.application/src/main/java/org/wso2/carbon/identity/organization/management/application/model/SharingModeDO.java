@@ -21,12 +21,16 @@ package org.wso2.carbon.identity.organization.management.application.model;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
-public class SharingInitiationModeDO  {
+/**
+ * Data object that represents the application sharing mode,
+ * including the sharing policy and the role-sharing policy configuration.
+ */
+public class SharingModeDO  {
 
     private final PolicyEnum policy;
     private final ApplicationShareRolePolicy applicationShareRolePolicy;
 
-    public SharingInitiationModeDO(PolicyEnum policy, ApplicationShareRolePolicy applicationShareRolePolicy) {
+    public SharingModeDO(PolicyEnum policy, ApplicationShareRolePolicy applicationShareRolePolicy) {
 
         this.policy = policy;
         this.applicationShareRolePolicy = applicationShareRolePolicy;

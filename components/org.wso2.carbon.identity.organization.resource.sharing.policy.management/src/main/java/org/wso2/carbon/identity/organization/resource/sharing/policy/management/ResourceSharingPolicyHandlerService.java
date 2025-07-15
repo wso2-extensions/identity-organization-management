@@ -345,7 +345,10 @@ public interface ResourceSharingPolicyHandlerService {
      * @return A list of {@link ResourceSharingPolicy} objects for the specified organization IDs.
      * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policies.
      */
-    List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(List<String> policyHoldingOrganizationIds,
-                                                                         String resourceType)
-            throws ResourceSharingPolicyMgtException;
+    default List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(
+            List<String> policyHoldingOrganizationIds, String resourceType) throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPoliciesByResourceType method is not implemented in " + this.getClass());
+    }
 }

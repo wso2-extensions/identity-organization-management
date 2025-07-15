@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -48,7 +48,6 @@ public interface ApplicationSharingManagerListener {
     void preShareApplication(String parentOrganizationId, String parentApplicationId, String sharedOrganizationId,
                              boolean shareWithAllChildren) throws OrganizationManagementException;
 
-
     /**
      * Pre listener of sharing an application with role sharing policy.
      *
@@ -66,7 +65,7 @@ public interface ApplicationSharingManagerListener {
     }
 
     /**
-     * Use@ {@link #postShareApplication(String, String, String, String, ApplicationShareRolePolicy, int)} instead.
+     * Use@ {@link #postShareApplication(String, String, String, String, ApplicationShareRolePolicy)} instead.
      * Post listener of sharing an application.
      *
      * @param parentOrganizationId Parent application residing organization id.
@@ -80,7 +79,6 @@ public interface ApplicationSharingManagerListener {
     void postShareApplication(String parentOrganizationId, String parentApplicationId, String sharedOrganizationId,
                               String sharedApplicationId, boolean shareWithAllChildren)
             throws OrganizationManagementException;
-
 
     /**
      * Post listener of sharing an application with role sharing policy.
@@ -98,7 +96,6 @@ public interface ApplicationSharingManagerListener {
 
         throw new NotImplementedException();
     }
-
 
     /**
      * Pre listener of updating roles of a shared application.
