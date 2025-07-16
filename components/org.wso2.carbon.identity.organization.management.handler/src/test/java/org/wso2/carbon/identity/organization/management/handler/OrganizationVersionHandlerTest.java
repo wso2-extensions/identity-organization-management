@@ -43,7 +43,6 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -111,7 +110,7 @@ public class OrganizationVersionHandlerTest {
 
         // Check if the IdPManagementUtil.clearIdPCache method is not called to clear the cache.
         idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
-                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(0));
+                anyString(), anyString()), org.mockito.Mockito.times(0));
     }
 
     @Test
@@ -130,7 +129,7 @@ public class OrganizationVersionHandlerTest {
 
         // Check if the IdPManagementUtil.clearIdPCache method is called to clear the cache.
         idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
-                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(1));
+                anyString(), anyString()), org.mockito.Mockito.times(1));
     }
 
     @Test
@@ -153,7 +152,7 @@ public class OrganizationVersionHandlerTest {
 
         // Check if the IdPManagementUtil.clearIdPCache method is called to clear the cache.
         idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
-                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(1));
+                anyString(), anyString()), org.mockito.Mockito.times(1));
     }
 
     @Test
@@ -176,6 +175,6 @@ public class OrganizationVersionHandlerTest {
 
         // Check if the IdPManagementUtil.clearIdPCache method is not called to clear the cache.
         idPManagementUtilMockedStatic.verify(() -> IdPManagementUtil.clearIdPCache(
-                anyString(), anyInt(), anyString()), org.mockito.Mockito.times(0));
+                anyString(), anyString()), org.mockito.Mockito.times(0));
     }
 }
