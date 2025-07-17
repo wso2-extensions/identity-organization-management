@@ -258,4 +258,35 @@ public interface OrganizationUserSharingService {
 
         throw new NotImplementedException("updateSharedTypeOfUserAssociation method is not implemented.");
     }
+
+    /**
+     * Creates the association between the shared user and the actual user in the organization.
+     *
+     * @param orgId            Organization ID of the user is shared.
+     * @param associatedUserId Actual user who is associated for a shared user.
+     * @param associatedOrgId  The organization ID associated user.
+     * @param sharedType       The type of sharing for the user in the organization.
+     * @param domain           The user store domain of the associated user.
+     * @throws OrganizationManagementException If an error occurs while creating the organization user association.
+     */
+    default void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId,
+                                       SharedType sharedType, String domain) throws OrganizationManagementException {
+
+        throw new NotImplementedException("shareOrganizationUser method is not implemented.");
+    }
+
+    /**
+     * Creates the association between the shared user and the actual user in the organization.
+     *
+     * @param orgId            Organization ID of the user is shared.
+     * @param associatedUserId Actual user who is associated for a shared user.
+     * @param associatedOrgId  The organization ID associated user.
+     * @param domain           The user store domain of the associated user.
+     * @throws OrganizationManagementException If an error occurs while creating the organization user association.
+     */
+    default void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId, String domain)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException("shareOrganizationUser method is not implemented.");
+    }
 }
