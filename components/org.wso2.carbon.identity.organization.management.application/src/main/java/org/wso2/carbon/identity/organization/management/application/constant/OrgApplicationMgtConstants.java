@@ -46,11 +46,18 @@ public class OrgApplicationMgtConstants {
     }
 
     public static final String SP_SHARED_ROLE_EXCLUDED_KEY = "roles";
+    public static final String SP_SHARED_SHARING_MODE_INCLUDED_KEY = "sharingMode";
     public static final Set<String> SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES;
+    public static final Set<String> SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES;
     static {
         Set<String> tempSet = new HashSet<>();
         tempSet.add(SP_SHARED_ROLE_EXCLUDED_KEY);
         SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES = Collections.unmodifiableSet(tempSet);
+    }
+    static {
+        Set<String> tempSet = new HashSet<>();
+        tempSet.add(SP_SHARED_SHARING_MODE_INCLUDED_KEY);
+        SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES = Collections.unmodifiableSet(tempSet);
     }
 
     public static final String TENANT = "TENANT";

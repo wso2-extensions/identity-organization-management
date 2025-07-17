@@ -263,6 +263,8 @@ public interface OrgApplicationManager {
      *                           application id.
      * @param excludedAttributes (Optional) A comma separated list of attributes to be excluded from the result.
      *                           Currently, supports excluding `roles`.
+     * @param attributes         (Optional) A comma separated list of attributes to be included in the result.
+     *                           Currently, supports including `roles`.
      * @param limit              (Optional) The maximum number of results to be returned. If not specified
      *                           (that is, 0), it will return all the results.
      * @param recursive          (Optional) If true, it will return the shared organizations recursively. If false,
@@ -276,6 +278,7 @@ public interface OrgApplicationManager {
                                                                                     String filter, int beforeCursor,
                                                                                     int afterCursor,
                                                                                     String excludedAttributes,
+                                                                                    String attributes,
                                                                                     int limit, boolean recursive)
             throws OrganizationManagementException {
 

@@ -116,7 +116,6 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,7 +163,9 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.PARENT_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_ROLE_EXCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SHARING_MODE_INCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ShareOperationType.APPLICATION_SHARE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.TENANT_CONTEXT_PATH_COMPONENT;
@@ -751,9 +752,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             triggerAuditLogEvent(auditLogBuilder, true);
         }
         getListener().postDeleteAllSharedApplications(mainOrganizationId, mainApplicationId, sharedApplicationDOList);
-        boolean isSharedWithAllChildren = Arrays.stream(mainApplication.getSpProperties())
+        boolean isSharedWithAllChildren = stream(mainApplication.getSpProperties())
                 .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
-        boolean isAppShared = Arrays.stream(mainApplication.getSpProperties())
+        boolean isAppShared = stream(mainApplication.getSpProperties())
                 .anyMatch(p -> IS_APP_SHARED.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
         if (isSharedWithAllChildren || isAppShared) {
             setShareWithAllChildrenProperty(mainApplication, false);
@@ -786,7 +787,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             unshareAllApplicationFromAllOrganizations(organizationId, applicationId);
         } else {
             ServiceProvider serviceProvider = getOrgApplication(applicationId, getTenantDomain());
-            if (Arrays.stream(serviceProvider.getSpProperties())
+            if (stream(serviceProvider.getSpProperties())
                     .anyMatch(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()) && Boolean.parseBoolean(p.getValue()))) {
                 throw handleClientException(ERROR_CODE_INVALID_DELETE_SHARE_REQUEST,
                         serviceProvider.getApplicationResourceId(), sharedOrganizationId);
@@ -919,7 +920,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setOrganizationId(organizationId);
             applicationSharedOrganizations = getApplicationSharedOrganizations(
-                    organizationId, applicationId, null, 0, 0, SP_SHARED_ROLE_EXCLUDED_KEY, 0, true);
+                    organizationId, applicationId, null, 0, 0, SP_SHARED_ROLE_EXCLUDED_KEY, null, 0, true);
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -942,6 +943,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                                                                    String filter, int beforeCursor,
                                                                                    int afterCursor,
                                                                                    String excludedAttributes,
+                                                                                   String attributes,
                                                                                    int limit, boolean recursive)
             throws OrganizationManagementException {
 
@@ -1012,9 +1014,19 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         // Convert the DO objects to organization nodes.
         List<String> excludedAttributesList = getExcludedAttributes(excludedAttributes);
+        List<String> includedAttributesList = getIncludedAttributes(attributes);
+        String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
+        SharingModeDO sharingModeDO = null;
+        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+            sharingModeDO = resolveSharingMode(mainOrganizationId, mainOrganizationId, mainApplicationId,
+                    mainApplicationId, mainOrgHandle);
+            if (sharingModeDO != null) {
+                includedAttributesList.remove(SP_SHARED_SHARING_MODE_INCLUDED_KEY);
+            }
+        }
         for (SharedApplicationDO sharedApplicationDO : sharedApplications) {
             applicationSharedOrganizationsList.add(getApplicationSharedOrganizationNode(sharedApplicationDO,
-                    mainOrganizationId, mainApplicationId, excludedAttributesList));
+                    mainOrganizationId, mainApplicationId, excludedAttributesList, includedAttributesList));
         }
 
         // Calculate next and previous tokens.
@@ -1039,10 +1051,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             SharedApplicationDO lastItem = sharedApplications.get(sharedApplications.size() - 1);
             nextToken = lastItem.getAppId();
         }
-        String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
-        SharingModeDO sharingModeDO = resolveSharingMode(mainOrganizationId, mainOrganizationId, mainApplicationId,
-                mainApplicationId, mainOrgHandle);
-
         return new SharedApplicationOrganizationNodePage(
                 applicationSharedOrganizationsList, sharingModeDO, nextToken, previousToken);
     }
@@ -1052,12 +1060,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return Collections.emptyList();
         }
 
-        return Arrays.stream(excludedAttributes.split(","))
+        return stream(excludedAttributes.split(","))
                 .map(String::trim)
                 .peek(attribute -> {
                     if (StringUtils.isBlank(attribute)) {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Empty or blank attribute found in excluded attributes");
+                            LOG.debug("Empty or blank attribute found in excluded attributes list.");
                         }
                     } else if (!SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES.contains(attribute)) {
                         if (LOG.isDebugEnabled()) {
@@ -1068,9 +1076,31 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 .collect(Collectors.toList());
     }
 
+    private List<String> getIncludedAttributes(String attributes) {
+        if (StringUtils.isBlank(attributes)) {
+            return Collections.emptyList();
+        }
+
+        return stream(attributes.split(","))
+                .map(String::trim)
+                .peek(attribute -> {
+                    if (StringUtils.isBlank(attribute)) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Empty or blank attribute found in included attributes list.");
+                        }
+                    } else if (!SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES.contains(attribute)) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Unsupported attribute found in included attributes: " + attribute);
+                        }
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
     private SharedApplicationOrganizationNode getApplicationSharedOrganizationNode(
             SharedApplicationDO sharedApplicationDO, String mainOrgId, String mainApplicationId,
-            List<String> excludedAttributesList) throws OrganizationManagementException {
+            List<String> excludedAttributesList, List<String> includedAttributesList)
+            throws OrganizationManagementException {
 
         // 1. Get the organization ID and the name.
         // 2. Get All children of the organization.
@@ -1094,9 +1124,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String organizationHandle = organization.getOrganizationHandle();
         String parentOrganizationId = organization.getParent().getId();
         int depthFromRoot = getOrganizationManager().getOrganizationDepthInHierarchy(subOrgId);
-        SharingModeDO sharingModeDO = resolveSharingMode(mainOrgId, subOrgId, mainApplicationId,
-                sharedAppResourceId, subOrgHandle);
-
+        SharingModeDO sharingModeDO = null;
+        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+            sharingModeDO = resolveSharingMode(mainOrgId, subOrgId, mainApplicationId, sharedAppResourceId,
+                    subOrgHandle);
+        }
         if (!excludedAttributesList.contains(SP_SHARED_ROLE_EXCLUDED_KEY)) {
             List<RoleWithAudienceDO> sharedAppRoles = getSharedAppRoles(mainOrgHandle, mainApplicationId, subOrgId,
                     sharedApplicationDO.getFragmentApplicationId());
@@ -1129,10 +1161,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 boolean isPolicyHolderOrg = Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), orgId);
 
                 if ((resourceSharingPolicy.getSharingPolicy()
-                        == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN
-                        && isPolicyHolderOrg) ||
-                        resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
-                                || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
+                        == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg)
+                        || (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
+                                && isPolicyHolderOrg)
+                        || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
 
                     ApplicationShareRolePolicy.Mode mode =
                             OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
@@ -1937,7 +1969,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         if (serviceProvider != null) {
-            boolean isFragmentApp = Arrays.stream(serviceProvider.getSpProperties())
+            boolean isFragmentApp = stream(serviceProvider.getSpProperties())
                     .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                             Boolean.parseBoolean(property.getValue()));
             // Given app is a main application.
@@ -2157,7 +2189,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private boolean isAlreadySharedApplication(ServiceProvider serviceProvider) {
 
-        return serviceProvider.getSpProperties() != null && Arrays.stream(serviceProvider.getSpProperties())
+        return serviceProvider.getSpProperties() != null && stream(serviceProvider.getSpProperties())
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&
                         Boolean.parseBoolean(property.getValue()));
     }
