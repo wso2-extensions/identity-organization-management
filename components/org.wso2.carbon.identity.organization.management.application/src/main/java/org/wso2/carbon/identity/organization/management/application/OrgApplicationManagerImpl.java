@@ -545,14 +545,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String mainTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, mainTenantDomain);
 
-        Map<String, List<RoleWithAudienceDO>> updateOperationPerEachOrg = new HashMap<>();
-        List<String> organizationsToBeUpdated = new ArrayList<>();
-        Map<String, ApplicationShareUpdateOperation.Operation> organizationIdToOperationMap = new HashMap<>();
+        Map<String, Map<ApplicationShareUpdateOperation.Operation, List<RoleWithAudienceDO>>>
+                organizationIdToOperationMap = new HashMap<>();
+        Set<String> organizationsToBeUpdated = new HashSet<>();
+
         for (ApplicationShareUpdateOperation updateOperation : updateOperationList) {
-            if (!(ApplicationShareUpdateOperation.Operation.ADD.ordinal() == updateOperation.getOperation().ordinal() ||
-                    ApplicationShareUpdateOperation.Operation.REMOVE.ordinal() == updateOperation.getOperation()
-                            .ordinal())) {
-                LOG.warn("Invalid operation type: " + updateOperation.getOperation());
+            ApplicationShareUpdateOperation.Operation operation = updateOperation.getOperation();
+            if (!(ApplicationShareUpdateOperation.Operation.ADD.ordinal() == operation.ordinal() ||
+                    ApplicationShareUpdateOperation.Operation.REMOVE.ordinal() == operation.ordinal())) {
+                LOG.warn("Invalid operation type: " + operation);
                 continue;
             }
             OrgApplicationScimFilterParser.ParsedFilterResult parsedFilterResult = parseFilter(
@@ -561,28 +562,38 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 LOG.warn("Unsupported path attribute: " + updateOperation.getPath());
                 continue;
             }
-            organizationsToBeUpdated.add(parsedFilterResult.getOrganizationId());
-            organizationIdToOperationMap.put(parsedFilterResult.getOrganizationId(), updateOperation.getOperation());
+            String orgId = parsedFilterResult.getOrganizationId();
             List<RoleWithAudienceDO> roleChanges = (List<RoleWithAudienceDO>) updateOperation.getValues();
-            updateOperationPerEachOrg.put(parsedFilterResult.getOrganizationId(), roleChanges);
+            organizationsToBeUpdated.add(orgId);
+            organizationIdToOperationMap
+                    .computeIfAbsent(orgId, k -> new HashMap<>())
+                    .merge(operation, roleChanges, (existing, incoming) -> {
+                        existing.addAll(incoming);
+                        return existing;
+                    });
         }
         // Sort out the organization list.
-        organizationsToBeUpdated = sortOrganizationsByHierarchy(mainOrganizationId, organizationsToBeUpdated);
+        List<String> sortedOrganizations = sortOrganizationsByHierarchy(mainOrganizationId,
+                new ArrayList<>(organizationsToBeUpdated));
         String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
         String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-        for (String sharedOrganizationId : organizationsToBeUpdated) {
+        for (String sharedOrganizationId : sortedOrganizations) {
             Organization organization = getOrganizationManager().getOrganization(sharedOrganizationId, false, false);
             if (TENANT.equalsIgnoreCase(organization.getType())) {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        updateRolesOfSharedApplication(mainApplication, mainOrganizationId, sharedOrganizationId,
-                                organizationIdToOperationMap.get(sharedOrganizationId),
-                                updateOperationPerEachOrg.get(sharedOrganizationId), username, userID);
-                    } catch (OrganizationManagementException e) {
-                        LOG.error(String.format("Error in updating roles of application: %s for organization: %s",
-                                mainApplicationId, sharedOrganizationId), e);
-                    }
-                }, executorService);
+                Map<ApplicationShareUpdateOperation.Operation, List<RoleWithAudienceDO>> operationListMap =
+                        organizationIdToOperationMap.get(sharedOrganizationId);
+                for (ApplicationShareUpdateOperation.Operation operation : operationListMap.keySet()) {
+                    List<RoleWithAudienceDO> roleList = operationListMap.get(operation);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            updateRolesOfSharedApplication(mainApplication, mainOrganizationId, sharedOrganizationId,
+                                    operation, roleList, username, userID);
+                        } catch (OrganizationManagementException e) {
+                            LOG.error(String.format("Error in updating roles of application: %s for organization: %s",
+                                    mainApplicationId, sharedOrganizationId), e);
+                        }
+                    }, executorService);
+                }
             }
         }
         if (LoggerUtils.isEnableV2AuditLogs()) {
@@ -590,7 +601,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     getInitiatorId(username, mainTenantDomain),  LoggerUtils.Target.User.name(),
                     getAppId(mainApplication), LoggerUtils.Target.Application.name(),
                     "processing-update-shared-application")
-                    .data(buildShareAppAuditData(mainApplicationId, organizationsToBeUpdated));
+                    .data(buildShareAppAuditData(mainApplicationId, sortedOrganizations));
             triggerAuditLogEvent(auditLogBuilder, true);
         }
     }
