@@ -887,9 +887,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         try {
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-            ServiceProvider sharedApplication =
-                    getApplicationManagementService().getApplicationByResourceId(sharedApplicationId,
-                            sharedTenantDomain);
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
 
@@ -907,6 +904,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserId(userID);
                 PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(username);
 
+                ServiceProvider sharedApplication = getApplicationManagementService().getApplicationByResourceId(
+                        sharedApplicationId, sharedTenantDomain);
                 getApplicationManagementService().deleteApplication(sharedApplication.getApplicationName(),
                         sharedTenantDomain, username);
             } finally {
