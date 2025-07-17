@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
+import jdk.internal.net.http.common.Pair;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.NamedPreparedStatement;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
@@ -33,6 +34,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -489,9 +491,20 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE, resourceType);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID, resourceId);
                     });
-            return result.stream().collect(Collectors.groupingBy(
-                    ResourceSharingPolicyWithAttributes::getPolicy,
-                    Collectors.mapping(ResourceSharingPolicyWithAttributes::getAttribute, Collectors.toList())));
+            Map<Integer, ResourceSharingPolicy> policyById = new HashMap<>();
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> resultMap = new HashMap<>();
+
+            for (ResourceSharingPolicyWithAttributes row : result) {
+                ResourceSharingPolicy policy = row.getPolicy();
+                int policyId = policy.getResourceSharingPolicyId();
+                ResourceSharingPolicy uniquePolicy = policyById.computeIfAbsent(policyId, k -> policy);
+                resultMap.computeIfAbsent(uniquePolicy, k -> new ArrayList<>());
+
+                if (row.getAttribute() != null) {
+                    resultMap.get(uniquePolicy).add(row.getAttribute());
+                }
+            }
+            return resultMap;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }
