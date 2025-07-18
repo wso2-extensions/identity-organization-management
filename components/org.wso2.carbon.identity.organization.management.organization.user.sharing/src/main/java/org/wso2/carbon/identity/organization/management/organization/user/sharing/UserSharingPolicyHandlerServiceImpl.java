@@ -1835,8 +1835,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
     private void handleAgentSharingThreadLocal(Map<String, Object> threadLocalProperties) {
 
-        UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(false);
-        UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(false);
+        UserCoreUtil.removeSkipUsernamePatternValidationThreadLocal();
+        UserCoreUtil.removeSkipPasswordPatternValidationThreadLocal();
         boolean isAgentSharing = (boolean) threadLocalProperties.getOrDefault(IS_AGENT_SHARING, false);
         if (isAgentSharing) {
             UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(true);
