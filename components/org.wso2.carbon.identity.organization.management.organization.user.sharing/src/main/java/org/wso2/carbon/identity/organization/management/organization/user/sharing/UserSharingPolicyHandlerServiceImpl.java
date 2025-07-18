@@ -129,6 +129,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.IS_AGENT_SHARING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
@@ -1825,8 +1826,22 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         carbonContext.setTenantId(tenantId);
         carbonContext.setUsername(username);
 
+        // Handle thread-local properties for agent sharing.
+        handleAgentSharingThreadLocal(threadLocalProperties);
+
         // Restore all thread-local properties.
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
+    }
+
+    private void handleAgentSharingThreadLocal(Map<String, Object> threadLocalProperties) {
+
+        UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(false);
+        UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(false);
+        boolean isAgentSharing = (boolean) threadLocalProperties.getOrDefault(IS_AGENT_SHARING, false);
+        if (isAgentSharing) {
+            UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(true);
+            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+        }
     }
 
     // Service getters.

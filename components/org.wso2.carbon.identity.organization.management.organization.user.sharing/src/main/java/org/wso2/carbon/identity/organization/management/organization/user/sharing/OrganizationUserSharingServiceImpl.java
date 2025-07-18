@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
-import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -47,6 +46,7 @@ import java.util.UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.IS_AGENT_SHARING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PROCESS_ADD_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
@@ -64,8 +64,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId)
             throws OrganizationManagementException {
 
-        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, SharedType.NOT_SPECIFIED,
-                null);
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, SharedType.NOT_SPECIFIED);
     }
 
     @Override
@@ -76,7 +75,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             shareOrganizationUser(orgId, associatedUserId, associatedOrgId);
         }
 
-        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, sharedType, null);
+        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, sharedType);
     }
 
     @Override
@@ -195,25 +194,6 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
         organizationUserSharingDAO.updateSharedTypeOfUserAssociation(id, sharedType);
     }
 
-    @Override
-    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId,
-                                      SharedType sharedType, String domain) throws OrganizationManagementException {
-
-        if (sharedType == null) {
-            shareOrganizationUser(orgId, associatedUserId, associatedOrgId, domain);
-        }
-
-        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, sharedType, domain);
-    }
-
-    @Override
-    public void shareOrganizationUser(String orgId, String associatedUserId, String associatedOrgId, String domain)
-            throws OrganizationManagementException {
-
-        shareOrganizationUserWithOrWithoutType(orgId, associatedUserId, associatedOrgId, SharedType.NOT_SPECIFIED,
-                domain);
-    }
-
     private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId) throws UserStoreException {
 
         RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
@@ -274,8 +254,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     private void shareOrganizationUserWithOrWithoutType(String orgId, String associatedUserId, String associatedOrgId,
-                                                        SharedType sharedType, String domain)
-            throws OrganizationManagementException {
+                                                        SharedType sharedType) throws OrganizationManagementException {
 
         try {
             String suborgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
@@ -292,9 +271,10 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
 
             int tenantId = IdentityTenantUtil.getTenantId(suborgTenantDomain);
-            // If the domain is not specified, use the primary domain.
-            if (StringUtils.isBlank(domain)) {
-                domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
+            String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
+            boolean isAgentSharing = (boolean) IdentityUtil.threadLocalProperties.get().get(IS_AGENT_SHARING);
+            if (isAgentSharing) {
+                domain = IdentityUtil.getAgentIdentityUserstoreName();
             }
             userStoreManager = getAbstractUserStoreManager(tenantId);
 
