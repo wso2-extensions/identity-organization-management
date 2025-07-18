@@ -30,7 +30,7 @@ public class SharingModeDO  {
     private final PolicyEnum policy;
     private final ApplicationShareRolePolicy applicationShareRolePolicy;
 
-    public SharingModeDO(PolicyEnum policy, ApplicationShareRolePolicy applicationShareRolePolicy) {
+    private SharingModeDO(PolicyEnum policy, ApplicationShareRolePolicy applicationShareRolePolicy) {
 
         this.policy = policy;
         this.applicationShareRolePolicy = applicationShareRolePolicy;
@@ -44,5 +44,31 @@ public class SharingModeDO  {
     public ApplicationShareRolePolicy getApplicationShareRolePolicy() {
 
         return applicationShareRolePolicy;
+    }
+
+    /**
+     * This class is used to build the SharingModeDO object.
+     */
+    public static class Builder {
+
+        private PolicyEnum policy;
+        private ApplicationShareRolePolicy applicationShareRolePolicy;
+
+        public Builder policy(PolicyEnum policy) {
+
+            this.policy = policy;
+            return this;
+        }
+
+        public Builder applicationShareRolePolicy(ApplicationShareRolePolicy applicationShareRolePolicy) {
+
+            this.applicationShareRolePolicy = applicationShareRolePolicy;
+            return this;
+        }
+
+        public SharingModeDO build() {
+
+            return new SharingModeDO(policy, applicationShareRolePolicy);
+        }
     }
 }

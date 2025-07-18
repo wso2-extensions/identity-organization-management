@@ -244,7 +244,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         boolean updateShareWithAllChildren = shouldUpdateShareWithAllChildren(shareWithAllChildren, rootApplication);
         if (updateShareWithAllChildren) {
             try {
-
                 IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
                 setShareWithAllChildrenProperty(rootApplication, shareWithAllChildren);
                 getApplicationManagementService().updateApplication(rootApplication,
@@ -1028,11 +1027,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
         SharingModeDO sharingModeDO = null;
         if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
-            sharingModeDO = resolveSharingMode(mainOrganizationId, mainOrganizationId, mainApplicationId,
-                    mainApplicationId, mainOrgHandle);
-            if (sharingModeDO != null) {
-                includedAttributesList.remove(SP_SHARED_SHARING_MODE_INCLUDED_KEY);
-            }
+            sharingModeDO = resolveGeneralSharingMode(mainOrganizationId, mainApplicationId, mainOrgHandle);
         }
         for (SharedApplicationDO sharedApplicationDO : sharedApplications) {
             applicationSharedOrganizationsList.add(getApplicationSharedOrganizationNode(sharedApplicationDO,
@@ -1131,30 +1126,29 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 mainApplicationId, mainOrgId, childOrgIds);
         boolean hasChildren = CollectionUtils.isNotEmpty(childSharedApplications);
         String organizationStatus = organization.getStatus();
-        String organizationHandle = organization.getOrganizationHandle();
         String parentOrganizationId = organization.getParent().getId();
         int depthFromRoot = getOrganizationManager().getOrganizationDepthInHierarchy(subOrgId);
         SharingModeDO sharingModeDO = null;
         if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
-            sharingModeDO = resolveSharingMode(mainOrgId, subOrgId, mainApplicationId, sharedAppResourceId,
+            sharingModeDO = resolveOrganizationSharingMode(mainOrgId, subOrgId, mainApplicationId, sharedAppResourceId,
                     subOrgHandle);
         }
         if (!excludedAttributesList.contains(SP_SHARED_ROLE_EXCLUDED_KEY)) {
             List<RoleWithAudienceDO> sharedAppRoles = getSharedAppRoles(mainOrgHandle, mainApplicationId, subOrgId,
                     sharedApplicationDO.getFragmentApplicationId());
             return new SharedApplicationOrganizationNode(sharedAppResourceId, subOrgId, subOrgName, organizationStatus,
-                    parentOrganizationId, organizationHandle, sharedAppRoles, hasChildren, depthFromRoot,
+                    parentOrganizationId, subOrgHandle, sharedAppRoles, hasChildren, depthFromRoot,
                     sharingModeDO);
         }
         // If roles are excluded, we do not need to fetch roles and returning null so it will differentiate
         // not having any roles and not need to fetch roles.
         return new SharedApplicationOrganizationNode(sharedAppResourceId, subOrgId, subOrgName, organizationStatus,
-                parentOrganizationId, organizationHandle, null, hasChildren, depthFromRoot,
+                parentOrganizationId, subOrgHandle, null, hasChildren, depthFromRoot,
                 sharingModeDO);
     }
 
-    private SharingModeDO resolveSharingMode(String initiatingOrgId, String orgId, String mainAppId, String appId,
-                                             String orgHandle) throws OrganizationManagementException {
+    private SharingModeDO resolveGeneralSharingMode(String initiatingOrgId, String mainAppId, String mainOrgHandle)
+            throws OrganizationManagementException {
 
         try {
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result = getResourceSharingPolicyHandlerService()
@@ -1167,56 +1161,24 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 List<SharedResourceAttribute> resourceAttributes = entry.getValue();
 
                 ServiceProvider application = getApplicationManagementService()
-                        .getApplicationByResourceId(appId, orgHandle);
-                boolean isPolicyHolderOrg = Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), orgId);
+                        .getApplicationByResourceId(mainAppId, mainOrgHandle);
 
-                if ((resourceSharingPolicy.getSharingPolicy()
-                        == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg)
-                        || (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
-                                && isPolicyHolderOrg)
+                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
                         || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
 
                     ApplicationShareRolePolicy.Mode mode =
                             OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
 
-                    ApplicationShareRolePolicy applicationShareRolePolicy;
+                    ApplicationShareRolePolicy.Builder applicationShareRolePolicy
+                            = new ApplicationShareRolePolicy.Builder().mode(mode);
                     if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == mode.ordinal()) {
-                        List<RoleWithAudienceDO> roleWithAudienceDOList = new ArrayList<>();
-
-                        if (resourceAttributes != null && resourceAttributes.get(0) != null) {
-                            String roleAudience = getApplicationManagementService()
-                                    .getAllowedAudienceForRoleAssociation(appId, orgHandle);
-                            RoleWithAudienceDO.AudienceType audienceType =
-                                    StringUtils.equalsIgnoreCase(RoleConstants.APPLICATION, roleAudience)
-                                            ? RoleWithAudienceDO.AudienceType.APPLICATION
-                                            : RoleWithAudienceDO.AudienceType.ORGANIZATION;
-
-                            for (SharedResourceAttribute attribute : resourceAttributes) {
-                                if (attribute.getSharedAttributeType() == SharedAttributeType.ROLE) {
-                                    try {
-                                        Role role = getRoleManagementServiceV2()
-                                                .getRole(attribute.getSharedAttributeId());
-                                        if (role != null) {
-                                            roleWithAudienceDOList.add(new RoleWithAudienceDO(
-                                                    role.getName(), role.getAudienceName(), audienceType));
-                                        }
-                                    } catch (IdentityRoleManagementException e) {
-                                        LOG.error("Failed to retrieve role for shared attribute ID: "
-                                                + attribute.getSharedAttributeId(), e);
-                                    }
-                                }
-                            }
-                        }
-                        applicationShareRolePolicy = new ApplicationShareRolePolicy.Builder()
-                                .mode(mode)
-                                .roleWithAudienceDOList(roleWithAudienceDOList)
-                                .build();
-                    } else {
-                        applicationShareRolePolicy = new ApplicationShareRolePolicy.Builder()
-                                .mode(mode)
-                                .build();
+                        applicationShareRolePolicy = applicationShareRolePolicy.roleWithAudienceDOList(
+                                extractRolesWithAudience(resourceAttributes, mainAppId, mainOrgHandle));
                     }
-                    return new SharingModeDO(resourceSharingPolicy.getSharingPolicy(), applicationShareRolePolicy);
+                    return new SharingModeDO.Builder()
+                            .policy(resourceSharingPolicy.getSharingPolicy())
+                            .applicationShareRolePolicy(applicationShareRolePolicy.build())
+                            .build();
                 }
             }
         } catch (ResourceSharingPolicyMgtException e) {
@@ -1225,6 +1187,81 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
         }
         return null;
+    }
+
+    private SharingModeDO resolveOrganizationSharingMode(String initiatingOrgId, String subOrgId, String mainAppId,
+                                                         String sharedAppId, String subOrgHandle)
+            throws OrganizationManagementException {
+
+        try {
+            ServiceProvider application = getApplicationManagementService()
+                    .getApplicationByResourceId(sharedAppId, subOrgHandle);
+            ApplicationShareRolePolicy.Mode mode = OrgApplicationManagerUtil
+                    .getAppAssociatedRoleSharingMode(application);
+            ApplicationShareRolePolicy.Builder roleSharingConfigBuilder = new ApplicationShareRolePolicy.Builder()
+                    .mode(mode);
+            SharingModeDO.Builder sharingModeDO = new SharingModeDO.Builder();
+
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result = getResourceSharingPolicyHandlerService()
+                    .getResourceSharingPolicyByInitiatingOrgId(initiatingOrgId, B2B_APPLICATION, mainAppId);
+
+            if (result != null && !result.isEmpty()) {
+                Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry
+                        = result.entrySet().iterator().next();
+                ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                List<SharedResourceAttribute> resourceAttributes = entry.getValue();
+                boolean isPolicyHolderOrg = Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId);
+
+                if (resourceSharingPolicy.getSharingPolicy()
+                        == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg) {
+
+                    sharingModeDO.policy(resourceSharingPolicy.getSharingPolicy());
+                    if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == mode.ordinal()) {
+                        roleSharingConfigBuilder = roleSharingConfigBuilder.roleWithAudienceDOList(
+                                extractRolesWithAudience(resourceAttributes, sharedAppId, subOrgHandle));
+                    }
+                }
+            }
+            sharingModeDO.applicationShareRolePolicy(roleSharingConfigBuilder.build());
+            return sharingModeDO.build();
+        } catch (ResourceSharingPolicyMgtException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        } catch (IdentityApplicationManagementException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        }
+    }
+
+    private List<RoleWithAudienceDO> extractRolesWithAudience(List<SharedResourceAttribute> resourceAttributes,
+                                                              String appId, String orgHandle)
+            throws IdentityApplicationManagementException {
+
+        List<RoleWithAudienceDO> roleWithAudienceDO = new ArrayList<>();
+
+        if (resourceAttributes != null && !resourceAttributes.isEmpty() && resourceAttributes.get(0) != null) {
+            String roleAudience = getApplicationManagementService()
+                    .getAllowedAudienceForRoleAssociation(appId, orgHandle);
+
+            RoleWithAudienceDO.AudienceType audienceType =
+                    StringUtils.equalsIgnoreCase(RoleConstants.APPLICATION, roleAudience)
+                            ? RoleWithAudienceDO.AudienceType.APPLICATION
+                            : RoleWithAudienceDO.AudienceType.ORGANIZATION;
+
+            for (SharedResourceAttribute attribute : resourceAttributes) {
+                if (attribute.getSharedAttributeType() == SharedAttributeType.ROLE) {
+                    try {
+                        Role role = getRoleManagementServiceV2().getRole(attribute.getSharedAttributeId());
+                        if (role != null) {
+                            roleWithAudienceDO.add(new RoleWithAudienceDO(
+                                    role.getName(), role.getAudienceName(), audienceType));
+                        }
+                    } catch (IdentityRoleManagementException e) {
+                        LOG.error("Failed to retrieve role for shared attribute ID: "
+                                + attribute.getSharedAttributeId(), e);
+                    }
+                }
+            }
+        }
+        return roleWithAudienceDO;
     }
 
     private List<RoleWithAudienceDO> getSharedAppRoles(String mainOrgName, String mainApplicationId, String subOrgId,

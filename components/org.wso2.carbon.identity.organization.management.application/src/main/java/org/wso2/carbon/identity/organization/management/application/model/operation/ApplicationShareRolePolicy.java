@@ -88,12 +88,6 @@ public class ApplicationShareRolePolicy {
             if (mode == null) {
                 throw new IllegalStateException("Role sharing mode must be set.");
             }
-            if (mode.ordinal() == Mode.SELECTED.ordinal() && (roleWithAudienceDOList == null)) {
-                throw new IllegalStateException("roleWithAudienceDOList must be set when mode is SELECTED.");
-            }
-            if (mode.ordinal() != Mode.SELECTED.ordinal() && roleWithAudienceDOList != null) {
-                throw new IllegalStateException("roleWithAudienceDOList should only be set when mode is SELECTED.");
-            }
             return new ApplicationShareRolePolicy(mode, roleWithAudienceDOList);
         }
     }
