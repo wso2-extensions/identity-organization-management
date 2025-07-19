@@ -207,6 +207,7 @@ public class ResourceSharingSQLConstants {
 
         public static final String JOIN_COLUMN_UM_ID_OF_UM_RESOURCE_SHARING_POLICY_TABLE = "POLICY_ID";
         public static final String JOIN_COLUMN_UM_ID_OF_UM_SHARED_RESOURCE_ATTRIBUTES_TABLE = "ATTRIBUTE_ID";
+
         private SQLPlaceholders() {
 
         }

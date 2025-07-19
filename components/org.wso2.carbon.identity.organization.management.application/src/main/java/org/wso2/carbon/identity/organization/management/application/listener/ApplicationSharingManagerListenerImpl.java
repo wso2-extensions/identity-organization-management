@@ -66,6 +66,7 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
 
     /**
      * Pre listener of sharing an application.
+     *
      * @param mainApplicationId This will be the main application id that resides in the root organization.
      * @param sharedOrganizationId This will be the sub-organization id which the application will be shared to.
      * @param applicationShareRolePolicy This will be the role sharing configuration (How the roles are shared).

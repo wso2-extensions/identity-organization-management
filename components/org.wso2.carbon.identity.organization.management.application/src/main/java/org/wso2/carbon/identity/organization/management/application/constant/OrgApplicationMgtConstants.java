@@ -47,18 +47,10 @@ public class OrgApplicationMgtConstants {
 
     public static final String SP_SHARED_ROLE_EXCLUDED_KEY = "roles";
     public static final String SP_SHARED_SHARING_MODE_INCLUDED_KEY = "sharingMode";
-    public static final Set<String> SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES;
-    public static final Set<String> SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES;
-    static {
-        Set<String> tempSet = new HashSet<>();
-        tempSet.add(SP_SHARED_ROLE_EXCLUDED_KEY);
-        SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES = Collections.unmodifiableSet(tempSet);
-    }
-    static {
-        Set<String> tempSet = new HashSet<>();
-        tempSet.add(SP_SHARED_SHARING_MODE_INCLUDED_KEY);
-        SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES = Collections.unmodifiableSet(tempSet);
-    }
+    public static final Set<String> SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES =
+            Collections.unmodifiableSet(new HashSet<>(Collections.singleton(SP_SHARED_ROLE_EXCLUDED_KEY)));
+    public static final Set<String> SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES =
+            Collections.unmodifiableSet(new HashSet<>(Collections.singleton(SP_SHARED_SHARING_MODE_INCLUDED_KEY)));
 
     public static final String TENANT = "TENANT";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
@@ -164,49 +156,42 @@ public class OrgApplicationMgtConstants {
             return value;
         }
     }
-    private static final String ORGANIZATION_APPLICATION_MANAGEMENT_ERROR_CODE_PREFIX = "ORGAPPMGT";
+
+    private static final String ORGANIZATION_APPLICATION_MANAGEMENT_ERROR_CODE_PREFIX = "OAM-";
 
     /**
      * Error messages related to organization application management.
      */
     public enum ErrorMessages {
 
-        ERROR_CODE_INVALID_FILTER_VALUE("60005", "Unable to retrieve app shared organizations.",
-                "Invalid filter value used for filtering."),
-        ERROR_CODE_ERROR_RETRIEVING_SHARED_APP("60006", "Unable to retrieve shared applications.",
-                "Error occurred while retrieving shared applications."),
-        ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ROLES("60007", "Unable to retrieve shared app roles.",
-                "Error occurred while retrieving shared app roles."),
-        ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER("60008",
-                "Invalid organization path filter.",
-                "The organization path filter is invalid. It should be in the format " +
+        ERROR_CODE_INVALID_FILTER_VALUE("60001", "Unable to retrieve app-shared organizations.",
+                "An invalid filter value was used for filtering."),
+        ERROR_CODE_INVALID_ORGANIZATION_PATH_FILTER("60002", "Invalid organization path filter.",
+                "The organization path filter is invalid. It should be in the format: " +
                         "'organizations[orgId eq \"<orgIdValue>\"].roles'."),
-        ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY("60009",
-                "Invalid organization hierarchy.", "The provided organization hierarchy is" +
-                " invalid. Ensure that the organization IDs are valid and provided a correct hierarchy. Cannot " +
-                "have child organizations without a parent organization in the list"),
-        ERROR_CODE_INVALID_SHARING_ORG_ID("60010",
-                "Invalid sharing organization ID.",
-                "Organization id is not provided or invalid. Ensure that the organization ID is valid."),
-        ERROR_CODE_INVALID_SELECTIVE_SHARING_POLICY("60011",
-                "Empty or invalid sharing policy.", "Provided sharing policy is empty or " +
-                "invalid. Ensure that the sharing policy is " + PolicyEnum.SELECTED_ORG_ONLY.getValue() + " or " +
-                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN.getValue() + "."),
-        ERROR_CODE_INVALID_ORGANIZATION_SHARE_CONFIGURATION("60012",
+        ERROR_CODE_INVALID_SHARING_ORG_ID("60003", "Invalid sharing organization ID.",
+                "The organization ID is either missing or invalid. " +
+                        "Please ensure a valid organization ID is provided."),
+        ERROR_CODE_INVALID_SELECTIVE_SHARING_POLICY("60004", "Invalid or empty sharing policy.",
+                "The provided sharing policy is empty or invalid. Ensure that the policy is either " +
+                        PolicyEnum.SELECTED_ORG_ONLY.getValue() + " or " +
+                        PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN.getValue() + "."),
+        ERROR_CODE_INVALID_ORGANIZATION_SHARE_CONFIGURATION("60005",
                 "Invalid organization share configuration.",
-                "Organization share configuration is invalid. Ensure that the organization share configuration is " +
-                        "valid and provided a correct hierarchy."),
-        ERROR_CODE_INVALID_ROLE_SHARING_MODE("60013",
-                "Invalid role sharing mode.",
-                "Role sharing mode is invalid. Ensure that the role sharing policy is " +
-                        "either ALL, NONE or SELECTED."),
-        ERROR_CODE_INVALID_ROLE_SHARING_OPERATION("60014",
-                "Invalid role sharing operation.",
-                "Role sharing operation is invalid. Ensure that the role sharing operation is provided with valid " +
-                        "role sharing mode and role with audience list.");
+                "The organization share configuration is invalid. " +
+                        "Please ensure a valid configuration with the correct hierarchy."),
+        ERROR_CODE_INVALID_ROLE_SHARING_MODE("60006", "Invalid role sharing mode.",
+                "The role sharing mode is invalid. " +
+                        "Ensure that it is set to one of the following: ALL, NONE, or SELECTED."),
+        ERROR_CODE_INVALID_ROLE_SHARING_OPERATION("60007", "Invalid role sharing operation.",
+                "The role sharing operation is invalid. " +
+                        "Ensure that a valid role sharing mode is specified, along with roles and the audience list."),
 
-
-
+        // Server errors.
+        ERROR_CODE_ERROR_RETRIEVING_SHARED_APP("65001", "Unable to retrieve shared applications.",
+                "An error occurred while retrieving shared applications."),
+        ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ROLES("65002", "Unable to retrieve shared app roles.",
+                "An error occurred while retrieving shared application roles.");
 
         private final String code;
         private final String message;

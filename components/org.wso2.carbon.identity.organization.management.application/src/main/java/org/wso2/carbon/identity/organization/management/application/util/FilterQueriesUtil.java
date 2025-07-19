@@ -201,7 +201,5 @@ public class FilterQueriesUtil {
         filterQueryBuilder.setFilterAttributeValue(FILTER_PLACEHOLDER_PREFIX, value);
     }
 
-    private FilterQueriesUtil() {
-        // To hide the public constructor.
-    }
+    private FilterQueriesUtil() {}
 }

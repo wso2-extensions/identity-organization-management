@@ -182,8 +182,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                             sharedOrganizationId, roleChanges);
                 } else if (ApplicationShareUpdateOperation.Operation.REMOVE.ordinal() == operation.ordinal()) {
                     throw new IdentityEventException(
-                            String.format("Removing roles from shared application %s is not supported.",
-                                    sharedApplicationId));
+                            String.format("Removing Organization audience roles from shared applications " +
+                                            "is not supported."));
                 } else {
                     throw new IdentityEventException(
                             String.format("Invalid operation type %s.", operation));
@@ -210,7 +210,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         Organization subOrg = getOrganization(sharedAppOrgId, false);
         String parentOrgId = subOrg.getParent().getId();
         String mainAppTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
-        // Here from the caller of this function validate that this is definitely an organization audience. So we
+        // Here the caller of this function validate that this is definitely an organization audience. So we
         // don't need to check for the audience type validations.
         List<RoleV2> associatedRolesOfMainApplication =
                             getApplicationMgtService().getAssociatedRolesOfApplication(
@@ -226,7 +226,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         Map<String, String> mainOrgToParentOrgRoleAssociations = getRoleManagementServiceV2()
                 .getMainRoleToSharedRoleMappingsBySubOrg(mainRolesIds, parentOrgTenantDomain);
         List<RoleV2> filteredRolesToBeShared = new ArrayList<>();
-        // Get the subOrg Details.
 
         if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == sharingConfig.getMode().ordinal()) {
             List<RoleWithAudienceDO> roleWithAudienceDOList =
@@ -259,7 +258,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 }
             }
         } else {
-            // Assuming ALL org roles needs to be shared.
             for (RoleV2 mainOrgAppRole : associatedRolesOfMainApplication) {
                 if (mainOrganizationId.equals(parentOrgId)) {
                     filteredRolesToBeShared.add(mainOrgAppRole);
@@ -279,7 +277,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             filteredRolesToBeAdded.add(role);
         }
         createSharedRolesWithOrgAudience(filteredRolesToBeAdded, mainAppTenantDomain, sharedAppOrgId);
-        // Returning the List of added roles. This share all the main roles (Newly added and already existing).
         return filteredRolesToBeAdded.stream()
                 .map(RoleV2::getId)
                 .collect(Collectors.toList());
@@ -381,18 +378,18 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
         for (RoleWithAudienceDO criterion : selectionCriteria) {
             if (!RoleConstants.APPLICATION.equals(criterion.getAudienceType().toString())) {
-                continue; // Only consider APPLICATION type criteria for app roles
+                continue;
             }
             boolean roleAvailableInMainOrg = false;
             for (RoleBasicInfo mainOrgAppRole : allMainOrgAppRoles) {
                 if (mainOrgAppRole.getName().equals(criterion.getRoleName()) &&
                         mainOrgAppRole.getAudienceName().equals(criterion.getAudienceName())) {
-                    // Add the role from the main org, not the criterion
+                    // Add the role from the main organization, not the criterion.
                     if (filteredMainOrgAppRoles.stream().noneMatch(r -> r.getId().equals(mainOrgAppRole.getId()))) {
                         filteredMainOrgAppRoles.add(mainOrgAppRole);
                     }
                     roleAvailableInMainOrg = true;
-                    break; // Found a match for this criterion in mainOrgAppRoles
+                    break;
                 }
             }
             if (!roleAvailableInMainOrg) {
@@ -419,8 +416,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
      * @throws OrganizationManagementException If an error occurs during organization management operations.
      */
     private List<RoleBasicInfo> filterAppRolesByParentOrgAssociation(List<RoleBasicInfo> appRolesFromMainOrg,
-                                                                     String mainOrganizationId,
-                                                                     Organization subOrg)
+                                                                     String mainOrganizationId, Organization subOrg)
             throws IdentityRoleManagementException, OrganizationManagementException {
 
         if (appRolesFromMainOrg.isEmpty()) {
@@ -429,7 +425,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
         String subOrgParentId = subOrg.getParent().getId();
         if (mainOrganizationId.equals(subOrgParentId)) {
-            return new ArrayList<>(appRolesFromMainOrg); // Direct child, no further filtering needed
+            // This is a direct child organization, no further filtering needed.
+            return new ArrayList<>(appRolesFromMainOrg);
         }
 
         String parentOrgTenantDomain = resolveTenantDomain(subOrgParentId);
@@ -491,7 +488,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
             getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(roleToBeShared.getId(),
                     subOrgRole.getId(), mainTenantDomain, sharedAppTenantDomain);
-            successfullyProvisionedOrExistingRoles.add(subOrgRole); // Add the newly created role.
+            successfullyProvisionedOrExistingRoles.add(subOrgRole);
         }
     }
 
@@ -537,7 +534,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         if (ApplicationShareRolePolicy.Mode.NONE.ordinal() == currentConfig.getMode().ordinal()) {
             // Mode is NONE: remove all previously shared roles for this app.
             if (!alreadySharedSubOrgAppRoles.isEmpty()) {
-                LOG.info("Role sharing mode is NONE. Removing all " + alreadySharedSubOrgAppRoles.size() +
+                LOG.warn("Role sharing mode is NONE. Removing all " + alreadySharedSubOrgAppRoles.size() +
                         " previously shared roles for app " + sharedAppId + " in org " + sharedOrganizationId);
                 for (RoleBasicInfo alreadySharedRole : alreadySharedSubOrgAppRoles) {
                     getRoleManagementServiceV2().deleteRole(alreadySharedRole.getId(), sharedAppTenantDomain);
@@ -554,7 +551,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     currentConfig.getRoleWithAudienceDOList());
             filteredRolesToBeShared = filterAppRolesByParentOrgAssociation(selectedMainRoles, mainOrganizationId,
                     subOrg);
-        } else { // Mode is ALL (or default).
+        } else {
             filteredRolesToBeShared = filterAppRolesByParentOrgAssociation(allMainOrgAppRoles, mainOrganizationId,
                     subOrg);
         }
@@ -566,7 +563,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             provisionOrVerifyApplicationRolesInSharedOrg(filteredRolesToBeShared, mainTenantDomain, sharedAppId,
                     sharedAppTenantDomain, provisionedOrExistingSharedRoles);
         }
-
         // Remove roles from sub-org that are no longer meant to be shared based on the current configuration.
         for (RoleBasicInfo alreadySharedRoleInSubOrg : alreadySharedSubOrgAppRoles) {
             boolean shouldRoleBeKept = false;
@@ -586,13 +582,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             }
 
             if (!shouldRoleBeKept) {
-                LOG.info("Deleting stale role '" + alreadySharedRoleInSubOrg.getName() + "' (ID: " +
+                LOG.warn("Deleting stale role '" + alreadySharedRoleInSubOrg.getName() + "' (ID: " +
                         alreadySharedRoleInSubOrg.getId() + ") from shared app " + sharedAppId + " in org " +
                         sharedOrganizationId);
                 getRoleManagementServiceV2().deleteRole(alreadySharedRoleInSubOrg.getId(), sharedAppTenantDomain);
             }
         }
-        // Return IDs of roles that passed all filters and were intended for sharing.
         return filteredRolesToBeShared.stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
     }
 
@@ -708,7 +703,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             sharedServiceProvider = getApplicationManagementService().getApplicationByResourceId(sharedAppId,
                     sharedAppTenantDomain);
         } catch (IdentityApplicationManagementException e) {
-            // Matches original exception type for this specific path
             throw new IdentityRoleManagementClientException("Error while getting the application by resource id: " +
                     sharedAppId, e);
         }
@@ -724,16 +718,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
 
         if (rolesToBeRemoved == null || rolesToBeRemoved.isEmpty()) {
-            LOG.info("No roles specified for removal from shared app " + sharedAppId);
+            LOG.warn("No roles specified for removal from shared app " + sharedAppId);
             return;
         }
-
         Organization subOrg = getOrganization(sharedOrganizationId, true);
-
-        // Delete from the current shared app
         deleteSharedAppRolesInternal(sharedAppTenantDomain, sharedAppId, rolesToBeRemoved);
 
-        // Delete from child organizations
         List<ChildOrganizationDO> childOrganizations = subOrg.getChildOrganizations();
         if (childOrganizations != null) {
             for (ChildOrganizationDO childOrganization : childOrganizations) {
@@ -747,7 +737,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                     LOG.error("Error removing roles from child organization " + childOrgId + " for app " +
                             sharedAppId, e);
-                    // Decide if to continue or rethrow, original seems to continue
                 }
             }
         }
@@ -764,6 +753,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private void deleteSharedAppRolesInternal(String tenantDomain, String applicationResourceId,
                                               List<RoleWithAudienceDO> rolesToDelete)
             throws IdentityRoleManagementException {
+
         if (rolesToDelete == null || rolesToDelete.isEmpty()) {
             return;
         }
@@ -781,20 +771,19 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 continue;
             }
             for (RoleBasicInfo existingRole : existingAppRoles) {
-                // Original comparison logic:
                 boolean isRoleNameEqual = existingRole.getName().equals(roleCriterion.getRoleName());
                 // In this context, existingRole.getAudienceName() IS applicationResourceId.
                 // So, roleCriterion.getAudienceName() must also be applicationResourceId for this to match.
                 // This implies the RoleWithAudienceDO for deletion is constructed with audienceName = sharedAppId.
                 boolean isAudienceNameEqual = existingRole.getAudienceName().equals(roleCriterion.getAudienceName());
 
-                if (isRoleNameEqual && isAudienceNameEqual) { // AudienceType already checked for criterion.
+                if (isRoleNameEqual && isAudienceNameEqual) {
                     getRoleManagementServiceV2().deleteRole(existingRole.getId(), tenantDomain);
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Deleted role '" + existingRole.getName() + "' (ID: " + existingRole.getId() +
                                 ") from app " + applicationResourceId + " in tenant " + tenantDomain);
                     }
-                    break; // Move to the next roleCriterion.
+                    break;
                 }
             }
         }
@@ -842,7 +831,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
 
         if (newRoles == null || newRoles.isEmpty()) {
-            LOG.info("No new org roles provided to add to shared app " + sharedAppId);
+            LOG.warn("No new org roles provided to add to shared app " + sharedAppId);
             return;
         }
 
@@ -865,7 +854,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Role '" + roleCriterion.getRoleName() + "' is not an ORGANIZATION type. Skipping.");
                 }
-                continue; // Only consider ORGANIZATION audience types for org roles.
+                continue;
             }
             Optional<RoleV2> mainOrgRoleOpt = associatedRolesOfMainApplication.stream()
                     .filter(roleInfo -> roleInfo.getName().equals(roleCriterion.getRoleName()))
@@ -883,7 +872,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
 
         if (orgRolesToShareCandidates.isEmpty()) {
-            LOG.info("No org roles from newRoles were found in the main application's associated roles. " +
+            LOG.warn("No org roles from newRoles were found in the main application's associated roles. " +
                     "Nothing to share.");
             return;
         }
@@ -893,10 +882,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         List<RoleV2> filteredRolesToBeShared = new ArrayList<>();
 
         if (mainOrganizationId.equals(parentOrgId)) {
-            // Main org is direct parent, all candidates can be shared (if they are org roles)
+            // Main organization is a direct parent, all candidates can be shared (if they are org roles).
             filteredRolesToBeShared.addAll(orgRolesToShareCandidates);
         } else {
-            // Filter by parent organization association
             String parentOrgTenantDomain = resolveTenantDomain(parentOrgId);
             List<String> candidateMainRoleIds = orgRolesToShareCandidates.stream()
                     .map(RoleV2::getId)
@@ -921,16 +909,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         }
 
         if (filteredRolesToBeShared.isEmpty()) {
-            LOG.info("After all filtering, no org roles are left to be shared with app " + sharedAppId + " in org " +
+            LOG.warn("After all filtering, no org roles are left to be shared with app " + sharedAppId + " in org " +
                     sharedOrganizationId);
             return;
         }
-
-        // Create the org-audience roles in the shared org.
-        // This method is assumed to handle the logic of creating roles with ORGANISATION audience
-        // and relating them correctly. The original code did not show its implementation.
         createSharedRolesWithOrgAudience(filteredRolesToBeShared, mainAppTenantDomain, sharedOrganizationId);
-        LOG.info("Successfully processed sharing of " + filteredRolesToBeShared.size() + " org roles for app " +
+        LOG.warn("Successfully processed sharing of " + filteredRolesToBeShared.size() + " org roles for app " +
                 sharedAppId);
     }
 
@@ -965,7 +949,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                 String shareAppTenantDomain =
                                         getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
 
-                                // Checking if the Role Sharing Mode is ALL.
                                 ServiceProvider sharedServiceProvider = getApplicationManagementService()
                                         .getApplicationByResourceId(sharedApplicationId, shareAppTenantDomain);
                                 ServiceProviderProperty[] spProperties = sharedServiceProvider.getSpProperties();
@@ -1029,7 +1012,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
                     List<BasicOrganization> applicationSharedOrganizations = new ArrayList<>();
                     for (String applicationId : applicationIdList) {
-                        // Checking if the Role Sharing Mode is ALL.
                         String shareAppTenantDomain = getOrganizationManager().resolveTenantDomain(roleOrgId);
                         ServiceProvider sharedServiceProvider = getApplicationManagementService()
                                 .getApplicationByResourceId(applicationId, shareAppTenantDomain);
@@ -1064,8 +1046,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                         }
 
                     }
-
-                    // Iterate through the list of organizations
                     for (BasicOrganization organization : applicationSharedOrganizations) {
                         String shareAppTenantDomain =
                                 getOrganizationManager().resolveTenantDomain(organization.getId());
@@ -1091,10 +1071,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                         mainRoleUUID, "Role conflict"));
                                 LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                             }
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug(String.format("Organization %s has a non shared role with name %s, ",
-                                        organization.getId(), mainRoleName));
-                            }
+                            LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
+                                    organization.getId(), mainRoleName));
                         }
                     }
                     break;

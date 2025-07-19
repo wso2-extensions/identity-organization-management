@@ -339,7 +339,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         }
         String sqlStmt = sqlStmtHead + sqlStmtTail;
         List<SharedApplicationDO> sharedApplicationDOList = new ArrayList<>();
-        // Use try-with-resources for Connection, NamedPreparedStatement, and ResultSet
+
         try (Connection dbConnection = IdentityDatabaseUtil.getDBConnection(false);
              NamedPreparedStatement namedPreparedStatement = new NamedPreparedStatement(dbConnection, sqlStmt)) {
 
@@ -354,7 +354,6 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                 namedPreparedStatement.setString(SHARED_ORG_ID_PLACEHOLDER_PREFIX + i, sharedOrgIds.get(i));
             }
 
-            // ResultSet is now declared in the try-with-resources statement
             try (ResultSet rs = namedPreparedStatement.executeQuery()) {
                 while (rs.next()) {
                     SharedApplicationDO sharedApplicationDO = new SharedApplicationDO(
@@ -366,9 +365,9 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw handleServerException(
-                    ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainApplicationId, ownerOrgId); //
+                    ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainApplicationId, ownerOrgId);
         }
-        return sharedApplicationDOList; //
+        return sharedApplicationDOList;
     }
 
     @Override

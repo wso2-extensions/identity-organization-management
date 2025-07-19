@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao;
 
-import jdk.internal.net.http.common.Pair;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.NamedPreparedStatement;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
@@ -465,7 +464,8 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
 
     @Override
     public Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
-    getResourceSharingPolicyByInitiatingOrgId(String initiatingOrganizationId, String resourceType, String resourceId)
+    getResourceSharingPolicyAndAttributesByInitiatingOrgId(String initiatingOrganizationId, String resourceType,
+                                                           String resourceId)
             throws ResourceSharingPolicyMgtServerException {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();

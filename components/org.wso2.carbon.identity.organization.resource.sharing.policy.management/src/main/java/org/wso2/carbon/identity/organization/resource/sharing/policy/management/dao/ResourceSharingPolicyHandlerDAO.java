@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -342,8 +342,9 @@ public interface ResourceSharingPolicyHandlerDAO {
      * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing
      *                                           policies or shared attributes.
      */
-    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>> getResourceSharingPolicyByInitiatingOrgId(
-            String initiatingOrganizationId, String resourceType, String resourceId)
+    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
+    getResourceSharingPolicyAndAttributesByInitiatingOrgId(String initiatingOrganizationId, String resourceType,
+                                                           String resourceId)
             throws ResourceSharingPolicyMgtException {
 
         throw new NotImplementedException(
@@ -358,7 +359,7 @@ public interface ResourceSharingPolicyHandlerDAO {
      *                                      Must not be {@code null} or empty.
      * @param resourceType                  The type of the resource being shared. Must not be {@code null}.
      * @return A list of {@link ResourceSharingPolicy} objects for the specified organization IDs.
-     * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policies.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the sharing policies.
      */
     default List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(
             List<String> policyHoldingOrganizationIds, String resourceType)

@@ -328,7 +328,8 @@ public interface ResourceSharingPolicyHandlerService {
      *                                           policies or shared attributes.
      */
     default Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
-    getResourceSharingPolicyByInitiatingOrgId(String initiatingOrganizationId, String resourceType, String resourceId)
+    getResourceSharingPolicyAndAttributesByInitiatingOrgId(String initiatingOrganizationId, String resourceType,
+                                                           String resourceId)
             throws ResourceSharingPolicyMgtException {
 
         throw new NotImplementedException(

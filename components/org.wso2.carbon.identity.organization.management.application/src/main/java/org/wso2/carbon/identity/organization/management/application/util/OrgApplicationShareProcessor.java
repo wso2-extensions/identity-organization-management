@@ -70,7 +70,7 @@ public class OrgApplicationShareProcessor {
             List<OrganizationNode> children = current.getChildren();
             if (children != null) {
                 for (OrganizationNode child : children) {
-                    // Check if already processed to handle potential cycles (though unlikely in org structure)
+                    // Check if already processed to handle potential cycles (though unlikely in org structure).
                     if (!info.allNodesById.containsKey(child.getId())) {
                         info.allNodesById.put(child.getId(), child);
                         info.bfsOrder.add(child.getId());
@@ -97,7 +97,7 @@ public class OrgApplicationShareProcessor {
 
         while (!queue.isEmpty()) {
             OrganizationNode current = queue.poll();
-            if (current != null && descendants.add(current.getId())) { // Add returns true if not already present
+            if (current != null && descendants.add(current.getId())) {
                 List<OrganizationNode> children = current.getChildren();
                 if (children != null) {
                     queue.addAll(children);

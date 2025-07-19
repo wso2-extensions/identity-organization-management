@@ -152,7 +152,6 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ROLES;
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_SHARE_CONFIGURATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ROLE_SHARING_OPERATION;
@@ -227,6 +226,10 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
+    private static final String PARENT_APP_ID = "parentAppId";
+    private static final String SHARED_TENANT_DOMAINS = "sharedTenantDomains";
+    private static final String ACTION_PROCESSING_SHARE_APP = "processing-share-application-with-selected-orgs";
+
     private static final Log LOG = LogFactory.getLog(OrgApplicationManagerImpl.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
@@ -291,8 +294,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, ownerTenantDomain);
 
-        // Prevent sharing if the application is already a shared (fragment) app.
-        if (isAlreadySharedApplication(mainApplication)) {
+        // Prevent sharing if the application is a shared (fragment) app.
+        if (isSharedApplication(mainApplication)) {
             throw handleClientException(ERROR_CODE_BLOCK_SHARING_SHARED_APP, mainApplicationId);
         }
 
@@ -301,7 +304,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return;
         }
 
-        // Get all child organizations of the owner and create a lookup map for faster access.
+        // Get all child organizations of the owner organization and create a lookup map for faster access.
         List<OrganizationNode> childOrganizationGraph = getOrganizationManager().getChildOrganizationGraph(
                 mainOrganizationId, true);
 
@@ -311,7 +314,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return;
         }
 
-        // Filter only valid child org configs that exist in the owner's child orgs using the map (O(1) lookups).
+        // Filter only valid child org configs that exist in the owner's child organizations.
         List<SelectiveShareApplicationOperation> filteredChildOrgConfigs = selectiveShareApplicationList.stream()
                 .filter(config -> {
                     String organizationId = config.getOrganizationId();
@@ -327,17 +330,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return;
         }
 
-        // Process and sort organization shares.
-        // Here we arrange the organizations in a way that the parent organizations are shared first,
-        // followed by their child organizations, ensuring that the sharing hierarchy is maintained.
-        // This is done to ensure that the sharing is done in a way that respects the organization hierarchy.
-        List<SelectiveShareApplicationOperation> orgsThatNeedToBeShared = processAndSortOrganizationShares(
+        /*
+         * Process and sort organization shares.
+         *
+         * Organizations are arranged so that parent organizations are processed before their
+         * corresponding child organizations. This ordering ensures that application sharing
+         * follows the correct hierarchical structure and respects the organization hierarchy.
+         */
+        List<SelectiveShareApplicationOperation> selectiveShareApplicationOperations = processAndSortOrganizationShares(
                 childOrganizationGraph, filteredChildOrgConfigs);
-        if (CollectionUtils.isEmpty(orgsThatNeedToBeShared)) {
-            throw new OrganizationManagementClientException(ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getMessage(),
-                    ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getDescription(),
-                    ERROR_CODE_INVALID_ORGANIZATION_HIERARCHY.getCode());
-        }
 
         // If there are valid orgs to share with, update the root application with the org login IDP.
         modifyRootApplication(mainApplication, ownerTenantDomain);
@@ -349,7 +350,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         List<String> orgIdsToShare = new ArrayList<>();
         // Share the application with each valid child organization as per the config.
-        for (SelectiveShareApplicationOperation selectiveShareApplication : orgsThatNeedToBeShared) {
+        for (SelectiveShareApplicationOperation selectiveShareApplication : selectiveShareApplicationOperations) {
             String childOrgId = selectiveShareApplication.getOrganizationId();
             if (StringUtils.isBlank(childOrgId)) {
                 throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, mainApplicationId);
@@ -394,8 +395,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
                     getInitiatorId(username, ownerTenantDomain),  LoggerUtils.Target.User.name(),
-                    getAppId(mainApplication), LoggerUtils.Target.Application.name(),
-                    "processing-share-application-with-selected-orgs")
+                    getAppId(mainApplication), LoggerUtils.Target.Application.name(), ACTION_PROCESSING_SHARE_APP)
                     .data(buildShareAppAuditData(mainApplicationId, orgIdsToShare));
             triggerAuditLogEvent(auditLogBuilder, true);
         }
@@ -404,8 +404,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private Map<String, String> buildShareAppAuditData(String mainApplicationId, List<String> sharedTenantDomainList) {
 
         Map<String, String> auditData = new HashMap<>();
-        auditData.put("parentAppId", mainApplicationId);
-        auditData.put("sharedTenantDomains", sharedTenantDomainList.toString());
+        auditData.put(PARENT_APP_ID, mainApplicationId);
+        auditData.put(SHARED_TENANT_DOMAINS, sharedTenantDomainList.toString());
         return auditData;
     }
 
@@ -442,7 +442,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, ownerTenantDomain);
 
         // Prevent sharing if the application is already a shared (fragment) app.
-        if (isAlreadySharedApplication(mainApplication)) {
+        if (isSharedApplication(mainApplication)) {
             throw handleClientException(ERROR_CODE_BLOCK_SHARING_SHARED_APP, mainApplicationId);
         }
 
@@ -459,7 +459,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
         }
 
-        // Get all child organizations of the owner and create a lookup map for faster access.
+        // Get all child organizations of the owner organization and create a lookup map for faster access.
         List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(mainOrganizationId,
                 true);
         if (childOrganizations.isEmpty()) {
@@ -486,10 +486,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         List<String> orgIdsToShare = new ArrayList<>();
         // Share the application with each valid child organization as per the config.
         for (String childOrgId : allOrganizationIdsInBfsOrder) {
-            if (StringUtils.isBlank(childOrgId)) {
-                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION, mainApplicationId);
-            }
-
             Organization sharingChildOrg = getOrganizationManager().getOrganization(childOrgId, false, false);
             // Only share with organizations of type TENANT.
             if (TENANT.equalsIgnoreCase(sharingChildOrg.getType())) {
@@ -581,8 +577,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (TENANT.equalsIgnoreCase(organization.getType())) {
                 Map<ApplicationShareUpdateOperation.Operation, List<RoleWithAudienceDO>> operationListMap =
                         organizationIdToOperationMap.get(sharedOrganizationId);
-                for (ApplicationShareUpdateOperation.Operation operation : operationListMap.keySet()) {
-                    List<RoleWithAudienceDO> roleList = operationListMap.get(operation);
+                for (Map.Entry<ApplicationShareUpdateOperation.Operation, List<RoleWithAudienceDO>> entry :
+                        operationListMap.entrySet()) {
+                    ApplicationShareUpdateOperation.Operation operation = entry.getKey();
+                    List<RoleWithAudienceDO> roleList = entry.getValue();
                     CompletableFuture.runAsync(() -> {
                         try {
                             updateRolesOfSharedApplication(mainApplication, mainOrganizationId, sharedOrganizationId,
@@ -825,11 +823,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         revokeSharedAppAccessTokens(mainOrgId, applicationId, sharedOrganizationId);
         deleteSharedApplication(sharedOrganizationId, sharedApplicationId);
 
-        // Only fetch shared organizations if we need to update the shared property.
-        List<BasicOrganization> applicationSharedOrganizations =
-                getApplicationSharedOrganizations(mainOrgId, applicationId);
-
-        if (applicationSharedOrganizations == null || applicationSharedOrganizations.isEmpty()) {
+        if (!hasSharedApps(applicationId)) {
             // Mark as non-shared only if there are no shared organizations.
             setIsAppSharedProperty(mainApplication, false);
             try {
@@ -959,12 +953,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         getListener().preGetApplicationSharedOrganizations(mainOrganizationId, mainApplicationId);
         List<SharedApplicationOrganizationNode> applicationSharedOrganizationsList = new ArrayList<>();
 
-        // Build the Expression node list with filter, next and previous.
-
         String sortOrder = beforeCursor != 0 ? ASC_SORT_ORDER : DESC_SORT_ORDER;
         List<ExpressionNode> expressionNodeList = getExpressionNodes(filter, afterCursor, beforeCursor);
 
-        // Extract organization filter from the expression node.
         String parentOrgId = null;
         Optional<String> optionalParentOrgId = removeAndGetOrganizationIdFromTheExpressionNodeList(expressionNodeList);
         if (optionalParentOrgId.isPresent()) {
@@ -979,13 +970,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         if (StringUtils.isBlank(parentOrgId)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Parent organization ID is not provided. Fetching all shared organizations.");
-            }
+            LOG.debug("Parent organization ID is not provided. Fetching all shared organizations.");
             parentOrgId = mainOrganizationId;
         }
 
-        // Get organization IDs to filter.
         List<String> organizationIds;
         if (StringUtils.isNotBlank(parentOrgId)) {
             organizationIds = getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive);
@@ -994,8 +982,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         // Fetch one more item than requested to determine if there are more items.
-        int fetchLimit = limit == 0 ? limit : limit + 1; // Limit == 0 means no limit has been set. So we should get
-        // all items.
+        // Limit == 0 means no limit has been set. So we should get all items.
+        int fetchLimit = limit == 0 ? limit : limit + 1;
         List<SharedApplicationDO> sharedApplications = getOrgApplicationMgtDAO().getSharedApplications(
                 mainOrganizationId, mainApplicationId, organizationIds, expressionNodeList, sortOrder, fetchLimit);
 
@@ -1003,12 +991,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return new SharedApplicationOrganizationNodePage(Collections.emptyList(), null, 0, 0);
         }
 
-        // Check if we have more items than requested.
         boolean hasMoreItems = sharedApplications.size() > limit;
         if (limit == 0) {
-            hasMoreItems = false; // If no limit is set, we assume no pagination.
+            // If no limit is set, we assume no pagination.
+            hasMoreItems = false;
         }
-
 
         // If we have more items, remove the extra one from the list.
         if (hasMoreItems) {
@@ -1020,8 +1007,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (needsReverse) {
             Collections.reverse(sharedApplications);
         }
-
-        // Convert the DO objects to organization nodes.
         List<String> excludedAttributesList = getExcludedAttributes(excludedAttributes);
         List<String> includedAttributesList = getIncludedAttributes(attributes);
         String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
@@ -1061,45 +1046,39 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     private List<String> getExcludedAttributes(String excludedAttributes) {
+
         if (StringUtils.isBlank(excludedAttributes)) {
             return Collections.emptyList();
         }
-
         return stream(excludedAttributes.split(","))
                 .map(String::trim)
                 .peek(attribute -> {
                     if (StringUtils.isBlank(attribute)) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Empty or blank attribute found in excluded attributes list.");
-                        }
+                        LOG.debug("Empty or blank attribute found in excluded attributes list.");
                     } else if (!SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES.contains(attribute)) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Unsupported attribute found in excluded attributes: " + attribute);
                         }
                     }
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
     }
 
     private List<String> getIncludedAttributes(String attributes) {
+
         if (StringUtils.isBlank(attributes)) {
             return Collections.emptyList();
         }
-
         return stream(attributes.split(","))
                 .map(String::trim)
                 .peek(attribute -> {
                     if (StringUtils.isBlank(attribute)) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Empty or blank attribute found in included attributes list.");
-                        }
+                        LOG.debug("Empty or blank attribute found in included attributes list.");
                     } else if (!SP_SHARED_SUPPORTED_INCLUDED_ATTRIBUTES.contains(attribute)) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Unsupported attribute found in included attributes: " + attribute);
                         }
                     }
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
     }
 
     private SharedApplicationOrganizationNode getApplicationSharedOrganizationNode(
@@ -1107,32 +1086,36 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             List<String> excludedAttributesList, List<String> includedAttributesList)
             throws OrganizationManagementException {
 
-        // 1. Get the organization ID and the name.
-        // 2. Get All children of the organization.
-        // If it has children, check if any of child has a shared application.
-        // Resolve has children with above information
-        // 3. Get the role sharing config.
-        // 4. Get the depth from root.
+        // 1. Get the sub organization ID and the handle.
         String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrgId);
         String subOrgId = sharedApplicationDO.getOrganizationId();
         String subOrgHandle = getOrganizationManager().resolveTenantDomain(subOrgId);
         String sharedAppResourceId = sharedApplicationDO.getFragmentApplicationId();
         Organization organization = getOrganizationManager().getOrganization(subOrgId, true, false);
         String subOrgName = organization.getName();
+
+        // 2. Get all children of the sub organization.
         List<ChildOrganizationDO> childOrganizations = organization.getChildOrganizations();
         List<String> childOrgIds = childOrganizations.stream()
                 .map(ChildOrganizationDO::getId).collect(Collectors.toList());
+
+        // If it has children, check if any child has a shared application.
         List<SharedApplicationDO> childSharedApplications = getOrgApplicationMgtDAO().getSharedApplications(
                 mainApplicationId, mainOrgId, childOrgIds);
         boolean hasChildren = CollectionUtils.isNotEmpty(childSharedApplications);
         String organizationStatus = organization.getStatus();
         String parentOrganizationId = organization.getParent().getId();
+
+        // 4. Get the depth from root.
         int depthFromRoot = getOrganizationManager().getOrganizationDepthInHierarchy(subOrgId);
+
+        // 5. Get the role sharing config.
         SharingModeDO sharingModeDO = null;
         if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
-            sharingModeDO = resolveOrganizationSharingMode(mainOrgId, subOrgId, mainApplicationId, sharedAppResourceId,
-                    subOrgHandle);
+            sharingModeDO = resolveOrganizationSharingMode(mainOrgId, subOrgId, mainApplicationId,
+                    sharedAppResourceId, subOrgHandle);
         }
+
         if (!excludedAttributesList.contains(SP_SHARED_ROLE_EXCLUDED_KEY)) {
             List<RoleWithAudienceDO> sharedAppRoles = getSharedAppRoles(mainOrgHandle, mainApplicationId, subOrgId,
                     sharedApplicationDO.getFragmentApplicationId());
@@ -1151,8 +1134,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         try {
-            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result = getResourceSharingPolicyHandlerService()
-                            .getResourceSharingPolicyByInitiatingOrgId(initiatingOrgId, B2B_APPLICATION, mainAppId);
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
+                    = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
+                            initiatingOrgId, B2B_APPLICATION, mainAppId);
 
             if (result != null && !result.isEmpty()) {
                 Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry
@@ -1202,8 +1186,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     .mode(mode);
             SharingModeDO.Builder sharingModeDO = new SharingModeDO.Builder();
 
-            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result = getResourceSharingPolicyHandlerService()
-                    .getResourceSharingPolicyByInitiatingOrgId(initiatingOrgId, B2B_APPLICATION, mainAppId);
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
+                    = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
+                            initiatingOrgId, B2B_APPLICATION, mainAppId);
 
             if (result != null && !result.isEmpty()) {
                 Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry
@@ -1647,10 +1632,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e, mainApplicationId, sharingOrgId);
             }
 
-            Optional<String> mayBeSharedAppId = resolveSharedApp(mainApplicationId, ownerOrgId, sharingOrgId);
+            Optional<String> sharedAppId = resolveSharedApp(mainApplicationId, ownerOrgId, sharingOrgId);
             String sharedApplicationId;
             // Create the OAuth app and the service provider only if the app hasn't been created.
-            if (!mayBeSharedAppId.isPresent()) {
+            if (!sharedAppId.isPresent()) {
                 // Check if the application is shared to the parentOrg.
                 String parentOrgId = getOrganizationManager().getOrganization(sharingOrgId, false, false).getParent()
                         .getId();
@@ -1703,7 +1688,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             } else {
                 try {
                     // The app is already shared, but the config needs to be updated.
-                    sharedApplicationId = mayBeSharedAppId.get();
+                    sharedApplicationId = sharedAppId.get();
                     ServiceProvider sharedServiceProvider = getApplicationManagementService()
                             .getApplicationByResourceId(sharedApplicationId, sharedTenantDomain);
                     // Add the role sharing config to the shared application.
@@ -2234,7 +2219,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private boolean isAlreadySharedApplication(ServiceProvider serviceProvider) {
+    private boolean isSharedApplication(ServiceProvider serviceProvider) {
 
         return serviceProvider.getSpProperties() != null && stream(serviceProvider.getSpProperties())
                 .anyMatch(property -> IS_FRAGMENT_APP.equals(property.getName()) &&

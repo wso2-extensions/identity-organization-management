@@ -269,11 +269,12 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
     }
 
     @Override
-    public Map<ResourceSharingPolicy, List<SharedResourceAttribute>> getResourceSharingPolicyByInitiatingOrgId(
-            String initiatingOrganizationId, String resourceType, String resourceId)
+    public Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
+    getResourceSharingPolicyAndAttributesByInitiatingOrgId(String initiatingOrganizationId, String resourceType,
+                                                           String resourceId)
             throws ResourceSharingPolicyMgtException {
 
-        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyByInitiatingOrgId(
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyAndAttributesByInitiatingOrgId(
                 initiatingOrganizationId, resourceType, resourceId);
     }
 

@@ -256,8 +256,7 @@ public class SharedRoleMgtHandlerTest {
         Map<String, String> roleMappings = new HashMap<>();
         roleMappings.put("app-role1-id", "parent-shared-role-id");
         when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
-                Collections.singletonList("app-role1-id"), PARENT_ORG_TENANT_DOMAIN))
-                .thenReturn(roleMappings);
+                Collections.singletonList("app-role1-id"), PARENT_ORG_TENANT_DOMAIN)).thenReturn(roleMappings);
 
         when(mockedRoleManagementService.isExistingRoleName(anyString(), eq(RoleConstants.APPLICATION),
                 eq(SHARED_ORG_APP_ID), eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(false); // Role does not exist yet
@@ -278,8 +277,6 @@ public class SharedRoleMgtHandlerTest {
                 anyList(), eq(RoleConstants.APPLICATION), eq(SHARED_ORG_APP_ID), eq(SHARED_ORG_TENANT_DOMAIN));
         verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
                 eq("app-role1-id"), eq("shared-role1-id"), eq(MAIN_ORG_TENANT_DOMAIN), eq(SHARED_ORG_TENANT_DOMAIN));
-        verify(mockedResourceSharingPolicyHandlerService, times(1)).addSharedResourceAttributes(
-                anyList());
     }
 
     @Test
@@ -555,8 +552,8 @@ public class SharedRoleMgtHandlerTest {
     /**
      * Test for attempting to remove organization-scoped roles from a shared application, which is not supported.
      */
-    @Test(expectedExceptions = IdentityEventException.class,
-          expectedExceptionsMessageRegExp = ".*Removing roles from shared application.*is not supported.*")
+    @Test(expectedExceptions = IdentityEventException.class, expectedExceptionsMessageRegExp
+            = ".*Removing Organization audience roles from shared applications is not supported.*")
     public void testRemoveOrgRolesFromSharedApplication() throws Exception {
 
         // Create an event for removing org roles from a shared application - this should fail.

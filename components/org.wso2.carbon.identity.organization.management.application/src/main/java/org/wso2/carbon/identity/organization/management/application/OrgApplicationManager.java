@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -67,16 +67,13 @@ public interface OrgApplicationManager {
      * - Configure roles that are shared with the organizations.
      * - Automatically enforces parent-child inheritance rules.
      *
-     * @param mainOrganizationId The ID of the organization that owns the application
-     * @param mainApplicationId The ID of the application to be shared
-     * @param selectiveShareApplicationList List of organizations to share with, including their policies and roles.
-     *                                      Important: You must include the complete organization hierarchy in this
-     *                                      list. For example, to share with organization A.1.1, you must include
-     *                                      both A.1 and A.1.1 in the list (order doesn't matter).
-     * @throws OrganizationManagementException If any error occurs during the sharing process
+     * @param mainOrganizationId                The ID of the organization that owns the application
+     * @param mainApplicationId                 The ID of the application to be shared
+     * @param selectiveShareApplicationList     List of organizations to share with, including their policies and roles.
+     * @throws OrganizationManagementException  If any error occurs during the sharing process
      */
     default void shareApplicationWithSelectedOrganizations(String mainOrganizationId, String mainApplicationId,
-                                                       List<SelectiveShareApplicationOperation>
+                                                           List<SelectiveShareApplicationOperation>
                                                                selectiveShareApplicationList)
             throws OrganizationManagementException {
 
@@ -90,17 +87,17 @@ public interface OrgApplicationManager {
      * This method allows you to share an application with all child organizations of the main organization.
      * and configure how roles should be applied universally to these organizations.
      *
-     * @param mainOrganizationId ID of the organization that owns the application.
-     * @param mainApplicationId ID of the application to be shared.
-     * @param generalApplicationShare Contains the sharing policy and role configuration that will be
-     *                               applied to all child organizations. Available policies:
-     *                               - `ALL_EXISTING_ORGS_ONLY` - Share with existing child organizations only.
-     *                               - `ALL_EXISTING_AND_FUTURE_ORGS` - Share with all existing and future child
-     *                                organizations.
+     * @param mainOrganizationId        ID of the organization that owns the application.
+     * @param mainApplicationId         ID of the application to be shared.
+     * @param generalApplicationShare   Contains the sharing policy and role configuration that will be
+     *                                  applied to all child organizations. Available policies:
+     *                                  - `ALL_EXISTING_ORGS_ONLY` - Share with existing child organizations only.
+     *                                  - `ALL_EXISTING_AND_FUTURE_ORGS` - Share with all existing and future child
+     *                                     organizations.
      * @throws OrganizationManagementException If the sharing operation fails.
      */
     default void shareApplicationWithAllOrganizations(String mainOrganizationId, String mainApplicationId,
-                                                     GeneralApplicationShareOperation generalApplicationShare)
+                                                      GeneralApplicationShareOperation generalApplicationShare)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(
@@ -114,13 +111,13 @@ public interface OrgApplicationManager {
      * the sharing to child organizations, even if a future-sharing policy is specified.
      * <p>
      * When to use this method:
-     * - Use this method ONLY for single organization sharing with a specific policy
-     * - For sharing with multiple organizations: use {@link #shareApplicationWithSelectedOrganizations}
-     * - For sharing with all children: use {@link #shareApplicationWithAllOrganizations}
+     * - Use this method ONLY for single organization sharing with a specific policy.
+     * - For sharing with multiple organizations: use {@link #shareApplicationWithSelectedOrganizations}.
+     * - For sharing with all children: use {@link #shareApplicationWithAllOrganizations}.
      * <p>
      * Hierarchical requirements:
-     * - The application must already be shared with the parent organization
-     * - The shared roles must be available in the parent organization
+     * - The application must already be shared with the parent organization.
+     * - The shared roles must be available in the parent organization.
      *
      * @param ownerOrgId                 The organization ID that owns the application.
      * @param mainApplication            The application to be shared.
@@ -151,8 +148,8 @@ public interface OrgApplicationManager {
      *   for an already-shared application
      * <p>
      * Hierarchical requirements:
-     * - The application must already be shared with the target organization
-     * - Roles involved in the policy must be valid and resolvable within the owner's tenant domain
+     * - The application must already be shared with the target organization.
+     * - Roles involved in the policy must be valid and resolvable within the owner's tenant domain.
      *
      * @param mainApplicationId            The ID of the main application being shared.
      * @param requestInitiatingOrgId       The ID of the organization initiating the policy update.
@@ -189,8 +186,8 @@ public interface OrgApplicationManager {
     /**
      * Un-share the application from all organizations.
      *
-     * @param mainOrganizationId     ID of the organization owning the primary application.
-     * @param mainApplicationId ID of the primary application.
+     * @param mainOrganizationId    ID of the organization owning the primary application.
+     * @param mainApplicationId     ID of the primary application.
      * @throws OrganizationManagementException on errors when un-sharing the application.
      */
     default void unshareAllApplicationFromAllOrganizations(String mainOrganizationId, String mainApplicationId)
@@ -256,7 +253,7 @@ public interface OrgApplicationManager {
      *                           filtering by organization id and parent organization id.
      *                           Ex: `id eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5` or
      *                           `parentId eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5`
-     * @param beforeCursor        (Optional) The before cursor to get the previous page of results. This should
+     * @param beforeCursor       (Optional) The before cursor to get the previous page of results. This should
      *                           be the shared application id. NOTE: We always prioritize the before token over the
      *                           after cursor. Value cannot be 0.
      * @param afterCursor        (Optional) The after cursor to get the next page of results. This should be a shared
@@ -270,7 +267,7 @@ public interface OrgApplicationManager {
      * @param recursive          (Optional) If true, it will return the shared organizations recursively. If false,
      *                           it will return only the immediate child organizations of the main organization.
      * @return A page of shared application organization nodes. It contains the shared application details along
-     * with the next and previous cursor values
+     * with the next and previous cursor values.
      * @throws OrganizationManagementException on errors occurred while retrieving the list of shared organizations.
      */
     default SharedApplicationOrganizationNodePage getApplicationSharedOrganizations(String mainOrganizationId,
