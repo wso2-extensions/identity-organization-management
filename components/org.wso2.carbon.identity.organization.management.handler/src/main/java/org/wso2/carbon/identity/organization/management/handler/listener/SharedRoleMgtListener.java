@@ -398,18 +398,16 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                  This is considered as a conflict of roles. Hence, we are logging the conflict and move forward
                  with other roles.
                 */
-                if (LoggerUtils.isEnableV2AuditLogs()) {
-                    String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                    String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                            getTenantDomain();
-                    AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                            IdentityUtil.getInitiatorId(username, tenantDomain),
-                            LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
-                            LogConstants.UserManagement.ADD_ROLE_ACTION)
-                            .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain),
-                                    null, sharedAppOrgId, role.getName(), role.getId(), "Role conflict"));
-                    LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                }
+                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                        getTenantDomain();
+                AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                        IdentityUtil.getInitiatorId(username, tenantDomain),
+                        LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
+                        LogConstants.UserManagement.ADD_ROLE_ACTION)
+                        .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain),
+                                null, sharedAppOrgId, role.getName(), role.getId(), "Role conflict"));
+                LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                 LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
                         sharedAppOrgId, role.getName()));
             } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {

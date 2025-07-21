@@ -1059,18 +1059,16 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                             getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
                                     sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
                         } else {
-                            if (LoggerUtils.isEnableV2AuditLogs()) {
-                                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                                String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                                        getTenantDomain();
-                                AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                                        IdentityUtil.getInitiatorId(username, tenantDomain),
-                                        LoggerUtils.Target.User.name(), mainRoleName, LoggerUtils.Target.Role.name(),
-                                        LogConstants.UserManagement.ADD_ROLE_ACTION)
-                                        .data(buildAuditData(roleOrgId, null, organization.getId(), mainRoleName,
-                                        mainRoleUUID, "Role conflict"));
-                                LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                            }
+                            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                            String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                                    getTenantDomain();
+                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                    IdentityUtil.getInitiatorId(username, tenantDomain),
+                                    LoggerUtils.Target.User.name(), mainRoleName, LoggerUtils.Target.Role.name(),
+                                    LogConstants.UserManagement.ADD_ROLE_ACTION)
+                                    .data(buildAuditData(roleOrgId, null, organization.getId(), mainRoleName,
+                                    mainRoleUUID, "Role conflict"));
+                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                             LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
                                     organization.getId(), mainRoleName));
                         }
@@ -1116,18 +1114,16 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                         // If the role exists in the shared org, but the relationship does not exist then this role is
                         // created directly in the sub organization level. So this is a conflict to share the role
                         // with same name and organization audience to the sub organization.
-                        if (LoggerUtils.isEnableV2AuditLogs()) {
-                            String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                            String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                                    getTenantDomain();
-                            AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                                    IdentityUtil.getInitiatorId(username, tenantDomain),
-                                    LoggerUtils.Target.User.name(), roleV2.getName(), LoggerUtils.Target.Role.name(),
-                                    LogConstants.ApplicationManagement.CREATE_APPLICATION_ACTION).
-                                    data(buildAuditData(parentOrganizationId, parentApplicationId,
-                                            sharedOrganizationId, roleV2.getName(), roleV2.getId(), "Role conflict"));
-                            LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                        }
+                        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                                getTenantDomain();
+                        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                                IdentityUtil.getInitiatorId(username, tenantDomain),
+                                LoggerUtils.Target.User.name(), roleV2.getName(), LoggerUtils.Target.Role.name(),
+                                LogConstants.ApplicationManagement.CREATE_APPLICATION_ACTION).
+                                data(buildAuditData(parentOrganizationId, parentApplicationId,
+                                        sharedOrganizationId, roleV2.getName(), roleV2.getId(), "Role conflict"));
+                        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                         throw new IdentityEventException(String.format("Organization %s has a non shared role with " +
                                 "name %s, ", sharedOrganizationId, roleV2.getName()));
                     }

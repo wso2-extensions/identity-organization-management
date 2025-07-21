@@ -46,6 +46,7 @@ import java.util.UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.IS_AGENT_SHARING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PRIMARY_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PROCESS_ADD_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
@@ -271,6 +272,10 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
             int tenantId = IdentityTenantUtil.getTenantId(suborgTenantDomain);
             String domain = IdentityUtil.getProperty("OrganizationUserInvitation.PrimaryUserDomain");
+            boolean isAgentSharing = (boolean) IdentityUtil.threadLocalProperties.get().get(IS_AGENT_SHARING);
+            if (isAgentSharing) {
+                domain = IdentityUtil.getAgentIdentityUserstoreName();
+            }
             userStoreManager = getAbstractUserStoreManager(tenantId);
 
             if (PRIMARY_DOMAIN.equalsIgnoreCase(domain)) {
