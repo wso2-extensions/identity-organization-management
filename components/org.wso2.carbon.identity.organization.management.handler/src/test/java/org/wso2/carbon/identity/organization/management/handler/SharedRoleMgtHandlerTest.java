@@ -608,7 +608,7 @@ public class SharedRoleMgtHandlerTest {
     private Event createUpdateRolesOfSharedApplicationEvent(
             ApplicationShareUpdateOperation.Operation operation, List<RoleWithAudienceDO> roles) {
 
-        Event event = new Event(OrgApplicationMgtConstants.EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION);
+        Event event = new Event(OrgApplicationMgtConstants.POST_UPDATE_ROLES_OF_SHARED_APPLICATION);
         event.addEventProperty(EVENT_PROP_MAIN_ORGANIZATION_ID, MAIN_ORG_ID);
         event.addEventProperty(EVENT_PROP_MAIN_APPLICATION_ID, MAIN_APP_ID);
         event.addEventProperty(EVENT_PROP_SHARED_ORGANIZATION_ID, SHARED_ORG_ID);

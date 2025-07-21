@@ -204,10 +204,12 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_DELETE_SHARE_REQUEST;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_SHARE_OPERATION_TYPE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_APPLICATION_SHARE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNAUTHORIZED_FRAGMENT_APP_ACCESS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_SHARE_OPERATION_PATH;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ATTRIBUTES_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ATTRIBUTES_FIELD_PREFIX;
@@ -548,14 +550,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             ApplicationShareUpdateOperation.Operation operation = updateOperation.getOperation();
             if (!(ApplicationShareUpdateOperation.Operation.ADD.ordinal() == operation.ordinal() ||
                     ApplicationShareUpdateOperation.Operation.REMOVE.ordinal() == operation.ordinal())) {
-                LOG.warn("Invalid operation type: " + operation);
-                continue;
+                throw handleClientException(ERROR_CODE_INVALID_SHARE_OPERATION_TYPE, operation.name());
             }
             OrgApplicationScimFilterParser.ParsedFilterResult parsedFilterResult = parseFilter(
                     updateOperation.getPath());
             if (!parsedFilterResult.hasPathAttribute()) {
-                LOG.warn("Unsupported path attribute: " + updateOperation.getPath());
-                continue;
+                throw handleClientException(ERROR_CODE_UNSUPPORTED_SHARE_OPERATION_PATH, updateOperation.getPath());
             }
             String orgId = parsedFilterResult.getOrganizationId();
             List<RoleWithAudienceDO> roleChanges = (List<RoleWithAudienceDO>) updateOperation.getValues();
@@ -1596,11 +1596,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                            String operationId) throws OrganizationManagementException {
 
         String mainApplicationId = mainApplication.getApplicationResourceId();
-        if (StringUtils.equals(ownerOrgId, sharingOrgId)) {
-            LOG.error("Application: " + mainApplicationId + " can't be shared with the same organization: "
-                    + ownerOrgId);
-            return;
-        }
         try {
             getListener().preShareApplication(ownerOrgId, mainApplicationId, sharingOrgId, applicationShareRolePolicy);
             // Use tenant of the organization to whom the application getting shared. When the consumer application is
@@ -1780,12 +1775,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             List<RoleBasicInfo> allMainOrgAppRoles = getApplicationRoles(mainApplicationId, ownerTenantDomain);
             List<String> addedRoles;
             if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == applicationShareRolePolicy.getMode().ordinal()) {
-                Set<String> selectedRoleNames = applicationShareRolePolicy.getRoleWithAudienceDOList()
+                Set<String> selectedRoleAudiencePairs = applicationShareRolePolicy.getRoleWithAudienceDOList()
                         .stream()
-                        .map(RoleWithAudienceDO::getRoleName)
+                        .map(dao -> dao.getRoleName() + "|" + dao.getAudienceName())
                         .collect(Collectors.toSet());
                 addedRoles = allMainOrgAppRoles.stream()
-                        .filter(role -> selectedRoleNames.contains(role.getName()))
+                        .filter(role -> selectedRoleAudiencePairs
+                                .contains(role.getName() + "|" + role.getAudienceName()))
                         .map(RoleBasicInfo::getId)
                         .collect(Collectors.toList());
             } else {

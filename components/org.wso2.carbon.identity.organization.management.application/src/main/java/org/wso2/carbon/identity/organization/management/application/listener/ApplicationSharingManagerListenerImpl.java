@@ -143,7 +143,7 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_ORGANIZATION_ID, sharedOrganizationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_AUDIENCES, roleChanges);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_UPDATE_OPERATION, operation);
-        fireEvent(OrgApplicationMgtConstants.EVENT_PRE_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
+        fireEvent(OrgApplicationMgtConstants.PRE_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class ApplicationSharingManagerListenerImpl implements ApplicationSharing
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_SHARED_APPLICATION_ID, sharedApplicationId);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_ROLE_AUDIENCES, roleChanges);
         eventProperties.put(OrgApplicationMgtConstants.EVENT_PROP_UPDATE_OPERATION, operation);
-        fireEvent(OrgApplicationMgtConstants.EVENT_POST_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
+        fireEvent(OrgApplicationMgtConstants.POST_UPDATE_ROLES_OF_SHARED_APPLICATION, eventProperties);
     }
 
     @Override

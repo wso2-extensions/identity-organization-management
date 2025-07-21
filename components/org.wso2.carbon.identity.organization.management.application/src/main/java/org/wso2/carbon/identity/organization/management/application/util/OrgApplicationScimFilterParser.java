@@ -81,24 +81,26 @@ public class OrgApplicationScimFilterParser {
     }
 
     // Regex to strictly match the desired filter format:
-    // organizations[orgId eq "<orgIdValue>"]
+    // organizations[orgId eq <orgIdValue>]
     // or
-    // organizations[orgId eq "<orgIdValue>"].roles
+    // organizations[orgId eq <orgIdValue>].roles
+    //
     // Breakdown:
-    // ^                                      - Start of the string
-    // organizations                          - Literal "organizations"
-    // \[                                     - Literal opening square bracket
-    // orgId                                  - Literal "orgId"
-    // \s+eq\s+                               - "eq" operator surrounded by one or more spaces
-    // \"([^\"]+)\"                           - Quoted organization ID. Group 1 captures the ID itself (without quotes).
-    //                                          [^\"]+ matches one or more characters that are not a double quote.
-    // \]                                     - Literal closing square bracket
-    // (                                      - Start of optional group for the path
-    //   \.roles                              - Literal ".roles"
-    // )?                                     - Makes the entire path group optional. Group 2 captures ".roles".
-    // $                                      - End of the string
+    // ^                                         - Start of the string
+    // organizations                             - Literal "organizations"
+    // \[                                        - Literal opening square bracket
+    // orgId                                     - Literal "orgId"
+    // \s+eq\s+                                  - "eq" operator surrounded by one or more spaces
+    // (?:                                       - Start of non-capturing group for quoted or unquoted value
+    //   "([^\"]+)"                              - Group 1: quoted orgId (excluding quotes)
+    //   |                                       - OR
+    //   ([^\s\]]+)                              - Group 2: unquoted orgId (up to space or closing bracket)
+    // )
+    // \]                                        - Literal closing square bracket
+    // (\.roles)?                                - Optional ".roles" segment; Group 3 captures ".roles" if present
+    // $                                         - End of the string
     private static final Pattern FILTER_PATTERN =
-            Pattern.compile("^organizations\\[orgId\\s+eq\\s+\"([^\"]+)\"\\](\\.roles)?$");
+            Pattern.compile("^organizations\\[orgId\\s+eq\\s+(?:\"([^\"]+)\"|([^\\s\\]]+))\\](\\.roles)?$");
 
     /**
      * Parses the given SCIM-like filter string to extract the organization ID and
@@ -122,8 +124,8 @@ public class OrgApplicationScimFilterParser {
         }
         Matcher matcher = FILTER_PATTERN.matcher(filterString);
         if (matcher.matches()) {
-            String organizationId = matcher.group(1); // Extract the orgId from the first capturing group.
-            String fullPathWithDot = matcher.group(2);   // Extract the optional ".roles" part (Group 2).
+            String organizationId = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            String fullPathWithDot = matcher.group(3);
             String pathAttribute = null;
             if (fullPathWithDot != null) {
                 // If group 2 matched, it means ".roles" was present.

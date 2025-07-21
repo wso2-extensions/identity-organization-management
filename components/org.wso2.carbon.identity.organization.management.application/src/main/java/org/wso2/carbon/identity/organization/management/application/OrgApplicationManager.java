@@ -197,7 +197,6 @@ public interface OrgApplicationManager {
                 "unshareAllApplications method is not implemented in " + this.getClass().getName());
     }
 
-
     /**
      * Update the shared application with the given update operations.
      * As of now, this method supports updating the roles of the shared application.
