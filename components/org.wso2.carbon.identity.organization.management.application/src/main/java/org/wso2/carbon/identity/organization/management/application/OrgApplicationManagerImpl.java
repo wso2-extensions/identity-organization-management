@@ -453,7 +453,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 generalApplicationShare.getPolicy(), generalApplicationShare.getRoleSharing());
 
         // Add the role sharing config to the main application.
-        setAppAssociatedRoleSharingMode(mainApplication, generalApplicationShare.getRoleSharing().getMode());
+        ApplicationShareRolePolicy.Mode roleSharingMode =  generalApplicationShare.getRoleSharing().getMode();
+        setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
+        if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
+            setShareWithAllChildrenProperty(mainApplication, true);
+        }
         try {
             getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
                     getAuthenticatedUsername());
