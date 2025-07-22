@@ -201,6 +201,8 @@
                             org.wso2.carbon;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.sharing.policy.management.model;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception;

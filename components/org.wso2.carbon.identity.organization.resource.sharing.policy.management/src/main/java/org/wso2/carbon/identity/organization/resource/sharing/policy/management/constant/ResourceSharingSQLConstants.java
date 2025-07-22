@@ -45,6 +45,9 @@ public class ResourceSharingSQLConstants {
             "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID," +
                     " UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY WHERE UM_POLICY_HOLDING_ORG_ID IN ";
 
+    // SQL tail for resource type filter.
+    public static final String RESOURCE_TYPE_FILTER = " AND UM_RESOURCE_TYPE = ?";
+
     public static final String GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD =
             "SELECT rsp.UM_POLICY_HOLDING_ORG_ID, " +
                     "rsp.UM_ID AS " +
@@ -58,6 +61,21 @@ public class ResourceSharingSQLConstants {
                     "UM_RESOURCE_SHARING_POLICY rsp LEFT JOIN UM_SHARED_RESOURCE_ATTRIBUTES attr " +
                     "ON rsp.UM_ID = attr.UM_RESOURCE_SHARING_POLICY_ID " +
                     "WHERE rsp.UM_POLICY_HOLDING_ORG_ID IN (%s)";
+
+    public static final String GET_RESOURCE_SHARING_POLICIES_WITH_INITIATING_ORG_ID =
+            "SELECT rsp.UM_POLICY_HOLDING_ORG_ID, " +
+                    "rsp.UM_ID AS " +
+                    SQLPlaceholders.JOIN_COLUMN_UM_ID_OF_UM_RESOURCE_SHARING_POLICY_TABLE + ", " +
+                    "rsp.UM_RESOURCE_ID, rsp.UM_RESOURCE_TYPE, rsp.UM_INITIATING_ORG_ID, " +
+                    "rsp.UM_POLICY_HOLDING_ORG_ID, rsp.UM_SHARING_POLICY, " +
+                    "attr.UM_ID AS " + SQLPlaceholders.JOIN_COLUMN_UM_ID_OF_UM_SHARED_RESOURCE_ATTRIBUTES_TABLE + ", " +
+                    "attr.UM_RESOURCE_SHARING_POLICY_ID, attr.UM_SHARED_ATTRIBUTE_TYPE, attr.UM_SHARED_ATTRIBUTE_ID " +
+                    "FROM " +
+                    "UM_RESOURCE_SHARING_POLICY rsp LEFT JOIN UM_SHARED_RESOURCE_ATTRIBUTES attr " +
+                    "ON rsp.UM_ID = attr.UM_RESOURCE_SHARING_POLICY_ID " +
+                    "WHERE rsp.UM_INITIATING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID
+                    + "; AND rsp.UM_RESOURCE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE +
+                    "; AND rsp.UM_RESOURCE_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + ";";
 
     // SQL for deleting resource sharing policy.
     public static final String DELETE_RESOURCE_SHARING_POLICY =

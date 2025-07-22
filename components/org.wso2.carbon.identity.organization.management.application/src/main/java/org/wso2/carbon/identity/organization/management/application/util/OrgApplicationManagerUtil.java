@@ -30,7 +30,10 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
+import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
@@ -41,6 +44,7 @@ import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_SSO_IDP_IMAGE_URL;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.IS_SYSTEM_RESERVED_IDP_DISPLAY_NAME;
@@ -88,6 +92,67 @@ public class OrgApplicationManagerUtil {
 
             serviceProvider.setSpProperties(newSpProperties);
         }
+    }
+
+    /**
+     * Checks whether the application is configured to be shared with all child organizations.
+     *
+     * @param properties The array of service provider properties.
+     * @return true if SHARE_WITH_ALL_CHILDREN property is set to true, false otherwise.
+     */
+    public static boolean isShareWithAllChildren(ServiceProviderProperty[] properties) {
+
+        if (properties == null) {
+            return false;
+        }
+        return Arrays.stream(properties).anyMatch(property -> SHARE_WITH_ALL_CHILDREN
+                .equalsIgnoreCase(property.getName()) && Boolean.parseBoolean(property.getValue()));
+    }
+
+    /**
+     * Set property value to service provider indicating the role sharing mode of the application. We only set the
+     * property if the role sharing mode is ALL.
+     * @param serviceProvider The application that the property should be set.
+     * @param mode The role sharing mode of the application.
+     */
+    public static void setAppAssociatedRoleSharingMode(ServiceProvider serviceProvider,
+                                                       ApplicationShareRolePolicy.Mode mode) {
+
+        Optional<ServiceProviderProperty> roleSharingMode = Arrays.stream(serviceProvider.getSpProperties())
+                .filter(p -> ROLE_SHARING_MODE.equals(p.getName()))
+                .findFirst();
+        if (roleSharingMode.isPresent()) {
+            roleSharingMode.get().setValue(mode.toString());
+        } else {
+            ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+            ServiceProviderProperty[] newSpProperties = new ServiceProviderProperty[spProperties.length + 1];
+            System.arraycopy(spProperties, 0, newSpProperties, 0, spProperties.length);
+
+            ServiceProviderProperty roleSharingModeProperty = new ServiceProviderProperty();
+            roleSharingModeProperty.setName(ROLE_SHARING_MODE);
+            roleSharingModeProperty.setValue(mode.toString());
+            newSpProperties[spProperties.length] = roleSharingModeProperty;
+
+            serviceProvider.setSpProperties(newSpProperties);
+        }
+    }
+
+    /**
+     * Get the role sharing mode of the application associated with the service provider.
+     * If the property is not set, it will return ALL as the default mode. For all the applications that shared with
+     * new Role Sharing feature, the role sharing mode will be added to sp properties. If it's not available, it means
+     * the application is shared with the old way, which is sharing all the roles with all child organizations.
+     *
+     * @param serviceProvider The service provider of the application.
+     * @return The role sharing mode of the application.
+     */
+    public static ApplicationShareRolePolicy.Mode getAppAssociatedRoleSharingMode(ServiceProvider serviceProvider) {
+
+        Optional<ServiceProviderProperty> roleSharingMode = Arrays.stream(serviceProvider.getSpProperties())
+                .filter(p -> ROLE_SHARING_MODE.equals(p.getName()))
+                .findFirst();
+        return roleSharingMode.map(serviceProviderProperty -> ApplicationShareRolePolicy.Mode.valueOf(
+                serviceProviderProperty.getValue())).orElse(ApplicationShareRolePolicy.Mode.ALL);
     }
 
     /**
@@ -217,5 +282,24 @@ public class OrgApplicationManagerUtil {
         } catch (IdentityApplicationManagementException e) {
             throw new OrganizationManagementServerException("Error while retrieving default service provider", null, e);
         }
+    }
+
+    public static OrganizationManagementClientException handleClientException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error) {
+        return new OrganizationManagementClientException(error.getMessage(), error.getDescription(), error.getCode());
+    }
+
+    /**
+     * Throw an OrganizationManagementServerException upon server side error in organization management.
+     *
+     * @param error The error enum.
+     * @param e     The error.
+     * @return OrganizationManagementServerException
+     */
+    public static OrganizationManagementServerException handleServerException(OrgApplicationMgtConstants.ErrorMessages
+                                                                                      error, Throwable e) {
+
+        String description = error.getDescription();
+        return new OrganizationManagementServerException(error.getMessage(), description, error.getCode(), e);
     }
 }
