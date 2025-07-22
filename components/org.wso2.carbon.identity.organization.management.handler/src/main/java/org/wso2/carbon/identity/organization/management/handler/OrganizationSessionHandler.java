@@ -186,7 +186,7 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         }
         if (StringUtils.isBlank(sessionId) || StringUtils.isBlank(orgId)) {
             LOG.debug("Organization authenticator not found in the authenticators list or " +
-                    "Session ID / org ID not found in the ID token.");
+                    "Session ID / Org ID not found in the ID token.");
             return;
         }
         String tenantDomain;
