@@ -73,7 +73,12 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
+            <artifactId>org.wso2.carbon.identity.testutil</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.multitenancy</groupId>
+            <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
