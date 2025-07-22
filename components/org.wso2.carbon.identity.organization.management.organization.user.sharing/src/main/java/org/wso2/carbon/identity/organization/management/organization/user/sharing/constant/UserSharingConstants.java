@@ -101,7 +101,6 @@ public class UserSharingConstants {
             "/api/server/v1/users/%s/shared-roles?orgId=%s";
 
     public static final String PROCESS_ADD_SHARED_USER = "processAddSharedUser";
-    public static final String IS_AGENT_SHARING = "isAgentSharing";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
