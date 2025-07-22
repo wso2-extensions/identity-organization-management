@@ -25,6 +25,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
@@ -51,6 +52,7 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for OrganizationVersionHandler.
  */
+@WithCarbonHome
 public class OrganizationVersionHandlerTest {
 
     @Mock
