@@ -50,7 +50,7 @@ public class OrgResourceResolverServiceImpl implements OrgResourceResolverServic
     private List<String> getAncestorOrganizationsIds(String organizationId)
             throws OrgResourceHierarchyTraverseServerException {
 
-        if (StringUtils.isBlank(organizationId)) {
+        if (StringUtils.isEmpty(organizationId)) {
             throw OrgResourceHierarchyTraverseUtil.handleServerException(
                     OrgResourceHierarchyTraverseConstants.ErrorMessages.ERROR_CODE_EMPTY_ORGANIZATION_ID);
         }
