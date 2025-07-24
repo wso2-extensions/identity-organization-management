@@ -71,6 +71,8 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_HEAD;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.HAS_FRAGMENT_APPS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
@@ -110,7 +112,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMySqlDB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
  * This class implements the {@link OrgApplicationMgtDAO} interface.
@@ -314,9 +318,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         }
     }
 
+    @Override
     public List<SharedApplicationDO> getSharedApplications(String ownerOrgId, String mainApplicationId,
-                                                           List<String> sharedOrgIds, List<ExpressionNode>
-                                                                   expressionNodes, String sortOrder, int limit)
+                                                           List<String> sharedOrgIds,
+                                                           List<ExpressionNode> expressionNodes,
+                                                           String sortOrder, int limit)
             throws OrganizationManagementException {
 
         if (CollectionUtils.isEmpty(sharedOrgIds)) {
@@ -334,7 +340,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             sqlStmtTail = String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL, sortOrder).replace(
                     SHARED_ORG_ID_LIST_PLACEHOLDER, placeholders);
         } else {
-            sqlStmtTail = String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT, sortOrder, limit)
+            sqlStmtTail = getSharedApplicationsByFilteringTailWithLimit(sortOrder, limit)
                     .replace(SHARED_ORG_ID_LIST_PLACEHOLDER, placeholders);
         }
         String sqlStmt = sqlStmtHead + sqlStmtTail;
@@ -368,6 +374,17 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainApplicationId, ownerOrgId);
         }
         return sharedApplicationDOList;
+    }
+
+    private String getSharedApplicationsByFilteringTailWithLimit(String sortOrder, int limit)
+            throws OrganizationManagementServerException {
+
+        if (isOracleDB()) {
+            return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE, sortOrder, limit);
+        } else if (isMSSqlDB()) {
+            return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL, sortOrder, limit);
+        }
+        return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT, sortOrder, limit);
     }
 
     @Override
