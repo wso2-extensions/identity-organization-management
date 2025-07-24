@@ -172,8 +172,9 @@ public interface OrgApplicationMgtDAO {
      *                                         when retrieving the shared apps.
      */
     default List<SharedApplicationDO> getSharedApplications(String ownerOrgId, String mainApplicationId,
-                                                           List<String> sharedOrgIds, List<ExpressionNode>
-                                                                   expressionNodes, String sortOder, int limit)
+                                                            List<String> sharedOrgIds,
+                                                            List<ExpressionNode> expressionNodes,
+                                                            String sortOder, int limit)
             throws OrganizationManagementException {
 
         throw new NotImplementedException(

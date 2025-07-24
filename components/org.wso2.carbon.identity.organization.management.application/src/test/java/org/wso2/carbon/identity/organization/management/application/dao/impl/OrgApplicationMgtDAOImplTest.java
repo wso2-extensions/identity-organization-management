@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.core.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
@@ -66,6 +67,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertThrows;
+import static org.wso2.carbon.identity.application.authentication.framework.util.SessionMgtConstants.DESC;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
@@ -88,6 +90,7 @@ public class OrgApplicationMgtDAOImplTest {
     private static final String SAMPLE_APP_1 = "test-app";
     private static final String SAMPLE_APP_2 = "scl-app";
     private static final String SAMPLE_APP_3 = "medical-app";
+    private static final String SAMPLE_APP_4 = "sample-app";
 
     private MockedStatic<IdentityTenantUtil> mockIdentityTenantUtil;
     private MockedStatic<IdentityUtil> mockIdentityUtil;
@@ -155,7 +158,7 @@ public class OrgApplicationMgtDAOImplTest {
                 {Arrays.asList(SHARED_ORG_ID_1, UN_SHARED_ORG_ID), 1},
                 // Passing an unshared org id only.
                 {Collections.singletonList(UN_SHARED_ORG_ID), 0},
-                // Passing an empty list
+                // Passing an empty list.
                 {Collections.emptyList(), 0},
         };
     }
@@ -170,6 +173,49 @@ public class OrgApplicationMgtDAOImplTest {
 
         Assert.assertNotNull(sharedApplications);
         Assert.assertEquals(sharedApplications.size(), expectedNumOfApps);
+    }
+
+    @DataProvider(name = "sharedApplicationsTestData")
+    public Object[][] getSharedApplicationsTestData()
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+
+        createAndShareApplication(SAMPLE_APP_4, new String[] {SHARED_ORG_ID_1, SHARED_ORG_ID_2});
+
+        return new Object[][] {
+                // Passing org ids of both shared apps only.
+                {Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2), 2, 2},
+                // Passing org ids of both shared apps with the limit of 1.
+                {Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2), 1, 1},
+                // Passing org ids of both shared apps and an unshared org id.
+                {Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2, UN_SHARED_ORG_ID), 2, 2},
+                // Passing org id of one shared app only.
+                {Collections.singletonList(SHARED_ORG_ID_1), 1, 1},
+                // Passing org id of shared app and an unshared org id.
+                {Arrays.asList(SHARED_ORG_ID_1, UN_SHARED_ORG_ID), 1, 1},
+                // Passing an unshared org id only.
+                {Collections.singletonList(UN_SHARED_ORG_ID), 0, 0},
+                // Passing an empty list.
+                {Collections.emptyList(), 0, 0},
+        };
+    }
+
+    @Test(dataProvider = "sharedApplicationsTestData")
+    public void testGetSharedApplications(List<String> sharedOrgIds, int limit, int expectedNumOfApps)
+            throws Exception {
+
+        try (MockedStatic<Utils> mockUtil = mockStatic(Utils.class)) {
+
+            mockUtil.when(Utils::isOracleDB).thenReturn(false);
+            mockUtil.when(Utils::isMSSqlDB).thenReturn(false);
+
+            String rootAppUUID = applicationDAO.getApplication(SAMPLE_APP_4, SUPER_TENANT_DOMAIN_NAME)
+                    .getApplicationResourceId();
+            List<SharedApplicationDO> sharedApplications = orgApplicationMgtDAO.getSharedApplications(
+                    ROOT_ORG_ID, rootAppUUID, sharedOrgIds, Collections.emptyList(), DESC, limit);
+
+            Assert.assertNotNull(sharedApplications);
+            Assert.assertEquals(sharedApplications.size(), expectedNumOfApps);
+        }
     }
 
     @Test(description = "Test the correct discoverable apps list for logged in user",

@@ -318,9 +318,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         }
     }
 
+    @Override
     public List<SharedApplicationDO> getSharedApplications(String ownerOrgId, String mainApplicationId,
-                                                           List<String> sharedOrgIds, List<ExpressionNode>
-                                                                   expressionNodes, String sortOrder, int limit)
+                                                           List<String> sharedOrgIds,
+                                                           List<ExpressionNode> expressionNodes,
+                                                           String sortOrder, int limit)
             throws OrganizationManagementException {
 
         if (CollectionUtils.isEmpty(sharedOrgIds)) {
