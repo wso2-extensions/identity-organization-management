@@ -986,6 +986,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             organizationIds = new ArrayList<>();
         }
 
+        List<String> includedAttributesList = getIncludedAttributes(attributes);
+        String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
+        SharingModeDO sharingModeDO = null;
+        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+            sharingModeDO = resolveGeneralSharingMode(mainOrganizationId, mainApplicationId, mainOrgHandle);
+        }
+
         // Fetch one more item than requested to determine if there are more items.
         // Limit == 0 means no limit has been set. So we should get all items.
         int fetchLimit = limit == 0 ? limit : limit + 1;
@@ -993,7 +1000,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 mainOrganizationId, mainApplicationId, organizationIds, expressionNodeList, sortOrder, fetchLimit);
 
         if (CollectionUtils.isEmpty(sharedApplications)) {
-            return new SharedApplicationOrganizationNodePage(Collections.emptyList(), null, 0, 0);
+            return new SharedApplicationOrganizationNodePage(Collections.emptyList(), sharingModeDO, 0, 0);
         }
 
         boolean hasMoreItems = sharedApplications.size() > limit;
@@ -1013,12 +1020,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             Collections.reverse(sharedApplications);
         }
         List<String> excludedAttributesList = getExcludedAttributes(excludedAttributes);
-        List<String> includedAttributesList = getIncludedAttributes(attributes);
-        String mainOrgHandle = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
-        SharingModeDO sharingModeDO = null;
-        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
-            sharingModeDO = resolveGeneralSharingMode(mainOrganizationId, mainApplicationId, mainOrgHandle);
-        }
         for (SharedApplicationDO sharedApplicationDO : sharedApplications) {
             applicationSharedOrganizationsList.add(getApplicationSharedOrganizationNode(sharedApplicationDO,
                     mainOrganizationId, mainApplicationId, excludedAttributesList, includedAttributesList));
