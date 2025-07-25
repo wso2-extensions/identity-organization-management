@@ -189,7 +189,11 @@ public class OrgApplicationMgtConstants {
         ERROR_CODE_ERROR_RETRIEVING_SHARED_APP("65001", "Unable to retrieve shared applications.",
                 "An error occurred while retrieving shared applications."),
         ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ROLES("65002", "Unable to retrieve shared app roles.",
-                "An error occurred while retrieving shared application roles.");
+                "An error occurred while retrieving shared application roles."),
+        ERROR_CODE_ERROR_RETRIEVING_APP_ROLE_ALLOWED_AUDIENCE("65003",
+                "Unable to retrieve application allowed audience for role association.",
+                "An error occurred while retrieving allowed audience for role association " +
+                        "for the application: %s.");
 
         private final String code;
         private final String message;

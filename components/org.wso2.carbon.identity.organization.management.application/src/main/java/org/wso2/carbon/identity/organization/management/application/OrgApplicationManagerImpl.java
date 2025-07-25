@@ -150,6 +150,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_APP_ROLE_ALLOWED_AUDIENCE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_SHARED_APP_ROLES;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_SHARE_CONFIGURATION;
@@ -1727,8 +1728,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     }
 
     public void addOrUpdatePolicy(String mainApplicationId, String requestInitiatingOrgId, String sharedOrgId,
-                                   String ownerTenantDomain, PolicyEnum applicationSharePolicy,
-                                   ApplicationShareRolePolicy applicationShareRolePolicy)
+                                  String ownerTenantDomain, PolicyEnum applicationSharePolicy,
+                                  ApplicationShareRolePolicy applicationShareRolePolicy)
             throws OrganizationManagementException {
 
         try {
@@ -1778,21 +1779,27 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 return;
             }
 
-            List<RoleBasicInfo> allMainOrgAppRoles = getApplicationRoles(mainApplicationId, ownerTenantDomain);
+            String allowedAudienceForRoleAssociation = getApplicationManagementService()
+                    .getAllowedAudienceForRoleAssociation(mainApplicationId, ownerTenantDomain);
+            boolean isAppLevelAudience = RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociation);
+
+            List<RoleBasicInfo> allMainAppRoles = getApplicationRoles(
+                    isAppLevelAudience ? mainApplicationId : requestInitiatingOrgId, ownerTenantDomain);
+
             List<String> addedRoles;
             if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == applicationShareRolePolicy.getMode().ordinal()) {
                 Set<String> selectedRoleAudiencePairs = applicationShareRolePolicy.getRoleWithAudienceDOList()
                         .stream()
                         .map(dao -> dao.getRoleName() + "|" + dao.getAudienceName())
                         .collect(Collectors.toSet());
-                addedRoles = allMainOrgAppRoles.stream()
+                addedRoles = allMainAppRoles.stream()
                         .filter(role -> selectedRoleAudiencePairs
                                 .contains(role.getName() + "|" + role.getAudienceName()))
                         .map(RoleBasicInfo::getId)
                         .collect(Collectors.toList());
             } else {
                 // Mode is ALL: add all the main application roles for this resource policy.
-                addedRoles = allMainOrgAppRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
+                addedRoles = allMainAppRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
             }
             List<SharedResourceAttribute> sharedResourceAttributes = new ArrayList<>();
             for (String roleId : addedRoles) {
@@ -1811,6 +1818,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         } catch (ResourceSharingPolicyMgtException | IdentityRoleManagementException e) {
             throw handleServerException(ERROR_CODE_ADDING_SHARED_RESOURCE_ATTRIBUTES_FAILED, e,
                     String.valueOf(resourceSharingPolicyId));
+        } catch (IdentityApplicationManagementException e) {
+            throw OrgApplicationManagerUtil.handleServerException(ERROR_CODE_ERROR_RETRIEVING_APP_ROLE_ALLOWED_AUDIENCE,
+                    e, mainApplicationId);
         }
     }
 
