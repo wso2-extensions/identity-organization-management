@@ -658,7 +658,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
-            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrgId, true);
+            String sharedOrgHandle = getOrganizationManager().resolveTenantDomain(sharedOrgId);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedOrgHandle, true);
             getListener().preUpdateRolesOfSharedApplication(mainOrgId, mainApplication.getApplicationResourceId(),
                     sharedOrgId, operation, roleChanges);
             // Set the request initiated user information, which will be used for the auditing purposes.
