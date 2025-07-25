@@ -50,9 +50,7 @@ public class ResourceSharingSQLConstants {
 
     public static final String GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD =
             "SELECT rsp.UM_POLICY_HOLDING_ORG_ID, " +
-                    "rsp.UM_ID AS " +
-                    SQLPlaceholders.JOIN_COLUMN_UM_ID_OF_UM_RESOURCE_SHARING_POLICY_TABLE + ", " +
-                    "rsp.UM_RESOURCE_ID, rsp.UM_RESOURCE_TYPE, rsp.UM_INITIATING_ORG_ID, " +
+                    "rsp.UM_ID, rsp.UM_RESOURCE_ID, rsp.UM_RESOURCE_TYPE, rsp.UM_INITIATING_ORG_ID, " +
                     "rsp.UM_POLICY_HOLDING_ORG_ID, rsp.UM_SHARING_POLICY, " +
                     "attr.UM_ID AS " +
                     SQLPlaceholders.JOIN_COLUMN_UM_ID_OF_UM_SHARED_RESOURCE_ATTRIBUTES_TABLE + ", " +
