@@ -454,7 +454,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 generalApplicationShare.getPolicy(), generalApplicationShare.getRoleSharing());
 
         // Add the role sharing config to the main application.
-        ApplicationShareRolePolicy.Mode roleSharingMode =  generalApplicationShare.getRoleSharing().getMode();
+        ApplicationShareRolePolicy.Mode roleSharingMode = generalApplicationShare.getRoleSharing().getMode();
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
         if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
             setShareWithAllChildrenProperty(mainApplication, true);
@@ -531,7 +531,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (LoggerUtils.isEnableV2AuditLogs()) {
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                    getInitiatorId(username, ownerTenantDomain),  LoggerUtils.Target.User.name(),
+                    getInitiatorId(username, ownerTenantDomain), LoggerUtils.Target.User.name(),
                     getAppId(mainApplication), LoggerUtils.Target.Application.name(),
                     "processing-share-application-with-all-orgs")
                     .data(buildShareAppAuditData(mainApplicationId, orgIdsToShare));
@@ -600,7 +600,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
         if (LoggerUtils.isEnableV2AuditLogs()) {
             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                    getInitiatorId(username, mainTenantDomain),  LoggerUtils.Target.User.name(),
+                    getInitiatorId(username, mainTenantDomain), LoggerUtils.Target.User.name(),
                     getAppId(mainApplication), LoggerUtils.Target.Application.name(),
                     "processing-update-shared-application")
                     .data(buildShareAppAuditData(mainApplicationId, sortedOrganizations));
@@ -724,7 +724,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (LoggerUtils.isEnableV2AuditLogs()) {
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                    getInitiatorId(username, mainTenantDomain),  LoggerUtils.Target.User.name(),
+                    getInitiatorId(username, mainTenantDomain), LoggerUtils.Target.User.name(),
                     getAppId(mainApplication), LoggerUtils.Target.Application.name(),
                     "processing-unshare-application-from-selected-orgs")
                     .data(buildShareAppAuditData(mainApplicationId, validOrganizationsInReverseBfsOrder));
@@ -748,6 +748,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             unsharingOrganizations.add(sharedApplicationDO.getOrganizationId());
             CompletableFuture.runAsync(() -> {
                 try {
+                    IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
                     deleteExistingSharedApplication(mainOrganizationId, sharedApplicationDO.getOrganizationId(),
                             mainApplication, sharedApplicationDO.getFragmentApplicationId());
                 } catch (OrganizationManagementException e) {
@@ -759,7 +760,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         if (LoggerUtils.isEnableV2AuditLogs()) {
             String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
             AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                    getInitiatorId(username, mainTenantDomain),  LoggerUtils.Target.User.name(),
+                    getInitiatorId(username, mainTenantDomain), LoggerUtils.Target.User.name(),
                     getAppId(mainApplication), LoggerUtils.Target.Application.name(),
                     "processing-unshare-application-from-all-orgs")
                     .data(buildShareAppAuditData(mainApplicationId, unsharingOrganizations));
@@ -818,7 +819,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * @param sharedOrganizationId Shared organization ID.
      * @param mainApplication      Main application to be shared.
      * @param sharedApplicationId  Shared application ID to be deleted.
-     *
      * @throws OrganizationManagementException If an error occurs while deleting the shared application.
      */
     private void deleteExistingSharedApplication(String mainOrgId, String sharedOrganizationId,
@@ -1141,9 +1141,18 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         try {
+            ServiceProvider application = getApplicationManagementService()
+                    .getApplicationByResourceId(mainAppId, mainOrgHandle);
+            if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
+                ApplicationShareRolePolicy.Builder applicationShareRolePolicy
+                        = new ApplicationShareRolePolicy.Builder().mode(ApplicationShareRolePolicy.Mode.ALL);
+                return new SharingModeDO.Builder()
+                        .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
+                        .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
+            }
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
                     = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
-                            initiatingOrgId, B2B_APPLICATION, mainAppId);
+                    initiatingOrgId, B2B_APPLICATION, mainAppId);
 
             if (result != null && !result.isEmpty()) {
                 Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry
@@ -1151,12 +1160,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
                 List<SharedResourceAttribute> resourceAttributes = entry.getValue();
 
-                ServiceProvider application = getApplicationManagementService()
-                        .getApplicationByResourceId(mainAppId, mainOrgHandle);
-
-                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
-                        || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
-
+                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
                     ApplicationShareRolePolicy.Mode mode =
                             OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
 
@@ -1841,6 +1845,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     /**
      * This is deprecated. Use shareApplicationWithPolicy instead.
+     *
      * @param ownerOrgId           Identifier of the organization owning the application.
      * @param sharedOrgId          Identifier of the organization to which the application being shared to.
      * @param mainApplication      The application which is shared with the child organizations.
@@ -2026,7 +2031,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * This method checks whether the exception is thrown due to the OAuth client already existing.
      *
      * @param e The IdentityException thrown upon OAuth app creation failure.
-     * @return  Boolean indicating whether the exception is thrown due to the OAuth client already existing.
+     * @return Boolean indicating whether the exception is thrown due to the OAuth client already existing.
      */
     private boolean isOAuthClientExistsError(IdentityException e) {
 
@@ -2038,10 +2043,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * It is possible that the error is due to stale data, hence a retry mechanism is implemented to check
      * whether it is a stale app and if so, delete the stale app and retry the oauth app creation.
      *
-     * @param ownerOrgId       ID of the owner organization.
-     * @param sharedOrgId      ID of the shared sub organization.
-     * @param mainApplication  The application that is being shared.
-     * @return                 OAuth app that is created.
+     * @param ownerOrgId      ID of the owner organization.
+     * @param sharedOrgId     ID of the shared sub organization.
+     * @param mainApplication The application that is being shared.
+     * @return OAuth app that is created.
      * @throws OrganizationManagementException Throws exception if there are any exceptions in the retry mechanism.
      */
     private OAuthConsumerAppDTO handleOAuthClientExistsError(
