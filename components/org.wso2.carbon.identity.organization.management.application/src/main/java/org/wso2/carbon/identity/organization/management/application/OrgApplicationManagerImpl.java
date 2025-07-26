@@ -1141,6 +1141,15 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             throws OrganizationManagementException {
 
         try {
+            ServiceProvider application = getApplicationManagementService()
+                    .getApplicationByResourceId(mainAppId, mainOrgHandle);
+            if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
+                ApplicationShareRolePolicy.Builder applicationShareRolePolicy
+                        = new ApplicationShareRolePolicy.Builder().mode(ApplicationShareRolePolicy.Mode.ALL);
+                return new SharingModeDO.Builder()
+                        .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
+                        .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
+            }
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
                     = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
                             initiatingOrgId, B2B_APPLICATION, mainAppId);
@@ -1151,12 +1160,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
                 List<SharedResourceAttribute> resourceAttributes = entry.getValue();
 
-                ServiceProvider application = getApplicationManagementService()
-                        .getApplicationByResourceId(mainAppId, mainOrgHandle);
-
-                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS
-                        || OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
-
+                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
                     ApplicationShareRolePolicy.Mode mode =
                             OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
 
