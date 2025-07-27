@@ -1652,8 +1652,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                         processUnitOperationStatus(operationId, mainApplicationId, sharingOrgId, OperationStatus.FAILED,
                                 "Application: " + mainApplicationId +
                                         " is not shared with the parent organization: " + parentOrgId);
-                        LOG.error("Application: " + mainApplicationId +
-                                " is not shared with the parent organization: " + parentOrgId);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Application: " + mainApplicationId +
+                                    " is not shared with the parent organization: " + parentOrgId);
+                        }
                         return;
                     }
                 }
