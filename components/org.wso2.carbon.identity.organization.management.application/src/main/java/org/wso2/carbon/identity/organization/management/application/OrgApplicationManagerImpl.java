@@ -1146,9 +1146,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             ServiceProvider application = getApplicationManagementService()
                     .getApplicationByResourceId(mainAppId, mainOrgHandle);
+            ApplicationShareRolePolicy.Mode mode = OrgApplicationManagerUtil
+                    .getAppAssociatedRoleSharingMode(application);
+
             if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
                 ApplicationShareRolePolicy.Builder applicationShareRolePolicy
-                        = new ApplicationShareRolePolicy.Builder().mode(ApplicationShareRolePolicy.Mode.ALL);
+                        = new ApplicationShareRolePolicy.Builder().mode(mode);
                 return new SharingModeDO.Builder()
                         .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
                         .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
@@ -1164,9 +1167,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 List<SharedResourceAttribute> resourceAttributes = entry.getValue();
 
                 if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
-                    ApplicationShareRolePolicy.Mode mode =
-                            OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
-
                     ApplicationShareRolePolicy.Builder applicationShareRolePolicy
                             = new ApplicationShareRolePolicy.Builder().mode(mode);
                     if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == mode.ordinal()) {
