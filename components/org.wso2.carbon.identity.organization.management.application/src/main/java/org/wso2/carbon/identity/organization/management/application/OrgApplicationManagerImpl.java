@@ -172,6 +172,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.createOrganizationSSOIDP;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getDefaultAuthenticationConfig;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.removeShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setAppAssociatedRoleSharingMode;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
@@ -458,6 +459,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
         if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
             setShareWithAllChildrenProperty(mainApplication, true);
+        } else {
+            removeShareWithAllChildrenProperty(mainApplication);
         }
         try {
             getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
