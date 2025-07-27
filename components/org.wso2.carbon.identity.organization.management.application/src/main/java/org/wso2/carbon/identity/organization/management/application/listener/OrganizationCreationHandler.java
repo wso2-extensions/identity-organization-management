@@ -266,8 +266,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         } else {
             Optional<String> sharedAppIdOptional = resolveSharedApp(mainApplicationId, mainOrganizationId, parentOrgId);
             if (!sharedAppIdOptional.isPresent()) {
-                LOG.error("No shared application found in the parent organization for organization: " + orgId +
-                        ". Skipping sharing of the main application with ID: " + mainApplicationId);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("No shared application found in the parent organization for organization: " + orgId +
+                            ". Skipping sharing of the main application with ID: " + mainApplicationId);
+                }
                 return null;
             }
             sharedAppId = sharedAppIdOptional.get();
@@ -275,8 +277,10 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         ServiceProvider sharedApplication = getApplicationManagementService().getApplicationByResourceId(
                 sharedAppId, parentOrgHandle);
         if (sharedApplication == null) {
-            LOG.error("No shared application found in the parent organization for organization: " + orgId +
-                    ". Skipping sharing of the main application with ID: " + mainApplicationId);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No shared application found in the parent organization for organization: " + orgId +
+                        ". Skipping sharing of the main application with ID: " + mainApplicationId);
+            }
             return null;
         }
         return sharedApplication;
