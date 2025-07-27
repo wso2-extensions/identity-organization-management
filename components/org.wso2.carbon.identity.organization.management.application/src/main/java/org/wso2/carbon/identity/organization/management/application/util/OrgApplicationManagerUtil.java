@@ -96,6 +96,28 @@ public class OrgApplicationManagerUtil {
     }
 
     /**
+     * Remove the SHARE_WITH_ALL_CHILDREN property from service provider if it exists.
+     *
+     * @param serviceProvider The main application.
+     */
+    public static void removeShareWithAllChildrenProperty(ServiceProvider serviceProvider) {
+
+        ServiceProviderProperty[] spProperties = serviceProvider.getSpProperties();
+        if (spProperties == null) {
+            return;
+        }
+        Optional<ServiceProviderProperty> shareWithAllChildren = Arrays.stream(spProperties)
+                .filter(p -> SHARE_WITH_ALL_CHILDREN.equals(p.getName()))
+                .findFirst();
+        if (shareWithAllChildren.isPresent()) {
+            ServiceProviderProperty[] newSpProperties = Arrays.stream(spProperties)
+                    .filter(p -> !SHARE_WITH_ALL_CHILDREN.equals(p.getName()))
+                    .toArray(ServiceProviderProperty[]::new);
+            serviceProvider.setSpProperties(newSpProperties);
+        }
+    }
+
+    /**
      * Checks whether the application is configured to be shared with all child organizations.
      *
      * @param properties The array of service provider properties.

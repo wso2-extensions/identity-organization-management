@@ -172,6 +172,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.createOrganizationSSOIDP;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getDefaultAuthenticationConfig;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.removeShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setAppAssociatedRoleSharingMode;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setShareWithAllChildrenProperty;
@@ -458,6 +459,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
         if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
             setShareWithAllChildrenProperty(mainApplication, true);
+        } else {
+            removeShareWithAllChildrenProperty(mainApplication);
         }
         try {
             getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
@@ -1143,9 +1146,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             ServiceProvider application = getApplicationManagementService()
                     .getApplicationByResourceId(mainAppId, mainOrgHandle);
+            ApplicationShareRolePolicy.Mode mode = OrgApplicationManagerUtil
+                    .getAppAssociatedRoleSharingMode(application);
+
             if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
                 ApplicationShareRolePolicy.Builder applicationShareRolePolicy
-                        = new ApplicationShareRolePolicy.Builder().mode(ApplicationShareRolePolicy.Mode.ALL);
+                        = new ApplicationShareRolePolicy.Builder().mode(mode);
                 return new SharingModeDO.Builder()
                         .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
                         .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
@@ -1161,9 +1167,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 List<SharedResourceAttribute> resourceAttributes = entry.getValue();
 
                 if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
-                    ApplicationShareRolePolicy.Mode mode =
-                            OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(application);
-
                     ApplicationShareRolePolicy.Builder applicationShareRolePolicy
                             = new ApplicationShareRolePolicy.Builder().mode(mode);
                     if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == mode.ordinal()) {
