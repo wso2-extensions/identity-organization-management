@@ -27,25 +27,20 @@
  import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
  import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
  import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
- import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
- import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
  import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-
+ 
  import java.util.Collections;
  import java.util.HashMap;
  import java.util.List;
  import java.util.Map;
  import java.util.Optional;
  import java.util.stream.Collectors;
-
-import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
+ 
+ import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_CONFIG_RESOURCE_NAME;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_CONFLICT;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED;
@@ -61,6 +56,11 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_CONFIG_RESOURCE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -235,7 +235,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     }
 
     @Override
-    public void addOrganizationConfiguration(OrganizationConfig organizationConfig) 
+    public void addOrganizationConfiguration(OrganizationConfig organizationConfig)
             throws OrganizationConfigException {
 
         try {
@@ -257,7 +257,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     }
 
     @Override
-    public void updateOrganizationConfiguration(OrganizationConfig organizationConfig) 
+    public void updateOrganizationConfiguration(OrganizationConfig organizationConfig)
             throws OrganizationConfigException {
 
         try {
