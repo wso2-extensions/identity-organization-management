@@ -16,41 +16,51 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.config.service;
+ package org.wso2.carbon.identity.organization.config.service;
 
-import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
-import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
-import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
-import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
-import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
-import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
-import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
-import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
-import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
-import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+ import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
+ import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
+ import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
+ import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
+ import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
+ import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
+ import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
+ import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
+ import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+ import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
+ import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+ import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+ import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Optional;
+ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_CONFIG_RESOURCE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_CONFLICT;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -222,5 +232,161 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationConfigServiceHolder.getInstance().getOrganizationManager();
+    }
+
+    @Override
+    public void addOrganizationConfiguration(OrganizationConfig organizationConfig) 
+            throws OrganizationConfigException {
+
+        try {
+            // Check if discovery attributes are being modified - only primary organization can modify discovery 
+            // attributes
+            if (containsDiscoveryAttributes(organizationConfig.getConfigProperties()) && 
+                    !isDiscoveryConfigChangeAllowed()) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
+            }
+            Optional<Resource> resourceOptional = getOrganizationResource();
+            if (resourceOptional.isPresent()) {
+                throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT, getOrganizationId());
+            }
+            Resource resource = buildResourceFromOrganizationConfig(organizationConfig);
+            getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
+        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_ADDING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    @Override
+    public void updateOrganizationConfiguration(OrganizationConfig organizationConfig) 
+            throws OrganizationConfigException {
+
+        try {
+            // Check if discovery attributes are being modified - only primary organization can modify discovery 
+            // attributes
+            if (containsDiscoveryAttributes(organizationConfig.getConfigProperties()) && 
+                    !isDiscoveryConfigChangeAllowed()) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
+            }
+            Optional<Resource> resourceOptional = getOrganizationResource();
+            Resource resource = buildResourceFromOrganizationConfig(organizationConfig);
+            if (!resourceOptional.isPresent()) {
+                getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
+            } else {
+                getConfigurationManager().replaceResource(RESOURCE_TYPE_NAME, resource);
+            }
+        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    @Override
+    public OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException {
+
+        Optional<Resource> resourceOptional = getOrganizationResource();
+        return getOrganizationConfiguration(resourceOptional);
+    }
+
+    @Override
+    public void deleteOrganizationConfiguration() throws OrganizationConfigException {
+
+        try {
+            Optional<Resource> resourceOptional = getOrganizationResource();
+            if (!resourceOptional.isPresent()) {
+                throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
+            }
+            
+            // Check if the existing configuration contains discovery attributes - only primary organization can 
+            // delete if discovery attributes exist
+            if (containsDiscoveryAttributes(resourceOptional.get().getAttributes().stream()
+                    .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
+                    .collect(Collectors.toList())) && !isDiscoveryConfigChangeAllowed()) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
+            }
+            
+            getConfigurationManager().deleteResource(RESOURCE_TYPE_NAME, ORGANIZATION_CONFIG_RESOURCE_NAME);
+        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    private OrganizationConfig getOrganizationConfiguration(Optional<Resource> resourceOptional)
+            throws OrganizationConfigException {
+
+        if (!resourceOptional.isPresent()) {
+            throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
+        }
+
+        List<ConfigProperty> configProperties = resourceOptional.map(resource -> resource.getAttributes().stream()
+                .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
+                .collect(Collectors.toList())).orElse(Collections.emptyList());
+
+        return new OrganizationConfig(configProperties);
+    }
+
+    private Optional<Resource> getOrganizationResource() throws OrganizationConfigException {
+
+        try {
+            return Optional.ofNullable(getConfigurationManager().getResource(RESOURCE_TYPE_NAME, 
+                    ORGANIZATION_CONFIG_RESOURCE_NAME));
+        } catch (ConfigurationManagementException e) {
+            if (!ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
+                throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG, e, getOrganizationId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Resource buildResourceFromOrganizationConfig(OrganizationConfig organizationConfig)
+            throws OrganizationConfigClientException {
+
+        // Separate discovery and branding attributes
+        List<ConfigProperty> discoveryAttributes = organizationConfig.getConfigProperties().stream()
+                .filter(property -> !IS_CONSOLE_BRANDING_ENABLED.equals(property.getKey()))
+                .collect(Collectors.toList());
+        
+        List<ConfigProperty> brandingAttributes = organizationConfig.getConfigProperties().stream()
+                .filter(property -> IS_CONSOLE_BRANDING_ENABLED.equals(property.getKey()))
+                .collect(Collectors.toList());
+
+        // Validate discovery attributes using discovery validation logic
+        if (!discoveryAttributes.isEmpty() && !validateSupportedDiscoveryAttributeKeys(discoveryAttributes)) {
+            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE);
+        }
+
+        // Validate branding attributes - only check if it's a valid boolean
+        for (ConfigProperty brandingProperty : brandingAttributes) {
+            String brandingValue = brandingProperty.getValue();
+            if (!"true".equalsIgnoreCase(brandingValue) && !"false".equalsIgnoreCase(brandingValue)) {
+                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
+            }
+        }
+
+        Map<String, String> configAttributes = new HashMap<>();
+        for (ConfigProperty property : organizationConfig.getConfigProperties()) {
+            String key = property.getKey();
+            configAttributes.put(key, property.getValue());
+        }
+
+        // Validate discovery configuration values (same as discovery config)
+        if (Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE)) &&
+                !Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_ENABLE))) {
+            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES);
+        }
+
+        List<Attribute> resourceAttributes = configAttributes.entrySet().stream()
+                .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
+                .map(attribute -> new Attribute(attribute.getKey(), attribute.getValue()))
+                .collect(Collectors.toList());
+        Resource resource = new Resource();
+        resource.setResourceName(ORGANIZATION_CONFIG_RESOURCE_NAME);
+        resource.setAttributes(resourceAttributes);
+        return resource;
+    }
+
+    private boolean containsDiscoveryAttributes(List<ConfigProperty> configProperties) {
+
+        // Check if any of the properties are discovery attributes (not branding)
+        return configProperties.stream().anyMatch(property ->
+                !IS_CONSOLE_BRANDING_ENABLED.equals(property.getKey()));
     }
 }
