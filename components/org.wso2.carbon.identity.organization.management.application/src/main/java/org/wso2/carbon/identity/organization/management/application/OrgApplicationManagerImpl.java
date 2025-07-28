@@ -1152,9 +1152,14 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
                 ApplicationShareRolePolicy.Builder applicationShareRolePolicy
                         = new ApplicationShareRolePolicy.Builder().mode(mode);
-                return new SharingModeDO.Builder()
-                        .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
-                        .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
+                // If an app has `sharedWithAllChildren` property, but the role mode has been set to `SELECTED` or
+                // `NONE`, that means app was shared with new app sharing mode. So it has been shared with a
+                // general share policy. That's why below check is checking for the mode.
+                if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == mode.ordinal()) {
+                    return new SharingModeDO.Builder()
+                            .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
+                            .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
+                }
             }
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
                     = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
