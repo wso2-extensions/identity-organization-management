@@ -45,16 +45,13 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_CONFIG_RESOURCE_NAME;
@@ -235,28 +232,6 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     }
 
     @Override
-    public void addOrganizationConfiguration(OrganizationConfig organizationConfig)
-            throws OrganizationConfigException {
-
-        try {
-            // Check if discovery attributes are being modified - only primary organization can modify discovery 
-            // attributes
-            if (containsDiscoveryAttributes(organizationConfig.getConfigProperties()) && 
-                    !isDiscoveryConfigChangeAllowed()) {
-                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
-            }
-            Optional<Resource> resourceOptional = getOrganizationResource();
-            if (resourceOptional.isPresent()) {
-                throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT, getOrganizationId());
-            }
-            Resource resource = buildResourceFromOrganizationConfig(organizationConfig);
-            getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
-        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
-            throw handleServerException(ERROR_CODE_ERROR_ADDING_ORGANIZATION_CONFIG, e, getOrganizationId());
-        }
-    }
-
-    @Override
     public void updateOrganizationConfiguration(OrganizationConfig organizationConfig)
             throws OrganizationConfigException {
 
@@ -284,29 +259,6 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
 
         Optional<Resource> resourceOptional = getOrganizationResource();
         return getOrganizationConfiguration(resourceOptional);
-    }
-
-    @Override
-    public void deleteOrganizationConfiguration() throws OrganizationConfigException {
-
-        try {
-            Optional<Resource> resourceOptional = getOrganizationResource();
-            if (!resourceOptional.isPresent()) {
-                throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
-            }
-            
-            // Check if the existing configuration contains discovery attributes - only primary organization can 
-            // delete if discovery attributes exist
-            if (containsDiscoveryAttributes(resourceOptional.get().getAttributes().stream()
-                    .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
-                    .collect(Collectors.toList())) && !isDiscoveryConfigChangeAllowed()) {
-                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
-            }
-            
-            getConfigurationManager().deleteResource(RESOURCE_TYPE_NAME, ORGANIZATION_CONFIG_RESOURCE_NAME);
-        } catch (ConfigurationManagementException | OrganizationManagementServerException e) {
-            throw handleServerException(ERROR_CODE_ERROR_DELETING_ORGANIZATION_CONFIG, e, getOrganizationId());
-        }
     }
 
     private OrganizationConfig getOrganizationConfiguration(Optional<Resource> resourceOptional)

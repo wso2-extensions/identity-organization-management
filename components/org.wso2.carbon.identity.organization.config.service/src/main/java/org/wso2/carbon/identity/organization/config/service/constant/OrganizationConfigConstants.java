@@ -61,9 +61,7 @@ public class OrganizationConfigConstants {
         ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES("60005", 
                 "Invalid organization discovery attribute values.", 
                 "Provided organization discovery attribute value combination is not supported."),
-        ERROR_CODE_ORGANIZATION_CONFIG_CONFLICT("60006", 
-                "The organization configuration already exists.",
-                "The organization configuration is already available for the organization with id: %s."),
+
         ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007", 
                 "No organization configuration found.",
                 "There is no organization configuration for organization with ID: %s."),
@@ -84,10 +82,7 @@ public class OrganizationConfigConstants {
                 "Unable to delete the organization discovery configuration.", 
                 "Server encountered an error while deleting the organization discovery " +
                 "configuration for the organization with id: %s"),
-        ERROR_CODE_ERROR_ADDING_ORGANIZATION_CONFIG("65004", 
-                "Unable to add the organization configuration.",
-                "Server encountered an error while adding the organization configuration for " +
-                "organization with ID: %s."),
+
         ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65005", 
                 "Unable to retrieve the organization configuration.", 
                 "Server encountered an error while retrieving the organization configuration for " +
@@ -95,11 +90,7 @@ public class OrganizationConfigConstants {
         ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65006", 
                 "Unable to update the organization configuration.",
                 "Server encountered an error while updating the organization configuration for " +
-                "organization with ID: %s."),
-        ERROR_CODE_ERROR_DELETING_ORGANIZATION_CONFIG("65007", 
-                "Unable to delete the organization configuration.",
-                "Server encountered an error while deleting the organization configuration for " +
-                "the organization with id: %s");
+                "organization with ID: %s.");
 
         private final String code;
         private final String message;
