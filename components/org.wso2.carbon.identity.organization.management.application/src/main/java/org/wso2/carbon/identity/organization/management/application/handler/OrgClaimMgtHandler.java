@@ -174,9 +174,10 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                                 .toArray(ClaimMapping[]::new);
 
                 for (BasicOrganization organization : sharedOrganizations) {
-                    List<String> missingClaims = getMissingClaims(organization.getId(), filteredClaimMappings);
-                    String sharedOrganizationTenantDomain = getOrganizationManager().
-                            resolveTenantDomain(organization.getId());
+                    String sharedOrganizationTenantDomain = getOrganizationManager()
+                            .resolveTenantDomain(organization.getId());
+                    List<String> missingClaims = getMissingClaims(sharedOrganizationTenantDomain,
+                            filteredClaimMappings);
                     List<LocalClaim> parentOrgCustomLocalClaims = getClaimMetadataManagementService().
                             getLocalClaims(tenantDomain);
                     CompletableFuture.runAsync(() -> {

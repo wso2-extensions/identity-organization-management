@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.NotImplementedException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
@@ -325,5 +326,46 @@ public interface ResourceSharingPolicyHandlerDAO {
         throw new NotImplementedException(
                 "deleteResourceSharingPoliciesAndAttributesByOrganizationId method is not implemented in " +
                         this.getClass());
+    }
+
+    /**
+     * Retrieves a map of resource sharing policies and their associated shared resource attributes
+     * for a given initiating organization ID, resource type, and resource ID.
+     *
+     * @param initiatingOrganizationId The ID of the organization initiating the resource sharing. Must be a valid ID.
+     * @param resourceType             The type of the resource being shared. Must not be {@code null}.
+     * @param resourceId               The unique identifier of the resource being shared. Must not be {@code null}.
+     * @return A map where:
+     * - The key is the {@link ResourceSharingPolicy} applicable to the initiating organization for the given resource.
+     * - The value is a list of {@link SharedResourceAttribute} associated with the policy.
+     * If no matching policies or attributes are found, an empty map will be returned.
+     * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing
+     *                                           policies or shared attributes.
+     */
+    default Map<ResourceSharingPolicy, List<SharedResourceAttribute>>
+    getResourceSharingPolicyAndAttributesByInitiatingOrgId(String initiatingOrganizationId, String resourceType,
+                                                           String resourceId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPolicyByInitiatingOrgId method is not implemented in " + this.getClass());
+    }
+
+    /**
+     * Retrieves a list of resource sharing policies associated with the given policy holding organization IDs
+     * for a given resource type.
+     *
+     * @param policyHoldingOrganizationIds  A list of organization IDs whose policies need to be retrieved.
+     *                                      Must not be {@code null} or empty.
+     * @param resourceType                  The type of the resource being shared. Must not be {@code null}.
+     * @return A list of {@link ResourceSharingPolicy} objects for the specified organization IDs.
+     * @throws ResourceSharingPolicyMgtServerException If an error occurs while retrieving the sharing policies.
+     */
+    default List<ResourceSharingPolicy> getResourceSharingPoliciesByResourceType(
+            List<String> policyHoldingOrganizationIds, String resourceType)
+            throws ResourceSharingPolicyMgtServerException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPoliciesByResourceType method is not implemented in " + this.getClass());
     }
 }

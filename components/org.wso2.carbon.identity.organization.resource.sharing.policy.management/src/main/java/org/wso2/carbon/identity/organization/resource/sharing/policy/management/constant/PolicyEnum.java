@@ -17,6 +17,7 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public enum PolicyEnum {
             "AllExistingOrgsOnly",
             "ALL_EXISTING_ORGS_ONLY",
             OrganizationScope.EXISTING_ORGS_ONLY,
-            Collections.singletonList(ResourceType.USER),
+            Collections.unmodifiableList(Arrays.asList(ResourceType.USER, ResourceType.APPLICATION)),
             "This policy applies when the resource needs to be shared with all existing organizations at " +
                     "the current time. Newly created organizations after the policy is applied will not be included " +
                     "under this policy."),
@@ -41,7 +42,7 @@ public enum PolicyEnum {
             "AllExistingAndFutureOrgs",
             "ALL_EXISTING_AND_FUTURE_ORGS",
             OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
-            Collections.singletonList(ResourceType.USER),
+            Collections.unmodifiableList(Arrays.asList(ResourceType.USER, ResourceType.APPLICATION)),
             "This policy allows sharing the resource with all current and any future organizations. It " +
                     "ensures that any new organizations created after the policy is set are automatically included."),
     IMMEDIATE_EXISTING_ORGS_ONLY(
@@ -67,7 +68,7 @@ public enum PolicyEnum {
             "SelectedOrgOnly",
             "SELECTED_ORG_ONLY",
             OrganizationScope.EXISTING_ORGS_ONLY,
-            Collections.singletonList(ResourceType.USER),
+            Collections.unmodifiableList(Arrays.asList(ResourceType.USER, ResourceType.APPLICATION)),
             "This policy applies when the resource is to be shared with a single, specific organization " +
                     "only. Newly created child organizations under this selected organization will not be included."),
     SELECTED_ORG_WITH_ALL_EXISTING_CHILDREN_ONLY(
@@ -84,7 +85,7 @@ public enum PolicyEnum {
             "SelectedOrgWithAllExistingAndFutureChildren",
             "SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN",
             OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
-            Collections.singletonList(ResourceType.USER),
+            Collections.unmodifiableList(Arrays.asList(ResourceType.USER, ResourceType.APPLICATION)),
             "This policy ensures the resource is shared with a selected organization and all of its child " +
                     "organizations, including those created in the future."),
     SELECTED_ORG_WITH_EXISTING_IMMEDIATE_CHILDREN_ONLY(

@@ -19,9 +19,6 @@
 package org.wso2.carbon.identity.organization.management.handler;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import org.apache.commons.logging.Log;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.testng.Assert;
@@ -39,11 +36,9 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.model.PatchOperation;
 import org.wso2.carbon.utils.AuditLog;
-import org.wso2.carbon.utils.CarbonUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +48,6 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_ADD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PATCH_OP_REMOVE;
@@ -113,8 +107,6 @@ public class OrganizationManagementAuditLogHandlerTest {
     private MockedStatic<CarbonContext> mockedCarbonContext;
     private MockedStatic<IdentityUtil> mockedIdentityUtil;
     private MockedStatic<LoggerUtils> mockedLoggerUtils;
-    private MockedStatic<CarbonUtils> mockedCarbonUtils;
-    private Log mockV1Logger;
     private Organization organization;
     private Gson gson;
 
@@ -137,19 +129,6 @@ public class OrganizationManagementAuditLogHandlerTest {
         mockedLoggerUtils.when(() -> LoggerUtils.getMaskedContent(any(String.class))).thenCallRealMethod();
         mockedLoggerUtils.when(() -> LoggerUtils.getInitiatorType(any(String.class)))
                 .thenReturn(LoggerUtils.Initiator.User.name());
-
-        mockedCarbonUtils = mockStatic(CarbonUtils.class);
-
-        if (method.getAnnotation(Test.class).groups()[0].equals("V1")) {
-            mockV1Logger = mock(Log.class);
-            setFinalFieldWithReflection(auditLogger, mockV1Logger);
-            mockedLoggerUtils.when(LoggerUtils::isEnableV2AuditLogs).thenReturn(false);
-            mockedCarbonUtils.when(CarbonUtils::isLegacyAuditLogsDisabled).thenReturn(false);
-        }
-        if (method.getAnnotation(Test.class).groups()[0].equals("V2")) {
-            mockedLoggerUtils.when(LoggerUtils::isEnableV2AuditLogs).thenReturn(true);
-            mockedCarbonUtils.when(CarbonUtils::isLegacyAuditLogsDisabled).thenReturn(true);
-        }
 
         organization = new Organization();
         organization.setId(TEST_ID);
@@ -182,7 +161,6 @@ public class OrganizationManagementAuditLogHandlerTest {
         mockedCarbonContext.close();
         mockedIdentityUtil.close();
         mockedLoggerUtils.close();
-        mockedCarbonUtils.close();
     }
 
     @Test(groups = "V2")
@@ -393,178 +371,5 @@ public class OrganizationManagementAuditLogHandlerTest {
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, TEST_ID);
         eventProperties.put(Constants.EVENT_PROP_PATCH_OPERATIONS, patchOperations);
         return new Event(Constants.EVENT_POST_PATCH_ORGANIZATION, eventProperties);
-    }
-
-    @Test(groups = "V1")
-    public void testV1LogOrganizationCreation() {
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
-        Event event = new Event(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
-
-        auditLogger.handleEvent(event);
-
-        ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockV1Logger).info(logCaptor.capture());
-
-        String logMessage = logCaptor.getValue();
-        assertV1LogMessage(logMessage, ADD_ORGANIZATION);
-
-        // Extract and verify data JSON
-        String dataJson = extractDataFromV1LogMessage(logMessage);
-        JsonObject dataObject = gson.fromJson(dataJson, JsonObject.class);
-
-        Assert.assertEquals(dataObject.get(ID).getAsString(), TEST_ID);
-        Assert.assertEquals(dataObject.get(NAME).getAsString(), TEST_NAME);
-        Assert.assertEquals(dataObject.get(DESCRIPTION).getAsString(), TEST_DESCRIPTION);
-        Assert.assertEquals(dataObject.get(STATUS).getAsString(), TEST_STATUS);
-        Assert.assertEquals(dataObject.get(TYPE).getAsString(), TEST_TYPE);
-        Assert.assertEquals(dataObject.get(PARENT_ORG_ID).getAsString(), TEST_PARENT_ID);
-        Assert.assertEquals(dataObject.get(CREATED_TIME).getAsString(), TEST_CREATED_TIME.toString());
-        Assert.assertEquals(dataObject.get(LAST_MODIFIED_TIME).getAsString(), TEST_LAST_MODIFIED_TIME.toString());
-
-        JsonObject creator = dataObject.getAsJsonObject(CREATOR);
-        Assert.assertEquals(creator.get(CREATOR_ID).getAsString(), TEST_CREATOR_ID);
-        Assert.assertEquals(creator.get(CREATOR_USERNAME).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_CREATOR_USERNAME));
-        Assert.assertEquals(creator.get(CREATOR_EMAIL).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_CREATOR_EMAIL));
-
-        JsonObject attributes = dataObject.getAsJsonObject(ATTRIBUTES);
-        Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_1).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_1));
-        Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_2).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_2));
-    }
-
-    @Test(groups = "V1")
-    public void testV1LogUpdateOrganization() {
-
-        organization.setCreatorId(null);
-        organization.setCreatorUsername(null);
-        organization.setCreatorEmail(null);
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, TEST_ID);
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
-        Event event = new Event(Constants.EVENT_POST_UPDATE_ORGANIZATION, eventProperties);
-
-        auditLogger.handleEvent(event);
-
-        ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockV1Logger).info(logCaptor.capture());
-
-        String logMessage = logCaptor.getValue();
-        assertV1LogMessage(logMessage, UPDATE_ORGANIZATION);
-
-        // Extract and verify data JSON
-        String dataJson = extractDataFromV1LogMessage(logMessage);
-        JsonObject dataObject = gson.fromJson(dataJson, JsonObject.class);
-
-        Assert.assertEquals(dataObject.get(ID).getAsString(), TEST_ID);
-        Assert.assertEquals(dataObject.get(NAME).getAsString(), TEST_NAME);
-        Assert.assertEquals(dataObject.get(DESCRIPTION).getAsString(), TEST_DESCRIPTION);
-        Assert.assertEquals(dataObject.get(STATUS).getAsString(), TEST_STATUS);
-        Assert.assertEquals(dataObject.get(TYPE).getAsString(), TEST_TYPE);
-        Assert.assertEquals(dataObject.get(PARENT_ORG_ID).getAsString(), TEST_PARENT_ID);
-        Assert.assertEquals(dataObject.get(CREATED_TIME).getAsString(), TEST_CREATED_TIME.toString());
-        Assert.assertEquals(dataObject.get(LAST_MODIFIED_TIME).getAsString(), TEST_LAST_MODIFIED_TIME.toString());
-        Assert.assertNull(dataObject.get(CREATOR));
-
-        JsonObject attributes = dataObject.getAsJsonObject(ATTRIBUTES);
-        Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_1).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_1));
-        Assert.assertEquals(attributes.get(TEST_ATTRIBUTE_KEY_2).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_2));
-    }
-
-    @Test(groups = "V1")
-    public void testV1LogPatchOrganization() {
-
-        auditLogger.handleEvent(getMockPatchEvent());
-
-        ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockV1Logger).info(logCaptor.capture());
-
-        String logMessage = logCaptor.getValue();
-        assertV1LogMessage(logMessage, UPDATE_ORGANIZATION);
-
-        // Extract and verify data JSON
-        String dataJson = extractDataFromV1LogMessage(logMessage);
-        JsonObject dataObject = gson.fromJson(dataJson, JsonObject.class);
-
-        Assert.assertEquals(dataObject.get(ID).getAsString(), TEST_ID);
-
-        JsonObject addedData = dataObject.getAsJsonObject(PATCH_ADDED);
-        Assert.assertEquals(addedData.get(ATTRIBUTES + "/" + TEST_ATTRIBUTE_KEY_3).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_ATTRIBUTE_VALUE_3));
-
-        JsonObject replacedData = dataObject.getAsJsonObject(PATCH_REPLACED);
-        Assert.assertEquals(replacedData.get(STATUS).getAsString(), TEST_DISABLED_STATUS);
-        Assert.assertEquals(replacedData.get(NAME).getAsString(), TEST_PATCHED_NAME);
-        Assert.assertEquals(replacedData.get(ATTRIBUTES + "/" + TEST_ATTRIBUTE_KEY_1).getAsString(),
-                LoggerUtils.getMaskedContent(TEST_PATCHED_ATTRIBUTE_VALUE_1));
-
-        JsonArray removedData = dataObject.getAsJsonArray(PATCH_REMOVED);
-        Assert.assertTrue(removedData.toString().contains(DESCRIPTION));
-        Assert.assertTrue(removedData.toString().contains(ATTRIBUTES + "/" + TEST_ATTRIBUTE_KEY_2));
-    }
-
-    @Test(groups = "V1")
-    public void testV1LogDeleteOrganization() {
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, TEST_ID);
-        Event event = new Event(Constants.EVENT_POST_DELETE_ORGANIZATION, eventProperties);
-
-        auditLogger.handleEvent(event);
-
-        ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockV1Logger).info(logCaptor.capture());
-
-        String logMessage = logCaptor.getValue();
-        assertV1LogMessage(logMessage, DELETE_ORGANIZATION);
-
-        // Extract and verify data JSON
-        String dataJson = extractDataFromV1LogMessage(logMessage);
-        JsonObject dataObject = gson.fromJson(dataJson, JsonObject.class);
-
-        Assert.assertEquals(dataObject.get(ID).getAsString(), TEST_ID);
-    }
-
-    private void assertV1LogMessage(String logMessage, String expectedAction) {
-
-        Assert.assertTrue(logMessage.contains("Initiator : " + TEST_INITIATOR_ID));
-        Assert.assertTrue(logMessage.contains("Action : " + expectedAction));
-        Assert.assertTrue(logMessage.contains("Target : " + TEST_ID));
-    }
-
-    private String extractDataFromV1LogMessage(String logMessage) {
-
-        String dataPrefix = "Data : { ";
-        String dataSuffix = " } | Result :";
-
-        int startIndex = logMessage.indexOf(dataPrefix) + dataPrefix.length();
-        int endIndex = logMessage.indexOf(dataSuffix);
-
-        return logMessage.substring(startIndex, endIndex);
-    }
-
-    private void setFinalFieldWithReflection(Object target, Object value) throws Exception {
-
-        Field field;
-        try {
-            field = target.getClass().getDeclaredField("LOG");
-        } catch (NoSuchFieldException e) {
-            field = target.getClass().getSuperclass().getDeclaredField("LOG");
-        }
-
-        field.setAccessible(true);
-
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-        field.set(target, value);
     }
 }

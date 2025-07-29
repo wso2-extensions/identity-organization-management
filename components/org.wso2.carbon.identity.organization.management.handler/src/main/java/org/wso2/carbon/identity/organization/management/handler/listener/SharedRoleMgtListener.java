@@ -45,8 +45,6 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
-import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.AuditLog;
 
 import java.util.ArrayList;
@@ -400,18 +398,16 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                  This is considered as a conflict of roles. Hence, we are logging the conflict and move forward
                  with other roles.
                 */
-                if (LoggerUtils.isEnableV2AuditLogs()) {
-                    String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
-                    String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
-                            getTenantDomain();
-                    AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
-                            IdentityUtil.getInitiatorId(username, tenantDomain),
-                            LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
-                            LogConstants.UserManagement.ADD_ROLE_ACTION)
-                            .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain),
-                                    null, sharedAppOrgId, role.getName(), role.getId(), "Role conflict"));
-                    LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
-                }
+                String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().
+                        getTenantDomain();
+                AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                        IdentityUtil.getInitiatorId(username, tenantDomain),
+                        LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
+                        LogConstants.UserManagement.ADD_ROLE_ACTION)
+                        .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain),
+                                null, sharedAppOrgId, role.getName(), role.getId(), "Role conflict"));
+                LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
                 LOG.warn(String.format("Organization %s has a non shared role with name %s, ",
                         sharedAppOrgId, role.getName()));
             } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
@@ -672,19 +668,6 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
         return true;
 
-    }
-
-    private String resolveEveryoneOrganizationRole(String tenantDomain) throws IdentityRoleManagementException {
-
-        try {
-            String internalEveryoneRole = OrganizationManagementHandlerDataHolder.getInstance().getRealmService()
-                    .getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain)).getRealmConfiguration()
-                    .getEveryOneRoleName();
-            return UserCoreUtil.removeDomainFromName(internalEveryoneRole);
-        } catch (UserStoreException e) {
-            throw new IdentityRoleManagementException(String.format(
-                    "Error while fetching the internal everyone role of the tenant with: %s.", tenantDomain), e);
-        }
     }
 
     private static boolean isFragmentApp(ServiceProvider serviceProvider) {

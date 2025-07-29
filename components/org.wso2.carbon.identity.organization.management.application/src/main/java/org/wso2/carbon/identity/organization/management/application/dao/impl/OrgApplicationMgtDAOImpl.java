@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
 import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.core.URLBuilderException;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.JdbcUtils;
@@ -39,9 +40,11 @@ import org.wso2.carbon.identity.organization.management.application.constant.SQL
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.util.FilterQueriesUtil;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.sql.Connection;
@@ -50,6 +53,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -64,6 +68,11 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_HEAD;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.GET_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.HAS_FRAGMENT_APPS;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.INSERT_SHARED_APP;
@@ -90,6 +99,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_SHARED_APP_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.SQLPlaceholders.SHARED_ORG_ID_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.application.constant.SQLConstants.UPDATE_SHARE_WITH_ALL_CHILDREN;
@@ -102,7 +112,9 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMySqlDB;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
 
 /**
  * This class implements the {@link OrgApplicationMgtDAO} interface.
@@ -164,7 +176,9 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     (resultSet, rowNumber) -> new SharedApplicationDO(
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
                             resultSet.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
-                            resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN)),
+                            resultSet.getBoolean(DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN),
+                            resultSet.getInt(DB_SCHEMA_COLUMN_NAME_SP_SHARED_APP_ID)
+                    ),
                     namedPreparedStatement -> {
                         namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_SP_APP_ID, sharedAppId);
                         namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
@@ -302,6 +316,75 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             throw handleServerException(
                     ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainAppId, ownerOrgId);
         }
+    }
+
+    @Override
+    public List<SharedApplicationDO> getSharedApplications(String ownerOrgId, String mainApplicationId,
+                                                           List<String> sharedOrgIds,
+                                                           List<ExpressionNode> expressionNodes,
+                                                           String sortOrder, int limit)
+            throws OrganizationManagementException {
+
+        if (CollectionUtils.isEmpty(sharedOrgIds)) {
+            return Collections.emptyList();
+        }
+        FilterQueryBuilder filterQueryBuilder = FilterQueriesUtil.getSharedAppOrgsFilterQueryBuilder(expressionNodes);
+        String filterQuery = filterQueryBuilder.getFilterQuery();
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+        String placeholders = IntStream.range(0, sharedOrgIds.size())
+                .mapToObj(i -> ":" + SHARED_ORG_ID_PLACEHOLDER_PREFIX + i + ";")
+                .collect(Collectors.joining(", "));
+        String sqlStmtHead = GET_SHARED_APPLICATIONS_BY_FILTERING_HEAD + filterQuery;
+        String sqlStmtTail;
+        if (limit == 0) {
+            sqlStmtTail = String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL, sortOrder).replace(
+                    SHARED_ORG_ID_LIST_PLACEHOLDER, placeholders);
+        } else {
+            sqlStmtTail = getSharedApplicationsByFilteringTailWithLimit(sortOrder, limit)
+                    .replace(SHARED_ORG_ID_LIST_PLACEHOLDER, placeholders);
+        }
+        String sqlStmt = sqlStmtHead + sqlStmtTail;
+        List<SharedApplicationDO> sharedApplicationDOList = new ArrayList<>();
+
+        try (Connection dbConnection = IdentityDatabaseUtil.getDBConnection(false);
+             NamedPreparedStatement namedPreparedStatement = new NamedPreparedStatement(dbConnection, sqlStmt)) {
+
+            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID, mainApplicationId);
+            namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID, ownerOrgId);
+            if (filterAttributeValue != null) {
+                for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                    namedPreparedStatement.setString(entry.getKey() , entry.getValue());
+                }
+            }
+            for (int i = 0; i < sharedOrgIds.size(); i++) {
+                namedPreparedStatement.setString(SHARED_ORG_ID_PLACEHOLDER_PREFIX + i, sharedOrgIds.get(i));
+            }
+
+            try (ResultSet rs = namedPreparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    SharedApplicationDO sharedApplicationDO = new SharedApplicationDO(
+                            rs.getString(DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID),
+                            rs.getString(DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID),
+                            rs.getInt(DB_SCHEMA_COLUMN_NAME_SP_SHARED_APP_ID));
+                    sharedApplicationDOList.add(sharedApplicationDO);
+                }
+            }
+        } catch (SQLException e) {
+            throw handleServerException(
+                    ERROR_CODE_ERROR_RESOLVING_SHARED_APPLICATION, e, mainApplicationId, ownerOrgId);
+        }
+        return sharedApplicationDOList;
+    }
+
+    private String getSharedApplicationsByFilteringTailWithLimit(String sortOrder, int limit)
+            throws OrganizationManagementServerException {
+
+        if (isOracleDB()) {
+            return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE, sortOrder, limit);
+        } else if (isMSSqlDB()) {
+            return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL, sortOrder, limit);
+        }
+        return String.format(GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT, sortOrder, limit);
     }
 
     @Override

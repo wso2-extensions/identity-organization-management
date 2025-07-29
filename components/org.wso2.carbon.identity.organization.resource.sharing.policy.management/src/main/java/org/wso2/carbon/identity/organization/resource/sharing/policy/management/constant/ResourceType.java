@@ -24,7 +24,9 @@ import java.util.List;
  * Enum representing the type of resource being shared.
  */
 public enum ResourceType {
-    USER(Collections.singletonList(SharedAttributeType.ROLE));
+
+    USER(Collections.singletonList(SharedAttributeType.ROLE)),
+    APPLICATION(Collections.singletonList(SharedAttributeType.ROLE));
 
     private final List<SharedAttributeType> applicableAttributes;
 

@@ -23,6 +23,9 @@ package org.wso2.carbon.identity.organization.management.application.constant;
  */
 public class SQLConstants {
 
+    public static final String ID_COLUMN_NAME = "ID";
+    public static final String SHARED_ORG_ID_COLUMN_NAME = "SHARED_ORG_ID";
+
     public static final String INSERT_SHARED_APP = "INSERT INTO SP_SHARED_APP (MAIN_APP_ID, OWNER_ORG_ID, " +
             "SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN) VALUES (:" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";, :" +
@@ -43,9 +46,9 @@ public class SQLConstants {
             + "FROM SP_SHARED_APP WHERE OWNER_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID +
             "; AND MAIN_APP_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + ";";
 
-    public static final String GET_SHARED_APPLICATION = "SELECT SHARED_APP_ID, SHARED_ORG_ID, SHARE_WITH_ALL_CHILDREN "
-            + "FROM SP_SHARED_APP JOIN SP_APP ON SP_APP.UUID = SP_SHARED_APP.SHARED_APP_ID WHERE SHARED_ORG_ID = :" +
-            SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + "; AND SP_APP.ID = :" +
+    public static final String GET_SHARED_APPLICATION = "SELECT SP_SHARED_APP.ID, SHARED_APP_ID, SHARED_ORG_ID, " +
+            "SHARE_WITH_ALL_CHILDREN FROM SP_SHARED_APP JOIN SP_APP ON SP_APP.UUID = SP_SHARED_APP.SHARED_APP_ID " +
+            "WHERE SHARED_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID + "; AND SP_APP.ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_SP_APP_ID + ";";
 
     public static final String GET_MAIN_APPLICATION = "SELECT MAIN_APP_ID, OWNER_ORG_ID FROM SP_SHARED_APP WHERE " +
@@ -72,6 +75,23 @@ public class SQLConstants {
                     SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :" +
                     SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND SHARED_ORG_ID IN (" +
                     SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ")";
+
+    public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_HEAD =
+            "SELECT ID, SHARED_ORG_ID, SHARED_APP_ID FROM SP_SHARED_APP WHERE MAIN_APP_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID + "; AND OWNER_ORG_ID = :" +
+                    SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID + "; AND ";
+
+    public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT = " SHARED_ORG_ID IN (" +
+                    SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s LIMIT %d;";
+
+    public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL = " SHARED_ORG_ID IN (" +
+            SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
+
+    public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE = " SHARED_ORG_ID IN (" +
+            SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s FETCH FIRST %d ROWS ONLY";
+
+    public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL = " SHARED_ORG_ID IN (" +
+            SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s;";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MYSQL =
             "SELECT DISTINCT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, " +
@@ -210,6 +230,7 @@ public class SQLConstants {
         public static final String DB_SCHEMA_COLUMN_NAME_MAIN_APP_ID = "MAIN_APP_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_OWNER_ORG_ID = "OWNER_ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_APP_ID = "SHARED_APP_ID";
+        public static final String DB_SCHEMA_COLUMN_NAME_SP_SHARED_APP_ID = "ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARED_ORG_ID = "SHARED_ORG_ID";
         public static final String DB_SCHEMA_COLUMN_NAME_SHARE_WITH_ALL_CHILDREN = "SHARE_WITH_ALL_CHILDREN";
         public static final String DB_SCHEMA_COLUMN_NAME_SP_ID = "SP_ID";
