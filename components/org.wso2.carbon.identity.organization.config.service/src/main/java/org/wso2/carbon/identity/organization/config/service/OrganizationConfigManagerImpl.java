@@ -16,7 +16,7 @@
  * under the License.
  */
 
- package org.wso2.carbon.identity.organization.config.service;
+package org.wso2.carbon.identity.organization.config.service;
 
 import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
 import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
@@ -30,14 +30,14 @@ import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfi
 import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
- 
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
- 
+
 import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
