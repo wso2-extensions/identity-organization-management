@@ -229,8 +229,9 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == sharingConfig.getMode().ordinal()) {
             List<RoleWithAudienceDO> roleWithAudienceDOList = sharingConfig.getRoleWithAudienceDOList();
             for (RoleWithAudienceDO roleWithAudienceDO : roleWithAudienceDOList) {
-                Optional<RoleV2> availableOrgRolesToBeShared = associatedRolesOfMainApplication.stream().findFirst()
-                        .filter(roleInfo -> roleInfo.getName().equals(roleWithAudienceDO.getRoleName()));
+                Optional<RoleV2> availableOrgRolesToBeShared = associatedRolesOfMainApplication.stream()
+                        .filter(roleInfo -> roleInfo.getName().equals(roleWithAudienceDO.getRoleName()))
+                        .findFirst();
                 if (availableOrgRolesToBeShared.isPresent()) {
                     /* If the parent org is the same as the main org, then we don't need to check for the parent org
                      role association. Because there's no role association in the main org. It has the org that has
