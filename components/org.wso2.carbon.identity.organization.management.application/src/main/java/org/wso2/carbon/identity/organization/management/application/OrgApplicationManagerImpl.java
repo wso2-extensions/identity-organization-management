@@ -459,7 +459,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
         if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
             setShareWithAllChildrenProperty(mainApplication, true);
-        } else {
+        } else if (!ApplicationMgtUtil.isConsole(mainApplication.getApplicationName())) {
             removeShareWithAllChildrenProperty(mainApplication);
         }
         try {
