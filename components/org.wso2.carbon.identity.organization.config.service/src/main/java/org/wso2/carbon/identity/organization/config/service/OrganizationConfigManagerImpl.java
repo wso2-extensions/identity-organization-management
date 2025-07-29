@@ -18,27 +18,27 @@
 
  package org.wso2.carbon.identity.organization.config.service;
 
- import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
- import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
- import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
- import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
- import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
- import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
- import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
- import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
- import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
+import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
+import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
+import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
+import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigClientException;
+import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
+import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
+import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
+import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
 import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
- import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
  
- import java.util.Collections;
- import java.util.HashMap;
- import java.util.List;
- import java.util.Map;
- import java.util.Optional;
- import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
  
- import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
+import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_CONFLICT;
