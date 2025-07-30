@@ -27,7 +27,7 @@ public class OrganizationConfigConstants {
 
     public static final String RESOURCE_TYPE_NAME = "ORGANIZATION_CONFIGURATION";
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
-    public static final String ORGANIZATION_CONFIG_RESOURCE_NAME = "OrganizationConfig";
+    public static final String ORGANIZATION_BRANDING_RESOURCE_NAME = "OrganizationBranding";
     public static final String EMAIL_DOMAIN_ENABLE = "emailDomain.enable";
     public static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
     public static final String IS_CONSOLE_BRANDING_ENABLED = "isConsoleBrandingEnabled";

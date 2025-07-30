@@ -260,6 +260,68 @@ public class OrganizationConfigManagerImplTest {
         Assert.assertEquals(returnedConfigProperties.get(2).getValue(), FALSE);
     }
 
+    @Test(priority = 10)
+    public void testBackwardCompatibility_DiscoveryConfigStillWorksIndependently() throws Exception {
+
+        try {
+            organizationConfigManagerImpl.deleteDiscoveryConfiguration();
+        } catch (Exception e) {
+            // Ignore if discovery config doesn't exist
+        }
+
+        List<ConfigProperty> discoveryConfigProperties = new ArrayList<>();
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryConfigProperties);
+        organizationConfigManagerImpl.addDiscoveryConfiguration(discoveryConfig);
+
+        List<ConfigProperty> returnedDiscoveryConfigProperties =
+                organizationConfigManagerImpl.getDiscoveryConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedDiscoveryConfigProperties.size(), 1);
+        Assert.assertEquals(returnedDiscoveryConfigProperties.get(0).getKey(), EMAIL_DOMAIN_ENABLE);
+        Assert.assertEquals(returnedDiscoveryConfigProperties.get(0).getValue(), TRUE);
+    }
+
+    @Test(priority = 11)
+    public void testProperRESTSemantics() throws Exception {
+
+        List<ConfigProperty> discoveryConfigProperties = new ArrayList<>();
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryConfigProperties);
+        organizationConfigManagerImpl.updateDiscoveryConfiguration(discoveryConfig);
+
+        List<ConfigProperty> brandingConfigProperties = new ArrayList<>();
+        brandingConfigProperties.add(new ConfigProperty("isConsoleBrandingEnabled", FALSE));
+        OrganizationConfig brandingConfig = new OrganizationConfig(brandingConfigProperties);
+        organizationConfigManagerImpl.updateOrganizationConfiguration(brandingConfig);
+
+        List<ConfigProperty> unifiedProperties = 
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+        Assert.assertEquals(unifiedProperties.size(), 1);
+        Assert.assertTrue(unifiedProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals("isConsoleBrandingEnabled") && 
+                        prop.getValue().equals(FALSE)));
+
+        try {
+            organizationConfigManagerImpl.getDiscoveryConfiguration();
+            Assert.fail("Discovery config should be deleted when PUT contains only branding");
+        } catch (OrganizationConfigClientException e) {
+            Assert.assertEquals(e.getMessage(), "No organization discovery configuration found.");
+        }
+
+        List<ConfigProperty> onlyBrandingProperties = new ArrayList<>();
+        onlyBrandingProperties.add(new ConfigProperty("isConsoleBrandingEnabled", TRUE));
+        OrganizationConfig onlyBrandingConfig = new OrganizationConfig(onlyBrandingProperties);
+        organizationConfigManagerImpl.updateOrganizationConfiguration(onlyBrandingConfig);
+
+        List<ConfigProperty> finalUnifiedProperties = 
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+        Assert.assertEquals(finalUnifiedProperties.size(), 1);
+        Assert.assertTrue(finalUnifiedProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals("isConsoleBrandingEnabled") && 
+                        prop.getValue().equals(TRUE)));
+    }
+
     @AfterClass
     public void tearDown() throws Exception {
 
