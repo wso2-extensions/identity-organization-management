@@ -36,8 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.wso2.carbon.identity.configuration.mgt.core.constant.ConfigurationConstants.ErrorMessages.ERROR_CODE_RESOURCE_DOES_NOT_EXISTS;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ALLOWED_DEFAULT_DISCOVERY_CONFIG_KEYS;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.DEFAULT_PARAM;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.EMAIL_DOMAIN_ENABLE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_CONFLICT;
@@ -48,8 +51,10 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DEFAULT_PARAMETER_MAPPINGS;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.config.service.util.Utils.handleServerException;
@@ -187,6 +192,10 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES);
         }
 
+        String defaultParamValue = configAttributes.get(DEFAULT_PARAM);
+        if (defaultParamValue != null && !SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.containsKey(defaultParamValue)) {
+            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE);
+        }
         List<Attribute> resourceAttributes = configAttributes.entrySet().stream()
                 .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
                 .map(attribute -> new Attribute(attribute.getKey(), attribute.getValue()))
@@ -199,9 +208,12 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
 
     private boolean validateSupportedDiscoveryAttributeKeys(List<ConfigProperty> configProperties) {
 
-        // Fist we check if existing in the pre-defined list of supported discovery attribute keys.
+        // First we check if existing in the pre-defined list of supported and allowed discovery attribute keys.
         boolean containsInPreDefinedList = configProperties.stream().allMatch(property ->
-                SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS.contains(property.getKey()));
+                Stream.concat(SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS.stream(),
+                                ALLOWED_DEFAULT_DISCOVERY_CONFIG_KEYS.stream())
+                        .collect(Collectors.toSet())
+                        .contains(property.getKey()));
         if (containsInPreDefinedList) {
             return true;
         }
