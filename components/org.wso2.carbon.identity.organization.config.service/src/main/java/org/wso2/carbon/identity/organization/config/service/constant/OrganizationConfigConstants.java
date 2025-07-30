@@ -27,8 +27,10 @@ public class OrganizationConfigConstants {
 
     public static final String RESOURCE_TYPE_NAME = "ORGANIZATION_CONFIGURATION";
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
+    public static final String ORGANIZATION_BRANDING_RESOURCE_NAME = "OrganizationBranding";
     public static final String EMAIL_DOMAIN_ENABLE = "emailDomain.enable";
     public static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
+    public static final String IS_CONSOLE_BRANDING_ENABLED = "isConsoleBrandingEnabled";
     @Deprecated
     /* Do not use this constant to register new discovery types. The
      `AttributeBasedOrganizationDiscoveryHandlerRegistry` should be used instead. It has the supported discovery
@@ -43,28 +45,52 @@ public class OrganizationConfigConstants {
     public enum ErrorMessages {
 
         // Client errors.
-        ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED("60001", "Can't modify the organization discovery " +
-                "configuration.", "Only the primary organization has the authority to modify the organization " +
+        ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED("60001", 
+                "Can't modify the organization discovery configuration.", 
+                "Only the primary organization has the authority to modify the organization " +
                 "discovery configuration."),
-        ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST("60002", "No organization discovery configuration found.",
+        ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST("60002", 
+                "No organization discovery configuration found.",
                 "There is no organization discovery configuration for organization with ID: %s."),
-        ERROR_CODE_DISCOVERY_CONFIG_CONFLICT("60003", "The organization discovery configuration already exists.",
+        ERROR_CODE_DISCOVERY_CONFIG_CONFLICT("60003", 
+                "The organization discovery configuration already exists.",
                 "The organization discovery configuration is already for available for the organization with id: %s."),
-        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE("60004", "Invalid organization discovery attribute.",
+        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE("60004", 
+                "Invalid organization discovery attribute.",
                 "The organization discovery attribute with key: %s is not supported."),
-        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES("60005", "Invalid organization discovery attribute " +
-                "values.", "Provided organization discovery attribute value combination is not supported."),
+        ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES("60005", 
+                "Invalid organization discovery attribute values.", 
+                "Provided organization discovery attribute value combination is not supported."),
+
+        ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007", 
+                "No organization configuration found.",
+                "There is no organization configuration for organization with ID: %s."),
+        ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES("60009", 
+                "Invalid organization configuration attribute values.", 
+                "Provided organization configuration attribute value combination is not supported."),
 
         // Server errors.
-        ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG("65001", "Unable to add the organization discovery " +
-                "configuration.", "Server encountered an error while adding the organization discovery " +
+        ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG("65001", 
+                "Unable to add the organization discovery configuration.", 
+                "Server encountered an error while adding the organization discovery " +
                 "configuration for organization with ID: %s."),
-        ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG("65002", "Unable to retrieve the organization " +
-                "discovery configuration.", "Server encountered an error while retrieving the organization discovery " +
+        ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG("65002", 
+                "Unable to retrieve the organization discovery configuration.", 
+                "Server encountered an error while retrieving the organization discovery " +
                 "configuration for organization with ID: %s."),
-        ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG("65003", "Unable to delete the organization discovery " +
-                "configuration.", "Server encountered an error while deleting the organization discovery " +
-                "configuration for the organization with id: %s");
+        ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG("65003", 
+                "Unable to delete the organization discovery configuration.", 
+                "Server encountered an error while deleting the organization discovery " +
+                "configuration for the organization with id: %s"),
+
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65005", 
+                "Unable to retrieve the organization configuration.", 
+                "Server encountered an error while retrieving the organization configuration for " +
+                "organization with ID: %s."),
+        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65006", 
+                "Unable to update the organization configuration.",
+                "Server encountered an error while updating the organization configuration for " +
+                "organization with ID: %s.");
 
         private final String code;
         private final String message;

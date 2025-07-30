@@ -27,9 +27,11 @@ import org.wso2.carbon.identity.organization.config.service.exception.Organizati
 import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,8 +48,14 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_DISCOVERY_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_BRANDING_RESOURCE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.RESOURCE_TYPE_NAME;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.SUPPORTED_DISCOVERY_ATTRIBUTE_KEYS;
@@ -222,5 +230,157 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationConfigServiceHolder.getInstance().getOrganizationManager();
+    }
+
+    @Override
+    public void updateOrganizationConfiguration(OrganizationConfig organizationConfig)
+            throws OrganizationConfigException {
+
+        try {
+            // Separate discovery and branding attributes
+            List<ConfigProperty> discoveryAttributes = organizationConfig.getConfigProperties().stream()
+                    .filter(property -> !IS_CONSOLE_BRANDING_ENABLED.equals(property.getKey()))
+                    .collect(Collectors.toList());
+            
+            List<ConfigProperty> brandingAttributes = organizationConfig.getConfigProperties().stream()
+                    .filter(property -> IS_CONSOLE_BRANDING_ENABLED.equals(property.getKey()))
+                    .collect(Collectors.toList());
+
+            // Check if discovery attributes are being modified - only primary organization can modify discovery 
+            // attributes
+            if (!discoveryAttributes.isEmpty() && !isDiscoveryConfigChangeAllowed()) {
+                throw handleClientException(ERROR_CODE_DISCOVERY_CONFIG_UPDATE_NOT_ALLOWED);
+            }
+
+            // If discovery attributes are provided, update discovery config (replace entire discovery config)
+            if (!discoveryAttributes.isEmpty()) {
+                DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryAttributes);
+                updateDiscoveryConfiguration(discoveryConfig);
+            } else {
+                // If no discovery attributes in PUT, delete discovery config (REST PUT replaces entire resource)
+                try {
+                    deleteDiscoveryConfiguration();
+                } catch (OrganizationConfigException e) {
+                    // Discovery config doesn't exist, which is fine for PUT semantics
+                }
+            }
+
+            // If branding attributes are provided, update branding config (replace entire branding config)
+            if (!brandingAttributes.isEmpty()) {
+                updateBrandingConfiguration(brandingAttributes);
+            } else {
+                // If no branding attributes in PUT, delete branding config (REST PUT replaces entire resource)
+                try {
+                    deleteBrandingConfiguration();
+                } catch (OrganizationConfigException e) {
+                    // Branding config doesn't exist, which is fine for PUT semantics
+                }
+            }
+        } catch (OrganizationManagementServerException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    @Override
+    public OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException {
+
+        List<ConfigProperty> allProperties = new ArrayList<>();
+        
+        // Get discovery config properties
+        try {
+            DiscoveryConfig discoveryConfig = getDiscoveryConfiguration();
+            allProperties.addAll(discoveryConfig.getConfigProperties());
+        } catch (OrganizationConfigException e) {
+            // Discovery config doesn't exist, continue with branding only
+        }
+        
+        // Get branding config properties
+        try {
+            List<ConfigProperty> brandingProperties = getBrandingConfiguration();
+            allProperties.addAll(brandingProperties);
+        } catch (OrganizationConfigException e) {
+            // Branding config doesn't exist, continue with discovery only
+        }
+        
+        // If no configs exist at all, throw exception
+        if (allProperties.isEmpty()) {
+            throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
+        }
+        
+        return new OrganizationConfig(allProperties);
+    }
+
+    private void updateBrandingConfiguration(List<ConfigProperty> brandingAttributes) 
+            throws OrganizationConfigException {
+
+        try {
+            // Validate branding attributes - only check if it's a valid boolean
+            for (ConfigProperty brandingProperty : brandingAttributes) {
+                String brandingValue = brandingProperty.getValue();
+                if (!"true".equalsIgnoreCase(brandingValue) && !"false".equalsIgnoreCase(brandingValue)) {
+                    throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
+                }
+            }
+
+            Map<String, String> configAttributes = new HashMap<>();
+            for (ConfigProperty property : brandingAttributes) {
+                configAttributes.put(property.getKey(), property.getValue());
+            }
+
+            List<Attribute> resourceAttributes = configAttributes.entrySet().stream()
+                    .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
+                    .map(attribute -> new Attribute(attribute.getKey(), attribute.getValue()))
+                    .collect(Collectors.toList());
+            
+            Resource resource = new Resource();
+            resource.setResourceName(ORGANIZATION_BRANDING_RESOURCE_NAME);
+            resource.setAttributes(resourceAttributes);
+
+            Optional<Resource> resourceOptional = getBrandingResource();
+            if (!resourceOptional.isPresent()) {
+                getConfigurationManager().addResource(RESOURCE_TYPE_NAME, resource);
+            } else {
+                getConfigurationManager().replaceResource(RESOURCE_TYPE_NAME, resource);
+            }
+        } catch (ConfigurationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
+    }
+
+    private List<ConfigProperty> getBrandingConfiguration() throws OrganizationConfigException {
+
+        Optional<Resource> resourceOptional = getBrandingResource();
+        if (!resourceOptional.isPresent()) {
+            throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
+        }
+
+        return resourceOptional.map(resource -> resource.getAttributes().stream()
+                .map(attribute -> new ConfigProperty(attribute.getKey(), attribute.getValue()))
+                .collect(Collectors.toList())).orElse(Collections.emptyList());
+    }
+
+    private Optional<Resource> getBrandingResource() throws OrganizationConfigException {
+
+        try {
+            return Optional.ofNullable(getConfigurationManager().getResource(RESOURCE_TYPE_NAME, 
+                    ORGANIZATION_BRANDING_RESOURCE_NAME));
+        } catch (ConfigurationManagementException e) {
+            if (!ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
+                throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG, e, getOrganizationId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private void deleteBrandingConfiguration() throws OrganizationConfigException {
+
+        try {
+            Optional<Resource> resourceOptional = getBrandingResource();
+            if (resourceOptional.isPresent()) {
+                getConfigurationManager().deleteResource(RESOURCE_TYPE_NAME, ORGANIZATION_BRANDING_RESOURCE_NAME);
+            }
+        } catch (ConfigurationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG, e, getOrganizationId());
+        }
     }
 }
