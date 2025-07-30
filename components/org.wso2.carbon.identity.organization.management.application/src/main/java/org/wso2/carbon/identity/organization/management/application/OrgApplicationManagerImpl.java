@@ -457,11 +457,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Add the role sharing config to the main application.
         ApplicationShareRolePolicy.Mode roleSharingMode = generalApplicationShare.getRoleSharing().getMode();
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
-        if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
-            setShareWithAllChildrenProperty(mainApplication, true);
-        } else {
-            removeShareWithAllChildrenProperty(mainApplication);
-        }
+        setShareWithAllChildrenProperty(mainApplication, true);
         try {
             getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
                     getAuthenticatedUsername());
@@ -775,7 +771,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         boolean isAppShared = stream(mainApplication.getSpProperties())
                 .anyMatch(p -> IS_APP_SHARED.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
         if (isSharedWithAllChildren || isAppShared) {
-            setShareWithAllChildrenProperty(mainApplication, false);
+            removeShareWithAllChildrenProperty(mainApplication);
             setIsAppSharedProperty(mainApplication, false);
             IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
             try {
@@ -1150,12 +1146,12 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     .getAppAssociatedRoleSharingMode(application);
 
             if (OrgApplicationManagerUtil.isShareWithAllChildren(application.getSpProperties())) {
-                ApplicationShareRolePolicy.Builder applicationShareRolePolicy
-                        = new ApplicationShareRolePolicy.Builder().mode(mode);
                 // If an app has `sharedWithAllChildren` property, but the role mode has been set to `SELECTED` or
                 // `NONE`, that means app was shared with new app sharing mode. So it has been shared with a
                 // general share policy. That's why below check is checking for the mode.
                 if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == mode.ordinal()) {
+                    ApplicationShareRolePolicy.Builder applicationShareRolePolicy
+                            = new ApplicationShareRolePolicy.Builder().mode(mode);
                     return new SharingModeDO.Builder()
                             .policy(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS)
                             .applicationShareRolePolicy(applicationShareRolePolicy.build()).build();
