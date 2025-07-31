@@ -41,10 +41,12 @@ import org.wso2.carbon.identity.organization.management.handler.OrganizationSess
 import org.wso2.carbon.identity.organization.management.handler.OrganizationVersionHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandler;
 import org.wso2.carbon.identity.organization.management.handler.SharingPolicyCleanUpHandler;
+import org.wso2.carbon.identity.organization.management.handler.listener.ResidentIdPMgtListener;
 import org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.idp.mgt.listener.IdentityProviderMgtListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -77,6 +79,8 @@ public class OrganizationManagementHandlerServiceComponent {
             bundleContext.registerService(AbstractEventHandler.class, new OrganizationVersionHandler(), null);
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     OrganizationManagementAuditLogHandler.getInstance(), null);
+            bundleContext.registerService(IdentityProviderMgtListener.class.getName(), new ResidentIdPMgtListener(),
+                    null);
             LOG.debug("Organization management handler component activated successfully.");
         } catch (Throwable e) {
             LOG.error("Error while activating organization management handler module.", e);
