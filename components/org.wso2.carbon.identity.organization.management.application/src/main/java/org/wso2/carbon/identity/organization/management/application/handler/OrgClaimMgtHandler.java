@@ -46,6 +46,7 @@ import org.wso2.carbon.identity.organization.management.service.model.BasicOrgan
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
@@ -129,6 +130,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         try {
             String parentTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
             String sharedOrganizationTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationID);
+            /*
+             * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need
+             * to be duplicated for each sub-organization.
+             * */
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(sharedOrganizationTenantDomain)) {
+                return;
+            }
             List<String> missingClaims = getMissingClaims(sharedOrganizationTenantDomain, claimMappings);
             if (!missingClaims.isEmpty()) {
                 List<LocalClaim> parentOrgCustomLocalClaims = getClaimMetadataManagementService().
@@ -164,6 +172,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         String applicationId =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.APPLICATION_ID);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
+        /*
+         * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+         * duplicated for each sub-organization.
+         * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         try {
             List<BasicOrganization> sharedOrganizations = getOrgApplicationManager().getApplicationSharedOrganizations(
                     getOrganizationManager().resolveOrganizationId(tenantDomain), applicationId);
@@ -280,6 +295,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        /*
+         * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+         * duplicated for each sub-organization.
+         * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         String localClaimURI = (String) eventProperties.get(IdentityEventConstants.EventProperty.LOCAL_CLAIM_URI);
         Map<String, String> localClaimProperties =
                 (Map<String, String>) eventProperties.get(IdentityEventConstants.EventProperty.
@@ -406,6 +428,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        /*
+         * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+         * duplicated for each sub-organization.
+         * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         String claimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
         String claimURI = (String) eventProperties.get(IdentityEventConstants.EventProperty.EXTERNAL_CLAIM_URI);
@@ -446,6 +475,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        /*
+        * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+        * duplicated for each sub-organization.
+        * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         String claimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
         String claimURI = (String) eventProperties.get(IdentityEventConstants.EventProperty.EXTERNAL_CLAIM_URI);
@@ -488,6 +524,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        /*
+         * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+         * duplicated for each sub-organization.
+         * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         String claimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
         try {
@@ -521,6 +564,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         Map<String, Object> eventProperties = event.getEventProperties();
         int tenantId = (int) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_ID);
         String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        /*
+         * If inheritance is enabled, the claims will be resolved from the parent organizations and do not need to be
+         * duplicated for each sub-organization.
+         * */
+        if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+            return;
+        }
         String oldClaimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.OLD_CLAIM_DIALECT_URI);
         String newClaimDialectURI =
@@ -601,6 +651,13 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         if (parentOrganization != null) {
             try {
                 String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganization.getId());
+                /*
+                 * If inheritance is enabled, the claims will be resolved from the parent organizations and do not
+                 * need to be duplicated for each sub-organization.
+                 * */
+                if (Utils.isClaimAndOIDCScopeInheritanceEnabled(parentOrgTenantDomain)) {
+                    return;
+                }
                 inheritClaimPropertiesAndAttributeMapping(createdOrganization.getId(), parentOrgTenantDomain);
             } catch (OrganizationManagementException e) {
                 throw new IdentityEventException("Error retrieving the tenant domain of parent organization.", e);
