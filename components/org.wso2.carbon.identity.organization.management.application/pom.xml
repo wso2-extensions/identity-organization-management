@@ -196,6 +196,7 @@
                             org.wso2.carbon.identity.oauth; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.oauth.common; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
+                            org.wso2.carbon.identity.oauth2.util; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
