@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.organization.config.service.exception.Organizati
 import org.wso2.carbon.identity.organization.config.service.internal.OrganizationConfigServiceHolder;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
 import org.wso2.carbon.identity.organization.config.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
 
 /**
  * Unit tests for OrganizationConfigManagerImpl class.
@@ -187,6 +189,169 @@ public class OrganizationConfigManagerImplTest {
         Assert.assertEquals(returnedConfigProperties.get(1).getValue(), TRUE);
     }
 
+    @Test(priority = 6)
+    public void testUpdateOrganizationConfiguration() throws Exception {
+
+        List<ConfigProperty> configProperties = new ArrayList<>();
+        configProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        configProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, TRUE));
+        OrganizationConfig organizationConfig = new OrganizationConfig(configProperties);
+
+        organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+        List<ConfigProperty> returnedConfigProperties =
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedConfigProperties.size(), 2);
+        Assert.assertEquals(returnedConfigProperties.get(0).getKey(), EMAIL_DOMAIN_ENABLE);
+        Assert.assertEquals(returnedConfigProperties.get(0).getValue(), TRUE);
+        Assert.assertEquals(returnedConfigProperties.get(1).getKey(), IS_CONSOLE_BRANDING_ENABLED);
+        Assert.assertEquals(returnedConfigProperties.get(1).getValue(), TRUE);
+    }
+
+    @Test(priority = 7)
+    public void testUpdateOrganizationConfigurationWithInvalidBrandingValue() throws Exception {
+
+        try {
+            List<ConfigProperty> configProperties = new ArrayList<>();
+            configProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, "invalid"));
+            OrganizationConfig organizationConfig = new OrganizationConfig(configProperties);
+
+            organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+            Assert.fail("Expected OrganizationConfigClientException was not thrown.");
+        } catch (OrganizationConfigClientException e) {
+            Assert.assertEquals(e.getMessage(), "Invalid organization configuration attribute values.");
+        }
+    }
+
+    @Test(priority = 8)
+    public void testUpdateOrganizationConfigurationWithInvalidDiscoveryConfig() throws Exception {
+
+        try {
+            List<ConfigProperty> configProperties = new ArrayList<>();
+            configProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, FALSE));
+            configProperties.add(new ConfigProperty(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE, TRUE));
+            OrganizationConfig organizationConfig = new OrganizationConfig(configProperties);
+
+            organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+            Assert.fail("Expected OrganizationConfigClientException was not thrown.");
+        } catch (OrganizationConfigClientException e) {
+            Assert.assertEquals(e.getMessage(), "Invalid organization discovery attribute values.");
+        }
+    }
+
+    @Test(priority = 9)
+    public void testUpdateOrganizationConfigurationWithDiscoveryAndBranding() throws Exception {
+
+        List<ConfigProperty> configProperties = new ArrayList<>();
+        configProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        configProperties.add(new ConfigProperty(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE, TRUE));
+        configProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, FALSE));
+        OrganizationConfig organizationConfig = new OrganizationConfig(configProperties);
+
+        organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+        List<ConfigProperty> returnedConfigProperties =
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedConfigProperties.size(), 3);
+        Assert.assertEquals(returnedConfigProperties.get(0).getKey(), EMAIL_DOMAIN_ENABLE);
+        Assert.assertEquals(returnedConfigProperties.get(0).getValue(), TRUE);
+        Assert.assertEquals(returnedConfigProperties.get(1).getKey(), EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE);
+        Assert.assertEquals(returnedConfigProperties.get(1).getValue(), TRUE);
+        Assert.assertEquals(returnedConfigProperties.get(2).getKey(), IS_CONSOLE_BRANDING_ENABLED);
+        Assert.assertEquals(returnedConfigProperties.get(2).getValue(), FALSE);
+    }
+
+    @Test(priority = 10)
+    public void testUnifiedBehavior_DiscoveryUpdateReflectsInOrganizationConfig() throws Exception {
+
+        List<ConfigProperty> orgConfigProperties = new ArrayList<>();
+        orgConfigProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, TRUE));
+        OrganizationConfig organizationConfig = new OrganizationConfig(orgConfigProperties);
+        organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+
+        List<ConfigProperty> discoveryConfigProperties = new ArrayList<>();
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE, TRUE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryConfigProperties);
+        organizationConfigManagerImpl.updateDiscoveryConfiguration(discoveryConfig);
+
+        List<ConfigProperty> returnedOrgConfigProperties =
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedOrgConfigProperties.size(), 3);
+        Assert.assertTrue(returnedOrgConfigProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && 
+                        prop.getValue().equals(TRUE)));
+        Assert.assertTrue(returnedOrgConfigProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && 
+                        prop.getValue().equals(TRUE)));
+                Assert.assertTrue(returnedOrgConfigProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals(IS_CONSOLE_BRANDING_ENABLED) &&
+                        prop.getValue().equals(TRUE)));
+    }
+
+    @Test(priority = 11)
+    public void testUnifiedBehavior_OrganizationConfigUpdateReflectsInDiscoveryConfig() throws Exception {
+
+        List<ConfigProperty> discoveryConfigProperties = new ArrayList<>();
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, FALSE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryConfigProperties);
+        organizationConfigManagerImpl.updateDiscoveryConfiguration(discoveryConfig);
+
+        List<ConfigProperty> orgConfigProperties = new ArrayList<>();
+        orgConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        orgConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE, TRUE));
+        orgConfigProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, FALSE));
+        OrganizationConfig organizationConfig = new OrganizationConfig(orgConfigProperties);
+        organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+
+        List<ConfigProperty> returnedDiscoveryConfigProperties =
+                organizationConfigManagerImpl.getDiscoveryConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedDiscoveryConfigProperties.size(), 2);
+        Assert.assertTrue(returnedDiscoveryConfigProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && 
+                        prop.getValue().equals(TRUE)));
+        Assert.assertTrue(returnedDiscoveryConfigProperties.stream()
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && 
+                        prop.getValue().equals(TRUE)));
+    }
+
+    @Test(priority = 12)
+    public void testUnifiedBehavior_DiscoveryDeletionRemovesFromOrganizationConfig() throws Exception {
+
+        List<ConfigProperty> orgConfigProperties = new ArrayList<>();
+        orgConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        orgConfigProperties.add(new ConfigProperty(IS_CONSOLE_BRANDING_ENABLED, TRUE));
+        OrganizationConfig organizationConfig = new OrganizationConfig(orgConfigProperties);
+        organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
+
+        organizationConfigManagerImpl.deleteDiscoveryConfiguration();
+
+        List<ConfigProperty> returnedOrgConfigProperties =
+                organizationConfigManagerImpl.getOrganizationConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedOrgConfigProperties.size(), 1);
+        Assert.assertEquals(returnedOrgConfigProperties.get(0).getKey(), IS_CONSOLE_BRANDING_ENABLED);
+        Assert.assertEquals(returnedOrgConfigProperties.get(0).getValue(), TRUE);
+    }
+
+    @Test(priority = 13)
+    public void testBackwardCompatibility_DiscoveryConfigStillWorksIndependently() throws Exception {
+
+        List<ConfigProperty> discoveryConfigProperties = new ArrayList<>();
+        discoveryConfigProperties.add(new ConfigProperty(EMAIL_DOMAIN_ENABLE, TRUE));
+        DiscoveryConfig discoveryConfig = new DiscoveryConfig(discoveryConfigProperties);
+        organizationConfigManagerImpl.addDiscoveryConfiguration(discoveryConfig);
+
+        List<ConfigProperty> returnedDiscoveryConfigProperties =
+                organizationConfigManagerImpl.getDiscoveryConfiguration().getConfigProperties();
+
+        Assert.assertEquals(returnedDiscoveryConfigProperties.size(), 1);
+        Assert.assertEquals(returnedDiscoveryConfigProperties.get(0).getKey(), EMAIL_DOMAIN_ENABLE);
+        Assert.assertEquals(returnedDiscoveryConfigProperties.get(0).getValue(), TRUE);
+    }
+    
     @AfterClass
     public void tearDown() throws Exception {
 

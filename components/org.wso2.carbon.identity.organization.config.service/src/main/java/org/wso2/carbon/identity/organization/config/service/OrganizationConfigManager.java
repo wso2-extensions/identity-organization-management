@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.config.service;
 
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfig;
+import org.wso2.carbon.identity.organization.config.service.model.OrganizationConfig;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 
 /**
@@ -75,4 +76,22 @@ public interface OrganizationConfigManager {
      *                                     configuration.
      */
     DiscoveryConfig getDiscoveryConfigurationByTenantId(int tenantId) throws OrganizationConfigException;
+
+        /**
+     * Update the organization configuration including both discovery and branding settings.
+     *
+     * @param organizationConfig The organization configuration.
+     * @throws OrganizationConfigException The exception thrown when an error occurs while updating the organization
+     *                                     configuration.
+     */
+    void updateOrganizationConfiguration(OrganizationConfig organizationConfig) throws OrganizationConfigException;
+
+    /**
+     * Fetch the organization configuration including both discovery and branding settings.
+     *
+     * @return The organization configuration.
+     * @throws OrganizationConfigException The exception thrown when an error occurs while fetching the organization
+     *                                     configuration.
+     */
+    OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException;
 }
