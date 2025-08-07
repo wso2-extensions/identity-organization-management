@@ -465,15 +465,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         try {
             getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
                     getAuthenticatedUsername());
+
+            // Get all child organizations of the owner organization and create a lookup map for faster access.
+            List<BasicOrganization> childOrganizations = getOrganizationManager()
+                    .getChildOrganizations(mainOrganizationId, true);
+            if (childOrganizations.isEmpty()) {
+                if (ApplicationMgtUtil.isConsoleOrMyAccount(mainApplication.getApplicationName())) {
+                    // If the application is a Console or MyAccount, update the useMappedLocalSubject as true.
+                    mainApplication.getClaimConfig().setAlwaysSendMappedLocalSubjectId(true);
+                    getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
+                            getAuthenticatedUsername());
+                }
+                return;
+            }
+
         } catch (IdentityApplicationManagementException e) {
             throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
-        }
-
-        // Get all child organizations of the owner organization and create a lookup map for faster access.
-        List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(mainOrganizationId,
-                true);
-        if (childOrganizations.isEmpty()) {
-            return;
         }
 
         List<String> allOrganizationIdsInBfsOrder = getAllOrganizationIdsInBfsOrder(mainOrganizationId);
