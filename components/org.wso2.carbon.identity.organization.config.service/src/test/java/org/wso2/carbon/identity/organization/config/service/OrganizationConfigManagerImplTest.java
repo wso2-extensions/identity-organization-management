@@ -58,7 +58,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.IS_CONSOLE_BRANDING_ENABLED;
 
 /**
  * Unit tests for OrganizationConfigManagerImpl class.
@@ -78,6 +77,7 @@ public class OrganizationConfigManagerImplTest {
     private static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
     private static final String TRUE = "true";
     private static final String FALSE = "false";
+    private static final String IS_CONSOLE_BRANDING_ENABLED = "isConsoleBrandingEnabled";
 
     @BeforeClass
     public void setUp() throws Exception {
