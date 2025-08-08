@@ -804,7 +804,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
      * this method to check and skip duplication.
      *
      * @param tenantDomain The domain of the tenant for which the inheritance status needs to be checked.
-     * @return true if is not during the tenant flow and claim inheritance is enabled, false otherwise.
+     * @return true if not in a tenant flow and claim inheritance is enabled; false otherwise.
      */
     private boolean isHierarchicalModeEnabled(String tenantDomain) throws OrganizationManagementException {
 
