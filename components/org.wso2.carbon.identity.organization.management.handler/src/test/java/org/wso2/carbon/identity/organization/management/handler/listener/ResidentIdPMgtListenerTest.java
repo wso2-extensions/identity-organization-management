@@ -56,14 +56,14 @@ public class ResidentIdPMgtListenerTest {
     private static final String SHARED_ROLE_ID_1 = "shared-role-id-1";
     private static final String SHARED_ROLE_ID_2 = "shared-role-id-2";
     private static final String PASSWORD_EXPIRY_RULE_PREFIX = "passwordExpiry.rule";
-    public static final String ROLES_RULE_PREFIX = "1,30,roles,eq,";
-    public static final String GROUP_RULE = "1,30,groups,eq,groupId123";
-    public static final String OTHER_PROPERTY = "other.property";
-    public static final String VALUE_1 = "value1";
-    public static final String VALUE_2 = "value2";
-    public static final String ANOTHER_PROPERTY = "another.property";
-    public static final String RULE_1 = ".1";
-    public static final String RULE_2 = ".2";
+    private static final String ROLES_RULE_PREFIX = "1,30,roles,eq,";
+    private static final String GROUP_RULE = "1,30,groups,eq,groupId123";
+    private static final String OTHER_PROPERTY = "other.property";
+    private static final String VALUE_1 = "value1";
+    private static final String VALUE_2 = "value2";
+    private static final String ANOTHER_PROPERTY = "another.property";
+    private static final String RULE_1 = ".1";
+    private static final String RULE_2 = ".2";
 
     @Mock
     private OrganizationManagementHandlerDataHolder dataHolder;

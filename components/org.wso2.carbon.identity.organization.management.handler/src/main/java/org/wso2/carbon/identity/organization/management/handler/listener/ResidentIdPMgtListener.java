@@ -41,9 +41,9 @@ public class ResidentIdPMgtListener extends AbstractIdentityProviderMgtListener 
 
     private static final Log LOG = LogFactory.getLog(ResidentIdPMgtListener.class);
     private static final String PASSWORD_EXPIRY_RULES_KEY_PREFIX = "passwordExpiry.rule";
-    public static final int ROLE_ID_INDEX = 4;
-    public static final int EXPECTED_RULE_TOKEN_COUNT = 5;
-    public static final int RULE_TYPE_INDEX = 2;
+    private static final int ROLE_ID_INDEX = 4;
+    private static final int EXPECTED_RULE_TOKEN_COUNT = 5;
+    private static final int RULE_TYPE_INDEX = 2;
 
     /**
      * Returns the priority of this listener.
