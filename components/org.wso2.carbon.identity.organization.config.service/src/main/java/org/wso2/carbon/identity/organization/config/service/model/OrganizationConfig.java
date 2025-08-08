@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,29 +16,29 @@
  * under the License.
  */
 
- package org.wso2.carbon.identity.organization.config.service.model;
+package org.wso2.carbon.identity.organization.config.service.model;
 
- import java.util.List;
- 
- /**
-  * This class represents the organization configuration including both discovery and branding settings.
-  */
- public class OrganizationConfig {
- 
-     private List<ConfigProperty> configProperties;
- 
-     public OrganizationConfig(List<ConfigProperty> configProperties) {
- 
-         this.configProperties = configProperties;
-     }
- 
-     public List<ConfigProperty> getConfigProperties() {
- 
-         return configProperties;
-     }
- 
-     public void setConfigProperties(List<ConfigProperty> configProperties) {
- 
-         this.configProperties = configProperties;
-     }
- }
+import java.util.List;
+
+/**
+ * This class represents organization configurations.
+ */
+public class OrganizationConfig {
+
+    private List<ConfigProperty> configProperties;
+
+    public OrganizationConfig(List<ConfigProperty> configProperties) {
+
+        this.configProperties = configProperties;
+    }
+
+    public List<ConfigProperty> getConfigProperties() {
+
+        return configProperties;
+    }
+
+    public void setConfigProperties(List<ConfigProperty> configProperties) {
+
+        this.configProperties = configProperties;
+    }
+}

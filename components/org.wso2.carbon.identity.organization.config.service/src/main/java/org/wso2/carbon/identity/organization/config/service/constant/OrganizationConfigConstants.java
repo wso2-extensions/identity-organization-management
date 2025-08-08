@@ -36,8 +36,8 @@ public class OrganizationConfigConstants {
     public static final String ORG_NAME = "orgName";
     public static final String ORG_PARAMETER = "org";
     public static final String IS_CONSOLE_BRANDING_ENABLED = "isConsoleBrandingEnabled";
-    
-    public static final List<String> SUPPORTED_BRANDING_ATTRIBUTE_KEYS = 
+
+    public static final List<String> SUPPORTED_BRANDING_ATTRIBUTE_KEYS =
             List.of(IS_CONSOLE_BRANDING_ENABLED);
 
     @Deprecated
@@ -72,12 +72,11 @@ public class OrganizationConfigConstants {
         ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE("60006",
                 "Invalid organization discovery default parameter value.", "Provided " +
                 "'defaultParam' value is not supported. Only 'orgHandle' and 'orgName' are allowed."),
-
-        ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007", 
+        ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007",
                 "No organization configuration found.",
                 "There is no organization configuration for organization with ID: %s."),
-        ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES("60009", 
-                "Invalid organization configuration attribute values.", 
+        ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES("60009",
+                "Invalid organization configuration attribute values.",
                 "Provided organization configuration attribute value combination is not supported."),
 
         // Server errors.
@@ -90,15 +89,14 @@ public class OrganizationConfigConstants {
         ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG("65003", "Unable to delete the organization discovery " +
                 "configuration.", "Server encountered an error while deleting the organization discovery " +
                 "configuration for the organization with id: %s"),
-
-        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65005", 
-                "Unable to retrieve the organization configuration.", 
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65005",
+                "Unable to retrieve the organization configuration.",
                 "Server encountered an error while retrieving the organization configuration for " +
-                "organization with ID: %s."),
-        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65006", 
+                        "organization with ID: %s."),
+        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65006",
                 "Unable to update the organization configuration.",
                 "Server encountered an error while updating the organization configuration for " +
-                "organization with ID: %s.");
+                        "organization with ID: %s.");
 
         private final String code;
         private final String message;

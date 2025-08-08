@@ -280,14 +280,11 @@ public class OrganizationConfigManagerImplTest {
 
         Assert.assertEquals(returnedOrgConfigProperties.size(), 3);
         Assert.assertTrue(returnedOrgConfigProperties.stream()
-                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && 
-                        prop.getValue().equals(TRUE)));
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && prop.getValue().equals(TRUE)));
+        Assert.assertTrue(returnedOrgConfigProperties.stream().anyMatch(
+                prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && prop.getValue().equals(TRUE)));
         Assert.assertTrue(returnedOrgConfigProperties.stream()
-                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && 
-                        prop.getValue().equals(TRUE)));
-                Assert.assertTrue(returnedOrgConfigProperties.stream()
-                .anyMatch(prop -> prop.getKey().equals(IS_CONSOLE_BRANDING_ENABLED) &&
-                        prop.getValue().equals(TRUE)));
+                .anyMatch(prop -> prop.getKey().equals(IS_CONSOLE_BRANDING_ENABLED) && prop.getValue().equals(TRUE)));
     }
 
     @Test(priority = 11)
@@ -310,11 +307,9 @@ public class OrganizationConfigManagerImplTest {
 
         Assert.assertEquals(returnedDiscoveryConfigProperties.size(), 2);
         Assert.assertTrue(returnedDiscoveryConfigProperties.stream()
-                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && 
-                        prop.getValue().equals(TRUE)));
-        Assert.assertTrue(returnedDiscoveryConfigProperties.stream()
-                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && 
-                        prop.getValue().equals(TRUE)));
+                .anyMatch(prop -> prop.getKey().equals(EMAIL_DOMAIN_ENABLE) && prop.getValue().equals(TRUE)));
+        Assert.assertTrue(returnedDiscoveryConfigProperties.stream().anyMatch(
+                prop -> prop.getKey().equals(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE) && prop.getValue().equals(TRUE)));
     }
 
     @Test(priority = 12)

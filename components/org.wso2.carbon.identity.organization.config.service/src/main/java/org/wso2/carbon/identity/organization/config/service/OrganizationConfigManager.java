@@ -77,21 +77,28 @@ public interface OrganizationConfigManager {
      */
     DiscoveryConfig getDiscoveryConfigurationByTenantId(int tenantId) throws OrganizationConfigException;
 
-        /**
-     * Update the organization configuration including both discovery and branding settings.
+    /**
+     * Update all the organization configurations.
      *
      * @param organizationConfig The organization configuration.
      * @throws OrganizationConfigException The exception thrown when an error occurs while updating the organization
      *                                     configuration.
      */
-    void updateOrganizationConfiguration(OrganizationConfig organizationConfig) throws OrganizationConfigException;
+    default void updateOrganizationConfiguration(OrganizationConfig organizationConfig)
+            throws OrganizationConfigException {
+
+    }
 
     /**
-     * Fetch the organization configuration including both discovery and branding settings.
+     * Fetch all the organization configurations.
      *
      * @return The organization configuration.
      * @throws OrganizationConfigException The exception thrown when an error occurs while fetching the organization
      *                                     configuration.
      */
-    OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException;
+    default OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException {
+
+        throw new NotImplementedException(
+                "getOrganizationConfiguration method is not implemented in " + this.getClass().getName());
+    }
 }

@@ -233,7 +233,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         return configProperties.stream().allMatch(property -> supportedDiscoveryAttributeKeys.contains(
                 property.getKey()));
     }
-    
+
     @Override
     public void updateOrganizationConfiguration(OrganizationConfig organizationConfig)
             throws OrganizationConfigException {
@@ -246,7 +246,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             List<ConfigProperty> discoveryAttributes = organizationConfig.getConfigProperties().stream()
                     .filter(property -> validateSupportedDiscoveryAttributeKeys(List.of(property)))
                     .collect(Collectors.toList());
-            
+
             List<ConfigProperty> brandingAttributes = organizationConfig.getConfigProperties().stream()
                     .filter(property -> SUPPORTED_BRANDING_ATTRIBUTE_KEYS.contains(property.getKey()))
                     .collect(Collectors.toList());
@@ -284,51 +284,51 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     public OrganizationConfig getOrganizationConfiguration() throws OrganizationConfigException {
 
         List<ConfigProperty> allProperties = new ArrayList<>();
-        
+
         try {
             DiscoveryConfig discoveryConfig = getDiscoveryConfiguration();
             allProperties.addAll(discoveryConfig.getConfigProperties());
         } catch (OrganizationConfigException e) {
             // Discovery config doesn't exist
         }
-        
+
         try {
             List<ConfigProperty> brandingProperties = getBrandingConfiguration();
             allProperties.addAll(brandingProperties);
         } catch (OrganizationConfigException e) {
             // Branding config doesn't exist
         }
-        
+
         if (allProperties.isEmpty()) {
             throw handleClientException(ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST, getOrganizationId());
         }
-        
+
         return new OrganizationConfig(allProperties);
     }
 
-    private void validateAllOrganizationConfigKeys(List<ConfigProperty> configProperties) 
+    private void validateAllOrganizationConfigKeys(List<ConfigProperty> configProperties)
             throws OrganizationConfigClientException {
 
         for (ConfigProperty property : configProperties) {
             String key = property.getKey();
-            
+
             boolean isValidDiscoveryKey = validateSupportedDiscoveryAttributeKeys(List.of(property));
 
             boolean isValidBrandingKey = SUPPORTED_BRANDING_ATTRIBUTE_KEYS.contains(key);
-            
+
             if (!isValidDiscoveryKey && !isValidBrandingKey) {
                 throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
             }
         }
     }
 
-    private void validateAllOrganizationConfigValues(List<ConfigProperty> configProperties) 
+    private void validateAllOrganizationConfigValues(List<ConfigProperty> configProperties)
             throws OrganizationConfigClientException {
 
-        List<ConfigProperty> discoveryAttributes = configProperties.stream()
-                .filter(property -> validateSupportedDiscoveryAttributeKeys(List.of(property)))
-                .collect(Collectors.toList());
-        
+        List<ConfigProperty> discoveryAttributes =
+                configProperties.stream().filter(property -> validateSupportedDiscoveryAttributeKeys(List.of(property)))
+                        .collect(Collectors.toList());
+
         List<ConfigProperty> brandingAttributes = configProperties.stream()
                 .filter(property -> SUPPORTED_BRANDING_ATTRIBUTE_KEYS.contains(property.getKey()))
                 .collect(Collectors.toList());
@@ -336,13 +336,13 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         if (!discoveryAttributes.isEmpty()) {
             validateDiscoveryAttributeValues(discoveryAttributes);
         }
-        
+
         if (!brandingAttributes.isEmpty()) {
             validateBrandingAttributeValues(brandingAttributes);
         }
     }
 
-    private void validateDiscoveryAttributeValues(List<ConfigProperty> discoveryAttributes) 
+    private void validateDiscoveryAttributeValues(List<ConfigProperty> discoveryAttributes)
             throws OrganizationConfigClientException {
 
         Map<String, String> configAttributes = new HashMap<>();
@@ -350,23 +350,20 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             configAttributes.put(property.getKey(), property.getValue());
         }
 
-        // Validate EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE vs EMAIL_DOMAIN_ENABLE
         if (Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE)) &&
                 !Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_ENABLE))) {
             throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES);
         }
 
-        // Validate DEFAULT_PARAM against supported mappings
         String defaultParamValue = configAttributes.get(DEFAULT_PARAM);
         if (defaultParamValue != null && !SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.containsKey(defaultParamValue)) {
             throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE);
         }
     }
 
-    private void validateBrandingAttributeValues(List<ConfigProperty> brandingAttributes) 
+    private void validateBrandingAttributeValues(List<ConfigProperty> brandingAttributes)
             throws OrganizationConfigClientException {
 
-        // Validate branding attributes - only check if it's a valid boolean
         for (ConfigProperty brandingProperty : brandingAttributes) {
             String brandingValue = brandingProperty.getValue();
             if (!"true".equalsIgnoreCase(brandingValue) && !"false".equalsIgnoreCase(brandingValue)) {
@@ -385,7 +382,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         return OrganizationConfigServiceHolder.getInstance().getOrganizationManager();
     }
 
-    private void updateBrandingConfiguration(List<ConfigProperty> brandingAttributes) 
+    private void updateBrandingConfiguration(List<ConfigProperty> brandingAttributes)
             throws OrganizationConfigException {
 
         try {
@@ -399,7 +396,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
                     .filter(attribute -> attribute.getValue() != null && !"null".equals(attribute.getValue()))
                     .map(attribute -> new Attribute(attribute.getKey(), attribute.getValue()))
                     .collect(Collectors.toList());
-            
+
             Resource resource = new Resource();
             resource.setResourceName(ORGANIZATION_BRANDING_RESOURCE_NAME);
             resource.setAttributes(resourceAttributes);
@@ -430,8 +427,8 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
     private Optional<Resource> getBrandingResource() throws OrganizationConfigException {
 
         try {
-            return Optional.ofNullable(getConfigurationManager().getResource(RESOURCE_TYPE_NAME, 
-                    ORGANIZATION_BRANDING_RESOURCE_NAME));
+            return Optional.ofNullable(
+                    getConfigurationManager().getResource(RESOURCE_TYPE_NAME, ORGANIZATION_BRANDING_RESOURCE_NAME));
         } catch (ConfigurationManagementException e) {
             if (!ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
                 throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG, e, getOrganizationId());
