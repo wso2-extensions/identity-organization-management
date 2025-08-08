@@ -444,20 +444,39 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Extract application and organization details.
         String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(mainOrganizationId);
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, ownerTenantDomain);
+        PolicyEnum applicationSharingPolicy = generalApplicationShare.getPolicy();
 
         // Prevent sharing if the application is already a shared (fragment) app.
         if (isSharedApplication(mainApplication)) {
             throw handleClientException(ERROR_CODE_BLOCK_SHARING_SHARED_APP, mainApplicationId);
         }
 
+        if (PolicyEnum.ALL_EXISTING_ORGS_ONLY.ordinal() == applicationSharingPolicy.ordinal()) {
+            /* If the policy is ALL_EXISTING_ORGS_ONLY, we need to check if the application has already been shared
+             with the future sharing policy. If so, we don't need to re-share the applications again, removing the
+             future sharing policy will suffice.*/
+            if (checkIfApplicationHasFutureSharingPolicy(mainApplicationId, mainOrganizationId, mainOrganizationId)) {
+                try {
+                    getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                            mainOrganizationId, ResourceType.APPLICATION, mainApplicationId, mainOrganizationId);
+                } catch (ResourceSharingPolicyMgtException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
+                }
+                return;
+            }
+        }
+
         // Adding the main org ID to the list of orgs to share with if there's future sharing policy.
         addOrUpdatePolicy(mainApplicationId, mainOrganizationId, mainOrganizationId, ownerTenantDomain,
-                generalApplicationShare.getPolicy(), generalApplicationShare.getRoleSharing());
+                applicationSharingPolicy, generalApplicationShare.getRoleSharing());
 
         // Add the role sharing config to the main application.
         ApplicationShareRolePolicy.Mode roleSharingMode = generalApplicationShare.getRoleSharing().getMode();
         setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
-        if (ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
+
+        if (PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() ==
+                applicationSharingPolicy.ordinal() &&
+                ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
             setShareWithAllChildrenProperty(mainApplication, true);
         } else {
             removeShareWithAllChildrenProperty(mainApplication);
@@ -478,7 +497,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         List<String> allOrganizationIdsInBfsOrder = getAllOrganizationIdsInBfsOrder(mainOrganizationId);
 
-        if (PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() == generalApplicationShare.getPolicy().ordinal() ||
+        if (PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() == applicationSharingPolicy.ordinal() ||
                 !allOrganizationIdsInBfsOrder.isEmpty()) {
             // If there are valid orgs to share with, update the root application with the org login IDP.
             modifyRootApplication(mainApplication, ownerTenantDomain);
@@ -489,7 +508,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
-        String sharePolicy = generalApplicationShare.getPolicy().getValue();
+        String sharePolicy = applicationSharingPolicy.getValue();
         String operationId = getOperationId(mainApplicationId, mainApplicationId, userID, sharePolicy);
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -775,7 +794,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         boolean isAppShared = stream(mainApplication.getSpProperties())
                 .anyMatch(p -> IS_APP_SHARED.equals(p.getName()) && Boolean.parseBoolean(p.getValue()));
         if (isSharedWithAllChildren || isAppShared) {
-            setShareWithAllChildrenProperty(mainApplication, false);
+            removeShareWithAllChildrenProperty(mainApplication);
             setIsAppSharedProperty(mainApplication, false);
             IdentityUtil.threadLocalProperties.get().put(UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN, true);
             try {
@@ -1739,6 +1758,52 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
+    private boolean checkIfApplicationHasFutureSharingPolicy(String mainApplicationId, String requestInitiatingOrgId,
+                                                     String sharedOrgId) throws OrganizationManagementException {
+
+        try {
+            List<ResourceSharingPolicy> resourceSharingPolicies = getResourceSharingPolicyHandlerService()
+                    .getResourceSharingPolicies(Collections.singletonList(requestInitiatingOrgId));
+
+            return resourceSharingPolicies.stream()
+                    .filter(policy -> policy.getResourceType() == ResourceType.APPLICATION)
+                    .filter(policy -> Objects.equals(policy.getResourceId(), mainApplicationId))
+                    .filter(policy -> Objects.equals(policy.getInitiatingOrgId(), requestInitiatingOrgId))
+                    .filter(policy -> Objects.equals(policy.getPolicyHoldingOrgId(), sharedOrgId))
+                    .anyMatch(this::isFutureSharingPolicy);
+        } catch (ResourceSharingPolicyMgtClientException e) {
+            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
+        } catch (ResourceSharingPolicyMgtException e) {
+            throw new OrganizationManagementServerException(e.getMessage(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Helper method to check if a policy is a future sharing policy.
+     *
+     * @param policy The resource sharing policy to check
+     * @return true if the policy is a future sharing policy
+     */
+    private boolean isFutureSharingPolicy(ResourceSharingPolicy policy) {
+
+        PolicyEnum sharingPolicy = policy.getSharingPolicy();
+        return sharingPolicy == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS ||
+               sharingPolicy == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN;
+    }
+
+    /**
+     * Adds or updates a resource sharing policy for an application.
+     * This method first deletes any existing policy for the specified application and organization, Then creates a new
+     * policy based on the provided parameters.
+     * @param mainApplicationId            The ID of the main application being shared.
+     * @param requestInitiatingOrgId       The ID of the organization initiating the policy update (As of now, this
+     *                                     will always be the parent organization).
+     * @param sharedOrgId                  The ID of the organization the application is shared with.
+     * @param ownerTenantDomain            The tenant domain that owns the application.
+     * @param applicationSharePolicy       The policy to be added or updated.
+     * @param applicationShareRolePolicy   The role-sharing configuration associated with the policy.
+     * @throws OrganizationManagementException on errors when adding or updating the policy.
+     */
     public void addOrUpdatePolicy(String mainApplicationId, String requestInitiatingOrgId, String sharedOrgId,
                                   String ownerTenantDomain, PolicyEnum applicationSharePolicy,
                                   ApplicationShareRolePolicy applicationShareRolePolicy)
