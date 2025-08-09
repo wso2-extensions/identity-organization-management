@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRe
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -141,6 +142,7 @@ import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.DEFAULT_BACKCHANNEL_LOGOUT_URL;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.MYACCOUNT_PORTAL_PATH;
 import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.getAppId;
+import static org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil.shouldUpdateSpProperty;
 import static org.wso2.carbon.identity.base.IdentityConstants.SKIP_CONSENT;
 import static org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils.triggerAuditLogEvent;
 import static org.wso2.carbon.identity.core.util.IdentityUtil.getInitiatorId;
@@ -161,6 +163,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.PARENT_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_ROLE_EXCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SHARING_MODE_INCLUDED_KEY;
@@ -172,6 +175,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.createOrganizationSSOIDP;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getDefaultAuthenticationConfig;
+import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.isShareWithAllChildrenPropertyAvailable;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.removeShareWithAllChildrenProperty;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setAppAssociatedRoleSharingMode;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.setIsAppSharedProperty;
@@ -459,6 +463,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 try {
                     getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
                             mainOrganizationId, ResourceType.APPLICATION, mainApplicationId, mainOrganizationId);
+                    if (isShareWithAllChildrenPropertyAvailable(mainApplication.getSpProperties())) {
+                        removeShareWithAllChildrenProperty(mainApplication);
+                        updateApplicationWithSystemCheck(mainApplication, ownerTenantDomain, mainApplicationId);
+                    }
                 } catch (ResourceSharingPolicyMgtException e) {
                     throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
                 }
@@ -472,20 +480,36 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
         // Add the role sharing config to the main application.
         ApplicationShareRolePolicy.Mode roleSharingMode = generalApplicationShare.getRoleSharing().getMode();
-        setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
+        boolean updateRoleSharingMode = shouldUpdateSpProperty(roleSharingMode.toString(),
+                ROLE_SHARING_MODE, mainApplication);
+        boolean updateShareWithAllChildren = shouldUpdateSpProperty("true",
+                SHARE_WITH_ALL_CHILDREN, mainApplication);
+        boolean isSpPropertyUpdated = false;
 
-        if (PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() ==
-                applicationSharingPolicy.ordinal() &&
-                ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal()) {
-            setShareWithAllChildrenProperty(mainApplication, true);
-        } else {
-            removeShareWithAllChildrenProperty(mainApplication);
+        // Apply role sharing mode if needed
+        if (updateRoleSharingMode) {
+            setAppAssociatedRoleSharingMode(mainApplication, roleSharingMode);
+            isSpPropertyUpdated = true;
         }
-        try {
-            getApplicationManagementService().updateApplication(mainApplication, ownerTenantDomain,
-                    getAuthenticatedUsername());
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, mainApplicationId);
+
+        // Handle share with all children property based on policy and role mode.
+        boolean isAllExistingAndFutureOrgs =
+                PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() == applicationSharingPolicy.ordinal();
+        boolean isRoleModeAll = ApplicationShareRolePolicy.Mode.ALL.ordinal() == roleSharingMode.ordinal();
+        boolean shouldSetShareWithAllChildren = isAllExistingAndFutureOrgs && isRoleModeAll &&
+                updateShareWithAllChildren;
+
+        if (shouldSetShareWithAllChildren) {
+            setShareWithAllChildrenProperty(mainApplication, true);
+            isSpPropertyUpdated = true;
+        } else {
+            if (isShareWithAllChildrenPropertyAvailable(mainApplication.getSpProperties())) {
+                removeShareWithAllChildrenProperty(mainApplication);
+                isSpPropertyUpdated = true;
+            }
+        }
+        if (isSpPropertyUpdated) {
+            updateApplicationWithSystemCheck(mainApplication, ownerTenantDomain, mainApplicationId);
         }
 
         // Get all child organizations of the owner organization and create a lookup map for faster access.
@@ -1719,20 +1743,33 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                             sharingOrgId);
                 }
             } else {
+                boolean systemApplication = OrgApplicationManagerUtil.isSystemApplication(
+                        mainApplication.getApplicationName());
                 try {
                     // The app is already shared, but the config needs to be updated.
                     sharedApplicationId = sharedAppId.get();
                     ServiceProvider sharedServiceProvider = getApplicationManagementService()
                             .getApplicationByResourceId(sharedApplicationId, sharedTenantDomain);
                     // Add the role sharing config to the shared application.
-                    setAppAssociatedRoleSharingMode(sharedServiceProvider, applicationShareRolePolicy.getMode());
-                    getApplicationManagementService().updateApplication(sharedServiceProvider,
-                            sharedTenantDomain, getAuthenticatedUsername());
+                    boolean shouldUpdateRoleMode = shouldUpdateSpProperty(applicationShareRolePolicy.getMode().name(),
+                            ROLE_SHARING_MODE, sharedServiceProvider);
+                    if (shouldUpdateRoleMode) {
+                        setAppAssociatedRoleSharingMode(sharedServiceProvider, applicationShareRolePolicy.getMode());
+                        if (systemApplication) {
+                            IdentityApplicationManagementUtil.setAllowUpdateSystemApplicationThreadLocal(true);
+                        }
+                        getApplicationManagementService().updateApplication(sharedServiceProvider,
+                                sharedTenantDomain, getAuthenticatedUsername());
+                    }
                 } catch (IdentityApplicationManagementException e) {
                     processUnitOperationStatus(operationId, mainApplicationId, sharingOrgId, OperationStatus.FAILED,
                             e.getMessage());
                     throw handleServerException(ERROR_CODE_ERROR_SHARING_APPLICATION, e, mainApplicationId,
                             sharingOrgId);
+                } finally {
+                    if (systemApplication) {
+                        IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
+                    }
                 }
             }
             String ownerTenantDomain = getOrganizationManager().resolveTenantDomain(ownerOrgId);
@@ -2425,5 +2462,31 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     private AsyncOperationStatusMgtService getAsyncStatusMgtService() {
 
         return OrgApplicationMgtDataHolder.getInstance().getAsyncOperationStatusMgtService();
+    }
+
+    /**
+     * Updates the application with proper system application handling.
+     *
+     * @param application The application to update
+     * @param tenantDomain The tenant domain
+     * @param applicationId The application ID for error handling
+     * @throws OrganizationManagementException If an error occurs during update
+     */
+    private void updateApplicationWithSystemCheck(ServiceProvider application, String tenantDomain,
+                                                  String applicationId) throws OrganizationManagementException {
+
+        boolean systemApplication = OrgApplicationManagerUtil.isSystemApplication(application.getApplicationName());
+        try {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.setAllowUpdateSystemApplicationThreadLocal(true);
+            }
+            getApplicationManagementService().updateApplication(application, tenantDomain, getAuthenticatedUsername());
+        } catch (IdentityApplicationManagementException e) {
+            throw handleServerException(ERROR_CODE_ERROR_UPDATING_APPLICATION_ATTRIBUTE, e, applicationId);
+        } finally {
+            if (systemApplication) {
+                IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
+            }
+        }
     }
 }
