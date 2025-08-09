@@ -1797,17 +1797,17 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
     }
 
-    private boolean checkIfApplicationHasFutureSharingPolicy(String mainApplicationId, String requestInitiatingOrgId,
+    private boolean checkIfApplicationHasFutureSharingPolicy(String mainApplicationId, String mainOrganizationId,
                                                      String sharedOrgId) throws OrganizationManagementException {
 
         try {
             List<ResourceSharingPolicy> resourceSharingPolicies = getResourceSharingPolicyHandlerService()
-                    .getResourceSharingPolicies(Collections.singletonList(requestInitiatingOrgId));
+                    .getResourceSharingPoliciesByResourceType(Collections.singletonList(mainOrganizationId),
+                            ResourceType.APPLICATION.name());
 
             return resourceSharingPolicies.stream()
-                    .filter(policy -> policy.getResourceType() == ResourceType.APPLICATION)
                     .filter(policy -> Objects.equals(policy.getResourceId(), mainApplicationId))
-                    .filter(policy -> Objects.equals(policy.getInitiatingOrgId(), requestInitiatingOrgId))
+                    .filter(policy -> Objects.equals(policy.getInitiatingOrgId(), mainOrganizationId))
                     .filter(policy -> Objects.equals(policy.getPolicyHoldingOrgId(), sharedOrgId))
                     .anyMatch(this::isFutureSharingPolicy);
         } catch (ResourceSharingPolicyMgtClientException e) {
@@ -1820,8 +1820,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     /**
      * Helper method to check if a policy is a future sharing policy.
      *
-     * @param policy The resource sharing policy to check
-     * @return true if the policy is a future sharing policy
+     * @param policy The resource sharing policy to check.
+     * @return true if the policy is a future sharing policy.
      */
     private boolean isFutureSharingPolicy(ResourceSharingPolicy policy) {
 
@@ -2469,10 +2469,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     /**
      * Updates the application with proper system application handling.
      *
-     * @param application The application to update
-     * @param tenantDomain The tenant domain
-     * @param applicationId The application ID for error handling
-     * @throws OrganizationManagementException If an error occurs during update
+     * @param application   The application to update.
+     * @param tenantDomain  The tenant domain.
+     * @param applicationId The application ID for error handling.
+     * @throws OrganizationManagementException If an error occurs during update.
      */
     private void updateApplicationWithSystemCheck(ServiceProvider application, String tenantDomain,
                                                   String applicationId) throws OrganizationManagementException {
