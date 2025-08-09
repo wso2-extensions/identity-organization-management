@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
@@ -44,6 +45,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
@@ -87,6 +89,9 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
         if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
             Organization organization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
             try {
+                if (!Utils.isClaimAndOIDCScopeInheritanceEnabled(organization.getOrganizationHandle())) {
+                    OAuth2Util.populateOIDCScopes(IdentityTenantUtil.getTenantId(organization.getOrganizationHandle()));
+                }
                 addSharedApplicationsToOrganization(organization);
             } catch (IdentityApplicationManagementException | OrganizationManagementException |
                      ResourceSharingPolicyMgtException e) {
