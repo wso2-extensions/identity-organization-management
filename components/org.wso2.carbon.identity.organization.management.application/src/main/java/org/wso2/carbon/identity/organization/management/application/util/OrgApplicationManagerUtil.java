@@ -133,6 +133,21 @@ public class OrgApplicationManagerUtil {
     }
 
     /**
+     * Checks whether the `shareWithAllChildren` property is available in the service provider properties.
+     *
+     * @param properties The array of service provider properties.
+     * @return true if SHARE_WITH_ALL_CHILDREN property is available, false otherwise.
+     */
+    public static boolean isShareWithAllChildrenPropertyAvailable(ServiceProviderProperty[] properties) {
+
+        if (properties == null) {
+            return false;
+        }
+        return Arrays.stream(properties).anyMatch(property -> SHARE_WITH_ALL_CHILDREN
+                .equalsIgnoreCase(property.getName()));
+    }
+
+    /**
      * Set property value to service provider indicating the role sharing mode of the application. We only set the
      * property if the role sharing mode is ALL.
      * @param serviceProvider The application that the property should be set.

@@ -251,6 +251,7 @@ public class OrganizationCreationHandlerTest {
         application.setApplicationResourceId(applicationResourceID);
         application.setSpProperties(new ServiceProviderProperty[] { roleSharingModeProp });
         application.setOwner(new User());
+        application.setApplicationName("Test Application");
 
         return application;
     }
