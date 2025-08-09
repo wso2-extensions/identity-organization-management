@@ -191,6 +191,7 @@
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.idp.mgt;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.idp.mgt.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt.listener;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.*;
