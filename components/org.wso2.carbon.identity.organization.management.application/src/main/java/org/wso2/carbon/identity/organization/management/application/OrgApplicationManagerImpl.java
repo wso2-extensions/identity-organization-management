@@ -2491,4 +2491,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             }
         }
     }
+
+    private String getAuthenticatedUsername() {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Retrieving authenticated username from the Carbon context.");
+        }
+        LOG.debug("Retrieving authenticated username from the Carbon context for the tenant: "
+                + PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain());
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+    }
+
+    public static String getSuperOrgId() throws OrganizationManagementServerException {
+
+        // retrieve the primary organization ID for the super tenant domain
+        return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager()
+                .getPrimaryOrganizationId(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+    }
 }
