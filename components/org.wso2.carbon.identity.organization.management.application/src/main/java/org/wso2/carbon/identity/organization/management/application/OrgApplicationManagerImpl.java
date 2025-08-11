@@ -516,6 +516,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         List<BasicOrganization> childOrganizations = getOrganizationManager().getChildOrganizations(mainOrganizationId,
                 true);
         if (childOrganizations.isEmpty()) {
+            if (ApplicationMgtUtil.isConsoleOrMyAccount(mainApplication.getApplicationName())) {
+                // If the application is a Console or MyAccount, update the useMappedLocalSubject as true.
+                mainApplication.getClaimConfig().setAlwaysSendMappedLocalSubjectId(true);
+                updateApplicationWithSystemCheck(mainApplication, ownerTenantDomain, mainApplicationId);
+            }
             return;
         }
 

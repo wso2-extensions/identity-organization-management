@@ -1077,6 +1077,62 @@ public class OrgApplicationManagerImplTest {
         }
     }
 
+    @DataProvider(name = "ConsoleOrMyAccountTestData")
+    public Object[][] getConsoleOrMyAccountTestData() {
+
+        return new Object[][]{
+                {"Console"},
+                {"My Account"}
+        };
+    }
+
+    @Test(dataProvider = "ConsoleOrMyAccountTestData")
+    public void testShareApplicationWithAllOrganizations_AllExistingOrgsOnly_ConsoleOrMyAccount(String appName)
+            throws Exception {
+
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class)) {
+
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername).thenReturn("test-user");
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL)
+                    .build();
+            GeneralApplicationShareOperation generalOperation = new GeneralApplicationShareOperation(
+                    PolicyEnum.ALL_EXISTING_ORGS_ONLY,
+                    allRolesPolicy
+            );
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+            ServiceProvider mainApplication = createMockServiceProvider(appName, false);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+            when(organizationManager.getChildOrganizations(mainOrgId, true)).thenReturn(Collections.emptyList());
+
+            when(mockOrgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+
+            // Execute - should return early without error.
+            orgApplicationManager.shareApplicationWithAllOrganizations(mainOrgId, mainAppId, generalOperation);
+
+            verify(organizationManager).resolveTenantDomain(mainOrgId);
+            verify(organizationManager).getChildOrganizations(mainOrgId, true);
+            verify(applicationManagementService).getApplicationByResourceId(mainAppId, "main-tenant-domain");
+            verify(applicationManagementService, times(2)).updateApplication(
+                    any(ServiceProvider.class), eq("main-tenant-domain"), eq("test-user"));
+        }
+    }
+
     @Test(expectedExceptions = OrganizationManagementClientException.class)
     public void testShareApplicationWithAllOrganizations_AlreadySharedApplication() throws Exception {
 
