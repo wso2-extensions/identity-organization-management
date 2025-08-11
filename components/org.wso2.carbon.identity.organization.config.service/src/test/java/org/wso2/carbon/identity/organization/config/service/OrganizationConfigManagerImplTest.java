@@ -235,7 +235,7 @@ public class OrganizationConfigManagerImplTest {
             organizationConfigManagerImpl.updateOrganizationConfiguration(organizationConfig);
             Assert.fail("Expected OrganizationConfigClientException was not thrown.");
         } catch (OrganizationConfigClientException e) {
-            Assert.assertEquals(e.getMessage(), "Invalid organization discovery attribute values.");
+            Assert.assertEquals(e.getMessage(), "Invalid organization configuration attribute values.");
         }
     }
 

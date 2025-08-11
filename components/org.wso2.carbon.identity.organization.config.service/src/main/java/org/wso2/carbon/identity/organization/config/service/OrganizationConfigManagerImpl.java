@@ -56,6 +56,7 @@ import static org.wso2.carbon.identity.organization.config.service.constant.Orga
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE;
+import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ORGANIZATION_BRANDING_RESOURCE_NAME;
@@ -239,9 +240,13 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             throws OrganizationConfigException {
 
         try {
-            validateAllOrganizationConfigKeys(organizationConfig.getConfigProperties());
+            if (!validateAllOrganizationConfigKeys(organizationConfig.getConfigProperties())) {
+                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_ATTRIBUTE);
+            }
 
-            validateAllOrganizationConfigValues(organizationConfig.getConfigProperties());
+            if (!validateAllOrganizationConfigValues(organizationConfig.getConfigProperties())) {
+                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
+            }
 
             List<ConfigProperty> discoveryAttributes = organizationConfig.getConfigProperties().stream()
                     .filter(property -> validateSupportedDiscoveryAttributeKeys(List.of(property)))
@@ -306,8 +311,7 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
         return new OrganizationConfig(allProperties);
     }
 
-    private void validateAllOrganizationConfigKeys(List<ConfigProperty> configProperties)
-            throws OrganizationConfigClientException {
+    private boolean validateAllOrganizationConfigKeys(List<ConfigProperty> configProperties) {
 
         for (ConfigProperty property : configProperties) {
             String key = property.getKey();
@@ -317,13 +321,13 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
             boolean isValidBrandingKey = SUPPORTED_BRANDING_ATTRIBUTE_KEYS.contains(key);
 
             if (!isValidDiscoveryKey && !isValidBrandingKey) {
-                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
+                return false;
             }
         }
+        return true;
     }
 
-    private void validateAllOrganizationConfigValues(List<ConfigProperty> configProperties)
-            throws OrganizationConfigClientException {
+    private boolean validateAllOrganizationConfigValues(List<ConfigProperty> configProperties) {
 
         List<ConfigProperty> discoveryAttributes =
                 configProperties.stream().filter(property -> validateSupportedDiscoveryAttributeKeys(List.of(property)))
@@ -333,17 +337,18 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
                 .filter(property -> SUPPORTED_BRANDING_ATTRIBUTE_KEYS.contains(property.getKey()))
                 .collect(Collectors.toList());
 
-        if (!discoveryAttributes.isEmpty()) {
-            validateDiscoveryAttributeValues(discoveryAttributes);
+        if (!discoveryAttributes.isEmpty() && !validateDiscoveryAttributeValues(discoveryAttributes)) {
+            return false;
         }
 
-        if (!brandingAttributes.isEmpty()) {
-            validateBrandingAttributeValues(brandingAttributes);
+        if (!brandingAttributes.isEmpty() && !validateBrandingAttributeValues(brandingAttributes)) {
+            return false;
         }
+
+        return true;
     }
 
-    private void validateDiscoveryAttributeValues(List<ConfigProperty> discoveryAttributes)
-            throws OrganizationConfigClientException {
+    private boolean validateDiscoveryAttributeValues(List<ConfigProperty> discoveryAttributes) {
 
         Map<String, String> configAttributes = new HashMap<>();
         for (ConfigProperty property : discoveryAttributes) {
@@ -352,24 +357,26 @@ public class OrganizationConfigManagerImpl implements OrganizationConfigManager 
 
         if (Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE)) &&
                 !Boolean.parseBoolean(configAttributes.get(EMAIL_DOMAIN_ENABLE))) {
-            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_ATTRIBUTE_VALUES);
+            return false;
         }
 
         String defaultParamValue = configAttributes.get(DEFAULT_PARAM);
         if (defaultParamValue != null && !SUPPORTED_DEFAULT_PARAMETER_MAPPINGS.containsKey(defaultParamValue)) {
-            throw handleClientException(ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE);
+            return false;
         }
+
+        return true;
     }
 
-    private void validateBrandingAttributeValues(List<ConfigProperty> brandingAttributes)
-            throws OrganizationConfigClientException {
+    private boolean validateBrandingAttributeValues(List<ConfigProperty> brandingAttributes) {
 
         for (ConfigProperty brandingProperty : brandingAttributes) {
             String brandingValue = brandingProperty.getValue();
             if (!"true".equalsIgnoreCase(brandingValue) && !"false".equalsIgnoreCase(brandingValue)) {
-                throw handleClientException(ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES);
+                return false;
             }
         }
+        return true;
     }
 
     private ConfigurationManager getConfigurationManager() {

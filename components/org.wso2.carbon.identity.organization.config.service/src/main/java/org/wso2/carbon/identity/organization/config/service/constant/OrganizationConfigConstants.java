@@ -75,6 +75,9 @@ public class OrganizationConfigConstants {
         ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007",
                 "No organization configuration found.",
                 "There is no organization configuration for organization with ID: %s."),
+        ERROR_CODE_INVALID_ORGANIZATION_ATTRIBUTE("60008",
+                "Invalid organization attribute.",
+                "The organization attribute with key: %s is not supported."),
         ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES("60009",
                 "Invalid organization configuration attribute values.",
                 "Provided organization configuration attribute value combination is not supported."),
@@ -89,11 +92,11 @@ public class OrganizationConfigConstants {
         ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG("65003", "Unable to delete the organization discovery " +
                 "configuration.", "Server encountered an error while deleting the organization discovery " +
                 "configuration for the organization with id: %s"),
-        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65005",
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65004",
                 "Unable to retrieve the organization configuration.",
                 "Server encountered an error while retrieving the organization configuration for " +
                         "organization with ID: %s."),
-        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65006",
+        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65005",
                 "Unable to update the organization configuration.",
                 "Server encountered an error while updating the organization configuration for " +
                         "organization with ID: %s.");
