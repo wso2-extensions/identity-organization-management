@@ -112,10 +112,6 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.framework.async.operation.status.mgt</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.multitenancy</groupId>
-            <artifactId>org.wso2.carbon.tenant.mgt</artifactId>
-        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -200,7 +196,6 @@
                             org.wso2.carbon.identity.oauth; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.oauth.common; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.identity.oauth.dto; version="${identity.inbound.auth.oauth.import.version.range}",
-                            org.wso2.carbon.identity.oauth2.util; version="${identity.inbound.auth.oauth.import.version.range}",
                             org.wso2.carbon.context;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.database.utils.jdbc;version="${org.wso2.carbon.database.utils.version.range}",
                             org.wso2.carbon.database.utils.jdbc.exceptions;version="${org.wso2.carbon.database.utils.version.range}",
@@ -227,7 +222,6 @@
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*;
                             version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.tenant.mgt.util.*;version="${carbon.multitenancy.imp.pkg.version.range}",
                             org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
                     </instructions>

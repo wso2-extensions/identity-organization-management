@@ -41,7 +41,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
-import org.wso2.carbon.tenant.mgt.util.TenantMgtUtil;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserCoreConstants;
@@ -87,7 +86,6 @@ public class OrgClaimMgtHandlerTest {
     private MockedStatic<OrgApplicationMgtDataHolder> mockedOrgApplicationMgtDataHolder;
     private MockedStatic<IdentityTenantUtil> mockedIdentityTenantUtil;
     private MockedStatic<Utils> mockedUtils;
-    private MockedStatic<TenantMgtUtil> mockedTenantMgtUtils;
 
     private OrgClaimMgtHandler orgClaimMgtHandler;
 
@@ -117,7 +115,6 @@ public class OrgClaimMgtHandlerTest {
         mockedOrgApplicationMgtDataHolder = mockStatic(OrgApplicationMgtDataHolder.class);
         mockedIdentityTenantUtil = mockStatic(IdentityTenantUtil.class);
         mockedUtils = mockStatic(Utils.class);
-        mockedTenantMgtUtils = mockStatic(TenantMgtUtil.class);
 
         mockedOrgApplicationMgtDataHolder.when(OrgApplicationMgtDataHolder::getInstance)
                 .thenReturn(orgApplicationMgtDataHolder);
@@ -126,7 +123,6 @@ public class OrgClaimMgtHandlerTest {
         mockedIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(TEST_TENANT_DOMAIN))
                 .thenReturn(TEST_TENANT_ID);
         mockedUtils.when(() -> Utils.isClaimAndOIDCScopeInheritanceEnabled(TEST_TENANT_DOMAIN)).thenReturn(false);
-        mockedTenantMgtUtils.when(TenantMgtUtil::isTenantCreation).thenReturn(false);
 
         when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
         when(orgApplicationMgtDataHolder.getClaimMetadataManagementService())
@@ -145,7 +141,6 @@ public class OrgClaimMgtHandlerTest {
         mockedOrgApplicationMgtDataHolder.close();
         mockedIdentityTenantUtil.close();
         mockedUtils.close();
-        mockedTenantMgtUtils.close();
     }
 
     /**

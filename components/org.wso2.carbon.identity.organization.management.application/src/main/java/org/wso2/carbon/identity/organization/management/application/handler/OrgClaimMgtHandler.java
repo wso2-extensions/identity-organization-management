@@ -47,7 +47,6 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
-import org.wso2.carbon.tenant.mgt.util.TenantMgtUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
@@ -132,7 +131,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             String parentTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
             String sharedOrganizationTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationID);
 
-            if (isHierarchicalModeEnabled(sharedOrganizationTenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(sharedOrganizationTenantDomain)) {
                 return;
             }
             List<String> missingClaims = getMissingClaims(sharedOrganizationTenantDomain, claimMappings);
@@ -171,7 +170,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.APPLICATION_ID);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             List<BasicOrganization> sharedOrganizations = getOrgApplicationManager().getApplicationSharedOrganizations(
@@ -298,7 +297,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                         MAPPED_ATTRIBUTES);
 
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -428,7 +427,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                         EXTERNAL_CLAIM_PROPERTIES);
 
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -470,7 +469,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 (Map<String, String>) eventProperties.get(IdentityEventConstants.EventProperty.
                         EXTERNAL_CLAIM_PROPERTIES);
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -509,7 +508,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         String claimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -547,7 +546,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         String newClaimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.NEW_CLAIM_DIALECT_URI);
         try {
-            if (isHierarchicalModeEnabled(tenantDomain)) {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
                 return;
             }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
@@ -625,7 +624,7 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         if (parentOrganization != null) {
             try {
                 String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganization.getId());
-                if (isHierarchicalModeEnabled(parentOrgTenantDomain)) {
+                if (Utils.isClaimAndOIDCScopeInheritanceEnabled(parentOrgTenantDomain)) {
                     return;
                 }
                 inheritClaimPropertiesAndAttributeMapping(createdOrganization.getId(), parentOrgTenantDomain);
@@ -794,30 +793,5 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
             primaryUserStoreDomain = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
         }
         return primaryUserStoreDomain;
-    }
-
-    /**
-     * Checks whether hierarchical mode is enabled, i.e., whether claim population can be skipped for sub-organizations.
-     *
-     * If inheritance is enabled, claims will be resolved from the parent organizations and do not need to be
-     * duplicated for each sub-organization. Therefore, event handler methods responsible for duplication can use
-     * this method to check and skip duplication.
-     *
-     * @param tenantDomain The domain of the tenant for which the inheritance status needs to be checked.
-     * @return true if not in a tenant flow and claim inheritance is enabled; false otherwise.
-     */
-    private boolean isHierarchicalModeEnabled(String tenantDomain) throws OrganizationManagementException {
-
-        /*
-         * During tenant creation, there will naturally be no child organizations for which the claims would be
-         * populated via this handler. Therefore, the non-hierarchical mode behaviour can be used.
-         *
-         * This is necessary due to the limitation of not being able to check the organization version and
-         * consequently, whether claim inheritance is enabled, during tenant creation.
-         */
-        if (TenantMgtUtil.isTenantCreation()) {
-            return false;
-        }
-        return Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain);
     }
 }
