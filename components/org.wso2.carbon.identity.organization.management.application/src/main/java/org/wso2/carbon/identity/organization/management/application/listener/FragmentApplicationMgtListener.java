@@ -511,7 +511,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementClientException(
-                    format("Error retrieving organization ID for tenant", application.getApplicationResourceId()));
+                    String.format("Error retrieving organization ID for tenant '%s'.", tenantDomain), e
+            );
         }
 
         // If the application is a fragment application and the main application is shared with all its descendants,
