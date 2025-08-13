@@ -491,7 +491,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         properties.put(EVENT_PROP_USER_NAME, invitation.getUsername());
         properties.put(EVENT_PROP_EMAIL_ADDRESS, invitation.getEmail());
         properties.put(EVENT_PROP_CONFIRMATION_CODE, invitation.getConfirmationCode());
-        properties.put(EVENT_PROP_TENANT_DOMAIN, invitation.getInvitedOrganizationId());
+        properties.put(EVENT_PROP_TENANT_DOMAIN, resolveTenantDomain(invitation.getInvitedOrganizationId()));
         properties.put(EVENT_PROP_REDIRECT_URL, invitation.getUserRedirectUrl());
         properties.put(EVENT_PROP_PROPERTIES, invitation.getInvitationProperties());
         Event invitationEvent = new Event(EVENT_NAME_POST_ADD_INVITATION, properties);

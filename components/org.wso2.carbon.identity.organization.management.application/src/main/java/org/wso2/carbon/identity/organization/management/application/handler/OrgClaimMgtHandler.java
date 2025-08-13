@@ -46,6 +46,7 @@ import org.wso2.carbon.identity.organization.management.service.model.BasicOrgan
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
@@ -129,6 +130,10 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         try {
             String parentTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganizationId);
             String sharedOrganizationTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrganizationID);
+
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(sharedOrganizationTenantDomain)) {
+                return;
+            }
             List<String> missingClaims = getMissingClaims(sharedOrganizationTenantDomain, claimMappings);
             if (!missingClaims.isEmpty()) {
                 List<LocalClaim> parentOrgCustomLocalClaims = getClaimMetadataManagementService().
@@ -165,6 +170,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.APPLICATION_ID);
         String tenantDomain = (String) eventProperties.get(IdentityEventConstants.EventProperty.TENANT_DOMAIN);
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             List<BasicOrganization> sharedOrganizations = getOrgApplicationManager().getApplicationSharedOrganizations(
                     getOrganizationManager().resolveOrganizationId(tenantDomain), applicationId);
             if (!sharedOrganizations.isEmpty()) {
@@ -289,6 +297,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                         MAPPED_ATTRIBUTES);
 
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             List<BasicOrganization> childOrganizations = getOrganizationManager().
                     getChildOrganizations(organizationId, true);
@@ -416,6 +427,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                         EXTERNAL_CLAIM_PROPERTIES);
 
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             List<BasicOrganization> childOrganizations = getOrganizationManager().
                     getChildOrganizations(organizationId, true);
@@ -455,6 +469,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
                 (Map<String, String>) eventProperties.get(IdentityEventConstants.EventProperty.
                         EXTERNAL_CLAIM_PROPERTIES);
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             List<BasicOrganization> childOrganizations = getOrganizationManager().
                     getChildOrganizations(organizationId, true);
@@ -491,6 +508,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         String claimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.CLAIM_DIALECT_URI);
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             List<BasicOrganization> childOrganizations = getOrganizationManager().
                     getChildOrganizations(organizationId, true);
@@ -526,6 +546,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         String newClaimDialectURI =
                 (String) eventProperties.get(IdentityEventConstants.EventProperty.NEW_CLAIM_DIALECT_URI);
         try {
+            if (Utils.isClaimAndOIDCScopeInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
             List<BasicOrganization> childOrganizations = getOrganizationManager().
                     getChildOrganizations(organizationId, true);
@@ -601,6 +624,9 @@ public class OrgClaimMgtHandler extends AbstractEventHandler {
         if (parentOrganization != null) {
             try {
                 String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrganization.getId());
+                if (Utils.isClaimAndOIDCScopeInheritanceEnabled(parentOrgTenantDomain)) {
+                    return;
+                }
                 inheritClaimPropertiesAndAttributeMapping(createdOrganization.getId(), parentOrgTenantDomain);
             } catch (OrganizationManagementException e) {
                 throw new IdentityEventException("Error retrieving the tenant domain of parent organization.", e);

@@ -21,7 +21,7 @@
     <parent>
         <artifactId>identity-organization-management</artifactId>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
-        <version>2.0.18-SNAPSHOT</version>
+        <version>2.0.24-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -191,6 +191,7 @@
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.idp.mgt;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.idp.mgt.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt.listener;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.*;
