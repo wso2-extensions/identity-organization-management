@@ -288,8 +288,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharingOrg, PolicyEnum.SELECTED_ORG_ONLY, applicationShareRolePolicy);
             selectiveShareApplicationList.add(selectiveShareApplication);
         }
-        IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
-        shareApplicationWithSelectedOrganizations(ownerOrgId, originalAppId, selectiveShareApplicationList);
+        try {
+            IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+            shareApplicationWithSelectedOrganizations(ownerOrgId, originalAppId, selectiveShareApplicationList);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(SKIP_ORGANIZATION_HIERARCHY_VALIDATION);
+        }
+
     }
 
     @Override
@@ -377,10 +382,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (TENANT.equalsIgnoreCase(sharingChildOrg.getType())) {
                 orgIdsToShare.add(sharingChildOrg.getId());
                 CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                    if (skipOrganizationHierarchyValidation) {
-                        IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
-                    }
+
                     try {
+                        if (skipOrganizationHierarchyValidation) {
+                            IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+                        }
                         shareApplicationWithPolicy(
                                 mainOrganizationId,
                                 mainApplication,
@@ -392,6 +398,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to sharingChildOrg: %s",
                                 mainApplication.getApplicationResourceId(), sharingChildOrg.getId()), e);
+                    } finally {
+                        if (skipOrganizationHierarchyValidation) {
+                            IdentityUtil.threadLocalProperties.get().remove(SKIP_ORGANIZATION_HIERARCHY_VALIDATION);
+                        }
                     }
                 }, executorService);
                 futures.add(future);
@@ -1823,7 +1833,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             handleShareApplicationException(operationId, e, mainApplication.getApplicationResourceId(),
                     sharingOrgId);
         } finally {
-            IdentityUtil.threadLocalProperties.get().remove(SKIP_ORGANIZATION_HIERARCHY_VALIDATION);
             PrivilegedCarbonContext.endTenantFlow();
         }
 
