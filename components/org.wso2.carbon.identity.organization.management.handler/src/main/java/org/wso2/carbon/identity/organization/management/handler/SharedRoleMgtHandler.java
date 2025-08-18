@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.event.IdentityEventClientException;
 import org.wso2.carbon.identity.event.IdentityEventConstants;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -68,6 +69,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SKIP_ORGANIZATION_HIERARCHY_VALIDATION;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 
@@ -203,7 +205,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private void createSharedOrgRoleSelectively(String mainOrganizationId, String mainApplicationId,
                                                 String sharedAppOrgId, ApplicationShareRolePolicy sharingConfig)
             throws OrganizationManagementException, IdentityRoleManagementException,
-            IdentityApplicationManagementException {
+            IdentityApplicationManagementException, IdentityEventClientException {
 
 
         Organization subOrg = getOrganization(sharedAppOrgId, false);
@@ -222,6 +224,16 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             mainRolesIds.add(mainRole.getId());
         }
         String parentOrgTenantDomain = getOrganizationManager().resolveTenantDomain(parentOrgId);
+
+        boolean skipOrganizationHierarchyValidation = Boolean.TRUE.equals(
+                IdentityUtil.threadLocalProperties.get().get(SKIP_ORGANIZATION_HIERARCHY_VALIDATION));
+        if (ApplicationShareRolePolicy.Mode.ALL.ordinal() != sharingConfig.getMode().ordinal()
+                && skipOrganizationHierarchyValidation) {
+            throw new IdentityEventClientException("The organization hierarchy validation cannot be skipped when " +
+                    "sharing roles in SELECTED mode. Please set the mode to ALL or remove the skip organization " +
+                    "hierarchy validation property.");
+        }
+
         Map<String, String> mainOrgToParentOrgRoleAssociations = getRoleManagementServiceV2()
                 .getMainRoleToSharedRoleMappingsBySubOrg(mainRolesIds, parentOrgTenantDomain);
         List<RoleV2> filteredRolesToBeShared = new ArrayList<>();
@@ -261,8 +273,14 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 if (mainOrganizationId.equals(parentOrgId)) {
                     filteredRolesToBeShared.add(mainOrgAppRole);
                 } else {
-                    if (mainOrgToParentOrgRoleAssociations.containsKey(mainOrgAppRole.getId())) {
+                    if (skipOrganizationHierarchyValidation) {
+                        // If the hierarchy validation is skipped, we don't need to check if the parent org has the
+                        // role association.
                         filteredRolesToBeShared.add(mainOrgAppRole);
+                    } else {
+                        if (mainOrgToParentOrgRoleAssociations.containsKey(mainOrgAppRole.getId())) {
+                            filteredRolesToBeShared.add(mainOrgAppRole);
+                        }
                     }
                 }
             }
@@ -504,7 +522,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private void createSharedAppRolesSelectively(String mainAppId, String mainOrganizationId,
                                                         String sharedAppId, String sharedOrganizationId,
                                                         ApplicationShareRolePolicy applicationShareRolePolicy)
-            throws IdentityRoleManagementException, OrganizationManagementException {
+            throws IdentityRoleManagementException, OrganizationManagementException, IdentityEventClientException {
 
         String sharedAppTenantDomain = resolveTenantDomain(sharedOrganizationId);
         String mainTenantDomain = resolveTenantDomain(mainOrganizationId);
@@ -543,14 +561,26 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         Organization subOrg = getOrganization(sharedOrganizationId, false);
         List<RoleBasicInfo> allMainOrgAppRoles = getMainApplicationRoles(mainAppId, mainTenantDomain);
 
+        boolean skipOrganizationHierarchyValidation = Boolean.TRUE.equals(
+                IdentityUtil.threadLocalProperties.get().get(SKIP_ORGANIZATION_HIERARCHY_VALIDATION));
+        if (skipOrganizationHierarchyValidation &&
+                ApplicationShareRolePolicy.Mode.ALL.ordinal() != currentConfig.getMode().ordinal()) {
+            throw new IdentityEventClientException("The organization hierarchy validation cannot be skipped when " +
+                    "sharing roles in SELECTED mode. Please set the mode to ALL or remove the skip organization " +
+                    "hierarchy validation property.");
+        }
         if (ApplicationShareRolePolicy.Mode.SELECTED.ordinal() == currentConfig.getMode().ordinal()) {
             List<RoleBasicInfo> selectedMainRoles = filterSelectedMainAppRoles(allMainOrgAppRoles,
                     currentConfig.getRoleWithAudienceDOList());
             filteredRolesToBeShared = filterAppRolesByParentOrgAssociation(selectedMainRoles, mainOrganizationId,
                     subOrg);
         } else {
-            filteredRolesToBeShared = filterAppRolesByParentOrgAssociation(allMainOrgAppRoles, mainOrganizationId,
-                    subOrg);
+            if (skipOrganizationHierarchyValidation) {
+                filteredRolesToBeShared = allMainOrgAppRoles;
+            } else {
+                filteredRolesToBeShared = filterAppRolesByParentOrgAssociation(allMainOrgAppRoles, mainOrganizationId,
+                        subOrg);
+            }
         }
 
         // This list will track roles that are successfully provisioned or found existing from the

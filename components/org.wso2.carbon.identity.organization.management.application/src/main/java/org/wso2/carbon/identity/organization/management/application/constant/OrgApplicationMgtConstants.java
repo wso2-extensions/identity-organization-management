@@ -63,6 +63,9 @@ public class OrgApplicationMgtConstants {
     public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
     public static final String DELETE_MAIN_APPLICATION = "deleteMainApplication";
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";
+    /* This constant is used to skip the organization hierarchy validation when sharing an application. This is just
+     keep the backward compatibility for existing application share endpoint. DO NOT use this in any new features. */
+    public static final String SKIP_ORGANIZATION_HIERARCHY_VALIDATION = "skipOrganizationHierarchyValidation";
     public static final String DELETE_SHARE_FOR_MAIN_APPLICATION = "deleteShareForMainApp";
     public static final String USER_CUSTOM_ATTRIBUTE_PROPERTY = "USER_CUSTOM_ATTRIBUTE";
     public static final String ORGANIZATION_SSO_IDP_IMAGE_URL = "assets/images/logos/sso.svg";
