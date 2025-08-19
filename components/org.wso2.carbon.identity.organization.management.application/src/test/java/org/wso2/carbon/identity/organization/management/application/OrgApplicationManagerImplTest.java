@@ -1242,11 +1242,15 @@ public class OrgApplicationManagerImplTest {
     }
 
     // ========================================
-    // Tests for skipOrganizationHierarchyValidation in shareApplicationWithPolicy
+    // Tests for skipOrganizationHierarchyValidation in shareApplicationWithPolicy.
     // ========================================
 
-    @Test
-    public void testShareApplicationWithPolicy_SkipHierarchyValidation_AllRoles_Succeeds() throws Exception {
+        /**
+         * Ensures sharing succeeds when skipOrganizationHierarchyValidation is enabled with
+         * policy SELECTED_ORG_ONLY and role mode ALL; verifies SP creation and DB link.
+         */
+        @Test
+        public void testSkipAllRolesSuccess() throws Exception {
 
         String ownerOrgId = "owner-org-id";
         String sharingOrgId = "sharing-org-id";
@@ -1336,8 +1340,12 @@ public class OrgApplicationManagerImplTest {
         }
     }
 
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testShareApplicationWithPolicy_SkipHierarchyValidation_WrongPolicy_Throws() throws Exception {
+        /**
+         * Ensures a client exception is thrown when skipOrganizationHierarchyValidation is enabled but
+         * the sharing policy is not SELECTED_ORG_ONLY.
+         */
+        @Test(expectedExceptions = OrganizationManagementClientException.class)
+        public void testSkipWrongPolicyFail() throws Exception {
 
         String ownerOrgId = "owner-org-id";
         String sharingOrgId = "sharing-org-id";
@@ -1395,8 +1403,12 @@ public class OrgApplicationManagerImplTest {
         }
     }
 
-    @Test(expectedExceptions = OrganizationManagementClientException.class)
-    public void testShareApplicationWithPolicy_SkipHierarchyValidation_NonAllRoleMode_Throws() throws Exception {
+        /**
+         * Ensures a client exception is thrown when skipOrganizationHierarchyValidation is enabled with
+         * SELECTED_ORG_ONLY policy but role mode is not ALL.
+         */
+        @Test(expectedExceptions = OrganizationManagementClientException.class)
+        public void testSkipNonAllRoleFail() throws Exception {
 
         String ownerOrgId = "owner-org-id";
         String sharingOrgId = "sharing-org-id";
