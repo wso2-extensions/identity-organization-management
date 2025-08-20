@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.core.ServiceURL;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
@@ -95,6 +96,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SKIP_ORGANIZATION_HIERARCHY_VALIDATION;
 
 /**
  * Unit tests for OrgApplicationManagerImpl.
@@ -424,6 +426,9 @@ public class OrgApplicationManagerImplTest {
             // Get Domain Qualified Username.
             when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
                     .thenReturn(organizationUserResidentResolverService);
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            when(orgApplicationMgtDAO.getSharedApplicationResourceId(anyString(), anyString(), anyString()))
+                    .thenReturn(Optional.empty());
             when(organizationUserResidentResolverService
                     .resolveUserFromResidentOrganization(null, adminUserId, sharedOrgId))
                     .thenReturn(Optional.of(mockUser));
@@ -1233,6 +1238,231 @@ public class OrgApplicationManagerImplTest {
 
             // Verify sharing occurred with NONE role policy.
             verify(organizationManager).getOrganization("child1-org-id", false, false);
+        }
+    }
+
+    // ========================================
+    // Tests for skipOrganizationHierarchyValidation in shareApplicationWithPolicy.
+    // ========================================
+
+        /**
+         * Ensures sharing succeeds when skipOrganizationHierarchyValidation is enabled with
+         * policy SELECTED_ORG_ONLY and role mode ALL; verifies SP creation and DB link.
+         */
+        @Test
+        public void testSkipAllRolesSuccess() throws Exception {
+
+        String ownerOrgId = "owner-org-id";
+        String sharingOrgId = "sharing-org-id";
+        String sharedTenantDomain = "shared-tenant";
+        String ownerTenantDomain = "owner-tenant";
+        int tenantId = 42;
+        String adminUserId = "admin-user-id";
+        String domainQualifiedUserName = "admin@sharing.org";
+
+        // Enable skip hierarchy validation.
+        IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+
+        ServiceProvider mainApplication = createMockServiceProvider("regular-app", false);
+        when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+
+        ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        OAuthConsumerAppDTO createdOAuthApp = mock(OAuthConsumerAppDTO.class);
+        String createdSharedAppId = "shared-app-id";
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+             MockedStatic<ServiceURLBuilder> serviceURLBuilder = mockStatic(ServiceURLBuilder.class);
+             MockedStatic<MultitenantUtils> multitenantUtilsMockedStatic = mockStatic(MultitenantUtils.class)) {
+
+            // Wire DataHolder and dependencies.
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(orgApplicationMgtDataHolder);
+            when(orgApplicationMgtDataHolder.getApplicationSharingManagerListener()).thenReturn(listener);
+            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(orgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            when(orgApplicationMgtDAO.getSharedApplicationResourceId(anyString(), anyString(), anyString()))
+                    .thenReturn(Optional.empty());
+            when(orgApplicationMgtDataHolder.getOAuthAdminService()).thenReturn(oAuthAdminService);
+            when(orgApplicationMgtDataHolder.getApplicationManagementService()).thenReturn(
+                    applicationManagementService);
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            when(orgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+
+            when(organizationManager.resolveTenantDomain(sharingOrgId)).thenReturn(sharedTenantDomain);
+            when(organizationManager.resolveTenantDomain(ownerOrgId)).thenReturn(ownerTenantDomain);
+
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(sharedTenantDomain))
+                    .thenReturn(tenantId);
+            when(realmService.getTenantUserRealm(tenantId)).thenReturn(userRealm);
+            when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
+            when(realmConfiguration.getAdminUserId()).thenReturn(adminUserId);
+            when(organizationUserResidentResolverService
+                    .resolveUserFromResidentOrganization(null, adminUserId, sharingOrgId))
+                    .thenReturn(Optional.of(mockUser));
+            when(mockUser.getDomainQualifiedUsername()).thenReturn(domainQualifiedUserName);
+            // Fallback path safety: if resident resolver returns empty, avoid NPE in MultitenantUtils.
+            when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+            when(mockAppOwner.toFullQualifiedUsername()).thenReturn("owner@owner-tenant");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername("owner@owner-tenant"))
+                    .thenReturn("owner");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername(null))
+                    .thenReturn("owner");
+
+            // No existing shared app for target org.
+            when(orgApplicationMgtDAO.getSharedApplicationResourceId(
+                    anyString(), anyString(), anyString())).thenReturn(Optional.empty());
+
+            // URLs and OAuth app creation flow.
+            mockServiceURLBuilder("https://localhost:9443", serviceURLBuilder);
+            when(oAuthAdminService.registerAndRetrieveOAuthApplicationData(any())).thenReturn(createdOAuthApp);
+
+            // SP creation and DB update.
+            when(applicationManagementService.createApplication(any(ServiceProvider.class), eq(sharedTenantDomain),
+                    anyString())).thenReturn(createdSharedAppId);
+
+            // Execute: should bypass parent sharing check and proceed.
+            orgApplicationManager.shareApplicationWithPolicy(ownerOrgId, mainApplication, sharingOrgId,
+                    PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy, null);
+
+            verify(applicationManagementService, times(1)).createApplication(any(ServiceProvider.class),
+                    eq(sharedTenantDomain), anyString());
+            verify(orgApplicationMgtDAO, times(1)).addSharedApplication(anyString(), eq(ownerOrgId),
+                    eq(createdSharedAppId), eq(sharingOrgId));
+        }
+    }
+
+        /**
+         * Ensures a client exception is thrown when skipOrganizationHierarchyValidation is enabled but
+         * the sharing policy is not SELECTED_ORG_ONLY.
+         */
+        @Test(expectedExceptions = OrganizationManagementClientException.class)
+        public void testSkipWrongPolicyFail() throws Exception {
+
+        String ownerOrgId = "owner-org-id";
+        String sharingOrgId = "sharing-org-id";
+        String sharedTenantDomain = "shared-tenant";
+        int tenantId = 7;
+        String adminUserId = "admin";
+
+        // Enable skip hierarchy validation.
+        IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+
+        ServiceProvider mainApplication = createMockServiceProvider("regular-app", false);
+        when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+
+        ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.ALL)
+                .build();
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+             MockedStatic<MultitenantUtils> multitenantUtilsMockedStatic = mockStatic(MultitenantUtils.class)) {
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(orgApplicationMgtDataHolder);
+            when(orgApplicationMgtDataHolder.getApplicationSharingManagerListener()).thenReturn(listener);
+            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(orgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            when(orgApplicationMgtDAO.getSharedApplicationResourceId(anyString(), anyString(), anyString()))
+                    .thenReturn(Optional.empty());
+
+            when(organizationManager.resolveTenantDomain(sharingOrgId)).thenReturn(sharedTenantDomain);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(sharedTenantDomain))
+                    .thenReturn(tenantId);
+            when(realmService.getTenantUserRealm(tenantId)).thenReturn(userRealm);
+            when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
+            when(realmConfiguration.getAdminUserId()).thenReturn(adminUserId);
+            when(organizationUserResidentResolverService
+                    .resolveUserFromResidentOrganization(null, adminUserId, sharingOrgId))
+                    .thenReturn(Optional.of(mockUser));
+            when(mockUser.getDomainQualifiedUsername()).thenReturn("admin@sharing.org");
+            // Fallback path safety to avoid NPE.
+            when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+            when(mockAppOwner.toFullQualifiedUsername()).thenReturn("owner@owner-tenant");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername("owner@owner-tenant"))
+                    .thenReturn("owner");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername(null))
+                    .thenReturn("owner");
+
+            // Expect: client exception due to wrong policy when skip flag is set.
+            orgApplicationManager.shareApplicationWithPolicy(ownerOrgId, mainApplication, sharingOrgId,
+                    PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN, allRolesPolicy, null);
+        }
+    }
+
+        /**
+         * Ensures a client exception is thrown when skipOrganizationHierarchyValidation is enabled with
+         * SELECTED_ORG_ONLY policy but role mode is not ALL.
+         */
+        @Test(expectedExceptions = OrganizationManagementClientException.class)
+        public void testSkipNonAllRoleFail() throws Exception {
+
+        String ownerOrgId = "owner-org-id";
+        String sharingOrgId = "sharing-org-id";
+        String sharedTenantDomain = "shared-tenant";
+        int tenantId = 3;
+        String adminUserId = "admin";
+
+        // Enable skip hierarchy validation.
+        IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+
+        ServiceProvider mainApplication = createMockServiceProvider("regular-app", false);
+        when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+
+        ApplicationShareRolePolicy noneRolePolicy = new ApplicationShareRolePolicy.Builder()
+                .mode(ApplicationShareRolePolicy.Mode.NONE)
+                .build();
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+             MockedStatic<MultitenantUtils> multitenantUtilsMockedStatic = mockStatic(MultitenantUtils.class)) {
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(orgApplicationMgtDataHolder);
+            when(orgApplicationMgtDataHolder.getApplicationSharingManagerListener()).thenReturn(listener);
+            when(orgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(orgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            when(orgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            when(orgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            when(orgApplicationMgtDAO.getSharedApplicationResourceId(anyString(), anyString(), anyString()))
+                    .thenReturn(Optional.empty());
+
+            when(organizationManager.resolveTenantDomain(sharingOrgId)).thenReturn(sharedTenantDomain);
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(sharedTenantDomain))
+                    .thenReturn(tenantId);
+            when(realmService.getTenantUserRealm(tenantId)).thenReturn(userRealm);
+            when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
+            when(realmConfiguration.getAdminUserId()).thenReturn(adminUserId);
+            when(organizationUserResidentResolverService
+                    .resolveUserFromResidentOrganization(null, adminUserId, sharingOrgId))
+                    .thenReturn(Optional.of(mockUser));
+            when(mockUser.getDomainQualifiedUsername()).thenReturn("admin@sharing.org");
+            // Fallback path safety to avoid NPE.
+            when(mainApplication.getOwner()).thenReturn(mockAppOwner);
+            when(mockAppOwner.toFullQualifiedUsername()).thenReturn("owner@owner-tenant");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername("owner@owner-tenant"))
+                    .thenReturn("owner");
+            multitenantUtilsMockedStatic.when(() -> MultitenantUtils.getTenantAwareUsername(null))
+                    .thenReturn("owner");
+
+            // Expect: client exception due to non-ALL role policy when skip flag is set.
+            orgApplicationManager.shareApplicationWithPolicy(ownerOrgId, mainApplication, sharingOrgId,
+                    PolicyEnum.SELECTED_ORG_ONLY, noneRolePolicy, null);
         }
     }
 

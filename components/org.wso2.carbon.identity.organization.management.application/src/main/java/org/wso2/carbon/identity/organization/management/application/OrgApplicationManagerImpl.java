@@ -167,6 +167,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.PARENT_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SKIP_ORGANIZATION_HIERARCHY_VALIDATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_ROLE_EXCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SHARING_MODE_INCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SP_SHARED_SUPPORTED_EXCLUDED_ATTRIBUTES;
@@ -291,7 +292,13 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     sharingOrg, PolicyEnum.SELECTED_ORG_ONLY, applicationShareRolePolicy);
             selectiveShareApplicationList.add(selectiveShareApplication);
         }
-        shareApplicationWithSelectedOrganizations(ownerOrgId, originalAppId, selectiveShareApplicationList);
+        try {
+            IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+            shareApplicationWithSelectedOrganizations(ownerOrgId, originalAppId, selectiveShareApplicationList);
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(SKIP_ORGANIZATION_HIERARCHY_VALIDATION);
+        }
+
     }
 
     @Override
@@ -342,16 +349,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             return;
         }
 
-        /*
-         * Process and sort organization shares.
-         *
-         * Organizations are arranged so that parent organizations are processed before their
-         * corresponding child organizations. This ordering ensures that application sharing
-         * follows the correct hierarchical structure and respects the organization hierarchy.
-         */
-        List<SelectiveShareApplicationOperation> selectiveShareApplicationOperations = processAndSortOrganizationShares(
-                childOrganizationGraph, filteredChildOrgConfigs);
-
+        boolean skipOrganizationHierarchyValidation = Boolean.TRUE.equals(
+                IdentityUtil.threadLocalProperties.get().get(SKIP_ORGANIZATION_HIERARCHY_VALIDATION));
+        List<SelectiveShareApplicationOperation> selectiveShareApplicationOperations;
+        if (skipOrganizationHierarchyValidation) {
+            selectiveShareApplicationOperations = filteredChildOrgConfigs;
+        } else {
+            /*
+             * Process and sort organization shares.
+             *
+             * Organizations are arranged so that parent organizations are processed before their
+             * corresponding child organizations. This ordering ensures that application sharing
+             * follows the correct hierarchical structure and respects the organization hierarchy.
+             */
+            selectiveShareApplicationOperations = processAndSortOrganizationShares(
+                    childOrganizationGraph, filteredChildOrgConfigs);
+        }
         // If there are valid orgs to share with, update the root application with the org login IDP.
         modifyRootApplication(mainApplication, ownerTenantDomain);
 
@@ -373,7 +386,11 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (TENANT.equalsIgnoreCase(sharingChildOrg.getType())) {
                 orgIdsToShare.add(sharingChildOrg.getId());
                 CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+
                     try {
+                        if (skipOrganizationHierarchyValidation) {
+                            IdentityUtil.threadLocalProperties.get().put(SKIP_ORGANIZATION_HIERARCHY_VALIDATION, true);
+                        }
                         shareApplicationWithPolicy(
                                 mainOrganizationId,
                                 mainApplication,
@@ -385,6 +402,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in sharing application: %s to sharingChildOrg: %s",
                                 mainApplication.getApplicationResourceId(), sharingChildOrg.getId()), e);
+                    } finally {
+                        if (skipOrganizationHierarchyValidation) {
+                            IdentityUtil.threadLocalProperties.get().remove(SKIP_ORGANIZATION_HIERARCHY_VALIDATION);
+                        }
                     }
                 }, executorService);
                 futures.add(future);
@@ -1702,21 +1723,43 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             String sharedApplicationId;
             // Create the OAuth app and the service provider only if the app hasn't been created.
             if (!sharedAppId.isPresent()) {
+                boolean skipOrganizationHierarchyValidation = Boolean.TRUE.equals(
+                        IdentityUtil.threadLocalProperties.get().get(SKIP_ORGANIZATION_HIERARCHY_VALIDATION));
+                if (skipOrganizationHierarchyValidation) {
+                    // Make sure that the organization hierarchy validation is skipped only if the policy is set to
+                    // SELECTED_ORG_ONLY and the role sharing mode is ALL.
+                    if (PolicyEnum.SELECTED_ORG_ONLY.ordinal() != policyEnum.ordinal()) {
+                        throw new OrganizationManagementClientException(
+                                ERROR_CODE_ERROR_SHARING_APPLICATION.getMessage(), "Organization hierarchy validation" +
+                                " is skipped for the application: " + mainApplicationId + "in organization: "
+                                + sharingOrgId + ", but the policy " + "is not set to SELECTED_ORG_ONLY.",
+                                ERROR_CODE_ERROR_SHARING_APPLICATION.getCode());
+                    }
+                    if (ApplicationShareRolePolicy.Mode.ALL != applicationShareRolePolicy.getMode()) {
+                        throw new OrganizationManagementClientException(
+                                ERROR_CODE_ERROR_SHARING_APPLICATION.getMessage(), "Organization hierarchy " +
+                                "validation is skipped for the application: " + mainApplicationId + "in organization: "
+                                + sharingOrgId + ", but the role sharing mode is not set to ALL.",
+                                ERROR_CODE_ERROR_SHARING_APPLICATION.getCode());
+                    }
+                }
                 // Check if the application is shared to the parentOrg.
-                String parentOrgId = getOrganizationManager().getOrganization(sharingOrgId, false, false).getParent()
-                        .getId();
-                if (!parentOrgId.equals(ownerOrgId)) {
-                    Optional<String> parentOrgSharedAppId = resolveSharedApp(mainApplicationId,
-                            ownerOrgId, parentOrgId);
-                    if (!parentOrgSharedAppId.isPresent()) {
-                        processUnitOperationStatus(operationId, mainApplicationId, sharingOrgId, OperationStatus.FAILED,
-                                "Application: " + mainApplicationId +
+                if (!skipOrganizationHierarchyValidation) {
+                    String parentOrgId = getOrganizationManager().getOrganization(sharingOrgId, false,
+                                    false).getParent().getId();
+                    if (!parentOrgId.equals(ownerOrgId)) {
+                        Optional<String> parentOrgSharedAppId = resolveSharedApp(mainApplicationId,
+                                ownerOrgId, parentOrgId);
+                        if (!parentOrgSharedAppId.isPresent()) {
+                            processUnitOperationStatus(operationId, mainApplicationId, sharingOrgId,
+                                    OperationStatus.FAILED, "Application: " + mainApplicationId +
+                                            " is not shared with the parent organization: " + parentOrgId);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Application: " + mainApplicationId +
                                         " is not shared with the parent organization: " + parentOrgId);
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Application: " + mainApplicationId +
-                                    " is not shared with the parent organization: " + parentOrgId);
+                            }
+                            return;
                         }
-                        return;
                     }
                 }
 
