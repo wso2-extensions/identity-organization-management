@@ -91,7 +91,7 @@ public class SQLConstants {
             SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s FETCH FIRST %d ROWS ONLY";
 
     public static final String GET_SHARED_APPLICATIONS_BY_FILTERING_TAIL = " SHARED_ORG_ID IN (" +
-            SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s;";
+            SQLPlaceholders.SHARED_ORG_ID_LIST_PLACEHOLDER + ") ORDER BY ID %s";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MYSQL =
             "SELECT DISTINCT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, " +
