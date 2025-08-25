@@ -39,7 +39,9 @@ import org.wso2.carbon.identity.application.mgt.provider.ApplicationPermissionPr
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
@@ -81,11 +83,15 @@ public class OrgApplicationMgtDAOImplTest {
     private static final String USERNAME = "test-user";
     private static final String USER_ID = "42ef1d92-add6-449b-8a3c-fc308d2a4eac";
     private static final String ROOT_ORG_ID = "72b81cba-51c7-4dc1-91be-b267e177c17a";
+    private static final String TENANT_DOMAIN_OF_ORG_ID_1 = "org1";
     private static final String SHARED_ORG_ID_1 = "30b701c6-e309-4241-b047-0c299c45d1a0";
     private static final int SHARED_TENANT_ID_1 = 1;
+    // Tenant domain equals to org id for org2.
+    private static final String TENANT_DOMAIN_OF_ORG_ID_2 = "93d996f9-a5ba-4275-a52b-adaad9eba869";
     private static final String SHARED_ORG_ID_2 = "93d996f9-a5ba-4275-a52b-adaad9eba869";
     private static final int SHARED_TENANT_ID_2 = 2;
     private static final String UN_SHARED_ORG_ID = "89d996f9-a5ba-4275-a52b-adaad9eba869";
+    private static final String TENANT_DOMAIN_OF_UN_SHARED_ORG_ID = "org3";
     private static final int UN_SHARED_TENANT_ID = 3;
     private static final String SAMPLE_APP_1 = "test-app";
     private static final String SAMPLE_APP_2 = "scl-app";
@@ -96,12 +102,15 @@ public class OrgApplicationMgtDAOImplTest {
     private MockedStatic<IdentityUtil> mockIdentityUtil;
     private MockedStatic<ApplicationManagementServiceComponentHolder> mockedApplicationManagementServiceComponentHolder;
     private ApplicationManagementServiceComponentHolder mockComponentHolder;
+    private MockedStatic<OrgApplicationMgtDataHolder> mockOrgApplicationMgtDataHolder;
+    private OrgApplicationMgtDataHolder mockedOrgApplicationMgtComponentHolder;
     private UserRealm mockUserRealm;
     private RealmService mockRealmService;
     private AbstractUserStoreManager mockAbstractUserStoreManager;
     private ApplicationPermissionProvider mockApplicationPermissionProvider;
     private TenantManager mockTenantManager;
     private OrganizationUserResidentResolverService mockOrganizationUserResidentResolverService;
+    private OrganizationManager mockOrganizationManager;
 
     private OrgApplicationMgtDAOImpl orgApplicationMgtDAO;
     private ApplicationDAO applicationDAO;
@@ -124,6 +133,9 @@ public class OrgApplicationMgtDAOImplTest {
         mockApplicationPermissionProvider = mock(ApplicationPermissionProvider.class);
         mockTenantManager = mock(TenantManager.class);
         mockOrganizationUserResidentResolverService = mock(OrganizationUserResidentResolverService.class);
+        mockOrgApplicationMgtDataHolder = mockStatic(OrgApplicationMgtDataHolder.class);
+        mockedOrgApplicationMgtComponentHolder = mock(OrgApplicationMgtDataHolder.class);
+        mockOrganizationManager = mock(OrganizationManager.class);
         setupInitConfigurations();
 
         orgApplicationMgtDAO = new OrgApplicationMgtDAOImpl();
@@ -139,13 +151,15 @@ public class OrgApplicationMgtDAOImplTest {
         mockIdentityTenantUtil.close();
         mockIdentityUtil.close();
         mockedApplicationManagementServiceComponentHolder.close();
+        mockOrgApplicationMgtDataHolder.close();
     }
 
     @DataProvider(name = "filteredSharedApplicationsTestData")
     public Object[][] getFilteredSharedApplicationsTestData()
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
-        createAndShareApplication(SAMPLE_APP_1, new String[] {SHARED_ORG_ID_1, SHARED_ORG_ID_2});
+        createAndShareApplication(SAMPLE_APP_1, new String[]{SHARED_ORG_ID_1, SHARED_ORG_ID_2},
+                new String[]{TENANT_DOMAIN_OF_ORG_ID_1, TENANT_DOMAIN_OF_ORG_ID_2});
 
         return new Object[][] {
                 // Passing org ids of both shared apps only.
@@ -179,7 +193,8 @@ public class OrgApplicationMgtDAOImplTest {
     public Object[][] getSharedApplicationsTestData()
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
-        createAndShareApplication(SAMPLE_APP_4, new String[] {SHARED_ORG_ID_1, SHARED_ORG_ID_2});
+        createAndShareApplication(SAMPLE_APP_4, new String[]{SHARED_ORG_ID_1, SHARED_ORG_ID_2},
+                new String[]{TENANT_DOMAIN_OF_ORG_ID_1, TENANT_DOMAIN_OF_ORG_ID_2});
 
         return new Object[][] {
                 // Passing org ids of both shared apps only.
@@ -223,31 +238,31 @@ public class OrgApplicationMgtDAOImplTest {
     public void testDiscoverableAppsList()
             throws IdentityApplicationManagementException, OrganizationManagementException, UserStoreException {
 
-        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(SHARED_ORG_ID_1);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(TENANT_DOMAIN_OF_ORG_ID_1);
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(SHARED_TENANT_ID_1);
-        createAndShareApplication(SAMPLE_APP_2, new String[] {SHARED_ORG_ID_1});
-        ServiceProvider serviceProvider1 = applicationDAO.getApplication(SAMPLE_APP_2, SHARED_ORG_ID_1);
+        createAndShareApplication(SAMPLE_APP_2, new String[]{SHARED_ORG_ID_1}, new String[]{TENANT_DOMAIN_OF_ORG_ID_1});
+        ServiceProvider serviceProvider1 = applicationDAO.getApplication(SAMPLE_APP_2, TENANT_DOMAIN_OF_ORG_ID_1);
         serviceProvider1.setDiscoverable(true);
         serviceProvider1.setAccessUrl("https://localhost:5000/scl-app");
         serviceProvider1.setDiscoverableGroups(
                 new DiscoverableGroup[] {getNewDiscoverableGroup(DEFAULT_USER_STORE_DOMAIN, 1, 0)});
-        applicationDAO.updateApplication(serviceProvider1, SHARED_ORG_ID_1);
-        createAndShareApplication(SAMPLE_APP_3, new String[] {SHARED_ORG_ID_1});
-        ServiceProvider serviceProvider2 = applicationDAO.getApplication(SAMPLE_APP_3, SHARED_ORG_ID_1);
+        applicationDAO.updateApplication(serviceProvider1, TENANT_DOMAIN_OF_ORG_ID_1);
+        createAndShareApplication(SAMPLE_APP_3, new String[]{SHARED_ORG_ID_1}, new String[]{TENANT_DOMAIN_OF_ORG_ID_1});
+        ServiceProvider serviceProvider2 = applicationDAO.getApplication(SAMPLE_APP_3, TENANT_DOMAIN_OF_ORG_ID_1);
         serviceProvider2.setDiscoverableGroups(
                 new DiscoverableGroup[] {getNewDiscoverableGroup(DEFAULT_USER_STORE_DOMAIN, 1, 1)});
         serviceProvider2.setDiscoverable(true);
         serviceProvider2.setAccessUrl("https://localhost:5000/medical-app");
-        applicationDAO.updateApplication(serviceProvider2, SHARED_ORG_ID_1);
-        ServiceProvider serviceProvider3 = applicationDAO.getApplication(SAMPLE_APP_1, SHARED_ORG_ID_1);
+        applicationDAO.updateApplication(serviceProvider2, TENANT_DOMAIN_OF_ORG_ID_1);
+        ServiceProvider serviceProvider3 = applicationDAO.getApplication(SAMPLE_APP_1, TENANT_DOMAIN_OF_ORG_ID_1);
         serviceProvider3.setDiscoverable(true);
         serviceProvider3.setAccessUrl("https://localhost:5000/test-app");
-        applicationDAO.updateApplication(serviceProvider3, SHARED_ORG_ID_1);
+        applicationDAO.updateApplication(serviceProvider3, TENANT_DOMAIN_OF_ORG_ID_1);
         when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
                 nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
         List<ApplicationBasicInfo> applicationBasicInfos =
-                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null, SHARED_ORG_ID_1,
-                        ROOT_ORG_ID);
+                orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null,
+                        TENANT_DOMAIN_OF_ORG_ID_1, ROOT_ORG_ID);
         assertEquals(applicationBasicInfos.size(), 2);
         assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_2);
         assertEquals(applicationBasicInfos.get(1).getApplicationName(), SAMPLE_APP_1);
@@ -261,7 +276,7 @@ public class OrgApplicationMgtDAOImplTest {
                 nullable(String.class))).thenThrow(new UserStoreException());
         assertThrows(OrganizationManagementException.class,
                 () -> orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, null, null, null,
-                        SHARED_ORG_ID_1, ROOT_ORG_ID));
+                        TENANT_DOMAIN_OF_ORG_ID_1, ROOT_ORG_ID));
     }
 
     @Test(description = "Test retrieving discoverable apps list with a filter",
@@ -273,7 +288,7 @@ public class OrgApplicationMgtDAOImplTest {
                 Arrays.asList(new Group("test-group-id-0"), new Group("test-group-id-1")));
         List<ApplicationBasicInfo> applicationBasicInfos =
                 orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "medical*", null, null,
-                        SHARED_ORG_ID_1, ROOT_ORG_ID);
+                        TENANT_DOMAIN_OF_ORG_ID_1, ROOT_ORG_ID);
         assertEquals(applicationBasicInfos.size(), 1);
         assertEquals(applicationBasicInfos.get(0).getApplicationName(), SAMPLE_APP_3);
     }
@@ -284,11 +299,10 @@ public class OrgApplicationMgtDAOImplTest {
 
         when(mockAbstractUserStoreManager.getGroupListOfUser(eq(USER_ID), nullable(String.class),
                 nullable(String.class))).thenReturn(Collections.singletonList(new Group("test-group-id-0")));
-        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, SHARED_ORG_ID_1, ROOT_ORG_ID),
-                2);
-        assertEquals(
-                orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("scl*", SHARED_ORG_ID_1, ROOT_ORG_ID),
-                1);
+        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications(null, TENANT_DOMAIN_OF_ORG_ID_1,
+                ROOT_ORG_ID), 2);
+        assertEquals(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("scl*", TENANT_DOMAIN_OF_ORG_ID_1,
+                ROOT_ORG_ID), 1);
     }
 
     /**
@@ -319,21 +333,22 @@ public class OrgApplicationMgtDAOImplTest {
      *
      * @param appName      Application name.
      * @param sharedOrgIds Shared organization ids.
+     * @param tenantDomains Tenant domains of the shared organization ids.
      */
-    private void createAndShareApplication(String appName, String[] sharedOrgIds)
+    private void createAndShareApplication(String appName, String[] sharedOrgIds, String[] tenantDomains)
             throws IdentityApplicationManagementException, OrganizationManagementException {
 
         ServiceProvider application = new ServiceProvider();
         application.setApplicationName(appName);
         application.setApplicationVersion("v1.0.0");
         applicationDAO.createApplication(application, SUPER_TENANT_DOMAIN_NAME);
-        for (String sharedOrgId : sharedOrgIds) {
+        for (int i = 0; i < sharedOrgIds.length; i++) {
             ServiceProvider sharedApp = new ServiceProvider();
             sharedApp.setApplicationName(appName);
             sharedApp.setApplicationVersion("v1.0.0");
-            applicationDAO.createApplication(sharedApp, sharedOrgId);
+            applicationDAO.createApplication(sharedApp, tenantDomains[i]);
             orgApplicationMgtDAO.addSharedApplication(application.getApplicationResourceId(), ROOT_ORG_ID,
-                    sharedApp.getApplicationResourceId(), sharedOrgId, false);
+                    sharedApp.getApplicationResourceId(), sharedOrgIds[i], false);
         }
     }
 
@@ -363,14 +378,14 @@ public class OrgApplicationMgtDAOImplTest {
                 .thenReturn(SUPER_TENANT_ID);
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SUPER_TENANT_ID)))
                 .thenReturn(SUPER_TENANT_DOMAIN_NAME);
-        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(SHARED_ORG_ID_1)))
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(TENANT_DOMAIN_OF_ORG_ID_1)))
                 .thenReturn(SHARED_TENANT_ID_1);
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SHARED_TENANT_ID_1)))
-                .thenReturn(SHARED_ORG_ID_1);
-        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(SHARED_ORG_ID_2)))
+                .thenReturn(TENANT_DOMAIN_OF_ORG_ID_1);
+        mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(eq(TENANT_DOMAIN_OF_ORG_ID_2)))
                 .thenReturn(SHARED_TENANT_ID_2);
         mockIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(eq(SHARED_TENANT_ID_2)))
-                .thenReturn(SHARED_ORG_ID_2);
+                .thenReturn(TENANT_DOMAIN_OF_ORG_ID_2);
 
         mockIdentityUtil.when(IdentityUtil::getIdentityConfigDirPath)
                 .thenReturn(Paths.get(carbonHome, "conf", "identity").toString());
@@ -388,11 +403,11 @@ public class OrgApplicationMgtDAOImplTest {
         when(mockRealmService.getTenantUserRealm(UN_SHARED_TENANT_ID)).thenReturn(mockUserRealm);
         when(mockRealmService.getTenantManager()).thenReturn(mockTenantManager);
         when(mockTenantManager.getTenant(eq(SHARED_TENANT_ID_1))).thenReturn(
-                getTenant(SHARED_TENANT_ID_1, SHARED_ORG_ID_1));
+                getTenant(SHARED_TENANT_ID_1, TENANT_DOMAIN_OF_ORG_ID_1, SHARED_ORG_ID_1));
         when(mockTenantManager.getTenant(eq(SHARED_TENANT_ID_2))).thenReturn(
-                getTenant(SHARED_TENANT_ID_2, SHARED_ORG_ID_2));
+                getTenant(SHARED_TENANT_ID_2, TENANT_DOMAIN_OF_ORG_ID_2, SHARED_ORG_ID_2));
         when(mockTenantManager.getTenant(eq(UN_SHARED_TENANT_ID))).thenReturn(
-                getTenant(UN_SHARED_TENANT_ID, UN_SHARED_ORG_ID));
+                getTenant(UN_SHARED_TENANT_ID, TENANT_DOMAIN_OF_UN_SHARED_ORG_ID, UN_SHARED_ORG_ID));
         when(mockUserRealm.getUserStoreManager()).thenReturn(mockAbstractUserStoreManager);
         when(mockComponentHolder.getApplicationPermissionProvider()).thenReturn(mockApplicationPermissionProvider);
         when(mockApplicationPermissionProvider.loadPermissions(anyString())).thenReturn(new ArrayList<>());
@@ -401,6 +416,14 @@ public class OrgApplicationMgtDAOImplTest {
         when(mockOrganizationUserResidentResolverService.resolveUserFromResidentOrganization(eq(USERNAME), eq(USER_ID),
                 anyString())).thenReturn(
                 Optional.of(new User(USER_ID, USERNAME, null)));
+
+        mockOrgApplicationMgtDataHolder.when(OrgApplicationMgtDataHolder::getInstance)
+                .thenReturn(mockedOrgApplicationMgtComponentHolder);
+        when(mockedOrgApplicationMgtComponentHolder.getOrganizationManager()).thenReturn(mockOrganizationManager);
+        when(mockOrganizationManager.resolveOrganizationId(TENANT_DOMAIN_OF_ORG_ID_1))
+                .thenReturn(SHARED_ORG_ID_1);
+        when(mockOrganizationManager.resolveOrganizationId(TENANT_DOMAIN_OF_ORG_ID_2))
+                .thenReturn(SHARED_ORG_ID_2);
     }
 
     /**
@@ -408,14 +431,15 @@ public class OrgApplicationMgtDAOImplTest {
      *
      * @param tenantId     Tenant id.
      * @param tenantDomain Tenant domain.
+     * @param organizationUUID Organization UUID.
      * @return New Tenant object.
      */
-    private Tenant getTenant(int tenantId, String tenantDomain) {
+    private Tenant getTenant(int tenantId, String tenantDomain, String organizationUUID) {
 
         Tenant tenant = new Tenant();
         tenant.setId(tenantId);
         tenant.setDomain(tenantDomain);
-        tenant.setAssociatedOrganizationUUID(tenantDomain);
+        tenant.setAssociatedOrganizationUUID(organizationUUID);
         return tenant;
     }
 }
