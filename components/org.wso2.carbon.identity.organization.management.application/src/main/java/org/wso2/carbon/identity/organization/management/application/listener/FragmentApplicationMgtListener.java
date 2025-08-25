@@ -320,6 +320,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
                         serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
                     }
+                    /*
+                    Set the application version to inherit parent app version.
+                     */
+                    serviceProvider.setApplicationVersion(mainApplication.getApplicationVersion());
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
