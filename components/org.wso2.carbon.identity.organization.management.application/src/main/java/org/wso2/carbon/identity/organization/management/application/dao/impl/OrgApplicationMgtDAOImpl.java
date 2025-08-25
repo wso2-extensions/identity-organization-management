@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.JdbcUtils;
 import org.wso2.carbon.identity.organization.management.application.constant.SQLConstants;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
+import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.util.FilterQueriesUtil;
@@ -395,10 +396,11 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         validateForUnImplementedSortingAttributes(sortOrder, sortBy);
         validateAttributesForPagination(offset, limit);
+        String organizationId = getOrganizationId(tenantDomain);
 
         // TODO: 17/9/24 : Enforce a max limit
         if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
-            return getDiscoverableSharedApplicationBasicInfo(limit, offset, tenantDomain, rootOrgId);
+            return getDiscoverableSharedApplicationBasicInfo(limit, offset, organizationId, rootOrgId);
         }
 
         String filterResolvedForSQL = resolveSQLFilter(filter);
@@ -413,7 +415,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     loggedInUserGroups.length);
 
             try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
-                statement.setString(1, tenantDomain);
+                statement.setString(1, organizationId);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
                 for (int i = 0; i < loggedInUserGroups.length; i++) {
@@ -430,7 +432,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw new OrganizationManagementException("Error while getting application basic information" +
-                    " for discoverable applications in tenantDomain: " + tenantDomain, e);
+                    " for discoverable applications in organization: " + organizationId, e);
         }
         return Collections.unmodifiableList(applicationBasicInfoList);
     }
@@ -439,13 +441,14 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
     public int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain, String rootOrgId)
             throws OrganizationManagementException {
 
+        String organizationId = getOrganizationId(tenantDomain);
         if (log.isDebugEnabled()) {
             log.debug("Getting count of discoverable shared applications matching filter: " + filter + " in " +
-                    "tenantDomain: " + tenantDomain);
+                    "organization: " + organizationId);
         }
 
         if (StringUtils.isBlank(filter) || ASTERISK.equals(filter)) {
-            return getCountOfDiscoverableSharedApplications(tenantDomain, rootOrgId);
+            return getCountOfDiscoverableSharedApplications(organizationId, rootOrgId);
         }
 
         int count = 0;
@@ -457,7 +460,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                             loggedInUserGroups.length);
 
             try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
-                statement.setString(1, tenantDomain);
+                statement.setString(1, organizationId);
                 statement.setString(2, filterResolvedForSQL);
                 statement.setString(3, rootOrgId);
                 for (int i = 0; i < loggedInUserGroups.length; i++) {
@@ -472,7 +475,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw new OrganizationManagementServerException("Error while getting count of discoverable " +
-                    "applications matching filter:" + filter + " in tenantDomain: " + tenantDomain);
+                    "applications matching filter:" + filter + " in organization: " + organizationId);
         }
         return count;
     }
@@ -490,7 +493,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
         }
     }
 
-    private int getCountOfDiscoverableSharedApplications(String tenantDomain, String rootOrgId)
+    private int getCountOfDiscoverableSharedApplications(String organizationId, String rootOrgId)
             throws OrganizationManagementException {
 
         int count = 0;
@@ -500,7 +503,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     loggedInUserGroups.length);
 
             try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
-                statement.setString(1, tenantDomain);
+                statement.setString(1, organizationId);
                 statement.setString(2, rootOrgId);
                 for (int i = 0; i < loggedInUserGroups.length; i++) {
                     statement.setString(i + 3, loggedInUserGroups[i]);
@@ -514,13 +517,13 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw new OrganizationManagementServerException("Error while getting count of discoverable " +
-                    "shared applications in tenantDomain: " + tenantDomain);
+                    "shared applications in organization: " + organizationId);
         }
         return count;
     }
 
     private List<ApplicationBasicInfo> getDiscoverableSharedApplicationBasicInfo(int limit, int offset,
-                                                                           String tenantDomain, String rootOrgId)
+                                                                           String organizationId, String rootOrgId)
             throws OrganizationManagementException {
 
         List<ApplicationBasicInfo> applicationBasicInfoList = new ArrayList<>();
@@ -533,7 +536,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
                     loggedInUserGroups.length);
 
             try (NamedPreparedStatement statement = new NamedPreparedStatement(connection, sqlStatement)) {
-                statement.setString(1, tenantDomain);
+                statement.setString(1, organizationId);
                 statement.setString(2, rootOrgId);
                 for (int i = 0; i < loggedInUserGroups.length; i++) {
                     statement.setString(i + 3, loggedInUserGroups[i]);
@@ -549,7 +552,7 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
             }
         } catch (SQLException e) {
             throw new OrganizationManagementException("Error while getting application basic information" +
-                    " for discoverable applications in tenantDomain: " + tenantDomain, e);
+                    " for discoverable applications in organization: " + organizationId, e);
         }
         return Collections.unmodifiableList(applicationBasicInfoList);
     }
@@ -762,5 +765,10 @@ public class OrgApplicationMgtDAOImpl implements OrgApplicationMgtDAO {
 
         throw new OrganizationManagementServerException("Error while loading discoverable applications from " +
                 "DB. Database driver for " + dbVendorType + "could not be identified or not supported.");
+    }
+
+    private String getOrganizationId(String tenantDomain) throws OrganizationManagementException {
+
+        return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager().resolveOrganizationId(tenantDomain);
     }
 }

@@ -358,6 +358,7 @@ public class OrgApplicationManagerImplTest {
     public void testGetDiscoverableSharedApplicationBasicInfo() throws OrganizationManagementException {
 
         String tenantDomain = "abc.com";
+        String organizationId = "1111111-222222";
         String rootOrgId = "root-org-id";
 
         ApplicationBasicInfo app1 = new ApplicationBasicInfo();
@@ -367,25 +368,29 @@ public class OrgApplicationManagerImplTest {
         app2.setApplicationName("App2");
         app2.setDescription("Description2");
         List<ApplicationBasicInfo> expectedApps = Arrays.asList(app1, app2);
-        when(organizationManager.getPrimaryOrganizationId(tenantDomain)).thenReturn(rootOrgId);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationId);
+        when(organizationManager.getPrimaryOrganizationId(organizationId)).thenReturn(rootOrgId);
         when(orgApplicationMgtDAO.getDiscoverableSharedApplicationBasicInfo(10, 0, "*",
                 "ASC", "dummyName", tenantDomain, rootOrgId)).thenReturn(expectedApps);
         List<ApplicationBasicInfo> actualApps = orgApplicationManager.getDiscoverableSharedApplicationBasicInfo(
                 10, 0, "*", "ASC", "dummyName", tenantDomain);
-        assertEquals(expectedApps, actualApps);
+        assertEquals(actualApps, expectedApps);
     }
 
     @Test
     public void testGetCountOfDiscoverableSharedApplications() throws OrganizationManagementException {
 
         int expectedCount = 5;
+        String tenantDomain = "dummyTenant";
+        String organizationId = "1111111-222222";
+        String rootOrgId = "rootOrg123";
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationId);
+        when(organizationManager.getPrimaryOrganizationId(organizationId)).thenReturn(rootOrgId);
+        when(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("*", tenantDomain,
+                rootOrgId)).thenReturn(5);
 
-        when(organizationManager.getPrimaryOrganizationId("dummyTenant")).thenReturn("rootOrg123");
-        when(orgApplicationMgtDAO.getCountOfDiscoverableSharedApplications("*", "dummyTenant",
-                "rootOrg123")).thenReturn(5);
-
-        int actualCount = orgApplicationManager.getCountOfDiscoverableSharedApplications("*", "dummyTenant");
-        assertEquals(expectedCount, actualCount);
+        int actualCount = orgApplicationManager.getCountOfDiscoverableSharedApplications("*", tenantDomain);
+        assertEquals(actualCount, expectedCount);
     }
 
     @Test

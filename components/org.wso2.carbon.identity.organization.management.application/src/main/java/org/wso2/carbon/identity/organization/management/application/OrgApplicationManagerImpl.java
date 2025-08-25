@@ -2140,7 +2140,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                                                                           String tenantDomain)
             throws OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
+        String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         return getOrgApplicationMgtDAO().getDiscoverableSharedApplicationBasicInfo(limit, offset, filter, sortOrder,
                 sortBy, tenantDomain, rootOrgId);
     }
@@ -2149,7 +2150,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
     public int getCountOfDiscoverableSharedApplications(String filter, String tenantDomain)
             throws OrganizationManagementException {
 
-        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(tenantDomain);
+        String organizationId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+        String rootOrgId = getOrganizationManager().getPrimaryOrganizationId(organizationId);
         return getOrgApplicationMgtDAO().getCountOfDiscoverableSharedApplications(filter, tenantDomain, rootOrgId);
     }
 
