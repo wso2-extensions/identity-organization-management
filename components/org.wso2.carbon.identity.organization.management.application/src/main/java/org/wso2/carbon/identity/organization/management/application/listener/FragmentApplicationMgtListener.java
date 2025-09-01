@@ -79,6 +79,7 @@ import static java.util.Arrays.stream;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_FLOW;
+import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.ApplicationVersion.BASE_APP_VERSION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_FRAGMENT_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
@@ -321,9 +322,9 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                         serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
                     }
                     /*
-                    Set the application version to inherit parent app version.
+                    Set the application version to base app version.
                      */
-                    serviceProvider.setApplicationVersion(mainApplication.getApplicationVersion());
+                    serviceProvider.setApplicationVersion(BASE_APP_VERSION);
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
