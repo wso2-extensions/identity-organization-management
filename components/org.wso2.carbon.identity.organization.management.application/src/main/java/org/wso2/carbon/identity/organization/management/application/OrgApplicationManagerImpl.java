@@ -366,6 +366,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     childOrganizationGraph, filteredChildOrgConfigs);
         }
         // If there are valid orgs to share with, update the root application with the org login IDP.
+        setIsAppSharedProperty(mainApplication, true);
         modifyRootApplication(mainApplication, ownerTenantDomain);
 
         String userID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId();
@@ -550,9 +551,9 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         }
 
         List<String> allOrganizationIdsInBfsOrder = getAllOrganizationIdsInBfsOrder(mainOrganizationId);
-
         if (PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.ordinal() == applicationSharingPolicy.ordinal() ||
                 !allOrganizationIdsInBfsOrder.isEmpty()) {
+            setIsAppSharedProperty(mainApplication, true);
             // If there are valid orgs to share with, update the root application with the org login IDP.
             modifyRootApplication(mainApplication, ownerTenantDomain);
         }
