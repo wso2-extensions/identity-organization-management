@@ -29,8 +29,10 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 
 import java.util.Map;
 
+import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_APPLICATION_WITH_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_ROLE_V2_EVENT;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_USER_WITH_ID;
+import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.APPLICATION_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.ROLE_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.USER_ID;
 
@@ -53,6 +55,10 @@ public class SharingPolicyCleanUpHandler extends AbstractEventHandler {
                 String deletedUserId = (String) eventProperties.get(USER_ID);
                 deleteResourceSharingPoliciesOfUser(deletedUserId);
                 break;
+            case POST_DELETE_APPLICATION_WITH_ID:
+                String applicationId = (String) eventProperties.get(APPLICATION_ID);
+                deleteSharingPoliciesOfApplication(applicationId);
+                break;
             default:
                 break;
         }
@@ -73,6 +79,16 @@ public class SharingPolicyCleanUpHandler extends AbstractEventHandler {
         try {
             getResourceSharingPolicyHandlerService().deleteSharedResourceAttributeByAttributeTypeAndId(
                     SharedAttributeType.ROLE, deletedRoleId);
+        } catch (ResourceSharingPolicyMgtException e) {
+            throw new IdentityEventException(e.getErrorCode(), e.getMessage(), e);
+        }
+    }
+
+    private void deleteSharingPoliciesOfApplication(String applicationId) throws IdentityEventException {
+
+        try {
+            getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
+                    ResourceType.APPLICATION, applicationId);
         } catch (ResourceSharingPolicyMgtException e) {
             throw new IdentityEventException(e.getErrorCode(), e.getMessage(), e);
         }
