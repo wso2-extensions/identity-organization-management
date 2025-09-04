@@ -24,6 +24,8 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.IdentityMgtConstants;
+import org.wso2.carbon.identity.governance.model.UserIdentityClaim;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserProfileUpdateGovernanceEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
@@ -61,7 +63,6 @@ public class OrganizationSharedUserUtil {
         return claimsMap.get(CLAIM_MANAGED_ORGANIZATION);
     }
 
-
     /**
      * Get the user ID of the associated user by the organization ID.
      */
@@ -92,5 +93,34 @@ public class OrganizationSharedUserUtil {
         }
         return StringUtils.isBlank(identityEventListenerConfig.getEnable()) ||
                 Boolean.parseBoolean(identityEventListenerConfig.getEnable());
+    }
+
+    /**
+     * Check whether the user is a shared user based on the user managed organization claim.
+     *
+     * @param claims User claims.
+     * @return True if the user is a shared user.
+     */
+    public static boolean isSharedUser(Map<String, String> claims) {
+
+        if (claims != null && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
+            return true;
+        }
+
+        // IdentityStoreEventListener#doPreAddUser, temporarily stores identity claims to a thread local
+        // until they are persisted to the IdentityDataStore. Hence, checking the thread local as well.
+        Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
+        if (threadLocalProperties == null) {
+            return false;
+        }
+
+        Object claimProp = threadLocalProperties.get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
+        if (!(claimProp instanceof UserIdentityClaim)) {
+            return false;
+        }
+
+        UserIdentityClaim userIdentityClaims = (UserIdentityClaim) claimProp;
+        String orgClaim = userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION);
+        return StringUtils.isNotBlank(orgClaim);
     }
 }

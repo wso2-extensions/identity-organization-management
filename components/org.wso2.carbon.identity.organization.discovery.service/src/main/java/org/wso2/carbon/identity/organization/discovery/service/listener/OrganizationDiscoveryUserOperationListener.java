@@ -25,9 +25,6 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.governance.IdentityMgtConstants;
-import org.wso2.carbon.identity.governance.model.UserIdentityClaim;
 import org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager;
 import org.wso2.carbon.identity.organization.config.service.exception.OrganizationConfigException;
 import org.wso2.carbon.identity.organization.config.service.model.ConfigProperty;
@@ -49,7 +46,7 @@ import java.util.Map;
 import static org.wso2.carbon.identity.organization.config.service.constant.OrganizationConfigConstants.ErrorMessages.ERROR_CODE_DISCOVERY_CONFIG_NOT_EXIST;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.ENABLE_CONFIG;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.DiscoveryConstants.PRE_ADD_USER_EMAIL_DOMAIN_VALIDATE;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil.isSharedUser;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMAIL_DOMAIN_ASSOCIATED_WITH_DIFFERENT_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EMAIL_DOMAIN_NOT_MAPPED_TO_ORGANIZATION;
 
@@ -169,31 +166,5 @@ public class OrganizationDiscoveryUserOperationListener extends AbstractIdentity
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager();
-    }
-
-    /**
-     * Check whether the user is a shared user or not.
-     *
-     * @return true if the user is a shared user, false otherwise.
-     */
-    private boolean isSharedUser(Map<String, String> claims) {
-
-        if (claims != null && StringUtils.isNotBlank(claims.get(CLAIM_MANAGED_ORGANIZATION))) {
-            return true;
-        }
-
-        // In IdentityStoreEventListener#doPreAddUser, temporarily cache the identity claim in a ThreadLocal
-        // and remove it from the claims list to defer further processing.
-        Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
-        if (threadLocalProperties == null) {
-            return false;
-        }
-        Object claimProp = threadLocalProperties.get(IdentityMgtConstants.USER_IDENTITY_CLAIMS);
-        if (!(claimProp instanceof UserIdentityClaim)) {
-            return false;
-        }
-        UserIdentityClaim userIdentityClaims = (UserIdentityClaim) claimProp;
-        String orgClaim = userIdentityClaims.getUserIdentityDataMap().get(CLAIM_MANAGED_ORGANIZATION);
-        return StringUtils.isNotBlank(orgClaim);
     }
 }
