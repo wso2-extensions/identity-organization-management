@@ -27,7 +27,6 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
@@ -42,6 +41,7 @@ import org.wso2.carbon.identity.organization.management.application.model.RoleWi
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareUpdateOperation;
+import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -67,7 +67,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
 import static org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_APPLICATION;
 
@@ -951,23 +950,6 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                 String sharedOrganizationId = sharedApplications.get(taskId).getOrganizationId();
                                 String shareAppTenantDomain =
                                         getOrganizationManager().resolveTenantDomain(sharedOrganizationId);
-
-                                ServiceProvider sharedServiceProvider = getApplicationManagementService()
-                                        .getApplicationByResourceId(sharedApplicationId, shareAppTenantDomain);
-                                ServiceProviderProperty[] spProperties = sharedServiceProvider.getSpProperties();
-                                boolean isRoleSharingModeAll = false;
-                                for (ServiceProviderProperty spProperty : spProperties) {
-                                    if (ROLE_SHARING_MODE.equals(spProperty.getName())) {
-                                        if (spProperty.getValue() != null && spProperty.getValue().equalsIgnoreCase(
-                                                ApplicationShareRolePolicy.Mode.ALL.name())) {
-                                            isRoleSharingModeAll = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!isRoleSharingModeAll) {
-                                    return;
-                                }
                                 String associatedUserName =
                                         PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
                                 try {
@@ -976,6 +958,23 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                             .setTenantDomain(shareAppTenantDomain, true);
                                     PrivilegedCarbonContext.getThreadLocalCarbonContext()
                                             .setUsername(associatedUserName);
+                                    ServiceProvider sharedServiceProvider = getApplicationManagementService()
+                                            .getApplicationByResourceId(sharedApplicationId, shareAppTenantDomain);
+                                    boolean isRoleSharingModeAll = false;
+                                    ApplicationShareRolePolicy.Mode roleSharingMode =
+                                            OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(
+                                                    sharedServiceProvider);
+                                    if (ApplicationShareRolePolicy.Mode.ALL.name().equals(roleSharingMode.name())) {
+                                        isRoleSharingModeAll = true;
+                                    }
+                                    /*
+                                     If the role sharing mode is not ALL, do not create the role in the shared
+                                     app when a new application role is created.
+                                    */
+                                    if (!isRoleSharingModeAll) {
+                                        return;
+                                    }
+
                                     RoleBasicInfo sharedRoleInfo =
                                         getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
                                                 Collections.emptyList(),
@@ -1015,39 +1014,61 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
                     List<BasicOrganization> applicationSharedOrganizations = new ArrayList<>();
                     for (String applicationId : applicationIdList) {
-                        String shareAppTenantDomain = getOrganizationManager().resolveTenantDomain(roleOrgId);
-                        ServiceProvider sharedServiceProvider = getApplicationManagementService()
-                                .getApplicationByResourceId(applicationId, shareAppTenantDomain);
-                        ServiceProviderProperty[] spProperties = sharedServiceProvider.getSpProperties();
-                        boolean isRoleSharingModeAll = false;
-                        for (ServiceProviderProperty spProperty : spProperties) {
-                            if (ROLE_SHARING_MODE.equals(spProperty.getName())) {
-                                if (spProperty.getValue() != null && spProperty.getValue().equalsIgnoreCase(
-                                        ApplicationShareRolePolicy.Mode.ALL.name())) {
-                                    isRoleSharingModeAll = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!isRoleSharingModeAll) {
-                            return;
-                        }
                         List<BasicOrganization> applicationSharedOrganizationsCopy = getOrgApplicationManager().
                                 getApplicationSharedOrganizations(roleOrgId, applicationId);
 
-                        for (BasicOrganization organizationCopy : applicationSharedOrganizationsCopy) {
-                            boolean found = false;
-                            for (BasicOrganization organization : applicationSharedOrganizations) {
-                                if (organization.getId().equals(organizationCopy.getId())) {
-                                    found = true;
-                                    break;
+                        List<SharedApplication> orgAudienceSharedApplications =
+                                getOrgApplicationManager().getSharedApplications(roleOrgId, applicationId);
+                        for (SharedApplication sharedApplication : orgAudienceSharedApplications) {
+                            try {
+                                String shareAppTenantDomain = getOrganizationManager().resolveTenantDomain(
+                                        sharedApplication.getOrganizationId());
+                                String associatedUserName =
+                                        PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+                                PrivilegedCarbonContext.startTenantFlow();
+                                PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                        .setTenantDomain(shareAppTenantDomain, true);
+                                PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(associatedUserName);
+                                ServiceProvider sharedServiceProvider = getApplicationManagementService()
+                                        .getApplicationByResourceId(sharedApplication.getSharedApplicationId(),
+                                                getOrganizationManager().resolveTenantDomain(
+                                                        sharedApplication.getOrganizationId()));
+                                boolean isRoleSharingModeAll = false;
+                                ApplicationShareRolePolicy.Mode roleSharingMode =
+                                        OrgApplicationManagerUtil.getAppAssociatedRoleSharingMode(
+                                                sharedServiceProvider);
+                                if (ApplicationShareRolePolicy.Mode.ALL.name().equals(roleSharingMode.name())) {
+                                    isRoleSharingModeAll = true;
                                 }
-                            }
-                            if (!found) {
-                                applicationSharedOrganizations.add(organizationCopy);
+                                /*
+                                 If the role sharing mode is not ALL, do not create the role in the shared
+                                 app when a new application role is created.
+                                */
+                                if (!isRoleSharingModeAll) {
+                                    return;
+                                }
+
+                                /*
+                                 Extracting the organization IDs which the applications are shared. If a particular
+                                 organization is already added to the list, then skipping that and move to the
+                                 next organization.
+                                */
+                                for (BasicOrganization organizationCopy : applicationSharedOrganizationsCopy) {
+                                    boolean found = false;
+                                    for (BasicOrganization organization : applicationSharedOrganizations) {
+                                        if (organization.getId().equals(organizationCopy.getId())) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!found) {
+                                        applicationSharedOrganizations.add(organizationCopy);
+                                    }
+                                }
+                            } finally {
+                                PrivilegedCarbonContext.endTenantFlow();
                             }
                         }
-
                     }
                     for (BasicOrganization organization : applicationSharedOrganizations) {
                         String shareAppTenantDomain =
