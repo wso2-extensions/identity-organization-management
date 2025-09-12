@@ -56,6 +56,7 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
@@ -192,16 +193,18 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         if (isFragmentApp(existingApplication)) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
-            LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
-                    serviceProvider.getLocalAndOutBoundAuthenticationConfig();
-            if (localAndOutBoundAuthenticationConfig != null &&
-                    localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig() != null) {
-                AuthenticationScriptConfig authenticationScriptConfig =
-                        localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig();
-                if (authenticationScriptConfig.isEnabled() &&
-                        !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
-                    throw new IdentityApplicationManagementClientException(
-                            "Authentication script configuration not allowed for shared applications.");
+            if (!Utils.isAdaptiveAuthEnabledForSharedApps()) {
+                LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
+                        serviceProvider.getLocalAndOutBoundAuthenticationConfig();
+                if (localAndOutBoundAuthenticationConfig != null &&
+                        localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig() != null) {
+                    AuthenticationScriptConfig authenticationScriptConfig =
+                            localAndOutBoundAuthenticationConfig.getAuthenticationScriptConfig();
+                    if (authenticationScriptConfig.isEnabled() &&
+                            !StringUtils.isBlank(authenticationScriptConfig.getContent())) {
+                        throw new IdentityApplicationManagementClientException(
+                                "Authentication script configuration not allowed for shared applications.");
+                    }
                 }
             }
         }
