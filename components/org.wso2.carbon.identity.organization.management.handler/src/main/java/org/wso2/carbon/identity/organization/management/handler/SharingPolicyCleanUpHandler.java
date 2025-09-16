@@ -29,7 +29,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 
 import java.util.Map;
 
-import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_APPLICATION_WITH_ID;
+import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_MAIN_APPLICATION_WITH_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_ROLE_V2_EVENT;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.Event.POST_DELETE_USER_WITH_ID;
 import static org.wso2.carbon.identity.event.IdentityEventConstants.EventProperty.APPLICATION_ID;
@@ -55,7 +55,7 @@ public class SharingPolicyCleanUpHandler extends AbstractEventHandler {
                 String deletedUserId = (String) eventProperties.get(USER_ID);
                 deleteResourceSharingPoliciesOfUser(deletedUserId);
                 break;
-            case POST_DELETE_APPLICATION_WITH_ID:
+            case POST_DELETE_MAIN_APPLICATION_WITH_ID:
                 String applicationId = (String) eventProperties.get(APPLICATION_ID);
                 deleteSharingPoliciesOfApplication(applicationId);
                 break;

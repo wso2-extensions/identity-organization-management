@@ -42,10 +42,10 @@ import static org.wso2.carbon.identity.organization.management.application.const
  * This listener intercepts application deletion events to perform cleanup
  * operations for shared applications while skipping fragment applications.
  */
-public class SharedApplicationEventListener extends AbstractApplicationMgtListener {
+public class MainApplicationEventListener extends AbstractApplicationMgtListener {
 
     private static final Log LOG =
-            LogFactory.getLog(SharedApplicationEventListener.class);
+            LogFactory.getLog(MainApplicationEventListener.class);
 
     /**
      * Get the default order ID for this listener.
@@ -85,7 +85,7 @@ public class SharedApplicationEventListener extends AbstractApplicationMgtListen
         eventProperties.put(IdentityEventConstants.EventProperty.TENANT_DOMAIN,
                 tenantDomain);
         Event event = createEvent(eventProperties,
-                IdentityEventConstants.Event.POST_DELETE_APPLICATION_WITH_ID);
+                IdentityEventConstants.Event.POST_DELETE_MAIN_APPLICATION_WITH_ID);
         doPublishEvent(event);
         return true;
     }

@@ -41,7 +41,7 @@ import org.wso2.carbon.identity.organization.management.application.handler.OrgC
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListenerImpl;
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
-import org.wso2.carbon.identity.organization.management.application.listener.SharedApplicationEventListener;
+import org.wso2.carbon.identity.organization.management.application.listener.MainApplicationEventListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
@@ -79,7 +79,7 @@ public class OrgApplicationMgtServiceComponent {
             bundleContext.registerService(ApplicationMgtListener.class.getName(), new FragmentApplicationMgtListener(),
                     null);
             bundleContext.registerService(ApplicationMgtListener.class.getName(),
-                    new SharedApplicationEventListener(), null);
+                    new MainApplicationEventListener(), null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrgClaimMgtHandler(), null);
