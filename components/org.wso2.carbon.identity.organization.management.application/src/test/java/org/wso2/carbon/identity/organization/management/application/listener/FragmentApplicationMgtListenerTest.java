@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -431,6 +432,60 @@ public class FragmentApplicationMgtListenerTest {
 
             Assert.assertEquals(resultClaimConfig.isAlwaysSendMappedLocalSubjectId(), alwaysSendMappedLocalSubjectId);
             Assert.assertEquals(resultClaimConfig.isMappedLocalSubjectMandatory(), mappedLocalSubjectMandatory);
+        }
+    }
+
+    @DataProvider(name = "adaptiveAuthForSharedAppsDataProvider")
+    public Object[][] adaptiveAuthForSharedAppsDataProvider() {
+
+        return new Object[][]{
+                {false, true}, // Adaptive auth not enabled for shared apps, expect exception.
+                {true, false}  // Adaptive auth enabled for shared apps, expect no exception.
+        };
+    }
+
+    @Test(dataProvider = "adaptiveAuthForSharedAppsDataProvider")
+    public void testAdaptiveAuthScriptUpdateForSharedApps(
+            boolean isAdaptiveAuthEnabledForSharedApps, boolean expectException) throws Exception {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil = mockStatic(
+                OrganizationManagementUtil.class);
+             MockedStatic<Utils> utils = mockStatic(Utils.class)) {
+
+            mockUtils(tenantDomain);
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+            utils.when(Utils::isAdaptiveAuthEnabledForSharedApps).thenReturn(isAdaptiveAuthEnabledForSharedApps);
+
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)
+            };
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+            when(serviceProvider.getApplicationName()).thenReturn(applicationName);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString()))
+                    .thenReturn(serviceProvider);
+
+            ServiceProvider updatedSharedApp = new ServiceProvider();
+            updatedSharedApp.setApplicationName(applicationName);
+            LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+            AuthenticationScriptConfig scriptConfig = new AuthenticationScriptConfig();
+            scriptConfig.setEnabled(true);
+            scriptConfig.setContent("some script");
+            authConfig.setAuthenticationScriptConfig(scriptConfig);
+            updatedSharedApp.setLocalAndOutBoundAuthenticationConfig(authConfig);
+
+            if (expectException) {
+                IdentityApplicationManagementClientException thrownException =
+                        Assert.expectThrows(IdentityApplicationManagementClientException.class,
+                                () -> fragmentApplicationMgtListener.doPreUpdateApplication(
+                                        updatedSharedApp, tenantDomain, userName));
+                Assert.assertEquals(thrownException.getMessage(),
+                        "Authentication script configuration not allowed for shared applications.");
+            } else {
+                boolean result =
+                        fragmentApplicationMgtListener.doPreUpdateApplication(updatedSharedApp, tenantDomain, userName);
+                Assert.assertTrue(result);
+            }
         }
     }
 
