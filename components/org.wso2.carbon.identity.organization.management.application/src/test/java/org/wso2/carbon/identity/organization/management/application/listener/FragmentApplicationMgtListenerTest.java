@@ -31,10 +31,14 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -45,6 +49,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplicationDO;
+import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
@@ -68,6 +73,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 
 /**
  * Test class for FragmentApplicationMgtListener.
@@ -486,6 +492,269 @@ public class FragmentApplicationMgtListenerTest {
                         fragmentApplicationMgtListener.doPreUpdateApplication(updatedSharedApp, tenantDomain, userName);
                 Assert.assertTrue(result);
             }
+        }
+    }
+
+    @Test
+    public void testRemovesOrgSSOAndAddsFallback() 
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+        
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil = 
+                mockStatic(OrganizationManagementUtil.class);
+             MockedStatic<OrgApplicationManagerUtil> orgApplicationManagerUtil = 
+                mockStatic(OrgApplicationManagerUtil.class)) {
+            
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(false);
+            
+            // Setup existing app 
+            ServiceProvider existingApp = new ServiceProvider();
+            existingApp.setApplicationName(applicationName);
+            existingApp.setApplicationResourceId(applicationResourceID);
+            
+            // Create auth config with only organization SSO 
+            LocalAndOutboundAuthenticationConfig existingAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            existingAuthConfig.setAuthenticationType("flow");
+            AuthenticationStep existingAuthStep = new AuthenticationStep();
+            existingAuthStep.setStepOrder(1);
+            existingAuthStep.setSubjectStep(true);
+            existingAuthStep.setAttributeStep(true);
+            
+            IdentityProvider existingOrgSSOIdp = new IdentityProvider();
+            existingOrgSSOIdp.setIdentityProviderName("OrganizationSSO");
+            FederatedAuthenticatorConfig existingOrgSSOAuthConfig = new FederatedAuthenticatorConfig();
+            existingOrgSSOAuthConfig.setName("OrganizationAuthenticator");
+            existingOrgSSOIdp.setDefaultAuthenticatorConfig(existingOrgSSOAuthConfig);
+            existingOrgSSOIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{existingOrgSSOAuthConfig});
+            
+            existingAuthStep.setFederatedIdentityProviders(new IdentityProvider[]{existingOrgSSOIdp});
+            existingAuthStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[0]);
+            existingAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{existingAuthStep});
+            existingApp.setLocalAndOutBoundAuthenticationConfig(existingAuthConfig);
+            
+            // Setup service provider 
+            LocalAndOutboundAuthenticationConfig serviceProviderAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            serviceProviderAuthConfig.setAuthenticationType("flow");
+            AuthenticationStep serviceProviderAuthStep = new AuthenticationStep();
+            serviceProviderAuthStep.setStepOrder(1);
+            serviceProviderAuthStep.setSubjectStep(true);
+            serviceProviderAuthStep.setAttributeStep(true);
+            
+            IdentityProvider serviceProviderOrgSSOIdp = new IdentityProvider();
+            serviceProviderOrgSSOIdp.setIdentityProviderName("OrganizationSSO");
+            FederatedAuthenticatorConfig serviceProviderOrgSSOAuthConfig = new FederatedAuthenticatorConfig();
+            serviceProviderOrgSSOAuthConfig.setName("OrganizationAuthenticator");
+            serviceProviderOrgSSOIdp.setDefaultAuthenticatorConfig(serviceProviderOrgSSOAuthConfig);
+            serviceProviderOrgSSOIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{serviceProviderOrgSSOAuthConfig});
+            
+            serviceProviderAuthStep.setFederatedIdentityProviders(new IdentityProvider[]{serviceProviderOrgSSOIdp});
+            serviceProviderAuthStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[0]);
+            serviceProviderAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{serviceProviderAuthStep});
+            
+            // Setup service provider properties and mocking
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_APP_SHARED, "false"), 
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, "false")
+            };
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+            when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+            when(serviceProvider.getLocalAndOutBoundAuthenticationConfig()).thenReturn(serviceProviderAuthConfig);
+            when(applicationManagementService.getApplicationByResourceId(applicationResourceID, tenantDomain))
+                    .thenReturn(existingApp);
+            
+            // Mock default authentication config for fallback
+            LocalAndOutboundAuthenticationConfig defaultAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            defaultAuthConfig.setAuthenticationType("default");
+            AuthenticationStep defaultAuthStep = new AuthenticationStep();
+            defaultAuthStep.setStepOrder(1);
+            LocalAuthenticatorConfig defaultLocalAuth = new LocalAuthenticatorConfig();
+            defaultLocalAuth.setName("BasicAuthenticator");
+            defaultLocalAuth.setEnabled(true);
+            defaultAuthStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{defaultLocalAuth});
+            defaultAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{defaultAuthStep});
+            orgApplicationManagerUtil.when(OrgApplicationManagerUtil::getDefaultAuthenticationConfig)
+                    .thenReturn(defaultAuthConfig);
+            
+            boolean result = fragmentApplicationMgtListener
+                    .doPreUpdateApplication(serviceProvider, tenantDomain, userName);
+            
+            assertTrue(result);
+            
+            LocalAndOutboundAuthenticationConfig updatedAuthConfig = 
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig();
+            AuthenticationStep firstStep = updatedAuthConfig.getAuthenticationSteps()[0];
+            
+            IdentityProvider[] federatedProviders = firstStep.getFederatedIdentityProviders();
+            Assert.assertEquals(federatedProviders.length, 0, 
+                    "Should have no federated providers after removing organization SSO");
+            
+            LocalAuthenticatorConfig[] localAuths = firstStep.getLocalAuthenticatorConfigs();
+            Assert.assertEquals(localAuths.length, 1, 
+                    "Should have exactly one local authenticator as fallback");
+            Assert.assertEquals("BasicAuthenticator", localAuths[0].getName(), 
+                    "Default BasicAuthenticator should be present as fallback");
+        }
+    }
+    
+    @Test
+    public void testRemovesOnlyOrgSSOAndKeepsOthers() 
+            throws IdentityApplicationManagementException, OrganizationManagementException {
+        
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil = 
+                mockStatic(OrganizationManagementUtil.class);
+             MockedStatic<OrgApplicationManagerUtil> orgApplicationManagerUtil = 
+                mockStatic(OrgApplicationManagerUtil.class)) {
+            
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(false);
+            
+            // Setup existing app 
+            ServiceProvider existingApp = new ServiceProvider();
+            existingApp.setApplicationName(applicationName);
+            existingApp.setApplicationResourceId(applicationResourceID);
+            
+            // Create auth config with organization SSO + Google + Basic for existing app
+            LocalAndOutboundAuthenticationConfig existingAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            existingAuthConfig.setAuthenticationType("flow");
+            AuthenticationStep existingAuthStep = new AuthenticationStep();
+            existingAuthStep.setStepOrder(1);
+            existingAuthStep.setSubjectStep(true);
+            existingAuthStep.setAttributeStep(true);
+            
+            IdentityProvider existingOrgSSOIdp = new IdentityProvider();
+            existingOrgSSOIdp.setIdentityProviderName("OrganizationSSO");
+            FederatedAuthenticatorConfig existingOrgSSOAuthConfig = new FederatedAuthenticatorConfig();
+            existingOrgSSOAuthConfig.setName("OrganizationAuthenticator");
+            existingOrgSSOIdp.setDefaultAuthenticatorConfig(existingOrgSSOAuthConfig);
+            existingOrgSSOIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{existingOrgSSOAuthConfig});
+            
+            IdentityProvider existingGoogleIdp = new IdentityProvider();
+            existingGoogleIdp.setIdentityProviderName("Google");
+            FederatedAuthenticatorConfig existingGoogleAuthConfig = new FederatedAuthenticatorConfig();
+            existingGoogleAuthConfig.setName("GoogleAuthenticator");
+            existingGoogleIdp.setDefaultAuthenticatorConfig(existingGoogleAuthConfig);
+            existingGoogleIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{existingGoogleAuthConfig});
+            
+            LocalAuthenticatorConfig existingLocalAuth = new LocalAuthenticatorConfig();
+            existingLocalAuth.setName("BasicAuthenticator");
+            existingLocalAuth.setEnabled(true);
+            
+            existingAuthStep.setFederatedIdentityProviders(
+                    new IdentityProvider[]{existingOrgSSOIdp, existingGoogleIdp});
+            existingAuthStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{existingLocalAuth});
+            existingAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{existingAuthStep});
+            existingApp.setLocalAndOutBoundAuthenticationConfig(existingAuthConfig);
+            
+            // Setup service provider 
+            LocalAndOutboundAuthenticationConfig serviceProviderAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            serviceProviderAuthConfig.setAuthenticationType("flow");
+            AuthenticationStep serviceProviderAuthStep = new AuthenticationStep();
+            serviceProviderAuthStep.setStepOrder(1);
+            serviceProviderAuthStep.setSubjectStep(true);
+            serviceProviderAuthStep.setAttributeStep(true);
+            
+            IdentityProvider serviceProviderOrgSSOIdp = new IdentityProvider();
+            serviceProviderOrgSSOIdp.setIdentityProviderName("OrganizationSSO");
+            FederatedAuthenticatorConfig serviceProviderOrgSSOAuthConfig = new FederatedAuthenticatorConfig();
+            serviceProviderOrgSSOAuthConfig.setName("OrganizationAuthenticator");
+            serviceProviderOrgSSOIdp.setDefaultAuthenticatorConfig(serviceProviderOrgSSOAuthConfig);
+            serviceProviderOrgSSOIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{serviceProviderOrgSSOAuthConfig});
+            
+            IdentityProvider serviceProviderGoogleIdp = new IdentityProvider();
+            serviceProviderGoogleIdp.setIdentityProviderName("Google");
+            FederatedAuthenticatorConfig serviceProviderGoogleAuthConfig = new FederatedAuthenticatorConfig();
+            serviceProviderGoogleAuthConfig.setName("GoogleAuthenticator");
+            serviceProviderGoogleIdp.setDefaultAuthenticatorConfig(serviceProviderGoogleAuthConfig);
+            serviceProviderGoogleIdp.setFederatedAuthenticatorConfigs(
+                    new FederatedAuthenticatorConfig[]{serviceProviderGoogleAuthConfig});
+            
+            LocalAuthenticatorConfig serviceProviderLocalAuth = new LocalAuthenticatorConfig();
+            serviceProviderLocalAuth.setName("BasicAuthenticator");
+            serviceProviderLocalAuth.setEnabled(true);
+            
+            serviceProviderAuthStep.setFederatedIdentityProviders(
+                    new IdentityProvider[]{serviceProviderOrgSSOIdp, serviceProviderGoogleIdp});
+            serviceProviderAuthStep.setLocalAuthenticatorConfigs(
+                    new LocalAuthenticatorConfig[]{serviceProviderLocalAuth});
+            serviceProviderAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{serviceProviderAuthStep});
+            
+            // Setup service provider properties and mocking
+            ServiceProviderProperty[] spProperties = new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_APP_SHARED, "false"), 
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, "false")
+            };
+            when(serviceProvider.getSpProperties()).thenReturn(spProperties);
+            when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+            when(serviceProvider.getLocalAndOutBoundAuthenticationConfig()).thenReturn(serviceProviderAuthConfig);
+            when(applicationManagementService.getApplicationByResourceId(applicationResourceID, tenantDomain))
+                    .thenReturn(existingApp);
+            
+            // Mock default authentication config for fallback
+            LocalAndOutboundAuthenticationConfig defaultAuthConfig = new LocalAndOutboundAuthenticationConfig();
+            defaultAuthConfig.setAuthenticationType("default");
+            AuthenticationStep defaultAuthStep = new AuthenticationStep();
+            defaultAuthStep.setStepOrder(1);
+            LocalAuthenticatorConfig defaultLocalAuth = new LocalAuthenticatorConfig();
+            defaultLocalAuth.setName("BasicAuthenticator");
+            defaultLocalAuth.setEnabled(true);
+            defaultAuthStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{defaultLocalAuth});
+            defaultAuthConfig.setAuthenticationSteps(new AuthenticationStep[]{defaultAuthStep});
+            orgApplicationManagerUtil.when(OrgApplicationManagerUtil::getDefaultAuthenticationConfig)
+                    .thenReturn(defaultAuthConfig);
+            
+            boolean result = fragmentApplicationMgtListener
+                    .doPreUpdateApplication(serviceProvider, tenantDomain, userName);
+            
+            assertTrue(result);
+            
+            LocalAndOutboundAuthenticationConfig modifiedAuthConfig = 
+                    serviceProvider.getLocalAndOutBoundAuthenticationConfig();
+            Assert.assertNotNull(modifiedAuthConfig, "Authentication config should not be null");
+            
+            AuthenticationStep[] modifiedAuthSteps = modifiedAuthConfig.getAuthenticationSteps();
+            Assert.assertNotNull(modifiedAuthSteps, "Authentication steps should not be null");
+            Assert.assertTrue(modifiedAuthSteps.length > 0, "Should have at least one authentication step");
+            
+            AuthenticationStep firstStep = modifiedAuthSteps[0];
+            Assert.assertNotNull(firstStep, "First authentication step should not be null");
+            
+            IdentityProvider[] federatedProviders = firstStep.getFederatedIdentityProviders();
+            Assert.assertNotNull(federatedProviders, "Federated providers should not be null");
+            Assert.assertTrue(federatedProviders.length > 0, "Should have at least one federated provider (Google)");
+            
+            boolean hasGoogleIdp = false;
+            boolean hasOrgSSO = false;
+            for (IdentityProvider idp : federatedProviders) {
+                if (idp.getDefaultAuthenticatorConfig() != null) {
+                    String authName = idp.getDefaultAuthenticatorConfig().getName();
+                    if ("GoogleAuthenticator".equals(authName)) {
+                        hasGoogleIdp = true;
+                    } else if ("OrganizationAuthenticator".equals(authName)) {
+                        hasOrgSSO = true;
+                    }
+                }
+            }
+            
+            Assert.assertTrue(hasGoogleIdp, "Google IDP should remain after removing organization SSO");
+            Assert.assertFalse(hasOrgSSO, "Organization SSO should be removed");
+            
+            LocalAuthenticatorConfig[] localAuths = firstStep.getLocalAuthenticatorConfigs();
+            Assert.assertNotNull(localAuths, "Local authenticators should not be null");
+            Assert.assertTrue(localAuths.length > 0, "Should have at least one local authenticator");
+            
+            boolean hasBasicAuth = false;
+            for (LocalAuthenticatorConfig localAuthConfig : localAuths) {
+                if ("BasicAuthenticator".equals(localAuthConfig.getName())) {
+                    hasBasicAuth = true;
+                    break;
+                }
+            }
+            Assert.assertTrue(hasBasicAuth, "BasicAuthenticator should remain");
         }
     }
 

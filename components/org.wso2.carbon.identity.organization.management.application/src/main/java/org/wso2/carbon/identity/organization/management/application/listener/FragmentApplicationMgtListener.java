@@ -742,7 +742,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
     }
 
-    private void removeOrganizationSSOAuthenticator(ServiceProvider rootApplication) {
+    private void removeOrganizationSSOAuthenticator(ServiceProvider rootApplication) 
+            throws OrganizationManagementServerException {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
                 rootApplication.getLocalAndOutBoundAuthenticationConfig();
@@ -771,6 +772,25 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         IdentityProvider[] identityProviders = identityProviderList.toArray(new IdentityProvider[0]);
 
         first.setFederatedIdentityProviders(identityProviders);
+
+        // Check if any authenticators remain after removing organization SSO
+        boolean hasLocalAuthenticators = first.getLocalAuthenticatorConfigs() != null && 
+                first.getLocalAuthenticatorConfigs().length > 0;
+        boolean hasFederatedAuthenticators = identityProviders.length > 0;
+        
+        // If no authenticators remain, add default authentication as fallback
+        if (!hasLocalAuthenticators && !hasFederatedAuthenticators) {
+            LocalAndOutboundAuthenticationConfig defaultAuthConfig = getDefaultAuthenticationConfig();
+            if (defaultAuthConfig != null && ArrayUtils.isNotEmpty(defaultAuthConfig.getAuthenticationSteps())) {
+                AuthenticationStep defaultStep = defaultAuthConfig.getAuthenticationSteps()[0];
+                first.setLocalAuthenticatorConfigs(defaultStep.getLocalAuthenticatorConfigs());
+            } else {
+                throw new OrganizationManagementServerException(
+                        "Unable to retrieve default authentication configuration for fallback.",
+                        "Error retrieving default authentication config.");
+            }
+        }
+
         newAuthSteps[0] = first;
         outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
         rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
