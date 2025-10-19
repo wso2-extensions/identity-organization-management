@@ -574,11 +574,11 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return UserInvitationMgtDataHolder.getInstance().getRoleManagementService();
     }
 
-    private RoleAssignments[] processingRoleAssignments(RoleAssignments[] roleAssignments, String invitedTenantId)
+    private RoleAssignments[] processingRoleAssignments(RoleAssignments[] roleAssignments, String invitedOrgId)
             throws UserInvitationMgtServerException {
 
         Role roleInfo;
-        String invitedTenantDomain = resolveTenantDomain(invitedTenantId);
+        String invitedTenantDomain = resolveTenantDomain(invitedOrgId);
         List<RoleAssignments> roleAssignmentsList = new ArrayList<>(Arrays.asList(roleAssignments));
 
         // Using iterator to remove elements from the array
@@ -588,7 +588,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             try {
                 if (getRoleManagementService().isExistingRole(roleAssignment.getRoleId(), invitedTenantDomain)) {
                     roleInfo = getRoleManagementService().getRoleWithoutUsers(roleAssignment.getRoleId(),
-                            invitedTenantId);
+                            invitedTenantDomain);
                     AudienceInfo audienceInfo = new AudienceInfo();
                     audienceInfo.setApplicationType(roleInfo.getAudience());
                     audienceInfo.setApplicationId(roleInfo.getAudienceId());
