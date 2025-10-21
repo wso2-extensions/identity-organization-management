@@ -22,5 +22,5 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
  */
 public enum EditOperation {
     UPDATE,
-    DELETE,
+    DELETE
 }

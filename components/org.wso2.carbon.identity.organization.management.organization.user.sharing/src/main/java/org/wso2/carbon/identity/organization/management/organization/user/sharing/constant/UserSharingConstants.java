@@ -36,7 +36,6 @@ public class UserSharingConstants {
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
     public static final String USER = "User";
-    public static final String BLANK = "";
     public static final String CORRELATION_ID_MDC = "Correlation-ID";
 
     public static final String SHARING_TYPE_SHARED = "Shared";

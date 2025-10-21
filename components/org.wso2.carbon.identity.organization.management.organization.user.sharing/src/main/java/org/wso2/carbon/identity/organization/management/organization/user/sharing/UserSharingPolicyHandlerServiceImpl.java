@@ -413,7 +413,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
+            }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -454,7 +456,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
+            }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -491,7 +495,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
+            }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -525,7 +531,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
+            }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -566,7 +574,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
                 } else {
-                    LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
+                    if(LOG.isDebugEnabled()) {
+                        LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
+                    }
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
@@ -1197,9 +1207,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 .filter(orgId -> !immediateChildOrgs.contains(orgId))
                 .collect(Collectors.toList());
 
-        if (!skippedOrganizations.isEmpty()) {
-            LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
-        }
+        if (!skippedOrganizations.isEmpty() && LOG.isDebugEnabled()) {
+                LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
+            }
 
         return validOrganizations;
     }
@@ -1299,9 +1309,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         if (baseUserShare instanceof SelectiveUserShare) {
             return ((SelectiveUserShare) baseUserShare).getOrganizationId();
-        } else {
-            return sharingInitiatedOrgId;
         }
+        return sharingInitiatedOrgId;
     }
 
     /**
@@ -1339,10 +1348,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 Optional<String> roleId =
                         getRoleIdFromAudience(roleWithAudienceDO.getRoleName(), roleWithAudienceDO.getAudienceType(),
                                 audienceId, sharingInitiatedTenantDomain);
-                if (!roleId.isPresent()) {
-                    continue;
-                }
-                list.add(roleId.get());
+                roleId.ifPresent(list::add);
             }
             return list;
         } catch (OrganizationManagementException e) {

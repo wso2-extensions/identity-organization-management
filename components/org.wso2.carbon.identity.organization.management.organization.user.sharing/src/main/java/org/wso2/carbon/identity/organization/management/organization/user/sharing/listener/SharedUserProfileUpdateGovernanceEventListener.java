@@ -187,7 +187,7 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
     }
 
     private static boolean hasUserAssociation(String userID, String currentTenantDomain)
-            throws UserStoreClientException {
+            throws UserStoreException {
 
         String currentOrganizationId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getOrganizationId();
         try {
@@ -226,12 +226,12 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
                 OrganizationSharedUserUtil.getUserManagedOrganizationClaim(userStoreManager, userID));
     }
 
-    private static boolean isRootOrg(String currentTenantDomain) throws UserStoreClientException {
+    private static boolean isRootOrg(String currentTenantDomain) throws UserStoreException {
 
         try {
             return !OrganizationManagementUtil.isOrganization(currentTenantDomain);
         } catch (OrganizationManagementException e) {
-            throw new UserStoreClientException(
+            throw new UserStoreException(
                     "Error occurred while checking if the organization is a root organization.", e);
         }
     }
@@ -259,10 +259,20 @@ public class SharedUserProfileUpdateGovernanceEventListener extends AbstractIden
 
         try {
             RealmService realmService = OrganizationUserSharingDataHolder.getInstance().getRealmService();
+            if (realmService == null) {
+                throw new UserStoreException("RealmService is not initialized.");
+            }
             UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
-            return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+            if (tenantUserRealm == null) {
+                throw new UserStoreException("UserRealm is null for tenant: " + tenantId);
+            }
+            org.wso2.carbon.user.api.UserStoreManager userStoreManager = tenantUserRealm.getUserStoreManager();
+            if (!(userStoreManager instanceof AbstractUserStoreManager)) {
+                throw new UserStoreException("UserStoreManager is not an instance of AbstractUserStoreManager.");
+            }
+            return (AbstractUserStoreManager) userStoreManager;
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            throw new UserStoreException(e);
+            throw new UserStoreException("Error while retrieving UserStoreManager for tenant: " + tenantId, e);
         }
     }
 }
