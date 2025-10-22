@@ -413,7 +413,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
             }
         } finally {
@@ -456,7 +456,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
             }
         } finally {
@@ -495,7 +495,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
             }
         } finally {
@@ -531,7 +531,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
                 }
             }
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
             }
         } finally {
@@ -574,7 +574,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
                 } else {
-                    if(LOG.isDebugEnabled()) {
+                    if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
                     }
                 }
