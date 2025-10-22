@@ -136,8 +136,8 @@ public class UserSharingPolicyHandlerServiceImplTest {
         userCoreUtilMockedStatic.close();
     }
 
-    @DataProvider(name = "getSharedOrgsDataProvider")
-    public Object[][] getSharedOrgsDataProvider() {
+    @DataProvider(name = "sharedOrgsDataProvider")
+    public Object[][] sharedOrgsDataProvider() {
 
         return new Object[][]{
                 {USER_1_ID, setExpectedResultsForGetSharedOrgsTestCase1()}, // Having many shared orgs.
@@ -146,7 +146,7 @@ public class UserSharingPolicyHandlerServiceImplTest {
         };
     }
 
-    @Test(dataProvider = "getSharedOrgsDataProvider")
+    @Test(dataProvider = "sharedOrgsDataProvider")
     public void testGetSharedOrganizationsOfUser(String associatedUserId, Map<String, UserAssociation> expectedResults)
             throws Exception {
 

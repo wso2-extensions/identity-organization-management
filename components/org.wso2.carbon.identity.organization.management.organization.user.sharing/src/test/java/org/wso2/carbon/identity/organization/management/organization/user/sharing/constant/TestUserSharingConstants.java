@@ -23,6 +23,10 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
  */
 public class TestUserSharingConstants {
 
+    private TestUserSharingConstants() {
+        // Prevent instantiation.
+    }
+
     // Fields.
     public static final String FIELD_USER_ID_RESOLVER = "userIDResolver";
     public static final String TENANT_DOMAIN = "tenantDomain";
