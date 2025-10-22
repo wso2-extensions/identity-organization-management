@@ -1208,8 +1208,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 .collect(Collectors.toList());
 
         if (!skippedOrganizations.isEmpty() && LOG.isDebugEnabled()) {
-                LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
-            }
+            LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
+        }
 
         return validOrganizations;
     }
