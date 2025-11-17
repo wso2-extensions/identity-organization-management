@@ -584,8 +584,8 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
 
-        <nimbusds.version>7.3.0.wso2v1</nimbusds.version>
-        <nimbusds.osgi.version.range>[7.3.0,8.0.0)</nimbusds.osgi.version.range>
+        <nimbusds.version>10.3.0.wso2v1</nimbusds.version>
+        <nimbusds.osgi.version.range>[10.0.0,11.0.0)</nimbusds.osgi.version.range>
         <json-smart.version>2.4.9</json-smart.version>
         <net.minidev.json.imp.pkg.version.range>[2.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
 
