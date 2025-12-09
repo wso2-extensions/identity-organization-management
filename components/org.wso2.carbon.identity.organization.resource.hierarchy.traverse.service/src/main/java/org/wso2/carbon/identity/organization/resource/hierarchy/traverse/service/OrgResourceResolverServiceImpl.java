@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.resource.hierarchy.traverse.servic
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant.OrgResourceHierarchyTraverseConstants;
@@ -36,6 +37,14 @@ import java.util.function.Function;
  * Implementation of the OrgResourceResolverService interface, responsible for resolving resources within the
  * given organization/ application hierarchy.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service." +
+                        "OrgResourceResolverService",
+                "service.scope=singleton"
+        }
+)
 public class OrgResourceResolverServiceImpl implements OrgResourceResolverService {
 
     @Override
