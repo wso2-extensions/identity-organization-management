@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +84,9 @@ public class GovernanceConfigUpdateHandler extends AbstractEventHandler {
             IdentityGovernanceService identityGovernanceService = OrganizationManagementHandlerDataHolder.getInstance()
                     .getIdentityGovernanceService();
             String tenantDomain = getOrganizationManager().resolveTenantDomain(organization.getId());
+            if (Utils.isLoginAndRegistrationConfigInheritanceEnabled(tenantDomain)) {
+                return;
+            }
             Map<String, String> configurationDetails = new HashMap<>();
             configurationDetails.put(EXPIRY_TIME, EXPIRY_TIME_VALUE);
             configurationDetails.put(NOTIFICATION_SEND_RECOVERY_NOTIFICATION_SUCCESS,
