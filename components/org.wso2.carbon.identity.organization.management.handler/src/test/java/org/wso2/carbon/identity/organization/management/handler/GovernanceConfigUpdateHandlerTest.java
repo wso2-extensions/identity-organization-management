@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.handler;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -34,6 +35,7 @@ import org.wso2.carbon.identity.organization.management.handler.internal.Organiz
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,22 +70,56 @@ public class GovernanceConfigUpdateHandlerTest {
     public void testHandleEventWithPostAddOrganizationEvent(Organization organization, int depth)
             throws IdentityEventException, OrganizationManagementException, IdentityGovernanceException {
 
-        // Mock the necessary methods.
-        when(organizationManager.resolveTenantDomain(organization.getId())).thenReturn("sampleTenantDomain");
-        when(organizationManager.getOrganizationDepthInHierarchy(organization.getId())).thenReturn(depth);
+        try (MockedStatic<Utils> utils = Mockito.mockStatic(Utils.class, Mockito.CALLS_REAL_METHODS)) {
 
-        // Trigger the event.
-        Map<String, Object> eventProperties = new HashMap<>();
-        eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
-        Event event = new Event(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
-        configUpdateHandler.handleEvent(event);
+            // Mock Utils behavior
+            utils.when(() -> Utils.isLoginAndRegistrationConfigInheritanceEnabled(Mockito.anyString()))
+                    .thenReturn(false);
+            // Mock the necessary methods.
+            when(organizationManager.resolveTenantDomain(organization.getId())).thenReturn("sampleTenantDomain");
+            when(organizationManager.getOrganizationDepthInHierarchy(organization.getId())).thenReturn(depth);
 
-        // Verify that the necessary methods are called.
-        verify(organizationManager).getOrganizationDepthInHierarchy(organization.getId());
-        if (depth > 0) {
-            verify(organizationManager).resolveTenantDomain(organization.getId());
-            verify(identityGovernanceService).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
-        } else {
+            // Trigger the event.
+            Map<String, Object> eventProperties = new HashMap<>();
+            eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
+            Event event = new Event(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
+            configUpdateHandler.handleEvent(event);
+
+            // Verify that the necessary methods are called.
+            verify(organizationManager).getOrganizationDepthInHierarchy(organization.getId());
+            if (depth > 0) {
+                verify(organizationManager).resolveTenantDomain(organization.getId());
+                verify(identityGovernanceService).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
+            } else {
+                verify(identityGovernanceService, never()).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
+            }
+        }
+    }
+
+    @Test(dataProvider = "organizationDataProvider")
+    public void testHandleEventWithPostAddOrganizationEventForV1Organizations(Organization organization, int depth)
+            throws IdentityEventException, OrganizationManagementException, IdentityGovernanceException {
+
+        try (MockedStatic<Utils> utils = Mockito.mockStatic(Utils.class, Mockito.CALLS_REAL_METHODS)) {
+
+            // Mock Utils behavior
+            utils.when(() -> Utils.isLoginAndRegistrationConfigInheritanceEnabled(Mockito.anyString()))
+                    .thenReturn(true);
+            // Mock the necessary methods.
+            when(organizationManager.resolveTenantDomain(organization.getId())).thenReturn("sampleTenantDomain");
+            when(organizationManager.getOrganizationDepthInHierarchy(organization.getId())).thenReturn(depth);
+
+            // Trigger the event.
+            Map<String, Object> eventProperties = new HashMap<>();
+            eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
+            Event event = new Event(Constants.EVENT_POST_ADD_ORGANIZATION, eventProperties);
+            configUpdateHandler.handleEvent(event);
+
+            // Verify that the necessary methods are called.
+            verify(organizationManager).getOrganizationDepthInHierarchy(organization.getId());
+            if (depth > 0) {
+                verify(organizationManager).resolveTenantDomain(organization.getId());
+            }
             verify(identityGovernanceService, never()).updateConfiguration(Mockito.anyString(), Mockito.anyMap());
         }
     }
