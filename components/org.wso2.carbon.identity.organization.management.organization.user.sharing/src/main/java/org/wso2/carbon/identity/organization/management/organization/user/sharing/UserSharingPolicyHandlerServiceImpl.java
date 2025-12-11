@@ -182,30 +182,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 });
     }
 
-    private OperationStatus getOperationStatus(String operationId) {
-
-        SubOperationStatusQueue list = asyncOperationStatusList.get(operationId);
-        OperationStatus status = list.getOperationStatus();
-        asyncOperationStatusList.remove(operationId);
-        return status;
-    }
-
-    private String getCorrelationId() {
-
-        String ref;
-        if (isCorrelationIDPresent()) {
-            ref = MDC.get(CORRELATION_ID_MDC);
-        } else {
-            ref = UUID.randomUUID().toString();
-        }
-        return ref;
-    }
-
-    private boolean isCorrelationIDPresent() {
-
-        return MDC.get(CORRELATION_ID_MDC) != null;
-    }
-
     @Override
     public void populateGeneralUserShare(GeneralUserShareDO generalUserShareDO) throws UserSharingMgtException {
 
@@ -1888,5 +1864,29 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
         }
         return error.toString();
+    }
+
+    private OperationStatus getOperationStatus(String operationId) {
+
+        SubOperationStatusQueue list = asyncOperationStatusList.get(operationId);
+        OperationStatus status = list.getOperationStatus();
+        asyncOperationStatusList.remove(operationId);
+        return status;
+    }
+
+    private String getCorrelationId() {
+
+        String ref;
+        if (isCorrelationIDPresent()) {
+            ref = MDC.get(CORRELATION_ID_MDC);
+        } else {
+            ref = UUID.randomUUID().toString();
+        }
+        return ref;
+    }
+
+    private boolean isCorrelationIDPresent() {
+
+        return MDC.get(CORRELATION_ID_MDC) != null;
     }
 }
