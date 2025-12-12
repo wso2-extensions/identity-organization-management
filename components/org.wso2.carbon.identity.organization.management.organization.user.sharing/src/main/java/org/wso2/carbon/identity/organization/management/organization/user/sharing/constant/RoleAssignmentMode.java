@@ -56,6 +56,16 @@ public enum RoleAssignmentMode {
                 return mode;
             }
         }
-        throw new IllegalArgumentException("Invalid RoleAssignmentMode value: " + stringValueOfRoleAssignmentMode);
+        // Build a comma-separated list of valid RoleAssignmentMode values.
+        StringBuilder validModes = new StringBuilder();
+        for (RoleAssignmentMode mode : RoleAssignmentMode.values()) {
+            if (validModes.length() > 0) {
+                validModes.append(", ");
+            }
+            validModes.append(mode.toString());
+        }
+        throw new IllegalArgumentException(
+                "Invalid RoleAssignmentMode value: " + stringValueOfRoleAssignmentMode + ". Valid modes are: " +
+                        validModes);
     }
 }

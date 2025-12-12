@@ -21,8 +21,8 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 /**
- * Data object that represents the application sharing mode, including the sharing policy and the role-sharing policy
- * configuration. in user-sharing v2.
+ * Data object that represents the user sharing mode configuration, including the sharing policy and the
+ * role-assignment configuration in user-sharing v2.
  */
 public class SharingModeDO {
 
@@ -70,7 +70,7 @@ public class SharingModeDO {
             return this;
         }
 
-        public Builder applicationShareRolePolicy(RoleAssignmentDO roleAssignment) {
+        public Builder roleAssignment(RoleAssignmentDO roleAssignment) {
 
             this.roleAssignment = roleAssignment;
             return this;

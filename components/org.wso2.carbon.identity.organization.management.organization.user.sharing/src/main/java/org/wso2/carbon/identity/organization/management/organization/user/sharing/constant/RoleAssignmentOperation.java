@@ -44,6 +44,12 @@ public enum RoleAssignmentOperation {
                 return operation;
             }
         }
-        throw new IllegalArgumentException("Invalid operation: " + value);
+        // Throw an exception with a helpful message listing valid operations.
+        String validOperations = String.join(", ",
+                java.util.Arrays.stream(RoleAssignmentOperation.values())
+                        .map(Enum::name)
+                        .toArray(String[]::new));
+        throw new IllegalArgumentException(
+                "Invalid operation: " + value + ". Valid operations are: " + validOperations);
     }
 }

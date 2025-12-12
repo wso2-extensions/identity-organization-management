@@ -67,9 +67,9 @@ public interface UserSharingPolicyHandlerServiceV2 {
     void populateGeneralUserUnshareV2(GeneralUserUnshareDO generalUserUnshareDO) throws UserSharingMgtException;
 
     /**
-     * Update the role assignments of shared user with the given update operations.
-     * As of now, this method supports updating the roles of the shared user in the shared organizations.
-     * You cannot use this method to share the user with new organizations.
+     * Updates the role assignments of a shared user with the given update operations.
+     * This method is intended to support updating the roles of the shared user in the shared organizations.
+     * This method does not support sharing the user with new organizations.
      *
      * @param mainOrganizationId     Main organization ID that owns the primary user.
      * @param userId                 ID of the primary user whose shared associations need to be updated.
