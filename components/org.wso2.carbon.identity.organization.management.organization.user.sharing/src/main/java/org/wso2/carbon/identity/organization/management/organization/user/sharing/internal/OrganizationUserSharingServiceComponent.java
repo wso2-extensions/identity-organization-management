@@ -35,6 +35,8 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerServiceImplV2;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.UserSharingPolicyHandlerServiceV2;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.OrganizationUserSharingHandler;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserProfileUpdateGovernanceEventListener;
@@ -83,6 +85,11 @@ public class OrganizationUserSharingServiceComponent {
         bundleContext.registerService(UserSharingPolicyHandlerService.class.getName(), userSharingPolicyHandlerService,
                 null);
         LOG.debug("OrganizationUserSharingServiceComponent activated successfully.");
+        UserSharingPolicyHandlerServiceImplV2 userSharingPolicyHandlerServiceV2 =
+                new UserSharingPolicyHandlerServiceImplV2();
+        bundleContext.registerService(UserSharingPolicyHandlerServiceV2.class.getName(),
+                userSharingPolicyHandlerServiceV2, null);
+        LOG.debug("UserSharingPolicyHandlerServiceImplV2 activated successfully.");
     }
 
     @Reference(
