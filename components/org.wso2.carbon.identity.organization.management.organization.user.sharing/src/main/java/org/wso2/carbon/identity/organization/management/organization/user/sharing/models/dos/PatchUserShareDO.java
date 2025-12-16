@@ -27,13 +27,13 @@ public class PatchUserShareDO {
 
     private String organizationId;
     private String userId;
-    private List<RoleAssignmentUpdateDO> roleAssignmentUpdateDO;
+    private List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs;
 
-    public PatchUserShareDO(String organizationId, String userId, List<RoleAssignmentUpdateDO> roleAssignmentUpdateDO) {
+    public PatchUserShareDO(String organizationId, String userId, List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs) {
 
         this.organizationId = organizationId;
         this.userId = userId;
-        this.roleAssignmentUpdateDO = roleAssignmentUpdateDO;
+        this.roleAssignmentUpdateDOs = roleAssignmentUpdateDOs;
     }
 
     public String getOrganizationId() {
@@ -56,13 +56,13 @@ public class PatchUserShareDO {
         this.userId = userId;
     }
 
-    public List<RoleAssignmentUpdateDO> getRoleAssignmentUpdateDO() {
+    public List<RoleAssignmentUpdateDO> getRoleAssignmentUpdateDOs() {
 
-        return roleAssignmentUpdateDO;
+        return roleAssignmentUpdateDOs;
     }
 
-    public void setRoleAssignmentUpdateDO(List<RoleAssignmentUpdateDO> roleAssignmentUpdateDO) {
+    public void setRoleAssignmentUpdateDOs(List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs) {
 
-        this.roleAssignmentUpdateDO = roleAssignmentUpdateDO;
+        this.roleAssignmentUpdateDOs = roleAssignmentUpdateDOs;
     }
 }
