@@ -21,13 +21,12 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleAssignmentUpdateDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-
-import java.util.List;
 
 /**
  * Service that manages the user sharing policy handler.
@@ -67,51 +66,28 @@ public interface UserSharingPolicyHandlerServiceV2 {
     void populateGeneralUserUnshareV2(GeneralUserUnshareDO generalUserUnshareDO) throws UserSharingMgtException;
 
     /**
-     * Updates the role assignments of a shared user with the given update operations.
-     * This method is intended to support updating the roles of the shared user in the shared organizations.
-     * This method does not support sharing the user with new organizations.
+     * Applies patch operations to attributes of shared users.
+     * <p>
+     * This method updates attributes of users that are already shared with
+     * organizations based on the provided patch operations
+     * (for example, updating assigned shared roles from the user share request).
+     * <p>
+     * This method does not support sharing users with new organizations.
      *
-     * @param mainOrganizationId     Main organization ID that owns the primary user.
-     * @param userId                 ID of the primary user whose shared associations need to be updated.
-     * @param roleAssignmentUpdateDO List of update operations to be performed on the assigned roles of the shared user.
-     *                               You have to specify the operation type, path and values to be updated.
-     * @throws OrganizationManagementException on errors when updating the shared user.
+     * @param patchUserShareDO Patch request containing update operations to be applied to an existing user sharing
+     *                         configuration.
+     * @throws OrganizationManagementException If an error occurs while processing the patch operations.
      */
-    void updateRoleAssignmentV2(String mainOrganizationId, String userId,
-                                List<RoleAssignmentUpdateDO> roleAssignmentUpdateDO)
-            throws OrganizationManagementException;
+    void updateRoleAssignmentV2(PatchUserShareDO patchUserShareDO) throws OrganizationManagementException;
 
     /**
-     * Returns the list of organizations with whom the primary user is shared. This method provides
-     * filtering, pagination, and other options to retrieve the shared organizations. Currently,
-     * this has support to filter organizations by organization id and parent organization id.
+     * Retrieves the organizations shared with a specific user based on the provided criteria.
      *
-     * @param mainOrganizationId ID of the main organization owning the primary user.
-     * @param userId             ID of the primary user in the main organization.
-     * @param filter             (Optional) Filter to search for shared organizations (optional). Currently supports
-     *                           filtering by organization id and parent organization id.
-     *                           Ex: `id eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5` or
-     *                           `parentId eq 088fb49c-46fa-48c1-a0a8-5538ee4b7ec5`
-     * @param beforeCursor       (Optional) The before cursor to get the previous page of results. This should be the
-     *                           shared organization identifier. NOTE: We always prioritize the before cursor over the
-     *                           after cursor. Value cannot be 0.
-     * @param afterCursor        (Optional) The after cursor to get the next page of results. This should be the
-     *                           shared organization identifier.
-     * @param excludedAttributes (Optional) A comma separated list of attributes to be excluded from the result.
-     *                           Currently supports excluding `roles`.
-     * @param attributes         (Optional) A comma separated list of attributes to be included in the result.
-     *                           Currently supports including `roles`.
-     * @param limit              (Optional) The maximum number of results to be returned. If not specified (that is, 0),
-     *                           it will return all the results.
-     * @param recursive          (Optional) If true, it will return the shared organizations recursively. If false, it
-     *                           will
-     *                           return only the immediate child organizations of the main organization.
-     * @return A {@code ResponseSharedOrgsV2DO} containing the shared organization nodes for the given user,
-     * along with pagination cursor information and active user sharing mode details.
-     * @throws OrganizationManagementException If an error occurs while retrieving the list of shared organizations.
+     * @param getUserSharedOrgsDO Data object containing parameters for retrieving shared organizations.
+     * @return ResponseSharedOrgsV2DO Object containing the list of organizations shared with the user and related
+     * metadata.
+     * @throws OrganizationManagementException If an error occurs while retrieving the shared organizations.
      */
-    ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(String mainOrganizationId, String userId, String filter,
-                                                        int beforeCursor, int afterCursor, String excludedAttributes,
-                                                        String attributes, int limit, boolean recursive)
+    ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(GetUserSharedOrgsDO getUserSharedOrgsDO)
             throws OrganizationManagementException;
 }

@@ -176,8 +176,7 @@ public class ResponseOrgDetailsV2DO {
         return sharingModeDO;
     }
 
-    public void setSharingModeDO(
-            SharingModeDO sharingModeDO) {
+    public void setSharingModeDO(SharingModeDO sharingModeDO) {
 
         this.sharingModeDO = sharingModeDO;
     }
