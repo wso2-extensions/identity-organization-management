@@ -29,7 +29,8 @@ public class PatchUserShareDO {
     private String userId;
     private List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs;
 
-    public PatchUserShareDO(String organizationId, String userId, List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs) {
+    public PatchUserShareDO(String organizationId, String userId,
+                            List<RoleAssignmentUpdateDO> roleAssignmentUpdateDOs) {
 
         this.organizationId = organizationId;
         this.userId = userId;
