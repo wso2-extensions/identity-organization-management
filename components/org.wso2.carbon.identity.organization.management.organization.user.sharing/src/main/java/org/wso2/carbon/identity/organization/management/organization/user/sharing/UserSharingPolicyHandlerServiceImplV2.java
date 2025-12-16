@@ -21,13 +21,12 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleAssignmentUpdateDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
-
-import java.util.List;
 
 /**
  * Implementation of the user sharing policy handler service v2.
@@ -61,21 +60,16 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     @Override
-    public void updateRoleAssignmentV2(String mainOrganizationId, String userId,
-                                       List<RoleAssignmentUpdateDO> roleAssignmentUpdateDO)
-            throws OrganizationManagementException {
+    public void updateRoleAssignmentV2(PatchUserShareDO patchUserShareDO) throws OrganizationManagementException {
 
         // todo: Implement the logic to update role assignments for shared users in v2.
     }
 
     @Override
-    public ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(String mainOrganizationId, String userId, String filter,
-                                                               int beforeCursor, int afterCursor,
-                                                               String excludedAttributes, String attributes, int limit,
-                                                               boolean recursive)
+    public ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(GetUserSharedOrgsDO getUserSharedOrgsDO)
             throws OrganizationManagementException {
 
-        // todo: Implement the logic to get shared organizations for a user in v2.
+        // todo: Implement the logic to get user shared organizations in v2.
         return null;
     }
 }
