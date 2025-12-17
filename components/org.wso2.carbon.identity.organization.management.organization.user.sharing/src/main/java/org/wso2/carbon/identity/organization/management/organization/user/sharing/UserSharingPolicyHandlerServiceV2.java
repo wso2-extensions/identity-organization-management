@@ -22,7 +22,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchUserShareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharePatchDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
@@ -74,11 +74,11 @@ public interface UserSharingPolicyHandlerServiceV2 {
      * <p>
      * This method does not support sharing users with new organizations.
      *
-     * @param patchUserShareDO Patch request containing update operations to be applied to an existing user sharing
+     * @param userSharePatchDO Patch request containing update operations to be applied to an existing user sharing
      *                         configuration.
      * @throws OrganizationManagementException If an error occurs while processing the patch operations.
      */
-    void updateRoleAssignmentV2(PatchUserShareDO patchUserShareDO) throws OrganizationManagementException;
+    void updateRoleAssignmentV2(UserSharePatchDO userSharePatchDO) throws OrganizationManagementException;
 
     /**
      * Retrieves the organizations shared with a specific user based on the provided criteria.

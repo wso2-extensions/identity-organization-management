@@ -20,14 +20,14 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 /**
  * Enum representing the types of user share role assignment operations. Applicable to role assignment updates.
  */
-public enum RoleAssignmentOperation {
+public enum UserSharePatchOperation {
 
     ADD("add"),
     REMOVE("remove");
 
     private final String value;
 
-    RoleAssignmentOperation(String value) {
+    UserSharePatchOperation(String value) {
 
         this.value = value;
     }
@@ -37,16 +37,16 @@ public enum RoleAssignmentOperation {
         return value;
     }
 
-    public static RoleAssignmentOperation fromValue(String value) {
+    public static UserSharePatchOperation fromValue(String value) {
 
-        for (RoleAssignmentOperation operation : RoleAssignmentOperation.values()) {
+        for (UserSharePatchOperation operation : UserSharePatchOperation.values()) {
             if (operation.getValue().equals(value)) {
                 return operation;
             }
         }
         // Throw an exception with a helpful message listing valid operations.
         String validOperations = String.join(", ",
-                java.util.Arrays.stream(RoleAssignmentOperation.values())
+                java.util.Arrays.stream(UserSharePatchOperation.values())
                         .map(Enum::name)
                         .toArray(String[]::new));
         throw new IllegalArgumentException(
