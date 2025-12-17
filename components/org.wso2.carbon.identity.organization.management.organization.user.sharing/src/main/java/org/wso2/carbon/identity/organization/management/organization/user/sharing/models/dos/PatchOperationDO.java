@@ -17,31 +17,34 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos;
 
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.RoleAssignmentOperation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharePatchOperation;
 
 /**
  * This class represents the user share update operation in user-sharing v2.
  */
-public class RoleAssignmentUpdateDO {
+public class PatchOperationDO {
 
-    private RoleAssignmentOperation operation;
+    private UserSharePatchOperation operation;
     private String path;
     private Object values;
 
-    public RoleAssignmentUpdateDO(RoleAssignmentOperation operation, String path, Object values) {
+    public PatchOperationDO() {
+
+    }
+
+    public PatchOperationDO(UserSharePatchOperation operation, String path, Object values) {
 
         this.operation = operation;
         this.path = path;
         this.values = values;
     }
 
-    public RoleAssignmentOperation getOperation() {
+    public UserSharePatchOperation getOperation() {
 
         return operation;
     }
 
-    public void setOperation(
-            RoleAssignmentOperation operation) {
+    public void setOperation(UserSharePatchOperation operation) {
 
         this.operation = operation;
     }

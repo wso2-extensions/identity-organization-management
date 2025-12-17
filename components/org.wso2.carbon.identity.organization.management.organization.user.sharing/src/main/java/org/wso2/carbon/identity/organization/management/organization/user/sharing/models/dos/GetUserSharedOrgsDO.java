@@ -34,9 +34,18 @@ public class GetUserSharedOrgsDO {
     private Boolean recursive;
     private List<String> attributes;
 
+    public GetUserSharedOrgsDO() {
+
+    }
+
+    public GetUserSharedOrgsDO(String userId, String parentOrgId) {
+
+        this.userId = userId;
+        this.parentOrgId = parentOrgId;
+    }
+
     public GetUserSharedOrgsDO(String userId, String parentOrgId, String before, String after, String filter,
-                               Integer limit,
-                               Boolean recursive, List<String> attributes) {
+                               Integer limit, Boolean recursive, List<String> attributes) {
 
         this.userId = userId;
         this.parentOrgId = parentOrgId;

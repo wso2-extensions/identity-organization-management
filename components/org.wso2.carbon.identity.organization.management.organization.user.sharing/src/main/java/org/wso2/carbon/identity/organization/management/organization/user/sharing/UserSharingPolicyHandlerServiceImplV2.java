@@ -22,11 +22,10 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchUserShareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharePatchDO;
 
 /**
  * Implementation of the user sharing policy handler service v2.
@@ -60,14 +59,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     @Override
-    public void updateRoleAssignmentV2(PatchUserShareDO patchUserShareDO) throws OrganizationManagementException {
+    public void updateRoleAssignmentV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException {
 
         // todo: Implement the logic to update role assignments for shared users in v2.
     }
 
     @Override
     public ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(GetUserSharedOrgsDO getUserSharedOrgsDO)
-            throws OrganizationManagementException {
+            throws UserSharingMgtException {
 
         // todo: Implement the logic to get user shared organizations in v2.
         return null;
