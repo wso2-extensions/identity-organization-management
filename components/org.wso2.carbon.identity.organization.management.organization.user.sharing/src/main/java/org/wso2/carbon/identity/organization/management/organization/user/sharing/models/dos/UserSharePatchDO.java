@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Model that represents the user share patch data object.

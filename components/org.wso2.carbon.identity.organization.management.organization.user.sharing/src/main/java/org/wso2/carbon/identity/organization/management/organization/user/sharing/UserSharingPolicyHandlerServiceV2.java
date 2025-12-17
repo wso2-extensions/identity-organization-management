@@ -22,10 +22,10 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharePatchDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharePatchDO;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 
 /**
