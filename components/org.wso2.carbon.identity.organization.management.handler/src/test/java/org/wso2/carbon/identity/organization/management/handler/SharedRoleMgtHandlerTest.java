@@ -679,4 +679,257 @@ public class SharedRoleMgtHandlerTest {
         org.setParent(parent);
         return org;
     }
+
+    /**
+     * Test for skipping system roles during organization role sharing.
+     */
+    @Test
+    public void testSkipSystemRolesWhenSharingOrgRoles() throws Exception {
+
+        Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
+
+        // Mock the organization manager.
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
+                .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
+
+        // Mock the application management service.
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(ORGANIZATION_AUD);
+
+        // Setup associated org roles including system roles.
+        List<RoleV2> mainAppOrgRoles = new ArrayList<>();
+        RoleV2 systemRole = new RoleV2();
+        systemRole.setId("system-role-id");
+        systemRole.setName("system_admin_role");
+        mainAppOrgRoles.add(systemRole);
+
+        RoleV2 normalRole = new RoleV2();
+        normalRole.setId("normal-role-id");
+        normalRole.setName("normal_role");
+        mainAppOrgRoles.add(normalRole);
+
+        when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(mainAppOrgRoles);
+
+        // Mock the role management service.
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+
+        // Setup that neither role exists in shared org.
+        when(mockedRoleManagementService.isExistingRoleName(anyString(), eq(RoleConstants.ORGANIZATION),
+                eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(false);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(anyList(),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(new HashMap<>());
+
+        // Setup result for normal role creation.
+        RoleBasicInfo createdNormalRole = createMockRoleBasicInfo("normal_role", "shared-normal-role-id",
+                SHARED_ORG_ID);
+        when(mockedRoleManagementService.addRole(eq("normal_role"), anyList(), anyList(), anyList(),
+                eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN)))
+                .thenReturn(createdNormalRole);
+
+        // Execute the handler.
+        SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
+        sharedRoleMgtHandler.handleEvent(event);
+
+        // Verify that system role was NOT created.
+        verify(mockedRoleManagementService, never()).addRole(eq("system_admin_role"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that normal role WAS created and relationship was established.
+        verify(mockedRoleManagementService, times(1)).addRole(eq("normal_role"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+        verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
+                eq("normal-role-id"), eq("shared-normal-role-id"), eq(MAIN_ORG_TENANT_DOMAIN),
+                eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that no relationship was created for system role.
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(
+                eq("system-role-id"), anyString(), anyString(), anyString());
+    }
+
+    /**
+     * Test for skipping roles containing domain separator during organization role sharing.
+     */
+    @Test
+    public void testSkipRolesWithDomainSeparatorWhenSharingOrgRoles() throws Exception {
+
+        Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
+
+        // Mock the organization manager.
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
+                .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
+
+        // Mock the application management service.
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(ORGANIZATION_AUD);
+
+        // Setup associated org roles including roles with domain separator.
+        List<RoleV2> mainAppOrgRoles = new ArrayList<>();
+        RoleV2 domainRole = new RoleV2();
+        domainRole.setId("domain-role-id");
+        domainRole.setName("PRIMARY/admin_role");
+        mainAppOrgRoles.add(domainRole);
+
+        RoleV2 normalRole = new RoleV2();
+        normalRole.setId("normal-role-id");
+        normalRole.setName("normalRole");
+        mainAppOrgRoles.add(normalRole);
+
+        when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(mainAppOrgRoles);
+
+        // Mock the role management service.
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+
+        // Setup that neither role exists in shared org.
+        when(mockedRoleManagementService.isExistingRoleName(anyString(), eq(RoleConstants.ORGANIZATION),
+                eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(false);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(anyList(),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(new HashMap<>());
+
+        // Setup result for normal role creation.
+        RoleBasicInfo createdNormalRole = createMockRoleBasicInfo("normalRole", "shared-normal-role-id",
+                SHARED_ORG_ID);
+        when(mockedRoleManagementService.addRole(eq("normalRole"), anyList(), anyList(), anyList(),
+                eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN)))
+                .thenReturn(createdNormalRole);
+
+        // Execute the handler.
+        SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
+        sharedRoleMgtHandler.handleEvent(event);
+
+        // Verify that domain role was NOT created.
+        verify(mockedRoleManagementService, never()).addRole(eq("PRIMARY/admin_role"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that normal role WAS created and relationship was established.
+        verify(mockedRoleManagementService, times(1)).addRole(eq("normalRole"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+        verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
+                eq("normal-role-id"), eq("shared-normal-role-id"), eq(MAIN_ORG_TENANT_DOMAIN),
+                eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that no relationship was created for domain role.
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(
+                eq("domain-role-id"), anyString(), anyString(), anyString());
+    }
+
+    /**
+     * Test for skipping both system roles and roles with domain separator during organization role sharing.
+     */
+    @Test
+    public void testSkipSystemAndDomainRolesWhenSharingOrgRoles() throws Exception {
+
+        Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
+
+        // Mock the organization manager.
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
+                .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
+
+        // Mock the application management service.
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(ORGANIZATION_AUD);
+
+        // Setup associated org roles with various types.
+        List<RoleV2> mainAppOrgRoles = new ArrayList<>();
+
+        RoleV2 systemRole = new RoleV2();
+        systemRole.setId("system-role-id");
+        systemRole.setName("system_role");
+        mainAppOrgRoles.add(systemRole);
+
+        RoleV2 domainRole = new RoleV2();
+        domainRole.setId("domain-role-id");
+        domainRole.setName("INTERNAL/admin");
+        mainAppOrgRoles.add(domainRole);
+
+        RoleV2 normalRole1 = new RoleV2();
+        normalRole1.setId("normal-role-id-1");
+        normalRole1.setName("employee");
+        mainAppOrgRoles.add(normalRole1);
+
+        RoleV2 normalRole2 = new RoleV2();
+        normalRole2.setId("normal-role-id-2");
+        normalRole2.setName("manager");
+        mainAppOrgRoles.add(normalRole2);
+
+        when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(mainAppOrgRoles);
+
+        // Mock the role management service.
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+
+        // Setup that no roles exist in shared org.
+        when(mockedRoleManagementService.isExistingRoleName(anyString(), eq(RoleConstants.ORGANIZATION),
+                eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(false);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(anyList(),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(new HashMap<>());
+
+        // Setup result for normal role creation.
+        RoleBasicInfo createdRole1 = createMockRoleBasicInfo("employee", "shared-employee-id", SHARED_ORG_ID);
+        when(mockedRoleManagementService.addRole(eq("employee"), anyList(), anyList(), anyList(),
+                eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN)))
+                .thenReturn(createdRole1);
+
+        RoleBasicInfo createdRole2 = createMockRoleBasicInfo("manager", "shared-manager-id", SHARED_ORG_ID);
+        when(mockedRoleManagementService.addRole(eq("manager"), anyList(), anyList(), anyList(),
+                eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN)))
+                .thenReturn(createdRole2);
+
+        // Execute the handler.
+        SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
+        sharedRoleMgtHandler.handleEvent(event);
+
+        // Verify that system role was NOT created.
+        verify(mockedRoleManagementService, never()).addRole(eq("system_role"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that domain role was NOT created.
+        verify(mockedRoleManagementService, never()).addRole(eq("INTERNAL/admin"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify that normal roles WERE created.
+        verify(mockedRoleManagementService, times(1)).addRole(eq("employee"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+        verify(mockedRoleManagementService, times(1)).addRole(eq("manager"), anyList(), anyList(),
+                anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify relationships were established only for normal roles.
+        verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
+                eq("normal-role-id-1"), eq("shared-employee-id"), eq(MAIN_ORG_TENANT_DOMAIN),
+                eq(SHARED_ORG_TENANT_DOMAIN));
+        verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
+                eq("normal-role-id-2"), eq("shared-manager-id"), eq(MAIN_ORG_TENANT_DOMAIN),
+                eq(SHARED_ORG_TENANT_DOMAIN));
+
+        // Verify no relationships for system or domain roles.
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(
+                eq("system-role-id"), anyString(), anyString(), anyString());
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(
+                eq("domain-role-id"), anyString(), anyString(), anyString());
+    }
 }
