@@ -688,7 +688,6 @@ public class SharedRoleMgtHandlerTest {
 
         Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
 
-        // Mock the organization manager.
         OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
@@ -696,7 +695,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
                 .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
 
-        // Mock the application management service.
         ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance()
                 .setApplicationManagementService(mockedApplicationManagementService);
@@ -718,7 +716,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
                 .thenReturn(mainAppOrgRoles);
 
-        // Mock the role management service.
         RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
 
@@ -763,7 +760,6 @@ public class SharedRoleMgtHandlerTest {
 
         Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
 
-        // Mock the organization manager.
         OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
@@ -771,7 +767,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
                 .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
 
-        // Mock the application management service.
         ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance()
                 .setApplicationManagementService(mockedApplicationManagementService);
@@ -793,7 +788,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
                 .thenReturn(mainAppOrgRoles);
 
-        // Mock the role management service.
         RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
 
@@ -838,7 +832,6 @@ public class SharedRoleMgtHandlerTest {
 
         Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
 
-        // Mock the organization manager.
         OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
@@ -846,7 +839,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
                 .thenReturn(createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID));
 
-        // Mock the application management service.
         ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance()
                 .setApplicationManagementService(mockedApplicationManagementService);
@@ -879,7 +871,6 @@ public class SharedRoleMgtHandlerTest {
         when(mockedApplicationManagementService.getAssociatedRolesOfApplication(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
                 .thenReturn(mainAppOrgRoles);
 
-        // Mock the role management service.
         RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
         OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
 
