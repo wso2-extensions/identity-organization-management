@@ -79,6 +79,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(SharedRoleMgtHandler.class);
     private static final String ALLOWED_AUDIENCE_FOR_ASSOCIATED_ROLES = "allowedAudienceForAssociatedRoles";
+    private static final String SYSTEM_PREFIX = "system_";
+    private static final String DOMAIN_NAME_SEPARATOR = "/";
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Override
@@ -321,6 +323,11 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
                         roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
             } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
+
+                if (role.getName().contains(DOMAIN_NAME_SEPARATOR) || role.getName().startsWith(SYSTEM_PREFIX)) {
+                    continue;
+                }
+
                 // Create the role in the shared org.
                 RoleBasicInfo sharedRole =
                         getRoleManagementServiceV2().addRole(role.getName(), Collections.emptyList(),
