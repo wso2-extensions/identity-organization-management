@@ -17,12 +17,18 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Enum representing the modes of role assignments.
  */
 public enum RoleAssignmentMode {
     SELECTED("SELECTED"),
     NONE("NONE");
+
+    private static final String VALID_MODES =
+            Arrays.stream(values()).map(RoleAssignmentMode::toString).collect(Collectors.joining(", "));
 
     private final String value;
 
@@ -47,25 +53,23 @@ public enum RoleAssignmentMode {
      *
      * @param stringValueOfRoleAssignmentMode The string value of RoleAssignmentMode.
      * @return The corresponding RoleAssignmentMode enum.
-     * @throws IllegalArgumentException if the value does not match any enum.
+     * @throws IllegalArgumentException if the value is null/blank or does not match any enum.
      */
     public static RoleAssignmentMode fromString(String stringValueOfRoleAssignmentMode) {
 
-        for (RoleAssignmentMode mode : RoleAssignmentMode.values()) {
-            if (mode.value.equalsIgnoreCase(stringValueOfRoleAssignmentMode)) {
+        if (stringValueOfRoleAssignmentMode == null || stringValueOfRoleAssignmentMode.trim().isEmpty()) {
+            throw new IllegalArgumentException("RoleAssignmentMode value cannot be null or empty. Valid modes are: "
+                    + VALID_MODES);
+        }
+
+        for (RoleAssignmentMode mode : values()) {
+            if (mode.value.equalsIgnoreCase(stringValueOfRoleAssignmentMode.trim())) {
                 return mode;
             }
         }
-        // Build a comma-separated list of valid RoleAssignmentMode values.
-        StringBuilder validModes = new StringBuilder();
-        for (RoleAssignmentMode mode : RoleAssignmentMode.values()) {
-            if (validModes.length() > 0) {
-                validModes.append(", ");
-            }
-            validModes.append(mode.toString());
-        }
+
         throw new IllegalArgumentException(
                 "Invalid RoleAssignmentMode value: " + stringValueOfRoleAssignmentMode + ". Valid modes are: " +
-                        validModes);
+                        VALID_MODES);
     }
 }

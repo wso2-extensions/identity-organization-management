@@ -17,10 +17,40 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Enum representing the types of edit operations.
  */
 public enum EditOperation {
     UPDATE,
-    DELETE
+    DELETE;
+
+    private static final String VALID_OPERATIONS =
+            Arrays.stream(values()).map(Enum::name).collect(Collectors.joining(", "));
+
+    /**
+     * Resolve {@link EditOperation} from a string value.
+     *
+     * @param value Edit operation value
+     * @return Matching {@link EditOperation}
+     * @throws IllegalArgumentException if the value is null, blank, or invalid
+     */
+    public static EditOperation fromString(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "EditOperation value cannot be null or empty. Valid operations are: " + VALID_OPERATIONS);
+        }
+
+        for (EditOperation operation : values()) {
+            if (operation.name().equalsIgnoreCase(value.trim())) {
+                return operation;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid EditOperation value: " + value + ". Valid operations are: " + VALID_OPERATIONS);
+    }
 }

@@ -17,8 +17,10 @@
 
 package org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Enum representing the type of resource being shared.
@@ -28,11 +30,14 @@ public enum ResourceType {
     USER(Collections.singletonList(SharedAttributeType.ROLE)),
     APPLICATION(Collections.singletonList(SharedAttributeType.ROLE));
 
+    private static final String VALID_RESOURCE_TYPES =
+            Arrays.stream(values()).map(Enum::name).collect(Collectors.joining(", "));
+
     private final List<SharedAttributeType> applicableAttributes;
 
     ResourceType(List<SharedAttributeType> applicableAttributes) {
 
-        this.applicableAttributes = applicableAttributes;
+        this.applicableAttributes = Collections.unmodifiableList(applicableAttributes);
     }
 
     /**
@@ -54,5 +59,29 @@ public enum ResourceType {
     public List<SharedAttributeType> getApplicableAttributes() {
 
         return applicableAttributes;
+    }
+
+    /**
+     * Resolve {@link ResourceType} from a string value.
+     *
+     * @param value Resource type value
+     * @return Matching {@link ResourceType}
+     * @throws IllegalArgumentException if the value is null, blank, or invalid
+     */
+    public static ResourceType fromString(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "ResourceType value cannot be null or empty. Valid values are: " + VALID_RESOURCE_TYPES);
+        }
+
+        for (ResourceType type : values()) {
+            if (type.name().equalsIgnoreCase(value.trim())) {
+                return type;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid ResourceType value: " + value + ". Valid values are: " + VALID_RESOURCE_TYPES);
     }
 }
