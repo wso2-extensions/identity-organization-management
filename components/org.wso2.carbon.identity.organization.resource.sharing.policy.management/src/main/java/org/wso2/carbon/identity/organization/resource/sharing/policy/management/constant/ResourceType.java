@@ -82,6 +82,6 @@ public enum ResourceType {
         }
 
         throw new IllegalArgumentException(
-                "Invalid ResourceType value: " + value + ". Valid values are: " + VALID_RESOURCE_TYPES);
+                "Invalid ResourceType value: " + value.trim() + ". Valid values are: " + VALID_RESOURCE_TYPES);
     }
 }

@@ -277,7 +277,7 @@ public enum PolicyEnum {
             }
         }
         throw new IllegalArgumentException(
-                "Invalid policy: " + requestedPolicy + ". Valid policies are: " + VALID_POLICIES);
+                "Invalid policy: " + requestedPolicy.trim() + ". Valid policies are: " + VALID_POLICIES);
     }
 
     /**
@@ -301,7 +301,7 @@ public enum PolicyEnum {
             }
         }
         throw new IllegalArgumentException(
-                "Invalid policy value: " + value + ". Valid values are: " + VALID_POLICY_VALUES);
+                "Invalid policy value: " + value.trim() + ". Valid values are: " + VALID_POLICY_VALUES);
     }
 
     /**
@@ -325,7 +325,7 @@ public enum PolicyEnum {
             }
         }
         throw new IllegalArgumentException(
-                "Invalid policy code: " + policyCode + ". Valid codes are: " + VALID_POLICY_CODES);
+                "Invalid policy code: " + policyCode.trim() + ". Valid codes are: " + VALID_POLICY_CODES);
     }
 
     /**
@@ -349,6 +349,6 @@ public enum PolicyEnum {
             }
         }
         throw new IllegalArgumentException(
-                "Invalid policy name: " + policyName + ". Valid names are: " + VALID_POLICY_NAMES);
+                "Invalid policy name: " + policyName.trim() + ". Valid names are: " + VALID_POLICY_NAMES);
     }
 }

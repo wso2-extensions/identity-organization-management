@@ -51,6 +51,6 @@ public enum EditOperation {
         }
 
         throw new IllegalArgumentException(
-                "Invalid EditOperation value: " + value + ". Valid operations are: " + VALID_OPERATIONS);
+                "Invalid EditOperation value: " + value.trim() + ". Valid operations are: " + VALID_OPERATIONS);
     }
 }

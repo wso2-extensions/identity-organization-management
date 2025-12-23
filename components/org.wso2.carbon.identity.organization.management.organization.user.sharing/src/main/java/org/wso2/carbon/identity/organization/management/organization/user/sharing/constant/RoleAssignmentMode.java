@@ -69,7 +69,7 @@ public enum RoleAssignmentMode {
         }
 
         throw new IllegalArgumentException(
-                "Invalid RoleAssignmentMode value: " + stringValueOfRoleAssignmentMode + ". Valid modes are: " +
+                "Invalid RoleAssignmentMode value: " + stringValueOfRoleAssignmentMode.trim() + ". Valid modes are: " +
                         VALID_MODES);
     }
 }

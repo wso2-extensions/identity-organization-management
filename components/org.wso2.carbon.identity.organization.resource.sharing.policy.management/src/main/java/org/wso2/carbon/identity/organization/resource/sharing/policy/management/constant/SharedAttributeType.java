@@ -50,6 +50,6 @@ public enum SharedAttributeType {
         }
 
         throw new IllegalArgumentException(
-                "Invalid SharedAttributeType value: " + value + ". Valid values are: " + VALID_TYPES);
+                "Invalid SharedAttributeType value: " + value.trim() + ". Valid values are: " + VALID_TYPES);
     }
 }

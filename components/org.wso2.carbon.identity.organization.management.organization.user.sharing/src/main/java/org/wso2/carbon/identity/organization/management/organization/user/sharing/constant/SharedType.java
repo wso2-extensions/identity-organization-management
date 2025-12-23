@@ -71,6 +71,6 @@ public enum SharedType {
         }
 
         throw new IllegalArgumentException(
-                "Invalid SharedType value: " + stringValueOfSharedType + ". Valid types are: " + VALID_TYPES);
+                "Invalid SharedType value: " + stringValueOfSharedType.trim() + ". Valid types are: " + VALID_TYPES);
     }
 }

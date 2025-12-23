@@ -53,6 +53,6 @@ public enum OrganizationScope {
         }
 
         throw new IllegalArgumentException(
-                "Invalid OrganizationScope value: " + value + ". Valid values are: " + VALID_SCOPES);
+                "Invalid OrganizationScope value: " + value.trim() + ". Valid values are: " + VALID_SCOPES);
     }
 }

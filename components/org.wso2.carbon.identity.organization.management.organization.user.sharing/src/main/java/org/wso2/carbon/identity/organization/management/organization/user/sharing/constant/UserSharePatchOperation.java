@@ -64,6 +64,6 @@ public enum UserSharePatchOperation {
         }
 
         throw new IllegalArgumentException(
-                "Invalid operation: " + value + ". Valid operations are: " + VALID_OPERATIONS);
+                "Invalid operation: " + value.trim() + ". Valid operations are: " + VALID_OPERATIONS);
     }
 }
