@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.application.resource.hierarchy.tra
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service.internal.OrgAppResourceHierarchyTraverseServiceDataHolder;
@@ -41,6 +42,14 @@ import java.util.function.BiFunction;
  * Implementation of the OrgAppResourceResolverService interface.
  * This class provides methods to resolve resources from the organization and application hierarchy.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service" +
+                        ".OrgAppResourceResolverService",
+                "service.scope=singleton"
+        }
+)
 public class OrgAppResourceResolverServiceImpl implements OrgAppResourceResolverService {
 
     /**
