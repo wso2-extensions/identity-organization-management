@@ -17,6 +17,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Enum representing the types of user share role assignment operations. Applicable to role assignment updates.
  */
@@ -24,6 +27,9 @@ public enum UserSharePatchOperation {
 
     ADD("add"),
     REMOVE("remove");
+
+    private static final String VALID_OPERATIONS =
+            Arrays.stream(values()).map(UserSharePatchOperation::getValue).collect(Collectors.joining(", "));
 
     private final String value;
 
@@ -37,19 +43,27 @@ public enum UserSharePatchOperation {
         return value;
     }
 
+    /**
+     * Resolve {@link UserSharePatchOperation} from a string value.
+     *
+     * @param value Operation value (e.g. {@code add}, {@code remove})
+     * @return Matching {@link UserSharePatchOperation}
+     * @throws IllegalArgumentException if the value is null, blank, or invalid
+     */
     public static UserSharePatchOperation fromValue(String value) {
 
-        for (UserSharePatchOperation operation : UserSharePatchOperation.values()) {
-            if (operation.getValue().equals(value)) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Operation value cannot be null or empty. Valid operations are: " + VALID_OPERATIONS);
+        }
+
+        for (UserSharePatchOperation operation : values()) {
+            if (operation.value.equalsIgnoreCase(value.trim())) {
                 return operation;
             }
         }
-        // Throw an exception with a helpful message listing valid operations.
-        String validOperations = String.join(", ",
-                java.util.Arrays.stream(UserSharePatchOperation.values())
-                        .map(Enum::name)
-                        .toArray(String[]::new));
+
         throw new IllegalArgumentException(
-                "Invalid operation: " + value + ". Valid operations are: " + validOperations);
+                "Invalid operation: " + value.trim() + ". Valid operations are: " + VALID_OPERATIONS);
     }
 }

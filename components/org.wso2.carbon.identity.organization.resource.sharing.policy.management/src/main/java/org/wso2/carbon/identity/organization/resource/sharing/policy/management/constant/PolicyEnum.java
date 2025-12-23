@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Enum representing user sharing policies with additional fields for code, name, value, organization scope, applicable
@@ -114,6 +115,16 @@ public enum PolicyEnum {
             "This policy specifies that no sharing will occur. The resource remains restricted to its " +
                     "current context and is not shared with any organization."
     );
+
+    private static final String VALID_POLICY_CODES =
+            Arrays.stream(values()).map(PolicyEnum::getPolicyCode).collect(Collectors.joining(", "));
+    private static final String VALID_POLICY_NAMES =
+            Arrays.stream(values()).map(PolicyEnum::getPolicyName).collect(Collectors.joining(", "));
+    private static final String VALID_POLICY_VALUES =
+            Arrays.stream(values()).map(PolicyEnum::getValue).collect(Collectors.joining(", "));
+    private static final String VALID_POLICIES =
+            "codes: [" + VALID_POLICY_CODES + "], names: [" + VALID_POLICY_NAMES + "], values: [" +
+                    VALID_POLICY_VALUES + "]";
 
     private final String policyCode;
     private final String policyName;
@@ -210,8 +221,13 @@ public enum PolicyEnum {
      */
     public static Optional<PolicyEnum> getByPolicyCode(String policyCode) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.policyCode.equals(policyCode)) {
+        if (policyCode == null || policyCode.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String normalized = policyCode.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.policyCode.equalsIgnoreCase(normalized)) {
                 return Optional.of(policy);
             }
         }
@@ -226,8 +242,13 @@ public enum PolicyEnum {
      */
     public static Optional<PolicyEnum> getByValue(String value) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.value.equals(value)) {
+        if (value == null || value.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String normalized = value.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.value.equalsIgnoreCase(normalized)) {
                 return Optional.of(policy);
             }
         }
@@ -243,15 +264,20 @@ public enum PolicyEnum {
      */
     public static PolicyEnum validateAndGetPolicyEnum(String requestedPolicy) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.value.equalsIgnoreCase(requestedPolicy) ||
-                    policy.policyCode.equalsIgnoreCase(requestedPolicy) ||
-                    policy.policyName.equalsIgnoreCase(requestedPolicy)) {
+        if (requestedPolicy == null || requestedPolicy.trim().isEmpty()) {
+            throw new IllegalArgumentException("Policy cannot be null or empty. Valid policies are: " + VALID_POLICIES);
+        }
+        String normalized = requestedPolicy.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.value.equalsIgnoreCase(normalized) ||
+                    policy.policyCode.equalsIgnoreCase(normalized) ||
+                    policy.policyName.equalsIgnoreCase(normalized)) {
                 return policy;
             }
         }
-        // Handle the case where no matching policy is found
-        throw new IllegalArgumentException("Invalid policy: " + requestedPolicy);
+        throw new IllegalArgumentException(
+                "Invalid policy: " + requestedPolicy.trim() + ". Valid policies are: " + VALID_POLICIES);
     }
 
     /**
@@ -263,12 +289,19 @@ public enum PolicyEnum {
      */
     public static PolicyEnum getPolicyByValue(String value) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.value.equalsIgnoreCase(value)) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Policy value cannot be null or empty. Valid values are: " + VALID_POLICY_VALUES);
+        }
+        String normalized = value.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.value.equalsIgnoreCase(normalized)) {
                 return policy;
             }
         }
-        throw new IllegalArgumentException("Invalid policy value: " + value);
+        throw new IllegalArgumentException(
+                "Invalid policy value: " + value.trim() + ". Valid values are: " + VALID_POLICY_VALUES);
     }
 
     /**
@@ -280,12 +313,19 @@ public enum PolicyEnum {
      */
     public static PolicyEnum getPolicyByPolicyCode(String policyCode) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.policyCode.equalsIgnoreCase(policyCode)) {
+        if (policyCode == null || policyCode.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Policy code cannot be null or empty. Valid codes are: " + VALID_POLICY_CODES);
+        }
+        String normalized = policyCode.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.policyCode.equalsIgnoreCase(normalized)) {
                 return policy;
             }
         }
-        throw new IllegalArgumentException("Invalid policy code: " + policyCode);
+        throw new IllegalArgumentException(
+                "Invalid policy code: " + policyCode.trim() + ". Valid codes are: " + VALID_POLICY_CODES);
     }
 
     /**
@@ -297,11 +337,18 @@ public enum PolicyEnum {
      */
     public static PolicyEnum getPolicyByPolicyName(String policyName) {
 
-        for (PolicyEnum policy : PolicyEnum.values()) {
-            if (policy.policyName.equalsIgnoreCase(policyName)) {
+        if (policyName == null || policyName.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Policy name cannot be null or empty. Valid names are: " + VALID_POLICY_NAMES);
+        }
+        String normalized = policyName.trim();
+
+        for (PolicyEnum policy : values()) {
+            if (policy.policyName.equalsIgnoreCase(normalized)) {
                 return policy;
             }
         }
-        throw new IllegalArgumentException("Invalid policy name: " + policyName);
+        throw new IllegalArgumentException(
+                "Invalid policy name: " + policyName.trim() + ". Valid names are: " + VALID_POLICY_NAMES);
     }
 }
