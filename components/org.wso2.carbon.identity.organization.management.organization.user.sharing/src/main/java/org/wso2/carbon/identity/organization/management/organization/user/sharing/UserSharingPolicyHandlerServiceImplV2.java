@@ -252,7 +252,32 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     @Override
     public void populateGeneralUserUnshareV2(GeneralUserUnshareDO generalUserUnshareDO) throws UserSharingMgtException {
 
-        // todo: Implement the logic to unshare users from all organizations in v2.
+        LOG.debug("Starting general user unshare operation.");
+        validateUserUnshareInput(generalUserUnshareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
+
+        Map<String, UserCriteriaType> userCriteria = generalUserUnshareDO.getUserCriteria();
+
+        // Capture thread-local properties before async execution.
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties.
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        // Run the unsharing logic asynchronously.
+        CompletableFuture.runAsync(() -> {
+                    LOG.debug("Processing async general user unshare for correlation ID: " + getCorrelationId());
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processGeneralUserUnshare(userCriteria, sharingInitiatedOrgId);
+                }, EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async general user unshare processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -397,6 +422,42 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    /**
+     * Processes general user unsharing based on the provided user criteria.
+     * This method iterates over the user criteria map and unshare users from all associated organizations.
+     *
+     * @param userCriteria          A map containing user criteria, such as user IDs.
+     * @param sharingInitiatedOrgId The ID of the organization that initiated the user unsharing.
+     */
+    private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
+
+        try {
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
     // User Sharing & Unsharing Helper Methods.
 
     /**
@@ -513,6 +574,28 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     // Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyOfUserInOrg(organizationId, associatedUserId, unsharingInitiatedOrgId);
                 }
+            } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
+                throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
+            }
+        }
+    }
+
+    /**
+     * Unshare a user from all applicable organizations based on the provided user list.
+     * If a resource-sharing policy exists for the user, it is deleted.
+     *
+     * @param userIds                 The list of user IDs to be unshared.
+     * @param unsharingInitiatedOrgId The ID of the organization that initiated the unsharing.
+     */
+    private void generalUserUnshareByUserIds(UserIdList userIds, String unsharingInitiatedOrgId)
+            throws UserSharingMgtServerException {
+
+        for (String associatedUserId : userIds.getIds()) {
+            try {
+                getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
+
+                // Delete all resource sharing policies if it has been stored for future shares.
+                deleteAllResourceSharingPoliciesOfUser(associatedUserId, unsharingInitiatedOrgId);
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
@@ -900,6 +983,19 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
                 policyHoldingOrgId, ResourceType.USER, associatedUserId, sharingInitiatedOrgId);
+    }
+
+    /**
+     * Deletes all resource sharing policies for a given user.
+     *
+     * @param associatedUserId      The ID of the associated user.
+     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     */
+    private void deleteAllResourceSharingPoliciesOfUser(String associatedUserId, String sharingInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
+
+        getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(ResourceType.USER,
+                associatedUserId, sharingInitiatedOrgId);
     }
 
     // Role Management Helper Methods.
