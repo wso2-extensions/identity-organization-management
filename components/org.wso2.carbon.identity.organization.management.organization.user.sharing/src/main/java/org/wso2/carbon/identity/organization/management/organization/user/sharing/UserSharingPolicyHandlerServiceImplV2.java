@@ -43,6 +43,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.BaseUserShare;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.GeneralUserShare;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SelectiveUserShare;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserShareDO;
@@ -117,6 +118,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
@@ -178,7 +180,37 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     @Override
     public void populateGeneralUserShareV2(GeneralUserShareV2DO generalUserShareV2DO) throws UserSharingMgtException {
 
-        // todo: Implement the logic to share users with all organizations in v2.
+        LOG.debug("Starting general user share operation.");
+        validateUserShareInput(generalUserShareV2DO);
+        String sharingInitiatedOrgId = getOrganizationId();
+
+        Map<String, UserCriteriaType> userCriteria = generalUserShareV2DO.getUserCriteria();
+        PolicyEnum policy = generalUserShareV2DO.getPolicy();
+        List<String> roleIds = getRoleIds(generalUserShareV2DO.getRoleAssignments().getRoles(), sharingInitiatedOrgId);
+        RoleAssignmentMode roleAssignmentMode = generalUserShareV2DO.getRoleAssignments().getMode();
+
+        // Capture thread-local properties before async execution.
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUserId = carbonContext.getUserId();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties.
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        // Run the sharing logic asynchronously.
+        CompletableFuture.runAsync(() -> {
+                    LOG.debug("Processing async general user share for correlation ID: " + getCorrelationId());
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processGeneralUserShare(userCriteria, policy, roleIds, roleAssignmentMode, sharingInitiatedOrgId,
+                            sharingInitiatedUserId, getCorrelationId());
+                }, EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async general user share processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -253,6 +285,50 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    /**
+     * Processes general user sharing based on the provided user criteria and sharing policy.
+     * This method iterates over the user criteria map and shares users according to the specified policy.
+     *
+     * @param userCriteria           A map containing user criteria, such as user IDs.
+     * @param policy                 The sharing policy defining the scope of sharing.
+     * @param roleIds                A list of role IDs to be assigned during sharing.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the user sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
+     */
+    private void processGeneralUserShare(Map<String, UserCriteriaType> userCriteria, PolicyEnum policy,
+                                         List<String> roleIds, RoleAssignmentMode roleAssignmentMode,
+                                         String sharingInitiatedOrgId, String sharingInitiatedUserId,
+                                         String correlationId) {
+
+        try {
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds, roleAssignmentMode,
+                                    sharingInitiatedOrgId, sharingInitiatedUserId, correlationId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
     // User Sharing & Unsharing Helper Methods.
 
     /**
@@ -299,6 +375,44 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 String errorMessage =
                         String.format(ERROR_SELECTIVE_SHARE.getMessage(), associatedUserId, e.getMessage());
                 throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
+            }
+        }
+    }
+
+    /**
+     * Shares a user with all applicable organizations based on the provided policy.
+     * If the user is not a resident user in the initiating organization, the sharing is skipped.
+     *
+     * @param userIds                The list of user IDs to be shared.
+     * @param policy                 The policy defining the scope of sharing.
+     * @param roleIds                The list of role IDs to be assigned during sharing.
+     * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
+     * @param sharingInitiatedUserId The ID of the user that initiated the user sharing.
+     * @param correlationId          The correlation ID to track down the user sharing.
+     */
+    private void generalUserShareByUserIds(UserIdList userIds, PolicyEnum policy, List<String> roleIds,
+                                           RoleAssignmentMode roleAssignmentMode, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUserId, String correlationId)
+            throws UserSharingMgtException {
+
+        for (String associatedUserId : userIds.getIds()) {
+            try {
+                if (isExistingUser(associatedUserId, sharingInitiatedOrgId) &&
+                        isResidentUserInOrg(associatedUserId, sharingInitiatedOrgId)) {
+                    GeneralUserShare generalUserShare = new GeneralUserShare.Builder()
+                            .withUserId(associatedUserId)
+                            .withPolicy(policy)
+                            .withRoles(roleIds)
+                            .withRoleAssignmentMode(roleAssignmentMode)
+                            .build();
+                    List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
+                    shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId,
+                            sharingInitiatedUserId, correlationId);
+                }
+            } catch (OrganizationManagementException | IdentityRoleManagementException |
+                     ResourceSharingPolicyMgtException e) {
+                String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
+                throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
     }
