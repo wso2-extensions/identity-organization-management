@@ -52,7 +52,6 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleAssignmentDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleWithAudienceDO;
-import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareOrgDetailsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareOrgDetailsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
@@ -142,6 +141,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     public void populateSelectiveUserShareV2(SelectiveUserShareV2DO selectiveUserShareV2DO)
             throws UserSharingMgtException {
 
+        LOG.debug("Starting selective user share operation.");
         validateUserShareInput(selectiveUserShareV2DO);
         String sharingInitiatedOrgId = getOrganizationId();
 
@@ -163,6 +163,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         // Run the sharing logic asynchronously.
         CompletableFuture.runAsync(() -> {
+                    LOG.debug("Processing async selective user share for correlation ID: " + getCorrelationId());
                     restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                             sharingInitiatedUsername, threadLocalProperties);
                     processSelectiveUserShare(userCriteria, validOrganizations, sharingInitiatedOrgId,
