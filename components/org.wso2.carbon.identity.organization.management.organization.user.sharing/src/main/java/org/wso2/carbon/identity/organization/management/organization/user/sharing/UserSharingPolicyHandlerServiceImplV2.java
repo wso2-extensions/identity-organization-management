@@ -47,6 +47,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.SelectiveUserShare;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserShareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.BaseUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
@@ -108,6 +109,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_AUDIENCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_DETAILS_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL;
@@ -118,6 +120,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
@@ -217,7 +220,33 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     public void populateSelectiveUserUnshareV2(SelectiveUserUnshareDO selectiveUserUnshareDO)
             throws UserSharingMgtException {
 
-        // todo: Implement the logic to unshare users from selective organizations in v2.
+        LOG.debug("Starting selective user unshare operation.");
+        validateUserUnshareInput(selectiveUserUnshareDO);
+        String sharingInitiatedOrgId = getOrganizationId();
+
+        Map<String, UserCriteriaType> userCriteria = selectiveUserUnshareDO.getUserCriteria();
+        List<String> organizations = selectiveUserUnshareDO.getOrganizations();
+
+        // Capture thread-local properties before async execution.
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties.
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        // Run the unsharing logic asynchronously.
+        CompletableFuture.runAsync(() -> {
+                    LOG.debug("Processing async selective user unshare for correlation ID: " + getCorrelationId());
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processSelectiveUserUnshare(userCriteria, organizations, sharingInitiatedOrgId);
+                }, EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async user selective unshare processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -329,6 +358,45 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    /**
+     * Processes selective user unsharing based on the provided user criteria and organization details.
+     * This method iterates over the user criteria map and unshare users selectively from the specified organizations.
+     *
+     * @param userCriteria          A map containing user criteria, such as user IDs.
+     * @param organizations         A list of organizations from which users will be unshared selectively.
+     * @param sharingInitiatedOrgId The ID of the organization that initiated the user unsharing.
+     */
+    private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
+                                             String sharingInitiatedOrgId) {
+
+        try {
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                    sharingInitiatedOrgId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
     // User Sharing & Unsharing Helper Methods.
 
     /**
@@ -413,6 +481,40 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
                 throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
+            }
+        }
+    }
+
+    /**
+     * Unshare a user from selected organizations based on the provided user list.
+     * If a resource-sharing policy exists for the user, it is deleted.
+     *
+     * @param userIds                 The list of user IDs to be unshared.
+     * @param organizations           The list of organizations from which the user should be unshared.
+     * @param unsharingInitiatedOrgId The ID of the organization that initiated the unsharing.
+     */
+    private void selectiveUserUnshareByUserIds(UserIdList userIds, List<String> organizations,
+                                               String unsharingInitiatedOrgId)
+            throws UserSharingMgtServerException {
+
+        for (String associatedUserId : userIds.getIds()) {
+            try {
+                for (String organizationId : organizations) {
+                    // Unshare user from the organization and its child organizations.
+                    List<String> orgTreeInclusive = new ArrayList<>();
+                    orgTreeInclusive.add(organizationId);
+                    orgTreeInclusive.addAll(getOrganizationManager().getChildOrganizationsIds(organizationId, true));
+
+                    for (String eachOrg : orgTreeInclusive) {
+                        getOrganizationUserSharingService().unshareOrganizationUserInSharedOrganization(
+                                associatedUserId, eachOrg);
+                    }
+
+                    // Delete resource sharing policy if it has been stored for future shares.
+                    deleteResourceSharingPolicyOfUserInOrg(organizationId, associatedUserId, unsharingInitiatedOrgId);
+                }
+            } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
+                throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
         }
     }
@@ -785,6 +887,21 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 OrganizationScope.FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope());
     }
 
+    /**
+     * Deletes the resource sharing policy for a given user in an organization.
+     *
+     * @param policyHoldingOrgId    The ID of the organization holding the policy.
+     * @param associatedUserId      The ID of the associated user.
+     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     */
+    private void deleteResourceSharingPolicyOfUserInOrg(String policyHoldingOrgId, String associatedUserId,
+                                                        String sharingInitiatedOrgId)
+            throws ResourceSharingPolicyMgtException {
+
+        getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyInOrgByResourceTypeAndId(
+                policyHoldingOrgId, ResourceType.USER, associatedUserId, sharingInitiatedOrgId);
+    }
+
     // Role Management Helper Methods.
 
     /**
@@ -1132,6 +1249,53 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
         validateNotNull(generalUserShareV2DO.getPolicy(), ERROR_CODE_POLICY_NULL);
         validateRoleAssignments(generalUserShareV2DO.getRoleAssignments());
+    }
+
+    private <T extends UserCriteriaType> void validateUserUnshareInput(BaseUserUnshareDO<T> userUnshareDO)
+            throws UserSharingMgtClientException {
+
+        if (userUnshareDO == null) {
+            throwValidationException(ERROR_CODE_NULL_UNSHARE);
+        }
+
+        if (userUnshareDO instanceof SelectiveUserUnshareDO) {
+            validateSelectiveUserUnshareDO((SelectiveUserUnshareDO) userUnshareDO);
+        } else if (userUnshareDO instanceof GeneralUserUnshareDO) {
+            validateGeneralUserUnshareDO((GeneralUserUnshareDO) userUnshareDO);
+        }
+    }
+
+    private void validateSelectiveUserUnshareDO(SelectiveUserUnshareDO selectiveUserUnshareDO)
+            throws UserSharingMgtClientException {
+
+        // Validate userCriteria is not null.
+        validateNotNull(selectiveUserUnshareDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
+
+        // Validate that userCriteria contains the required USER_IDS key and is not null.
+        if (!selectiveUserUnshareDO.getUserCriteria().containsKey(USER_IDS) ||
+                selectiveUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
+        }
+
+        // Validate organizations list is not null.
+        validateNotNull(selectiveUserUnshareDO.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
+
+        for (String organization : selectiveUserUnshareDO.getOrganizations()) {
+            validateNotNull(organization, ERROR_CODE_ORG_ID_NULL);
+        }
+    }
+
+    private void validateGeneralUserUnshareDO(GeneralUserUnshareDO generalUserUnshareDO)
+            throws UserSharingMgtClientException {
+
+        // Validate userCriteria is not null.
+        validateNotNull(generalUserUnshareDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
+
+        // Validate that userCriteria contains the required USER_IDS key and is not null.
+        if (!generalUserUnshareDO.getUserCriteria().containsKey(USER_IDS) ||
+                generalUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
+        }
     }
 
     private void validateRoleAssignments(RoleAssignmentDO roleAssignments) throws UserSharingMgtClientException {
