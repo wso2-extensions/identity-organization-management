@@ -23,6 +23,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
@@ -124,6 +125,13 @@ import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN
 /**
  * Service implementation to process applications across organizations. Class implements {@link OrgApplicationManager}.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.management.application.OrgApplicationManager",
+                "service.scope=singleton"
+        }
+)
 public class OrgApplicationManagerImpl implements OrgApplicationManager {
 
     private static final Log LOG = LogFactory.getLog(OrgApplicationManagerImpl.class);
