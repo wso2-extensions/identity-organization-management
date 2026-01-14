@@ -69,6 +69,18 @@ public class UserSharingConstants {
     public static final String LOG_WARN_NON_RESIDENT_USER =
             "Skipping user share for user: %s since the user is not managed by the sharing initiated org: %s";
 
+    public static final String ACTION_GENERAL_USER_SHARE = "general user share";
+    public static final String ACTION_SELECTIVE_USER_SHARE = "selective user share";
+    public static final String ACTION_SELECTIVE_USER_UNSHARE = "selective user unshare";
+    public static final String ACTION_GENERAL_USER_UNSHARE = "general user unshare";
+    public static final String ACTION_USER_SHARE_ATTRIBUTE_UPDATE = "user share attribute update";
+    public static final String ACTION_USER_SHARE_ROLE_ASSIGNMENT_UPDATE = "user share role assignment update";
+
+    public static final String ASYNC_PROCESSING_LOG_TEMPLATE = "Processing async %s initiated by user: %s in " +
+            "organization: %s.";
+    public static final String USER_SHARING_LOG_TEMPLATE = "Sharing user: %s from organization: %s is initiated by " +
+            "user: %s.";
+
     public static final String DEFAULT_PROFILE = "default";
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
