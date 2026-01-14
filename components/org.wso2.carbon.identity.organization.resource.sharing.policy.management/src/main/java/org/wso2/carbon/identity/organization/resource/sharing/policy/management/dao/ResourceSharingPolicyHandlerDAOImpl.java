@@ -64,6 +64,7 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_WITH_INITIATING_ORG_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICIES_WITH_SHARED_ATTRIBUTES_BY_POLICY_HOLDING_ORGS_HEAD;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICY_BY_ID;
+import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_RESOURCE_SHARING_POLICY_BY_RESOURCE_KEYS;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_ID;
 import static org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceSharingSQLConstants.GET_SHARED_RESOURCE_ATTRIBUTES_BY_ATTRIBUTE_TYPE;
@@ -113,6 +114,31 @@ public class ResourceSharingPolicyHandlerDAOImpl implements ResourceSharingPolic
                     (resultSet, rowNum) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
                     namedPreparedStatement ->
                             namedPreparedStatement.setInt(DB_SCHEMA_COLUMN_NAME_UM_ID, resourceSharingPolicyId)));
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
+        }
+    }
+
+    @Override
+    public Optional<ResourceSharingPolicy> getResourceSharingPolicyByResourceKeys(String resourceType,
+                                                                                  String resourceId,
+                                                                                  String initiatingOrgId,
+                                                                                  String policyHoldingOrgId)
+            throws ResourceSharingPolicyMgtServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+
+        try {
+            return Optional.ofNullable(namedJdbcTemplate.fetchSingleRecord(
+                    GET_RESOURCE_SHARING_POLICY_BY_RESOURCE_KEYS,
+                    (resultSet, rowNum) -> retrieveResourceSharingPolicyRecordFromDB(resultSet),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE, resourceType);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_RESOURCE_ID, resourceId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID, initiatingOrgId);
+                        namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID,
+                                policyHoldingOrgId);
+                    }));
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_RETRIEVING_RESOURCE_SHARING_POLICY_FAILED);
         }

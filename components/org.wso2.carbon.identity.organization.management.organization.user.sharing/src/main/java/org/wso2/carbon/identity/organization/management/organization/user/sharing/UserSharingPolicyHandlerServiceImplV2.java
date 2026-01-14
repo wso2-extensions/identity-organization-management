@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.RoleAssignmentMode;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharePatchOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
@@ -51,6 +52,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchOperationDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleAssignmentDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleWithAudienceDO;
@@ -112,20 +114,37 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_DETAILS_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_INVALID_FORMAT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATIONS_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_OP_INVALID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_OP_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_PATH_INVALID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_PATH_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_ROLES_VALUE_CONTENT_INVALID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_VALUE_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_PATCH_OPERATION_VALUE_TYPE_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_REQUEST_BODY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_NONE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_PREFIX;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_SUFFIX_ROLES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
@@ -281,9 +300,37 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     @Override
-    public void updateRoleAssignmentV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException {
+    public void updateSharedUserAttributesV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException {
 
-        // todo: Implement the logic to update role assignments for shared users in v2.
+        LOG.debug("Starting user share role assignment update operation.");
+        validateUpdateRoleAssignmentInput(userSharePatchDO);
+        String sharingInitiatedOrgId = getOrganizationId();
+
+        Map<String, UserCriteriaType> userCriteria = userSharePatchDO.getUserCriteria();
+
+        // Capture thread-local properties before async execution.
+        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String sharingInitiatedUsername = carbonContext.getUsername();
+        String sharingInitiatedUserId = carbonContext.getUserId();
+        int sharingInitiatedTenantId = carbonContext.getTenantId();
+        String sharingInitiatedTenantDomain = carbonContext.getTenantDomain();
+
+        // Capture additional thread-local properties.
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        // Run the sharing logic asynchronously.
+        CompletableFuture.runAsync(() -> {
+                    LOG.debug("Processing async user share role assignment update for correlation ID: " +
+                            getCorrelationId());
+                    restoreThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
+                            sharingInitiatedUsername, threadLocalProperties);
+                    processUpdateSharedUserAttributes(userCriteria, sharingInitiatedOrgId, sharingInitiatedUserId,
+                            userSharePatchDO, getCorrelationId());
+                }, EXECUTOR)
+                .exceptionally(ex -> {
+                    LOG.error("Error occurred during async user share role assignment update processing.", ex);
+                    return null;
+                });
     }
 
     @Override
@@ -458,6 +505,40 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    private void processUpdateSharedUserAttributes(Map<String, UserCriteriaType> userCriteria,
+                                                   String sharingInitiatedOrgId, String sharingInitiatedUserId,
+                                                   UserSharePatchDO userSharePatchDO, String correlationId) {
+
+        try {
+            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+                String criterionKey = criterion.getKey();
+                UserCriteriaType criterionValues = criterion.getValue();
+
+                try {
+                    if (USER_IDS.equals(criterionKey)) {
+                        if (criterionValues instanceof UserIdList) {
+                            updateSharedUserAttributesByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId,
+                                    sharingInitiatedUserId, userSharePatchDO, correlationId);
+                        } else {
+                            LOG.error("Invalid user criteria provided for user share role assignment update: " +
+                                    criterionKey);
+                        }
+                    } else {
+                        LOG.error("Invalid user criteria provided for user share role assignment update: " +
+                                criterionKey);
+                    }
+                } catch (UserSharingMgtException e) {
+                    LOG.error("Error occurred while updating role assignments from user criteria: " + USER_IDS, e);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Completed user share role assignment update initiated from " + sharingInitiatedOrgId + ".");
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
     // User Sharing & Unsharing Helper Methods.
 
     /**
@@ -602,6 +683,22 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    private void updateSharedUserAttributesByUserIds(UserIdList userIds, String sharingInitiatedOrgId,
+                                                     String sharingInitiatedUserId, UserSharePatchDO userSharePatchDO,
+                                                     String correlationId)
+            throws UserSharingMgtException {
+
+        for (String associatedUserId : userIds.getIds()) {
+            try {
+                updateSharedUserAttributesForUser(associatedUserId, sharingInitiatedOrgId, sharingInitiatedUserId,
+                        userSharePatchDO.getPatchOperations(), correlationId);
+            } catch (OrganizationManagementException | IdentityRoleManagementException |
+                     ResourceSharingPolicyMgtException e) {
+                throw new UserSharingMgtServerException(ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE);
+            }
+        }
+    }
+
     // Business Logic Methods.
 
     /**
@@ -661,43 +758,70 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
-    private String registerOperationStatus(Map.Entry<BaseUserShare, List<String>> entry, String sharingInitiatedOrgId,
-                                           String sharingInitiatedUserId, String correlationId)
-            throws AsyncOperationStatusMgtException {
+    private void updateSharedUserAttributesForUser(String associatedUserId, String sharingInitiatedOrgId,
+                                                   String sharingInitiatedUserId,
+                                                   List<PatchOperationDO> patchOperations, String correlationId)
+            throws UserSharingMgtException, OrganizationManagementException, IdentityRoleManagementException,
+            ResourceSharingPolicyMgtException {
 
-        BaseUserShare baseUserShare = entry.getKey();
-        String operationId;
-        if (baseUserShare instanceof SelectiveUserShare) {
-            SelectiveUserShare selectiveUserShare = (SelectiveUserShare) baseUserShare;
-            operationId = getAsyncStatusMgtService().registerOperationStatus(
-                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
-                            selectiveUserShare.getOrganizationId(), sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), false);
-        } else {
-            operationId = getAsyncStatusMgtService().registerOperationStatus(
-                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
-                            sharingInitiatedOrgId, sharingInitiatedUserId,
-                            entry.getKey().getPolicy().getValue()), false);
+        for (PatchOperationDO patchOperation : patchOperations) {
+            if (isPatchOperationPathRoles(patchOperation.getPath().trim())) {
+                updateRoleAssignmentsOfSharedUser(associatedUserId, sharingInitiatedOrgId, sharingInitiatedUserId,
+                        patchOperation, correlationId);
+            }
         }
-        if (StringUtils.isNotBlank(operationId)) {
-            // Registering an operation requires a valid operation ID.
-            SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
-            asyncOperationStatusList.put(operationId, statusQueue);
-        }
-        return operationId;
     }
 
-    private void registerOperationStatusUnit(String operationId, String resourceId, String targetOrgId, OperationStatus
-            status, String message) throws AsyncOperationStatusMgtException {
+    private void updateRoleAssignmentsOfSharedUser(String associatedUserId, String sharingInitiatedOrgId,
+                                                   String sharingInitiatedUserId, PatchOperationDO patchOperation,
+                                                   String correlationId)
+            throws UserSharingMgtException, OrganizationManagementException, IdentityRoleManagementException {
 
-        if (StringUtils.isBlank(operationId)) {
-            // Skipping registering of unit operations since the operationId is null.
-            return;
+        String orgId = extractOrgIdFromRolesPath(patchOperation.getPath());
+        UserAssociation userAssociation =
+                getOrganizationUserSharingService().getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
+        List<String> roleIds =
+                getRoleIds(castToRoleWithAudienceList(patchOperation.getValues()), sharingInitiatedOrgId);
+        switch (patchOperation.getOperation()) {
+            case ADD:
+                handleRoleAssignmentAddition(userAssociation, sharingInitiatedOrgId, sharingInitiatedUserId, roleIds,
+                        correlationId);
+                break;
+            case REMOVE:
+                handleRoleAssignmentRemoval(userAssociation, sharingInitiatedOrgId, sharingInitiatedUserId, roleIds,
+                        correlationId);
+                break;
         }
-        UnitOperationInitDTO statusDTO = new UnitOperationInitDTO(operationId, resourceId, targetOrgId, status,
-                message);
-        getAsyncStatusMgtService().registerUnitOperationStatus(statusDTO);
-        asyncOperationStatusList.get(operationId).add(status);
+    }
+
+    private void handleRoleAssignmentAddition(UserAssociation userAssociation, String sharingInitiatedOrgId,
+                                              String sharingInitiatedUserId, List<String> roleIds,
+                                              String correlationId) {
+
+        //String operationId = registerOperationStatus(entry, sharingInitiatedOrgId, sharingInitiatedUserId,
+        // correlationId);
+        //UserSharingResultDO userSharingResultDO = new UserSharingResultDO(operationId,
+        // userAssociation.getAssociatedUserId(), true, false, OperationStatus.SUCCESS, StringUtils.EMPTY);
+
+        assignRolesToTheSharedUser(userAssociation, sharingInitiatedOrgId, roleIds, tempUserSharingResultDO());
+    }
+
+    /**
+     * Creates a temporary UserSharingResultDO object with default values.
+     * This method will be removed in a subsequent commit where the notification framework will be removed as well.
+     *
+     * @return A UserSharingResultDO object with default values.
+     */
+    private UserSharingResultDO tempUserSharingResultDO() {
+
+        return new UserSharingResultDO("", "", true, false, OperationStatus.SUCCESS, StringUtils.EMPTY);
+    }
+
+    private void handleRoleAssignmentRemoval(UserAssociation userAssociation, String sharingInitiatedOrgId,
+                                             String sharingInitiatedUserId, List<String> roleIds, String correlationId)
+            throws OrganizationManagementException, IdentityRoleManagementException {
+
+        unAssignOldSharedRolesFromSharedUser(userAssociation, roleIds);
     }
 
     /**
@@ -815,6 +939,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         return organizationUserSharingService.getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
     }
 
+    // Business Logic Helper Methods.
+
     /**
      * Checks if the specified user is a resident user in the given organization.
      *
@@ -904,6 +1030,47 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getMessage(), sharingInitiatedOrgId);
             throw new UserSharingMgtServerException(ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS, errorMessage);
         }
+    }
+
+    // Operation Status Management Methods.
+
+    private String registerOperationStatus(Map.Entry<BaseUserShare, List<String>> entry, String sharingInitiatedOrgId,
+                                           String sharingInitiatedUserId, String correlationId)
+            throws AsyncOperationStatusMgtException {
+
+        BaseUserShare baseUserShare = entry.getKey();
+        String operationId;
+        if (baseUserShare instanceof SelectiveUserShare) {
+            SelectiveUserShare selectiveUserShare = (SelectiveUserShare) baseUserShare;
+            operationId = getAsyncStatusMgtService().registerOperationStatus(
+                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
+                            selectiveUserShare.getOrganizationId(), sharingInitiatedUserId,
+                            entry.getKey().getPolicy().getValue()), false);
+        } else {
+            operationId = getAsyncStatusMgtService().registerOperationStatus(
+                    new OperationInitDTO(correlationId, B2B_USER_SHARE, B2B_USER, entry.getKey().getUserId(),
+                            sharingInitiatedOrgId, sharingInitiatedUserId,
+                            entry.getKey().getPolicy().getValue()), false);
+        }
+        if (StringUtils.isNotBlank(operationId)) {
+            // Registering an operation requires a valid operation ID.
+            SubOperationStatusQueue statusQueue = new SubOperationStatusQueue();
+            asyncOperationStatusList.put(operationId, statusQueue);
+        }
+        return operationId;
+    }
+
+    private void registerOperationStatusUnit(String operationId, String resourceId, String targetOrgId, OperationStatus
+            status, String message) throws AsyncOperationStatusMgtException {
+
+        if (StringUtils.isBlank(operationId)) {
+            // Skipping registering of unit operations since the operationId is null.
+            return;
+        }
+        UnitOperationInitDTO statusDTO = new UnitOperationInitDTO(operationId, resourceId, targetOrgId, status,
+                message);
+        getAsyncStatusMgtService().registerUnitOperationStatus(statusDTO);
+        asyncOperationStatusList.get(operationId).add(status);
     }
 
     // Resource Sharing Policy Management Methods.
@@ -1246,6 +1413,29 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
     }
 
+    /**
+     * Removes roles that are no longer assigned to the shared user.
+     *
+     * @param userAssociation  The user association object containing user and organization details.
+     * @param rolesToBeRemoved The list of role IDs to be removed.
+     */
+    private void unAssignOldSharedRolesFromSharedUser(UserAssociation userAssociation, List<String> rolesToBeRemoved)
+            throws OrganizationManagementException, IdentityRoleManagementException {
+
+        String userId = userAssociation.getUserId();
+        String orgId = userAssociation.getOrganizationId();
+        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+
+        Map<String, String> mainRoleToSharedRoleMappingsBySubOrg =
+                getRoleManagementService().getMainRoleToSharedRoleMappingsBySubOrg(rolesToBeRemoved,
+                        targetOrgTenantDomain);
+
+        for (String roleId : mainRoleToSharedRoleMappingsBySubOrg.values()) {
+            getRoleManagementService().updateUserListOfRole(roleId, Collections.emptyList(),
+                    Collections.singletonList(userId), targetOrgTenantDomain);
+        }
+    }
+
     private String buildPartialResultMessageForFailedRoles(List<String> failedAssignedRoles) {
 
         StringBuilder error = new StringBuilder("User shared and Failed assigning roles: ");
@@ -1256,6 +1446,24 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             }
         }
         return error.toString();
+    }
+
+    private List<RoleWithAudienceDO> castToRoleWithAudienceList(Object values) {
+
+        List<RoleWithAudienceDO> roleWithAudienceList = new ArrayList<>();
+        if (values instanceof List<?>) {
+            for (Object value : (List<?>) values) {
+                if (value instanceof RoleWithAudienceDO) {
+                    RoleWithAudienceDO roleWithAudience = new RoleWithAudienceDO();
+                    roleWithAudience.setRoleName(((RoleWithAudienceDO) value).getRoleName());
+                    roleWithAudience.setAudienceName(((RoleWithAudienceDO) value).getAudienceName());
+                    roleWithAudience.setAudienceType(((RoleWithAudienceDO) value).getAudienceType());
+                    roleWithAudienceList.add(roleWithAudience);
+                }
+            }
+        }
+        LOG.debug("Sized role with audience list: " + roleWithAudienceList.size());
+        return roleWithAudienceList;
     }
 
     // Async helpers.
@@ -1301,7 +1509,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         return MDC.get(CORRELATION_ID_MDC) != null;
     }
 
-    // Validation Methods.
+    // User Share Input Validation Methods.
 
     private <T extends UserCriteriaType> void validateUserShareInput(BaseUserShareDO<T> baseUserShareDO)
             throws UserSharingMgtClientException {
@@ -1347,6 +1555,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         validateRoleAssignments(generalUserShareV2DO.getRoleAssignments());
     }
 
+    // User Unshare Input Validation Methods.
+
     private <T extends UserCriteriaType> void validateUserUnshareInput(BaseUserUnshareDO<T> userUnshareDO)
             throws UserSharingMgtClientException {
 
@@ -1391,6 +1601,142 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         if (!generalUserUnshareDO.getUserCriteria().containsKey(USER_IDS) ||
                 generalUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
             throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
+        }
+    }
+
+    // Role Assignment Update Input Validation Methods.
+
+    private void validateUpdateRoleAssignmentInput(UserSharePatchDO userSharePatchDO)
+            throws UserSharingMgtClientException {
+
+        // 1. validate UserSharePatchDO is not null.
+        validateNotNull(userSharePatchDO, ERROR_CODE_REQUEST_BODY_NULL);
+
+        // 2. validate user criteria.
+        validateNotNull(userSharePatchDO.getUserCriteria(), ERROR_CODE_USER_CRITERIA_INVALID);
+        if (!userSharePatchDO.getUserCriteria().containsKey(USER_IDS) ||
+                userSharePatchDO.getUserCriteria().get(USER_IDS) == null) {
+            throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
+        }
+
+        // 3. validate operations is not null (empty list is okay).
+        validateNotNull(userSharePatchDO.getPatchOperations(), ERROR_CODE_PATCH_OPERATIONS_NULL);
+
+        // 4. for each operation object.
+        for (PatchOperationDO patchOperation : userSharePatchDO.getPatchOperations()) {
+
+            // 4.1 validate PatchOperation object is not null.
+            validateNotNull(patchOperation, ERROR_CODE_PATCH_OPERATION_NULL);
+
+            // 4.2 validate operation is a valid value of enum
+            validateNotNull(patchOperation.getOperation(), ERROR_CODE_PATCH_OPERATION_OP_NULL);
+            validatePatchOperationValue(patchOperation.getOperation());
+
+            // 4.3 validate path is a currently supported path
+            validateNotNull(patchOperation.getPath(), ERROR_CODE_PATCH_OPERATION_PATH_NULL);
+            String pathType = resolveAndValidatePatchPath(patchOperation.getPath());
+
+            // 4.4 values cannot be null (empty list is okay)
+            validateNotNull(patchOperation.getValues(), ERROR_CODE_PATCH_OPERATION_VALUE_NULL);
+
+            // 4.4.1 If the path is roles, validate value list as RoleWithAudienceDO list
+            validatePatchValuesAgainstPath(pathType, patchOperation.getValues());
+        }
+    }
+
+    private void validatePatchOperationValue(UserSharePatchOperation operation) throws UserSharingMgtClientException {
+
+        if (operation != UserSharePatchOperation.ADD && operation != UserSharePatchOperation.REMOVE) {
+            throwValidationException(ERROR_CODE_PATCH_OPERATION_OP_INVALID);
+        }
+    }
+
+    private String resolveAndValidatePatchPath(String path) throws UserSharingMgtClientException {
+
+        String trimmed = path.trim();
+        if (trimmed.isEmpty()) {
+            throwValidationException(ERROR_CODE_PATCH_OPERATION_PATH_INVALID);
+        }
+
+        // Patch operation path: roles (patching roles)
+        if (isPatchOperationPathRoles(trimmed)) {
+            validateOrgRolesPath(trimmed);
+            return PATCH_PATH_ROLES;
+        }
+
+        throwValidationException(ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED);
+        return PATCH_PATH_NONE;
+    }
+
+    private boolean isPatchOperationPathRoles(String path) {
+
+        return path.startsWith(PATCH_PATH_PREFIX) && path.endsWith(PATCH_PATH_SUFFIX_ROLES);
+    }
+
+    private void validateOrgRolesPath(String path) throws UserSharingMgtClientException {
+
+        // organizations[orgId eq <uuid>].roles.
+        String orgId = extractOrgIdFromRolesPath(path);
+
+        if (orgId.isEmpty()) {
+            throwValidationException(ERROR_CODE_ORG_ID_NULL);
+        }
+
+        validateUuid(orgId);
+    }
+
+    private String extractOrgIdFromRolesPath(String path) {
+
+        return path.substring(PATCH_PATH_PREFIX.length(), path.length() - PATCH_PATH_SUFFIX_ROLES.length()).trim();
+    }
+
+    private void validatePatchValuesAgainstPath(String pathType, Object values)
+            throws UserSharingMgtClientException {
+
+        switch (pathType) {
+            case PATCH_PATH_ROLES:
+                validateRoleWithAudienceValues(values);
+                break;
+            default:
+                // Should not happen since resolveAndValidatePatchPath guards this.
+                throwValidationException(ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED);
+        }
+    }
+
+    private void validateRoleWithAudienceValues(Object values) throws UserSharingMgtClientException {
+
+        // value can be empty list, but must be a list
+        if (!(values instanceof List)) {
+            throwValidationException(ERROR_CODE_PATCH_OPERATION_VALUE_TYPE_INVALID);
+        }
+
+        List<?> list = (List<?>) values;
+
+        // Empty list is allowed (your requirement)
+        for (Object item : list) {
+            if (!(item instanceof RoleWithAudienceDO)) {
+                throwValidationException(ERROR_CODE_PATCH_OPERATION_ROLES_VALUE_CONTENT_INVALID);
+            }
+
+            RoleWithAudienceDO role = (RoleWithAudienceDO) item;
+            validateNotNull(role.getRoleName(), ERROR_CODE_ROLE_NAME_NULL);
+            validateNotNull(role.getAudienceName(), ERROR_CODE_AUDIENCE_NAME_NULL);
+            validateNotNull(role.getAudienceType(), ERROR_CODE_AUDIENCE_TYPE_NULL);
+        }
+    }
+
+    // Helper Validation Methods.
+
+    private void validateUuid(String uuid) throws UserSharingMgtClientException {
+
+        if (uuid == null || uuid.trim().isEmpty()) {
+            throwValidationException(ERROR_CODE_ORG_ID_NULL);
+        }
+
+        try {
+            java.util.UUID.fromString(uuid);
+        } catch (IllegalArgumentException e) {
+            throwValidationException(ERROR_CODE_ORG_ID_INVALID_FORMAT);
         }
     }
 

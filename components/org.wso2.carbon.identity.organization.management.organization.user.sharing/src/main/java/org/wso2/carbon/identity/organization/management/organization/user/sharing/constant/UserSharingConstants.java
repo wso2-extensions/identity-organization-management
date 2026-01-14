@@ -42,6 +42,11 @@ public class UserSharingConstants {
     public static final String SHARING_TYPE_INVITED = "Invited";
     public static final String SHARING_TYPE_INHERITED = "Inherited"; //Sub-org Owner.
 
+    public static final String PATCH_PATH_ROLES = "roles";
+    public static final String PATCH_PATH_NONE = "none";
+    public static final String PATCH_PATH_PREFIX = "organizations[orgId eq ";
+    public static final String PATCH_PATH_SUFFIX_ROLES = "].roles";
+
     public static final String NULL_POLICY = "Policy is null";
 
     public static final String SHARING_ERROR_PREFIX = "OUS-";
@@ -255,7 +260,48 @@ public class UserSharingConstants {
                 "The audience with the provided name and type could not be found."),
         ERROR_CODE_ROLE_NOT_FOUND("10051",
                 "Role '%s' not found in audience '%s':'%s'.",
-                "The role with the provided name and audience could not be found.");
+                "The role with the provided name and audience could not be found."),
+        ERROR_CODE_REQUEST_BODY_NULL("10052",
+                "Request body is null.",
+                "The request body provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATIONS_NULL("10053",
+                "Patch operations list is null.",
+                "The patch operations list provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_NULL("10054",
+                "Patch operation is null.",
+                "One of the patch operations provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_OP_NULL("10055",
+                "Patch operation 'op' is null.",
+                "The 'op' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_PATH_NULL("10056",
+                "Patch operation 'path' is null.",
+                "The 'path' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_VALUE_NULL("10057",
+                "Patch operation 'value' is null.",
+                "The 'value' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_OP_INVALID("10058",
+                "Invalid patch operation 'op': %s.",
+                "The 'op' field in one of the patch operations is invalid. Allowed values are 'add' and 'remove'."),
+        ERROR_CODE_PATCH_OPERATION_PATH_INVALID("10059",
+                "Invalid patch operation 'path': %s.",
+                "The 'path' field in one of the patch operations is invalid. Allowed values are : 'roles'."),
+        ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED("10060",
+                "Unsupported patch operation 'path': %s.",
+                "The 'path' field in one of the patch operations is not supported for the user " +
+                        "share update operation."),
+        ERROR_CODE_ORG_ID_INVALID_FORMAT("10061",
+                "Invalid organization ID format: %s.",
+                "The organization ID provided is in an invalid format and cannot be processed."),
+        ERROR_CODE_PATCH_OPERATION_VALUE_TYPE_INVALID("10062",
+                "Invalid patch operation 'value' type.",
+                "The 'value' field in a patch operation must be a JSON array (list)."),
+        ERROR_CODE_PATCH_OPERATION_ROLES_VALUE_CONTENT_INVALID("10063",
+                "Invalid patch operation 'value' for roles path.",
+                "For the roles patch path, the 'value' field must be a list of role assignments, where " +
+                        "each entry contains a role name, audience name, and audience type."),
+        ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE("10064",
+                "Error occurred during user share role assignment update.",
+                "An unexpected error occurred while updating role assignments for the shared user.");
 
         private final String code;
         private final String message;
