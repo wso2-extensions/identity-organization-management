@@ -77,7 +77,7 @@ public interface UserSharingPolicyHandlerServiceV2 {
      *                         configuration.
      * @throws UserSharingMgtException If an error occurs while processing the patch operations.
      */
-    void updateRoleAssignmentV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException;
+    void updateSharedUserAttributesV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException;
 
     /**
      * Retrieves the organizations shared with a specific user based on the provided criteria.
