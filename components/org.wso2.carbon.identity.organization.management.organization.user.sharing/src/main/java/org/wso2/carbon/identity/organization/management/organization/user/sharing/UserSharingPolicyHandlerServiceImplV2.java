@@ -59,7 +59,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     @Override
-    public void updateRoleAssignmentV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException {
+    public void updateSharedUserAttributesV2(UserSharePatchDO userSharePatchDO) throws UserSharingMgtException {
 
         // todo: Implement the logic to update role assignments for shared users in v2.
     }
