@@ -27,11 +27,11 @@ public class GetUserSharedOrgsDO {
 
     private String userId;
     private String parentOrgId;
-    private String before;
-    private String after;
+    private int before;
+    private int after;
     private String filter;
-    private Integer limit;
-    private Boolean recursive;
+    private int limit;
+    private boolean recursive;
     private List<String> attributes;
 
     public GetUserSharedOrgsDO() {
@@ -44,8 +44,8 @@ public class GetUserSharedOrgsDO {
         this.parentOrgId = parentOrgId;
     }
 
-    public GetUserSharedOrgsDO(String userId, String parentOrgId, String before, String after, String filter,
-                               Integer limit, Boolean recursive, List<String> attributes) {
+    public GetUserSharedOrgsDO(String userId, String parentOrgId, int before, int after, String filter,
+                               int limit, boolean recursive, List<String> attributes) {
 
         this.userId = userId;
         this.parentOrgId = parentOrgId;
@@ -77,22 +77,22 @@ public class GetUserSharedOrgsDO {
         this.parentOrgId = parentOrgId;
     }
 
-    public String getBefore() {
+    public int getBefore() {
 
         return before;
     }
 
-    public void setBefore(String before) {
+    public void setBefore(int before) {
 
         this.before = before;
     }
 
-    public String getAfter() {
+    public int getAfter() {
 
         return after;
     }
 
-    public void setAfter(String after) {
+    public void setAfter(int after) {
 
         this.after = after;
     }
@@ -107,22 +107,22 @@ public class GetUserSharedOrgsDO {
         this.filter = filter;
     }
 
-    public Integer getLimit() {
+    public int getLimit() {
 
         return limit;
     }
 
-    public void setLimit(Integer limit) {
+    public void setLimit(int limit) {
 
         this.limit = limit;
     }
 
-    public Boolean getRecursive() {
+    public boolean getRecursive() {
 
         return recursive;
     }
 
-    public void setRecursive(Boolean recursive) {
+    public void setRecursive(boolean recursive) {
 
         this.recursive = recursive;
     }
