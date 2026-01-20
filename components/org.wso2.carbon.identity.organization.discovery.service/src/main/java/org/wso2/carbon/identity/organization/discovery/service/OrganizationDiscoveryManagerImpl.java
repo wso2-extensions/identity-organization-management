@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationDiscoveryDAO;
@@ -69,6 +70,13 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 /**
  * Implementation of Organization Discovery Manager Interface.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.discovery.service.OrganizationDiscoveryManager",
+                "service.scope=singleton"
+        }
+)
 public class OrganizationDiscoveryManagerImpl implements OrganizationDiscoveryManager {
 
     private static final OrganizationDiscoveryDAO organizationDiscoveryDAO = new OrganizationDiscoveryDAOImpl();
