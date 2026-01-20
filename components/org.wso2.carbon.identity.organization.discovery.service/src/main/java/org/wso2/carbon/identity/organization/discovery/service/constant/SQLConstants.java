@@ -55,7 +55,8 @@ public class SQLConstants {
 
     public static final String GET_DISCOVERY_ORGANIZATION_IDS_MSSQL = "SELECT DISTINCT UM_ORG_ID, " + 
             "UM_ORG.UM_CREATED_TIME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE %s " + 
-            "UM_ROOT_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + "; UM_ORG.UM_CREATED_TIME DESC " + 
+            "UM_ROOT_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + 
+            "; ORDER BY UM_ORG.UM_CREATED_TIME DESC " + 
             "OFFSET :" + SQLPlaceholders.DB_OFFSET + "; ROWS FETCH NEXT :" + SQLPlaceholders.DB_LIMIT + "; ROWS ONLY";
 
     public static final String GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES = "SELECT UM_ORG_ID, UM_DISCOVERY_TYPE, " +
