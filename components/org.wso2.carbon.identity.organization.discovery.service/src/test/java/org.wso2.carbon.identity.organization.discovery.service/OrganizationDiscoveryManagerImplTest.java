@@ -414,6 +414,7 @@ public class OrganizationDiscoveryManagerImplTest {
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
     }
+    
     @Test
     public void testGetOrganizationsDiscoveryAttributesSortedByCreatedTime() throws Exception {
 
