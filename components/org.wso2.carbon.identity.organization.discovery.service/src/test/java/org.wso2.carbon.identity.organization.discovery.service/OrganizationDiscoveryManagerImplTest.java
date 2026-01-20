@@ -49,6 +49,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
+
 /**
  * Unit tests for Organization Discovery Manager.
  */
@@ -414,7 +415,7 @@ public class OrganizationDiscoveryManagerImplTest {
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
     }
-    
+
     @Test
     public void testGetOrganizationsDiscoveryAttributesSortedByCreatedTime() throws Exception {
 
