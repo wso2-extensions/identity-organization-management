@@ -49,7 +49,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
-
+/**
+ * Unit tests for Organization Discovery Manager.
+ */
 public class OrganizationDiscoveryManagerImplTest {
 
     private static final String DISCOVERY_ATTRIBUTE_TYPE = "emailDomain";
@@ -411,5 +413,81 @@ public class OrganizationDiscoveryManagerImplTest {
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
+    }
+    @Test
+    public void testGetOrganizationsDiscoveryAttributesSortedByCreatedTime() throws Exception {
+
+        String orgOldId = "10084a8d-113f-4211-a0d5-efe36b082210";
+        String orgNewId = "90084a8d-113f-4211-a0d5-efe36b082219";
+
+        //Manually insert Organizations (Type/Status included)
+        try (java.sql.Connection connection = TestUtils.dataSourceMap.get(TestUtils.DB_NAME).getConnection();
+             java.sql.PreparedStatement ps = connection.prepareStatement(
+                     "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_CREATED_TIME, UM_LAST_MODIFIED, " + 
+                     "UM_ORG_TYPE, UM_STATUS) VALUES (?, ?, ?, ?, ?, ?)")) {
+
+            // Insert OLD Organization (2020)
+            ps.setString(1, orgOldId);
+            ps.setString(2, "OldOrg");
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf("2020-01-01 12:00:00"));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf("2020-01-01 12:00:00"));
+            ps.setString(5, "STRUCTURAL");
+            ps.setString(6, "ACTIVE");
+            ps.executeUpdate();
+
+            // Insert NEW Organization (2025)
+            ps.setString(1, orgNewId);
+            ps.setString(2, "NewOrg");
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf("2025-01-01 12:00:00"));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf("2025-01-01 12:00:00"));
+            ps.setString(5, "STRUCTURAL");
+            ps.setString(6, "ACTIVE");
+            ps.executeUpdate();
+        }
+
+        // Org Old gets "old.com"
+        List<OrgDiscoveryAttribute> attributesOld = new ArrayList<>();
+        OrgDiscoveryAttribute attrOld = new OrgDiscoveryAttribute();
+        attrOld.setType(DISCOVERY_ATTRIBUTE_TYPE);
+        attrOld.setValues(Collections.singletonList("old.com"));
+        attributesOld.add(attrOld);
+        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(orgOldId, attributesOld);
+
+        // Org New gets "new.com"
+        List<OrgDiscoveryAttribute> attributesNew = new ArrayList<>();
+        OrgDiscoveryAttribute attrNew = new OrgDiscoveryAttribute();
+        attrNew.setType(DISCOVERY_ATTRIBUTE_TYPE);
+        attrNew.setValues(Collections.singletonList("new.com"));
+        attributesNew.add(attrNew);
+        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(orgNewId, attributesNew);
+
+        // Execute the Search (No filter = returns ALL)
+        // This triggers your SQL "ORDER BY CREATED_TIME DESC"
+        DiscoveryOrganizationsResult result = organizationDiscoveryManager
+                .getOrganizationsDiscoveryAttributes(10, 0, null);
+
+        // Verify the Order
+        List<org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery> orgs =
+                result.getOrganizations();
+
+        // The list will contain other orgs from other tests too, 
+        // so we must find OUR orgs and check their relative order.
+        int indexOld = -1;
+        int indexNew = -1;
+
+        for (int i = 0; i < orgs.size(); i++) {
+            if (orgs.get(i).getOrganizationId().equals(orgOldId)) {
+                indexOld = i;
+            }
+            if (orgs.get(i).getOrganizationId().equals(orgNewId)) {
+                indexNew = i;
+            }
+        }
+
+        Assert.assertTrue(indexNew != -1 && indexOld != -1, "Both organizations should be in the result list");
+        
+        // The New Index must be smaller (appear earlier) than the Old Index
+        Assert.assertTrue(indexNew < indexOld, 
+                "Sorting Failed! NewOrg (Index " + indexNew + ") should appear before OldOrg (Index " + indexOld + ")");
     }
 }
