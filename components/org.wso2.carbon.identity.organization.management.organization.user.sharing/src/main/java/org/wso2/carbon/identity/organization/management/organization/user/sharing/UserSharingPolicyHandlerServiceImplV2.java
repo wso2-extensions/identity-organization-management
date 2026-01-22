@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +26,11 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
+import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
+import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.core.model.OperationNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
@@ -46,12 +52,14 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GetUserSharedOrgsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.PatchOperationDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseOrgDetailsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleAssignmentDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.RoleWithAudienceDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareOrgDetailsV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareV2DO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SharingModeDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharePatchDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
@@ -59,6 +67,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.SharingInitiatorContext;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -69,6 +78,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -76,12 +86,15 @@ import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -100,8 +113,14 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_FILTER_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTES_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTE_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_AUDIENCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_SHARE;
@@ -127,6 +146,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_ID_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
@@ -139,9 +159,27 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_ROLES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_SUFFIX_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SP_SHARED_ROLE_INCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SP_SHARED_SHARING_MODE_INCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_SHARING_LOG_TEMPLATE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ASC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.DESC_SORT_ORDER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_FORMAT;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ATTRIBUTES_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ATTRIBUTES_FIELD_PREFIX;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_NAME_FIELD;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_AFTER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_BEFORE;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 import static org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util.OrgResourceHierarchyTraverseUtil.getOrganizationManager;
 
 /**
@@ -152,6 +190,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImplV2.class);
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
+    private static final Set<String> SUPPORTED_GET_ATTRIBUTES =
+            new HashSet<>(Arrays.asList(SP_SHARED_SHARING_MODE_INCLUDED_KEY, SP_SHARED_ROLE_INCLUDED_KEY));
 
     @Override
     public void populateSelectiveUserShareV2(SelectiveUserShareV2DO selectiveUserShareV2DO)
@@ -329,8 +369,59 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     public ResponseSharedOrgsV2DO getUserSharedOrganizationsV2(GetUserSharedOrgsDO getUserSharedOrgsDO)
             throws UserSharingMgtException {
 
-        // todo: Implement the logic to get user shared organizations in v2.
-        return null;
+        LOG.debug("Starting user share role assignment get operation.");
+
+        validateSharedUserGetInput(getUserSharedOrgsDO);
+
+        int limit = getUserSharedOrgsDO.getLimit();
+        int beforeCursor = getUserSharedOrgsDO.getBefore();
+        int afterCursor = getUserSharedOrgsDO.getAfter();
+        boolean recursive = getUserSharedOrgsDO.getRecursive();
+        String filter = getUserSharedOrgsDO.getFilter();
+        String mainUserId = getUserSharedOrgsDO.getUserId();
+        List<String> includedAttributes = getUserSharedOrgsDO.getAttributes();
+        List<ResponseOrgDetailsV2DO> sharedOrgsList = new ArrayList<>();
+
+        try {
+            // Determine sort order based on pagination cursors.
+            String sortOrder = (beforeCursor != 0) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
+            List<ExpressionNode> expressionNodes = getExpressionNodes(filter, afterCursor, beforeCursor);
+
+            String parentOrgId = resolveParentOrgId(expressionNodes, getUserSharedOrgsDO);
+            List<String> childOrgIds = StringUtils.isNotBlank(parentOrgId)
+                    ? getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive)
+                    : new ArrayList<>();
+
+            SharingModeDO generalSharingMode = resolveGeneralSharingMode(includedAttributes, parentOrgId, mainUserId);
+
+            int fetchLimit = (limit == 0) ? limit : limit + 1;
+            List<UserAssociation> userAssociations =
+                    getOrganizationUserSharingService().getUserAssociationsOfGivenUser(mainUserId, parentOrgId,
+                            childOrgIds, expressionNodes, sortOrder, fetchLimit);
+
+            if (CollectionUtils.isEmpty(userAssociations)) {
+                return buildEmptyResponseToGet(generalSharingMode);
+            }
+
+            boolean hasMoreItems = (limit != 0) && (userAssociations.size() > limit);
+            if (hasMoreItems) {
+                userAssociations.remove(userAssociations.size() - 1); // Remove the "probe" item.
+            }
+
+            // If we fetched in ASC order (for 'before' cursor), reverse back to DESC for display.
+            if (beforeCursor != 0) {
+                Collections.reverse(userAssociations);
+            }
+
+            for (UserAssociation userAssociation : userAssociations) {
+                sharedOrgsList.add(resolveSharedOrgDetails(userAssociation, includedAttributes));
+            }
+
+            return buildResponseWithCursors(sharedOrgsList, userAssociations, generalSharingMode, beforeCursor,
+                    afterCursor, hasMoreItems);
+        } catch (OrganizationManagementException e) {
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER, e);
+        }
     }
 
     // Asynchronous Processing Methods.
@@ -679,6 +770,478 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE);
             }
         }
+    }
+
+    // GET operation helper methods.
+
+    /**
+     * construct the final response object with calculated cursors.
+     *
+     * @param sharedOrgsList     List of shared organizations.
+     * @param userAssociations   List of user associations.
+     * @param generalSharingMode General sharing mode.
+     * @param before             Before cursor.
+     * @param after              After cursor.
+     * @param hasMoreItems       Flag indicating if there are more items.
+     * @return ResponseSharedOrgsV2DO.
+     */
+    private ResponseSharedOrgsV2DO buildResponseWithCursors(List<ResponseOrgDetailsV2DO> sharedOrgsList,
+                                                            List<UserAssociation> userAssociations,
+                                                            SharingModeDO generalSharingMode,
+                                                            int before,
+                                                            int after,
+                                                            boolean hasMoreItems) {
+
+        ResponseSharedOrgsV2DO response = new ResponseSharedOrgsV2DO();
+        response.setSharedOrgs(sharedOrgsList);
+        response.setSharingMode(generalSharingMode);
+
+        int nextToken = 0;
+        int previousToken = 0;
+
+        // Is First Page? (No cursors provided OR provided 'before' but hit the start)
+        boolean isFirstPage = (before == 0 && after == 0) || (before != 0 && !hasMoreItems);
+
+        // Is Last Page? (No more items found AND (provided 'after' OR provided 'before' which hit the end))
+        boolean isLastPage = !hasMoreItems && (after != 0 || before == 0);
+
+        if (!isFirstPage && !userAssociations.isEmpty()) {
+            previousToken = userAssociations.get(0).getId();
+        }
+
+        if (!isLastPage && !userAssociations.isEmpty()) {
+            nextToken = userAssociations.get(userAssociations.size() - 1).getId();
+        }
+
+        response.setNextPageCursor(nextToken);
+        response.setPreviousPageCursor(previousToken);
+
+        return response;
+    }
+
+    /**
+     * Build an empty response for get user shared organizations.
+     *
+     * @param sharingMode Sharing mode.
+     * @return ResponseSharedOrgsV2DO.
+     */
+    private ResponseSharedOrgsV2DO buildEmptyResponseToGet(SharingModeDO sharingMode) {
+
+        ResponseSharedOrgsV2DO response = new ResponseSharedOrgsV2DO();
+        response.setSharingMode(sharingMode);
+        response.setSharedOrgs(Collections.emptyList());
+        response.setNextPageCursor(0);
+        response.setPreviousPageCursor(0);
+        return response;
+    }
+
+    /**
+     * Resolves the parent organization ID from either the filter expression or the input object.
+     *
+     * @param expressionNodes     List of expression nodes from the filter.
+     * @param getUserSharedOrgsDO Input data object.
+     * @return Resolved parent organization ID.
+     * @throws OrganizationManagementException OrganizationManagementException.
+     */
+    private String resolveParentOrgId(List<ExpressionNode> expressionNodes, GetUserSharedOrgsDO getUserSharedOrgsDO)
+            throws OrganizationManagementException {
+
+        // Try to get ID from expression
+        Optional<String> optionalParentId = removeAndGetOrganizationIdFromTheExpressionNodeList(expressionNodes);
+        if (optionalParentId.isPresent()) {
+            return optionalParentId.get();
+        }
+
+        // Try to get Name from expression and resolve to ID
+        Optional<String> optionalOrgName = removeAndGetOrganizationNameFromTheExpressionNodeList(expressionNodes);
+        if (optionalOrgName.isPresent()) {
+            return getOrganizationManager().getOrganizationIdByName(optionalOrgName.get());
+        }
+
+        return getUserSharedOrgsDO.getParentOrgId(); // null validation has been done in validateSharedUserGetInput.
+    }
+
+    /**
+     * Resolve shared organization details from user association.
+     *
+     * @param userAssociation        User association.
+     * @param includedAttributesList List of included attributes.
+     * @return ResponseOrgDetailsV2DO.
+     * @throws OrganizationManagementException OrganizationManagementException.
+     * @throws UserSharingMgtException         UserSharingMgtException.
+     */
+    private ResponseOrgDetailsV2DO resolveSharedOrgDetails(UserAssociation userAssociation,
+                                                           List<String> includedAttributesList)
+            throws OrganizationManagementException, UserSharingMgtException {
+
+        ResponseOrgDetailsV2DO responseOrgDetailsV2DO = new ResponseOrgDetailsV2DO();
+        responseOrgDetailsV2DO.setUserId(userAssociation.getAssociatedUserId());
+        responseOrgDetailsV2DO.setSharedUserId(userAssociation.getUserId());
+        responseOrgDetailsV2DO.setSharedType(userAssociation.getSharedType());
+
+        Organization organization =
+                getOrganizationManager().getOrganization(userAssociation.getOrganizationId(), true, false);
+
+        responseOrgDetailsV2DO.setOrganizationId(organization.getId());
+        responseOrgDetailsV2DO.setOrganizationName(organization.getName());
+        responseOrgDetailsV2DO.setOrganizationHandle(organization.getOrganizationHandle());
+        responseOrgDetailsV2DO.setOrganizationStatus(organization.getStatus());
+        responseOrgDetailsV2DO.setOrganizationReference(getOrganizationReference(organization));
+        responseOrgDetailsV2DO.setParentOrganizationId(
+                organization.getParent() != null ? organization.getParent().getId() : null);
+        responseOrgDetailsV2DO.setHasChildren(organization.hasChildren());
+        responseOrgDetailsV2DO.setDepthFromRoot(
+                getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId()));
+        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+            SharingModeDO sharingModeDO =
+                    resolveSelectiveSharingMode(organization.getId(), userAssociation.getAssociatedUserId(),
+                            organization.getId());
+            responseOrgDetailsV2DO.setSharingModeDO(sharingModeDO);
+        }
+        if (includedAttributesList.contains(SP_SHARED_ROLE_INCLUDED_KEY)) {
+            responseOrgDetailsV2DO.setRoleWithAudienceDOList(
+                    getAssignedSharedRolesForSharedUserInOrganization(userAssociation, organization.getId()));
+        }
+
+        return responseOrgDetailsV2DO;
+
+    }
+
+    /**
+     * Get organization reference URL.
+     *
+     * @param organization Organization.
+     * @return Organization reference URL.
+     */
+    private String getOrganizationReference(Organization organization) {
+
+        return "/t/" + organization.getName() + "/api/server/v1/organizations/" + organization.getId();
+    }
+
+    /**
+     * Get assigned shared roles for a shared user in an organization.
+     *
+     * @param userAssociation User association.
+     * @param orgId           Organization ID.
+     * @return List of RoleWithAudienceDO.
+     * @throws UserSharingMgtException UserSharingMgtException.
+     */
+    private List<RoleWithAudienceDO> getAssignedSharedRolesForSharedUserInOrganization(UserAssociation userAssociation,
+                                                                                       String orgId)
+            throws UserSharingMgtException {
+
+        try {
+            List<RoleWithAudienceDO> roleWithAudienceList = new ArrayList<>();
+
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+
+            String usernameWithDomain = userIDResolver.getNameByID(userAssociation.getUserId(), tenantDomain);
+            String username = UserCoreUtil.removeDomainFromName(usernameWithDomain);
+            String domainName = UserCoreUtil.extractDomainFromName(usernameWithDomain);
+
+            List<String> sharedRoleIdsInOrg =
+                    getOrganizationUserSharingService().getRolesSharedWithUserInOrganization(username, tenantId,
+                            domainName);
+
+            for (String sharedRoleId : sharedRoleIdsInOrg) {
+                Role role = getRoleManagementService().getRole(sharedRoleId, tenantDomain);
+                RoleWithAudienceDO roleWithAudience = new RoleWithAudienceDO();
+                roleWithAudience.setRoleName(role.getName());
+                roleWithAudience.setAudienceName(role.getAudienceName());
+                roleWithAudience.setAudienceType(role.getAudience());
+                roleWithAudienceList.add(roleWithAudience);
+            }
+
+            return roleWithAudienceList;
+        } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            throw new UserSharingMgtClientException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
+        }
+    }
+
+    /**
+     * Resolve general sharing mode for supported future general sharing policies.
+     *
+     * @param includedAttributes List of included attributes.
+     * @param parentOrgId        Parent organization ID.
+     * @param mainUserId         Main user ID.
+     * @return SharingModeDO.
+     * @throws OrganizationManagementException OrganizationManagementException.
+     */
+    private SharingModeDO resolveGeneralSharingMode(List<String> includedAttributes, String parentOrgId,
+                                                    String mainUserId)
+            throws OrganizationManagementException {
+
+        if (includedAttributes.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+            return resolveSharingMode(parentOrgId, mainUserId, false, "");
+        }
+        return null;
+    }
+
+    /**
+     * Resolve selective sharing mode for supported future selective sharing policies.
+     *
+     * @param initiatingOrgId Initiating organization ID.
+     * @param mainUserId      Main user ID.
+     * @param subOrgId        Sub organization ID for selective share.
+     * @return SharingModeDO.
+     * @throws OrganizationManagementException OrganizationManagementException.
+     */
+    private SharingModeDO resolveSelectiveSharingMode(String initiatingOrgId, String mainUserId, String subOrgId)
+            throws OrganizationManagementException {
+
+        return resolveSharingMode(initiatingOrgId, mainUserId, true, subOrgId);
+    }
+
+    /**
+     * Resolve sharing mode if the sharing policy is a future policy.
+     *
+     * @param initiatingOrgId  Initiating organization ID.
+     * @param mainUserId       Main user ID.
+     * @param isSelectiveShare Whether it's a selective share.
+     * @param subOrgId         Sub organization ID for selective share.
+     * @return SharingModeDO.
+     * @throws OrganizationManagementException OrganizationManagementException.
+     */
+    private SharingModeDO resolveSharingMode(String initiatingOrgId, String mainUserId, boolean isSelectiveShare,
+                                             String subOrgId)
+            throws OrganizationManagementException {
+
+        try {
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
+                    = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
+                    initiatingOrgId, USER, mainUserId);
+
+            if (result != null && !result.isEmpty()) {
+                Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry =
+                        result.entrySet().iterator().next();
+                ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                List<SharedResourceAttribute> resourceAttributes = entry.getValue();
+
+                if (isSelectiveShare) {
+                    boolean isPolicyHolderOrg = Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId);
+                    if (resourceSharingPolicy.getSharingPolicy() ==
+                            PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg) {
+                        return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                    }
+                } else {
+                    if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS ||
+                            resourceSharingPolicy.getSharingPolicy() == PolicyEnum.IMMEDIATE_EXISTING_AND_FUTURE_ORGS) {
+                        return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                    }
+                }
+            }
+        } catch (ResourceSharingPolicyMgtException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        } catch (IdentityRoleManagementException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getErrorCode());
+        }
+        return null;
+    }
+
+    /**
+     * Construct SharingModeDO from ResourceSharingPolicy and SharedResourceAttributes.
+     *
+     * @param resourceSharingPolicy ResourceSharingPolicy.
+     * @param resourceAttributes    List of SharedResourceAttribute.
+     * @return SharingModeDO.
+     * @throws IdentityRoleManagementException IdentityRoleManagementException.
+     */
+    private SharingModeDO getSharingModeDO(ResourceSharingPolicy resourceSharingPolicy,
+                                           List<SharedResourceAttribute> resourceAttributes)
+            throws IdentityRoleManagementException {
+
+        SharingModeDO sharingModeDO = new SharingModeDO(resourceSharingPolicy.getSharingPolicy());
+
+        RoleAssignmentDO roleAssignmentDO = new RoleAssignmentDO();
+        roleAssignmentDO.setMode(RoleAssignmentMode.NONE);
+        roleAssignmentDO.setRoles(Collections.emptyList());
+        sharingModeDO.setRoleAssignment(roleAssignmentDO);
+
+        if (resourceAttributes != null && !resourceAttributes.isEmpty()) {
+
+            List<SharedResourceAttribute> roleAttributes = resourceAttributes.stream()
+                    .filter(attr -> attr.getSharedAttributeType() == SharedAttributeType.ROLE)
+                    .collect(Collectors.toList());
+
+            if (!roleAttributes.isEmpty()) {
+                roleAssignmentDO.setMode(RoleAssignmentMode.SELECTED);
+                roleAssignmentDO.setRoles(getRoleWithAudienceFromMainRoleIds(roleAttributes));
+                sharingModeDO.setRoleAssignment(roleAssignmentDO);
+            }
+        }
+
+        return sharingModeDO;
+    }
+
+    /**
+     * Get RoleWithAudienceDO list from main role IDs.
+     *
+     * @param roleAttributes List of SharedResourceAttribute.
+     * @return List of RoleWithAudienceDO.
+     * @throws IdentityRoleManagementException IdentityRoleManagementException.
+     */
+    private List<RoleWithAudienceDO> getRoleWithAudienceFromMainRoleIds(List<SharedResourceAttribute> roleAttributes)
+            throws IdentityRoleManagementException {
+
+        List<RoleWithAudienceDO> roleWithAudiences = new ArrayList<>();
+
+        for (SharedResourceAttribute attribute : roleAttributes) {
+            Role role = getRoleManagementService().getRole(attribute.getSharedAttributeId());
+            if (role != null) {
+                roleWithAudiences.add(
+                        new RoleWithAudienceDO(role.getName(), role.getAudienceName(), role.getAudience()));
+            }
+        }
+
+        return roleWithAudiences;
+    }
+
+    /**
+     * Parses the filter string into a list of expression nodes for pagination and filtering.
+     *
+     * @param filter The filter string.
+     * @param after  The 'after' pagination cursor.
+     * @param before The 'before' pagination cursor.
+     * @return A list of expression nodes.
+     * @throws OrganizationManagementClientException If the filter format is invalid or contains unsupported attributes.
+     */
+    private List<ExpressionNode> getExpressionNodes(String filter, int after, int before)
+            throws OrganizationManagementClientException {
+
+        List<ExpressionNode> expressionNodes = new ArrayList<>();
+        if (StringUtils.isBlank(filter)) {
+            filter = StringUtils.EMPTY;
+        }
+        // paginationSortOrder specifies the sorting order for the pagination cursor.
+        String paginatedFilter = getPaginatedFilterForDescendingOrder(filter, after, before);
+        try {
+            if (StringUtils.isNotBlank(paginatedFilter)) {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(paginatedFilter);
+                Node rootNode = filterTreeBuilder.buildTree();
+                setExpressionNodeList(rootNode, expressionNodes);
+            }
+        } catch (IOException | IdentityException e) {
+            throw handleClientException(ERROR_CODE_INVALID_FILTER_FORMAT);
+        }
+        return expressionNodes;
+    }
+
+    /**
+     * Sets the expression nodes required for the retrieval of shared users from the database.
+     *
+     * @param node       The node.
+     * @param expression The list of expression nodes.
+     */
+    private void setExpressionNodeList(Node node, List<ExpressionNode> expression)
+            throws OrganizationManagementClientException {
+
+        if (node instanceof ExpressionNode) {
+            ExpressionNode expressionNode = (ExpressionNode) node;
+            String attributeValue = expressionNode.getAttributeValue();
+            if (StringUtils.isNotBlank(attributeValue)) {
+                if (attributeValue.startsWith(ORGANIZATION_ATTRIBUTES_FIELD_PREFIX)) {
+                    attributeValue = ORGANIZATION_ATTRIBUTES_FIELD;
+                }
+                if (isFilteringAttributeNotSupported(attributeValue)) {
+                    throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, attributeValue);
+                }
+                expression.add(expressionNode);
+            }
+        } else if (node instanceof OperationNode) {
+            String operation = ((OperationNode) node).getOperation();
+            if (!StringUtils.equalsIgnoreCase(AND, operation)) {
+                throw handleClientException(ERROR_CODE_UNSUPPORTED_COMPLEX_QUERY_IN_FILTER);
+            }
+            setExpressionNodeList(node.getLeftNode(), expression);
+            setExpressionNodeList(node.getRightNode(), expression);
+        }
+    }
+
+    /**
+     * Appends pagination conditions to the filter for descending order.
+     *
+     * @param paginatedFilter The existing filter string.
+     * @param after           The 'after' pagination cursor.
+     * @param before          The 'before' pagination cursor.
+     * @return The updated filter string with pagination conditions.
+     * @throws OrganizationManagementClientException If the cursor values are invalid.
+     */
+    private String getPaginatedFilterForDescendingOrder(String paginatedFilter, int after, int before)
+            throws OrganizationManagementClientException {
+
+        try {
+            if (before != 0) {
+                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and before gt " + before :
+                        "before gt " + before;
+            } else if (after != 0) {
+                paginatedFilter += StringUtils.isNotBlank(paginatedFilter) ? " and after lt " + after :
+                        "after lt " + after;
+            }
+        } catch (IllegalArgumentException e) {
+            throw handleClientException(ERROR_CODE_INVALID_CURSOR_FOR_PAGINATION);
+        }
+        return paginatedFilter;
+    }
+
+    /**
+     * Checks if the filtering attribute is not supported.
+     *
+     * @param attributeValue The attribute value to check.
+     * @return true if the attribute is not supported; false otherwise.
+     */
+    private boolean isFilteringAttributeNotSupported(String attributeValue) {
+
+        return !attributeValue.equalsIgnoreCase(ORGANIZATION_ID_FIELD) &&
+                !attributeValue.equalsIgnoreCase(PAGINATION_AFTER) &&
+                !attributeValue.equalsIgnoreCase(PAGINATION_BEFORE) &&
+                !attributeValue.equalsIgnoreCase(PARENT_ID_FIELD);
+    }
+
+    /**
+     * Removes and retrieves the organization ID from the expression node list.
+     *
+     * @param expressionNodeList The list of expression nodes.
+     * @return An Optional containing the organization ID if found; otherwise, an empty Optional.
+     */
+    private Optional<String> removeAndGetOrganizationIdFromTheExpressionNodeList(
+            List<ExpressionNode> expressionNodeList) {
+
+        String organizationId = null;
+        for (ExpressionNode expressionNode : expressionNodeList) {
+            if (expressionNode.getAttributeValue().equalsIgnoreCase(PARENT_ID_FIELD)) {
+                organizationId = expressionNode.getValue();
+                break;
+            }
+        }
+        if (organizationId != null) {
+            expressionNodeList.removeIf(expressionNode -> expressionNode.getAttributeValue()
+                    .equalsIgnoreCase(PARENT_ID_FIELD));
+        }
+        return Optional.ofNullable(organizationId);
+    }
+
+    /**
+     * Removes and retrieves the organization name from the expression node list.
+     *
+     * @param expressionNodeList The list of expression nodes.
+     * @return An Optional containing the organization name if found; otherwise, an empty Optional.
+     */
+    private Optional<String> removeAndGetOrganizationNameFromTheExpressionNodeList(
+            List<ExpressionNode> expressionNodeList) {
+
+        String organizationName = null;
+        for (ExpressionNode expressionNode : expressionNodeList) {
+            if (expressionNode.getAttributeValue().equalsIgnoreCase(ORGANIZATION_NAME_FIELD)) {
+                organizationName = expressionNode.getValue();
+                break;
+            }
+        }
+        if (organizationName != null) {
+            expressionNodeList.removeIf(expressionNode -> expressionNode.getAttributeValue()
+                    .equalsIgnoreCase(ORGANIZATION_NAME_FIELD));
+        }
+        return Optional.ofNullable(organizationName);
     }
 
     // Business Logic Methods.
@@ -1600,6 +2163,36 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             validateNotNull(role.getRoleName(), ERROR_CODE_ROLE_NAME_NULL);
             validateNotNull(role.getAudienceName(), ERROR_CODE_AUDIENCE_NAME_NULL);
             validateNotNull(role.getAudienceType(), ERROR_CODE_AUDIENCE_TYPE_NULL);
+        }
+    }
+
+    // Shared User GET Input Validation Methods.
+
+    private void validateSharedUserGetInput(GetUserSharedOrgsDO getUserSharedOrgsDO)
+            throws UserSharingMgtClientException {
+
+        // 1. validate request object is not null.
+        validateNotNull(getUserSharedOrgsDO, ERROR_CODE_REQUEST_BODY_NULL);
+
+        // 2. validate required identifiers (service invariants).
+        validateNotNull(getUserSharedOrgsDO.getUserId(), ERROR_CODE_USER_ID_NULL);
+        validateNotNull(getUserSharedOrgsDO.getParentOrgId(), ERROR_CODE_ORG_ID_NULL);
+
+        validateNotNull(getUserSharedOrgsDO.getFilter(), ERROR_CODE_FILTER_NULL);
+
+        validateGetAttributes(getUserSharedOrgsDO.getAttributes());
+    }
+
+    private void validateGetAttributes(List<String> attributes) throws UserSharingMgtClientException {
+
+        validateNotNull(attributes, ERROR_CODE_GET_ATTRIBUTES_NULL);
+
+        for (String attribute : attributes) {
+            validateNotNull(attribute, ERROR_CODE_GET_ATTRIBUTE_NULL);
+
+            if (!SUPPORTED_GET_ATTRIBUTES.contains(attribute)) {
+                throwValidationException(ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED);
+            }
         }
     }
 
