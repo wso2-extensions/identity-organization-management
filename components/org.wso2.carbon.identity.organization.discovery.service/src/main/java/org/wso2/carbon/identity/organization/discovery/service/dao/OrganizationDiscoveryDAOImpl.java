@@ -72,8 +72,10 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.isDB2DB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
+
 
 /**
  * DAO implementation for organization discovery.
@@ -478,7 +480,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
 
         try {
             String orgIdsQuery;
-            if (isMSSqlDB() || isOracleDB()) {
+            if (isDB2DB() || isMSSqlDB() || isOracleDB()) {
                 orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_MSSQL_SORTED_BY_CREATED_TIME, filterQuery);
             } else {
                 orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_SORTED_BY_CREATED_TIME, filterQuery);

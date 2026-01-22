@@ -34,14 +34,17 @@ import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationD
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.discovery.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -422,74 +425,41 @@ public class OrganizationDiscoveryManagerImplTest {
         String orgOldId = "10084a8d-113f-4211-a0d5-efe36b082210";
         String orgNewId = "90084a8d-113f-4211-a0d5-efe36b082219";
 
-        //Manually insert Organizations (Type/Status included)
-        try (java.sql.Connection connection = TestUtils.dataSourceMap.get(TestUtils.DB_NAME).getConnection();
-             java.sql.PreparedStatement ps = connection.prepareStatement(
-                     "INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_CREATED_TIME, UM_LAST_MODIFIED, " + 
-                     "UM_ORG_TYPE, UM_STATUS) VALUES (?, ?, ?, ?, ?, ?)")) {
-
-            // Insert OLD Organization (2020)
-            ps.setString(1, orgOldId);
-            ps.setString(2, "OldOrg");
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf("2020-01-01 12:00:00"));
-            ps.setTimestamp(4, java.sql.Timestamp.valueOf("2020-01-01 12:00:00"));
-            ps.setString(5, "STRUCTURAL");
-            ps.setString(6, "ACTIVE");
-            ps.executeUpdate();
-
-            // Insert NEW Organization (2025)
-            ps.setString(1, orgNewId);
-            ps.setString(2, "NewOrg");
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf("2025-01-01 12:00:00"));
-            ps.setTimestamp(4, java.sql.Timestamp.valueOf("2025-01-01 12:00:00"));
-            ps.setString(5, "STRUCTURAL");
-            ps.setString(6, "ACTIVE");
-            ps.executeUpdate();
-        }
-
-        // Org Old gets "old.com"
+        when(organizationManager.getPrimaryOrganizationId(orgOldId)).thenReturn(SUPER_ORG_ID);
+        when(organizationManager.getPrimaryOrganizationId(orgNewId)).thenReturn(SUPER_ORG_ID);
+        when(attributeBasedOrganizationDiscoveryHandler.isDiscoveryConfigurationEnabled(
+                SUPER_ORG_ID)).thenReturn(true);
+        when(attributeBasedOrganizationDiscoveryHandler.getType()).thenReturn(DISCOVERY_ATTRIBUTE_TYPE);
+        when(attributeBasedOrganizationDiscoveryHandler.areAttributeValuesInValidFormat(anyList())).thenReturn(true);
+        
         List<OrgDiscoveryAttribute> attributesOld = new ArrayList<>();
         OrgDiscoveryAttribute attrOld = new OrgDiscoveryAttribute();
         attrOld.setType(DISCOVERY_ATTRIBUTE_TYPE);
         attrOld.setValues(Collections.singletonList("old.com"));
         attributesOld.add(attrOld);
-        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(orgOldId, attributesOld);
+        organizationDiscoveryManager.addOrganizationDiscoveryAttributes(orgOldId, attributesOld, true);
 
-        // Org New gets "new.com"
         List<OrgDiscoveryAttribute> attributesNew = new ArrayList<>();
         OrgDiscoveryAttribute attrNew = new OrgDiscoveryAttribute();
         attrNew.setType(DISCOVERY_ATTRIBUTE_TYPE);
         attrNew.setValues(Collections.singletonList("new.com"));
         attributesNew.add(attrNew);
-        organizationDiscoveryDAO.addOrganizationDiscoveryAttributes(orgNewId, attributesNew);
+        organizationDiscoveryManager.addOrganizationDiscoveryAttributes(orgNewId, attributesNew, true);
 
-        // Execute the Search (No filter = returns ALL)
-        // This triggers your SQL "ORDER BY CREATED_TIME DESC"
+        //Retrieve all organization discovery attributes to verify the default sorting order.
         DiscoveryOrganizationsResult result = organizationDiscoveryManager
                 .getOrganizationsDiscoveryAttributes(10, 0, null);
 
-        // Verify the Order
-        List<org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery> orgs =
-                result.getOrganizations();
+        //Extract all Organization IDs into a simple list
+        List<String> allOrgIds = result.getOrganizations().stream()
+        .map(OrganizationDiscovery::getOrganizationId)
+        .collect(Collectors.toList());
 
-        // The list will contain other orgs from other tests too, 
-        // so we must find OUR orgs and check their relative order.
-        int indexOld = -1;
-        int indexNew = -1;
-
-        for (int i = 0; i < orgs.size(); i++) {
-            if (orgs.get(i).getOrganizationId().equals(orgOldId)) {
-                indexOld = i;
-            }
-            if (orgs.get(i).getOrganizationId().equals(orgNewId)) {
-                indexNew = i;
-            }
-        }
-
-        Assert.assertTrue(indexNew != -1 && indexOld != -1, "Both organizations should be in the result list");
+        Assert.assertTrue(allOrgIds.containsAll(Arrays.asList(orgNewId, orgOldId)),
+         "Both organizations should be in the result list");
         
         // The New Index must be smaller (appear earlier) than the Old Index
-        Assert.assertTrue(indexNew < indexOld, 
-                "Sorting Failed! NewOrg (Index " + indexNew + ") should appear before OldOrg (Index " + indexOld + ")");
+        Assert.assertTrue(allOrgIds.indexOf(orgNewId) < allOrgIds.indexOf(orgOldId), 
+        "Newest organization should appear before the Oldest organization.");
     }
 }
