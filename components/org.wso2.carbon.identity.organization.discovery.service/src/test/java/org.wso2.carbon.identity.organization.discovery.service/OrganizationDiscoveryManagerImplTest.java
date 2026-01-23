@@ -34,14 +34,17 @@ import org.wso2.carbon.identity.organization.discovery.service.dao.OrganizationD
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.discovery.service.model.DiscoveryOrganizationsResult;
 import org.wso2.carbon.identity.organization.discovery.service.model.OrgDiscoveryAttribute;
+import org.wso2.carbon.identity.organization.discovery.service.model.OrganizationDiscovery;
 import org.wso2.carbon.identity.organization.discovery.service.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -50,6 +53,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SUPER_ORG_ID;
 
+/**
+ * Unit tests for Organization Discovery Manager.
+ */
 public class OrganizationDiscoveryManagerImplTest {
 
     private static final String DISCOVERY_ATTRIBUTE_TYPE = "emailDomain";
@@ -411,5 +417,49 @@ public class OrganizationDiscoveryManagerImplTest {
         organizationId = organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(DISCOVERY_ATTRIBUTE_TYPE,
                 DISCOVERY_INPUT, SUPER_ORG_ID, mockAuthenticationContext);
         Assert.assertNull(organizationId);
+    }
+
+    @Test
+    public void testGetOrganizationsDiscoveryAttributesSortedByCreatedTime() throws Exception {
+
+        String orgOldId = "10084a8d-113f-4211-a0d5-efe36b082210";
+        String orgNewId = "90084a8d-113f-4211-a0d5-efe36b082219";
+
+        when(organizationManager.getPrimaryOrganizationId(orgOldId)).thenReturn(SUPER_ORG_ID);
+        when(organizationManager.getPrimaryOrganizationId(orgNewId)).thenReturn(SUPER_ORG_ID);
+        when(attributeBasedOrganizationDiscoveryHandler.isDiscoveryConfigurationEnabled(
+                SUPER_ORG_ID)).thenReturn(true);
+        when(attributeBasedOrganizationDiscoveryHandler.getType()).thenReturn(DISCOVERY_ATTRIBUTE_TYPE);
+        when(attributeBasedOrganizationDiscoveryHandler.areAttributeValuesInValidFormat(anyList())).thenReturn(true);
+        
+        List<OrgDiscoveryAttribute> attributesOld = new ArrayList<>();
+        OrgDiscoveryAttribute attrOld = new OrgDiscoveryAttribute();
+        attrOld.setType(DISCOVERY_ATTRIBUTE_TYPE);
+        attrOld.setValues(Collections.singletonList("old.com"));
+        attributesOld.add(attrOld);
+        organizationDiscoveryManager.addOrganizationDiscoveryAttributes(orgOldId, attributesOld, true);
+
+        List<OrgDiscoveryAttribute> attributesNew = new ArrayList<>();
+        OrgDiscoveryAttribute attrNew = new OrgDiscoveryAttribute();
+        attrNew.setType(DISCOVERY_ATTRIBUTE_TYPE);
+        attrNew.setValues(Collections.singletonList("new.com"));
+        attributesNew.add(attrNew);
+        organizationDiscoveryManager.addOrganizationDiscoveryAttributes(orgNewId, attributesNew, true);
+
+        //Retrieve all organization discovery attributes to verify the default sorting order.
+        DiscoveryOrganizationsResult result = organizationDiscoveryManager
+                .getOrganizationsDiscoveryAttributes(10, 0, null);
+
+        //Extract all Organization IDs into a simple list
+        List<String> allOrgIds = result.getOrganizations().stream()
+        .map(OrganizationDiscovery::getOrganizationId)
+        .collect(Collectors.toList());
+
+        Assert.assertTrue(allOrgIds.containsAll(Arrays.asList(orgNewId, orgOldId)),
+         "Both organizations should be in the result list");
+        
+        // The New Index must be smaller (appear earlier) than the Old Index
+        Assert.assertTrue(allOrgIds.indexOf(orgNewId) < allOrgIds.indexOf(orgOldId), 
+        "Newest organization should appear before the Oldest organization.");
     }
 }
