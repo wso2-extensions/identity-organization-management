@@ -34,16 +34,22 @@ public class ResponseOrgDetailsV2DO {
     private String organizationName;
     private String organizationHandle;
     private String organizationStatus;
+    private String organizationReference;
     private String parentOrganizationId;
     private List<RoleWithAudienceDO> roleWithAudienceDOList;
     private boolean hasChildren;
     private int depthFromRoot;
     private SharingModeDO sharingModeDO;
 
+    public ResponseOrgDetailsV2DO() {
+
+    }
+
     public ResponseOrgDetailsV2DO(String userId, String sharedUserId, SharedType sharedType, String organizationId,
                                   String organizationName, String organizationHandle, String organizationStatus,
-                                  String parentOrganizationId, List<RoleWithAudienceDO> roleWithAudienceDOList,
-                                  boolean hasChildren, int depthFromRoot, SharingModeDO sharingModeDO) {
+                                  String organizationReference, String parentOrganizationId,
+                                  List<RoleWithAudienceDO> roleWithAudienceDOList, boolean hasChildren,
+                                  int depthFromRoot, SharingModeDO sharingModeDO) {
 
         this.userId = userId;
         this.sharedUserId = sharedUserId;
@@ -52,6 +58,7 @@ public class ResponseOrgDetailsV2DO {
         this.organizationName = organizationName;
         this.organizationHandle = organizationHandle;
         this.organizationStatus = organizationStatus;
+        this.organizationReference = organizationReference;
         this.parentOrganizationId = parentOrganizationId;
         this.roleWithAudienceDOList = roleWithAudienceDOList;
         this.hasChildren = hasChildren;
@@ -130,6 +137,16 @@ public class ResponseOrgDetailsV2DO {
         this.organizationStatus = organizationStatus;
     }
 
+    public String getOrganizationReference() {
+
+        return organizationReference;
+    }
+
+    public void setOrganizationReference(String organizationReference) {
+
+        this.organizationReference = organizationReference;
+    }
+
     public String getParentOrganizationId() {
 
         return parentOrganizationId;
@@ -145,8 +162,7 @@ public class ResponseOrgDetailsV2DO {
         return roleWithAudienceDOList;
     }
 
-    public void setRoleWithAudienceDOList(
-            List<RoleWithAudienceDO> roleWithAudienceDOList) {
+    public void setRoleWithAudienceDOList(List<RoleWithAudienceDO> roleWithAudienceDOList) {
 
         this.roleWithAudienceDOList = roleWithAudienceDOList;
     }

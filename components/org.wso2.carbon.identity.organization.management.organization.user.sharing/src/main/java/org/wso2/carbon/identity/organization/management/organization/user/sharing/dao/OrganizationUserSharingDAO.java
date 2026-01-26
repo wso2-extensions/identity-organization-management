@@ -18,11 +18,13 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
@@ -96,6 +98,27 @@ public interface OrganizationUserSharingDAO {
      */
     List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException;
+
+    /**
+     * Get all the user associations for a given user filtered by expression nodes.
+     *
+     * @param associatedUserId Actual user ID of the user.
+     * @param associatedOrgId  The organization ID where the user is managed.
+     * @param orgIdsScope      The list of organization IDs to limit the search scope.
+     * @param expressionNodes  The list of expression nodes to filter the user associations.
+     * @param sortOder         The order to sort the results.
+     * @param limit            The maximum number of results to return.
+     * @return the list of {@link UserAssociation}s.
+     * @throws OrganizationManagementException If an error occurs while fetching user associations.
+     */
+    default List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId,
+                                                                      List<String> orgIdsScope,
+                                                                      List<ExpressionNode> expressionNodes,
+                                                                      String sortOder, int limit)
+            throws OrganizationManagementException {
+
+        throw new NotImplementedException("getUserAssociationsOfGivenUser method with filters is not implemented.");
+    }
 
     /**
      * Get all the user associations for a given user filtered by shared type.

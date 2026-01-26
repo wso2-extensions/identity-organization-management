@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
@@ -127,6 +128,17 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             throws OrganizationManagementException {
 
         return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId);
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
+                                                                List<String> orgIdsScope,
+                                                                List<ExpressionNode> expressionNodes,
+                                                                String sortOder, int limit)
+            throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId,
+                orgIdsScope, expressionNodes, sortOder, limit);
     }
 
     @Override

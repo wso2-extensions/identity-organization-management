@@ -22,12 +22,16 @@ import org.apache.commons.collections.CollectionUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.FilterQueriesUtil;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -37,6 +41,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2;
@@ -59,9 +65,15 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_RESTRICTED_USERNAMES_BY_ROLE_AND_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_ROLES_OF_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_SHARED_USER_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_HEAD;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ROLE_IN_TENANT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.INSERT_RESTRICTED_EDIT_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.ASC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ORG_ID;
@@ -76,7 +88,9 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_USER_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_USER_ID;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.DESC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.HAS_USER_ASSOCIATIONS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.ORG_ID_SCOPE_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
@@ -212,6 +226,95 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     @Override
     public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId,
+                                                                     List<String> orgIdsScope,
+                                                                     List<ExpressionNode> expressionNodes,
+                                                                     String sortOrder, int limit)
+            throws OrganizationManagementException {
+
+        if (CollectionUtils.isEmpty(orgIdsScope)) {
+            return Collections.emptyList();
+        }
+
+        // (Optional but recommended) Hard-guard sort order because it gets injected into SQL.
+        String resolvedSortOrder = ASC_SORT_ORDER.equalsIgnoreCase(sortOrder) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
+
+        FilterQueryBuilder filterQueryBuilder = FilterQueriesUtil.getSharedUserOrgsFilterQueryBuilder(expressionNodes);
+        String filterQuery = filterQueryBuilder.getFilterQuery();
+        Map<String, String> filterAttributeValue = filterQueryBuilder.getFilterAttributeValue();
+
+        String orgIdPlaceholders = IntStream.range(0, orgIdsScope.size())
+                .mapToObj(i -> ":" + ORG_ID_SCOPE_PLACEHOLDER_PREFIX + i + ";")
+                .collect(Collectors.joining(", "));
+
+        String sql = buildGetUserAssociationsSql(filterQuery, orgIdPlaceholders, resolvedSortOrder, limit);
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            return namedJdbcTemplate.executeQuery(sql,
+                    (resultSet, rowNumber) -> {
+                        UserAssociation userAssociation = new UserAssociation();
+                        userAssociation.setId(resultSet.getInt(COLUMN_NAME_UM_ID));
+                        userAssociation.setUserId(resultSet.getString(COLUMN_NAME_USER_ID));
+                        userAssociation.setOrganizationId(resultSet.getString(COLUMN_NAME_ORG_ID));
+                        userAssociation.setAssociatedUserId(resultSet.getString(COLUMN_NAME_ASSOCIATED_USER_ID));
+                        userAssociation.setUserResidentOrganizationId(
+                                resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID));
+                        userAssociation.setSharedType(
+                                SharedType.fromString(resultSet.getString(COLUMN_NAME_UM_SHARED_TYPE)));
+                        return userAssociation;
+                    },
+                    ps -> {
+                        // base params
+                        ps.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                        ps.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
+
+                        // filter params.
+                        for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
+                            ps.setString(entry.getKey(), entry.getValue());
+                        }
+
+                        // scope params.
+                        for (int i = 0; i < orgIdsScope.size(); i++) {
+                            ps.setString(ORG_ID_SCOPE_PLACEHOLDER_PREFIX + i, orgIdsScope.get(i));
+                        }
+                    });
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    private String buildGetUserAssociationsSql(String filterQuery, String orgIdPlaceholders,
+                                               String sortOrder, int limit)
+            throws OrganizationManagementServerException {
+
+        String head = GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_HEAD + filterQuery;
+
+        String tail;
+        if (limit == 0) {
+            tail = String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL, sortOrder);
+        } else {
+            tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit);
+        }
+
+        return (head + tail).replace(PLACEHOLDER_ORG_IDS, orgIdPlaceholders);
+    }
+
+    private String getUserAssociationsByFilteringTailWithLimit(String sortOrder, int limit)
+            throws OrganizationManagementServerException {
+
+        if (isOracleDB()) {
+            return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE,
+                    sortOrder, limit);
+        } else if (isMSSqlDB()) {
+            return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL,
+                    sortOrder, limit);
+        }
+        return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT,
+                sortOrder, limit);
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId,
                                                                      SharedType sharedType)
             throws OrganizationManagementServerException {
 
@@ -255,7 +358,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                     }
-                    );
+                                                                );
             return Boolean.TRUE.equals(result);
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);
@@ -412,8 +515,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     @Override
     public void addEditRestrictionsForSharedUserRole(String roleId, String username, String tenantDomain,
-                                                      String domainName, EditOperation editOperation,
-                                                      String permittedOrgId)
+                                                     String domainName, EditOperation editOperation,
+                                                     String permittedOrgId)
             throws UserSharingMgtServerException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
@@ -559,7 +662,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return dbQueryMap.get(DB_TYPE_DB2);
         } else if (isMSSqlDB()) {
             return dbQueryMap.get(DB_TYPE_MSSQL);
-        }  else if (isMySqlDB()) {
+        } else if (isMySqlDB()) {
             return dbQueryMap.get(DB_TYPE_MYSQL);
         } else if (isOracleDB()) {
             return dbQueryMap.get(DB_TYPE_ORACLE);
