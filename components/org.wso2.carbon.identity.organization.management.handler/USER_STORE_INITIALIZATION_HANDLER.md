@@ -78,9 +78,12 @@ If a user store is not initialized within the configured wait time:
 ## Performance Considerations
 
 - The handler only runs for sub-organization creation events
-- Each user store is checked sequentially
+- Each user store is checked sequentially to ensure proper initialization order
 - The total maximum wait time = (number of user stores) × (configured wait time)
+  - For default config (DEFAULT,AGENT with 60s wait time): maximum 120 seconds
+  - In practice, user stores initialize much faster (typically < 5 seconds)
 - Use appropriate wait time and interval values based on your deployment
+- Consider reducing the number of user stores or wait time if organization creation time is critical
 
 ## Example Logs
 

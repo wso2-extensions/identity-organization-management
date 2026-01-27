@@ -125,6 +125,8 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
                 if (StringUtils.isEmpty(trimmedUserStoreName)) {
                     continue;
                 }
+                // Wait for each user store sequentially. This ensures each user store is fully initialized
+                // before proceeding to the next one. Total wait time = sum of individual wait times.
                 waitForSpecificUserStore(userStoreManager, trimmedUserStoreName, waitTime, waitInterval, 
                         organization.getId());
             }
@@ -156,20 +158,24 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
         }
 
         UserStoreManager targetUserStore = null;
-        int waited = 0;
+        long startTime = System.currentTimeMillis();
         
         try {
-            while (targetUserStore == null && waited < maxWaitTime) {
+            while (targetUserStore == null) {
+                long elapsed = System.currentTimeMillis() - startTime;
+                if (elapsed >= maxWaitTime) {
+                    break;
+                }
+                
                 targetUserStore = userStoreManager.getSecondaryUserStoreManager(userStoreName);
                 if (targetUserStore != null) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("User store '%s' initialized successfully for organization: %s " +
-                                "(waited: %d ms)", userStoreName, organizationId, waited));
+                                "(waited: %d ms)", userStoreName, organizationId, elapsed));
                     }
                     break;
                 }
                 Thread.sleep(waitInterval);
-                waited += waitInterval;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
