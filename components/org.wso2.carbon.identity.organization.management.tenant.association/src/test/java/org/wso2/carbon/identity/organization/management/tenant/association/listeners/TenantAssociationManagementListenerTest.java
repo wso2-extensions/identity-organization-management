@@ -68,8 +68,8 @@ public class TenantAssociationManagementListenerTest {
     public void setUp() {
 
         MockitoAnnotations.openMocks(this);
-        TenantAssociationDataHolder.setRealmService(realmService);
-        TenantAssociationDataHolder.setOrganizationManager(organizationManager);
+        TenantAssociationDataHolder.getInstance().setRealmService(realmService);
+        TenantAssociationDataHolder.getInstance().setOrganizationManager(organizationManager);
     }
 
     @DataProvider(name = "tenantNameDataProvider")

@@ -45,6 +45,10 @@ public class OrganizationManagementHandlerDataHolder {
     private RealmService realmService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
     private UserSessionManagementService userSessionManagementService;
+    
+    private OrganizationManagementHandlerDataHolder() {
+
+    }
 
     public static OrganizationManagementHandlerDataHolder getInstance() {
 
