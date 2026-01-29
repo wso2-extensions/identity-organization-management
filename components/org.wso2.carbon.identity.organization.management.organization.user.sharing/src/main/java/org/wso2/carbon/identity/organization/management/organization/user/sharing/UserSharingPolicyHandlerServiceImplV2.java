@@ -65,6 +65,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.SharingInitiatorContext;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
@@ -155,6 +156,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_NON_RESIDENT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORG_ID_FIELD_REPRESENTATION_1;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ORG_ID_FIELD_REPRESENTATION_2;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_NONE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_ROLES;
@@ -180,7 +183,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
-import static org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util.OrgResourceHierarchyTraverseUtil.getOrganizationManager;
 
 /**
  * Implementation of the user sharing policy handler service v2.
@@ -1192,7 +1194,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      */
     private boolean isFilteringAttributeNotSupported(String attributeValue) {
 
-        return !attributeValue.equalsIgnoreCase(ORGANIZATION_ID_FIELD) &&
+        return !attributeValue.equalsIgnoreCase(ORG_ID_FIELD_REPRESENTATION_1) &&
+                !attributeValue.equalsIgnoreCase(ORG_ID_FIELD_REPRESENTATION_2) &&
+                !attributeValue.equalsIgnoreCase(ORGANIZATION_ID_FIELD) &&
                 !attributeValue.equalsIgnoreCase(PAGINATION_AFTER) &&
                 !attributeValue.equalsIgnoreCase(PAGINATION_BEFORE) &&
                 !attributeValue.equalsIgnoreCase(PARENT_ID_FIELD);
@@ -1285,7 +1289,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
 
             if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
-                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId);
+                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId, true);
             }
             for (String orgId : entry.getValue()) {
                 shareAndAssignRolesIfPresent(orgId, entry.getKey(), sharingInitiatedOrgId);
@@ -1564,10 +1568,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     /**
      * Saves a new resource sharing policy for a user.
      *
-     * @param baseUserShare         The user share details containing policy information.
-     * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
+     * @param baseUserShare           The user share details containing policy information.
+     * @param sharingInitiatedOrgId   The ID of the organization that initiated the sharing.
+     * @param replaceExistingPolicies Whether to replace existing policies for the user. If true, existing policies
+     *                                will be deleted before saving the new policy.
+     * @throws ResourceSharingPolicyMgtException If an error occurs while saving the resource sharing policy.
      */
-    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
+    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId,
+                                       boolean replaceExistingPolicies)
             throws ResourceSharingPolicyMgtException {
 
         ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
@@ -1588,6 +1596,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             sharedResourceAttributes.add(sharedResourceAttribute);
         }
 
+        if (replaceExistingPolicies) {
+            deleteAllResourceSharingPoliciesOfUser(baseUserShare.getUserId(), sharingInitiatedOrgId);
+        }
         resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
                 sharedResourceAttributes);
     }
@@ -2253,6 +2264,11 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
 
         return OrganizationUserSharingDataHolder.getInstance().getResourceSharingPolicyHandlerService();
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return OrganizationUserSharingDataHolder.getInstance().getOrganizationManager();
     }
 
     private RoleManagementService getRoleManagementService() {

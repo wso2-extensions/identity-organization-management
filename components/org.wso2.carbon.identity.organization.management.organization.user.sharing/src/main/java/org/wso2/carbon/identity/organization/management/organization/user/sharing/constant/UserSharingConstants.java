@@ -31,7 +31,9 @@ public class UserSharingConstants {
 
     public static final String BEFORE = "before";
     public static final String AFTER = "after";
-    public static final String ORGANIZATION_ID = "id";
+    public static final String ORGANIZATION_ID_REPRESENTATION_1 = "orgId";
+    public static final String ORGANIZATION_ID_REPRESENTATION_2 = "organizationId";
+    public static final String ORGANIZATION_ID_REPRESENTATION_3 = "id";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
     public static final Map<String, String> SP_SHARED_ATTRIBUTE_COLUMN_MAP =
             Collections.unmodifiableMap(attributeColumnMap);
@@ -39,7 +41,9 @@ public class UserSharingConstants {
     static {
         attributeColumnMap.put(BEFORE, SQLConstants.ID_COLUMN_NAME);
         attributeColumnMap.put(AFTER, SQLConstants.ID_COLUMN_NAME);
-        attributeColumnMap.put(ORGANIZATION_ID, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_1, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_2, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_3, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
     }
 
     public static final String USER_ID = "userId";
@@ -50,8 +54,11 @@ public class UserSharingConstants {
     public static final String ROLES = "roles";
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
-    public static final String USER = "User";
+    public static final String USER = "USER";
     public static final String CORRELATION_ID_MDC = "Correlation-ID";
+
+    public static final String ORG_ID_FIELD_REPRESENTATION_1 = "orgId";
+    public static final String ORG_ID_FIELD_REPRESENTATION_2 = "organizationId";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";

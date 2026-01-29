@@ -59,8 +59,7 @@ public class ResponseSharedOrgsV2DO {
         return sharedOrgs;
     }
 
-    public void setSharedOrgs(
-            List<ResponseOrgDetailsV2DO> sharedOrgs) {
+    public void setSharedOrgs(List<ResponseOrgDetailsV2DO> sharedOrgs) {
 
         this.sharedOrgs = sharedOrgs;
     }

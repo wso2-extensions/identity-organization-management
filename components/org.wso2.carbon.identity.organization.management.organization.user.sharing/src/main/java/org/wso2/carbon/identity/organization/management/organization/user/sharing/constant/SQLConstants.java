@@ -30,8 +30,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
  */
 public class SQLConstants {
 
-    public static final String ID_COLUMN_NAME = "ID";
-    public static final String SHARED_ORG_ID_COLUMN_NAME = "SHARED_ORG_ID";
+    public static final String ID_COLUMN_NAME = "UM_ID";
+    public static final String SHARED_ORG_ID_COLUMN_NAME = "UM_ORG_ID";
 
     public static final String CREATE_ORGANIZATION_USER_ASSOCIATION = "INSERT INTO UM_ORG_USER_ASSOCIATION(" +
             "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID) VALUES(?, ?, ?, ?)";
@@ -175,19 +175,19 @@ public class SQLConstants {
                     "AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; ";
 
     public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL =
-            "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s";
 
     public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT =
-            "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s LIMIT %d";
 
     public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE =
-            "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
 
     public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL =
-            "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
 
     /**
@@ -224,6 +224,10 @@ public class SQLConstants {
 
         public static final String ASC_SORT_ORDER = "ASC";
         public static final String DESC_SORT_ORDER = "DESC";
+
+        public static final String AND = "AND";
+        public static final String OR = "OR";
+        public static final String WHITE_SPACE = " ";
 
         // Prefix for dynamic named params: :orgId0; :orgId1; ...
         public static final String ORG_ID_SCOPE_PLACEHOLDER_PREFIX = "orgId";

@@ -73,6 +73,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_USER_ROLE_IN_TENANT;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.INSERT_RESTRICTED_EDIT_PERMISSION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.AND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.ASC_SORT_ORDER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID;
@@ -94,6 +95,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.WHITE_SPACE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.UPDATE_USER_ASSOCIATION_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_USER_ROLE_ID;
@@ -287,7 +289,11 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                                                String sortOrder, int limit)
             throws OrganizationManagementServerException {
 
-        String head = GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_HEAD + filterQuery;
+        String head = GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_HEAD + WHITE_SPACE + AND + WHITE_SPACE;
+
+        if (!filterQuery.isEmpty()) {
+            head += filterQuery;
+        }
 
         String tail;
         if (limit == 0) {
