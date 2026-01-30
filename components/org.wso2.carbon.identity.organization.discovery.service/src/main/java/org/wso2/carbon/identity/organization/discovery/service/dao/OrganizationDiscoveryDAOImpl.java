@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -72,10 +72,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.SW;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.isDB2DB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isMSSqlDB;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isOracleDB;
-
 
 /**
  * DAO implementation for organization discovery.
@@ -480,7 +478,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
 
         try {
             String orgIdsQuery;
-            if (isDB2DB() || isMSSqlDB() || isOracleDB()) {
+            if (isMSSqlDB() || isOracleDB()) {
                 orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_MSSQL_SORTED_BY_CREATED_TIME, filterQuery);
             } else {
                 orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_SORTED_BY_CREATED_TIME, filterQuery);
@@ -515,8 +513,7 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
         }
 
         String discoveryAttributesQuery = GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES_SORTED_BY_CREATED_TIME
-                .replace(ORGS_LIST_PLACEHOLDER,
-                String.join(", ", organizationPlaceholders));
+                .replace(ORGS_LIST_PLACEHOLDER, String.join(", ", organizationPlaceholders));
         try {
             return namedJdbcTemplate.executeQuery(discoveryAttributesQuery,
                     (resultSet, rowNumber) -> {

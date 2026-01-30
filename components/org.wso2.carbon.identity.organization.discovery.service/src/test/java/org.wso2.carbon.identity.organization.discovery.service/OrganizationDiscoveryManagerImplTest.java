@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2024-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -446,11 +446,10 @@ public class OrganizationDiscoveryManagerImplTest {
         attributesNew.add(attrNew);
         organizationDiscoveryManager.addOrganizationDiscoveryAttributes(orgNewId, attributesNew, true);
 
-        //Retrieve all organization discovery attributes to verify the default sorting order.
+        // Retrieve all organization discovery attributes to verify the default sorting order.
         DiscoveryOrganizationsResult result = organizationDiscoveryManager
                 .getOrganizationsDiscoveryAttributes(10, 0, null);
 
-        //Extract all Organization IDs into a simple list
         List<String> allOrgIds = result.getOrganizations().stream()
         .map(OrganizationDiscovery::getOrganizationId)
         .collect(Collectors.toList());
@@ -458,8 +457,8 @@ public class OrganizationDiscoveryManagerImplTest {
         Assert.assertTrue(allOrgIds.containsAll(Arrays.asList(orgNewId, orgOldId)),
          "Both organizations should be in the result list");
         
-        // The New Index must be smaller (appear earlier) than the Old Index
+        // The new index must be smaller (appear earlier) than the old Index.
         Assert.assertTrue(allOrgIds.indexOf(orgNewId) < allOrgIds.indexOf(orgOldId), 
-        "Newest organization should appear before the Oldest organization.");
+        "Newest organization should appear before the oldest organization.");
     }
 }
