@@ -21,7 +21,7 @@ package org.wso2.carbon.identity.organization.management.handler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
@@ -32,14 +32,14 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
-import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
-import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 
 import java.util.Map;
 
+import static org.wso2.carbon.identity.organization.management.service.util.Utils.getUserStoreManager;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 
 /**
@@ -55,9 +55,9 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
     private static final String USER_STORES_CONFIG_KEY = "OrganizationUserStoreInitialization.UserStores";
     private static final String WAIT_TIME_CONFIG_KEY = "OrganizationUserStoreInitialization.WaitTime";
     private static final String WAIT_INTERVAL_CONFIG_KEY = "OrganizationUserStoreInitialization.WaitInterval";
-    private static final int DEFAULT_WAIT_TIME_MS = 60000; // 60 seconds.
+    private static final int DEFAULT_WAIT_TIME_MS = 120000; // 60 seconds.
     private static final int DEFAULT_WAIT_INTERVAL_MS = 500; // 500 milliseconds.
-    private static final String DEFAULT_USER_STORES = "DEFAULT,AGENT";
+    private static final String DEFAULT_USER_STORES = "DEFAULT";
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -113,12 +113,16 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
         int waitInterval = getConfigValue(WAIT_INTERVAL_CONFIG_KEY, DEFAULT_WAIT_INTERVAL_MS);
 
         try {
+            // Start tenant flow with the created sub-organization's tenant context.
+            PrivilegedCarbonContext.startTenantFlow();
+
+            PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
             String tenantDomain = getOrganizationManager().resolveTenantDomain(organization.getId());
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            RealmService realmService = OrganizationManagementHandlerDataHolder.getInstance().getRealmService();
-            UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
-            AbstractUserStoreManager userStoreManager = 
-                    (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+            carbonContext.setTenantId(tenantId);
+            carbonContext.setTenantDomain(tenantDomain);
+
+            AbstractUserStoreManager userStoreManager = getUserStoreManager(tenantId);
 
             for (String userStoreName : userStoresToWaitFor) {
                 String trimmedUserStoreName = userStoreName.trim();
@@ -131,10 +135,16 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
                         organization.getId());
             }
 
-        } catch (OrganizationManagementException | UserStoreException e) {
+        } catch (UserStoreException e) {
             throw new IdentityEventException(
                     String.format("Error while waiting for user store initialization for organization: %s",
                             organization.getId()), e);
+        } catch (OrganizationManagementException e) {
+            throw new IdentityEventException(
+                String.format("Error while resolving tenant domain for organization: %s",
+                    organization.getId()), e);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
     }
 
