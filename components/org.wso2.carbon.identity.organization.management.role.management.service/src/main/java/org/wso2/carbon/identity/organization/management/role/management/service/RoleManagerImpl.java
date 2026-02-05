@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.role.management.service
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
@@ -85,6 +86,13 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 /**
  * Implementation of Role Manager Interface.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.management.role.management.service.RoleManager",
+                "service.scope=singleton"
+        }
+)
 public class RoleManagerImpl implements RoleManager {
 
     private static final RoleManagementDAO roleManagementDAO = new RoleManagementDAOImpl();

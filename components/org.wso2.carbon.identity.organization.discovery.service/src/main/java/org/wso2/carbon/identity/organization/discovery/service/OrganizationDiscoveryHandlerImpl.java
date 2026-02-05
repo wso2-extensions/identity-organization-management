@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.handler.orgdiscovery.OrganizationDiscoveryHandler;
@@ -48,6 +49,14 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 /**
  * Implementation of the Organization Discovery Handler.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.application.authentication.framework.handler.orgdiscovery" +
+                        ".OrganizationDiscoveryHandler",
+                "service.scope=singleton"
+        }
+)
 public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHandler {
 
     @Override

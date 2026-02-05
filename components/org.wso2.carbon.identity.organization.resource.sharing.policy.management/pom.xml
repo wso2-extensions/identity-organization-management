@@ -29,12 +29,6 @@
     <name>WSO2 - Organization Resource Sharing Policy Management Service</name>
     <packaging>bundle</packaging>
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.wso2.carbon</groupId>
@@ -82,6 +76,10 @@
                 </exclusion>
             </exclusions>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.platform</groupId>
+            <artifactId>org.eclipse.osgi.services</artifactId>
         </dependency>
     </dependencies>
 

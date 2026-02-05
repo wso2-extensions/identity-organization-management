@@ -28,15 +28,19 @@ import org.wso2.carbon.user.core.service.RealmService;
  */
 public class RoleManagementDataHolder {
 
-    private static final RoleManagementDataHolder ROLE_MANAGEMENT_DATA_HOLDER = new RoleManagementDataHolder();
+    private static final RoleManagementDataHolder INSTANCE = new RoleManagementDataHolder();
     private OrganizationManager organizationManager;
     private OrganizationUserResidentResolverService organizationUserResidentResolverService;
     private OrganizationGroupResidentResolverService organizationGroupResidentResolverService;
     private RealmService realmService;
 
+    private RoleManagementDataHolder() {
+        
+    }
+    
     public static RoleManagementDataHolder getInstance() {
 
-        return ROLE_MANAGEMENT_DATA_HOLDER;
+        return INSTANCE;
     }
 
     public OrganizationManager getOrganizationManager() {
