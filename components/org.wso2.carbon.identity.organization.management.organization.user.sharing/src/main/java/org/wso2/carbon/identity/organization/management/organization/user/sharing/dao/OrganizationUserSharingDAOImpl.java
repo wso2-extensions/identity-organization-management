@@ -46,6 +46,10 @@ import java.util.stream.IntStream;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_DB2;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_DB2;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_MSSQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_MSSQL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CHECK_USER_ORG_ASSOCIATION_EXISTS_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.CREATE_ORGANIZATION_USER_ASSOCIATION;
@@ -372,6 +376,34 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
+    public boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
+                                                 List<String> orgIdsScope)
+            throws OrganizationManagementServerException {
+
+        if (orgIdsScope == null || orgIdsScope.isEmpty()) {
+            return false;
+        }
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociationsInOrgScope();
+        String query = getDBSpecificQuery(dbQueryMap);
+        try {
+            Boolean result = namedJdbcTemplate.fetchSingleRecord(
+                    query,
+                    (resultSet, rowNumber) -> resultSet.getBoolean(HAS_USER_ASSOCIATIONS),
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
+                        namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
+                        namedPreparedStatement.setString(COLUMN_NAME_ORG_ID, String.join(",", orgIdsScope));
+                    }
+                                                                );
+            return Boolean.TRUE.equals(result);
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
     public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException {
 
@@ -659,6 +691,18 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         dbQueryMap.put(DB_TYPE_ORACLE, CHECK_USER_ORG_ASSOCIATION_EXISTS_ORACLE);
         dbQueryMap.put(DB_TYPE_POSTGRESQL, CHECK_USER_ORG_ASSOCIATION_EXISTS);
         dbQueryMap.put(DB_TYPE_DEFAULT, CHECK_USER_ORG_ASSOCIATION_EXISTS);
+        return dbQueryMap;
+    }
+
+    private Map<String, String> getDBQueryMapOfHasUserAssociationsInOrgScope() {
+
+        Map<String, String> dbQueryMap = new HashMap<>();
+        dbQueryMap.put(DB_TYPE_DB2, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_DB2);
+        dbQueryMap.put(DB_TYPE_MSSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_MSSQL);
+        dbQueryMap.put(DB_TYPE_MYSQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE);
+        dbQueryMap.put(DB_TYPE_ORACLE, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_ORACLE);
+        dbQueryMap.put(DB_TYPE_POSTGRESQL, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE);
+        dbQueryMap.put(DB_TYPE_DEFAULT, CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE);
         return dbQueryMap;
     }
 

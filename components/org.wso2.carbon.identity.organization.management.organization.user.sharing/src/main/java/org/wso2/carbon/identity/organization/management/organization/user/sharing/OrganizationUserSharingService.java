@@ -184,6 +184,22 @@ public interface OrganizationUserSharingService {
     }
 
     /**
+     * Checks if the given user has at least one association within the specified organization scope.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @param orgIdsScope      The list of organization IDs defining the scope to check for associations.
+     * @return True if the user has at least one association within the specified organization scope.
+     * @throws OrganizationManagementServerException If an error occurs while checking user associations.
+     */
+    default boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
+                                                  List<String> orgIdsScope)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("hasUserAssociationsInOrgScope method is not implemented.");
+    }
+
+    /**
      * Retrieve the list of usernames that are not eligible to be removed from the specified role within the given
      * tenant domain, based on the permissions of the requesting organization.
      *

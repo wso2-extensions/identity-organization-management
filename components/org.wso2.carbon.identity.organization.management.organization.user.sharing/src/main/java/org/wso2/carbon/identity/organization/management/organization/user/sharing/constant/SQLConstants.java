@@ -83,6 +83,43 @@ public class SQLConstants {
                     "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
                     "    ) THEN 1 ELSE 0 " +
                     "END AS has_user_associations FROM SYSIBM.SYSDUMMY1;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE =
+            "SELECT EXISTS ( " +
+                    "    SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "    WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "    AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    AND UM_ORG_ID IN (:" + SQLPlaceholders.COLUMN_NAME_ORG_ID + ";) " +
+                    ") AS has_user_associations;";
+
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_ORACLE =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (:" + SQLPlaceholders.COLUMN_NAME_ORG_ID + ";) " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM DUAL;";
+
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_MSSQL =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (:" + SQLPlaceholders.COLUMN_NAME_ORG_ID + ";) " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations;";
+
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_DB2 =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (:" + SQLPlaceholders.COLUMN_NAME_ORG_ID + ";) " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM SYSIBM.SYSDUMMY1;";
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG = "SELECT UM_ID, UM_USER_ID, " +
             "UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE FROM UM_ORG_USER_ASSOCIATION " +
             "WHERE UM_ASSOCIATED_USER_ID = ? AND UM_ORG_ID = ?";

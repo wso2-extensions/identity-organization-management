@@ -151,6 +151,22 @@ public interface OrganizationUserSharingDAO {
     }
 
     /**
+     * Checks if the given user has at least one association within the specified organization scope.
+     *
+     * @param associatedUserId The ID of the associated user.
+     * @param associatedOrgId  The organization ID where the user's identity is managed.
+     * @param orgIdsScope      The list of organization IDs defining the scope to check for associations.
+     * @return True if the user has at least one association within the specified organization scope.
+     * @throws OrganizationManagementServerException If an error occurs while checking user associations.
+     */
+    default boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
+                                                  List<String> orgIdsScope)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("hasUserAssociationsInOrgScope DAO method is not implemented.");
+    }
+
+    /**
      * Get the organization user association of a given user in a given organization.
      *
      * @param associatedUserId ID of the associated user.
