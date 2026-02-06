@@ -517,13 +517,13 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
+            List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId).collect(Collectors.toList());
+            List<String> groups =
+                    getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
+                            .collect(Collectors.toList());
+            List<String> permissions = getPermissionsWithIdFromRoleId(roleId).stream()
+                    .map(Permission::getId).map(Object::toString).collect(Collectors.toList());
             namedJdbcTemplate.withTransaction(template -> {
-                List<String> users = getUsersFromRoleId(roleId).stream().map(User::getId).collect(Collectors.toList());
-                List<String> groups =
-                        getGroupsWithId(getMemberGroupsIdsFromRoleId(roleId)).stream().map(Group::getGroupId)
-                                .collect(Collectors.toList());
-                List<String> permissions = getPermissionsWithIdFromRoleId(roleId).stream()
-                        .map(Permission::getId).map(Object::toString).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(users)) {
                     removeUsersFromRole(users, roleId);
                 }
@@ -562,7 +562,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
                 }
                 return null;
             });
-        } catch (TransactionException e) {
+        } catch (TransactionException | UserStoreException e) {
             throw handleServerException(ERROR_CODE_PATCHING_ROLE, e, organizationId);
         }
         return role;
@@ -646,7 +646,7 @@ public class RoleManagementDAOImpl implements RoleManagementDAO {
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 for (String permission : permissions) {
-                    int value = namedJdbcTemplate.fetchSingleRecord(CHECK_PERMISSION_EXISTS,
+                    int value = template.fetchSingleRecord(CHECK_PERMISSION_EXISTS,
                             (resultSet, rowNumber) -> resultSet.getInt(1),
                             namedPreparedStatement -> {
                                 namedPreparedStatement.setString(DB_SCHEMA_COLUMN_NAME_UM_RESOURCE_ID, permission);
