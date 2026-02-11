@@ -28,6 +28,10 @@ public class OrganizationManagementExtDataHolder {
     private static final OrganizationManagementExtDataHolder instance = new OrganizationManagementExtDataHolder();
 
     private IdentityEventService identityEventService;
+    
+    private OrganizationManagementExtDataHolder() {
+
+    }
 
     /**
      * Get {@link IdentityEventService}.

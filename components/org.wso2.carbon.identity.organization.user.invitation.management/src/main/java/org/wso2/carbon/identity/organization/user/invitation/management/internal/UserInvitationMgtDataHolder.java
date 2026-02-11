@@ -37,6 +37,10 @@ public class UserInvitationMgtDataHolder {
     private OrganizationUserSharingService organizationUserSharingService;
     private RoleManagementService roleManagementService;
 
+    private UserInvitationMgtDataHolder() {
+
+    }
+    
     public static UserInvitationMgtDataHolder getInstance() {
 
         return USER_INVITATION_MGT_DATA_HOLDER;

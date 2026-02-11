@@ -58,7 +58,7 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
                             "for Tenant ID: " + tenantId);
         }
         try {
-            RealmService realmService = TenantAssociationDataHolder.getRealmService();
+            RealmService realmService = TenantAssociationDataHolder.getInstance().getRealmService();
             Tenant tenant = realmService.getTenantManager().getTenant(tenantId);
             // Association will be created only if the tenant created with an organization id.
             String organizationID = tenant.getAssociatedOrganizationUUID();
@@ -85,6 +85,6 @@ public class TenantAssociationManagementListener extends AbstractIdentityTenantM
 
     private OrganizationManager getOrganizationManager() {
 
-        return TenantAssociationDataHolder.getOrganizationManager();
+        return TenantAssociationDataHolder.getInstance().getOrganizationManager();
     }
 }

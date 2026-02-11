@@ -32,6 +32,10 @@ public class OrganizationConfigServiceHolder {
     private OrganizationManager organizationManager = null;
     private OrganizationConfigManager organizationConfigManager = null;
 
+    private OrganizationConfigServiceHolder() {
+        
+    }
+    
     public static OrganizationConfigServiceHolder getInstance() {
 
         return instance;

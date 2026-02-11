@@ -28,6 +28,10 @@ public class OrganizationManagementAuthzServiceHolder {
     private static OrganizationManagementAuthzServiceHolder instance = new OrganizationManagementAuthzServiceHolder();
     private RealmService realmService = null;
 
+    private OrganizationManagementAuthzServiceHolder() {
+        
+    }
+    
     public static OrganizationManagementAuthzServiceHolder getInstance() {
 
         return instance;
