@@ -30,6 +30,10 @@ public class OrganizationClaimProviderServiceComponentHolder {
             new OrganizationClaimProviderServiceComponentHolder();
     private OrganizationManager organizationManager;
     private boolean isOrganizationManagementEnable = false;
+    
+    private OrganizationClaimProviderServiceComponentHolder() {
+        
+    }
 
     public static OrganizationClaimProviderServiceComponentHolder getInstance() {
 

@@ -29,6 +29,10 @@ public class OrganizationManagementTomcatDataHolder {
     private static final OrganizationManagementTomcatDataHolder instance = new OrganizationManagementTomcatDataHolder();
     private OrganizationManager organizationManager;
     private boolean isOrganizationManagementEnable;
+    
+    private OrganizationManagementTomcatDataHolder() {
+        
+    }
 
     public static OrganizationManagementTomcatDataHolder getInstance() {
 

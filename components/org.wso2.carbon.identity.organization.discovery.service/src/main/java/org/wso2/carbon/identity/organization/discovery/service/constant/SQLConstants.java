@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -70,6 +70,23 @@ public class SQLConstants {
             "WHERE UM_DISCOVERY_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_TYPE + "; AND UM_DISCOVERY_VALUE = :"
             + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_VALUE + "; AND UM_ROOT_ORG_ID = :" +
             SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + ";";
+    
+    public static final String GET_DISCOVERY_ORGANIZATION_IDS_SORTED_BY_CREATED_TIME = "SELECT DISTINCT UM_ORG_ID, " + 
+            "UM_ORG.UM_CREATED_TIME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID WHERE %s " + 
+            "UM_ROOT_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + "; ORDER BY " + 
+            "UM_ORG.UM_CREATED_TIME DESC LIMIT :" + SQLPlaceholders.DB_LIMIT + "; OFFSET :" +
+            SQLPlaceholders.DB_OFFSET + ";";
+
+    public static final String GET_DISCOVERY_ORGANIZATION_IDS_MSSQL_SORTED_BY_CREATED_TIME = "SELECT DISTINCT " + 
+            "UM_ORG_ID, UM_ORG.UM_CREATED_TIME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON UM_ORG.UM_ID = UM_ORG_ID " + 
+            "WHERE %s UM_ROOT_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_ROOT_ID + 
+            "; ORDER BY UM_ORG.UM_CREATED_TIME DESC OFFSET :" +  SQLPlaceholders.DB_OFFSET + 
+            "; ROWS FETCH NEXT :" + SQLPlaceholders.DB_LIMIT + "; ROWS ONLY";
+
+    public static final String GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES_SORTED_BY_CREATED_TIME = "SELECT UM_ORG_ID, " + 
+            "UM_DISCOVERY_TYPE, UM_DISCOVERY_VALUE, UM_ORG_NAME FROM UM_ORG_DISCOVERY JOIN UM_ORG ON " + 
+            "UM_ORG.UM_ID = UM_ORG_ID WHERE UM_ORG_ID IN (" + SQLPlaceholders.ORGS_LIST_PLACEHOLDER + ") " + 
+            "ORDER BY UM_ORG.UM_CREATED_TIME DESC";
 
     /**
      * SQL placeholders related to organization discovery management SQL operations.

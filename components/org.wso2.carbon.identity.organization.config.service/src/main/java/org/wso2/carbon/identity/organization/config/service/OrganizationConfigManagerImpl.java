@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.config.service;
 
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
 import org.wso2.carbon.identity.configuration.mgt.core.exception.ConfigurationManagementException;
 import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
@@ -63,6 +64,13 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 /**
  * Implementation of Organization Configuration Manager Interface.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.config.service.OrganizationConfigManager",
+                "service.scope=singleton"
+        }
+)
 public class OrganizationConfigManagerImpl implements OrganizationConfigManager {
 
     @Override

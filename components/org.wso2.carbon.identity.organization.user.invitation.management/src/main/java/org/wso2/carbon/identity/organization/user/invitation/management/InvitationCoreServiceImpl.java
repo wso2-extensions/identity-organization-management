@@ -62,7 +62,6 @@ import org.wso2.carbon.user.core.common.Group;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
-import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -77,16 +76,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.DEFAULT_USER_STORE_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_NAME_POST_ADD_INVITATION;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_POST_ADD_INVITED_ORG_USER;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_CONFIRMATION_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_EMAIL_ADDRESS;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_GROUP_NAME;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ORG_ID;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_PROPERTIES;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_REDIRECT_URL;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_ROLE_ASSIGNMENTS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.EVENT_PROP_USER_NAME;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_ACCEPT_INVITATION;
@@ -118,7 +112,6 @@ import static org.wso2.carbon.identity.organization.user.invitation.management.c
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_USER_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FAIL_STATUS;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.FILTER_STATUS_EQ;
-import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.INVITED_USER_GROUP_NAME_PREFIX;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORG_USER_INVITATION_DEFAULT_REDIRECT_URL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORG_USER_INVITATION_USER_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.STATUS_EXPIRED;
@@ -532,31 +525,6 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
             return invitation.getExpiredAt().after(currentTime);
         }
         return false;
-    }
-
-    private String getAvailableGroupName() throws UserStoreException {
-
-        SecureRandom rnd = new SecureRandom();
-        int number = rnd.nextInt(999999);
-        // This will convert any number sequence into 6 character.
-        return DEFAULT_USER_STORE_DOMAIN + "/" + INVITED_USER_GROUP_NAME_PREFIX + String.format("%06d", number);
-    }
-
-    private void triggerRoleAssignmentEvent(String orgId, String groupName,
-                                            List<RoleAssignments> roleAssignmentsList) {
-
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put(EVENT_PROP_ORG_ID, orgId);
-        properties.put(EVENT_PROP_GROUP_NAME, groupName);
-        properties.put(EVENT_PROP_ROLE_ASSIGNMENTS, roleAssignmentsList);
-
-        Event roleAssignmentEvent = new Event(EVENT_POST_ADD_INVITED_ORG_USER, properties);
-        try {
-            UserInvitationMgtDataHolder.getInstance().getIdentityEventService().handleEvent(roleAssignmentEvent);
-        } catch (IdentityEventException e) {
-            LOG.error("Error while triggering role assignment event for group: " + groupName + " in organization: " +
-                    orgId, e);
-        }
     }
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {

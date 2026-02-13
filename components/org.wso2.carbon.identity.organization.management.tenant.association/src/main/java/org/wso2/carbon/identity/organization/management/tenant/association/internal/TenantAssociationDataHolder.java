@@ -27,12 +27,19 @@ import org.wso2.carbon.user.core.service.RealmService;
  */
 public class TenantAssociationDataHolder {
 
-    private static RealmService realmService;
-    private static RoleManager roleManager;
-    private static OrganizationManager organizationManager;
+    private RealmService realmService;
+    private RoleManager roleManager;
+    private OrganizationManager organizationManager;
+    
+    private static final TenantAssociationDataHolder INSTANCE = new TenantAssociationDataHolder();
 
     private TenantAssociationDataHolder() {
 
+    }
+    
+    public static TenantAssociationDataHolder getInstance() {
+
+        return INSTANCE;
     }
 
     /**
@@ -40,7 +47,7 @@ public class TenantAssociationDataHolder {
      *
      * @return RealmService.
      */
-    public static RealmService getRealmService() {
+    public RealmService getRealmService() {
 
         if (realmService == null) {
             throw new RuntimeException("RealmService was not set during the TenantAssociationServiceComponent startup");
@@ -53,9 +60,9 @@ public class TenantAssociationDataHolder {
      *
      * @param realmService RealmService.
      */
-    public static void setRealmService(RealmService realmService) {
+    public void setRealmService(RealmService realmService) {
 
-        TenantAssociationDataHolder.realmService = realmService;
+        this.realmService = realmService;
     }
 
     /**
@@ -63,7 +70,7 @@ public class TenantAssociationDataHolder {
      *
      * @return Organization role manager service.
      */
-    public static RoleManager getRoleManager() {
+    public RoleManager getRoleManager() {
 
         return roleManager;
     }
@@ -73,18 +80,18 @@ public class TenantAssociationDataHolder {
      *
      * @param roleManager Organization role manager service.
      */
-    public static void setRoleManager(RoleManager roleManager) {
+    public void setRoleManager(RoleManager roleManager) {
 
-        TenantAssociationDataHolder.roleManager = roleManager;
+        this.roleManager = roleManager;
     }
 
-    public static OrganizationManager getOrganizationManager() {
+    public OrganizationManager getOrganizationManager() {
 
         return organizationManager;
     }
 
-    public static void setOrganizationManager(OrganizationManager organizationManager) {
+    public void setOrganizationManager(OrganizationManager organizationManager) {
 
-        TenantAssociationDataHolder.organizationManager = organizationManager;
+        this.organizationManager = organizationManager;
     }
 }
