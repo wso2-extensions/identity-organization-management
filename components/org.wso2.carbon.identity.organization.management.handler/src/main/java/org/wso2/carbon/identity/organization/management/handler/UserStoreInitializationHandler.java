@@ -55,7 +55,7 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
     private static final String USER_STORES_CONFIG_KEY = "OrganizationUserStoreInitialization.UserStores";
     private static final String WAIT_TIME_CONFIG_KEY = "OrganizationUserStoreInitialization.WaitTime";
     private static final String WAIT_INTERVAL_CONFIG_KEY = "OrganizationUserStoreInitialization.WaitInterval";
-    private static final int DEFAULT_WAIT_TIME_MS = 120000; // 60 seconds.
+    private static final int DEFAULT_WAIT_TIME_MS = 60000; // 60 seconds.
     private static final int DEFAULT_WAIT_INTERVAL_MS = 500; // 500 milliseconds.
     private static final String DEFAULT_USER_STORES = "DEFAULT";
 
@@ -122,7 +122,7 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
             carbonContext.setTenantId(tenantId);
             carbonContext.setTenantDomain(tenantDomain);
 
-            AbstractUserStoreManager userStoreManager = getUserStoreManager(tenantId);
+
 
             for (String userStoreName : userStoresToWaitFor) {
                 String trimmedUserStoreName = userStoreName.trim();
@@ -131,14 +131,10 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
                 }
                 // Wait for each user store sequentially. This ensures each user store is fully initialized
                 // before proceeding to the next one. Total wait time = sum of individual wait times.
-                waitForSpecificUserStore(userStoreManager, trimmedUserStoreName, waitTime, waitInterval, 
+                waitForSpecificUserStore(tenantId, trimmedUserStoreName, waitTime, waitInterval,
                         organization.getId());
             }
 
-        } catch (UserStoreException e) {
-            throw new IdentityEventException(
-                    String.format("Error while waiting for user store initialization for organization: %s",
-                            organization.getId()), e);
         } catch (OrganizationManagementException e) {
             throw new IdentityEventException(
                 String.format("Error while resolving tenant domain for organization: %s",
@@ -151,14 +147,14 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
     /**
      * Wait for a specific user store to be initialized.
      *
-     * @param userStoreManager The user store manager.
+     * @param tenantId The sub organization tenant ID.
      * @param userStoreName The name of the user store to wait for.
      * @param maxWaitTime Maximum time to wait in milliseconds.
      * @param waitInterval Wait interval between checks in milliseconds.
      * @param organizationId Organization ID for logging.
      * @throws IdentityEventException If the user store is not initialized within the wait time.
      */
-    private void waitForSpecificUserStore(AbstractUserStoreManager userStoreManager, String userStoreName,
+    private void waitForSpecificUserStore(int tenantId, String userStoreName,
                                           int maxWaitTime, int waitInterval, String organizationId)
             throws IdentityEventException {
 
@@ -176,7 +172,8 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
                 if (elapsed >= maxWaitTime) {
                     break;
                 }
-                
+
+                AbstractUserStoreManager userStoreManager = getUserStoreManager(tenantId);
                 targetUserStore = userStoreManager.getSecondaryUserStoreManager(userStoreName);
                 if (targetUserStore != null) {
                     if (LOG.isDebugEnabled()) {
@@ -187,7 +184,7 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
                 }
                 Thread.sleep(waitInterval);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | UserStoreException e) {
             Thread.currentThread().interrupt();
             throw new IdentityEventException(
                     String.format("Thread interrupted while waiting for user store '%s' initialization " +
