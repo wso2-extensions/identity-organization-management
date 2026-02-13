@@ -103,6 +103,29 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                 FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getMessage());
     }
 
+    @Override
+    public OrganizationDiscoveryResult discoverOrganization(OrganizationDiscoveryInput orgDiscoveryInput,
+                                                            String appId, String tenantDomain)
+            throws FrameworkException {
+
+        String mainAppOrgId;
+        try {
+            mainAppOrgId = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
+                    .resolveOrganizationId(tenantDomain);
+        } catch (OrganizationManagementException e) {
+            throw new FrameworkException("Error while getting organization ID for tenant domain: "
+                    + tenantDomain, e);
+        }
+
+        if (StringUtils.isNotBlank(orgDiscoveryInput.getOrgId())) {
+            return handleOrgDiscoveryByOrgId(orgDiscoveryInput.getOrgId(), appId, mainAppOrgId);
+        }
+        // If any of the above conditions are not met, it means valid discovery parameters are not found.
+        return OrganizationDiscoveryResult.failure(
+                FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getCode(),
+                FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getMessage());
+    }
+
     private OrganizationDiscoveryResult handleOrgDiscoveryByOrgId(String orgId, String appId, String mainAppOrgId)
             throws FrameworkException {
 
