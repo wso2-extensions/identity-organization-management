@@ -122,8 +122,6 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
             carbonContext.setTenantId(tenantId);
             carbonContext.setTenantDomain(tenantDomain);
 
-
-
             for (String userStoreName : userStoresToWaitFor) {
                 String trimmedUserStoreName = userStoreName.trim();
                 if (StringUtils.isEmpty(trimmedUserStoreName)) {
