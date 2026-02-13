@@ -44,7 +44,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 
 /**
  * Event handler for waiting until user stores are initialized after organization creation.
- * This handler ensures that user stores (like DEFAULT and AGENT) are fully initialized
+ * This handler ensures that user stores are fully initialized
  * before the organization creation API returns, preventing intermittent failures during
  * user creation and role assignment operations.
  */
