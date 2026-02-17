@@ -27,5 +27,16 @@
     <Match>
         <Bug pattern="MS_EXPOSE_REP"/>
     </Match>
+    <!-- Suppress EI_EXPOSE_STATIC_REP2 for TenantAssociationDataHolder.setRealmService -->
+    <Match>
+        <Class name="org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder"/>
+        <Method name="setRealmService"/>
+        <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+    </Match>
+    <!-- Suppress EI_EXPOSE_STATIC_REP2 for TenantAssociationDataHolder.setRoleManager -->
+    <Match>
+        <Class name="org.wso2.carbon.identity.organization.management.tenant.association.internal.TenantAssociationDataHolder"/>
+        <Method name="setRoleManager"/>
+        <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+    </Match>
 </FindBugsFilter>
-
