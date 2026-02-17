@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -305,16 +305,18 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             return;
         }
         String sharedAppTenantDomain = getOrganizationManager().resolveTenantDomain(sharedAppOrgId);
+
+        Map<String, String> mainRoleToSharedRoleMappingsInSharedOrg =
+                getMainRoleToSharedRoleMappingsInChunks(rolesList, sharedAppTenantDomain);
+
         for (RoleV2 role : rolesList) {
             // Check if the role exists in the application shared org.
             boolean roleExistsInSharedOrg =
                     getRoleManagementServiceV2().isExistingRoleName(role.getName(), RoleConstants.ORGANIZATION,
                             sharedAppOrgId, sharedAppTenantDomain);
-            Map<String, String> mainRoleToSharedRoleMappingInSharedOrg =
-                    getRoleManagementServiceV2().getMainRoleToSharedRoleMappingsBySubOrg(
-                            Collections.singletonList(role.getId()), sharedAppTenantDomain);
+
             boolean roleRelationshipExistsInSharedOrg =
-                    MapUtils.isNotEmpty(mainRoleToSharedRoleMappingInSharedOrg);
+                    mainRoleToSharedRoleMappingsInSharedOrg.get(role.getId()) != null;
             if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
                 // Add relationship between main role and shared role.
                 String roleIdInSharedOrg =
@@ -958,6 +960,30 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         createSharedRolesWithOrgAudience(filteredRolesToBeShared, mainAppTenantDomain, sharedOrganizationId);
         LOG.warn("Successfully processed sharing of " + filteredRolesToBeShared.size() + " org roles for app " +
                 sharedAppId);
+    }
+
+    private Map<String, String> getMainRoleToSharedRoleMappingsInChunks(List<RoleV2> rolesList,
+                                                                        String sharedAppTenantDomain)
+            throws IdentityRoleManagementException {
+
+        Map<String, String> allMappings = new HashMap<>();
+        int chunkSize = 1000;
+
+        for (int i = 0; i < rolesList.size(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, rolesList.size());
+            List<RoleV2> chunk = rolesList.subList(i, end);
+
+            List<String> roleIds = chunk.stream()
+                    .map(RoleV2::getId)
+                    .collect(Collectors.toList());
+
+            Map<String, String> chunkMappings = getRoleManagementServiceV2()
+                    .getMainRoleToSharedRoleMappingsBySubOrg(roleIds, sharedAppTenantDomain);
+
+            allMappings.putAll(chunkMappings);
+        }
+
+        return allMappings;
     }
 
     private void createSharedRolesOnNewRoleCreation(Map<String, Object> eventProperties)
