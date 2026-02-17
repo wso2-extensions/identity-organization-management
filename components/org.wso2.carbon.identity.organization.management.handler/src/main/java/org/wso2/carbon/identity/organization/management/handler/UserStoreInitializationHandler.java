@@ -57,7 +57,6 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
     private static final String WAIT_INTERVAL_CONFIG_KEY = "OrganizationUserStoreInitialization.WaitInterval";
     private static final int DEFAULT_WAIT_TIME_MS = 60000; // 60 seconds.
     private static final int DEFAULT_WAIT_INTERVAL_MS = 500; // 500 milliseconds.
-    private static final String DEFAULT_USER_STORES = "DEFAULT";
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -102,11 +101,14 @@ public class UserStoreInitializationHandler extends AbstractEventHandler {
         }
 
         // Get the list of user stores to wait for.
-        String userStoresConfig = IdentityUtil.getProperty(USER_STORES_CONFIG_KEY);
-        if (StringUtils.isEmpty(userStoresConfig)) {
-            userStoresConfig = DEFAULT_USER_STORES;
+        String userStoresToBeChecked = IdentityUtil.getProperty(USER_STORES_CONFIG_KEY);
+        if (StringUtils.isEmpty(userStoresToBeChecked)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No user stores are specified to check. Skipping user store initialization wait.");
+            }
+            return;
         }
-        String[] userStoresToWaitFor = userStoresConfig.split(",");
+        String[] userStoresToWaitFor = userStoresToBeChecked.split(",");
 
         // Get wait time and interval configuration.
         int waitTime = getConfigValue(WAIT_TIME_CONFIG_KEY, DEFAULT_WAIT_TIME_MS);
