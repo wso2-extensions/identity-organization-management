@@ -28,12 +28,17 @@ public class OrganizationConfigConstants {
 
     public static final String RESOURCE_TYPE_NAME = "ORGANIZATION_CONFIGURATION";
     public static final String RESOURCE_NAME = "OrganizationDiscovery";
+    public static final String ORGANIZATION_BRANDING_RESOURCE_NAME = "OrganizationBranding";
     public static final String EMAIL_DOMAIN_ENABLE = "emailDomain.enable";
     public static final String EMAIL_DOMAIN_BASED_SELF_SIGNUP_ENABLE = "emailDomainBasedSelfSignup.enable";
     public static final String DEFAULT_PARAM = "defaultParam";
     public static final String ORG_HANDLE = "orgHandle";
     public static final String ORG_NAME = "orgName";
     public static final String ORG_PARAMETER = "org";
+    public static final String IS_CONSOLE_BRANDING_ENABLED = "isConsoleBrandingEnabled";
+
+    public static final List<String> SUPPORTED_BRANDING_ATTRIBUTE_KEYS =
+            List.of(IS_CONSOLE_BRANDING_ENABLED);
 
     @Deprecated
     /* Do not use this constant to register new discovery types. The
@@ -67,6 +72,15 @@ public class OrganizationConfigConstants {
         ERROR_CODE_INVALID_DISCOVERY_DEFAULT_PARAM_VALUE("60006",
                 "Invalid organization discovery default parameter value.", "Provided " +
                 "'defaultParam' value is not supported. Only 'orgHandle' and 'orgName' are allowed."),
+        ERROR_CODE_ORGANIZATION_CONFIG_NOT_EXIST("60007",
+                "No organization configuration found.",
+                "There is no organization configuration for organization with ID: %s."),
+        ERROR_CODE_INVALID_ORGANIZATION_ATTRIBUTE("60008",
+                "Invalid organization attribute.",
+                "The organization attribute with key: %s is not supported."),
+        ERROR_CODE_INVALID_ORGANIZATION_CONFIG_ATTRIBUTE_VALUES("60009",
+                "Invalid organization configuration attribute values.",
+                "Provided organization configuration attribute value combination is not supported."),
 
         // Server errors.
         ERROR_CODE_ERROR_ADDING_DISCOVERY_CONFIG("65001", "Unable to add the organization discovery " +
@@ -77,7 +91,15 @@ public class OrganizationConfigConstants {
                 "configuration for organization with ID: %s."),
         ERROR_CODE_ERROR_DELETING_DISCOVERY_CONFIG("65003", "Unable to delete the organization discovery " +
                 "configuration.", "Server encountered an error while deleting the organization discovery " +
-                "configuration for the organization with id: %s");
+                "configuration for the organization with id: %s"),
+        ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_CONFIG("65004",
+                "Unable to retrieve the organization configuration.",
+                "Server encountered an error while retrieving the organization configuration for " +
+                        "organization with ID: %s."),
+        ERROR_CODE_ERROR_UPDATING_ORGANIZATION_CONFIG("65005",
+                "Unable to update the organization configuration.",
+                "Server encountered an error while updating the organization configuration for " +
+                        "organization with ID: %s.");
 
         private final String code;
         private final String message;
