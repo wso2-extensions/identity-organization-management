@@ -2296,6 +2296,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setCallbackUrl(callbackUrl);
         consumerApp.setBackChannelLogoutUrl(backChannelUrl);
         consumerApp.setApplicationName(mainAppName);
+        consumerApp.setFragmentApp(true);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
