@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
@@ -140,6 +141,17 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
 
     @Override
     public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
+                                                                List<String> orgIdsScope,
+                                                                List<ExpressionNode> expressionNodes,
+                                                                String sortOrder, int limit)
+            throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId,
+                orgIdsScope, expressionNodes, sortOrder, limit);
+    }
+
+    @Override
+    public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
                                                                 SharedType sharedType)
             throws OrganizationManagementException {
 
@@ -151,6 +163,14 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             throws OrganizationManagementServerException {
 
         return organizationUserSharingDAO.hasUserAssociations(associatedUserId, associatedOrgId);
+    }
+
+    @Override
+    public boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
+                                                 List<String> orgIdsScope)
+            throws OrganizationManagementServerException {
+
+        return organizationUserSharingDAO.hasUserAssociationsInOrgScope(associatedUserId, associatedOrgId, orgIdsScope);
     }
 
     @Override

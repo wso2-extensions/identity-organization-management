@@ -40,6 +40,14 @@ public class ResourceSharingSQLConstants {
                     "FROM UM_RESOURCE_SHARING_POLICY WHERE UM_ID = " +
                     ":" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_UM_ID + ";";
 
+    // SQL for retrieving resource sharing policy by resource type, ID, initiating org ID and policy holding org ID.
+    public static final String GET_RESOURCE_SHARING_POLICY_BY_RESOURCE_KEYS =
+            "SELECT * FROM UM_RESOURCE_SHARING_POLICY " +
+                    "WHERE UM_RESOURCE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
+                    "UM_RESOURCE_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND " +
+                    "UM_INITIATING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + "; AND " +
+                    "UM_POLICY_HOLDING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_POLICY_HOLDING_ORG_ID + ";";
+
     // SQL HEAD constant for retrieving resource sharing policies by organization IDs.
     public static final String GET_RESOURCE_SHARING_POLICIES_BY_ORG_IDS_HEAD =
             "SELECT UM_ID, UM_RESOURCE_ID, UM_RESOURCE_TYPE, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID," +

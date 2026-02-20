@@ -27,6 +27,17 @@ public class RoleWithAudienceDO {
     private String audienceName;
     private String audienceType;
 
+    public RoleWithAudienceDO(String roleName, String audienceName, String audienceType) {
+
+        this.roleName = roleName;
+        this.audienceName = audienceName;
+        this.audienceType = audienceType;
+    }
+
+    public RoleWithAudienceDO() {
+
+    }
+
     public String getRoleName() {
 
         return roleName;

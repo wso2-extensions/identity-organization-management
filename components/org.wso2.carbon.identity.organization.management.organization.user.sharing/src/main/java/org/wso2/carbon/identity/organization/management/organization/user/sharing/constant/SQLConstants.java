@@ -30,6 +30,9 @@ import static org.wso2.carbon.identity.organization.management.organization.user
  */
 public class SQLConstants {
 
+    public static final String ID_COLUMN_NAME = "UM_ID";
+    public static final String SHARED_ORG_ID_COLUMN_NAME = "UM_ORG_ID";
+
     public static final String CREATE_ORGANIZATION_USER_ASSOCIATION = "INSERT INTO UM_ORG_USER_ASSOCIATION(" +
             "UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID) VALUES(?, ?, ?, ?)";
     public static final String CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE = "INSERT INTO UM_ORG_USER_ASSOCIATION(" +
@@ -78,6 +81,40 @@ public class SQLConstants {
                     "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
                     "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
                     "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM SYSIBM.SYSDUMMY1;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE =
+            "SELECT EXISTS ( " +
+                    "    SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "    WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "    AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "    AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    ") AS has_user_associations;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_ORACLE =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations FROM DUAL;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_MSSQL =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "    ) THEN 1 ELSE 0 " +
+                    "END AS has_user_associations;";
+    public static final String CHECK_USER_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_DB2 =
+            "SELECT CASE " +
+                    "    WHEN EXISTS ( " +
+                    "        SELECT 1 FROM UM_ORG_USER_ASSOCIATION " +
+                    "        WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
+                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "    ) THEN 1 ELSE 0 " +
                     "END AS has_user_associations FROM SYSIBM.SYSDUMMY1;";
     public static final String GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG = "SELECT UM_ID, UM_USER_ID, " +
@@ -165,6 +202,32 @@ public class SQLConstants {
                     "ORDER BY " + SQLPlaceholders.COLUMN_NAME_CREATED_TIME + " DESC " +
                     "LIMIT 1;";
 
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_HEAD =
+            "SELECT UM_ID, UM_USER_ID, UM_ORG_ID, UM_ASSOCIATED_USER_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
+                    "FROM UM_ORG_USER_ASSOCIATION " +
+                    "WHERE UM_ASSOCIATED_USER_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_USER_ID + "; " +
+                    "AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; ";
+
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s";
+
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s LIMIT %d";
+
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
+
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_DB2 =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
+
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
+
     /**
      * SQL placeholders related to organization user sharing SQL operations.
      */
@@ -196,6 +259,16 @@ public class SQLConstants {
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
         public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
+
+        public static final String ASC_SORT_ORDER = "ASC";
+        public static final String DESC_SORT_ORDER = "DESC";
+
+        public static final String AND = "AND";
+        public static final String OR = "OR";
+        public static final String WHITE_SPACE = " ";
+
+        // Prefix for dynamic named params: :orgId0; :orgId1; ...
+        public static final String ORG_ID_SCOPE_PLACEHOLDER_PREFIX = "orgId";
 
         /**
          * SQL column names for resource sharing status management.

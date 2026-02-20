@@ -17,6 +17,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.RoleAssignmentMode;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
@@ -41,6 +42,7 @@ public class GeneralUserShare extends BaseUserShare {
         private String userId;
         private PolicyEnum policy;
         private List<String> roles;
+        private RoleAssignmentMode roleAssignmentMode; // Used in user-sharing V2.
 
         public Builder withUserId(String userId) throws OrganizationManagementServerException {
 
@@ -69,6 +71,15 @@ public class GeneralUserShare extends BaseUserShare {
             return this;
         }
 
+        public Builder withRoleAssignmentMode(RoleAssignmentMode roleAssignmentMode) {
+
+            if (roleAssignmentMode == null) {
+                roleAssignmentMode = RoleAssignmentMode.NONE;
+            }
+            this.roleAssignmentMode = roleAssignmentMode;
+            return this;
+        }
+
         public GeneralUserShare build() throws OrganizationManagementServerException {
 
             if (userId == null || policy == null) {
@@ -78,6 +89,8 @@ public class GeneralUserShare extends BaseUserShare {
             generalUserShare.setUserId(userId);
             generalUserShare.setPolicy(policy);
             generalUserShare.setRoles(roles != null ? roles : new ArrayList<>());
+            generalUserShare.setRoleAssignmentMode(roleAssignmentMode != null ? roleAssignmentMode :
+                    RoleAssignmentMode.NONE);
             return generalUserShare;
         }
     }

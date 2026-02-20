@@ -20,12 +20,31 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Constants for organization user sharing.
  */
 public class UserSharingConstants {
+
+    public static final String BEFORE = "before";
+    public static final String AFTER = "after";
+    public static final String ORGANIZATION_ID_REPRESENTATION_1 = "orgId";
+    public static final String ORGANIZATION_ID_REPRESENTATION_2 = "organizationId";
+    public static final String ORGANIZATION_ID_REPRESENTATION_3 = "id";
+    private static final Map<String, String> attributeColumnMap = new HashMap<>();
+    public static final Map<String, String> SP_SHARED_ATTRIBUTE_COLUMN_MAP =
+            Collections.unmodifiableMap(attributeColumnMap);
+
+    static {
+        attributeColumnMap.put(BEFORE, SQLConstants.ID_COLUMN_NAME);
+        attributeColumnMap.put(AFTER, SQLConstants.ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_1, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_2, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+        attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_3, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
+    }
 
     public static final String USER_ID = "userId";
     public static final String USER_IDS = "userIds";
@@ -35,12 +54,20 @@ public class UserSharingConstants {
     public static final String ROLES = "roles";
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
-    public static final String USER = "User";
+    public static final String USER = "USER";
     public static final String CORRELATION_ID_MDC = "Correlation-ID";
+
+    public static final String ORG_ID_FIELD_REPRESENTATION_1 = "orgId";
+    public static final String ORG_ID_FIELD_REPRESENTATION_2 = "organizationId";
 
     public static final String SHARING_TYPE_SHARED = "Shared";
     public static final String SHARING_TYPE_INVITED = "Invited";
     public static final String SHARING_TYPE_INHERITED = "Inherited"; //Sub-org Owner.
+
+    public static final String PATCH_PATH_ROLES = "roles";
+    public static final String PATCH_PATH_NONE = "none";
+    public static final String PATCH_PATH_PREFIX = "organizations[orgId eq ";
+    public static final String PATCH_PATH_SUFFIX_ROLES = "].roles";
 
     public static final String NULL_POLICY = "Policy is null";
 
@@ -63,6 +90,21 @@ public class UserSharingConstants {
             "Skipping user share for organizations that are not immediate children: %s";
     public static final String LOG_WARN_NON_RESIDENT_USER =
             "Skipping user share for user: %s since the user is not managed by the sharing initiated org: %s";
+
+    public static final String ACTION_GENERAL_USER_SHARE = "general user share";
+    public static final String ACTION_SELECTIVE_USER_SHARE = "selective user share";
+    public static final String ACTION_SELECTIVE_USER_UNSHARE = "selective user unshare";
+    public static final String ACTION_GENERAL_USER_UNSHARE = "general user unshare";
+    public static final String ACTION_USER_SHARE_ATTRIBUTE_UPDATE = "user share attribute update";
+    public static final String ACTION_USER_SHARE_ROLE_ASSIGNMENT_UPDATE = "user share role assignment update";
+
+    public static final String SP_SHARED_ROLE_INCLUDED_KEY = "roles";
+    public static final String SP_SHARED_SHARING_MODE_INCLUDED_KEY = "sharingMode";
+
+    public static final String ASYNC_PROCESSING_LOG_TEMPLATE = "Processing async %s initiated by user: %s in " +
+            "organization: %s.";
+    public static final String USER_SHARING_LOG_TEMPLATE = "Sharing user: %s from organization: %s is initiated by " +
+            "user: %s.";
 
     public static final String DEFAULT_PROFILE = "default";
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
@@ -255,7 +297,63 @@ public class UserSharingConstants {
                 "The audience with the provided name and type could not be found."),
         ERROR_CODE_ROLE_NOT_FOUND("10051",
                 "Role '%s' not found in audience '%s':'%s'.",
-                "The role with the provided name and audience could not be found.");
+                "The role with the provided name and audience could not be found."),
+        ERROR_CODE_REQUEST_BODY_NULL("10052",
+                "Request body is null.",
+                "The request body provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATIONS_NULL("10053",
+                "Patch operations list is null.",
+                "The patch operations list provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_NULL("10054",
+                "Patch operation is null.",
+                "One of the patch operations provided is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_OP_NULL("10055",
+                "Patch operation 'op' is null.",
+                "The 'op' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_PATH_NULL("10056",
+                "Patch operation 'path' is null.",
+                "The 'path' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_VALUE_NULL("10057",
+                "Patch operation 'value' is null.",
+                "The 'value' field in one of the patch operations is null and must be valid."),
+        ERROR_CODE_PATCH_OPERATION_OP_INVALID("10058",
+                "Invalid patch operation 'op': %s.",
+                "The 'op' field in one of the patch operations is invalid. Allowed values are 'add' and 'remove'."),
+        ERROR_CODE_PATCH_OPERATION_PATH_INVALID("10059",
+                "Invalid patch operation 'path': %s.",
+                "The 'path' field in one of the patch operations is invalid. Allowed values are : 'roles'."),
+        ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED("10060",
+                "Unsupported patch operation 'path': %s.",
+                "The 'path' field in one of the patch operations is not supported for the user " +
+                        "share update operation."),
+        ERROR_CODE_ORG_ID_INVALID_FORMAT("10061",
+                "Invalid organization ID format: %s.",
+                "The organization ID provided is in an invalid format and cannot be processed."),
+        ERROR_CODE_PATCH_OPERATION_VALUE_TYPE_INVALID("10062",
+                "Invalid patch operation 'value' type.",
+                "The 'value' field in a patch operation must be a JSON array (list)."),
+        ERROR_CODE_PATCH_OPERATION_ROLES_VALUE_CONTENT_INVALID("10063",
+                "Invalid patch operation 'value' for roles path.",
+                "For the roles patch path, the 'value' field must be a list of role assignments, where " +
+                        "each entry contains a role name, audience name, and audience type."),
+        ERROR_CODE_USER_SHARE_ROLE_ASSIGNMENT_UPDATE("10064",
+                "Error occurred during user share role assignment update.",
+                "An unexpected error occurred while updating role assignments for the shared user."),
+        ERROR_CODE_FILTER_NULL("10065",
+                "Filter is null.",
+                "Filter must be provided."),
+        ERROR_CODE_GET_ATTRIBUTES_NULL("10066",
+                "Attributes list is null.",
+                "Attributes list must be provided."),
+        ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED("10067",
+                "Unsupported attribute requested: %s.",
+                "One or more of the requested attributes are not supported for retrieval."),
+        ERROR_CODE_GET_ATTRIBUTE_NULL("10068",
+                "Attribute name is null.",
+                "One of the attribute names provided is null and must be valid."),
+        ERROR_CODE_INVALID_FILTER_VALUE("10069",
+                "Invalid filter value provided: %s.",
+                "The filter value provided is invalid and cannot be processed.");
 
         private final String code;
         private final String message;
