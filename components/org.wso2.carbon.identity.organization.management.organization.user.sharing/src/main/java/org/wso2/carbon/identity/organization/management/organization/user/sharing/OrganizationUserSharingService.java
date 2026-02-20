@@ -139,7 +139,7 @@ public interface OrganizationUserSharingService {
      * @param residentOrgId   The organization ID where the user is managed.
      * @param orgIdsScope     The list of organization IDs to limit the search scope.
      * @param expressionNodes The list of expression nodes for filtering the results.
-     * @param sortOder        The order in which to sort the results (e.g., ascending or descending).
+     * @param sortOrder        The order in which to sort the results (e.g., ascending or descending).
      * @param limit           The maximum number of results to return.
      * @return A list of {@link UserAssociation}s.
      * @throws OrganizationManagementException If an error occurs while fetching user associations.
@@ -147,7 +147,7 @@ public interface OrganizationUserSharingService {
     default List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
                                                                  List<String> orgIdsScope,
                                                                  List<ExpressionNode> expressionNodes,
-                                                                 String sortOder, int limit)
+                                                                 String sortOrder, int limit)
             throws OrganizationManagementException {
 
         throw new NotImplementedException("getUserAssociationsOfGivenUser method is not implemented.");

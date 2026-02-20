@@ -134,11 +134,11 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public List<UserAssociation> getUserAssociationsOfGivenUser(String actualUserId, String residentOrgId,
                                                                 List<String> orgIdsScope,
                                                                 List<ExpressionNode> expressionNodes,
-                                                                String sortOder, int limit)
+                                                                String sortOrder, int limit)
             throws OrganizationManagementException {
 
         return organizationUserSharingDAO.getUserAssociationsOfAssociatedUser(actualUserId, residentOrgId,
-                orgIdsScope, expressionNodes, sortOder, limit);
+                orgIdsScope, expressionNodes, sortOrder, limit);
     }
 
     @Override

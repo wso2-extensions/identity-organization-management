@@ -1671,7 +1671,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             throws UserSharingMgtServerException {
 
         try {
-            return getOrganizationManager().getChildOrganizationsIds(getOrganizationId(), false);
+            return getOrganizationManager().getChildOrganizationsIds(sharingInitiatedOrgId, false);
         } catch (OrganizationManagementException e) {
             String errorMessage = String.format(
                     ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getMessage(), sharingInitiatedOrgId);
@@ -2041,7 +2041,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 }
             }
         }
-        LOG.debug("Sized role with audience list: " + roleWithAudienceList.size());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Sized role with audience list: " + roleWithAudienceList.size());
+        }
         return roleWithAudienceList;
     }
 
@@ -2124,7 +2126,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
     private void logAsyncProcessing(String action, String sharingInitiatedUserId, String sharingInitiatedOrgId) {
 
-        if (!LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
             LOG.debug(String.format(ASYNC_PROCESSING_LOG_TEMPLATE, action, sharingInitiatedUserId,
                     sharingInitiatedOrgId));
         }

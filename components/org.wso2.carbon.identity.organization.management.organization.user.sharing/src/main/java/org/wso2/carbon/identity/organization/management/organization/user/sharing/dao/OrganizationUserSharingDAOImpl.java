@@ -25,6 +25,7 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.EditOperation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
@@ -384,9 +385,17 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return false;
         }
 
+        String orgIdPlaceholder = "ORG_ID_";
+        List<String> orgIdPlaceholders = new ArrayList<>();
+        for (int i = 1; i <= orgIdsScope.size(); i++) {
+            orgIdPlaceholders.add(":" + orgIdPlaceholder + i + ";");
+        }
+
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociationsInOrgScope();
-        String query = getDBSpecificQuery(dbQueryMap);
+        String query = getDBSpecificQuery(dbQueryMap).replace(
+                SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS, String.join(", ", orgIdPlaceholders));
+
         try {
             Boolean result = namedJdbcTemplate.fetchSingleRecord(
                     query,
@@ -394,9 +403,12 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
-                        namedPreparedStatement.setString(COLUMN_NAME_ORG_ID, String.join(",", orgIdsScope));
-                    }
-                                                                );
+                        int index = 1;
+                        for (String orgId : orgIdsScope) {
+                            namedPreparedStatement.setString(orgIdPlaceholder + index, orgId);
+                            index++;
+                        }
+                    });
             return Boolean.TRUE.equals(result);
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);

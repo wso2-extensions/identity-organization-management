@@ -106,7 +106,7 @@ public interface OrganizationUserSharingDAO {
      * @param associatedOrgId  The organization ID where the user is managed.
      * @param orgIdsScope      The list of organization IDs to limit the search scope.
      * @param expressionNodes  The list of expression nodes to filter the user associations.
-     * @param sortOder         The order to sort the results.
+     * @param sortOrder         The order to sort the results.
      * @param limit            The maximum number of results to return.
      * @return the list of {@link UserAssociation}s.
      * @throws OrganizationManagementException If an error occurs while fetching user associations.
@@ -114,7 +114,7 @@ public interface OrganizationUserSharingDAO {
     default List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId,
                                                                       List<String> orgIdsScope,
                                                                       List<ExpressionNode> expressionNodes,
-                                                                      String sortOder, int limit)
+                                                                      String sortOrder, int limit)
             throws OrganizationManagementException {
 
         throw new NotImplementedException("getUserAssociationsOfGivenUser method with filters is not implemented.");
