@@ -184,7 +184,6 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_AFTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_BEFORE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PARENT_ID_FIELD;
-import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
 
 /**
@@ -2529,11 +2528,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             return user + "@" + tenantDomain;
         }
         return CarbonConstants.REGISTRY_SYSTEM_USERNAME;
-    }
-
-    private static String getAuditData(String tenantDomain) {
-
-        return String.format("Tenant Domain : %s", tenantDomain);
     }
 
     private static String getAuditData(String tenantDomain, String initiatingOrgId) {
