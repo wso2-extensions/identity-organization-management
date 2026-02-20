@@ -75,10 +75,15 @@ public interface ResourceSharingPolicyHandlerService {
      * or an empty {@link Optional} if no matching resource sharing policy exists.
      * @throws ResourceSharingPolicyMgtException If an error occurs while retrieving the resource sharing policy.
      */
-    Optional<ResourceSharingPolicy> getResourceSharingPolicyByResourceKeys(String resourceType, String resourceId,
-                                                                           String initiatingOrgId,
-                                                                           String policyHoldingOrgId)
-            throws ResourceSharingPolicyMgtException;
+    default Optional<ResourceSharingPolicy> getResourceSharingPolicyByResourceKeys(String resourceType,
+                                                                                   String resourceId,
+                                                                                   String initiatingOrgId,
+                                                                                   String policyHoldingOrgId)
+            throws ResourceSharingPolicyMgtException {
+
+        throw new NotImplementedException(
+                "getResourceSharingPolicyByResourceKeys method is not implemented in " + this.getClass());
+    }
 
     /**
      * Retrieves a list of resource sharing policies associated with the given policy holding organization IDs.

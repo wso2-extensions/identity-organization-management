@@ -109,7 +109,7 @@ public class FilterQueriesUtil {
                     break;
                 }
                 default: {
-                    break;
+                    throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, operation);
                 }
             }
         } else {

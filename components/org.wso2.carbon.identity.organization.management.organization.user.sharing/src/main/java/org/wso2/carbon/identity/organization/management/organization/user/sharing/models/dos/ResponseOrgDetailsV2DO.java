@@ -41,10 +41,30 @@ public class ResponseOrgDetailsV2DO {
     private int depthFromRoot;
     private SharingModeDO sharingModeDO;
 
+    /**
+     * Default constructor.
+     */
     public ResponseOrgDetailsV2DO() {
 
     }
 
+    /**
+     * Parameterized constructor.
+     *
+     * @param userId                    User ID of the user.
+     * @param sharedUserId              User ID of the shared user.
+     * @param sharedType                The type of sharing.
+     * @param organizationId            Organization ID of the shared organization.
+     * @param organizationName          Organization name of the shared organization.
+     * @param organizationHandle        Organization handle of the shared organization.
+     * @param organizationStatus        Organization status of the shared organization.
+     * @param organizationReference     Organization reference of the shared organization.
+     * @param parentOrganizationId      Parent organization ID of the shared organization.
+     * @param roleWithAudienceDOList    List of roles with audience details assigned to the user for the shared org.
+     * @param hasChildren               Whether the shared organization has children or not.
+     * @param depthFromRoot             The depth of the shared organization from the root organization.
+     * @param sharingModeDO             Sharing mode details of the shared organization.
+     */
     public ResponseOrgDetailsV2DO(String userId, String sharedUserId, SharedType sharedType, String organizationId,
                                   String organizationName, String organizationHandle, String organizationStatus,
                                   String organizationReference, String parentOrganizationId,

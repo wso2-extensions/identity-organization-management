@@ -220,6 +220,10 @@ public class SQLConstants {
             "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
 
+    public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_DB2 =
+            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
+                    "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
+
     public static final String GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL =
             "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
                     "ORDER BY UM_ID %s OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
