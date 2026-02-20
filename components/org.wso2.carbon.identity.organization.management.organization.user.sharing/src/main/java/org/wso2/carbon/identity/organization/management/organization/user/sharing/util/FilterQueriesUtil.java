@@ -35,12 +35,11 @@ public class FilterQueriesUtil {
     }
 
     /**
-     * Append the filter query to the query builder.
-     *
-     * @param expressionNodes       List of expression nodes.
-     * @param attributeNameResolver A function that maps attribute values to their corresponding column names.
-     * @return FilterQueryBuilder instance containing the filter query and attribute values.
-     * @throws OrganizationManagementClientException If an error occurs while appending the filter query.
+     * Build a filter query using the provided expression nodes and attribute name resolver.
+     * `@param` expressionNodes       List of expression nodes to build the filter from.
+     * `@param` attributeNameResolver A function that maps attribute values to their corresponding column names.
+     * `@return` FilterQueryBuilder instance containing the filter query and attribute values.
+     * `@throws` OrganizationManagementClientException If an error occurs while building the filter query.
      */
     public static FilterQueryBuilder getFilterQueryBuilder(List<ExpressionNode> expressionNodes,
                                                            Function<String, String> attributeNameResolver)
