@@ -39,6 +39,7 @@ public class FilterQueriesUtil {
      *
      * @param expressionNodes       List of expression nodes.
      * @param attributeNameResolver A function that maps attribute values to their corresponding column names.
+     * @return FilterQueryBuilder instance containing the filter query and attribute values.
      * @throws OrganizationManagementClientException If an error occurs while appending the filter query.
      */
     public static FilterQueryBuilder getFilterQueryBuilder(List<ExpressionNode> expressionNodes,
@@ -53,11 +54,12 @@ public class FilterQueriesUtil {
         } else {
             for (ExpressionNode expressionNode : expressionNodes) {
                 String operation = expressionNode.getOperation();
-                String value = expressionNode.getValue();
-                String attributeValue = expressionNode.getAttributeValue();
-                String attributeName = attributeNameResolver.apply(attributeValue);
+                String filterValue = expressionNode.getValue();
+                String requestedAttributeValue = expressionNode.getAttributeValue();
+                String attributeName = attributeNameResolver.apply(requestedAttributeValue);
 
-                count = buildFilterBasedOnOperation(filterQueryBuilder, attributeName, value, operation, count, filter);
+                count = buildFilterBasedOnOperation(filterQueryBuilder, attributeName, requestedAttributeValue,
+                        filterValue, operation, count, filter);
             }
             if (StringUtils.isBlank(filter.toString())) {
                 filterQueryBuilder.setFilterQuery(StringUtils.EMPTY);
@@ -69,7 +71,8 @@ public class FilterQueriesUtil {
     }
 
     private static int buildFilterBasedOnOperation(FilterQueryBuilder filterQueryBuilder, String attributeName,
-                                                   String value, String operation, int count, StringBuilder filter)
+                                                   String requestedAttributeValue, String value, String operation,
+                                                   int count, StringBuilder filter)
             throws OrganizationManagementClientException {
 
         if (StringUtils.isNotBlank(attributeName) && StringUtils.isNotBlank(value) && StringUtils
@@ -120,7 +123,7 @@ public class FilterQueriesUtil {
                 }
             }
         } else {
-            throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, attributeName);
+            throw handleClientException(ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE, requestedAttributeValue);
         }
         return count;
     }

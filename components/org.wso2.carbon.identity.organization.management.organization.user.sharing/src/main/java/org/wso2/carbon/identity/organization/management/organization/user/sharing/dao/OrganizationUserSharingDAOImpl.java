@@ -398,7 +398,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociationsInOrgScope();
         String query = getDBSpecificQuery(dbQueryMap).replace(
-                SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS, String.join(", ", orgIdPlaceholders));
+                PLACEHOLDER_ORG_IDS, String.join(", ", orgIdPlaceholders));
 
         try {
             Boolean result = namedJdbcTemplate.fetchSingleRecord(
