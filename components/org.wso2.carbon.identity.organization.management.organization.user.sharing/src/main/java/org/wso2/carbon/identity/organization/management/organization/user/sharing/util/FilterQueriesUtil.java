@@ -21,6 +21,13 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  */
 public class FilterQueriesUtil {
 
+    /**
+     * Get the filter query builder for shared user organizations.
+     *
+     * @param expressionNodes List of expression nodes.
+     * @return FilterQueryBuilder instance containing the filter query and attribute values.
+     * @throws OrganizationManagementClientException If an error occurs while building the filter query.
+     */
     public static FilterQueryBuilder getSharedUserOrgsFilterQueryBuilder(List<ExpressionNode> expressionNodes)
             throws OrganizationManagementClientException {
 

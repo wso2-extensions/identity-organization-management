@@ -243,7 +243,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return Collections.emptyList();
         }
 
-        // (Optional but recommended) Hard-guard sort order because it gets injected into SQL.
+        // Hard-guard sort order because it gets injected into SQL.
         String resolvedSortOrder = ASC_SORT_ORDER.equalsIgnoreCase(sortOrder) ? ASC_SORT_ORDER : DESC_SORT_ORDER;
 
         FilterQueryBuilder filterQueryBuilder = FilterQueriesUtil.getSharedUserOrgsFilterQueryBuilder(expressionNodes);
@@ -272,16 +272,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         return userAssociation;
                     },
                     ps -> {
-                        // base params
+                        // Base params.
                         ps.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
                         ps.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
 
-                        // filter params.
+                        // Filter params.
                         for (Map.Entry<String, String> entry : filterAttributeValue.entrySet()) {
                             ps.setString(entry.getKey(), entry.getValue());
                         }
 
-                        // scope params.
+                        // Scope params.
                         for (int i = 0; i < orgIdsScope.size(); i++) {
                             ps.setString(ORG_ID_SCOPE_PLACEHOLDER_PREFIX + i, orgIdsScope.get(i));
                         }
@@ -302,7 +302,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         }
 
         String tail;
-        if (limit == 0) {
+        if (limit <= 0) {
             tail = String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL, sortOrder);
         } else {
             tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit);
