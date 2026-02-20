@@ -68,12 +68,12 @@ public class TenantAssociationServiceComponent {
             unbind = "unsetRealmService")
     protected void setRealmService(RealmService realmService) {
 
-        TenantAssociationDataHolder.setRealmService(realmService);
+        TenantAssociationDataHolder.getInstance().setRealmService(realmService);
     }
 
     protected void unsetRealmService(RealmService realmService) {
 
-        TenantAssociationDataHolder.setRealmService(null);
+        TenantAssociationDataHolder.getInstance().setRealmService(null);
     }
 
     @Reference(
@@ -84,12 +84,12 @@ public class TenantAssociationServiceComponent {
             unbind = "unsetRoleManagerService")
     protected void setRoleManagerService(RoleManager roleManagerService) {
 
-        TenantAssociationDataHolder.setRoleManager(roleManagerService);
+        TenantAssociationDataHolder.getInstance().setRoleManager(roleManagerService);
     }
 
     protected void unsetRoleManagerService(RoleManager roleManagerService) {
 
-        TenantAssociationDataHolder.setRoleManager(null);
+        TenantAssociationDataHolder.getInstance().setRoleManager(null);
     }
 
     @Reference(name = "identity.organization.management.component",
@@ -99,11 +99,11 @@ public class TenantAssociationServiceComponent {
             unbind = "unsetOrganizationManager")
     protected void setOrganizationManager(OrganizationManager organizationManager) {
 
-        TenantAssociationDataHolder.setOrganizationManager(organizationManager);
+        TenantAssociationDataHolder.getInstance().setOrganizationManager(organizationManager);
     }
 
     protected void unsetOrganizationManager(OrganizationManager organizationManager) {
 
-        TenantAssociationDataHolder.setOrganizationManager(null);
+        TenantAssociationDataHolder.getInstance().setOrganizationManager(null);
     }
 }

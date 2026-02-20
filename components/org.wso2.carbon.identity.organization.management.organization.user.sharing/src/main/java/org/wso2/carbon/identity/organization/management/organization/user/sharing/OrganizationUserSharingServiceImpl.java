@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -56,6 +57,14 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 /**
  * Implementation of the organization user association service.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.management.organization.user.sharing." +
+                        "OrganizationUserSharingService",
+                "service.scope=singleton"
+        }
+)
 public class OrganizationUserSharingServiceImpl implements OrganizationUserSharingService {
 
     private final OrganizationUserSharingDAO organizationUserSharingDAO = new OrganizationUserSharingDAOImpl();
