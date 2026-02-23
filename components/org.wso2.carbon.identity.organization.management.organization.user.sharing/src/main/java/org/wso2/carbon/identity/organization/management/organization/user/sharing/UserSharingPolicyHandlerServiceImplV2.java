@@ -1880,9 +1880,13 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             if (StringUtils.equalsIgnoreCase(APPLICATION, role.getAudienceType())) {
                 return getApplicationResourceId(role.getAudienceName(), tenantDomain);
             }
-            LOG.warn(String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getDescription(), role.getAudienceType()));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format(ERROR_CODE_INVALID_AUDIENCE_TYPE.getDescription(), role.getAudienceType()));
+            }
         } catch (IdentityApplicationManagementException e) {
-            LOG.warn(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), role.getAudienceName()));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), role.getAudienceName()));
+            }
         }
         return null;
     }
@@ -1903,7 +1907,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         if (applicationBasicInfo != null) {
             return applicationBasicInfo.getApplicationResourceId();
         }
-        LOG.warn(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), audienceName));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format(ERROR_CODE_AUDIENCE_NOT_FOUND.getMessage(), audienceName));
+        }
         return null;
     }
 
@@ -1927,7 +1933,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             return Optional.of(
                     getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain));
         } catch (IdentityRoleManagementException e) {
-            LOG.warn(String.format(ERROR_CODE_ROLE_NOT_FOUND.getMessage(), roleName, audienceType, audienceId));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format(ERROR_CODE_ROLE_NOT_FOUND.getMessage(), roleName, audienceType, audienceId));
+            }
             return Optional.empty();
         }
     }
