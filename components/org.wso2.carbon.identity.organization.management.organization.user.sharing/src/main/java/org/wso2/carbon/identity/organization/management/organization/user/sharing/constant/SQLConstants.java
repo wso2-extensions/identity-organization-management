@@ -259,6 +259,7 @@ public class SQLConstants {
         public static final String PLACEHOLDER_NAME_USER_NAMES = "USER_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
         public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
+        public static final String PLACEHOLDER_ORG_ID = "ORG_ID_";
 
         public static final String ASC_SORT_ORDER = "ASC";
         public static final String DESC_SORT_ORDER = "DESC";

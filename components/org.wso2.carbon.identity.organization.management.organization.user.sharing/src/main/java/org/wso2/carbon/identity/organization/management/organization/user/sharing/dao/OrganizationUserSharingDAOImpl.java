@@ -98,6 +98,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.HAS_USER_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.ORG_ID_SCOPE_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_USER_NAMES;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ORG_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.SQLPlaceholders.WHITE_SPACE;
@@ -380,18 +381,17 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     }
 
     @Override
-    public boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
-                                                 List<String> orgIdsScope)
+    public boolean hasUserAssociationsInOrganizations(String associatedUserId, String associatedOrgId,
+                                                 List<String> orgIds)
             throws OrganizationManagementServerException {
 
-        if (orgIdsScope == null || orgIdsScope.isEmpty()) {
+        if (CollectionUtils.isEmpty(orgIds)) {
             return false;
         }
 
-        String orgIdPlaceholder = "ORG_ID_";
         List<String> orgIdPlaceholders = new ArrayList<>();
-        for (int i = 1; i <= orgIdsScope.size(); i++) {
-            orgIdPlaceholders.add(":" + orgIdPlaceholder + i + ";");
+        for (int i = 1; i <= orgIds.size(); i++) {
+            orgIdPlaceholders.add(":" + PLACEHOLDER_ORG_ID + i + ";");
         }
 
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
@@ -407,8 +407,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_USER_ID, associatedUserId);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                         int index = 1;
-                        for (String orgId : orgIdsScope) {
-                            namedPreparedStatement.setString(orgIdPlaceholder + index, orgId);
+                        for (String orgId : orgIds) {
+                            namedPreparedStatement.setString(PLACEHOLDER_ORG_ID + index, orgId);
                             index++;
                         }
                     });

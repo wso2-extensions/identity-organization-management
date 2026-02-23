@@ -42,7 +42,8 @@ public class ResourceSharingSQLConstants {
 
     // SQL for retrieving resource sharing policy by resource type, ID, initiating org ID and policy holding org ID.
     public static final String GET_RESOURCE_SHARING_POLICY_BY_RESOURCE_KEYS =
-            "SELECT * FROM UM_RESOURCE_SHARING_POLICY " +
+            "SELECT UM_ID, UM_RESOURCE_TYPE, UM_RESOURCE_ID, UM_INITIATING_ORG_ID, UM_POLICY_HOLDING_ORG_ID, " +
+                    "UM_SHARING_POLICY FROM UM_RESOURCE_SHARING_POLICY " +
                     "WHERE UM_RESOURCE_TYPE = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_TYPE + "; AND " +
                     "UM_RESOURCE_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_RESOURCE_ID + "; AND " +
                     "UM_INITIATING_ORG_ID = :" + SQLPlaceholders.DB_SCHEMA_COLUMN_NAME_INITIATING_ORG_ID + "; AND " +

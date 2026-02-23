@@ -98,8 +98,8 @@ public class UserSharingConstants {
     public static final String ACTION_USER_SHARE_ATTRIBUTE_UPDATE = "user share attribute update";
     public static final String ACTION_USER_SHARE_ROLE_ASSIGNMENT_UPDATE = "user share role assignment update";
 
-    public static final String SP_SHARED_ROLE_INCLUDED_KEY = "roles";
-    public static final String SP_SHARED_SHARING_MODE_INCLUDED_KEY = "sharingMode";
+    public static final String SHARED_USER_ROLE_INCLUDED_KEY = "roles";
+    public static final String SHARED_USER_SHARING_MODE_INCLUDED_KEY = "sharingMode";
 
     public static final String ASYNC_PROCESSING_LOG_TEMPLATE = "Processing async %s initiated by user: %s in " +
             "organization: %s.";

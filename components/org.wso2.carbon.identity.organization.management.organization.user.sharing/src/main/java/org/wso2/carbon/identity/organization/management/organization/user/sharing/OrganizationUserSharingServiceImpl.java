@@ -166,11 +166,11 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
-    public boolean hasUserAssociationsInOrgScope(String associatedUserId, String associatedOrgId,
-                                                 List<String> orgIdsScope)
+    public boolean hasUserAssociationsInOrganizations(String associatedUserId, String associatedOrgId,
+                                                 List<String> orgIds)
             throws OrganizationManagementServerException {
 
-        return organizationUserSharingDAO.hasUserAssociationsInOrgScope(associatedUserId, associatedOrgId, orgIdsScope);
+        return organizationUserSharingDAO.hasUserAssociationsInOrganizations(associatedUserId, associatedOrgId, orgIds);
     }
 
     @Override

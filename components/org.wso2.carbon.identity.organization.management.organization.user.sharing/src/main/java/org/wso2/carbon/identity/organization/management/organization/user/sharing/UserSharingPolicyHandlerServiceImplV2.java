@@ -83,6 +83,7 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -165,8 +166,8 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_ROLES;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.PATCH_PATH_SUFFIX_ROLES;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SP_SHARED_ROLE_INCLUDED_KEY;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SP_SHARED_SHARING_MODE_INCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SHARED_USER_ROLE_INCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SHARED_USER_SHARING_MODE_INCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_SHARING_LOG_TEMPLATE;
@@ -199,7 +200,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
     private static final Set<String> SUPPORTED_GET_ATTRIBUTES =
-            new HashSet<>(Arrays.asList(SP_SHARED_SHARING_MODE_INCLUDED_KEY, SP_SHARED_ROLE_INCLUDED_KEY));
+            new HashSet<>(Arrays.asList(SHARED_USER_SHARING_MODE_INCLUDED_KEY, SHARED_USER_ROLE_INCLUDED_KEY));
 
     @Override
     public void populateSelectiveUserShareV2(SelectiveUserShareV2DO selectiveUserShareV2DO)
@@ -910,23 +911,24 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         Organization organization =
                 getOrganizationManager().getOrganization(userAssociation.getOrganizationId(), true, false);
 
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(organization.getId());
         responseOrgDetailsV2DO.setOrganizationId(organization.getId());
         responseOrgDetailsV2DO.setOrganizationName(organization.getName());
         responseOrgDetailsV2DO.setOrganizationHandle(organization.getOrganizationHandle());
         responseOrgDetailsV2DO.setOrganizationStatus(organization.getStatus());
-        responseOrgDetailsV2DO.setOrganizationReference(getOrganizationReference(organization));
+        responseOrgDetailsV2DO.setOrganizationReference(getOrganizationReference(organization.getId(), tenantDomain));
         responseOrgDetailsV2DO.setParentOrganizationId(
                 organization.getParent() != null ? organization.getParent().getId() : null);
         responseOrgDetailsV2DO.setHasChildren(organization.hasChildren());
         responseOrgDetailsV2DO.setDepthFromRoot(
                 getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId()));
-        if (includedAttributesList.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
+        if (includedAttributesList.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
             SharingModeDO sharingModeDO =
                     resolveSelectiveSharingMode(organization.getId(), userAssociation.getAssociatedUserId(),
                             organization.getId());
             responseOrgDetailsV2DO.setSharingModeDO(sharingModeDO);
         }
-        if (includedAttributesList.contains(SP_SHARED_ROLE_INCLUDED_KEY)) {
+        if (includedAttributesList.contains(SHARED_USER_ROLE_INCLUDED_KEY)) {
             responseOrgDetailsV2DO.setRoleWithAudienceDOList(
                     getAssignedSharedRolesForSharedUserInOrganization(userAssociation, organization.getId()));
         }
@@ -938,12 +940,13 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     /**
      * Get organization reference URL.
      *
-     * @param organization Organization.
+     * @param orgId        Organization ID.
+     * @param tenantDomain Tenant domain of the organization.
      * @return Organization reference URL.
      */
-    private String getOrganizationReference(Organization organization) {
+    private String getOrganizationReference(String orgId, String tenantDomain) {
 
-        return "/t/" + organization.getName() + "/api/server/v1/organizations/" + organization.getId();
+        return "/t/" + tenantDomain + "/api/server/v1/organizations/" + orgId;
     }
 
     /**
@@ -1000,8 +1003,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                                                     String mainUserId)
             throws OrganizationManagementException {
 
-        if (includedAttributes.contains(SP_SHARED_SHARING_MODE_INCLUDED_KEY)) {
-            return resolveSharingMode(parentOrgId, mainUserId, false, "");
+        if (includedAttributes.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
+            return resolveSharingMode(parentOrgId, mainUserId, false, null);
         }
         return null;
     }
@@ -1094,7 +1097,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
             if (!roleAttributes.isEmpty()) {
                 roleAssignmentDO.setMode(RoleAssignmentMode.SELECTED);
-                roleAssignmentDO.setRoles(getRoleWithAudienceFromMainRoleIds(roleAttributes));
+                roleAssignmentDO.setRoles(getRoleWithAudienceFromMainRoleIds(roleAttributes,
+                        resourceSharingPolicy.getInitiatingOrgId()));
                 sharingModeDO.setRoleAssignment(roleAssignmentDO);
             }
         }
@@ -1104,25 +1108,36 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
     /**
      * Get RoleWithAudienceDO list from main role IDs.
+     * The role IDs stored in the resource attribute table are always resolved against the sharing-initiated org's
+     * tenant domain, so the same tenant domain must be used here to look them up correctly.
      *
-     * @param roleAttributes List of SharedResourceAttribute.
+     * @param roleAttributes    List of SharedResourceAttribute.
+     * @param initiatingOrgId   The ID of the organization that initiated the sharing.
      * @return List of RoleWithAudienceDO.
      * @throws IdentityRoleManagementException IdentityRoleManagementException.
      */
-    private List<RoleWithAudienceDO> getRoleWithAudienceFromMainRoleIds(List<SharedResourceAttribute> roleAttributes)
+    private List<RoleWithAudienceDO> getRoleWithAudienceFromMainRoleIds(List<SharedResourceAttribute> roleAttributes,
+                                                                         String initiatingOrgId)
             throws IdentityRoleManagementException {
 
-        List<RoleWithAudienceDO> roleWithAudiences = new ArrayList<>();
+        try {
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(initiatingOrgId);
+            List<RoleWithAudienceDO> roleWithAudiences = new ArrayList<>();
 
-        for (SharedResourceAttribute attribute : roleAttributes) {
-            Role role = getRoleManagementService().getRole(attribute.getSharedAttributeId());
-            if (role != null) {
-                roleWithAudiences.add(
-                        new RoleWithAudienceDO(role.getName(), role.getAudienceName(), role.getAudience()));
+            for (SharedResourceAttribute attribute : roleAttributes) {
+                RoleBasicInfo role = getRoleManagementService().getRoleBasicInfoById(
+                        attribute.getSharedAttributeId(), tenantDomain);
+                if (role != null) {
+                    roleWithAudiences.add(
+                            new RoleWithAudienceDO(role.getName(), role.getAudienceName(), role.getAudience()));
+                }
             }
-        }
 
-        return roleWithAudiences;
+            return roleWithAudiences;
+        } catch (OrganizationManagementException e) {
+            throw new IdentityRoleManagementException(
+                    "Error resolving tenant domain for initiating org: " + initiatingOrgId, e);
+        }
     }
 
     /**
@@ -1395,7 +1410,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private boolean isUserAlreadySharedInOrg(String associatedUserId, String associatedOrgId, String subOrgId)
             throws OrganizationManagementException {
 
-        return getOrganizationUserSharingService().hasUserAssociationsInOrgScope(associatedUserId, associatedOrgId,
+        return getOrganizationUserSharingService().hasUserAssociationsInOrganizations(associatedUserId, associatedOrgId,
                 Collections.singletonList(subOrgId));
     }
 
@@ -2172,7 +2187,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      */
     private boolean hasRoleChanges(List<String> oldSharedRoleIds, List<String> newRoleIds) {
 
-        return !new HashSet<>(oldSharedRoleIds).equals(new HashSet<>(newRoleIds));
+        Set<String> oldRoleSet = new HashSet<>(oldSharedRoleIds);
+        Set<String> newRoleSet = new HashSet<>(newRoleIds);
+        return !oldRoleSet.equals(newRoleSet);
     }
 
     private void logAsyncProcessing(String action, String sharingInitiatedUserId, String sharingInitiatedOrgId) {
