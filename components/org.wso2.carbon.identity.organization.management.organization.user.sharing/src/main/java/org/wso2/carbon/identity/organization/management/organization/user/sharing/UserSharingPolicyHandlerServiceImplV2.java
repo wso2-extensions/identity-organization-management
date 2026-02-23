@@ -227,12 +227,16 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     logAsyncProcessing(ACTION_SELECTIVE_USER_SHARE,
                             sharingInitiatorContext.getSharingInitiatedUserId(),
                             sharingInitiatorContext.getSharingInitiatedOrgId());
-                    initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
-                            sharingInitiatorContext.getSharingInitiatedTenantId(),
-                            sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
-                    processSelectiveUserShare(userCriteria, validOrganizations,
-                            sharingInitiatorContext.getSharingInitiatedOrgId(),
-                            sharingInitiatorContext.getSharingInitiatedUserId());
+                    try {
+                        initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
+                                sharingInitiatorContext.getSharingInitiatedTenantId(),
+                                sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        processSelectiveUserShare(userCriteria, validOrganizations,
+                                sharingInitiatorContext.getSharingInitiatedOrgId(),
+                                sharingInitiatorContext.getSharingInitiatedUserId());
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective share processing.", ex);
@@ -264,12 +268,16 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     logAsyncProcessing(ACTION_GENERAL_USER_SHARE,
                             sharingInitiatorContext.getSharingInitiatedUserId(),
                             sharingInitiatorContext.getSharingInitiatedOrgId());
-                    initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
-                            sharingInitiatorContext.getSharingInitiatedTenantId(),
-                            sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
-                    processGeneralUserShare(userCriteria, policy, roleIds, roleAssignmentMode,
-                            sharingInitiatorContext.getSharingInitiatedOrgId(),
-                            sharingInitiatorContext.getSharingInitiatedUserId());
+                    try {
+                        initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
+                                sharingInitiatorContext.getSharingInitiatedTenantId(),
+                                sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        processGeneralUserShare(userCriteria, policy, roleIds, roleAssignmentMode,
+                                sharingInitiatorContext.getSharingInitiatedOrgId(),
+                                sharingInitiatorContext.getSharingInitiatedUserId());
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user share processing.", ex);
@@ -299,11 +307,15 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     logAsyncProcessing(ACTION_SELECTIVE_USER_UNSHARE,
                             sharingInitiatorContext.getSharingInitiatedUserId(),
                             sharingInitiatorContext.getSharingInitiatedOrgId());
-                    initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
-                            sharingInitiatorContext.getSharingInitiatedTenantId(),
-                            sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
-                    processSelectiveUserUnshare(userCriteria, organizations,
-                            sharingInitiatorContext.getSharingInitiatedOrgId());
+                    try {
+                        initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
+                                sharingInitiatorContext.getSharingInitiatedTenantId(),
+                                sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        processSelectiveUserUnshare(userCriteria, organizations,
+                                sharingInitiatorContext.getSharingInitiatedOrgId());
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user selective unshare processing.", ex);
@@ -331,10 +343,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     logAsyncProcessing(ACTION_GENERAL_USER_UNSHARE,
                             sharingInitiatorContext.getSharingInitiatedUserId(),
                             sharingInitiatorContext.getSharingInitiatedOrgId());
-                    initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
-                            sharingInitiatorContext.getSharingInitiatedTenantId(),
-                            sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
-                    processGeneralUserUnshare(userCriteria, sharingInitiatorContext.getSharingInitiatedOrgId());
+                    try {
+                        initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
+                                sharingInitiatorContext.getSharingInitiatedTenantId(),
+                                sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        processGeneralUserUnshare(userCriteria, sharingInitiatorContext.getSharingInitiatedOrgId());
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general user unshare processing.", ex);
@@ -362,11 +378,16 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     logAsyncProcessing(ACTION_USER_SHARE_ATTRIBUTE_UPDATE,
                             sharingInitiatorContext.getSharingInitiatedUserId(),
                             sharingInitiatorContext.getSharingInitiatedOrgId());
-                    initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
-                            sharingInitiatorContext.getSharingInitiatedTenantId(),
-                            sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
-                    processUpdateSharedUserAttributes(userCriteria, sharingInitiatorContext.getSharingInitiatedOrgId(),
-                            sharingInitiatorContext.getSharingInitiatedUserId(), userSharePatchDO);
+                    try {
+                        initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
+                                sharingInitiatorContext.getSharingInitiatedTenantId(),
+                                sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        processUpdateSharedUserAttributes(userCriteria,
+                                sharingInitiatorContext.getSharingInitiatedOrgId(),
+                                sharingInitiatorContext.getSharingInitiatedUserId(), userSharePatchDO);
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
+                    }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async user share role assignment update processing.", ex);
@@ -448,31 +469,27 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                                            List<SelectiveUserShareOrgDetailsV2DO> organizations,
                                            String sharingInitiatedOrgId, String sharingInitiatedUserId) {
 
-        try {
-            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-                String criterionKey = criterion.getKey();
-                UserCriteriaType criterionValues = criterion.getValue();
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
 
-                try {
-                    if (USER_IDS.equals(criterionKey)) {
-                        if (criterionValues instanceof UserIdList) {
-                            selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
-                                    sharingInitiatedOrgId, sharingInitiatedUserId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
-                        }
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        selectiveUserShareByUserIds((UserIdList) criterionValues, organizations,
+                                sharingInitiatedOrgId, sharingInitiatedUserId);
                     } else {
                         LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
                     }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                } else {
+                    LOG.error("Invalid user criteria provided for selective user share: " + criterionKey);
                 }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
-            }
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Completed selective user share initiated from " + sharingInitiatedOrgId + ".");
         }
     }
 
@@ -490,31 +507,27 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                                          List<String> roleIds, RoleAssignmentMode roleAssignmentMode,
                                          String sharingInitiatedOrgId, String sharingInitiatedUserId) {
 
-        try {
-            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-                String criterionKey = criterion.getKey();
-                UserCriteriaType criterionValues = criterion.getValue();
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
 
-                try {
-                    if (USER_IDS.equals(criterionKey)) {
-                        if (criterionValues instanceof UserIdList) {
-                            generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds, roleAssignmentMode,
-                                    sharingInitiatedOrgId, sharingInitiatedUserId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
-                        }
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        generalUserShareByUserIds((UserIdList) criterionValues, policy, roleIds, roleAssignmentMode,
+                                sharingInitiatedOrgId, sharingInitiatedUserId);
                     } else {
                         LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                     }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
+                } else {
+                    LOG.error("Invalid user criteria provided for general user share: " + criterionKey);
                 }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while sharing user from user criteria: " + USER_IDS, e);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
-            }
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Completed general user share initiated from " + sharingInitiatedOrgId + ".");
         }
     }
 
@@ -529,31 +542,27 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private void processSelectiveUserUnshare(Map<String, UserCriteriaType> userCriteria, List<String> organizations,
                                              String sharingInitiatedOrgId) {
 
-        try {
-            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-                String criterionKey = criterion.getKey();
-                UserCriteriaType criterionValues = criterion.getValue();
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
 
-                try {
-                    if (USER_IDS.equals(criterionKey)) {
-                        if (criterionValues instanceof UserIdList) {
-                            selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
-                                    sharingInitiatedOrgId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
-                        }
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        selectiveUserUnshareByUserIds((UserIdList) criterionValues, organizations,
+                                sharingInitiatedOrgId);
                     } else {
                         LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
                     }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                } else {
+                    LOG.error("Invalid user criteria provided for selective user unshare: " + criterionKey);
                 }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
-            }
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Completed selective user unshare initiated from " + sharingInitiatedOrgId + ".");
         }
     }
 
@@ -566,30 +575,26 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      */
     private void processGeneralUserUnshare(Map<String, UserCriteriaType> userCriteria, String sharingInitiatedOrgId) {
 
-        try {
-            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-                String criterionKey = criterion.getKey();
-                UserCriteriaType criterionValues = criterion.getValue();
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
 
-                try {
-                    if (USER_IDS.equals(criterionKey)) {
-                        if (criterionValues instanceof UserIdList) {
-                            generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
-                        } else {
-                            LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
-                        }
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        generalUserUnshareByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId);
                     } else {
                         LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
                     }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
+                } else {
+                    LOG.error("Invalid user criteria provided for general user unshare: " + criterionKey);
                 }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while unsharing user from user criteria: " + USER_IDS, e);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
-            }
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Completed general user unshare initiated from " + sharingInitiatedOrgId + ".");
         }
     }
 
@@ -597,33 +602,29 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                                                    String sharingInitiatedOrgId, String sharingInitiatedUserId,
                                                    UserSharePatchDO userSharePatchDO) {
 
-        try {
-            for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
-                String criterionKey = criterion.getKey();
-                UserCriteriaType criterionValues = criterion.getValue();
+        for (Map.Entry<String, UserCriteriaType> criterion : userCriteria.entrySet()) {
+            String criterionKey = criterion.getKey();
+            UserCriteriaType criterionValues = criterion.getValue();
 
-                try {
-                    if (USER_IDS.equals(criterionKey)) {
-                        if (criterionValues instanceof UserIdList) {
-                            updateSharedUserAttributesByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId,
-                                    sharingInitiatedUserId, userSharePatchDO);
-                        } else {
-                            LOG.error("Invalid user criteria provided for user share role assignment update: " +
-                                    criterionKey);
-                        }
+            try {
+                if (USER_IDS.equals(criterionKey)) {
+                    if (criterionValues instanceof UserIdList) {
+                        updateSharedUserAttributesByUserIds((UserIdList) criterionValues, sharingInitiatedOrgId,
+                                sharingInitiatedUserId, userSharePatchDO);
                     } else {
                         LOG.error("Invalid user criteria provided for user share role assignment update: " +
                                 criterionKey);
                     }
-                } catch (UserSharingMgtException e) {
-                    LOG.error("Error occurred while updating role assignments from user criteria: " + USER_IDS, e);
+                } else {
+                    LOG.error("Invalid user criteria provided for user share role assignment update: " +
+                            criterionKey);
                 }
+            } catch (UserSharingMgtException e) {
+                LOG.error("Error occurred while updating role assignments from user criteria: " + USER_IDS, e);
             }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Completed user share role assignment update initiated from " + sharingInitiatedOrgId + ".");
-            }
-        } finally {
-            PrivilegedCarbonContext.endTenantFlow();
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Completed user share role assignment update initiated from " + sharingInitiatedOrgId + ".");
         }
     }
 
@@ -2208,6 +2209,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private void initiateThreadLocalContext(String tenantDomain, int tenantId, String username,
                                             Map<String, Object> threadLocalProperties) {
 
+        // startTenantFlow() is called here to push a new context frame. The caller is responsible for
+        // always calling endTenantFlow() in a finally block to guarantee the frame is popped.
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
 

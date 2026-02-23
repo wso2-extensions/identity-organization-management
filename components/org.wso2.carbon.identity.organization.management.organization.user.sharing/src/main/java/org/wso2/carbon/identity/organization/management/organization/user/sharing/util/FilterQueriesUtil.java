@@ -28,7 +28,7 @@ import org.wso2.carbon.identity.organization.management.service.model.FilterQuer
 import java.util.List;
 import java.util.function.Function;
 
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SP_SHARED_ATTRIBUTE_COLUMN_MAP;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SHARED_USER_SHARED_ATTRIBUTE_COLUMN_MAP;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.FILTER_PLACEHOLDER_PREFIX;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleClientException;
@@ -48,7 +48,7 @@ public class FilterQueriesUtil {
     public static FilterQueryBuilder getSharedUserOrgsFilterQueryBuilder(List<ExpressionNode> expressionNodes)
             throws OrganizationManagementClientException {
 
-        return getFilterQueryBuilder(expressionNodes, SP_SHARED_ATTRIBUTE_COLUMN_MAP::get);
+        return getFilterQueryBuilder(expressionNodes, SHARED_USER_SHARED_ATTRIBUTE_COLUMN_MAP::get);
     }
 
     /**

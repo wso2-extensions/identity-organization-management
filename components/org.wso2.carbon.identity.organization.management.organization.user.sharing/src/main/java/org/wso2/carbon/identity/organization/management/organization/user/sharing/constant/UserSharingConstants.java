@@ -35,7 +35,7 @@ public class UserSharingConstants {
     public static final String ORGANIZATION_ID_REPRESENTATION_2 = "organizationId";
     public static final String ORGANIZATION_ID_REPRESENTATION_3 = "id";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
-    public static final Map<String, String> SP_SHARED_ATTRIBUTE_COLUMN_MAP =
+    public static final Map<String, String> SHARED_USER_SHARED_ATTRIBUTE_COLUMN_MAP =
             Collections.unmodifiableMap(attributeColumnMap);
 
     static {
