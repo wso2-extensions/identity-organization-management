@@ -87,6 +87,19 @@ public interface OrganizationUserSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
+     * Delete all user associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the user associations are deleted successfully.
+     * @throws OrganizationManagementServerException If an error occurs while deleting the user associations.
+     */
+    default boolean deleteUserAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("deleteUserAssociationsByOrganizationId method is not implemented.");
+    }
+
+    /**
      * Get all the user associations for a given user.
      *
      * @param associatedUserId Actual user ID of the user.

@@ -50,6 +50,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_MYSQL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_POSTGRESQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER;
@@ -179,6 +180,22 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
+    public boolean deleteUserAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, orgId);
+                    });
+            return true;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e, orgId);
         }
     }
 
