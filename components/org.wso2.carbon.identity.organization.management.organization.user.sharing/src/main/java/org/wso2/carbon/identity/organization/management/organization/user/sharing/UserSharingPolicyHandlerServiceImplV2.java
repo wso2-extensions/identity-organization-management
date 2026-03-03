@@ -987,7 +987,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
             return roleWithAudienceList;
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            throw new UserSharingMgtClientException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER, e);
         }
     }
 
