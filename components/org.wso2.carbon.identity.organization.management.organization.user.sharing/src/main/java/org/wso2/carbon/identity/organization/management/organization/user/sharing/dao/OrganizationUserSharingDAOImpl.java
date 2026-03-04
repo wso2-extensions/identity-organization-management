@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
@@ -107,6 +109,8 @@ import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEX
  */
 public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDAO {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
+
     @Override
     public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
                                                   String associatedOrgId) throws OrganizationManagementServerException {
@@ -193,6 +197,9 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                     namedPreparedStatement -> {
                         namedPreparedStatement.setString(1, orgId);
                     });
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("User associations deletion for organization " + orgId + " is complete.");
+            }
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e, orgId);

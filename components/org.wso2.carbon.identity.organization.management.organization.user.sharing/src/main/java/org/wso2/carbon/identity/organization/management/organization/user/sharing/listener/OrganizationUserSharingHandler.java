@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
@@ -79,6 +80,12 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
         if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
             Organization createdOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
+            if (createdOrganization == null) {
+                return;
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Handling user sharing for created organization: " + createdOrganization.getId());
+            }
             try {
                 if (OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
                     shareUsers(createdOrganization.getId());
@@ -96,7 +103,9 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
         if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {
             String deletedOrgId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
             try {
-                cleanupUserAssociations(deletedOrgId);
+                if (StringUtils.isNotBlank(deletedOrgId)) {
+                    cleanupUserAssociations(deletedOrgId);
+                }
             } catch (OrganizationManagementException e) {
                 throw new IdentityEventException("Error while cleaning up user associations for deleted " +
                         "organization: " + deletedOrgId, e);
