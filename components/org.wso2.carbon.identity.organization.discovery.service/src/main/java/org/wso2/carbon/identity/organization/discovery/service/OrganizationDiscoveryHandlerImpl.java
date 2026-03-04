@@ -114,7 +114,7 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Initiating organization discovery for application: " + appId + " in tenant domain: "
-                    + tenantDomain + " with discovery parameters: " + orgDiscoveryInput);
+                    + tenantDomain);
         }
         String mainAppOrgId;
         try {
