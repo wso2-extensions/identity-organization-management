@@ -24,6 +24,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.OrganizationDiscoveryInput;
 import org.wso2.carbon.identity.application.authentication.framework.model.OrganizationDiscoveryResult;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -33,6 +34,7 @@ import org.wso2.carbon.identity.organization.config.service.model.DiscoveryConfi
 import org.wso2.carbon.identity.organization.discovery.service.internal.OrganizationDiscoveryServiceHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 
 import java.util.List;
@@ -43,6 +45,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.APPLICATION_NOT_SHARED;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_DISCOVERY_TYPE_NOT_ENABLED_OR_SUPPORTED;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND;
@@ -68,6 +71,8 @@ public class OrganizationDiscoveryHandlerImplTest {
     private static final String ORG_DISCOVERY_TYPE = "emailDomain";
     private static final String INVALID_ORG_DISCOVERY_TYPE = "invalidOrgDiscoveryType";
     private static final String SHARED_APP_ID = "sharedAppId";
+    private static final String ORG_ID_NO_SHARED_APP = "orgIdNoSharedApp";
+    private static final String INVALID_TENANT_DOMAIN = "invalidTenantDomain";
 
     private final OrganizationDiscoveryHandlerImpl organizationDiscoveryHandler =
             new OrganizationDiscoveryHandlerImpl();
@@ -134,6 +139,16 @@ public class OrganizationDiscoveryHandlerImplTest {
                 new EmailDomainBasedDiscoveryHandler());
 
         when(applicationManagementService.getSharedAppId(MAIN_APP_ID, ROOT_ORG_ID, ORG_ID)).thenReturn(SHARED_APP_ID);
+
+        Organization organizationWithNoSharedApp = new Organization();
+        organizationWithNoSharedApp.setId(ORG_ID_NO_SHARED_APP);
+        when(organizationManager.getOrganization(ORG_ID_NO_SHARED_APP, false, false))
+                .thenReturn(organizationWithNoSharedApp);
+        when(applicationManagementService.getSharedAppId(MAIN_APP_ID, ROOT_ORG_ID, ORG_ID_NO_SHARED_APP))
+                .thenReturn(null);
+
+        when(organizationManager.resolveOrganizationId(INVALID_TENANT_DOMAIN))
+                .thenThrow(new OrganizationManagementException("Error resolving organization ID"));
     }
 
     @AfterClass
@@ -216,5 +231,61 @@ public class OrganizationDiscoveryHandlerImplTest {
         assertNotNull(orgDiscoveryResult.getFailureDetails(), "Failure details should not be null.");
         assertEquals(orgDiscoveryResult.getFailureDetails().getCode(), failureCode,
                 "Failure code should match the expected code.");
+    }
+
+    @Test
+    public void testDiscoverOrganizationWithAppIdAndTenantDomainSuccess() throws Exception {
+
+        OrganizationDiscoveryInput orgDiscoveryInput = new OrganizationDiscoveryInput.Builder()
+                .orgId(ORG_ID)
+                .build();
+
+        OrganizationDiscoveryResult orgDiscoveryResult = organizationDiscoveryHandler
+                .discoverOrganization(orgDiscoveryInput, MAIN_APP_ID, ROOT_TENANT_DOMAIN);
+
+        assertTrue(orgDiscoveryResult.isSuccessful(), "Organization discovery should be successful.");
+        assertNotNull(orgDiscoveryResult.getDiscoveredOrganization(),
+                "Discovered organization should not be null.");
+        assertEquals(orgDiscoveryResult.getDiscoveredOrganization().getId(), ORG_ID,
+                "Discovered organization ID should match the expected ID.");
+        assertEquals(orgDiscoveryResult.getSharedApplicationId(), SHARED_APP_ID,
+                "Shared application ID should match the expected shared application ID.");
+    }
+
+    @DataProvider
+    public Object[][] discoverOrganizationWithAppIdAndTenantDomainFailureDataProvider() {
+
+        return new Object[][]{
+                {null, VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getCode()},
+                {INVALID_ORG_ID, ORGANIZATION_NOT_FOUND.getCode()},
+                {ORG_ID_NO_SHARED_APP, APPLICATION_NOT_SHARED.getCode()},
+        };
+    }
+
+    @Test(dataProvider = "discoverOrganizationWithAppIdAndTenantDomainFailureDataProvider")
+    public void testDiscoverOrganizationWithAppIdAndTenantDomainFailure(String orgId, String failureCode)
+            throws Exception {
+
+        OrganizationDiscoveryInput orgDiscoveryInput = new OrganizationDiscoveryInput.Builder()
+                .orgId(orgId)
+                .build();
+
+        OrganizationDiscoveryResult orgDiscoveryResult = organizationDiscoveryHandler
+                .discoverOrganization(orgDiscoveryInput, MAIN_APP_ID, ROOT_TENANT_DOMAIN);
+
+        assertFalse(orgDiscoveryResult.isSuccessful(), "Organization discovery should not be successful.");
+        assertNotNull(orgDiscoveryResult.getFailureDetails(), "Failure details should not be null.");
+        assertEquals(orgDiscoveryResult.getFailureDetails().getCode(), failureCode,
+                "Failure code should match the expected code.");
+    }
+
+    @Test(expectedExceptions = FrameworkException.class)
+    public void testDiscoverOrganizationWithAppIdAndTenantDomainThrowsOnTenantResolutionFailure() throws Exception {
+
+        OrganizationDiscoveryInput orgDiscoveryInput = new OrganizationDiscoveryInput.Builder()
+                .orgId(ORG_ID)
+                .build();
+
+        organizationDiscoveryHandler.discoverOrganization(orgDiscoveryInput, MAIN_APP_ID, INVALID_TENANT_DOMAIN);
     }
 }
