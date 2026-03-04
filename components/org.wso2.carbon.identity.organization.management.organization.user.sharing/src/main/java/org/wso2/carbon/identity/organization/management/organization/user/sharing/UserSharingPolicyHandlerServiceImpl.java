@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -136,6 +136,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
@@ -288,15 +289,26 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                             sharingInitiatedOrgId);
 
             for (UserAssociation userAssociation : userAssociations) {
-                ResponseOrgDetailsDO responseOrgDetailsDO = new ResponseOrgDetailsDO();
-                responseOrgDetailsDO.setOrganizationId(userAssociation.getOrganizationId());
-                responseOrgDetailsDO.setOrganizationName(getOrganizationName(userAssociation.getOrganizationId()));
-                responseOrgDetailsDO.setSharedUserId(userAssociation.getUserId());
-                responseOrgDetailsDO.setSharedType(userAssociation.getSharedType());
-                responseOrgDetailsDO.setRolesRef(getRolesRef(associatedUserId, userAssociation.getOrganizationId()));
-                responseOrgDetailsDOS.add(responseOrgDetailsDO);
+                try {
+                    ResponseOrgDetailsDO responseOrgDetailsDO = new ResponseOrgDetailsDO();
+                    responseOrgDetailsDO.setOrganizationId(userAssociation.getOrganizationId());
+                    responseOrgDetailsDO.setOrganizationName(getOrganizationName(userAssociation.getOrganizationId()));
+                    responseOrgDetailsDO.setSharedUserId(userAssociation.getUserId());
+                    responseOrgDetailsDO.setSharedType(userAssociation.getSharedType());
+                    responseOrgDetailsDO.setRolesRef(
+                            getRolesRef(associatedUserId, userAssociation.getOrganizationId()));
+                    responseOrgDetailsDOS.add(responseOrgDetailsDO);
+                } catch (OrganizationManagementException e) {
+                    if (ERROR_CODE_INVALID_ORGANIZATION_ID.getCode().equals(e.getErrorCode())) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Skipping stale organization: " + userAssociation.getOrganizationId() +
+                                    " for associated user: " + associatedUserId + ". " + e.getMessage());
+                        }
+                    } else {
+                        throw e;
+                    }
+                }
             }
-
             return new ResponseSharedOrgsDO(responseLinkList, responseOrgDetailsDOS);
         } catch (OrganizationManagementException e) {
             throw new UserSharingMgtClientException(ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER);
