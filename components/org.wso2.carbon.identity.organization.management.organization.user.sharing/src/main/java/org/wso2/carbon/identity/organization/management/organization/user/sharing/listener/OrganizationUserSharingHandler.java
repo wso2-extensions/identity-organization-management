@@ -79,7 +79,7 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
         Organization createdOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
 
         try {
-            if (OrganizationManagementUtil.isOrganization(createdOrganization.getId())) {
+            if (OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
                 shareUsers(createdOrganization.getId());
             }
         } catch (OrganizationManagementException e) {

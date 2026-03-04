@@ -46,6 +46,10 @@ public class OrganizationUserSharingDataHolder {
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
     private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
 
+    private OrganizationUserSharingDataHolder() {
+        
+    }
+    
     public static OrganizationUserSharingDataHolder getInstance() {
 
         return instance;

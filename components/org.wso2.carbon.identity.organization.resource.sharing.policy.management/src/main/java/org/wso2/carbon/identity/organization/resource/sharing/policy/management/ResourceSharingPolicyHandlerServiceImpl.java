@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.resource.sharing.policy.management
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.SharedAttributeType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.dao.ResourceSharingPolicyHandlerDAO;
@@ -42,6 +43,14 @@ import static org.wso2.carbon.identity.organization.resource.sharing.policy.mana
 /**
  * Implementation of the core service for managing resource sharing policies.
  */
+@Capability(
+        namespace = "osgi.service",
+        attribute = {
+                "objectClass=org.wso2.carbon.identity.organization.resource.sharing.policy.management." +
+                        "ResourceSharingPolicyHandlerService",
+                "service.scope=singleton"
+        }
+)
 public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(ResourceSharingPolicyHandlerServiceImpl.class);
@@ -67,6 +76,17 @@ public class ResourceSharingPolicyHandlerServiceImpl implements ResourceSharingP
             throws ResourceSharingPolicyMgtException {
 
         return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyById(resourceSharingPolicyId);
+    }
+
+    @Override
+    public Optional<ResourceSharingPolicy> getResourceSharingPolicyByResourceKeys(String resourceType,
+                                                                                  String resourceId,
+                                                                                  String initiatingOrgId,
+                                                                                  String policyHoldingOrgId)
+            throws ResourceSharingPolicyMgtException {
+
+        return RESOURCE_SHARING_POLICY_HANDLER_DAO.getResourceSharingPolicyByResourceKeys(resourceType, resourceId,
+                initiatingOrgId, policyHoldingOrgId);
     }
 
     @Override

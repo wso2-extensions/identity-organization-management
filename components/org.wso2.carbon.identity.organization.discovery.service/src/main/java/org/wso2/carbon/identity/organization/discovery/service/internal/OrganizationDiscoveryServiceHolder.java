@@ -41,6 +41,10 @@ public class OrganizationDiscoveryServiceHolder {
     private OrganizationDiscoveryManager organizationDiscoveryManager;
     private Map<String, AttributeBasedOrganizationDiscoveryHandler> attributeBasedOrganizationDiscoveryHandlerMap;
 
+    private OrganizationDiscoveryServiceHolder() {
+        
+    }
+    
     public static OrganizationDiscoveryServiceHolder getInstance() {
 
         return instance;

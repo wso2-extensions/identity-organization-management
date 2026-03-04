@@ -17,6 +17,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Enum representing the types of user associations.
  */
@@ -25,6 +28,9 @@ public enum SharedType {
     INVITED("INVITED"),
     OWNER("OWNER"),
     NOT_SPECIFIED("NOT SPECIFIED");
+
+    private static final String VALID_TYPES =
+            Arrays.stream(values()).map(SharedType::toString).collect(Collectors.joining(", "));
 
     private final String value;
 
@@ -49,15 +55,22 @@ public enum SharedType {
      *
      * @param stringValueOfSharedType The string value of SharedType.
      * @return The corresponding SharedType enum.
-     * @throws IllegalArgumentException if the value does not match any enum.
+     * @throws IllegalArgumentException if the value is null, blank, or invalid.
      */
     public static SharedType fromString(String stringValueOfSharedType) {
 
-        for (SharedType type : SharedType.values()) {
-            if (type.value.equalsIgnoreCase(stringValueOfSharedType)) {
+        if (stringValueOfSharedType == null || stringValueOfSharedType.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "SharedType value cannot be null or empty. Valid types are: " + VALID_TYPES);
+        }
+
+        for (SharedType type : values()) {
+            if (type.value.equalsIgnoreCase(stringValueOfSharedType.trim())) {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Invalid SharedType value: " + stringValueOfSharedType);
+
+        throw new IllegalArgumentException(
+                "Invalid SharedType value: " + stringValueOfSharedType.trim() + ". Valid types are: " + VALID_TYPES);
     }
 }

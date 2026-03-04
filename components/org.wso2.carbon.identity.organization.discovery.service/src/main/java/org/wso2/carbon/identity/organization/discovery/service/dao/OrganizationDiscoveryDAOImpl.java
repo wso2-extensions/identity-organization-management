@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -44,9 +44,9 @@ import static org.wso2.carbon.identity.organization.discovery.service.constant.S
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DISCOVERY_ATTRIBUTE_VALUE_LIST_PLACEHOLDER;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.DISCOVERY_ORGANIZATIONS_TOTAL_COUNT;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.EXCLUDE_CURRENT_ORGANIZATION_FROM_CHECK_DISCOVERY_ATTRIBUTE_EXIST;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS;
-import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS_MSSQL;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES_SORTED_BY_CREATED_TIME;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS_MSSQL_SORTED_BY_CREATED_TIME;
+import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_DISCOVERY_ORGANIZATION_IDS_SORTED_BY_CREATED_TIME;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_DISCOVERY_ATTRIBUTES;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.GET_ORGANIZATION_ID_BY_DISCOVERY_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.discovery.service.constant.SQLConstants.INSERT_ORGANIZATION_DISCOVERY_ATTRIBUTES;
@@ -479,9 +479,9 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
         try {
             String orgIdsQuery;
             if (isMSSqlDB() || isOracleDB()) {
-                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_MSSQL, filterQuery);
+                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_MSSQL_SORTED_BY_CREATED_TIME, filterQuery);
             } else {
-                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS, filterQuery);
+                orgIdsQuery = String.format(GET_DISCOVERY_ORGANIZATION_IDS_SORTED_BY_CREATED_TIME, filterQuery);
             }
             return namedJdbcTemplate.executeQuery(orgIdsQuery,
                     (resultSet, rowNumber) -> resultSet.getString(1),
@@ -512,8 +512,8 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
             organizationPlaceholders.add(":" + organizationPlaceholder + i + ";");
         }
 
-        String discoveryAttributesQuery = GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES.replace(ORGS_LIST_PLACEHOLDER,
-                String.join(", ", organizationPlaceholders));
+        String discoveryAttributesQuery = GET_DISCOVERY_ORGANIZATIONS_ATTRIBUTES_SORTED_BY_CREATED_TIME
+                .replace(ORGS_LIST_PLACEHOLDER, String.join(", ", organizationPlaceholders));
         try {
             return namedJdbcTemplate.executeQuery(discoveryAttributesQuery,
                     (resultSet, rowNumber) -> {
