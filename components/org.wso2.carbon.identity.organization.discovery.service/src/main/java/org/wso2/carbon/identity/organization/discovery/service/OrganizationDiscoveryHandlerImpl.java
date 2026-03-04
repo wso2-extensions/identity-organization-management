@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.handler.orgdiscovery.OrganizationDiscoveryHandler;
@@ -49,6 +51,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
  * Implementation of the Organization Discovery Handler.
  */
 public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHandler {
+
+    private static final Log LOG = LogFactory.getLog(OrganizationDiscoveryHandlerImpl.class);
 
     @Override
     public OrganizationDiscoveryResult discoverOrganization(OrganizationDiscoveryInput orgDiscoveryInput,
@@ -99,6 +103,10 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                                                             String appId, String tenantDomain)
             throws FrameworkException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating organization discovery for application: " + appId + " in tenant domain: "
+                    + tenantDomain + " with discovery parameters: " + orgDiscoveryInput);
+        }
         String mainAppOrgId;
         try {
             mainAppOrgId = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
