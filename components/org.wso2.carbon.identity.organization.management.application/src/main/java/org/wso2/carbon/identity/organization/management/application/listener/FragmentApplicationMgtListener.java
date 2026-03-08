@@ -830,7 +830,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
                     .isUseUserstoreDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
-                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+                    .isUseTenantDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
             tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
             outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
@@ -905,7 +905,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
                     .isUseUserstoreDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
-                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+                    .isUseTenantDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
             tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
             outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
@@ -963,8 +963,19 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             }
         }
         first.setLocalAuthenticatorConfigs(authenticatorList.toArray(new LocalAuthenticatorConfig[0]));
-        newAuthSteps[0] = first;
-        outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
+        AuthenticationStep[] finalAuthSteps;
+        boolean firstStepEmpty = authenticatorList.isEmpty() &&
+                ArrayUtils.isEmpty(first.getFederatedIdentityProviders());
+        if (firstStepEmpty) {
+            // Remove the now-empty first step; shift remaining steps down.
+            finalAuthSteps = newAuthSteps.length > 1
+                    ? Arrays.copyOfRange(newAuthSteps, 1, newAuthSteps.length)
+                    : new AuthenticationStep[0];
+        } else {
+            newAuthSteps[0] = first;
+            finalAuthSteps = newAuthSteps;
+        }
+        outboundAuthenticationConfig.setAuthenticationSteps(finalAuthSteps);
         rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
     }
 
