@@ -235,13 +235,13 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     removeOrganizationIdentifierHandler(serviceProvider);
                 }
             } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue())) {
-                if (serviceProvider.isNewB2BLoginEnabled() && !isOrganizationIdfConfigured) {
+                if (serviceProvider.isEnhancedB2BLoginEnabled() && !isOrganizationIdfConfigured) {
                     addOrganizationIdentifierHandler(serviceProvider);
-                } else if (!serviceProvider.isNewB2BLoginEnabled() && !authenticatorConfigured) {
+                } else if (!serviceProvider.isEnhancedB2BLoginEnabled() && !authenticatorConfigured) {
                     addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
                 }
             }
-            if (serviceProvider.isNewB2BLoginEnabled()) {
+            if (serviceProvider.isEnhancedB2BLoginEnabled()) {
                 if (authenticatorConfigured) {
                     removeOrganizationSSOAuthenticator(serviceProvider);
                 }
