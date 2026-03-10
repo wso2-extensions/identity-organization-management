@@ -770,23 +770,23 @@ public class FragmentApplicationMgtListenerTest {
         return new Object[][] {
                 // App being unshared with IDF configured → IDF must be removed.
                 {"false", false, false, true, false, false, false},
-                // App being shared with enhancedB2BLogin enabled and no IDF → IDF must be added.
+                // App being shared with enhancedOrgAuthentication enabled and no IDF → IDF must be added.
                 {"true", true, false, false, false, false, true},
-                // App being shared with enhancedB2BLogin enabled and existing OrgSSO → add IDF, remove OrgSSO.
+                // App being shared with enhancedOrgAuthentication enabled and existing OrgSSO → add IDF, remove OrgSSO.
                 {"true", true, true, false, false, false, true},
-                // No sharing property change, enhancedB2BLogin enabled,
+                // No sharing property change, enhancedOrgAuthentication enabled,
                 // existing OrgSSO with BasicAuth → OrgSSO removed.
                 {null, true, true, false, true, false, false},
-                // No sharing property change, enhancedB2BLogin disabled, existing IDF → IDF removed.
+                // No sharing property change, enhancedOrgAuthentication disabled, existing IDF → IDF removed.
                 {null, false, false, true, false, false, false},
         };
     }
 
     @Test(dataProvider = "orgIdentifierHandlerDoPreUpdateDataProvider")
     public void testOrgIdentifierHandlerHandlingInDoPreUpdateApplication(
-            String isAppShared, boolean isEnhancedB2BLoginEnabled, boolean hasOrgSSO, boolean hasOrgIdf,
-            boolean hasBasicAuth, boolean expectedHasOrgSSO, boolean expectedHasOrgIdf)
-            throws IdentityApplicationManagementException, OrganizationManagementException {
+            String isAppShared, boolean isEnhancedOrganizationAuthenticationEnabled, boolean hasOrgSSO,
+            boolean hasOrgIdf, boolean hasBasicAuth, boolean expectedHasOrgSSO, boolean expectedHasOrgIdf)
+            throws IdentityApplicationManagementException {
 
         try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
                      mockStatic(OrganizationManagementUtil.class)) {
@@ -816,7 +816,8 @@ public class FragmentApplicationMgtListenerTest {
             when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
             when(serviceProvider.getApplicationName()).thenReturn(applicationName);
             when(serviceProvider.getLocalAndOutBoundAuthenticationConfig()).thenReturn(authConfig);
-            when(serviceProvider.isEnhancedB2BLoginEnabled()).thenReturn(isEnhancedB2BLoginEnabled);
+            when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled())
+                    .thenReturn(isEnhancedOrganizationAuthenticationEnabled);
             when(applicationManagementService.getApplicationByResourceId(applicationResourceID, tenantDomain))
                     .thenReturn(existingApp);
 
