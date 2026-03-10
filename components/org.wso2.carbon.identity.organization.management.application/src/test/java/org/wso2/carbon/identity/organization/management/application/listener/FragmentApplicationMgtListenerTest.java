@@ -774,7 +774,8 @@ public class FragmentApplicationMgtListenerTest {
                 {"true", true, false, false, false, false, true},
                 // App being shared with enhancedB2BLogin enabled and existing OrgSSO → add IDF, remove OrgSSO.
                 {"true", true, true, false, false, false, true},
-                // No sharing property change, enhancedB2BLogin enabled, existing OrgSSO with BasicAuth → OrgSSO removed.
+                // No sharing property change, enhancedB2BLogin enabled,
+                // existing OrgSSO with BasicAuth → OrgSSO removed.
                 {null, true, true, false, true, false, false},
                 // No sharing property change, enhancedB2BLogin disabled, existing IDF → IDF removed.
                 {null, false, false, true, false, false, false},
@@ -824,18 +825,22 @@ public class FragmentApplicationMgtListenerTest {
 
             assertTrue(result);
 
-            AuthenticationStep resultStep = authConfig.getAuthenticationSteps()[0];
+            AuthenticationStep[] resultSteps = authConfig.getAuthenticationSteps();
 
-            boolean actualHasOrgIdf = resultStep.getLocalAuthenticatorConfigs() != null &&
-                    Arrays.stream(resultStep.getLocalAuthenticatorConfigs())
-                            .anyMatch(a -> ORGANIZATION_IDENTIFIER_HANDLER.equals(a.getName()));
+            boolean actualHasOrgIdf = false;
+            boolean actualHasOrgSSO = false;
+            if (resultSteps != null && resultSteps.length > 0) {
+                AuthenticationStep resultStep = resultSteps[0];
+                actualHasOrgIdf = resultStep.getLocalAuthenticatorConfigs() != null &&
+                        Arrays.stream(resultStep.getLocalAuthenticatorConfigs())
+                                .anyMatch(a -> ORGANIZATION_IDENTIFIER_HANDLER.equals(a.getName()));
+                actualHasOrgSSO = resultStep.getFederatedIdentityProviders() != null &&
+                        Arrays.stream(resultStep.getFederatedIdentityProviders())
+                                .filter(idp -> idp.getDefaultAuthenticatorConfig() != null)
+                                .anyMatch(idp -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(
+                                        idp.getDefaultAuthenticatorConfig().getName()));
+            }
             assertEquals(expectedHasOrgIdf, actualHasOrgIdf);
-
-            boolean actualHasOrgSSO = resultStep.getFederatedIdentityProviders() != null &&
-                    Arrays.stream(resultStep.getFederatedIdentityProviders())
-                            .filter(idp -> idp.getDefaultAuthenticatorConfig() != null)
-                            .anyMatch(idp -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(
-                                    idp.getDefaultAuthenticatorConfig().getName()));
             assertEquals(expectedHasOrgSSO, actualHasOrgSSO);
         }
     }
