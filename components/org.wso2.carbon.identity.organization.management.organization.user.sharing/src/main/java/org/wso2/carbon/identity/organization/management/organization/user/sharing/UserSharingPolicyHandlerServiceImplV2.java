@@ -1310,7 +1310,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         }
         if (!baseUserShareObjects.isEmpty()) {
             Map<BaseUserShare, List<String>> userShareEntryMap =
-                    getuserShareEntryMap(baseUserShareObjects, sharingInitiatedOrgId);
+                    getUserShareEntryMap(baseUserShareObjects, sharingInitiatedOrgId);
 
             applyUserSharesToOrganizations(associatedUserId, sharingInitiatedOrgId, userShareEntryMap);
         }
@@ -1507,7 +1507,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
      * @return A map containing user share objects and their corresponding organizations.
      */
-    private Map<BaseUserShare, List<String>> getuserShareEntryMap(
+    private Map<BaseUserShare, List<String>> getUserShareEntryMap(
             List<BaseUserShare> baseUserShareObjects, String sharingInitiatedOrgId)
             throws OrganizationManagementException {
 
