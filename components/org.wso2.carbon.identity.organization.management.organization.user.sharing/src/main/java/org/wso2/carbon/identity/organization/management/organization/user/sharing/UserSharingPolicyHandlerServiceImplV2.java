@@ -1844,6 +1844,10 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(ResourceType.USER,
                 associatedUserId, sharingInitiatedOrgId);
+        String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                "Delete All User Sharing Policies", associatedUserId,
+                getAuditData(tenantDomain, sharingInitiatedOrgId), SUCCESS));
     }
 
     // Role Management Helper Methods.
