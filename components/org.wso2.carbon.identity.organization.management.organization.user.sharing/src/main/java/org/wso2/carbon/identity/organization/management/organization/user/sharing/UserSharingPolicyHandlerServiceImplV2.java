@@ -1401,7 +1401,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 deleteOldSharedRoles(userAssociation, currentSharedRoleIds);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
-            LOG.error("Error while handling roles assigment to the previously shared user" + e.getMessage());
+            LOG.error("Error while handling roles assignment to the previously shared user" + e.getMessage());
         }
     }
 
@@ -2194,7 +2194,22 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         List<String> rolesToBeRemoved = new ArrayList<>(currentRoleIds);
         rolesToBeRemoved.removeAll(newSubOrgRoleIds);
 
+        // Roles that remain unchanged (intersection of current and new).
+        List<String> rolesUnchanged = new ArrayList<>(currentRoleIds);
+        rolesUnchanged.retainAll(newSubOrgRoleIds);
+
         deleteOldSharedRoles(userAssociation, rolesToBeRemoved);
+
+        String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                "Reconcile Shared User Roles", userAssociation.getUserId(),
+                String.format("%s, Previous Roles : %s, Incoming New Roles (parent org) : %s, " +
+                                "Roles To Be Removed : %s, Roles Unchanged : %s, Roles To Be Added : %s",
+                        getAuditData(tenantDomain, subOrgId),
+                        currentRoleIds, newRoleIdsInParentOrg,
+                        rolesToBeRemoved, rolesUnchanged, rolesToBeAdded),
+                SUCCESS));
+
         return rolesToBeAdded;
     }
 
