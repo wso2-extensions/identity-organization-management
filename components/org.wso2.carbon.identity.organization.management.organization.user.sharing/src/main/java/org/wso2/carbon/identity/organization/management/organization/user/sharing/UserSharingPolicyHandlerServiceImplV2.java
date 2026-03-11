@@ -2200,6 +2200,17 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         deleteOldSharedRoles(userAssociation, rolesToBeRemoved);
 
+        // Invert the mapping to convert sub-org role IDs back to parent-org role IDs, so the returned list
+        // is in the initiating-org space and can be processed correctly by assignRolesToTheSharedUser().
+        Map<String, String> sharedToMainRoleMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : mainToSharedRoleMap.entrySet()) {
+            sharedToMainRoleMap.put(entry.getValue(), entry.getKey());
+        }
+        List<String> rolesToBeAddedInParentOrg = new ArrayList<>();
+        for (String subOrgRoleId : rolesToBeAdded) {
+            rolesToBeAddedInParentOrg.add(sharedToMainRoleMap.getOrDefault(subOrgRoleId, subOrgRoleId));
+        }
+
         String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                 "Reconcile Shared User Roles", userAssociation.getUserId(),
@@ -2207,10 +2218,10 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                                 "Roles To Be Removed : %s, Roles Unchanged : %s, Roles To Be Added : %s",
                         getAuditData(tenantDomain, subOrgId),
                         currentRoleIds, newRoleIdsInParentOrg,
-                        rolesToBeRemoved, rolesUnchanged, rolesToBeAdded),
+                        rolesToBeRemoved, rolesUnchanged, rolesToBeAddedInParentOrg),
                 SUCCESS));
 
-        return rolesToBeAdded;
+        return rolesToBeAddedInParentOrg;
     }
 
     /**
