@@ -1392,15 +1392,13 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                             userSharingOrg);
             List<String> roleIds = baseUserShare.getRoles();
             RoleAssignmentMode roleAssignmentMode = baseUserShare.getRoleAssignmentMode();
+            List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
             if (roleAssignmentMode != RoleAssignmentMode.NONE) {
-
-                List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
                 List<String> newSharedRoleIds =
-                        getRolesToBeAddedAfterUpdate(userAssociation, currentSharedRoleIds, roleIds);
-
-                if (hasRoleChanges(currentSharedRoleIds, newSharedRoleIds)) {
-                    assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds);
-                }
+                        removeObsoleteRolesAndGetRolesToAdd(userAssociation, currentSharedRoleIds, roleIds);
+                assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, newSharedRoleIds);
+            } else {
+                deleteOldSharedRoles(userAssociation, currentSharedRoleIds);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             LOG.error("Error while handling roles assigment to the previously shared user" + e.getMessage());
@@ -2163,24 +2161,38 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      * Determines the roles that need to be added after an update by comparing the current roles
      * with the new set of roles. Note that this will only be affected to the roles which have been assigned to user
      * with the sharing of that user. If this particular user has been assigned to some roles within the sub
-     * organization, there won't be any effect to those roles.
+     * organization, there won't be any effect to those roles. And if there are any roles in the currentRoleIds which
+     * are not in the newRoleIds, those roles will be removed from the user as they are no longer assigned to the user
+     * after the update.
      *
-     * @param userAssociation The user association object containing user and organization details.
-     * @param currentRoleIds  The list of role IDs currently assigned to the shared user.
-     * @param newRoleIds      The list of new role IDs to be assigned.
+     * @param userAssociation       The user association object containing user and organization details.
+     * @param currentRoleIds        The list of role IDs currently assigned to the shared user.
+     * @param newRoleIdsInParentOrg The list of new role IDs in the parent organization that are intended to be
+     *                              assigned to the shared user.
      * @return A list of roles that need to be added.
      */
-    private List<String> getRolesToBeAddedAfterUpdate(UserAssociation userAssociation, List<String> currentRoleIds,
-                                                      List<String> newRoleIds)
+    private List<String> removeObsoleteRolesAndGetRolesToAdd(UserAssociation userAssociation,
+                                                             List<String> currentRoleIds,
+                                                             List<String> newRoleIdsInParentOrg)
             throws OrganizationManagementException, IdentityRoleManagementException {
 
+        String subOrgId = userAssociation.getOrganizationId();
+        String subOrgTenantDomain = getOrganizationManager().resolveTenantDomain(subOrgId);
+
+        // Map parent-org role IDs to their corresponding sub-org role IDs so both sides of the comparison are in the
+        // same org space.
+        Map<String, String> mainToSharedRoleMap =
+                getRoleManagementService().getMainRoleToSharedRoleMappingsBySubOrg(newRoleIdsInParentOrg,
+                        subOrgTenantDomain);
+        Set<String> newSubOrgRoleIds = new HashSet<>(mainToSharedRoleMap.values());
+
         // Roles to be added are those in newRoleIds that are not in currentRoleIds.
-        List<String> rolesToBeAdded = new ArrayList<>(newRoleIds);
+        List<String> rolesToBeAdded = new ArrayList<>(newSubOrgRoleIds);
         rolesToBeAdded.removeAll(currentRoleIds);
 
         // Roles to be removed are those in currentRoleIds that are not in newRoleIds.
         List<String> rolesToBeRemoved = new ArrayList<>(currentRoleIds);
-        rolesToBeRemoved.removeAll(newRoleIds);
+        rolesToBeRemoved.removeAll(newSubOrgRoleIds);
 
         deleteOldSharedRoles(userAssociation, rolesToBeRemoved);
         return rolesToBeAdded;
@@ -2209,20 +2221,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     "Remove Roles from Shared User", userId,
                     getAuditData(tenantDomain, orgId), SUCCESS));
         }
-    }
-
-    /**
-     * Checks if there are any role changes when updating a shared user.
-     *
-     * @param oldSharedRoleIds The list of old shared role IDs.
-     * @param newRoleIds       The list of new role IDs.
-     * @return True if there are role changes, false otherwise.
-     */
-    private boolean hasRoleChanges(List<String> oldSharedRoleIds, List<String> newRoleIds) {
-
-        Set<String> oldRoleSet = new HashSet<>(oldSharedRoleIds);
-        Set<String> newRoleSet = new HashSet<>(newRoleIds);
-        return !oldRoleSet.equals(newRoleSet);
     }
 
     private void logAsyncProcessing(String action, String sharingInitiatedUserId, String sharingInitiatedOrgId) {
