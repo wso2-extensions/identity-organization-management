@@ -1309,33 +1309,30 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     sharingInitiatedUserId));
         }
         if (!baseUserShareObjects.isEmpty()) {
-            Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject =
-                    getUserSharingOrgsForEachUserShareObject(baseUserShareObjects, sharingInitiatedOrgId);
+            Map<BaseUserShare, List<String>> userShareEntryMap =
+                    getUserShareEntryMap(baseUserShareObjects, sharingInitiatedOrgId);
 
-            applyUserSharesToOrganizations(sharingInitiatedOrgId, userSharingOrgsForEachUserShareObject);
+            applyUserSharesToOrganizations(associatedUserId, sharingInitiatedOrgId, userShareEntryMap);
         }
     }
 
     /**
      * Applies user shares to the specified organizations based on the provided user share objects.
      *
-     * @param sharingInitiatedOrgId                 The ID of the organization initiating the sharing.
-     * @param userSharingOrgsForEachUserShareObject A map containing user share objects and their corresponding
-     *                                              organizations.
+     * @param associatedUserId      The ID of the user to be shared.
+     * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
+     * @param userShareEntryMap     A map containing user share objects and their corresponding organizations.
      */
-    private void applyUserSharesToOrganizations(String sharingInitiatedOrgId, Map<BaseUserShare,
-            List<String>> userSharingOrgsForEachUserShareObject)
+    private void applyUserSharesToOrganizations(String associatedUserId, String sharingInitiatedOrgId,
+                                                Map<BaseUserShare, List<String>> userShareEntryMap)
             throws ResourceSharingPolicyMgtException, OrganizationManagementException {
 
-        for (Map.Entry<BaseUserShare, List<String>> entry : userSharingOrgsForEachUserShareObject.entrySet()) {
+        saveUserSharingPolicyIfApplicable(associatedUserId, sharingInitiatedOrgId, userShareEntryMap, true);
+
+        for (Map.Entry<BaseUserShare, List<String>> entry : userShareEntryMap.entrySet()) {
 
             BaseUserShare baseUserShare = entry.getKey();
             List<String> userSharingOrgs = entry.getValue();
-
-            // This will be initiated for each new sharing for the user. The latest sharing policy will be stored.
-            if (isApplicableOrganizationScopeForSavingPolicy(entry.getKey().getPolicy())) {
-                saveUserSharingPolicy(entry.getKey(), sharingInitiatedOrgId, true);
-            }
 
             for (String userSharingOrg : userSharingOrgs) {
                 if (isUserAlreadySharedInOrg(baseUserShare.getUserId(), sharingInitiatedOrgId, userSharingOrg)) {
@@ -1345,6 +1342,35 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     // New user share.
                     createNewUserShare(baseUserShare, sharingInitiatedOrgId, userSharingOrg);
                 }
+            }
+        }
+    }
+
+    /**
+     * Saves the user sharing policy for future shares if applicable based on the provided user share objects.
+     *
+     * @param associatedUserId       The ID of the user to be shared.
+     * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
+     * @param userShareEntryMap     A map containing user share objects and their corresponding organizations.
+     * @param replaceExistingPolicy A flag indicating whether to replace existing policies for the user.
+     */
+    private void saveUserSharingPolicyIfApplicable(String associatedUserId, String sharingInitiatedOrgId,
+                                                   Map<BaseUserShare, List<String>> userShareEntryMap,
+                                                   boolean replaceExistingPolicy)
+            throws ResourceSharingPolicyMgtException {
+
+        if (userShareEntryMap.isEmpty()) {
+            return;
+        }
+
+        // Since, there is no user re-sharing as of now, all the previous policies will be replaced by the new ones.
+        if (replaceExistingPolicy) {
+            deleteAllResourceSharingPoliciesOfUser(associatedUserId, sharingInitiatedOrgId);
+        }
+
+        for (BaseUserShare userShare : userShareEntryMap.keySet()) {
+            if (isApplicableOrganizationScopeForSavingPolicy(userShare.getPolicy())) {
+                saveUserSharingPolicy(userShare, sharingInitiatedOrgId);
             }
         }
     }
@@ -1481,7 +1507,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      * @param sharingInitiatedOrgId The ID of the organization initiating the sharing.
      * @return A map containing user share objects and their corresponding organizations.
      */
-    private Map<BaseUserShare, List<String>> getUserSharingOrgsForEachUserShareObject(
+    private Map<BaseUserShare, List<String>> getUserShareEntryMap(
             List<BaseUserShare> baseUserShareObjects, String sharingInitiatedOrgId)
             throws OrganizationManagementException {
 
@@ -1728,12 +1754,9 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
      *
      * @param baseUserShare           The user share details containing policy information.
      * @param sharingInitiatedOrgId   The ID of the organization that initiated the sharing.
-     * @param replaceExistingPolicies Whether to replace existing policies for the user. If true, existing policies
-     *                                will be deleted before saving the new policy.
      * @throws ResourceSharingPolicyMgtException If an error occurs while saving the resource sharing policy.
      */
-    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId,
-                                       boolean replaceExistingPolicies)
+    private void saveUserSharingPolicy(BaseUserShare baseUserShare, String sharingInitiatedOrgId)
             throws ResourceSharingPolicyMgtException {
 
         ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService =
@@ -1756,9 +1779,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             sharedResourceAttributes.add(sharedResourceAttribute);
         }
 
-        if (replaceExistingPolicies) {
-            deleteAllResourceSharingPoliciesOfUser(baseUserShare.getUserId(), sharingInitiatedOrgId);
-        }
         resourceSharingPolicyHandlerService.addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
                 sharedResourceAttributes);
         String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
@@ -1824,6 +1844,10 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(ResourceType.USER,
                 associatedUserId, sharingInitiatedOrgId);
+        String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                "Delete All User Sharing Policies", associatedUserId,
+                getAuditData(tenantDomain, sharingInitiatedOrgId), SUCCESS));
     }
 
     // Role Management Helper Methods.
