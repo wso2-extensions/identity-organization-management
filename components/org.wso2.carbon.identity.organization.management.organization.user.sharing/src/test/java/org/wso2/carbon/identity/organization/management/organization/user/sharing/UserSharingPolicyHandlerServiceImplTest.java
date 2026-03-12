@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseOrgDetailsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedRolesDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -100,6 +101,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.VALIDATE_MSG_SHARED_ROLE_NAME;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.VALIDATE_MSG_SHARED_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.TestUserSharingConstants.VALIDATE_MSG_SHARED_USER_ID;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 
 /**
  * Unit tests for UserSharingPolicyHandlerServiceImpl.
@@ -208,6 +210,80 @@ public class UserSharingPolicyHandlerServiceImplTest {
         assertThrows(UserSharingMgtClientException.class,
                 () -> userSharingPolicyHandlerService.getSharedOrganizationsOfUser(USER_1_ID, null, null, null, null,
                         false));
+    }
+
+    @Test
+    public void testGetSharedOrganizationsOfUserWithStaleOrganization() throws Exception {
+
+        utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
+
+        OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
+        when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
+        OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
+        when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
+        OrganizationManager mockOrgManager = mock(OrganizationManager.class);
+        when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
+
+        // Create three user associations: two valid and one stale.
+        List<UserAssociation> mockUserAssociations = new ArrayList<>();
+        mockUserAssociations.add(createUserAssociation(USER_1_ID, ORG_1_ID));
+        mockUserAssociations.add(createUserAssociation(USER_1_ID, ORG_2_ID));
+        mockUserAssociations.add(createUserAssociation(USER_1_ID, ORG_3_ID));
+
+        when(mockOrgUserSharingService.getUserAssociationsOfGivenUser(USER_1_ID, ORG_SUPER_ID)).thenReturn(
+                mockUserAssociations);
+
+        // Mock ORG_1 and ORG_3 as valid.
+        when(mockOrgManager.getOrganizationNameById(ORG_1_ID)).thenReturn(ORG_1_NAME);
+        when(mockOrgManager.getOrganizationNameById(ORG_3_ID)).thenReturn(ORG_3_NAME);
+
+        // Mock ORG_2 as stale (throws exception).
+        when(mockOrgManager.getOrganizationNameById(ORG_2_ID)).thenThrow(
+                new OrganizationManagementException(ERROR_CODE_INVALID_ORGANIZATION_ID.getMessage(),
+                        ERROR_CODE_INVALID_ORGANIZATION_ID.getDescription(),
+                        ERROR_CODE_INVALID_ORGANIZATION_ID.getCode()));
+
+        ResponseSharedOrgsDO response =
+                userSharingPolicyHandlerService.getSharedOrganizationsOfUser(USER_1_ID, null, null, null, null,
+                        false);
+
+        assertNotNull(response, VALIDATE_MSG_RESPONSE);
+        assertEquals(response.getSharedOrgs().size(), 2);
+
+        // Verify that the response contains only ORG_1 and ORG_3.
+        List<String> returnedOrgIds =
+                response.getSharedOrgs().stream().map(
+                        ResponseOrgDetailsDO::getOrganizationId).collect(Collectors.toList());
+        assertTrue(returnedOrgIds.contains(ORG_1_ID));
+        assertTrue(returnedOrgIds.contains(ORG_3_ID));
+        assertEquals(returnedOrgIds.stream().filter(id -> id.equals(ORG_2_ID)).count(), 0);
+        assertEquals(response.getSharedOrgs().get(0).getOrganizationName(), ORG_1_NAME, VALIDATE_MSG_SHARED_ORG_NAME);
+        assertEquals(response.getSharedOrgs().get(1).getOrganizationName(), ORG_3_NAME, VALIDATE_MSG_SHARED_ORG_NAME);
+    }
+
+    @Test
+    public void testGetSharedOrganizationsOfUserWithException() throws Exception {
+
+        utilsMockedStatic.when(Utils::getOrganizationId).thenReturn(ORG_SUPER_ID);
+
+        OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
+        when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
+        OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
+        when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
+        OrganizationManager mockOrgManager = mock(OrganizationManager.class);
+        when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
+
+        List<UserAssociation> mockUserAssociations = new ArrayList<>();
+        mockUserAssociations.add(createUserAssociation(USER_1_ID, ORG_1_ID));
+        when(mockOrgUserSharingService.getUserAssociationsOfGivenUser(USER_1_ID, ORG_SUPER_ID))
+                .thenReturn(mockUserAssociations);
+
+        when(mockOrgManager.getOrganizationNameById(ORG_1_ID)).thenThrow(
+                new OrganizationManagementException("error"));
+
+        assertThrows(UserSharingMgtClientException.class,
+                () -> userSharingPolicyHandlerService.getSharedOrganizationsOfUser(
+                        USER_1_ID, null, null, null, null, false));
     }
 
     @DataProvider(name = "roleSharingDataProvider")
