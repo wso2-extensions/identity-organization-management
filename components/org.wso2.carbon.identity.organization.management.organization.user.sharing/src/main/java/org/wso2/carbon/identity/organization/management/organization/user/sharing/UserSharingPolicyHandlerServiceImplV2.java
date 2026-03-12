@@ -422,7 +422,11 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     ? getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive)
                     : new ArrayList<>();
 
-            SharingModeDO generalSharingMode = resolveGeneralSharingMode(includedAttributes, parentOrgId, mainUserId);
+            SharingModeDO generalSharingMode = null;
+            if (includedAttributes.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
+                generalSharingMode = resolveGeneralSharingMode(parentOrgId, mainUserId);
+            }
+            boolean includeGeneralSharingMode = (generalSharingMode != null);
 
             int fetchLimit = (limit == 0) ? limit : limit + 1;
             List<UserAssociation> userAssociations =
@@ -445,6 +449,17 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
             for (UserAssociation userAssociation : userAssociations) {
                 sharedOrgsList.add(resolveSharedOrgDetails(userAssociation, includedAttributes));
+            }
+            if (!includeGeneralSharingMode && includedAttributes.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
+                int parentOrgDepth = getOrganizationManager().getOrganizationDepthInHierarchy(parentOrgId);
+                List<ResponseOrgDetailsV2DO> directChildOrgs = sharedOrgsList.stream()
+                        .filter(orgDetails -> orgDetails.getDepthFromRoot() - parentOrgDepth == 1)
+                        .collect(Collectors.toList());
+                for (ResponseOrgDetailsV2DO orgDetails : directChildOrgs) {
+                    SharingModeDO sharingModeDO =
+                            resolveSelectiveSharingMode(parentOrgId, mainUserId, orgDetails.getOrganizationId());
+                    orgDetails.setSharingModeDO(sharingModeDO);
+                }
             }
 
             return buildResponseWithCursors(sharedOrgsList, userAssociations, generalSharingMode, beforeCursor,
@@ -923,12 +938,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         responseOrgDetailsV2DO.setHasChildren(organization.hasChildren());
         responseOrgDetailsV2DO.setDepthFromRoot(
                 getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId()));
-        if (includedAttributesList.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
-            SharingModeDO sharingModeDO =
-                    resolveSelectiveSharingMode(organization.getId(), userAssociation.getAssociatedUserId(),
-                            organization.getId());
-            responseOrgDetailsV2DO.setSharingModeDO(sharingModeDO);
-        }
         if (includedAttributesList.contains(SHARED_USER_ROLE_INCLUDED_KEY)) {
             responseOrgDetailsV2DO.setRoleWithAudienceDOList(
                     getAssignedSharedRolesForSharedUserInOrganization(userAssociation, organization.getId()));
@@ -994,18 +1003,33 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     /**
      * Resolve general sharing mode for supported future general sharing policies.
      *
-     * @param includedAttributes List of included attributes.
      * @param parentOrgId        Parent organization ID.
      * @param mainUserId         Main user ID.
      * @return SharingModeDO.
      * @throws OrganizationManagementException OrganizationManagementException.
      */
-    private SharingModeDO resolveGeneralSharingMode(List<String> includedAttributes, String parentOrgId,
-                                                    String mainUserId)
+    private SharingModeDO resolveGeneralSharingMode(String parentOrgId, String mainUserId)
             throws OrganizationManagementException {
 
-        if (includedAttributes.contains(SHARED_USER_SHARING_MODE_INCLUDED_KEY)) {
-            return resolveSharingMode(parentOrgId, mainUserId, false, null);
+        try {
+            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result =
+                    getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
+                            parentOrgId, USER, mainUserId);
+
+            if (result != null && result.size() == 1) {
+                Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry =
+                        result.entrySet().iterator().next();
+                ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                List<SharedResourceAttribute> resourceAttributes = entry.getValue();
+
+                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
+                    return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                }
+            }
+        } catch (ResourceSharingPolicyMgtException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        } catch (IdentityRoleManagementException e) {
+            throw new OrganizationManagementException(e.getMessage(), e.getErrorCode());
         }
         return null;
     }
@@ -1022,44 +1046,18 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     private SharingModeDO resolveSelectiveSharingMode(String initiatingOrgId, String mainUserId, String subOrgId)
             throws OrganizationManagementException {
 
-        return resolveSharingMode(initiatingOrgId, mainUserId, true, subOrgId);
-    }
-
-    /**
-     * Resolve sharing mode if the sharing policy is a future policy.
-     *
-     * @param initiatingOrgId  Initiating organization ID.
-     * @param mainUserId       Main user ID.
-     * @param isSelectiveShare Whether it's a selective share.
-     * @param subOrgId         Sub organization ID for selective share.
-     * @return SharingModeDO.
-     * @throws OrganizationManagementException OrganizationManagementException.
-     */
-    private SharingModeDO resolveSharingMode(String initiatingOrgId, String mainUserId, boolean isSelectiveShare,
-                                             String subOrgId)
-            throws OrganizationManagementException {
-
         try {
             Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result
                     = getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
                     initiatingOrgId, USER, mainUserId);
 
             if (result != null && !result.isEmpty()) {
-                Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry =
-                        result.entrySet().iterator().next();
-                ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
-                List<SharedResourceAttribute> resourceAttributes = entry.getValue();
-
-                if (isSelectiveShare) {
-                    boolean isPolicyHolderOrg = Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId);
-                    if (resourceSharingPolicy.getSharingPolicy() ==
-                            PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg) {
-                        return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
-                    }
-                } else {
-                    if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS ||
-                            resourceSharingPolicy.getSharingPolicy() == PolicyEnum.IMMEDIATE_EXISTING_AND_FUTURE_ORGS) {
-                        return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                for (Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry : result.entrySet()) {
+                    ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                    if (Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId) &&
+                            resourceSharingPolicy.getSharingPolicy() ==
+                                    PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
+                        return getSharingModeDO(resourceSharingPolicy, entry.getValue());
                     }
                 }
             }
