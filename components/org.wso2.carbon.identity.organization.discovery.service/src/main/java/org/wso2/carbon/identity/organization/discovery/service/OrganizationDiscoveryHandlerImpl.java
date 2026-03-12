@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.discovery.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
@@ -59,6 +61,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 )
 public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHandler {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationDiscoveryHandlerImpl.class);
+
     @Override
     public OrganizationDiscoveryResult discoverOrganization(OrganizationDiscoveryInput orgDiscoveryInput,
                                                             AuthenticationContext context)
@@ -96,6 +100,33 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
             } else if (StringUtils.isNotBlank(orgDiscoveryInput.getOrgName())) {
                 return handleOrgDiscoveryByOrgName(orgDiscoveryInput.getOrgName(), appId, mainAppOrgId);
             }
+        }
+        // If any of the above conditions are not met, it means valid discovery parameters are not found.
+        return OrganizationDiscoveryResult.failure(
+                FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getCode(),
+                FrameworkConstants.OrgDiscoveryFailureDetails.VALID_DISCOVERY_PARAMETERS_NOT_FOUND.getMessage());
+    }
+
+    @Override
+    public OrganizationDiscoveryResult discoverOrganization(OrganizationDiscoveryInput orgDiscoveryInput,
+                                                            String appId, String tenantDomain)
+            throws FrameworkException {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating organization discovery for application: " + appId + " in tenant domain: "
+                    + tenantDomain);
+        }
+        String mainAppOrgId;
+        try {
+            mainAppOrgId = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
+                    .resolveOrganizationId(tenantDomain);
+        } catch (OrganizationManagementException e) {
+            throw new FrameworkException("Error while getting organization ID for tenant domain: "
+                    + tenantDomain, e);
+        }
+
+        if (StringUtils.isNotBlank(orgDiscoveryInput.getOrgId())) {
+            return handleOrgDiscoveryByOrgId(orgDiscoveryInput.getOrgId(), appId, mainAppOrgId);
         }
         // If any of the above conditions are not met, it means valid discovery parameters are not found.
         return OrganizationDiscoveryResult.failure(

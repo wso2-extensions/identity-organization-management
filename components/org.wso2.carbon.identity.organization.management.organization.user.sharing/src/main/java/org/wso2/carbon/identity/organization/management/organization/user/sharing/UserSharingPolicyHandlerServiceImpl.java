@@ -311,6 +311,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             return new ResponseSharedOrgsDO(responseLinkList, responseOrgDetailsDOS);
         } catch (OrganizationManagementException e) {
+            LOG.error("Error occurred while retrieving shared organizations of user.", e);
             throw new UserSharingMgtClientException(ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_USER);
         }
     }
@@ -360,6 +361,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
             return new ResponseSharedRolesDO(responseLinkList, roleWithAudienceList);
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+            LOG.error("Error occurred while retrieving roles shared with user in organization.", e);
             throw new UserSharingMgtClientException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_USER);
         }
     }

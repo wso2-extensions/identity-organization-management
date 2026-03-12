@@ -60,6 +60,7 @@ public class OrgApplicationMgtConstants {
     public static final String CORRELATION_ID_MDC = "Correlation-ID";
 
     public static final String ORGANIZATION_LOGIN_AUTHENTICATOR = "OrganizationAuthenticator";
+    public static final String ORGANIZATION_IDENTIFIER_HANDLER = "OrganizationIdentifierHandler";
     public static final String DELETE_FRAGMENT_APPLICATION = "deleteFragmentApplication";
     public static final String DELETE_MAIN_APPLICATION = "deleteMainApplication";
     public static final String UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN = "updateShareWithAllChildren";

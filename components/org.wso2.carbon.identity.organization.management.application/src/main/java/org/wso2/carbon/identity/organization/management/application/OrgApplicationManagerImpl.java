@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
@@ -164,6 +165,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_SELECTIVE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_SHARING_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.PARENT_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
@@ -1627,15 +1629,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         AuthenticationStep first = new AuthenticationStep();
         if (ArrayUtils.isNotEmpty(authSteps)) {
             AuthenticationStep exist = authSteps[0];
-            boolean idpAlreadyConfigured = false;
-            if (ArrayUtils.isNotEmpty(exist.getFederatedIdentityProviders())) {
-                idpAlreadyConfigured = stream(exist.getFederatedIdentityProviders()).map(
-                                IdentityProvider::getDefaultAuthenticatorConfig)
-                        .anyMatch(auth -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
-            }
-            if (idpAlreadyConfigured) {
-                return;
-            }
             first.setStepOrder(exist.getStepOrder());
             first.setSubjectStep(exist.isSubjectStep());
             first.setAttributeStep(exist.isAttributeStep());
@@ -1646,28 +1639,50 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         AuthenticationStep[] newAuthSteps =
                 ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() : new AuthenticationStep[1];
 
-        IdentityProvider[] idps;
-        try {
-            idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e, getOrganizationId());
+        if (rootApplication.isEnhancedOrganizationAuthenticationEnabled()) {
+            boolean identifierHandlerAlreadyConfigured = ArrayUtils.isNotEmpty(first.getLocalAuthenticatorConfigs())
+                    && stream(first.getLocalAuthenticatorConfigs())
+                            .anyMatch(auth -> ORGANIZATION_IDENTIFIER_HANDLER.equals(auth.getName()));
+            if (!identifierHandlerAlreadyConfigured) {
+                LocalAuthenticatorConfig identifierHandler = new LocalAuthenticatorConfig();
+                identifierHandler.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+                identifierHandler.setEnabled(true);
+                first.setLocalAuthenticatorConfigs((LocalAuthenticatorConfig[]) ArrayUtils.addAll(
+                        first.getLocalAuthenticatorConfigs(),
+                        new LocalAuthenticatorConfig[]{identifierHandler}));
+            }
+        } else {
+            boolean idpAlreadyConfigured = ArrayUtils.isNotEmpty(first.getFederatedIdentityProviders())
+                    && stream(first.getFederatedIdentityProviders())
+                            .map(IdentityProvider::getDefaultAuthenticatorConfig)
+                            .filter(Objects::nonNull)
+                            .anyMatch(auth -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
+            if (!idpAlreadyConfigured) {
+                IdentityProvider[] idps;
+                try {
+                    idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
+                } catch (IdentityApplicationManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e,
+                            getOrganizationId());
+                }
+                Optional<IdentityProvider> maybeOrganizationIDP =
+                        stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
+                IdentityProvider identityProvider;
+                try {
+                    identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
+                            getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
+                } catch (IdentityProviderManagementClientException e) {
+                    throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
+                } catch (IdentityProviderManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
+                }
+                first.setFederatedIdentityProviders(
+                        (IdentityProvider[]) ArrayUtils.addAll(
+                                first.getFederatedIdentityProviders() != null ?
+                                        first.getFederatedIdentityProviders() : new IdentityProvider[0],
+                            new IdentityProvider[]{identityProvider}));
+            }
         }
-        Optional<IdentityProvider> maybeOrganizationIDP = stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
-        IdentityProvider identityProvider;
-        try {
-            identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
-                    getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
-        } catch (IdentityProviderManagementClientException e) {
-            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
-        } catch (IdentityProviderManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
-        }
-
-        first.setFederatedIdentityProviders(
-                (IdentityProvider[]) ArrayUtils.addAll(
-                        first.getFederatedIdentityProviders() != null ? 
-                                first.getFederatedIdentityProviders() : new IdentityProvider[0],
-                        new IdentityProvider[]{identityProvider}));
         newAuthSteps[0] = first;
         outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
         rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
@@ -2296,6 +2311,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setCallbackUrl(callbackUrl);
         consumerApp.setBackChannelLogoutUrl(backChannelUrl);
         consumerApp.setApplicationName(mainAppName);
+        consumerApp.setIsFragmentApp(true);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
