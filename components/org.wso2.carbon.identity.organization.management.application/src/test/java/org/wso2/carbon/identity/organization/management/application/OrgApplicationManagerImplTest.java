@@ -1628,8 +1628,12 @@ public class OrgApplicationManagerImplTest {
             testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
                     Collections.singletonList(shareOperation));
 
-            // Verify setAuthenticationSteps NOT called — modifyRootApplication returned early.
-            verify(authConfig, never()).setAuthenticationSteps(any());
+            // Verify the Org SSO IDP path was not invoked — enhanced org auth was already configured.
+            verify(applicationManagementService, never()).getAllIdentityProviders(anyString());
+            verify(idpManager, never()).addIdPWithResourceId(any(), anyString());
+            // Verify updateApplication was called to persist other mutations (e.g. isAppShared flag).
+            verify(applicationManagementService).updateApplication(
+                    any(ServiceProvider.class), anyString(), anyString());
         }
     }
 
@@ -1706,10 +1710,12 @@ public class OrgApplicationManagerImplTest {
             testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
                     Collections.singletonList(shareOperation));
 
-            // Verify getAllIdentityProviders NOT called — modifyRootApplication returned early.
+            // Verify the Org SSO IDP was not fetched or created again — already configured.
             verify(applicationManagementService, never()).getAllIdentityProviders(anyString());
-            // Verify setAuthenticationSteps NOT called — modifyRootApplication returned early.
-            verify(authConfig, never()).setAuthenticationSteps(any());
+            verify(idpManager, never()).addIdPWithResourceId(any(), anyString());
+            // Verify updateApplication was called to persist other mutations (e.g. isAppShared flag).
+            verify(applicationManagementService).updateApplication(
+                    any(ServiceProvider.class), anyString(), anyString());
         }
     }
 

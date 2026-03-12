@@ -1643,45 +1643,45 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             boolean identifierHandlerAlreadyConfigured = ArrayUtils.isNotEmpty(first.getLocalAuthenticatorConfigs())
                     && stream(first.getLocalAuthenticatorConfigs())
                             .anyMatch(auth -> ORGANIZATION_IDENTIFIER_HANDLER.equals(auth.getName()));
-            if (identifierHandlerAlreadyConfigured) {
-                return;
+            if (!identifierHandlerAlreadyConfigured) {
+                LocalAuthenticatorConfig identifierHandler = new LocalAuthenticatorConfig();
+                identifierHandler.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+                identifierHandler.setEnabled(true);
+                first.setLocalAuthenticatorConfigs((LocalAuthenticatorConfig[]) ArrayUtils.addAll(
+                        first.getLocalAuthenticatorConfigs(),
+                        new LocalAuthenticatorConfig[]{identifierHandler}));
             }
-            LocalAuthenticatorConfig identifierHandler = new LocalAuthenticatorConfig();
-            identifierHandler.setName(ORGANIZATION_IDENTIFIER_HANDLER);
-            identifierHandler.setEnabled(true);
-            first.setLocalAuthenticatorConfigs((LocalAuthenticatorConfig[]) ArrayUtils.addAll(
-                    first.getLocalAuthenticatorConfigs(),
-                    new LocalAuthenticatorConfig[]{identifierHandler}));
         } else {
             boolean idpAlreadyConfigured = ArrayUtils.isNotEmpty(first.getFederatedIdentityProviders())
                     && stream(first.getFederatedIdentityProviders())
                             .map(IdentityProvider::getDefaultAuthenticatorConfig)
+                            .filter(Objects::nonNull)
                             .anyMatch(auth -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
-            if (idpAlreadyConfigured) {
-                return;
-            }
-            IdentityProvider[] idps;
-            try {
-                idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
-            } catch (IdentityApplicationManagementException e) {
-                throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e, getOrganizationId());
-            }
-            Optional<IdentityProvider> maybeOrganizationIDP =
-                    stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
-            IdentityProvider identityProvider;
-            try {
-                identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
-                        getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
-            } catch (IdentityProviderManagementClientException e) {
-                throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
-            } catch (IdentityProviderManagementException e) {
-                throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
-            }
-            first.setFederatedIdentityProviders(
-                    (IdentityProvider[]) ArrayUtils.addAll(
-                            first.getFederatedIdentityProviders() != null ?
-                                    first.getFederatedIdentityProviders() : new IdentityProvider[0],
+            if (!idpAlreadyConfigured) {
+                IdentityProvider[] idps;
+                try {
+                    idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
+                } catch (IdentityApplicationManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e,
+                            getOrganizationId());
+                }
+                Optional<IdentityProvider> maybeOrganizationIDP =
+                        stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
+                IdentityProvider identityProvider;
+                try {
+                    identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
+                            getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
+                } catch (IdentityProviderManagementClientException e) {
+                    throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
+                } catch (IdentityProviderManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
+                }
+                first.setFederatedIdentityProviders(
+                        (IdentityProvider[]) ArrayUtils.addAll(
+                                first.getFederatedIdentityProviders() != null ?
+                                        first.getFederatedIdentityProviders() : new IdentityProvider[0],
                             new IdentityProvider[]{identityProvider}));
+            }
         }
         newAuthSteps[0] = first;
         outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
