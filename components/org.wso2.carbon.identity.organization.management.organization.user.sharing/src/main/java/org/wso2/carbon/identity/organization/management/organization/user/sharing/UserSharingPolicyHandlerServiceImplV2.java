@@ -118,7 +118,6 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_FILTER_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTES_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED;
@@ -2511,7 +2510,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         validateNotNull(getUserSharedOrgsDO.getUserId(), ERROR_CODE_USER_ID_NULL);
         validateNotNull(getUserSharedOrgsDO.getParentOrgId(), ERROR_CODE_ORG_ID_NULL);
 
-        validateNotNull(getUserSharedOrgsDO.getFilter(), ERROR_CODE_FILTER_NULL);
+        // 3. Normalize filter: treat null as empty string.
+        if (getUserSharedOrgsDO.getFilter() == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Filter parameter is null. Hence, normalizing to empty string for user: " +
+                        getUserSharedOrgsDO.getUserId());
+            }
+            getUserSharedOrgsDO.setFilter(StringUtils.EMPTY);
+        }
 
         validateGetAttributes(getUserSharedOrgsDO.getAttributes());
     }
