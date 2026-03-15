@@ -2510,8 +2510,12 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         validateNotNull(getUserSharedOrgsDO.getUserId(), ERROR_CODE_USER_ID_NULL);
         validateNotNull(getUserSharedOrgsDO.getParentOrgId(), ERROR_CODE_ORG_ID_NULL);
 
-        // 3. normalize filter: treat null as empty string.
+        // 3. Normalize filter: treat null as empty string.
         if (getUserSharedOrgsDO.getFilter() == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Filter parameter is null. Hence, normalizing to empty string for user: " +
+                        getUserSharedOrgsDO.getUserId());
+            }
             getUserSharedOrgsDO.setFilter(StringUtils.EMPTY);
         }
 
