@@ -264,7 +264,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             roleIds = getRoleIds(generalUserShareV2DO.getRoleAssignments().getRoles(),
                     sharingInitiatorContext.getSharingInitiatedOrgId());
         } catch (OrganizationManagementServerException e) {
-            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS);
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS, e);
         }
         RoleAssignmentMode roleAssignmentMode = generalUserShareV2DO.getRoleAssignments().getMode();
 

@@ -203,7 +203,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         try {
             roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
         } catch (OrganizationManagementServerException e) {
-            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS);
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS, e);
         }
 
         // Capture thread-local properties before async execution.
