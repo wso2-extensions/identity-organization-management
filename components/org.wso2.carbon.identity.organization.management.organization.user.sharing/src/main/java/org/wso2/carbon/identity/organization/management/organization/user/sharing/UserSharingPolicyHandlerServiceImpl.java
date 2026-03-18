@@ -23,10 +23,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.slf4j.MDC;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.buffer.SubOperationStatusQueue;
@@ -101,6 +104,9 @@ import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.API_REF_GET_SHARED_ROLES_OF_USER_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.APPLICATION;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_FAILURE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_MESSAGE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_SUCCESS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.B2B_USER_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CORRELATION_ID_MDC;
@@ -145,6 +151,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(UserSharingPolicyHandlerServiceImpl.class);
+    private static final Log AUDIT_LOG = CarbonConstants.AUDIT_LOG;
     private final UserIDResolver userIDResolver = new UserIDResolver();
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
     private final ConcurrentMap<String, SubOperationStatusQueue> asyncOperationStatusList = new ConcurrentHashMap<>();
@@ -563,6 +570,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     }
                     shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
+                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                            "Selective User Share", associatedUserId,
+                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 } else {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
@@ -572,6 +583,10 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage =
                         String.format(ERROR_SELECTIVE_SHARE.getMessage(), associatedUserId, e.getMessage());
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "Selective User Share", associatedUserId,
+                        getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
                 throw new UserSharingMgtServerException(ERROR_SELECTIVE_SHARE, errorMessage);
             }
         }
@@ -604,10 +619,18 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
                     shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
+                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                            "General User Share", associatedUserId,
+                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "General User Share", associatedUserId,
+                        getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
                 throw new UserSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
@@ -635,7 +658,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     // Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyOfUserInOrg(organizationId, associatedUserId, unsharingInitiatedOrgId);
                 }
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "Selective User Unshare", associatedUserId,
+                        getAuditData(tenantDomain, unsharingInitiatedOrgId), AUDIT_SUCCESS));
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "Selective User Unshare", associatedUserId,
+                        getAuditData(tenantDomain, unsharingInitiatedOrgId), AUDIT_FAILURE));
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
         }
@@ -657,7 +688,15 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
                 // Delete all resource sharing policies if it has been stored for future shares.
                 deleteAllResourceSharingPoliciesOfUser(associatedUserId, unsharingInitiatedOrgId);
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "General User Unshare", associatedUserId,
+                        getAuditData(tenantDomain, unsharingInitiatedOrgId), AUDIT_SUCCESS));
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "General User Unshare", associatedUserId,
+                        getAuditData(tenantDomain, unsharingInitiatedOrgId), AUDIT_FAILURE));
                 throw new UserSharingMgtServerException(ERROR_CODE_USER_UNSHARE);
             }
         }
@@ -1505,11 +1544,18 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         try {
             userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
-
+            String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+            AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                    "Create User Sharing Association", associatedUserId,
+                    getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
         } catch (OrganizationManagementException e) {
 
             String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
             LOG.error(errorMessage, e);
+            String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+            AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                    "Create User Sharing Association", associatedUserId,
+                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
 
             // Both User Share and Role Assignment Failed.
             registerOperationStatusUnit(operationId, associatedUserId, orgId, OperationStatus.FAILED,
@@ -1653,15 +1699,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             if (!failedAssignedRoles.isEmpty()) {
                 resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED);
                 resultDO.setOperationStatusMessage(buildPartialResultMessageForFailedRoles(failedAssignedRoles));
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "Assign Roles to Shared User", userId,
+                        getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
             } else if (resultDO.getIsUserSharedSuccess()) {
                 resultDO.setOperationStatus(OperationStatus.SUCCESS);
                 resultDO.setOperationStatusMessage(ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER);
+                String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+                AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                        "Assign Roles to Shared User", userId,
+                        getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
             }
             return resultDO;
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             resultDO.setOperationStatus(OperationStatus.PARTIALLY_COMPLETED);
             resultDO.setOperationStatusMessage(ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER + e);
             resultDO.setIsUserRoleAssignedIfPresentSuccess(false);
+            String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+            AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                    "Assign Roles to Shared User", userId,
+                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
             return resultDO;
         }
     }
@@ -1804,6 +1862,33 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throws UserSharingMgtClientException {
 
         throw new UserSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
+    }
+
+    // Audit Log Helper Methods.
+
+    private static String getInitiator(String tenantDomain) {
+
+        String user = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        if (LoggerUtils.isLogMaskingEnable) {
+            if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(tenantDomain)) {
+                String initiator = IdentityUtil.getInitiatorId(user, tenantDomain);
+                if (StringUtils.isNotBlank(initiator)) {
+                    return initiator;
+                }
+            }
+            if (StringUtils.isNotBlank(user)) {
+                return LoggerUtils.getMaskedContent(user + "@" + tenantDomain);
+            }
+            return LoggerUtils.getMaskedContent(CarbonConstants.REGISTRY_SYSTEM_USERNAME);
+        } else if (StringUtils.isNotBlank(user)) {
+            return user + "@" + tenantDomain;
+        }
+        return CarbonConstants.REGISTRY_SYSTEM_USERNAME;
+    }
+
+    private static String getAuditData(String tenantDomain, String initiatingOrgId) {
+
+        return String.format("Tenant Domain : %s, Initiating Organization ID : %s", tenantDomain, initiatingOrgId);
     }
 
     // Async helpers.
