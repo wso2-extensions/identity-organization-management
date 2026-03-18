@@ -68,6 +68,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
@@ -198,7 +199,12 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         Map<String, UserCriteriaType> userCriteria = generalUserShareDO.getUserCriteria();
         PolicyEnum policy = generalUserShareDO.getPolicy();
-        List<String> roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
+        List<String> roleIds;
+        try {
+            roleIds = getRoleIds(generalUserShareDO.getRoles(), sharingInitiatedOrgId);
+        } catch (OrganizationManagementServerException e) {
+            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS, e);
+        }
 
         // Capture thread-local properties before async execution.
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
@@ -1357,7 +1363,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      * @return A list of role IDs that match the given role-audience combination.
      */
     private List<String> getRoleIds(List<RoleWithAudienceDO> rolesWithAudience, String sharingInitiatedOrgId)
-            throws UserSharingMgtException {
+            throws OrganizationManagementServerException {
 
         try {
             String sharingInitiatedTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
@@ -1373,7 +1379,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             }
             return list;
         } catch (OrganizationManagementException e) {
-            throw new UserSharingMgtServerException(ERROR_CODE_GET_ROLE_IDS);
+            throw new OrganizationManagementServerException(ERROR_CODE_GET_ROLE_IDS.getMessage(),
+                    ERROR_CODE_GET_ROLE_IDS.getDescription(), ERROR_CODE_GET_ROLE_IDS.getCode(), e);
         }
     }
 
