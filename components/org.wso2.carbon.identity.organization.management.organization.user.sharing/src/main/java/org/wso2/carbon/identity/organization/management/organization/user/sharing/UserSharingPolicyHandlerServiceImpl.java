@@ -570,10 +570,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     }
                     shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
-                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
-                            "Selective User Share", associatedUserId,
-                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 } else {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
@@ -619,10 +615,6 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                     List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
                     shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId, correlationId);
-                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
-                            "General User Share", associatedUserId,
-                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException |
                      ResourceSharingPolicyMgtException e) {
@@ -1547,7 +1539,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Create User Sharing Association", associatedUserId,
-                    getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
         } catch (OrganizationManagementException e) {
 
             String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -1555,7 +1547,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Create User Sharing Association", associatedUserId,
-                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
 
             // Both User Share and Role Assignment Failed.
             registerOperationStatusUnit(operationId, associatedUserId, orgId, OperationStatus.FAILED,
@@ -1702,14 +1694,14 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
                 AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                         "Assign Roles to Shared User", userId,
-                        getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
+                        getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
             } else if (resultDO.getIsUserSharedSuccess()) {
                 resultDO.setOperationStatus(OperationStatus.SUCCESS);
                 resultDO.setOperationStatusMessage(ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER);
                 String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
                 AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                         "Assign Roles to Shared User", userId,
-                        getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
+                        getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
             }
             return resultDO;
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
@@ -1719,7 +1711,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Assign Roles to Shared User", userId,
-                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
             return resultDO;
         }
     }

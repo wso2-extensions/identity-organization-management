@@ -677,10 +677,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     }
                     shareUser(associatedUserId, selectiveUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId);
-                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
-                            "Selective User Share", associatedUserId,
-                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 } else {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format(LOG_WARN_NON_RESIDENT_USER, associatedUserId, sharingInitiatedOrgId));
@@ -726,10 +722,6 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     List<BaseUserShare> generalUserShareObjectsInRequest = Collections.singletonList(generalUserShare);
                     shareUser(associatedUserId, generalUserShareObjectsInRequest, sharingInitiatedOrgId,
                             sharingInitiatedUserId);
-                    String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-                    AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
-                            "General User Share", associatedUserId,
-                            getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
                 String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -2005,7 +1997,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Create User Sharing Association", associatedUserId,
-                    getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
         } catch (OrganizationManagementException e) {
 
             String errorMessage = String.format(ERROR_CODE_USER_SHARE.getMessage(), associatedUserId, e.getMessage());
@@ -2013,7 +2005,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Create User Sharing Association", associatedUserId,
-                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
             return;
         }
 
@@ -2085,14 +2077,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
                 AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                         "Assign Roles to Shared User", userId,
-                        getAuditData(tenantDomain, orgId), AUDIT_SUCCESS));
+                        getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_SUCCESS));
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             LOG.error("Error occurred while assigning roles to the shared user: " + userId, e);
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
                     "Assign Roles to Shared User", userId,
-                    getAuditData(tenantDomain, orgId), AUDIT_FAILURE));
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
         }
     }
 
