@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -90,6 +90,11 @@ public class UserSharingConstants {
             "Skipping user share for organizations that are not immediate children: %s";
     public static final String LOG_WARN_NON_RESIDENT_USER =
             "Skipping user share for user: %s since the user is not managed by the sharing initiated org: %s";
+
+    public static final String AUDIT_MESSAGE =
+            "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : %s ";
+    public static final String AUDIT_SUCCESS = "Success";
+    public static final String AUDIT_FAILURE = "Failure";
 
     public static final String ACTION_GENERAL_USER_SHARE = "general user share";
     public static final String ACTION_SELECTIVE_USER_SHARE = "selective user share";
