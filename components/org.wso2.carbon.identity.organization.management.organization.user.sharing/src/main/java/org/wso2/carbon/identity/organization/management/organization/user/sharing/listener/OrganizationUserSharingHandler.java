@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.listener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
@@ -66,7 +67,7 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
     private final UserIDResolver userIDResolver = new UserIDResolver();
 
     /**
-     * Handles the user sharing for the newly created organization.
+     * Handles the user sharing for the newly created organization and cleanup for deleted organizations.
      *
      * @param event The event to be handled.
      * @throws IdentityEventException If an error occurs while handling the event.
@@ -76,19 +77,39 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
         String eventName = event.getEventName();
         Map<String, Object> eventProperties = event.getEventProperties();
-        Organization createdOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
 
-        try {
-            if (OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
-                shareUsers(createdOrganization.getId());
+        if (Constants.EVENT_POST_ADD_ORGANIZATION.equals(eventName)) {
+            Organization createdOrganization = (Organization) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION);
+            if (createdOrganization == null) {
+                return;
             }
-        } catch (OrganizationManagementException e) {
-            throw new IdentityEventException("Error while handling user sharing for event: " + eventName, e);
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw new IdentityEventException("Error while retrieving resource sharing policies for event: " + eventName,
-                    e);
-        } catch (IdentityRoleManagementException e) {
-            throw new IdentityEventException("Error while handling role sharing for event: " + eventName, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Handling user sharing for created organization: " + createdOrganization.getId());
+            }
+            try {
+                if (OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
+                    shareUsers(createdOrganization.getId());
+                }
+            } catch (OrganizationManagementException e) {
+                throw new IdentityEventException("Error while handling user sharing for event: " + eventName, e);
+            } catch (ResourceSharingPolicyMgtException e) {
+                throw new IdentityEventException("Error while retrieving resource sharing policies for event: " +
+                        eventName, e);
+            } catch (IdentityRoleManagementException e) {
+                throw new IdentityEventException("Error while handling role sharing for event: " + eventName, e);
+            }
+        }
+
+        if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {
+            String deletedOrgId = (String) eventProperties.get(Constants.EVENT_PROP_ORGANIZATION_ID);
+            try {
+                if (StringUtils.isNotBlank(deletedOrgId)) {
+                    cleanupUserAssociations(deletedOrgId);
+                }
+            } catch (OrganizationManagementException e) {
+                throw new IdentityEventException("Error while cleaning up user associations for deleted " +
+                        "organization: " + deletedOrgId, e);
+            }
         }
     }
 
@@ -237,6 +258,14 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
         return getOrganizationManager().getRelativeDepthBetweenOrganizationsInSameBranch(ancestorOrg,
                 createdOrgId) == 1;
+    }
+
+    private void cleanupUserAssociations(String deletedOrgId) throws OrganizationManagementException {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Cleaning up user associations for deleted organization: " + deletedOrgId);
+        }
+        getOrganizationUserSharingService().deleteUserAssociationsByOrganizationId(deletedOrgId);
     }
 
     private OrganizationUserSharingService getOrganizationUserSharingService() {

@@ -119,6 +119,12 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     }
 
     @Override
+    public boolean deleteUserAssociationsByOrganizationId(String orgId) throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.deleteUserAssociationsByOrganizationId(orgId);
+    }
+
+    @Override
     public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementException {
 

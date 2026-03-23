@@ -98,6 +98,15 @@ public interface OrganizationUserSharingService {
     boolean deleteUserAssociation(String userId, String associatedOrgId) throws OrganizationManagementException;
 
     /**
+     * Deletes all user associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the user associations are deleted successfully.
+     * @throws OrganizationManagementException If an error occurs while deleting the user associations.
+     */
+    boolean deleteUserAssociationsByOrganizationId(String orgId) throws OrganizationManagementException;
+
+    /**
      * Get the user association of the associated user in a given organization.
      *
      * @param associatedUserId The ID of the user who is associated to the organization.
