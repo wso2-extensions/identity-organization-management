@@ -1473,7 +1473,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
     private void updateRoleAssignmentsOfSharedUser(String associatedUserId, String sharingInitiatedOrgId,
                                                    String sharingInitiatedUserId, PatchOperationDO patchOperation)
-            throws UserSharingMgtException, OrganizationManagementException, IdentityRoleManagementException {
+            throws OrganizationManagementException, IdentityRoleManagementException {
 
         logAsyncProcessing(ACTION_USER_SHARE_ROLE_ASSIGNMENT_UPDATE, sharingInitiatedUserId, sharingInitiatedOrgId);
         String orgId = extractOrgIdFromRolesPath(patchOperation.getPath());
@@ -1684,11 +1684,22 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             int subOrgTenantId = IdentityTenantUtil.getTenantId(subOrgTenantDomain);
             AbstractUserStoreManager subOrgUserStoreManager = getAbstractUserStoreManager(subOrgTenantId);
 
-            return subOrgUserStoreManager.isExistingUser(username);
+            return subOrgUserStoreManager.isExistingUser(getDomainFreeUsernameForSharedUserResolution(username));
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is an existing user.", e);
             return false;
         }
+    }
+
+    /**
+     * Removes the user store domain from the username for shared user resolution.
+     *
+     * @param username The username to be processed.
+     * @return The domain-free username for shared user resolution.
+     */
+    private String getDomainFreeUsernameForSharedUserResolution(String username) {
+
+        return UserCoreUtil.removeDomainFromName(username);
     }
 
     /**
