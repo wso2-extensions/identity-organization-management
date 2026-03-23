@@ -1684,7 +1684,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             int subOrgTenantId = IdentityTenantUtil.getTenantId(subOrgTenantDomain);
             AbstractUserStoreManager subOrgUserStoreManager = getAbstractUserStoreManager(subOrgTenantId);
 
-            return subOrgUserStoreManager.isExistingUser(normalizeUsernameForSharedUserResolution(username));
+            return subOrgUserStoreManager.isExistingUser(getDomainFreeUsernameForSharedUserResolution(username));
         } catch (UserStoreException | OrganizationManagementException e) {
             LOG.error("Error occurred while checking if the user is an existing user.", e);
             return false;
@@ -1692,23 +1692,14 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     /**
-     * Normalizes the username for shared user resolution by removing the domain and adding the target user store
-     * domain if specified.
+     * Removes the user store domain from the username for shared user resolution.
      *
-     * @param username The username to be normalized.
-     * @return The normalized username for shared user resolution.
+     * @param username The username to be processed.
+     * @return The domain-free username for shared user resolution.
      */
-    private String normalizeUsernameForSharedUserResolution(String username) {
+    private String getDomainFreeUsernameForSharedUserResolution(String username) {
 
-        String plainUsername = UserCoreUtil.removeDomainFromName(username);
-        String targetUserStoreDomain =
-                IdentityUtil.getProperty(UserSharingConstants.TARGET_USER_STORE_DOMAIN_PROPERTY);
-
-        if (StringUtils.isBlank(targetUserStoreDomain)) {
-            return plainUsername;
-        }
-
-        return UserCoreUtil.addDomainToName(plainUsername, targetUserStoreDomain);
+        return UserCoreUtil.removeDomainFromName(username);
     }
 
     /**
