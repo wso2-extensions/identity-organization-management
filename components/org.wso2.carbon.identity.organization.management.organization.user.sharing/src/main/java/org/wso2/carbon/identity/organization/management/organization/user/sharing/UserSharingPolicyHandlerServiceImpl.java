@@ -777,9 +777,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      */
     private void handleExistingSharedUser(String associatedUserId, String sharingInitiatedOrgId, Map<BaseUserShare,
             List<String>> userSharingOrgsForEachUserShareObject, String sharingInitiatedUserId, String correlationId)
-            throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
+            throws UserSharingMgtException, OrganizationManagementException,
             ResourceSharingPolicyMgtException, AsyncOperationStatusMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing existing shared user: " + associatedUserId + " for organization: "
+                    + sharingInitiatedOrgId);
+        }
         processUserSharingUpdates(userSharingOrgsForEachUserShareObject, associatedUserId,
                 sharingInitiatedOrgId, sharingInitiatedUserId, correlationId);
 
@@ -801,8 +805,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
     private void processUserSharingUpdates(Map<BaseUserShare, List<String>> userSharingOrgsForEachUserShareObject,
                                            String associatedUserId, String sharingInitiatedOrgId,
                                            String sharingInitiatedUserId, String correlationId)
-            throws UserSharingMgtException, IdentityRoleManagementException, OrganizationManagementException,
-            AsyncOperationStatusMgtException {
+            throws UserSharingMgtException, OrganizationManagementException, AsyncOperationStatusMgtException {
 
         List<String> userSharingAllOrgs = userSharingOrgsForEachUserShareObject.values()
                 .stream()
@@ -1483,7 +1486,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
      */
     private void updateRolesIfNecessary(UserAssociation userAssociation, List<String> roleIds,
                                         String sharingInitiatedOrgId, UserSharingResultDO resultDO)
-            throws OrganizationManagementException, IdentityRoleManagementException, AsyncOperationStatusMgtException {
+            throws AsyncOperationStatusMgtException {
 
         try {
             List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedUser(userAssociation);
@@ -1496,7 +1499,11 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             registerOperationStatusUnit(resultDO.getOperationId(), userAssociation.getUserId(), sharingInitiatedOrgId,
                     OperationStatus.PARTIALLY_COMPLETED, ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER + e.getMessage());
-            throw e;
+
+            String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+            AUDIT_LOG.warn(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
+                    "Reconcile Shared User Roles", userAssociation.getUserId(),
+                    getAuditData(tenantDomain, sharingInitiatedOrgId), AUDIT_FAILURE));
         }
     }
 
