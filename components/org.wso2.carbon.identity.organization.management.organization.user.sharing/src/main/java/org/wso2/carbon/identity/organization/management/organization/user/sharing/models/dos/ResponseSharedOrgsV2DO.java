@@ -30,6 +30,10 @@ public class ResponseSharedOrgsV2DO {
     private int nextPageCursor;
     private int previousPageCursor;
 
+    public ResponseSharedOrgsV2DO() {
+
+    }
+
     public ResponseSharedOrgsV2DO(SharingModeDO sharingMode, List<ResponseOrgDetailsV2DO> sharedOrgs,
                                   int nextPageCursor, int previousPageCursor) {
 
@@ -55,8 +59,7 @@ public class ResponseSharedOrgsV2DO {
         return sharedOrgs;
     }
 
-    public void setSharedOrgs(
-            List<ResponseOrgDetailsV2DO> sharedOrgs) {
+    public void setSharedOrgs(List<ResponseOrgDetailsV2DO> sharedOrgs) {
 
         this.sharedOrgs = sharedOrgs;
     }

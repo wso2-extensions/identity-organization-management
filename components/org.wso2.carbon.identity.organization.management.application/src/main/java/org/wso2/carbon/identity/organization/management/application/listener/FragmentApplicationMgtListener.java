@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
@@ -84,6 +85,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.UPDATE_SP_METADATA_SHARE_WITH_ALL_CHILDREN;
@@ -225,12 +227,26 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             Optional<ServiceProviderProperty> appShared = Arrays.stream(serviceProvider.getSpProperties())
                     .filter(p -> IS_APP_SHARED.equals(p.getName())).findFirst();
             boolean authenticatorConfigured = isOrganizationSSOAuthenticatorConfigured(serviceProvider);
-            if (appShared.isPresent() && !Boolean.parseBoolean(appShared.get().getValue()) &&
-                    authenticatorConfigured) {
-                removeOrganizationSSOAuthenticator(serviceProvider);
-            } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue()) &&
-                    !authenticatorConfigured) {
-                addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
+            boolean isOrganizationIdfConfigured = isOrganizationIdentifierHandlerConfigured(serviceProvider);
+            if (appShared.isPresent() && !Boolean.parseBoolean(appShared.get().getValue())) {
+                if (authenticatorConfigured) {
+                    removeOrganizationSSOAuthenticator(serviceProvider);
+                } else if (isOrganizationIdfConfigured) {
+                    removeOrganizationIdentifierHandler(serviceProvider);
+                }
+            } else if (appShared.isPresent() && Boolean.parseBoolean(appShared.get().getValue())) {
+                if (serviceProvider.isEnhancedOrganizationAuthenticationEnabled() && !isOrganizationIdfConfigured) {
+                    addOrganizationIdentifierHandler(serviceProvider);
+                } else if (!serviceProvider.isEnhancedOrganizationAuthenticationEnabled() && !authenticatorConfigured) {
+                    addOrganizationSSOAuthenticator(serviceProvider, tenantDomain);
+                }
+            }
+            if (serviceProvider.isEnhancedOrganizationAuthenticationEnabled()) {
+                if (authenticatorConfigured) {
+                    removeOrganizationSSOAuthenticator(serviceProvider);
+                }
+            } else if (isOrganizationIdfConfigured) {
+                removeOrganizationIdentifierHandler(serviceProvider);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException(String.format("Error while resolving the organization " +
@@ -814,7 +830,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
                     .isUseUserstoreDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
-                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+                    .isUseTenantDomainInLocalSubjectIdentifier());
             tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
             tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
             outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
@@ -868,6 +884,110 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             return exist != null && exist.getFederatedIdentityProviders() != null &&
                     stream(exist.getFederatedIdentityProviders()).map(IdentityProvider::getDefaultAuthenticatorConfig)
                             .anyMatch(auth -> auth != null && ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
+        }
+        return false;
+    }
+
+    private void addOrganizationIdentifierHandler(ServiceProvider rootApplication)
+            throws OrganizationManagementServerException, OrganizationManagementClientException {
+
+        LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
+                rootApplication.getLocalAndOutBoundAuthenticationConfig();
+        AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
+
+        if (StringUtils.equalsIgnoreCase(outboundAuthenticationConfig.getAuthenticationType(), AUTH_TYPE_DEFAULT)) {
+            LocalAndOutboundAuthenticationConfig defaultAuthenticationConfig = getDefaultAuthenticationConfig();
+            if (defaultAuthenticationConfig != null) {
+                authSteps = defaultAuthenticationConfig.getAuthenticationSteps();
+            }
+            LocalAndOutboundAuthenticationConfig tempOutboundAuthenticationConfig =
+                    new LocalAndOutboundAuthenticationConfig();
+            tempOutboundAuthenticationConfig.setUseUserstoreDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseUserstoreDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setUseTenantDomainInLocalSubjectIdentifier(outboundAuthenticationConfig
+                    .isUseTenantDomainInLocalSubjectIdentifier());
+            tempOutboundAuthenticationConfig.setSkipConsent(outboundAuthenticationConfig.isSkipConsent());
+            tempOutboundAuthenticationConfig.setSkipLogoutConsent(outboundAuthenticationConfig.isSkipLogoutConsent());
+            outboundAuthenticationConfig = tempOutboundAuthenticationConfig;
+            outboundAuthenticationConfig.setAuthenticationType(AUTH_TYPE_FLOW);
+        }
+
+        AuthenticationStep first = new AuthenticationStep();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            first.setStepOrder(exist.getStepOrder());
+            first.setSubjectStep(exist.isSubjectStep());
+            first.setAttributeStep(exist.isAttributeStep());
+            first.setFederatedIdentityProviders(exist.getFederatedIdentityProviders());
+            first.setLocalAuthenticatorConfigs(exist.getLocalAuthenticatorConfigs());
+        }
+
+        AuthenticationStep[] newAuthSteps =
+                ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() : new AuthenticationStep[1];
+
+        LocalAuthenticatorConfig identityHandlerAuthenticator = new LocalAuthenticatorConfig();
+        identityHandlerAuthenticator.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+        identityHandlerAuthenticator.setEnabled(true);
+        first.setLocalAuthenticatorConfigs((LocalAuthenticatorConfig[]) ArrayUtils.addAll(
+                first.getLocalAuthenticatorConfigs(),
+                new LocalAuthenticatorConfig[]{identityHandlerAuthenticator}));
+        newAuthSteps[0] = first;
+        outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
+        rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
+    }
+
+    private void removeOrganizationIdentifierHandler(ServiceProvider rootApplication) {
+
+        LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
+                rootApplication.getLocalAndOutBoundAuthenticationConfig();
+        AuthenticationStep[] authSteps = outboundAuthenticationConfig.getAuthenticationSteps();
+
+        AuthenticationStep first = new AuthenticationStep();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            first.setStepOrder(exist.getStepOrder());
+            first.setSubjectStep(exist.isSubjectStep());
+            first.setAttributeStep(exist.isAttributeStep());
+            first.setFederatedIdentityProviders(exist.getFederatedIdentityProviders());
+            first.setLocalAuthenticatorConfigs(exist.getLocalAuthenticatorConfigs());
+        }
+
+        AuthenticationStep[] newAuthSteps =
+                ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() : new AuthenticationStep[1];
+        List<LocalAuthenticatorConfig> authenticatorList = new ArrayList<>();
+        if (ArrayUtils.isNotEmpty(first.getLocalAuthenticatorConfigs())) {
+            for (LocalAuthenticatorConfig localAuthenticatorConfig : first.getLocalAuthenticatorConfigs()) {
+                if (!ORGANIZATION_IDENTIFIER_HANDLER.equals(localAuthenticatorConfig.getName())) {
+                    authenticatorList.add(localAuthenticatorConfig);
+                }
+            }
+        }
+        first.setLocalAuthenticatorConfigs(authenticatorList.toArray(new LocalAuthenticatorConfig[0]));
+        AuthenticationStep[] finalAuthSteps;
+        boolean firstStepEmpty = authenticatorList.isEmpty() &&
+                ArrayUtils.isEmpty(first.getFederatedIdentityProviders());
+        if (firstStepEmpty) {
+            // Remove the now-empty first step; shift remaining steps down.
+            finalAuthSteps = newAuthSteps.length > 1
+                    ? Arrays.copyOfRange(newAuthSteps, 1, newAuthSteps.length)
+                    : new AuthenticationStep[0];
+        } else {
+            newAuthSteps[0] = first;
+            finalAuthSteps = newAuthSteps;
+        }
+        outboundAuthenticationConfig.setAuthenticationSteps(finalAuthSteps);
+        rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
+    }
+
+    private boolean isOrganizationIdentifierHandlerConfigured(ServiceProvider rootApplication) {
+
+        AuthenticationStep[] authSteps = rootApplication.getLocalAndOutBoundAuthenticationConfig()
+                .getAuthenticationSteps();
+        if (ArrayUtils.isNotEmpty(authSteps)) {
+            AuthenticationStep exist = authSteps[0];
+            return exist != null && exist.getLocalAuthenticatorConfigs() != null &&
+                    stream(exist.getLocalAuthenticatorConfigs())
+                            .anyMatch(auth -> ORGANIZATION_IDENTIFIER_HANDLER.equals(auth.getName()));
         }
         return false;
     }

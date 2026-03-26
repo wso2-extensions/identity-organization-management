@@ -56,7 +56,10 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,6 +69,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.IS_API_BASED_AUTHENTICATION_ENABLED_PROPERTY_NAME;
@@ -73,6 +77,8 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
 
 /**
@@ -756,6 +762,223 @@ public class FragmentApplicationMgtListenerTest {
             }
             Assert.assertTrue(hasBasicAuth, "BasicAuthenticator should remain");
         }
+    }
+
+    @DataProvider(name = "orgIdentifierHandlerDoPreUpdateDataProvider")
+    public Object[][] orgIdentifierHandlerDoPreUpdateDataProvider() {
+
+        return new Object[][] {
+                // App being unshared with IDF configured → IDF must be removed.
+                {"false", false, false, true, false, false, false},
+                // App being shared with enhancedOrgAuthentication enabled and no IDF → IDF must be added.
+                {"true", true, false, false, false, false, true},
+                // App being shared with enhancedOrgAuthentication enabled and existing OrgSSO → add IDF, remove OrgSSO.
+                {"true", true, true, false, false, false, true},
+                // No sharing property change, enhancedOrgAuthentication enabled,
+                // existing OrgSSO with BasicAuth → OrgSSO removed.
+                {null, true, true, false, true, false, false},
+                // No sharing property change, enhancedOrgAuthentication disabled, existing IDF → IDF removed.
+                {null, false, false, true, false, false, false},
+        };
+    }
+
+    @Test(dataProvider = "orgIdentifierHandlerDoPreUpdateDataProvider")
+    public void testOrgIdentifierHandlerHandlingInDoPreUpdateApplication(
+            String isAppShared, boolean isEnhancedOrganizationAuthenticationEnabled, boolean hasOrgSSO,
+            boolean hasOrgIdf, boolean hasBasicAuth, boolean expectedHasOrgSSO, boolean expectedHasOrgIdf)
+            throws IdentityApplicationManagementException {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class)) {
+
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(false);
+
+            ServiceProvider existingApp = new ServiceProvider();
+            existingApp.setApplicationName(applicationName);
+            existingApp.setApplicationResourceId(applicationResourceID);
+            existingApp.setSpProperties(new ServiceProviderProperty[0]);
+            existingApp.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+
+            LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+            authConfig.setAuthenticationType("flow");
+            AuthenticationStep authStep = buildAuthStep(hasOrgSSO, hasOrgIdf, hasBasicAuth);
+            authConfig.setAuthenticationSteps(new AuthenticationStep[]{authStep});
+
+            List<ServiceProviderProperty> propList = new ArrayList<>();
+            if (isAppShared != null) {
+                propList.add(mockServiceProviderProperty(IS_APP_SHARED, isAppShared));
+            }
+            propList.add(mockServiceProviderProperty(IS_FRAGMENT_APP, FALSE));
+
+            when(serviceProvider.getSpProperties())
+                    .thenReturn(propList.toArray(new ServiceProviderProperty[0]));
+            when(serviceProvider.getApplicationResourceId()).thenReturn(applicationResourceID);
+            when(serviceProvider.getApplicationName()).thenReturn(applicationName);
+            when(serviceProvider.getLocalAndOutBoundAuthenticationConfig()).thenReturn(authConfig);
+            when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled())
+                    .thenReturn(isEnhancedOrganizationAuthenticationEnabled);
+            when(applicationManagementService.getApplicationByResourceId(applicationResourceID, tenantDomain))
+                    .thenReturn(existingApp);
+
+            boolean result = fragmentApplicationMgtListener
+                    .doPreUpdateApplication(serviceProvider, tenantDomain, userName);
+
+            assertTrue(result);
+
+            AuthenticationStep[] resultSteps = authConfig.getAuthenticationSteps();
+
+            boolean actualHasOrgIdf = false;
+            boolean actualHasOrgSSO = false;
+            if (resultSteps != null && resultSteps.length > 0) {
+                AuthenticationStep resultStep = resultSteps[0];
+                actualHasOrgIdf = resultStep.getLocalAuthenticatorConfigs() != null &&
+                        Arrays.stream(resultStep.getLocalAuthenticatorConfigs())
+                                .anyMatch(a -> ORGANIZATION_IDENTIFIER_HANDLER.equals(a.getName()));
+                actualHasOrgSSO = resultStep.getFederatedIdentityProviders() != null &&
+                        Arrays.stream(resultStep.getFederatedIdentityProviders())
+                                .filter(idp -> idp.getDefaultAuthenticatorConfig() != null)
+                                .anyMatch(idp -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(
+                                        idp.getDefaultAuthenticatorConfig().getName()));
+            }
+            assertEquals(expectedHasOrgIdf, actualHasOrgIdf);
+            assertEquals(expectedHasOrgSSO, actualHasOrgSSO);
+        }
+    }
+
+    @Test
+    public void testIsOrganizationIdentifierHandlerConfiguredWithHandlerInStep() throws Exception {
+
+        ServiceProvider sp = new ServiceProvider();
+        LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+        AuthenticationStep step = new AuthenticationStep();
+        LocalAuthenticatorConfig idfAuth = new LocalAuthenticatorConfig();
+        idfAuth.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+        step.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{idfAuth});
+        authConfig.setAuthenticationSteps(new AuthenticationStep[]{step});
+        sp.setLocalAndOutBoundAuthenticationConfig(authConfig);
+
+        Method method = FragmentApplicationMgtListener.class
+                .getDeclaredMethod("isOrganizationIdentifierHandlerConfigured", ServiceProvider.class);
+        method.setAccessible(true);
+        boolean result = (boolean) method.invoke(fragmentApplicationMgtListener, sp);
+        assertTrue(result);
+    }
+
+    @Test
+    public void testIsOrganizationIdentifierHandlerConfiguredWithoutHandler() throws Exception {
+
+        ServiceProvider sp = new ServiceProvider();
+        LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+        AuthenticationStep step = new AuthenticationStep();
+        LocalAuthenticatorConfig basicAuth = new LocalAuthenticatorConfig();
+        basicAuth.setName("BasicAuthenticator");
+        step.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{basicAuth});
+        authConfig.setAuthenticationSteps(new AuthenticationStep[]{step});
+        sp.setLocalAndOutBoundAuthenticationConfig(authConfig);
+
+        Method method = FragmentApplicationMgtListener.class
+                .getDeclaredMethod("isOrganizationIdentifierHandlerConfigured", ServiceProvider.class);
+        method.setAccessible(true);
+        boolean result = (boolean) method.invoke(fragmentApplicationMgtListener, sp);
+        assertFalse(result);
+    }
+
+    @Test
+    public void testAddOrganizationIdentifierHandlerToExistingStep() throws Exception {
+
+        ServiceProvider sp = new ServiceProvider();
+        LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+        authConfig.setAuthenticationType("flow");
+        AuthenticationStep step = new AuthenticationStep();
+        step.setStepOrder(1);
+        step.setSubjectStep(true);
+        step.setAttributeStep(true);
+        LocalAuthenticatorConfig basicAuth = new LocalAuthenticatorConfig();
+        basicAuth.setName("BasicAuthenticator");
+        step.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{basicAuth});
+        step.setFederatedIdentityProviders(new IdentityProvider[0]);
+        authConfig.setAuthenticationSteps(new AuthenticationStep[]{step});
+        sp.setLocalAndOutBoundAuthenticationConfig(authConfig);
+
+        Method method = FragmentApplicationMgtListener.class
+                .getDeclaredMethod("addOrganizationIdentifierHandler", ServiceProvider.class);
+        method.setAccessible(true);
+        method.invoke(fragmentApplicationMgtListener, sp);
+
+        AuthenticationStep resultStep = sp.getLocalAndOutBoundAuthenticationConfig()
+                .getAuthenticationSteps()[0];
+        boolean hasIdf = Arrays.stream(resultStep.getLocalAuthenticatorConfigs())
+                .anyMatch(a -> ORGANIZATION_IDENTIFIER_HANDLER.equals(a.getName()));
+        assertTrue(hasIdf, "OrganizationIdentifierHandler should be added to the first step");
+        assertEquals(2, resultStep.getLocalAuthenticatorConfigs().length);
+    }
+
+    @Test
+    public void testRemoveOrganizationIdentifierHandlerFromStep() throws Exception {
+
+        ServiceProvider sp = new ServiceProvider();
+        LocalAndOutboundAuthenticationConfig authConfig = new LocalAndOutboundAuthenticationConfig();
+        authConfig.setAuthenticationType("flow");
+        AuthenticationStep step = new AuthenticationStep();
+        step.setStepOrder(1);
+        LocalAuthenticatorConfig basicAuth = new LocalAuthenticatorConfig();
+        basicAuth.setName("BasicAuthenticator");
+        LocalAuthenticatorConfig idfAuth = new LocalAuthenticatorConfig();
+        idfAuth.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+        step.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{basicAuth, idfAuth});
+        step.setFederatedIdentityProviders(new IdentityProvider[0]);
+        authConfig.setAuthenticationSteps(new AuthenticationStep[]{step});
+        sp.setLocalAndOutBoundAuthenticationConfig(authConfig);
+
+        Method method = FragmentApplicationMgtListener.class
+                .getDeclaredMethod("removeOrganizationIdentifierHandler", ServiceProvider.class);
+        method.setAccessible(true);
+        method.invoke(fragmentApplicationMgtListener, sp);
+
+        AuthenticationStep resultStep = sp.getLocalAndOutBoundAuthenticationConfig()
+                .getAuthenticationSteps()[0];
+        boolean hasIdf = Arrays.stream(resultStep.getLocalAuthenticatorConfigs())
+                .anyMatch(a -> ORGANIZATION_IDENTIFIER_HANDLER.equals(a.getName()));
+        assertFalse(hasIdf, "OrganizationIdentifierHandler should be removed from the first step");
+        assertEquals(1, resultStep.getLocalAuthenticatorConfigs().length);
+        assertEquals("BasicAuthenticator", resultStep.getLocalAuthenticatorConfigs()[0].getName());
+    }
+
+    private AuthenticationStep buildAuthStep(boolean hasOrgSSO, boolean hasOrgIdf, boolean hasBasicAuth) {
+
+        AuthenticationStep step = new AuthenticationStep();
+        step.setStepOrder(1);
+        step.setSubjectStep(true);
+        step.setAttributeStep(true);
+
+        if (hasOrgSSO) {
+            IdentityProvider orgSSOIdp = new IdentityProvider();
+            orgSSOIdp.setIdentityProviderName("OrganizationSSO");
+            FederatedAuthenticatorConfig orgSSOFedConfig = new FederatedAuthenticatorConfig();
+            orgSSOFedConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+            orgSSOIdp.setDefaultAuthenticatorConfig(orgSSOFedConfig);
+            orgSSOIdp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{orgSSOFedConfig});
+            step.setFederatedIdentityProviders(new IdentityProvider[]{orgSSOIdp});
+        } else {
+            step.setFederatedIdentityProviders(new IdentityProvider[0]);
+        }
+
+        List<LocalAuthenticatorConfig> localAuths = new ArrayList<>();
+        if (hasOrgIdf) {
+            LocalAuthenticatorConfig idfAuth = new LocalAuthenticatorConfig();
+            idfAuth.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+            idfAuth.setEnabled(true);
+            localAuths.add(idfAuth);
+        }
+        if (hasBasicAuth) {
+            LocalAuthenticatorConfig basicAuth = new LocalAuthenticatorConfig();
+            basicAuth.setName("BasicAuthenticator");
+            basicAuth.setEnabled(true);
+            localAuths.add(basicAuth);
+        }
+        step.setLocalAuthenticatorConfigs(localAuths.toArray(new LocalAuthenticatorConfig[0]));
+        return step;
     }
 
     @AfterMethod

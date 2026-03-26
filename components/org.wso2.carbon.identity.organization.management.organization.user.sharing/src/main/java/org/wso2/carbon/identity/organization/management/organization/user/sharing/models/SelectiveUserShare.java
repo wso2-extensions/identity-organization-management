@@ -17,6 +17,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.models;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.RoleAssignmentMode;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
@@ -55,6 +56,7 @@ public class SelectiveUserShare extends BaseUserShare {
         private String organizationId;
         private PolicyEnum policy;
         private List<String> roles;
+        private RoleAssignmentMode roleAssignmentMode; // Used in user-sharing V2.
 
         public Builder withUserId(String userId) throws OrganizationManagementServerException {
 
@@ -92,6 +94,15 @@ public class SelectiveUserShare extends BaseUserShare {
             return this;
         }
 
+        public Builder withRoleAssignmentMode(RoleAssignmentMode roleAssignmentMode) {
+
+            if (roleAssignmentMode == null) {
+                roleAssignmentMode = RoleAssignmentMode.NONE;
+            }
+            this.roleAssignmentMode = roleAssignmentMode;
+            return this;
+        }
+
         public SelectiveUserShare build() throws OrganizationManagementServerException {
 
             if (userId == null || organizationId == null || policy == null) {
@@ -102,6 +113,8 @@ public class SelectiveUserShare extends BaseUserShare {
             selectiveUserShare.setOrganizationId(organizationId);
             selectiveUserShare.setPolicy(policy);
             selectiveUserShare.setRoles(roles != null ? roles : new ArrayList<>());
+            selectiveUserShare.setRoleAssignmentMode(roleAssignmentMode != null ? roleAssignmentMode :
+                    RoleAssignmentMode.NONE);
             return selectiveUserShare;
         }
     }

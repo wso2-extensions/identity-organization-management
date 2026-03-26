@@ -29,6 +29,15 @@ public class SharingModeDO {
     private PolicyEnum policy;
     private RoleAssignmentDO roleAssignment;
 
+    public SharingModeDO() {
+
+    }
+
+    public SharingModeDO(PolicyEnum policy) {
+
+        this.policy = policy;
+    }
+
     public SharingModeDO(PolicyEnum policy, RoleAssignmentDO roleAssignment) {
 
         this.policy = policy;

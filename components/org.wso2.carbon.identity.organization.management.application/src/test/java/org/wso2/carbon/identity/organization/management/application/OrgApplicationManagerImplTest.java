@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.application;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
@@ -29,8 +30,10 @@ import org.wso2.carbon.identity.application.common.IdentityApplicationManagement
 import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
@@ -90,12 +93,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.application.mgt.ApplicationConstants.AUTH_TYPE_DEFAULT;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SKIP_ORGANIZATION_HIERARCHY_VALIDATION;
 
 /**
@@ -1468,6 +1474,248 @@ public class OrgApplicationManagerImplTest {
             // Expect: client exception due to non-ALL role policy when skip flag is set.
             orgApplicationManager.shareApplicationWithPolicy(ownerOrgId, mainApplication, sharingOrgId,
                     PolicyEnum.SELECTED_ORG_ONLY, noneRolePolicy, null);
+        }
+    }
+
+    @Test
+    public void testModifyRootApplicationEnhancedOrgAuthEnabledAddsIdentifierHandler() throws Exception {
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic =
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername).thenReturn("test-user");
+            utilsMockedStatic.when(Utils::getOrganizationId).thenReturn("test-org-id");
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL).build();
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId, PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy);
+
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(mainApplication.isEnhancedOrganizationAuthenticationEnabled()).thenReturn(true);
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+            Organization childOrg = createMockOrganization(childOrgId);
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                    Collections.singletonList(shareOperation));
+
+            // Verify getAllIdentityProviders NOT called (no IDP creation for enhanced mode).
+            verify(applicationManagementService, never()).getAllIdentityProviders(anyString());
+
+            // Verify setAuthenticationSteps was called with OrganizationIdentifierHandler in local auth config.
+            LocalAndOutboundAuthenticationConfig authConfig =
+                    mainApplication.getLocalAndOutBoundAuthenticationConfig();
+            ArgumentCaptor<AuthenticationStep[]> stepsCaptor = ArgumentCaptor.forClass(AuthenticationStep[].class);
+            verify(authConfig).setAuthenticationSteps(stepsCaptor.capture());
+            AuthenticationStep[] capturedSteps = stepsCaptor.getValue();
+            Assert.assertNotNull(capturedSteps);
+            Assert.assertTrue(capturedSteps.length > 0);
+            LocalAuthenticatorConfig[] localConfigs = capturedSteps[0].getLocalAuthenticatorConfigs();
+            Assert.assertNotNull(localConfigs);
+            boolean identifierHandlerFound = Arrays.stream(localConfigs)
+                    .anyMatch(c -> ORGANIZATION_IDENTIFIER_HANDLER.equals(c.getName()));
+            Assert.assertTrue(identifierHandlerFound, "OrganizationIdentifierHandler should be added");
+        }
+    }
+
+    @Test
+    public void testModifyRootApplicationEnhancedOrgAuthAlreadyConfiguredSkipsUpdate() throws Exception {
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic =
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername).thenReturn("test-user");
+            utilsMockedStatic.when(Utils::getOrganizationId).thenReturn("test-org-id");
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL).build();
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId, PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy);
+
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            when(mainApplication.isEnhancedOrganizationAuthenticationEnabled()).thenReturn(true);
+
+            // Set up auth step with OrganizationIdentifierHandler already present.
+            LocalAuthenticatorConfig existingConfig = new LocalAuthenticatorConfig();
+            existingConfig.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+            AuthenticationStep existingStep = new AuthenticationStep();
+            existingStep.setLocalAuthenticatorConfigs(new LocalAuthenticatorConfig[]{existingConfig});
+            LocalAndOutboundAuthenticationConfig authConfig =
+                    mainApplication.getLocalAndOutBoundAuthenticationConfig();
+            when(authConfig.getAuthenticationSteps()).thenReturn(new AuthenticationStep[]{existingStep});
+
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+            Organization childOrg = createMockOrganization(childOrgId);
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                    Collections.singletonList(shareOperation));
+
+            // Verify the Org SSO IDP path was not invoked — enhanced org auth was already configured.
+            verify(applicationManagementService, never()).getAllIdentityProviders(anyString());
+            verify(idpManager, never()).addIdPWithResourceId(any(), anyString());
+            // Verify updateApplication was called to persist other mutations (e.g. isAppShared flag).
+            verify(applicationManagementService).updateApplication(
+                    any(ServiceProvider.class), anyString(), anyString());
+        }
+    }
+
+    @Test
+    public void testModifyRootApplicationOrgSSOAlreadyConfiguredSkipsUpdate() throws Exception {
+
+        try (MockedStatic<OrgApplicationMgtDataHolder> orgApplicationMgtDataHolderMockedStatic =
+                     mockStatic(OrgApplicationMgtDataHolder.class);
+             MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic =
+                     mockStatic(IdentityTenantUtil.class)) {
+
+            utilsMockedStatic.when(Utils::getAuthenticatedUsername).thenReturn("test-user");
+            utilsMockedStatic.when(Utils::getOrganizationId).thenReturn("test-org-id");
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId("main-tenant-domain"))
+                    .thenReturn(-1234);
+
+            orgApplicationMgtDataHolderMockedStatic.when(OrgApplicationMgtDataHolder::getInstance)
+                    .thenReturn(mockOrgApplicationMgtDataHolder);
+            when(mockOrgApplicationMgtDataHolder.getOrganizationManager()).thenReturn(organizationManager);
+            when(mockOrgApplicationMgtDataHolder.getApplicationManagementService())
+                    .thenReturn(applicationManagementService);
+            when(mockOrgApplicationMgtDataHolder.getIdpManager()).thenReturn(idpManager);
+            when(mockOrgApplicationMgtDataHolder.getOrgApplicationMgtDAO()).thenReturn(orgApplicationMgtDAO);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRealmService()).thenReturn(realmService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getOrganizationUserResidentResolverService())
+                    .thenReturn(organizationUserResidentResolverService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getApplicationSharingManagerListener())
+                    .thenReturn(listener);
+            lenient().when(mockOrgApplicationMgtDataHolder.getIdentityEventService()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getRoleManagementServiceV2()).thenReturn(null);
+            lenient().when(mockOrgApplicationMgtDataHolder.getResourceSharingPolicyHandlerService())
+                    .thenReturn(resourceSharingPolicyHandlerService);
+            lenient().when(mockOrgApplicationMgtDataHolder.getAsyncOperationStatusMgtService())
+                    .thenReturn(asyncOperationStatusMgtService);
+
+            when(orgApplicationMgtDAO.getSharedApplications(anyString(), anyString()))
+                    .thenReturn(Collections.emptyList());
+
+            String mainOrgId = "main-org-id";
+            String mainAppId = "main-app-id";
+            String childOrgId = "child-org-id";
+
+            ApplicationShareRolePolicy allRolesPolicy = new ApplicationShareRolePolicy.Builder()
+                    .mode(ApplicationShareRolePolicy.Mode.ALL).build();
+            SelectiveShareApplicationOperation shareOperation = new SelectiveShareApplicationOperation(
+                    childOrgId, PolicyEnum.SELECTED_ORG_ONLY, allRolesPolicy);
+
+            when(organizationManager.resolveTenantDomain(mainOrgId)).thenReturn("main-tenant-domain");
+
+            ServiceProvider mainApplication = createMockServiceProvider("main-app", false);
+            // isEnhancedOrganizationAuthenticationEnabled defaults to false.
+
+            // Set up auth step with Org SSO IDP already present.
+            FederatedAuthenticatorConfig fedConfig = new FederatedAuthenticatorConfig();
+            fedConfig.setName(ORGANIZATION_LOGIN_AUTHENTICATOR);
+            IdentityProvider existingIdp = new IdentityProvider();
+            existingIdp.setDefaultAuthenticatorConfig(fedConfig);
+            AuthenticationStep existingStep = new AuthenticationStep();
+            existingStep.setFederatedIdentityProviders(new IdentityProvider[]{existingIdp});
+            LocalAndOutboundAuthenticationConfig authConfig =
+                    mainApplication.getLocalAndOutBoundAuthenticationConfig();
+            when(authConfig.getAuthenticationSteps()).thenReturn(new AuthenticationStep[]{existingStep});
+
+            when(applicationManagementService.getApplicationByResourceId(mainAppId, "main-tenant-domain"))
+                    .thenReturn(mainApplication);
+
+            List<OrganizationNode> childGraph = createMockOrganizationGraph(childOrgId);
+            when(organizationManager.getChildOrganizationGraph(mainOrgId, true)).thenReturn(childGraph);
+            Organization childOrg = createMockOrganization(childOrgId);
+            when(organizationManager.getOrganization(childOrgId, false, false)).thenReturn(childOrg);
+
+            OrgApplicationManager testOrgApplicationManager = new OrgApplicationManagerImpl();
+            testOrgApplicationManager.shareApplicationWithSelectedOrganizations(mainOrgId, mainAppId,
+                    Collections.singletonList(shareOperation));
+
+            // Verify the Org SSO IDP was not fetched or created again — already configured.
+            verify(applicationManagementService, never()).getAllIdentityProviders(anyString());
+            verify(idpManager, never()).addIdPWithResourceId(any(), anyString());
+            // Verify updateApplication was called to persist other mutations (e.g. isAppShared flag).
+            verify(applicationManagementService).updateApplication(
+                    any(ServiceProvider.class), anyString(), anyString());
         }
     }
 

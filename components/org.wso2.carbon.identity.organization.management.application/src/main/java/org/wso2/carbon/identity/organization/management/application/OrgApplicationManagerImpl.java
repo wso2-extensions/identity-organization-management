@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.InboundAuthenticationRequestConfig;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
@@ -164,6 +165,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_SELECTIVE_SHARING_POLICY;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_INVALID_SHARING_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.PARENT_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
@@ -780,11 +782,22 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, mainTenantDomain);
         List<String> validOrganizationsInReverseBfsOrder = getValidOrganizationsInReverseBfsOrder(mainOrganizationId,
                 sharedOrganizationList);
+
+        // Capture thread-local context before async execution.
+        PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String callerUsername = callerContext.getUsername();
+        String callerUserId = callerContext.getUserId();
+        int callerTenantId = callerContext.getTenantId();
+        String callerTenantDomain = callerContext.getTenantDomain();
+        Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         for (String sharedOrganizationId : validOrganizationsInReverseBfsOrder) {
             Organization organization = getOrganizationManager().getOrganization(sharedOrganizationId, false, false);
             if (TENANT.equalsIgnoreCase(organization.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
+                        restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername, callerUserId,
+                                callerThreadLocalProperties);
                         Optional<String> optionalSharedApplicationId =
                                 resolveSharedApp(mainApplicationId, mainOrganizationId, organization.getId());
                         if (!optionalSharedApplicationId.isPresent()) {
@@ -802,6 +815,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in unsharing application: %s from organization: %s",
                                 mainApplicationId, sharedOrganizationId), e);
+                    } finally {
+                        clearAsyncThreadContext();
                     }
                 }, executorService);
             }
@@ -828,17 +843,29 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         List<SharedApplicationDO> sharedApplicationDOList =
                 getOrgApplicationMgtDAO().getSharedApplications(mainOrganizationId, mainApplicationId);
         IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
+
+        // Capture thread-local context before async execution.
+        PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String callerUsername = callerContext.getUsername();
+        String callerUserId = callerContext.getUserId();
+        int callerTenantId = callerContext.getTenantId();
+        String callerTenantDomain = callerContext.getTenantDomain();
+        Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         List<String> unsharingOrganizations = new ArrayList<>();
         for (SharedApplicationDO sharedApplicationDO : sharedApplicationDOList) {
             unsharingOrganizations.add(sharedApplicationDO.getOrganizationId());
             CompletableFuture.runAsync(() -> {
                 try {
-                    IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
+                    restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername, callerUserId,
+                            callerThreadLocalProperties);
                     deleteExistingSharedApplication(mainOrganizationId, sharedApplicationDO.getOrganizationId(),
                             mainApplication, sharedApplicationDO.getFragmentApplicationId());
                 } catch (OrganizationManagementException e) {
                     LOG.error(String.format("Error in unsharing application: %s from organization: %s",
                             mainApplicationId, sharedApplicationDO.getOrganizationId()), e);
+                } finally {
+                    clearAsyncThreadContext();
                 }
             }, executorService);
         }
@@ -1627,15 +1654,6 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         AuthenticationStep first = new AuthenticationStep();
         if (ArrayUtils.isNotEmpty(authSteps)) {
             AuthenticationStep exist = authSteps[0];
-            boolean idpAlreadyConfigured = false;
-            if (ArrayUtils.isNotEmpty(exist.getFederatedIdentityProviders())) {
-                idpAlreadyConfigured = stream(exist.getFederatedIdentityProviders()).map(
-                                IdentityProvider::getDefaultAuthenticatorConfig)
-                        .anyMatch(auth -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
-            }
-            if (idpAlreadyConfigured) {
-                return;
-            }
             first.setStepOrder(exist.getStepOrder());
             first.setSubjectStep(exist.isSubjectStep());
             first.setAttributeStep(exist.isAttributeStep());
@@ -1646,28 +1664,50 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         AuthenticationStep[] newAuthSteps =
                 ArrayUtils.isNotEmpty(authSteps) ? authSteps.clone() : new AuthenticationStep[1];
 
-        IdentityProvider[] idps;
-        try {
-            idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
-        } catch (IdentityApplicationManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e, getOrganizationId());
+        if (rootApplication.isEnhancedOrganizationAuthenticationEnabled()) {
+            boolean identifierHandlerAlreadyConfigured = ArrayUtils.isNotEmpty(first.getLocalAuthenticatorConfigs())
+                    && stream(first.getLocalAuthenticatorConfigs())
+                            .anyMatch(auth -> ORGANIZATION_IDENTIFIER_HANDLER.equals(auth.getName()));
+            if (!identifierHandlerAlreadyConfigured) {
+                LocalAuthenticatorConfig identifierHandler = new LocalAuthenticatorConfig();
+                identifierHandler.setName(ORGANIZATION_IDENTIFIER_HANDLER);
+                identifierHandler.setEnabled(true);
+                first.setLocalAuthenticatorConfigs((LocalAuthenticatorConfig[]) ArrayUtils.addAll(
+                        first.getLocalAuthenticatorConfigs(),
+                        new LocalAuthenticatorConfig[]{identifierHandler}));
+            }
+        } else {
+            boolean idpAlreadyConfigured = ArrayUtils.isNotEmpty(first.getFederatedIdentityProviders())
+                    && stream(first.getFederatedIdentityProviders())
+                            .map(IdentityProvider::getDefaultAuthenticatorConfig)
+                            .filter(Objects::nonNull)
+                            .anyMatch(auth -> ORGANIZATION_LOGIN_AUTHENTICATOR.equals(auth.getName()));
+            if (!idpAlreadyConfigured) {
+                IdentityProvider[] idps;
+                try {
+                    idps = getApplicationManagementService().getAllIdentityProviders(tenantDomain);
+                } catch (IdentityApplicationManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_RETRIEVING_ORGANIZATION_IDP_LIST, e,
+                            getOrganizationId());
+                }
+                Optional<IdentityProvider> maybeOrganizationIDP =
+                        stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
+                IdentityProvider identityProvider;
+                try {
+                    identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
+                            getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
+                } catch (IdentityProviderManagementClientException e) {
+                    throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
+                } catch (IdentityProviderManagementException e) {
+                    throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
+                }
+                first.setFederatedIdentityProviders(
+                        (IdentityProvider[]) ArrayUtils.addAll(
+                                first.getFederatedIdentityProviders() != null ?
+                                        first.getFederatedIdentityProviders() : new IdentityProvider[0],
+                            new IdentityProvider[]{identityProvider}));
+            }
         }
-        Optional<IdentityProvider> maybeOrganizationIDP = stream(idps).filter(this::isOrganizationLoginIDP).findFirst();
-        IdentityProvider identityProvider;
-        try {
-            identityProvider = maybeOrganizationIDP.isPresent() ? maybeOrganizationIDP.get() :
-                    getIdentityProviderManager().addIdPWithResourceId(createOrganizationSSOIDP(), tenantDomain);
-        } catch (IdentityProviderManagementClientException e) {
-            throw new OrganizationManagementClientException(e.getMessage(), e.getMessage(), e.getErrorCode());
-        } catch (IdentityProviderManagementException e) {
-            throw handleServerException(ERROR_CODE_ERROR_CREATING_ORG_LOGIN_IDP, e, getOrganizationId());
-        }
-
-        first.setFederatedIdentityProviders(
-                (IdentityProvider[]) ArrayUtils.addAll(
-                        first.getFederatedIdentityProviders() != null ? 
-                                first.getFederatedIdentityProviders() : new IdentityProvider[0],
-                        new IdentityProvider[]{identityProvider}));
         newAuthSteps[0] = first;
         outboundAuthenticationConfig.setAuthenticationSteps(newAuthSteps);
         rootApplication.setLocalAndOutBoundAuthenticationConfig(outboundAuthenticationConfig);
@@ -2296,6 +2336,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         consumerApp.setCallbackUrl(callbackUrl);
         consumerApp.setBackChannelLogoutUrl(backChannelUrl);
         consumerApp.setApplicationName(mainAppName);
+        consumerApp.setIsFragmentApp(true);
         return getOAuthAdminService().registerAndRetrieveOAuthApplicationData(consumerApp);
     }
 
@@ -2573,5 +2614,36 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
             }
         }
+    }
+
+    /**
+     * Restores the caller's thread-local context in an async worker thread so that downstream code has a valid tenant
+     * and user context.
+     *
+     * @param tenantDomain          Tenant domain of the request initiator.
+     * @param tenantId              Tenant ID of the request initiator.
+     * @param username              Username of the request initiator.
+     * @param userId                User ID of the request initiator.
+     * @param threadLocalProperties Snapshot of threadLocalProperties taken before async dispatch.
+     */
+    private void restoreCallerContext(String tenantDomain, int tenantId, String username, String userId,
+                                      Map<String, Object> threadLocalProperties) {
+
+        PrivilegedCarbonContext.startTenantFlow();
+        PrivilegedCarbonContext context = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        context.setTenantDomain(tenantDomain, true);
+        context.setTenantId(tenantId);
+        context.setUsername(username);
+        context.setUserId(userId);
+        IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
+    }
+
+    /**
+     * Cleans up thread-local state set by restoreCallerContext at the end of an async task.
+     */
+    private void clearAsyncThreadContext() {
+
+        IdentityUtil.threadLocalProperties.get().clear();
+        PrivilegedCarbonContext.endTenantFlow();
     }
 }
