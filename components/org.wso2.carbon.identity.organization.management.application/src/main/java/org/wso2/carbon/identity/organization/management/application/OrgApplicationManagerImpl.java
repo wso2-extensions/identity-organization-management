@@ -782,11 +782,21 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         ServiceProvider mainApplication = getOrgApplication(mainApplicationId, mainTenantDomain);
         List<String> validOrganizationsInReverseBfsOrder = getValidOrganizationsInReverseBfsOrder(mainOrganizationId,
                 sharedOrganizationList);
+
+        // Capture thread-local context before async execution.
+        PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String callerUsername = callerContext.getUsername();
+        int callerTenantId = callerContext.getTenantId();
+        String callerTenantDomain = callerContext.getTenantDomain();
+        Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         for (String sharedOrganizationId : validOrganizationsInReverseBfsOrder) {
             Organization organization = getOrganizationManager().getOrganization(sharedOrganizationId, false, false);
             if (TENANT.equalsIgnoreCase(organization.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
+                        restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername,
+                                callerThreadLocalProperties);
                         Optional<String> optionalSharedApplicationId =
                                 resolveSharedApp(mainApplicationId, mainOrganizationId, organization.getId());
                         if (!optionalSharedApplicationId.isPresent()) {
@@ -804,6 +814,8 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                     } catch (OrganizationManagementException e) {
                         LOG.error(String.format("Error in unsharing application: %s from organization: %s",
                                 mainApplicationId, sharedOrganizationId), e);
+                    } finally {
+                        clearAsyncThreadContext();
                     }
                 }, executorService);
             }
@@ -830,17 +842,28 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         List<SharedApplicationDO> sharedApplicationDOList =
                 getOrgApplicationMgtDAO().getSharedApplications(mainOrganizationId, mainApplicationId);
         IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
+
+        // Capture thread-local context before async execution.
+        PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        String callerUsername = callerContext.getUsername();
+        int callerTenantId = callerContext.getTenantId();
+        String callerTenantDomain = callerContext.getTenantDomain();
+        Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
         List<String> unsharingOrganizations = new ArrayList<>();
         for (SharedApplicationDO sharedApplicationDO : sharedApplicationDOList) {
             unsharingOrganizations.add(sharedApplicationDO.getOrganizationId());
             CompletableFuture.runAsync(() -> {
                 try {
-                    IdentityUtil.threadLocalProperties.get().put(DELETE_SHARE_FOR_MAIN_APPLICATION, true);
+                    restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername,
+                            callerThreadLocalProperties);
                     deleteExistingSharedApplication(mainOrganizationId, sharedApplicationDO.getOrganizationId(),
                             mainApplication, sharedApplicationDO.getFragmentApplicationId());
                 } catch (OrganizationManagementException e) {
                     LOG.error(String.format("Error in unsharing application: %s from organization: %s",
                             mainApplicationId, sharedApplicationDO.getOrganizationId()), e);
+                } finally {
+                    clearAsyncThreadContext();
                 }
             }, executorService);
         }
@@ -2589,5 +2612,34 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
                 IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
             }
         }
+    }
+
+    /**
+     * Restores the caller's thread-local context in an async worker thread so that downstream code has a valid tenant
+     * and user context.
+     *
+     * @param tenantDomain          Tenant domain of the request initiator.
+     * @param tenantId              Tenant ID of the request initiator.
+     * @param username              Username of the request initiator.
+     * @param threadLocalProperties Snapshot of threadLocalProperties taken before async dispatch.
+     */
+    private void restoreCallerContext(String tenantDomain, int tenantId, String username,
+                                      Map<String, Object> threadLocalProperties) {
+
+        PrivilegedCarbonContext.startTenantFlow();
+        PrivilegedCarbonContext context = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+        context.setTenantDomain(tenantDomain, true);
+        context.setTenantId(tenantId);
+        context.setUsername(username);
+        IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
+    }
+
+    /**
+     * Cleans up thread-local state set by restoreCallerContext at the end of an async task.
+     */
+    private void clearAsyncThreadContext() {
+
+        IdentityUtil.threadLocalProperties.get().clear();
+        PrivilegedCarbonContext.endTenantFlow();
     }
 }
