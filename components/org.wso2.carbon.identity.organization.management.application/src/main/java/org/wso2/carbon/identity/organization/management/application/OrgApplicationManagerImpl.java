@@ -786,6 +786,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Capture thread-local context before async execution.
         PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String callerUsername = callerContext.getUsername();
+        String callerUserId = callerContext.getUserId();
         int callerTenantId = callerContext.getTenantId();
         String callerTenantDomain = callerContext.getTenantDomain();
         Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
@@ -795,7 +796,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             if (TENANT.equalsIgnoreCase(organization.getType())) {
                 CompletableFuture.runAsync(() -> {
                     try {
-                        restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername,
+                        restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername, callerUserId,
                                 callerThreadLocalProperties);
                         Optional<String> optionalSharedApplicationId =
                                 resolveSharedApp(mainApplicationId, mainOrganizationId, organization.getId());
@@ -846,6 +847,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         // Capture thread-local context before async execution.
         PrivilegedCarbonContext callerContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         String callerUsername = callerContext.getUsername();
+        String callerUserId = callerContext.getUserId();
         int callerTenantId = callerContext.getTenantId();
         String callerTenantDomain = callerContext.getTenantDomain();
         Map<String, Object> callerThreadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
@@ -855,7 +857,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
             unsharingOrganizations.add(sharedApplicationDO.getOrganizationId());
             CompletableFuture.runAsync(() -> {
                 try {
-                    restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername,
+                    restoreCallerContext(callerTenantDomain, callerTenantId, callerUsername, callerUserId,
                             callerThreadLocalProperties);
                     deleteExistingSharedApplication(mainOrganizationId, sharedApplicationDO.getOrganizationId(),
                             mainApplication, sharedApplicationDO.getFragmentApplicationId());
@@ -2621,9 +2623,10 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
      * @param tenantDomain          Tenant domain of the request initiator.
      * @param tenantId              Tenant ID of the request initiator.
      * @param username              Username of the request initiator.
+     * @param userId                User ID of the request initiator.
      * @param threadLocalProperties Snapshot of threadLocalProperties taken before async dispatch.
      */
-    private void restoreCallerContext(String tenantDomain, int tenantId, String username,
+    private void restoreCallerContext(String tenantDomain, int tenantId, String username, String userId,
                                       Map<String, Object> threadLocalProperties) {
 
         PrivilegedCarbonContext.startTenantFlow();
@@ -2631,6 +2634,7 @@ public class OrgApplicationManagerImpl implements OrgApplicationManager {
         context.setTenantDomain(tenantDomain, true);
         context.setTenantId(tenantId);
         context.setUsername(username);
+        context.setUserId(userId);
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
     }
 
