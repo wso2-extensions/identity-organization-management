@@ -38,3 +38,5 @@ target
 .openapi-generator/
 
 .DS_Store
+
+.vscode
