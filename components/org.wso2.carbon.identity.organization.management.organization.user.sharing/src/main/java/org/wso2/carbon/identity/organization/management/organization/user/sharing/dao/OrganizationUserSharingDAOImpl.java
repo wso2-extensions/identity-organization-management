@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
@@ -60,6 +62,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_MYSQL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_ORACLE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DBTypes.DB_TYPE_POSTGRESQL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SQLConstants.GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER;
@@ -127,6 +130,8 @@ import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEX
  * DAO implementation for managing organization user associations.
  */
 public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDAO {
+
+    private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
 
     @Override
     public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
@@ -201,6 +206,25 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             return true;
         } catch (DataAccessException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    @Override
+    public boolean deleteUserAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        try {
+            namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID,
+                    namedPreparedStatement -> {
+                        namedPreparedStatement.setString(1, orgId);
+                    });
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("User associations deletion for organization " + orgId + " is complete.");
+            }
+            return true;
+        } catch (DataAccessException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETE_ORGANIZATION_USER_ASSOCIATIONS, e, orgId);
         }
     }
 

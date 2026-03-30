@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -116,6 +116,12 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     public boolean deleteUserAssociation(String userId, String associatedOrgId) throws OrganizationManagementException {
 
         return organizationUserSharingDAO.deleteUserAssociationOfUserByAssociatedOrg(userId, associatedOrgId);
+    }
+
+    @Override
+    public boolean deleteUserAssociationsByOrganizationId(String orgId) throws OrganizationManagementException {
+
+        return organizationUserSharingDAO.deleteUserAssociationsByOrganizationId(orgId);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -87,6 +87,19 @@ public interface OrganizationUserSharingDAO {
      */
     boolean deleteUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException;
+
+    /**
+     * Delete all user associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the user associations are deleted successfully.
+     * @throws OrganizationManagementServerException If an error occurs while deleting the user associations.
+     */
+    default boolean deleteUserAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("deleteUserAssociationsByOrganizationId method is not implemented.");
+    }
 
     /**
      * Get all the user associations for a given user.
