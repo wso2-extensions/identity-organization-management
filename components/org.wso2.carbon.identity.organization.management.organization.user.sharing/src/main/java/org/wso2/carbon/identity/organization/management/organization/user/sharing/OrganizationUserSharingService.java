@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -96,6 +96,15 @@ public interface OrganizationUserSharingService {
      * @throws OrganizationManagementException If an error occurs while deleting the organization user association.
      */
     boolean deleteUserAssociation(String userId, String associatedOrgId) throws OrganizationManagementException;
+
+    /**
+     * Deletes all user associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the user associations are deleted successfully.
+     * @throws OrganizationManagementException If an error occurs while deleting the user associations.
+     */
+    boolean deleteUserAssociationsByOrganizationId(String orgId) throws OrganizationManagementException;
 
     /**
      * Get the user association of the associated user in a given organization.
