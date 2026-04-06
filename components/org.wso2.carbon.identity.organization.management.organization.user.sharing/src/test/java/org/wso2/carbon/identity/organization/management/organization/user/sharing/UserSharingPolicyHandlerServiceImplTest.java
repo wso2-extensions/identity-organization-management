@@ -18,13 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.organization.user.sharing;
 
+import org.apache.commons.logging.Log;
 import org.mockito.InjectMocks;
 import org.mockito.MockedStatic;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.constants.OperationStatus;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
@@ -32,15 +35,18 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseOrgDetailsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedRolesDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharingResultDO;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +60,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.testng.Assert.assertEquals;
@@ -106,6 +113,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 /**
  * Unit tests for UserSharingPolicyHandlerServiceImpl.
  */
+@WithCarbonHome
 public class UserSharingPolicyHandlerServiceImplTest {
 
     @InjectMocks
@@ -419,6 +427,66 @@ public class UserSharingPolicyHandlerServiceImplTest {
         assertThrows(UserSharingMgtClientException.class,
                 () -> userSharingPolicyHandlerService.getRolesSharedWithUserInOrganization(USER_1_ID, ORG_1_ID, null,
                         null, null, null, false));
+    }
+
+    @Test
+    public void testUpdateRolesIfNecessaryHandlesOrganizationManagementException() throws Exception {
+
+        OrganizationUserSharingDataHolder dataHolder = mock(OrganizationUserSharingDataHolder.class);
+        when(OrganizationUserSharingDataHolder.getInstance()).thenReturn(dataHolder);
+        OrganizationUserSharingService mockOrgUserSharingService = mock(OrganizationUserSharingService.class);
+        when(dataHolder.getOrganizationUserSharingService()).thenReturn(mockOrgUserSharingService);
+        OrganizationManager mockOrgManager = mock(OrganizationManager.class);
+        when(dataHolder.getOrganizationManager()).thenReturn(mockOrgManager);
+        RoleManagementService mockRoleMgtService = mock(RoleManagementService.class);
+        when(dataHolder.getRoleManagementService()).thenReturn(mockRoleMgtService);
+        when(mockOrgManager.resolveTenantDomain(ORG_1_ID)).thenReturn(TENANT_DOMAIN);
+
+        // Return a non-empty current role list so that rolesToBeRemoved is non-empty.
+        when(mockRoleMgtService.getRoleIdListOfUser(USER_1_ID, TENANT_DOMAIN))
+                .thenReturn(Collections.singletonList(APP_ROLE_1_ID));
+        when(mockOrgUserSharingService.getSharedUserRolesFromUserRoles(
+                Collections.singletonList(APP_ROLE_1_ID), TENANT_DOMAIN))
+                .thenReturn(Collections.singletonList(APP_ROLE_1_ID));
+
+        // The exception is thrown by updateUserListOfRole during role deletion.
+        when(mockRoleMgtService.updateUserListOfRole(anyString(), any(), any(), anyString()))
+                .thenThrow(new IdentityRoleManagementException(VALIDATE_MSG_EXCEPTION));
+
+        UserAssociation userAssociation = createUserAssociation(USER_1_ID, ORG_1_ID);
+        UserSharingResultDO resultDO = new UserSharingResultDO(null, USER_1_ID, true, false,
+                OperationStatus.SUCCESS, "");
+
+        // Inject a mock audit log into the static final AUDIT_LOG field via Unsafe.
+        Log mockAuditLog = mock(Log.class);
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object unsafe = theUnsafeField.get(null);
+        Field auditLogField = UserSharingPolicyHandlerServiceImpl.class.getDeclaredField("AUDIT_LOG");
+        Object staticBase = unsafeClass.getMethod("staticFieldBase", Field.class).invoke(unsafe, auditLogField);
+        long staticOffset = (long) unsafeClass.getMethod("staticFieldOffset", Field.class)
+                .invoke(unsafe, auditLogField);
+        Log originalAuditLog = (Log) unsafeClass.getMethod("getObject", Object.class, long.class)
+                .invoke(unsafe, staticBase, staticOffset);
+        unsafeClass.getMethod("putObject", Object.class, long.class, Object.class)
+                .invoke(unsafe, staticBase, staticOffset, mockAuditLog);
+        try {
+            // Invoke updateRolesIfNecessary directly.
+            Method method = UserSharingPolicyHandlerServiceImpl.class.getDeclaredMethod(
+                    "updateRolesIfNecessary", UserAssociation.class, List.class, String.class,
+                    UserSharingResultDO.class);
+            method.setAccessible(true);
+            method.invoke(userSharingPolicyHandlerService, userAssociation, Collections.emptyList(),
+                    ORG_SUPER_ID, resultDO);
+
+            // Verify the audit warning was emitted for the role-update failure.
+            verify(mockAuditLog).warn(anyString());
+        } finally {
+            // Restore the original AUDIT_LOG.
+            unsafeClass.getMethod("putObject", Object.class, long.class, Object.class)
+                    .invoke(unsafe, staticBase, staticOffset, originalAuditLog);
+        }
     }
 
     // Test case Builders.
