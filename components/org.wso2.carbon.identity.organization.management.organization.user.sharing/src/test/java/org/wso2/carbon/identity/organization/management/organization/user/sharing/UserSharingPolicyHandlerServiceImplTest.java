@@ -32,13 +32,21 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserShareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.GeneralUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseOrgDetailsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedOrgsDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.ResponseSharedRolesDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserShareOrgDetailsDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.SelectiveUserUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.dos.UserSharingResultDO;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
@@ -578,6 +586,181 @@ public class UserSharingPolicyHandlerServiceImplTest {
         role2.setAudience(APPLICATION_AUDIENCE);
 
         return Arrays.asList(role1, role2);
+    }
+
+    // Input Validation Tests.
+
+    @DataProvider(name = "selectiveShareValidationDataProvider")
+    public Object[][] selectiveShareValidationDataProvider() {
+
+        return new Object[][]{
+                // Empty userIds list.
+                {Collections.emptyList(), ORG_1_ID, "OUS-10070"},
+                // Null userId in list.
+                {Arrays.asList(USER_1_ID, null), ORG_1_ID, "OUS-10071"},
+                // Empty string userId.
+                {Collections.singletonList(""), ORG_1_ID, "OUS-10071"},
+                // Whitespace-only userId.
+                {Collections.singletonList("   "), ORG_1_ID, "OUS-10071"},
+                // Valid userIds but empty organizations list.
+                {Collections.singletonList(USER_1_ID), null, "OUS-10073"},
+                // Valid userIds but blank orgId.
+                {Collections.singletonList(USER_1_ID), "", "OUS-10072"},
+                // Valid userIds but whitespace-only orgId.
+                {Collections.singletonList(USER_1_ID), "   ", "OUS-10072"},
+        };
+    }
+
+    @Test(dataProvider = "selectiveShareValidationDataProvider")
+    public void testValidateSelectiveUserShareDO(List<String> userIds, String orgId, String expectedErrorCode)
+            throws Exception {
+
+        SelectiveUserShareDO selectiveUserShareDO = new SelectiveUserShareDO();
+        Map<String, UserCriteriaType> userCriteria = new HashMap<>();
+        userCriteria.put("userIds", new UserIdList(userIds));
+        selectiveUserShareDO.setUserCriteria(userCriteria);
+
+        if (orgId == null) {
+            // Empty organizations list case.
+            selectiveUserShareDO.setOrganizations(new ArrayList<>());
+        } else {
+            SelectiveUserShareOrgDetailsDO orgDetails = new SelectiveUserShareOrgDetailsDO();
+            orgDetails.setOrganizationId(orgId);
+            orgDetails.setPolicy(PolicyEnum.SELECTED_ORG_ONLY);
+            orgDetails.setRoles(new ArrayList<>());
+            selectiveUserShareDO.setOrganizations(Collections.singletonList(orgDetails));
+        }
+
+        Method method = UserSharingPolicyHandlerServiceImpl.class.getDeclaredMethod(
+                "validateSelectiveUserShareDO", SelectiveUserShareDO.class);
+        method.setAccessible(true);
+
+        try {
+            method.invoke(userSharingPolicyHandlerService, selectiveUserShareDO);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof UserSharingMgtClientException, VALIDATE_MSG_EXCEPTION);
+            UserSharingMgtClientException clientException = (UserSharingMgtClientException) e.getCause();
+            assertEquals(clientException.getErrorCode(), expectedErrorCode,
+                    "Expected error code " + expectedErrorCode);
+            return;
+        }
+        throw new AssertionError("Expected UserSharingMgtClientException was not thrown.");
+    }
+
+    @DataProvider(name = "generalShareValidationDataProvider")
+    public Object[][] generalShareValidationDataProvider() {
+
+        return new Object[][]{
+                {Collections.emptyList(), "OUS-10070"},
+                {Arrays.asList(USER_1_ID, null), "OUS-10071"},
+                {Collections.singletonList(""), "OUS-10071"},
+                {Collections.singletonList("   "), "OUS-10071"},
+        };
+    }
+
+    @Test(dataProvider = "generalShareValidationDataProvider")
+    public void testValidateGeneralUserShareDO(List<String> userIds, String expectedErrorCode) throws Exception {
+
+        GeneralUserShareDO generalUserShareDO = new GeneralUserShareDO();
+        Map<String, UserCriteriaType> userCriteria = new HashMap<>();
+        userCriteria.put("userIds", new UserIdList(userIds));
+        generalUserShareDO.setUserCriteria(userCriteria);
+        generalUserShareDO.setPolicy(PolicyEnum.SELECTED_ORG_ONLY);
+        generalUserShareDO.setRoles(new ArrayList<>());
+
+        Method method = UserSharingPolicyHandlerServiceImpl.class.getDeclaredMethod(
+                "validateGeneralUserShareDO", GeneralUserShareDO.class);
+        method.setAccessible(true);
+
+        try {
+            method.invoke(userSharingPolicyHandlerService, generalUserShareDO);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof UserSharingMgtClientException, VALIDATE_MSG_EXCEPTION);
+            UserSharingMgtClientException clientException = (UserSharingMgtClientException) e.getCause();
+            assertEquals(clientException.getErrorCode(), expectedErrorCode,
+                    "Expected error code " + expectedErrorCode);
+            return;
+        }
+        throw new AssertionError("Expected UserSharingMgtClientException was not thrown.");
+    }
+
+    @DataProvider(name = "selectiveUnshareValidationDataProvider")
+    public Object[][] selectiveUnshareValidationDataProvider() {
+
+        return new Object[][]{
+                {Collections.emptyList(), ORG_1_ID, "OUS-10070"},
+                {Collections.singletonList(null), ORG_1_ID, "OUS-10071"},
+                {Collections.singletonList(""), ORG_1_ID, "OUS-10071"},
+                {Collections.singletonList(USER_1_ID), null, "OUS-10073"},
+                {Collections.singletonList(USER_1_ID), "", "OUS-10072"},
+                {Collections.singletonList(USER_1_ID), "   ", "OUS-10072"},
+        };
+    }
+
+    @Test(dataProvider = "selectiveUnshareValidationDataProvider")
+    public void testValidateSelectiveUserUnshareDO(List<String> userIds, String orgId, String expectedErrorCode)
+            throws Exception {
+
+        SelectiveUserUnshareDO selectiveUserUnshareDO = new SelectiveUserUnshareDO();
+        Map<String, UserCriteriaType> userCriteria = new HashMap<>();
+        userCriteria.put("userIds", new UserIdList(userIds));
+        selectiveUserUnshareDO.setUserCriteria(userCriteria);
+
+        if (orgId == null) {
+            selectiveUserUnshareDO.setOrganizations(new ArrayList<>());
+        } else {
+            selectiveUserUnshareDO.setOrganizations(Collections.singletonList(orgId));
+        }
+
+        Method method = UserSharingPolicyHandlerServiceImpl.class.getDeclaredMethod(
+                "validateSelectiveUserUnshareDO", SelectiveUserUnshareDO.class);
+        method.setAccessible(true);
+
+        try {
+            method.invoke(userSharingPolicyHandlerService, selectiveUserUnshareDO);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof UserSharingMgtClientException, VALIDATE_MSG_EXCEPTION);
+            UserSharingMgtClientException clientException = (UserSharingMgtClientException) e.getCause();
+            assertEquals(clientException.getErrorCode(), expectedErrorCode,
+                    "Expected error code " + expectedErrorCode);
+            return;
+        }
+        throw new AssertionError("Expected UserSharingMgtClientException was not thrown.");
+    }
+
+    @DataProvider(name = "generalUnshareValidationDataProvider")
+    public Object[][] generalUnshareValidationDataProvider() {
+
+        return new Object[][]{
+                {Collections.emptyList(), "OUS-10070"},
+                {Collections.singletonList(null), "OUS-10071"},
+                {Collections.singletonList(""), "OUS-10071"},
+                {Collections.singletonList("   "), "OUS-10071"},
+        };
+    }
+
+    @Test(dataProvider = "generalUnshareValidationDataProvider")
+    public void testValidateGeneralUserUnshareDO(List<String> userIds, String expectedErrorCode) throws Exception {
+
+        GeneralUserUnshareDO generalUserUnshareDO = new GeneralUserUnshareDO();
+        Map<String, UserCriteriaType> userCriteria = new HashMap<>();
+        userCriteria.put("userIds", new UserIdList(userIds));
+        generalUserUnshareDO.setUserCriteria(userCriteria);
+
+        Method method = UserSharingPolicyHandlerServiceImpl.class.getDeclaredMethod(
+                "validateGeneralUserUnshareDO", GeneralUserUnshareDO.class);
+        method.setAccessible(true);
+
+        try {
+            method.invoke(userSharingPolicyHandlerService, generalUserUnshareDO);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof UserSharingMgtClientException, VALIDATE_MSG_EXCEPTION);
+            UserSharingMgtClientException clientException = (UserSharingMgtClientException) e.getCause();
+            assertEquals(clientException.getErrorCode(), expectedErrorCode,
+                    "Expected error code " + expectedErrorCode);
+            return;
+        }
+        throw new AssertionError("Expected UserSharingMgtClientException was not thrown.");
     }
 
     // Helper Methods.
