@@ -124,14 +124,17 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_NULL_UNSHARE;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_EMPTY;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL;
-import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_BLANK;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLES_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_CRITERIA_MISSING;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_IDS_EMPTY;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_ID_BLANK;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_USER_UNSHARE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
@@ -1770,12 +1773,20 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
 
+        // Validate userIds list is not empty and each userId is not blank.
+        validateUserIdList(selectiveUserShareDO.getUserCriteria());
+
         // Validate organizations list is not null.
         validateNotNull(selectiveUserShareDO.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
 
+        // Validate organizations list is not empty.
+        if (selectiveUserShareDO.getOrganizations().isEmpty()) {
+            throwValidationException(ERROR_CODE_ORGANIZATIONS_EMPTY);
+        }
+
         // Validate each organization in the list.
         for (SelectiveUserShareOrgDetailsDO orgDetails : selectiveUserShareDO.getOrganizations()) {
-            validateNotNull(orgDetails.getOrganizationId(), ERROR_CODE_ORG_ID_NULL);
+            validateNotBlank(orgDetails.getOrganizationId(), ERROR_CODE_ORG_ID_BLANK);
             validateNotNull(orgDetails.getPolicy(), ERROR_CODE_POLICY_NULL);
 
             // Validate roles list is not null (it can be empty).
@@ -1798,6 +1809,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
         if (!generalDO.getUserCriteria().containsKey(USER_IDS) || generalDO.getUserCriteria().get(USER_IDS) == null) {
             throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
+        validateUserIdList(generalDO.getUserCriteria());
         validateNotNull(generalDO.getPolicy(), ERROR_CODE_POLICY_NULL);
         validateNotNull(generalDO.getRoles(), ERROR_CODE_ROLES_NULL);
 
@@ -1835,11 +1847,19 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
 
+        // Validate userIds list is not empty and each userId is not blank.
+        validateUserIdList(selectiveUserUnshareDO.getUserCriteria());
+
         // Validate organizations list is not null.
         validateNotNull(selectiveUserUnshareDO.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
 
+        // Validate organizations list is not empty.
+        if (selectiveUserUnshareDO.getOrganizations().isEmpty()) {
+            throwValidationException(ERROR_CODE_ORGANIZATIONS_EMPTY);
+        }
+
         for (String organization : selectiveUserUnshareDO.getOrganizations()) {
-            validateNotNull(organization, ERROR_CODE_ORG_ID_NULL);
+            validateNotBlank(organization, ERROR_CODE_ORG_ID_BLANK);
         }
     }
 
@@ -1854,6 +1874,9 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 generalUserUnshareDO.getUserCriteria().get(USER_IDS) == null) {
             throwValidationException(ERROR_CODE_USER_CRITERIA_MISSING);
         }
+
+        // Validate userIds list is not empty and each userId is not blank.
+        validateUserIdList(generalUserUnshareDO.getUserCriteria());
     }
 
     private void validateNotNull(Object obj, UserSharingConstants.ErrorMessage error)
@@ -1861,6 +1884,27 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         if (obj == null) {
             throwValidationException(error);
+        }
+    }
+
+    private void validateNotBlank(String value, UserSharingConstants.ErrorMessage error)
+            throws UserSharingMgtClientException {
+
+        if (StringUtils.isBlank(value)) {
+            throwValidationException(error);
+        }
+    }
+
+    private void validateUserIdList(Map<String, ? extends UserCriteriaType> userCriteria)
+            throws UserSharingMgtClientException {
+
+        UserIdList userIdList = (UserIdList) userCriteria.get(USER_IDS);
+        List<String> ids = userIdList.getIds();
+        if (ids == null || ids.isEmpty()) {
+            throwValidationException(ERROR_CODE_USER_IDS_EMPTY);
+        }
+        for (String userId : ids) {
+            validateNotBlank(userId, ERROR_CODE_USER_ID_BLANK);
         }
     }
 
