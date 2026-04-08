@@ -1477,17 +1477,29 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         logAsyncProcessing(ACTION_USER_SHARE_ROLE_ASSIGNMENT_UPDATE, sharingInitiatedUserId, sharingInitiatedOrgId);
         String orgId = extractOrgIdFromRolesPath(patchOperation.getPath());
-        UserAssociation userAssociation =
-                getOrganizationUserSharingService().getUserAssociationOfAssociatedUserByOrgId(associatedUserId, orgId);
         List<String> roleIds =
                 getRoleIds(castToRoleWithAudienceList(patchOperation.getValues()), sharingInitiatedOrgId);
-        switch (patchOperation.getOperation()) {
-            case ADD:
-                handleRoleAssignmentAddition(userAssociation, sharingInitiatedOrgId, roleIds);
-                break;
-            case REMOVE:
-                handleRoleAssignmentRemoval(userAssociation, roleIds);
-                break;
+
+        // Build the list of orgs to update: the target org plus all its descendants.
+        List<String> orgIdsToUpdate = new ArrayList<>();
+        orgIdsToUpdate.add(orgId);
+        orgIdsToUpdate.addAll(getOrganizationManager().getChildOrganizationsIds(orgId, true));
+
+        for (String targetOrgId : orgIdsToUpdate) {
+            UserAssociation userAssociation =
+                    getOrganizationUserSharingService().getUserAssociationOfAssociatedUserByOrgId(associatedUserId,
+                            targetOrgId);
+            if (userAssociation == null) {
+                continue;
+            }
+            switch (patchOperation.getOperation()) {
+                case ADD:
+                    handleRoleAssignmentAddition(userAssociation, sharingInitiatedOrgId, roleIds);
+                    break;
+                case REMOVE:
+                    handleRoleAssignmentRemoval(userAssociation, roleIds);
+                    break;
+            }
         }
     }
 
