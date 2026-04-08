@@ -1490,6 +1490,10 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                     getOrganizationUserSharingService().getUserAssociationOfAssociatedUserByOrgId(associatedUserId,
                             targetOrgId);
             if (userAssociation == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("No user association found for user: " + associatedUserId + " in organization: "
+                            + targetOrgId + ". Skipping role assignment update for this organization.");
+                }
                 continue;
             }
             switch (patchOperation.getOperation()) {
