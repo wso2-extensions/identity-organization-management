@@ -1496,13 +1496,19 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                 }
                 continue;
             }
-            switch (patchOperation.getOperation()) {
-                case ADD:
-                    handleRoleAssignmentAddition(userAssociation, sharingInitiatedOrgId, roleIds);
-                    break;
-                case REMOVE:
-                    handleRoleAssignmentRemoval(userAssociation, roleIds);
-                    break;
+            try {
+                switch (patchOperation.getOperation()) {
+                    case ADD:
+                        handleRoleAssignmentAddition(userAssociation, sharingInitiatedOrgId, roleIds);
+                        break;
+                    case REMOVE:
+                        handleRoleAssignmentRemoval(userAssociation, roleIds);
+                        break;
+                }
+            } catch (OrganizationManagementException | IdentityRoleManagementException e) {
+                LOG.warn("Error occurred while performing " + patchOperation.getOperation()
+                        + " role assignment update for user: " + associatedUserId + " in organization: "
+                        + targetOrgId + ". Skipping and continuing with remaining organizations.", e);
             }
         }
     }
