@@ -476,6 +476,9 @@ public class OrganizationDiscoveryDAOImpl implements OrganizationDiscoveryDAO {
                                                      NamedJdbcTemplate namedJdbcTemplate)
             throws OrganizationManagementServerException {
 
+        if (isMSSqlDB() && limit == 0) {
+            return Collections.emptyList();
+        }
         try {
             String orgIdsQuery;
             if (isMSSqlDB() || isOracleDB()) {
