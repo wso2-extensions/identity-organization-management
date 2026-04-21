@@ -121,7 +121,7 @@ public class SQLConstants {
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
             "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND ssa.OWNER_ORG_ID = ? AND " +
             "(sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1')" +
-            SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER + "BETWEEN ? AND ? ORDER BY ID DESC";
+            SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER + "ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_MSSQL =
             "SELECT DISTINCT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, " +
@@ -171,7 +171,7 @@ public class SQLConstants {
             "JOIN SP_APP sa_shared ON ssa.SHARED_APP_ID = sa_shared.UUID LEFT OUTER JOIN APP_GROUP_ASSOCIATION " +
             "ag_assoc ON sa_shared.ID = ag_assoc.APP_ID WHERE ssa.SHARED_ORG_ID = ? AND sa_shared.APP_NAME LIKE ? " +
             "AND ssa.OWNER_ORG_ID = ? AND (sa_main.IS_DISCOVERABLE = '1' OR sa_shared.IS_DISCOVERABLE = '1')" +
-            SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER + "BETWEEN ? AND ? ORDER BY ID DESC";
+            SQLPlaceholders.GROUP_ID_CONDITION_PLACEHOLDER + "ORDER BY ID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
     public static final String LOAD_DISCOVERABLE_SHARED_APPS_BY_TENANT_AND_APP_NAME_MSSQL =
             "SELECT DISTINCT sa_shared.ID, sa_shared.APP_NAME, sa_shared.DESCRIPTION, sa_shared.UUID, " +
