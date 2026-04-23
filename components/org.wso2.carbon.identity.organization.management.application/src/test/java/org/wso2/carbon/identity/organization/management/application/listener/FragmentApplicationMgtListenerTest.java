@@ -447,6 +447,63 @@ public class FragmentApplicationMgtListenerTest {
         }
     }
 
+    @DataProvider(name = "testRoleClaimsNotAddedWhenEnhancedOrgAuthEnabledDataProvider")
+    public Object[][] testRoleClaimsNotAddedWhenEnhancedOrgAuthEnabledDataProvider() {
+
+        return new Object[][] {
+                // Enhanced org auth enabled with B2B app role support: no role claims should be added.
+                {true},
+                // Enhanced org auth enabled without B2B app role support: no role claims should be added.
+                {false}
+        };
+    }
+
+    @Test(dataProvider = "testRoleClaimsNotAddedWhenEnhancedOrgAuthEnabledDataProvider")
+    public void testRoleClaimsNotAddedWhenEnhancedOrgAuthEnabled(boolean supportAppRoles)
+            throws Exception {
+
+        try (MockedStatic<Utils> utilsMockedStatic = mockStatic(Utils.class)) {
+
+            utilsMockedStatic.when(Utils::isB2BApplicationRoleSupportEnabled).thenReturn(supportAppRoles);
+
+            ServiceProvider sharedSP = new ServiceProvider();
+            sharedSP.setApplicationResourceId(applicationResourceID);
+            sharedSP.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+            sharedSP.setSpProperties(new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)
+            });
+
+            ClaimMapping[] claimMappings = {
+                    ClaimMapping.build("http://wso2.org/claims/email", null, null, false),
+                    ClaimMapping.build("http://wso2.org/claims/runtime/temp", null, null, false)
+            };
+            ClaimConfig mainClaimConfig = new ClaimConfig();
+            mainClaimConfig.setClaimMappings(claimMappings);
+
+            MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
+
+            ServiceProvider mainSp = new ServiceProvider();
+            mainSp.setClaimConfig(mainClaimConfig);
+            mainSp.setEnhancedOrganizationAuthenticationEnabled(true);
+            mainSp.setSpProperties(new ServiceProviderProperty[0]);
+
+            when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+            when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                    .thenReturn(Optional.of(mainApplicationDO));
+            when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString())).thenReturn(mainSp);
+
+            fragmentApplicationMgtListener.doPostGetServiceProvider(sharedSP, applicationName, tenantDomain);
+
+            ClaimConfig resultClaimConfig = sharedSP.getClaimConfig();
+            Assert.assertNotNull(resultClaimConfig);
+            // Runtime claim filtered out; no roles or app-roles claims added because enhanced org auth is enabled.
+            Assert.assertEquals(resultClaimConfig.getClaimMappings().length, 1);
+            Assert.assertEquals(resultClaimConfig.getClaimMappings()[0].getLocalClaim().getClaimUri(),
+                    "http://wso2.org/claims/email");
+        }
+    }
+
     @DataProvider(name = "adaptiveAuthForSharedAppsDataProvider")
     public Object[][] adaptiveAuthForSharedAppsDataProvider() {
 
