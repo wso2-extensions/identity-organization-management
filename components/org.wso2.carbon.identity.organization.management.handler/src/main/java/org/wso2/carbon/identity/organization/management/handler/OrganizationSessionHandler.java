@@ -71,6 +71,8 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
             handleOrgSessionExtend(eventProperties);
         } else if (IdentityEventConstants.EventName.SESSION_CREATE.name().equals(eventName)) {
             handleOrgSessionCreation(eventProperties);
+        } else if (IdentityEventConstants.EventName.SESSION_EXPIRE.name().equals(eventName)) {
+            handleOrgSessionExpiration(eventProperties);
         }
     }
 
@@ -84,6 +86,31 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                     IdentityEventConstants.EventProperty.SESSION_CONTEXT);
             AuthenticationContext context = (AuthenticationContext) eventProperties.get(
                     IdentityEventConstants.EventProperty.CONTEXT);
+
+            if (sessionContext != null && sessionContext.getAuthenticatedOrgData() != null) {
+                Map<String, Object> params = eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) != null ?
+                        (Map<String, Object>) eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) : null;
+                String sessionKey = null;
+                if (params != null) {
+                    sessionKey = params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID) != null ?
+                            (String) params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID) : null;
+                }
+                if (StringUtils.isNotBlank(sessionKey)) {
+                    for (String orgId : sessionContext.getAuthenticatedOrgData().keySet()) {
+                        try {
+                            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+                            if (StringUtils.isNotBlank(tenantDomain)) {
+                                FrameworkUtils.removeSessionContextFromCache(sessionKey, tenantDomain);
+                            }
+                        } catch (OrganizationManagementException e) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Error while resolving tenant domain for org ID: " + orgId +
+                                        " when removing session from cache.", e);
+                            }
+                        }
+                    }
+                }
+            }
 
             if (context != null && context.isLogoutRequest()) {
                 /*
@@ -137,6 +164,38 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
         } catch (SessionManagementException | UserIdNotFoundException e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error while terminating the org session.", e);
+            }
+        }
+    }
+
+    private void handleOrgSessionExpiration(Map<String, Object> eventProperties) {
+
+        SessionContext sessionContext = (SessionContext) eventProperties.get(
+                IdentityEventConstants.EventProperty.SESSION_CONTEXT);
+        if (sessionContext == null || sessionContext.getAuthenticatedOrgData() == null) {
+            return;
+        }
+        Map<String, Object> params = eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) != null ?
+                (Map<String, Object>) eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) : null;
+        String sessionKey = null;
+        if (params != null) {
+            sessionKey = params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID) != null ?
+                    (String) params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID) : null;
+        }
+        if (StringUtils.isBlank(sessionKey)) {
+            return;
+        }
+        for (String orgId : sessionContext.getAuthenticatedOrgData().keySet()) {
+            try {
+                String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+                if (StringUtils.isNotBlank(tenantDomain)) {
+                    FrameworkUtils.removeSessionContextFromCache(sessionKey, tenantDomain);
+                }
+            } catch (OrganizationManagementException e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Error while resolving tenant domain for org ID: " + orgId +
+                            " when removing session from cache.", e);
+                }
             }
         }
     }
