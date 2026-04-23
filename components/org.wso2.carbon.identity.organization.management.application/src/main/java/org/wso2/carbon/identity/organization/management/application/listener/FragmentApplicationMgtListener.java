@@ -305,12 +305,15 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                                     .filter(claim -> !claim.getLocalClaim().getClaimUri()
                                             .startsWith("http://wso2.org/claims/runtime/"))
                                     .toArray(ClaimMapping[]::new);
-                    if (isB2BApplicationRoleSupportEnabled()) {
-                        // Add application roles to the filtered claim mappings (if any
-                        filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
+                    if (!mainApplication.isEnhancedOrganizationAuthenticationEnabled()) {
+                        // Roles related claim mappings should be added mandatory for only legacy organization login.
+                        if (isB2BApplicationRoleSupportEnabled()) {
+                            // Add application roles to the filtered claim mappings (if any
+                            filteredClaimMappings = addApplicationRolesToFilteredClaimMappings(filteredClaimMappings);
+                        }
+                        // Add roles to the filtered claim mappings.
+                        filteredClaimMappings = addRolesClaimToFilteredClaimMappings(filteredClaimMappings);
                     }
-                    // Add roles to the filtered claim mappings.
-                    filteredClaimMappings = addRolesClaimToFilteredClaimMappings(filteredClaimMappings);
                     ClaimConfig claimConfig = new ClaimConfig();
                     claimConfig.setClaimMappings(filteredClaimMappings);
                     claimConfig.setAlwaysSendMappedLocalSubjectId(
