@@ -88,8 +88,8 @@ public class OrganizationSessionHandler extends AbstractEventHandler {
                     IdentityEventConstants.EventProperty.CONTEXT);
 
             if (sessionContext != null && sessionContext.getAuthenticatedOrgData() != null) {
-                Map<String,Object> params = eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) != null ?
-                        (Map<String,Object>) eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) : null;
+                Map<String, Object> params = eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) != null ?
+                        (Map<String, Object>) eventProperties.get(IdentityEventConstants.EventProperty.PARAMS) : null;
                 String sessionKey = null;
                 if (params != null) {
                     sessionKey = params.get(FrameworkConstants.AnalyticsAttributes.SESSION_ID) != null ?
