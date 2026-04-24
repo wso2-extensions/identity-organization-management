@@ -59,10 +59,6 @@
             <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.wso2.carbon.utils</groupId>
             <artifactId>org.wso2.carbon.database.utils</artifactId>
         </dependency>
@@ -153,7 +149,6 @@
                             org.wso2.carbon.identity.application.common;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt;version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.model; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
