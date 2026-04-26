@@ -172,6 +172,7 @@
                             org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.util;version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.common;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.utils;version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.service; version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
