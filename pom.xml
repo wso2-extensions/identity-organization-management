@@ -53,6 +53,7 @@
         <module>components/org.wso2.carbon.identity.organization.user.invitation.management</module>
         <module>components/org.wso2.carbon.identity.organization.config.service</module>
         <module>components/org.wso2.carbon.identity.organization.discovery.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.organization.agent.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
@@ -125,6 +126,12 @@
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.claim.metadata.mgt</artifactId>
                 <version>${carbon.identity.framework.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.organization.agent.sharing</artifactId>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -287,11 +294,6 @@
                 <groupId>org.wso2.carbon.identity.governance</groupId>
                 <artifactId>org.wso2.carbon.identity.governance</artifactId>
                 <version>${org.wso2.carbon.identity.governance.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
-                <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
-                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -548,6 +550,19 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <basedir/>
+                    <mainOutputDirectory/>
+                    <mojoStatusPath/>
+                    <outputDirectory/>
+                    <projectArtifact/>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
