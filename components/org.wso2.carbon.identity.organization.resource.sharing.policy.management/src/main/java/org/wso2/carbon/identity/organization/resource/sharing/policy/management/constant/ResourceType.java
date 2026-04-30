@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
 public enum ResourceType {
 
     USER(Collections.singletonList(SharedAttributeType.ROLE)),
-    APPLICATION(Collections.singletonList(SharedAttributeType.ROLE));
+    APPLICATION(Collections.singletonList(SharedAttributeType.ROLE)),
+    CONNECTION(Collections.emptyList());
 
     private static final String VALID_RESOURCE_TYPES =
             Arrays.stream(values()).map(Enum::name).collect(Collectors.joining(", "));
