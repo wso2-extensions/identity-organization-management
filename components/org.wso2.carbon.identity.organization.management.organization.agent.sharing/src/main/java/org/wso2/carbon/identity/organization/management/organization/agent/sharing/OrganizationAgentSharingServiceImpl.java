@@ -37,7 +37,9 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
@@ -87,12 +89,14 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             String sharedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             startTenantFlow(sharedOrgTenantDomain);
             IdentityUtil.threadLocalProperties.get().put(PROCESS_ADD_SHARED_AGENT, true);
+            SCIMCommonUtils.setThreadLocalIsSCIMAgentFlow(true);
 
             // Set up the claims for the shared agent entry.
             HashMap<String, String> agentClaims = new HashMap<>();
             agentClaims.put(CLAIM_MANAGED_ORGANIZATION, associatedOrgId);
             agentClaims.put(ID_CLAIM_READ_ONLY, "true");
             UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(true);
+            UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(true);
 
             // Add the shared agent entry to the target organization's agent user store.
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrgTenantDomain);
@@ -101,16 +105,20 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
                     ((UserStoreManager) realmService.getTenantUserRealm(sharedOrgTenantId).getUserStoreManager())
                             .getSecondaryUserStoreManager(domainName);
-            sharedOrgAgentStoreManager.addUser(associatedAgentId, generatePassword(), null, agentClaims, DEFAULT_PROFILE);
+            User sharedUser = sharedOrgAgentStoreManager.addUserWithID(
+                    associatedAgentId, generatePassword(), null, agentClaims, DEFAULT_PROFILE);
 
             // Create the agent association record in the database.
             // Agent ID equals agent username, so associatedAgentId is used directly as the shared agent's ID.
-            organizationAgentSharingDAO.createOrganizationAgentAssociation(associatedAgentId, orgId,
+            organizationAgentSharingDAO.createOrganizationAgentAssociation(sharedUser.getUserID(), orgId,
                     associatedAgentId, associatedOrgId, sharedType);
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         } finally {
             IdentityUtil.threadLocalProperties.get().remove(PROCESS_ADD_SHARED_AGENT);
+            SCIMCommonUtils.unsetThreadLocalIsSCIMAgentFlow();
+            UserCoreUtil.setSkipPasswordPatternValidationThreadLocal(false);
+            UserCoreUtil.setSkipUsernamePatternValidationThreadLocal(false);
             endTenantFlow();
         }
     }
