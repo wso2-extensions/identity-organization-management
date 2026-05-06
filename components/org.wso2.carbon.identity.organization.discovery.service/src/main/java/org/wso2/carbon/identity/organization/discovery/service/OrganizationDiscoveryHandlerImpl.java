@@ -178,20 +178,30 @@ public class OrganizationDiscoveryHandlerImpl implements OrganizationDiscoveryHa
                                                                     String mainAppOrgId)
             throws FrameworkException {
 
-        String orgId;
+        String resolvedOrgId = null;
         try {
-            orgId = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
-                    .getOrganizationIdByName(orgName);
-            if (StringUtils.isBlank(orgId)) {
-                return OrganizationDiscoveryResult.failure(
-                        FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
-                        FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getMessage());
+            List<Organization> organizations = OrganizationDiscoveryServiceHolder.getInstance()
+                    .getOrganizationManager().getOrganizationsByName(orgName);
+            for (Organization organization : organizations) {
+                String orgId = organization.getId();
+                int relativeDepth = OrganizationDiscoveryServiceHolder.getInstance().getOrganizationManager()
+                        .getRelativeDepthBetweenOrganizationsInSameBranch(orgId, mainAppOrgId);
+                if (relativeDepth > 0) {
+                    // Only one organization with the same name can exist in a single organization tree.
+                    resolvedOrgId = orgId;
+                    break;
+                }
             }
         } catch (OrganizationManagementException e) {
             throw new FrameworkException("Error while resolving organization ID for organization name: "
                     + orgName, e);
         }
-        return handleOrgDiscoveryByOrgId(orgId, appId, mainAppOrgId);
+        if (StringUtils.isBlank(resolvedOrgId)) {
+            return OrganizationDiscoveryResult.failure(
+                    FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getCode(),
+                    FrameworkConstants.OrgDiscoveryFailureDetails.ORGANIZATION_NOT_FOUND.getMessage());
+        }
+        return handleOrgDiscoveryByOrgId(resolvedOrgId, appId, mainAppOrgId);
     }
 
     private OrganizationDiscoveryResult handleOrgDiscoveryByLoginHint(String loginHint, String appId,
