@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy.FirstFoundAggregationStrategy;
+import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreClientException;
 import org.wso2.carbon.user.core.UserStoreException;
@@ -94,6 +95,10 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     public boolean doPreDeleteUserWithID(String userID, UserStoreManager userStoreManager) throws UserStoreException {
 
         if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        // Skip shared user association cleanup for agent flows; agent associations are handled separately.
+        if (Boolean.TRUE.equals(SCIMCommonUtils.getThreadLocalIsSCIMAgentFlow())) {
             return true;
         }
         try {

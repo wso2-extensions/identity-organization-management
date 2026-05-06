@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -133,11 +134,39 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
 
+    private final Supplier<NamedJdbcTemplate> associationTemplateSupplier;
+
+    /**
+     * Default constructor. Uses the UM database as the association datasource.
+     */
+    public OrganizationUserSharingDAOImpl() {
+
+        this.associationTemplateSupplier = () -> getNewTemplate();
+    }
+
+    /**
+     * Constructor with a custom association datasource supplier.
+     * Allows the association table to be stored in a different database
+     * while role-related queries always target the UM database.
+     *
+     * @param associationTemplateSupplier Supplier that provides the {@link NamedJdbcTemplate} for the
+     *                                    {@code UM_ORG_USER_ASSOCIATION} table datasource.
+     */
+    public OrganizationUserSharingDAOImpl(Supplier<NamedJdbcTemplate> associationTemplateSupplier) {
+
+        this.associationTemplateSupplier = associationTemplateSupplier;
+    }
+
+    private NamedJdbcTemplate getAssociationTemplate() {
+
+        return associationTemplateSupplier.get();
+    }
+
     @Override
     public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
                                                   String associatedOrgId) throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION, namedPreparedStatement -> {
@@ -158,7 +187,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                                                   String associatedOrgId, SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE, namedPreparedStatement -> {
@@ -178,7 +207,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationOfUserByAssociatedOrg(String userId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER,
                     namedPreparedStatement -> {
@@ -196,7 +225,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER,
                     namedPreparedStatement -> {
@@ -213,7 +242,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationsByOrganizationId(String orgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID,
                     namedPreparedStatement -> {
@@ -232,7 +261,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER,
                     (resultSet, rowNumber) -> {
@@ -280,7 +309,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
         String sql = buildGetUserAssociationsSql(filterQuery, orgIdPlaceholders, resolvedSortOrder, limit);
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(sql,
                     (resultSet, rowNumber) -> {
@@ -357,7 +386,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                                                                      SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE,
                     (resultSet, rowNumber) -> {
@@ -386,7 +415,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociations();
         String query = getDBSpecificQuery(dbQueryMap);
         try {
@@ -418,7 +447,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             orgIdPlaceholders.add(":" + PLACEHOLDER_ORG_ID + i + ";");
         }
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociationsInOrgScope();
         String query = getDBSpecificQuery(dbQueryMap).replace(
                 PLACEHOLDER_ORG_IDS, String.join(", ", orgIdPlaceholders));
@@ -446,7 +475,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG,
                     (resultSet, rowNumber) -> {
@@ -475,7 +504,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public UserAssociation getUserAssociation(String userId, String organizationId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER,
                     (resultSet, rowNumber) -> {
@@ -664,7 +693,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                 GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS.replace(PLACEHOLDER_ORG_IDS,
                         String.join(", ", orgIdPlaceholders));
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(
                     fetchUserAssociationsQuery,
@@ -697,7 +726,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(
                     UPDATE_USER_ASSOCIATION_SHARED_TYPE,

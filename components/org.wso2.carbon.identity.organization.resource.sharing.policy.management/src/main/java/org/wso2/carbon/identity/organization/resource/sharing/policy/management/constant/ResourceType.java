@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public enum ResourceType {
 
     USER(Collections.singletonList(SharedAttributeType.ROLE)),
+    AGENT(Collections.singletonList(SharedAttributeType.ROLE)),
     APPLICATION(Collections.singletonList(SharedAttributeType.ROLE));
 
     private static final String VALID_RESOURCE_TYPES =

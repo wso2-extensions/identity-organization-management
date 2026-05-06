@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -20,13 +20,13 @@
     <parent>
         <groupId>org.wso2.carbon.identity.organization.management</groupId>
         <artifactId>identity-organization-management</artifactId>
-        <version>2.5.4-SNAPSHOT</version>
+        <version>2.4.18</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
-    <name>WSO2 - Organization User Sharing Service</name>
+    <artifactId>org.wso2.carbon.identity.organization.management.organization.agent.sharing</artifactId>
+    <name>WSO2 - Organization Agent Sharing Service</name>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -57,6 +57,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.utils</groupId>
@@ -94,6 +98,14 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
+            <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -110,15 +122,6 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.testutil</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
-            <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -131,13 +134,13 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
-                        <Bundle-Description>Organization User Association Management Service Bundle</Bundle-Description>
+                        <Bundle-Description>Organization Agent Association Management Service Bundle</Bundle-Description>
                         <Private-Package>
-                            org.wso2.carbon.identity.organization.management.organization.user.sharing.internal
+                            org.wso2.carbon.identity.organization.management.organization.agent.sharing.internal
                         </Private-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.organization.management.organization.user.sharing.internal,
-                            org.wso2.carbon.identity.organization.management.organization.user.sharing.*;
+                            !org.wso2.carbon.identity.organization.management.organization.agent.sharing.internal,
+                            org.wso2.carbon.identity.organization.management.organization.agent.sharing.*;
                             version="${identity.organization.management.exp.pkg.version}",
                         </Export-Package>
                         <Import-Package>
@@ -153,6 +156,7 @@
                             org.wso2.carbon.identity.application.common;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.common.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.mgt;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.model; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
@@ -198,7 +202,11 @@
                             org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance.model; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.central.log.mgt.utils; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.scim2.common.utils; version="${identity.scim2.imp.pkg.version.range}"
+                            org.wso2.carbon.identity.scim2.common.utils; version="${identity.scim2.imp.pkg.version.range}",
+                            javax.naming,
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.models;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;version="${identity.organization.management.exp.pkg.version}"
                         </Import-Package>
                     </instructions>
                 </configuration>
@@ -209,9 +217,9 @@
                 <version>${jacoco.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/constant/*.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/internal/*.class</exclude>
-                        <exclude>org/wso2/carbon/identity/organization/management/organization/user/sharing/models/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/agent/sharing/constant/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/agent/sharing/internal/*.class</exclude>
+                        <exclude>org/wso2/carbon/identity/organization/management/organization/agent/sharing/models/*.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
