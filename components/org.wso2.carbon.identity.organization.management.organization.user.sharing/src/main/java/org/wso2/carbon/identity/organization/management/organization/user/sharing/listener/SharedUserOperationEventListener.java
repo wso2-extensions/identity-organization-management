@@ -146,12 +146,25 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        /*
+         * Need to use the app resident org ID to resolve user claims when shared users login to sub-orgs via
+         * sub-org apps or via enhanced organization login.
+         */
+        String appResidentOrganizationId =
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getApplicationResidentOrganizationId();
         try {
-            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
+            if (StringUtils.isBlank(appResidentOrganizationId) &&
+                    !OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            String currentOrganizationId = resolveOrganizationId(currentTenantDomain);
+
+            String currentOrganizationId;
+            if (StringUtils.isNotBlank(appResidentOrganizationId)) {
+                currentOrganizationId = appResidentOrganizationId;
+            } else {
+                currentOrganizationId = resolveOrganizationId(currentTenantDomain);
+            }
             UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.
