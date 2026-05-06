@@ -19,10 +19,10 @@
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing;
 
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtException;
+import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.AgentSharePatchDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.GeneralAgentShareDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.GeneralAgentUnshareDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.GetAgentSharedOrgsDO;
-import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.AgentSharePatchDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.ResponseAgentSharedOrgsDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.SelectiveAgentShareDO;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.SelectiveAgentUnshareDO;

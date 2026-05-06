@@ -33,52 +33,6 @@ public class SQLConstants {
     public static final String ID_COLUMN_NAME = "UM_ID";
     public static final String SHARED_ORG_ID_COLUMN_NAME = "UM_ORG_ID";
 
-    public static final String CREATE_ORGANIZATION_AGENT_ASSOCIATION =
-            "INSERT INTO UM_ORG_AGENT_ASSOCIATION(" +
-                    "UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID) VALUES(?, ?, ?, ?)";
-    public static final String CREATE_ORGANIZATION_AGENT_ASSOCIATION_WITH_TYPE =
-            "INSERT INTO UM_ORG_AGENT_ASSOCIATION(" +
-                    "UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE) VALUES(" +
-                    ":" + SQLPlaceholders.COLUMN_NAME_AGENT_ID + ";, " +
-                    ":" + SQLPlaceholders.COLUMN_NAME_ORG_ID + ";, " +
-                    ":" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + ";, " +
-                    ":" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + ";, " +
-                    ":" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + ";)";
-    public static final String DELETE_ORGANIZATION_AGENT_ASSOCIATION_FOR_SHARED_AGENT =
-            "DELETE FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_AGENT_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
-    public static final String DELETE_ORGANIZATION_AGENT_ASSOCIATIONS_FOR_ROOT_AGENT =
-            "DELETE FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_ASSOCIATED_AGENT_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
-    public static final String DELETE_ORGANIZATION_AGENT_ASSOCIATION_FOR_SHARED_AGENT_BY_ORG_ID =
-            "DELETE FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_AGENT_ID = ? AND UM_ORG_ID = ?";
-    public static final String GET_ORGANIZATION_AGENT_ASSOCIATIONS_FOR_AGENT =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_ASSOCIATED_AGENT_ID = ? AND UM_ASSOCIATED_ORG_ID = ?";
-    public static final String GET_ORGANIZATION_AGENT_ASSOCIATION_FOR_ROOT_AGENT_IN_ORG =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_ASSOCIATED_AGENT_ID = ? AND UM_ORG_ID = ?";
-    public static final String GET_ORGANIZATION_AGENT_ASSOCIATIONS_FOR_SHARED_AGENT =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_AGENT_ID = ? AND UM_ORG_ID = ?";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_HEAD =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; ";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_TAIL =
-            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "ORDER BY UM_ID %s";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_TAIL_WITH_LIMIT =
-            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "ORDER BY UM_ID %s LIMIT %d";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE =
-            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_TAIL_WITH_LIMIT_DB2 =
-            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "ORDER BY UM_ID %s FETCH FIRST %d ROWS ONLY";
-    public static final String GET_AGENT_ASSOCIATIONS_FOR_ASSOCIATED_AGENT_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL =
-            "UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "ORDER BY UM_ID %s OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
     public static final String GET_SHARED_ROLES_OF_SHARED_AGENT =
             "SELECT H.UM_UUID " +
                     "FROM UM_HYBRID_USER_ROLE UHR " +
@@ -107,74 +61,6 @@ public class SQLConstants {
                     + "AND r.UM_TENANT_ID = :" + COLUMN_NAME_UM_TENANT_ID + "; "
                     + "AND p.UM_PERMITTED_ORG_ID != :" + COLUMN_NAME_UM_PERMITTED_ORG_ID + "; "
                     + "AND p.UM_EDIT_OPERATION = :" + COLUMN_NAME_UM_EDIT_OPERATION + ";";
-    public static final String GET_ORGANIZATION_AGENT_ASSOCIATIONS_FOR_AGENT_BY_SHARED_TYPE =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION WHERE UM_ASSOCIATED_AGENT_ID = ? AND UM_ASSOCIATED_ORG_ID = ? " +
-                    "AND UM_SHARED_TYPE = ?";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS =
-            "SELECT EXISTS ( " +
-                    "    SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "    WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "    AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    ") AS has_agent_associations;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_ORACLE =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations FROM DUAL;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_MSSQL =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_DB2 =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations FROM SYSIBM.SYSDUMMY1;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE =
-            "SELECT EXISTS ( " +
-                    "    SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "    WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "    AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "    AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    ") AS has_agent_associations;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_ORACLE =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations FROM DUAL;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_MSSQL =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations;";
-    public static final String CHECK_AGENT_ORG_ASSOCIATION_EXISTS_IN_ORG_SCOPE_DB2 =
-            "SELECT CASE " +
-                    "    WHEN EXISTS ( " +
-                    "        SELECT 1 FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "        WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "        AND UM_ASSOCIATED_ORG_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_ORG_ID + "; " +
-                    "        AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ") " +
-                    "    ) THEN 1 ELSE 0 " +
-                    "END AS has_agent_associations FROM SYSIBM.SYSDUMMY1;";
     public static final String GET_SHARED_AGENT_ROLES =
             "SELECT DISTINCT hr.UM_UUID FROM UM_HYBRID_ROLE hr "
                     + "INNER JOIN UM_HYBRID_USER_ROLE ur "
@@ -205,63 +91,25 @@ public class SQLConstants {
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_EDIT_OPERATION + ";, " +
                     ":" + SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID + ";)";
-    public static final String GET_AGENT_ASSOCIATIONS_OF_AGENT_IN_GIVEN_ORGS =
-            "SELECT UM_ID, UM_AGENT_ID, UM_ORG_ID, UM_ASSOCIATED_AGENT_ID, UM_ASSOCIATED_ORG_ID, UM_SHARED_TYPE " +
-                    "FROM UM_ORG_AGENT_ASSOCIATION " +
-                    "WHERE UM_ASSOCIATED_AGENT_ID = :" + SQLPlaceholders.COLUMN_NAME_ASSOCIATED_AGENT_ID + "; " +
-                    "AND UM_ORG_ID IN (" + SQLPlaceholders.PLACEHOLDER_ORG_IDS + ");";
-    public static final String UPDATE_AGENT_ASSOCIATION_SHARED_TYPE =
-            "UPDATE UM_ORG_AGENT_ASSOCIATION " +
-                    "SET UM_SHARED_TYPE = :" + SQLPlaceholders.COLUMN_NAME_UM_SHARED_TYPE + "; " +
-                    "WHERE UM_ID = :" + SQLPlaceholders.COLUMN_NAME_UM_ID + ";";
 
     /**
      * SQL placeholders related to organization agent sharing SQL operations.
      */
     public static final class SQLPlaceholders {
 
-        public static final String TABLE_NAME_UM_ORG_AGENT_ASSOCIATION = "UM_ORG_AGENT_ASSOCIATION";
-        public static final String COLUMN_NAME_AGENT_ID = "UM_AGENT_ID";
-        public static final String COLUMN_NAME_ORG_ID = "UM_ORG_ID";
-        public static final String COLUMN_NAME_ASSOCIATED_AGENT_ID = "UM_ASSOCIATED_AGENT_ID";
-        public static final String COLUMN_NAME_ASSOCIATED_ORG_ID = "UM_ASSOCIATED_ORG_ID";
         public static final String COLUMN_NAME_UM_AGENT_NAME = "UM_AGENT_NAME";
         public static final String COLUMN_NAME_UM_TENANT_ID = "UM_TENANT_ID";
         public static final String COLUMN_NAME_UM_ID = "UM_ID";
-        public static final String COLUMN_NAME_UM_SHARED_TYPE = "UM_SHARED_TYPE";
         public static final String COLUMN_NAME_UM_UUID = "UM_UUID";
         public static final String COLUMN_NAME_UM_DOMAIN_NAME = "UM_DOMAIN_NAME";
-        public static final String COLUMN_NAME_UM_DOMAIN_ID = "UM_DOMAIN_ID";
         public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_ID = "UM_HYBRID_USER_ROLE_ID";
         public static final String COLUMN_NAME_UM_HYBRID_USER_ROLE_TENANT_ID = "UM_HYBRID_USER_ROLE_TENANT_ID";
         public static final String COLUMN_NAME_UM_EDIT_OPERATION = "UM_EDIT_OPERATION";
         public static final String COLUMN_NAME_UM_PERMITTED_ORG_ID = "UM_PERMITTED_ORG_ID";
-        public static final String HAS_AGENT_ASSOCIATIONS = "has_agent_associations";
 
         public static final String PLACEHOLDER_NAME_AGENT_NAMES = "AGENT_NAMES";
         public static final String PLACEHOLDER_ROLE_IDS = "ROLE_IDS";
-        public static final String PLACEHOLDER_ORG_IDS = "ORG_IDS";
-        public static final String PLACEHOLDER_ORG_ID = "ORG_ID_";
 
-        public static final String ASC_SORT_ORDER = "ASC";
-        public static final String DESC_SORT_ORDER = "DESC";
-
-        public static final String AND = "AND";
         public static final String OR = "OR";
-        public static final String WHITE_SPACE = " ";
-        public static final String ORG_ID_SCOPE_PLACEHOLDER_PREFIX = "orgId";
-    }
-
-    /**
-     * Database types related to organization agent sharing SQL operations.
-     */
-    public static final class DBTypes {
-
-        public static final String DB_TYPE_DB2 = "db2";
-        public static final String DB_TYPE_MSSQL = "mssql";
-        public static final String DB_TYPE_MYSQL = "mysql";
-        public static final String DB_TYPE_ORACLE = "oracle";
-        public static final String DB_TYPE_POSTGRESQL = "postgresql";
-        public static final String DB_TYPE_DEFAULT = "default";
     }
 }

@@ -69,7 +69,6 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,14 +92,6 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.AGENT_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ASYNC_PROCESSING_LOG_TEMPLATE;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_NONE;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_PREFIX;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_ROLES;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_SUFFIX_ROLES;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.SHARED_AGENT_ROLE_INCLUDED_KEY;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.SHARED_AGENT_SHARING_MODE_INCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_SHARE;
@@ -113,8 +104,8 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_AGENT;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLE_IDS;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_INVALID_AUDIENCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_INVALID_POLICY;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_NULL_SHARE;
@@ -140,6 +131,14 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_NONE;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_PREFIX;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_SUFFIX_ROLES;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.SHARED_AGENT_ROLE_INCLUDED_KEY;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.SHARED_AGENT_SHARING_MODE_INCLUDED_KEY;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 
 /**
@@ -242,7 +241,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         CompletableFuture.runAsync(() -> {
-                    logAsyncProcessing(ACTION_SELECTIVE_AGENT_UNSHARE, carbonContext.getUserId(), sharingInitiatedOrgId);
+                    logAsyncProcessing(ACTION_SELECTIVE_AGENT_UNSHARE, carbonContext.getUserId(),
+                            sharingInitiatedOrgId);
                     try {
                         initiateThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                                 sharingInitiatedUsername, threadLocalProperties);
@@ -539,7 +539,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
      * @param sharingInitiatedUserId The ID of the user that initiated the sharing.
      */
-    private void selectiveAgentShareByAgentIds(AgentIdList agentIds, List<SelectiveAgentShareOrgDetailsDO> organizations,
+    private void selectiveAgentShareByAgentIds(AgentIdList agentIds,
+                                               List<SelectiveAgentShareOrgDetailsDO> organizations,
                                                String sharingInitiatedOrgId, String sharingInitiatedUserId)
             throws AgentSharingMgtException {
 
@@ -575,10 +576,11 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         }
                     }
                     if (isApplicableOrganizationScopeForSavingPolicy(organization.getPolicy())) {
-                        saveAgentSharingPolicy(associatedAgentId, sharingInitiatedOrgId, organization.getOrganizationId(),
-                                organization.getPolicy(),
+                        saveAgentSharingPolicy(associatedAgentId, sharingInitiatedOrgId,
+                                organization.getOrganizationId(), organization.getPolicy(),
                                 organization.getRoleAssignments() != null
-                                        ? getRoleIds(organization.getRoleAssignments().getRoles(), sharingInitiatedOrgId)
+                                        ? getRoleIds(organization.getRoleAssignments().getRoles(),
+                                                sharingInitiatedOrgId)
                                         : Collections.emptyList());
                     }
                 }
@@ -627,7 +629,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                             roleIds);
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedAgentId, e.getMessage());
+                String errorMessage = String.format(ERROR_GENERAL_SHARE.getMessage(), associatedAgentId,
+                        e.getMessage());
                 throw new AgentSharingMgtServerException(ERROR_GENERAL_SHARE, errorMessage);
             }
         }
@@ -660,7 +663,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                     deleteResourceSharingPolicyOfAgentInOrg(organizationId, associatedAgentId, unsharingInitiatedOrgId);
                 }
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new AgentSharingMgtServerException(ERROR_CODE_AGENT_UNSHARE);
+                throw new AgentSharingMgtServerException(ERROR_CODE_AGENT_UNSHARE, e);
             }
         }
     }
@@ -680,7 +683,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         unsharingInitiatedOrgId);
                 deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, unsharingInitiatedOrgId);
             } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
-                throw new AgentSharingMgtServerException(ERROR_CODE_AGENT_UNSHARE);
+                throw new AgentSharingMgtServerException(ERROR_CODE_AGENT_UNSHARE, e);
             }
         }
     }
@@ -744,6 +747,11 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         String orgId = extractOrgIdFromRolesPath(patchOperation.getPath());
         AgentAssociation agentAssociation = getOrganizationAgentSharingService()
                 .getAgentAssociationOfAssociatedAgentByOrgId(associatedAgentId, orgId);
+        if (agentAssociation == null) {
+            LOG.warn("No agent association found for agent: " + associatedAgentId + " in organization: " + orgId +
+                    ". Skipping role assignment update.");
+            return;
+        }
         List<String> roleIds = getRoleIds(castToRoleWithAudienceList(patchOperation.getValues()),
                 sharingInitiatedOrgId);
         switch (patchOperation.getOperation()) {
@@ -878,7 +886,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             }
             return roleWithAudienceList;
         } catch (OrganizationManagementException | IdentityRoleManagementException |
-                 org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtException e) {
+                 AgentSharingMgtException e) {
             throw new AgentSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_AGENT, e);
         }
     }
@@ -1069,7 +1077,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                 unAssignOldSharedRolesFromSharedAgent(agentAssociation, currentSharedRoleIds);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException |
-                 org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtException e) {
+                 AgentSharingMgtException e) {
             LOG.error("Error occurred while reconciling roles for the previously shared agent: " +
                     associatedAgentId, e);
         }
@@ -1097,10 +1105,10 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @return A list of role IDs currently assigned to the shared agent in the target organization.
      */
     private List<String> getCurrentSharedRoleIdsForSharedAgent(AgentAssociation agentAssociation)
-            throws OrganizationManagementException,
-            org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtException {
+            throws OrganizationManagementException, AgentSharingMgtException {
 
-        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(agentAssociation.getOrganizationId());
+        String targetOrgTenantDomain =
+                getOrganizationManager().resolveTenantDomain(agentAssociation.getOrganizationId());
         int targetTenantId = IdentityTenantUtil.getTenantId(targetOrgTenantDomain);
         String domainName = IdentityUtil.getAgentIdentityUserstoreName();
         String username = agentAssociation.getAgentId();
@@ -1124,7 +1132,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                                              List<String> newRoleIdsInParentOrg)
             throws OrganizationManagementException, IdentityRoleManagementException {
 
-        String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(agentAssociation.getOrganizationId());
+        String targetOrgTenantDomain =
+                getOrganizationManager().resolveTenantDomain(agentAssociation.getOrganizationId());
         Map<String, String> mainToSharedRoleMap =
                 getRoleManagementService().getMainRoleToSharedRoleMappingsBySubOrg(newRoleIdsInParentOrg,
                         targetOrgTenantDomain);
@@ -1163,7 +1172,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         String agentId = agentAssociation.getAgentId();
         String orgId = agentAssociation.getOrganizationId();
         try {
-            String sharingInitiatedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
+            String sharingInitiatedOrgTenantDomain =
+                    getOrganizationManager().resolveTenantDomain(sharingInitiatedOrgId);
             String targetOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             String domainName = IdentityUtil.getAgentIdentityUserstoreName();
             String username = agentAssociation.getAgentId();
@@ -1188,7 +1198,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         targetOrgTenantDomain, domainName, EditOperation.DELETE, sharingInitiatedOrgId);
             }
         } catch (OrganizationManagementException | IdentityRoleManagementException |
-                 org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtException e) {
+                 AgentSharingMgtException e) {
             LOG.error("Error occurred while assigning roles to the shared agent: " + agentId, e);
         }
     }

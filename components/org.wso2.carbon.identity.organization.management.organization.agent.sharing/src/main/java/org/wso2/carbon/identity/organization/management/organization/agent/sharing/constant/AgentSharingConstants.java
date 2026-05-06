@@ -18,10 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,55 +44,22 @@ public class AgentSharingConstants {
         attributeColumnMap.put(ORGANIZATION_ID_REPRESENTATION_3, SQLConstants.SHARED_ORG_ID_COLUMN_NAME);
     }
 
-    public static final String AGENT_ID = "agentId";
     public static final String AGENT_IDS = "agentIds";
-    public static final String ORG_ID = "orgId";
-    public static final String POLICY = "policy";
-    public static final String ROLES = "roles";
     public static final String ORGANIZATION = "organization";
     public static final String APPLICATION = "application";
-    public static final String AGENT = "AGENT";
-    public static final String CORRELATION_ID_MDC = "Correlation-ID";
-
-    public static final String ORG_ID_FIELD_REPRESENTATION_1 = "orgId";
-    public static final String ORG_ID_FIELD_REPRESENTATION_2 = "organizationId";
-
-    public static final String SHARING_TYPE_SHARED = "Shared";
-    public static final String SHARING_TYPE_INVITED = "Invited";
-    public static final String SHARING_TYPE_INHERITED = "Inherited";
 
     public static final String PATCH_PATH_ROLES = "roles";
     public static final String PATCH_PATH_NONE = "none";
     public static final String PATCH_PATH_PREFIX = "organizations[orgId eq ";
     public static final String PATCH_PATH_SUFFIX_ROLES = "].roles";
-
-    public static final String NULL_POLICY = "Policy is null";
-
     public static final String SHARING_ERROR_PREFIX = "OAS-";
-
-    public static final String NULL_INPUT_MESSAGE_SUFFIX = " is null";
-    public static final String NULL_SHARE_INPUT_MESSAGE = "Attempting to do a null agent share";
-    public static final String NULL_UNSHARE_INPUT_MESSAGE = "Attempting to do a null agent unshare";
-
-    public static final String POLICY_CODE_FOR_EXISTING_AND_FUTURE = "-EF-";
-    public static final String POLICY_CODE_FOR_FUTURE_ONLY = "-FO-";
-
-    public static final String VALIDATION_CONTEXT_AGENT_SHARE_SELECTIVE_DO = "SelectiveAgentShareDO";
-    public static final String VALIDATION_CONTEXT_AGENT_SHARE_GENERAL_DO = "GeneralAgentShareDO";
-
-    public static final String LOG_INFO_SELECTIVE_SHARE_COMPLETED = "Selective agent share completed.";
-    public static final String LOG_INFO_GENERAL_SHARE_COMPLETED = "General agent share completed.";
-
     public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
             "Skipping agent share for organizations that are not immediate children: %s";
-    public static final String LOG_WARN_NON_RESIDENT_AGENT =
-            "Skipping agent share for agent: %s since the agent is not managed by the sharing initiated org: %s";
 
     public static final String ACTION_GENERAL_AGENT_SHARE = "general agent share";
     public static final String ACTION_SELECTIVE_AGENT_SHARE = "selective agent share";
     public static final String ACTION_SELECTIVE_AGENT_UNSHARE = "selective agent unshare";
     public static final String ACTION_GENERAL_AGENT_UNSHARE = "general agent unshare";
-    public static final String ACTION_AGENT_SHARE_ATTRIBUTE_UPDATE = "agent share attribute update";
     public static final String ACTION_AGENT_SHARE_ROLE_ASSIGNMENT_UPDATE = "agent share role assignment update";
 
     public static final String SHARED_AGENT_ROLE_INCLUDED_KEY = "roles";
@@ -102,38 +67,11 @@ public class AgentSharingConstants {
 
     public static final String ASYNC_PROCESSING_LOG_TEMPLATE = "Processing async %s initiated by user: %s in " +
             "organization: %s.";
-    public static final String AGENT_SHARING_LOG_TEMPLATE = "Sharing agent: %s from organization: %s is initiated " +
-            "by user: %s.";
 
     public static final String DEFAULT_PROFILE = "default";
     public static final String CLAIM_MANAGED_ORGANIZATION = "http://wso2.org/claims/identity/managedOrg";
     public static final String ID_CLAIM_READ_ONLY = "http://wso2.org/claims/identity/isReadOnlyUser";
-
-    public static final String ORG_MGT_PERMISSION = "/permission/admin/manage/identity/organizationmgt";
-    public static final String ORG_ROLE_MGT_PERMISSION = "/permission/admin/manage/identity/rolemgt";
-
     public static final String PROCESS_ADD_SHARED_AGENT = "processAddSharedAgent";
-
-    public static final List<String> MINIMUM_PERMISSIONS_REQUIRED_FOR_ORG_CREATOR_VIEW =
-            Collections.unmodifiableList(Arrays.asList(
-                    "/permission/admin/manage/identity/authentication/session/view",
-                    "/permission/admin/manage/identity/groupmgt/view",
-                    "/permission/admin/manage/identity/governance/view",
-                    "/permission/admin/manage/identity/userstore/config/view",
-                    "/permission/admin/manage/identity/usermgt/view",
-                    "/permission/admin/manage/identity/usermgt/list",
-                    "/permission/admin/manage/identity/applicationmgt/view",
-                    "/permission/admin/manage/identity/cors/origins/view",
-                    "/permission/admin/manage/identity/idpmgt/view",
-                    "/permission/admin/manage/identity/claimmgt/metadata/view"));
-
-    /**
-     * Enum for assignmentType.
-     */
-    public enum AssignmentType {
-        ROLE,
-        GROUP
-    }
 
     /**
      * Error messages for organization agent sharing management related errors.
@@ -155,27 +93,18 @@ public class AgentSharingConstants {
         ERROR_CODE_ROLES_NULL("10019",
                 "Roles list is null.",
                 "Roles list must be provided."),
-        ERROR_CODE_AGENT_ID_NULL("10020",
-                "Agent ID is null.",
-                "Agent ID must be provided."),
         ERROR_CODE_ORG_DETAILS_NULL("10021",
                 "Organization details are null.",
                 "Organization details must be provided."),
         ERROR_CODE_ORG_ID_NULL("10022",
                 "Organization ID is null.",
                 "Organization ID must be provided."),
-        ERROR_INVALID_ROLES_FORMAT("10025",
-                "Invalid roles format.",
-                "The roles provided are in an invalid format and cannot be processed."),
         ERROR_SELECTIVE_SHARE("10026",
                 "Error occurred during selective agent share propagation for agentId: %s - %s",
                 "Error occurred during selective agent share propagation for a given agent."),
         ERROR_GENERAL_SHARE("10027",
                 "Error occurred during general agent share propagation for agentId: %s - %s",
                 "Error occurred during general agent share propagation for a given agent."),
-        ERROR_CODE_GET_TENANT_FROM_ORG("10029",
-                "Unable to get the tenant domain.",
-                "Unable to get the tenant domain for the organization %s."),
         ERROR_CODE_ROLE_NAME_NULL("10030",
                 "Role name is null.",
                 "Role name must be provided."),
@@ -190,7 +119,8 @@ public class AgentSharingConstants {
                 "The audience type '%s' is invalid. Allowed types are 'ORGANIZATION' and 'APPLICATION'."),
         ERROR_CODE_INVALID_POLICY("10041",
                 "Invalid policy provided: %s",
-                "The policy '%s' is not recognized or supported for determining organizations to share the agent with."),
+                "The policy '%s' is not recognized or supported for determining organizations to share " +
+                        "the agent with."),
         ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS("10042",
                 "Error occurred while retrieving immediate child organizations.",
                 "An unexpected error occurred while fetching immediate child organizations for the " +
@@ -267,9 +197,6 @@ public class AgentSharingConstants {
         ERROR_CODE_AGENT_UNSHARE("10068",
                 "Error occurred during agent unshare operation.",
                 "An unexpected error occurred while unsharing the agent."),
-        ERROR_CODE_AGENT_SHARE_ROLE_ASSIGNMENT_UPDATE("10069",
-                "Error occurred during agent share role assignment update.",
-                "An unexpected error occurred while updating role assignments for the shared agent."),
         ERROR_CODE_GET_ROLE_IDS("10070",
                 "Error occurred while retrieving role IDs.",
                 "An unexpected error occurred during the retrieval of role IDs for the provided roles with " +

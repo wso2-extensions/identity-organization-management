@@ -34,12 +34,12 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.common.User;
 import org.wso2.carbon.user.core.service.RealmService;
-import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.HashMap;
@@ -51,6 +51,7 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ID_CLAIM_READ_ONLY;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PROCESS_ADD_SHARED_AGENT;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_CREATE_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_DELETE_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 
 /**
@@ -127,6 +128,11 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
     public boolean unshareOrganizationAgents(String associatedAgentId, String associatedOrgId)
             throws OrganizationManagementException {
 
+        List<AgentAssociation> agentAssociationList =
+                organizationAgentSharingDAO.getAgentAssociationsOfAssociatedAgent(associatedAgentId, associatedOrgId);
+        for (AgentAssociation agentAssociation : agentAssociationList) {
+            removeSharedAgent(agentAssociation);
+        }
         return organizationAgentSharingDAO.deleteAgentAssociationsOfAssociatedAgent(associatedAgentId,
                 associatedOrgId);
     }
@@ -140,6 +146,7 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
         if (agentAssociation == null) {
             return false;
         }
+        removeSharedAgent(agentAssociation);
         return organizationAgentSharingDAO.deleteAgentAssociationOfAgentByAssociatedOrg(
                 agentAssociation.getAgentId(), sharedOrgId);
     }
@@ -257,6 +264,43 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             throws OrganizationManagementServerException {
 
         organizationAgentSharingDAO.updateSharedTypeOfAgentAssociation(id, sharedType);
+    }
+
+    private void removeSharedAgent(AgentAssociation agentAssociation) throws OrganizationManagementException {
+
+        if (agentAssociation == null) {
+            return;
+        }
+        String agentId = agentAssociation.getAgentId();
+        String organizationId = agentAssociation.getOrganizationId();
+        String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+        try {
+            String domainName = IdentityUtil.getAgentIdentityUserstoreName();
+            RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+            AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
+                    ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
+                            .getSecondaryUserStoreManager(domainName);
+            deleteAgentInTenantFlow(sharedOrgAgentStoreManager, agentId, tenantDomain, organizationId);
+        } catch (UserStoreException e) {
+            throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, agentId, organizationId);
+        }
+    }
+
+    private void deleteAgentInTenantFlow(AbstractUserStoreManager agentStoreManager, String agentId,
+                                         String tenantDomain, String organizationId) throws UserStoreException {
+
+        try {
+            String requestInitiator = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+            SCIMCommonUtils.setThreadLocalIsSCIMAgentFlow(true);
+            startTenantFlow(tenantDomain);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setOrganizationId(organizationId);
+            PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(requestInitiator);
+            agentStoreManager.deleteUserWithID(agentId);
+        } finally {
+            SCIMCommonUtils.unsetThreadLocalIsSCIMAgentFlow();
+            endTenantFlow();
+        }
     }
 
     private OrganizationManager getOrganizationManager() {
