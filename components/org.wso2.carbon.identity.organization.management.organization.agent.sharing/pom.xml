@@ -102,6 +102,10 @@
             <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
             <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -198,7 +202,11 @@
                             org.wso2.carbon.identity.governance; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.governance.model; version="${identity.governance.imp.pkg.version.range}",
                             org.wso2.carbon.identity.central.log.mgt.utils; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.scim2.common.utils; version="${identity.scim2.imp.pkg.version.range}"
+                            org.wso2.carbon.identity.scim2.common.utils; version="${identity.scim2.imp.pkg.version.range}",
+                            javax.naming,
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.dao;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.models;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.constant;version="${identity.organization.management.exp.pkg.version}"
                         </Import-Package>
                     </instructions>
                 </configuration>

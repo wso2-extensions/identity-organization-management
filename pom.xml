@@ -556,19 +556,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <basedir/>
-                    <mainOutputDirectory/>
-                    <mojoStatusPath/>
-                    <outputDirectory/>
-                    <projectArtifact/>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -623,7 +610,7 @@
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
 
-        <identity.inbound.provisioning.scim2.version>3.4.229-SNAPSHOT</identity.inbound.provisioning.scim2.version>
+        <identity.inbound.provisioning.scim2.version>3.7.9</identity.inbound.provisioning.scim2.version>
         <identity.scim2.imp.pkg.version.range>[3.4.0, 4.0.0)</identity.scim2.imp.pkg.version.range>
 
         <carbon.identity.framework.version>7.10.68</carbon.identity.framework.version>
