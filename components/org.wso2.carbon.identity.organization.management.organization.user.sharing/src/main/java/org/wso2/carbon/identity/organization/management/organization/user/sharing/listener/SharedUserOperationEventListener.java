@@ -150,18 +150,18 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
          * Need to use the app resident org ID to resolve user claims when shared users login to sub-orgs via
          * sub-org apps or via enhanced organization login.
          */
-        String appResidentOrganizationId =
-                PrivilegedCarbonContext.getThreadLocalCarbonContext().getApplicationResidentOrganizationId();
+        String accessingOrganizationId =
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getAccessingOrganizationId();
         try {
-            if (StringUtils.isBlank(appResidentOrganizationId) &&
+            if (StringUtils.isBlank(accessingOrganizationId) &&
                     !OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
 
             String currentOrganizationId;
-            if (StringUtils.isNotBlank(appResidentOrganizationId)) {
-                currentOrganizationId = appResidentOrganizationId;
+            if (StringUtils.isNotBlank(accessingOrganizationId)) {
+                currentOrganizationId = accessingOrganizationId;
             } else {
                 currentOrganizationId = resolveOrganizationId(currentTenantDomain);
             }
