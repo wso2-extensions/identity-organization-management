@@ -26,8 +26,14 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerServiceImpl;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
+import org.wso2.carbon.idp.mgt.IdpManager;
 
 /**
  * OSGi service component for the Organization Connection Sharing bundle.
@@ -70,5 +76,65 @@ public class ConnectionSharingServiceComponent {
             serviceRegistration = null;
         }
         LOG.debug("ConnectionSharingServiceComponent deactivated.");
+    }
+
+    @Reference(
+            name = "organization.management.service",
+            service = OrganizationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManager"
+    )
+    protected void setOrganizationManager(OrganizationManager organizationManager) {
+
+        ConnectionSharingDataHolder.getInstance().setOrganizationManager(organizationManager);
+        LOG.debug("Set Organization Management Service.");
+    }
+
+    protected void unsetOrganizationManager(OrganizationManager organizationManager) {
+
+        ConnectionSharingDataHolder.getInstance().setOrganizationManager(null);
+        LOG.debug("Unset Organization Management Service.");
+    }
+
+    @Reference(
+            name = "resource.sharing.policy.handler.service",
+            service = ResourceSharingPolicyHandlerService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetResourceSharingPolicyHandlerService"
+    )
+    protected void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        ConnectionSharingDataHolder.getInstance()
+                .setResourceSharingPolicyHandlerService(resourceSharingPolicyHandlerService);
+        LOG.debug("Set Resource Sharing Policy Handler Service.");
+    }
+
+    protected void unsetResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        ConnectionSharingDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+        LOG.debug("Unset Resource Sharing Policy Handler Service.");
+    }
+
+    @Reference(
+            name = "idp.manager.service",
+            service = IdpManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIdpManager"
+    )
+    protected void setIdpManager(IdpManager idpManager) {
+
+        ConnectionSharingDataHolder.getInstance().setIdpManager(idpManager);
+        LOG.debug("Set IDP Manager Service.");
+    }
+
+    protected void unsetIdpManager(IdpManager idpManager) {
+
+        ConnectionSharingDataHolder.getInstance().setIdpManager(null);
+        LOG.debug("Unset IDP Manager Service.");
     }
 }

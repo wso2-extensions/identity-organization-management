@@ -18,13 +18,24 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal;
 
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.OrganizationConnectionSharingService;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
+import org.wso2.carbon.idp.mgt.IdpManager;
+
 /**
  * Data holder for connection sharing management.
- * Service fields are added here as real OSGi dependencies are wired into the implementation.
  */
 public class ConnectionSharingDataHolder {
 
     private static final ConnectionSharingDataHolder instance = new ConnectionSharingDataHolder();
+
+    private OrganizationManager organizationManager;
+    private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
+    private IdpManager idpManager;
+    private OrganizationConnectionSharingService organizationConnectionSharingService =
+            new OrganizationConnectionSharingService() {
+            };
 
     private ConnectionSharingDataHolder() {
 
@@ -33,5 +44,47 @@ public class ConnectionSharingDataHolder {
     public static ConnectionSharingDataHolder getInstance() {
 
         return instance;
+    }
+
+    public OrganizationManager getOrganizationManager() {
+
+        return organizationManager;
+    }
+
+    public void setOrganizationManager(OrganizationManager organizationManager) {
+
+        this.organizationManager = organizationManager;
+    }
+
+    public ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
+
+        return resourceSharingPolicyHandlerService;
+    }
+
+    public void setResourceSharingPolicyHandlerService(
+            ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
+
+        this.resourceSharingPolicyHandlerService = resourceSharingPolicyHandlerService;
+    }
+
+    public IdpManager getIdpManager() {
+
+        return idpManager;
+    }
+
+    public void setIdpManager(IdpManager idpManager) {
+
+        this.idpManager = idpManager;
+    }
+
+    public OrganizationConnectionSharingService getOrganizationConnectionSharingService() {
+
+        return organizationConnectionSharingService;
+    }
+
+    public void setOrganizationConnectionSharingService(
+            OrganizationConnectionSharingService organizationConnectionSharingService) {
+
+        this.organizationConnectionSharingService = organizationConnectionSharingService;
     }
 }

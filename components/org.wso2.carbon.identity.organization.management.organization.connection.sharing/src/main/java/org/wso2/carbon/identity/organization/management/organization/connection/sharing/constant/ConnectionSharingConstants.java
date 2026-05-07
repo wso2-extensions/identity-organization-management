@@ -25,6 +25,25 @@ public class ConnectionSharingConstants {
 
     public static final String ERROR_PREFIX = "CSH-";
 
+    public static final String CONNECTION_IDS = "CONNECTION_IDS";
+    public static final String CONNECTION_NAMES = "CONNECTION_NAMES";
+    public static final String SHARING_MODE_ATTRIBUTE = "sharingMode";
+
+    public static final String AUDIT_MESSAGE =
+            "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : %s ";
+    public static final String AUDIT_SUCCESS = "Success";
+    public static final String AUDIT_FAILURE = "Failure";
+
+    public static final String ACTION_SELECTIVE_CONNECTION_SHARE = "selective connection share";
+    public static final String ACTION_GENERAL_CONNECTION_SHARE = "general connection share";
+    public static final String ACTION_SELECTIVE_CONNECTION_UNSHARE = "selective connection unshare";
+    public static final String ACTION_GENERAL_CONNECTION_UNSHARE = "general connection unshare";
+
+    public static final String ASYNC_PROCESSING_LOG_TEMPLATE =
+            "Processing async %s initiated by user: %s in organization: %s.";
+    public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
+            "Skipping connection share for organizations that are not immediate children: %s";
+
     /**
      * Error messages for connection sharing management.
      */
@@ -50,7 +69,19 @@ public class ConnectionSharingConstants {
                 "Connection criteria must be provided."),
         ERROR_CODE_INTERNAL_ERROR("10007",
                 "Internal server error.",
-                "An unexpected error occurred during the connection sharing operation.");
+                "An unexpected error occurred during the connection sharing operation."),
+        ERROR_CODE_CONNECTION_NOT_FOUND("10008",
+                "Connection not found.",
+                "The specified connection was not found in the organization."),
+        ERROR_CODE_GET_CHILD_ORGS("10009",
+                "Failed to retrieve child organizations.",
+                "An error occurred while retrieving child organizations of the initiating organization."),
+        ERROR_CODE_GET_SHARED_CONNECTIONS("10010",
+                "Failed to retrieve shared connection organizations.",
+                "An error occurred while retrieving the organizations a connection has been shared with."),
+        ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE("10011",
+                "Unsupported attribute.",
+                "The specified attribute is not supported for the get shared organizations operation.");
 
         private final String code;
         private final String message;
