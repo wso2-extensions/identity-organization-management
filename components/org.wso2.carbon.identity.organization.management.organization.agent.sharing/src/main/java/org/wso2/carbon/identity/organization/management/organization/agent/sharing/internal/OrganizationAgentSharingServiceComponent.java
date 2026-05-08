@@ -24,16 +24,19 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
+import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.AgentSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.AgentSharingPolicyHandlerServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.OrganizationAgentSharingService;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.OrganizationAgentSharingServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.agent.sharing.listener.OrganizationAgentSharingHandler;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
@@ -55,16 +58,35 @@ public class OrganizationAgentSharingServiceComponent {
     @Activate
     protected void activate(ComponentContext componentContext) {
 
-        BundleContext bundleContext = componentContext.getBundleContext();
-        OrganizationAgentSharingService organizationAgentSharingService = new OrganizationAgentSharingServiceImpl();
-        OrganizationAgentSharingDataHolder.getInstance()
-                .setOrganizationAgentSharingService(organizationAgentSharingService);
-        bundleContext.registerService(OrganizationAgentSharingService.class.getName(), organizationAgentSharingService,
-                null);
-        AgentSharingPolicyHandlerService agentSharingPolicyHandlerService = new AgentSharingPolicyHandlerServiceImpl();
-        bundleContext.registerService(AgentSharingPolicyHandlerService.class.getName(),
-                agentSharingPolicyHandlerService, null);
-        LOG.debug("OrganizationAgentSharingServiceComponent activated successfully.");
+        try {
+            BundleContext bundleContext = componentContext.getBundleContext();
+            OrganizationAgentSharingService organizationAgentSharingService =
+                    new OrganizationAgentSharingServiceImpl();
+            OrganizationAgentSharingDataHolder.getInstance()
+                    .setOrganizationAgentSharingService(organizationAgentSharingService);
+            bundleContext.registerService(OrganizationAgentSharingService.class.getName(),
+                    organizationAgentSharingService, null);
+            AgentSharingPolicyHandlerService agentSharingPolicyHandlerService =
+                    new AgentSharingPolicyHandlerServiceImpl();
+            bundleContext.registerService(AgentSharingPolicyHandlerService.class.getName(),
+                    agentSharingPolicyHandlerService, null);
+            bundleContext.registerService(AbstractEventHandler.class.getName(),
+                    new OrganizationAgentSharingHandler(), null);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("OrganizationAgentSharingServiceComponent activated successfully.");
+            }
+        } catch (Exception e) {
+            LOG.error("Error while activating OrganizationAgentSharingServiceComponent bundle.", e);
+        }
+    }
+
+    @Deactivate
+    protected void deactivate(ComponentContext componentContext) {
+
+        OrganizationAgentSharingDataHolder.getInstance().setOrganizationAgentSharingService(null);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("OrganizationAgentSharingServiceComponent bundle is deactivated.");
+        }
     }
 
     @Reference(

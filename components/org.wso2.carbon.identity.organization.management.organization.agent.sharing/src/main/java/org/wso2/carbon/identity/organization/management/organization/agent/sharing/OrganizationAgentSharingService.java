@@ -77,6 +77,15 @@ public interface OrganizationAgentSharingService {
     }
 
     /**
+     * Delete all agent associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the agent associations are deleted successfully.
+     * @throws OrganizationManagementException If an error occurs while deleting the agent associations.
+     */
+    boolean deleteAgentAssociationsByOrganizationId(String orgId) throws OrganizationManagementException;
+
+    /**
      * Delete the organization agent association of the shared agent.
      *
      * @param agentId         The ID of the agent.
@@ -118,7 +127,7 @@ public interface OrganizationAgentSharingService {
     default List<AgentAssociation> getAgentAssociationsOfGivenAgent(String actualAgentId, String residentOrgId)
             throws OrganizationManagementException {
 
-        return null;
+        throw new NotImplementedException("getAgentAssociationsOfGivenAgent method is not implemented.");
     }
 
     /**

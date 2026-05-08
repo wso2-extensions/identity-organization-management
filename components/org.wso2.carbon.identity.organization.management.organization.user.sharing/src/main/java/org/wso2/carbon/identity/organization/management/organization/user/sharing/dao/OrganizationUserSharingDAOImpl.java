@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -135,6 +136,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
 
     private final Supplier<NamedJdbcTemplate> associationTemplateSupplier;
+    private final Callable<String> associationDbProductSupplier;
 
     /**
      * Default constructor. Uses the UM database as the association datasource.
@@ -142,6 +144,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public OrganizationUserSharingDAOImpl() {
 
         this.associationTemplateSupplier = () -> getNewTemplate();
+        this.associationDbProductSupplier = OrganizationUserSharingDAOImpl::resolveDefaultDbProductType;
     }
 
     /**
@@ -149,17 +152,53 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
      * Allows the association table to be stored in a different database
      * while role-related queries always target the UM database.
      *
-     * @param associationTemplateSupplier Supplier that provides the {@link NamedJdbcTemplate} for the
-     *                                    {@code UM_ORG_USER_ASSOCIATION} table datasource.
+     * @param associationTemplateSupplier  Supplier that provides the {@link NamedJdbcTemplate} for the
+     *                                     {@code UM_ORG_USER_ASSOCIATION} table datasource.
+     * @param associationDbProductSupplier Callable that returns the DB product-type key for the association datasource,
+     *                                     so that dialect-specific SQL is selected from the correct datasource
+     *                                     rather than from the global UM database helpers.
      */
-    public OrganizationUserSharingDAOImpl(Supplier<NamedJdbcTemplate> associationTemplateSupplier) {
+    public OrganizationUserSharingDAOImpl(Supplier<NamedJdbcTemplate> associationTemplateSupplier,
+                                          Callable<String> associationDbProductSupplier) {
 
         this.associationTemplateSupplier = associationTemplateSupplier;
+        this.associationDbProductSupplier = associationDbProductSupplier;
     }
 
     private NamedJdbcTemplate getAssociationTemplate() {
 
         return associationTemplateSupplier.get();
+    }
+
+    private String getAssociationDbProductType() throws OrganizationManagementServerException {
+
+        try {
+            return associationDbProductSupplier.call();
+        } catch (OrganizationManagementServerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    private static String resolveDefaultDbProductType() throws OrganizationManagementServerException {
+
+        if (isDB2DB()) {
+            return DB_TYPE_DB2;
+        }
+        if (isMSSqlDB()) {
+            return DB_TYPE_MSSQL;
+        }
+        if (isMySqlDB()) {
+            return DB_TYPE_MYSQL;
+        }
+        if (isOracleDB()) {
+            return DB_TYPE_ORACLE;
+        }
+        if (isPostgreSqlDB()) {
+            return DB_TYPE_POSTGRESQL;
+        }
+        return DB_TYPE_DEFAULT;
     }
 
     @Override
@@ -358,22 +397,21 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         if (limit <= 0) {
             tail = String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL, sortOrder);
         } else {
-            tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit);
+            tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit, getAssociationDbProductType());
         }
 
         return (head + tail).replace(PLACEHOLDER_ORG_IDS, orgIdPlaceholders);
     }
 
-    private String getUserAssociationsByFilteringTailWithLimit(String sortOrder, int limit)
-            throws OrganizationManagementServerException {
+    private String getUserAssociationsByFilteringTailWithLimit(String sortOrder, int limit, String dbProductType) {
 
-        if (isOracleDB()) {
+        if (DB_TYPE_ORACLE.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE,
                     sortOrder, limit);
-        } else if (isMSSqlDB()) {
+        } else if (DB_TYPE_MSSQL.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL,
                     sortOrder, limit);
-        } else if (isDB2DB()) {
+        } else if (DB_TYPE_DB2.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_DB2,
                     sortOrder, limit);
         }
@@ -776,15 +814,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     private String getDBSpecificQuery(Map<String, String> dbQueryMap) throws OrganizationManagementServerException {
 
-        if (isDB2DB()) {
+        String dbProductType = getAssociationDbProductType();
+        if (DB_TYPE_DB2.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_DB2);
-        } else if (isMSSqlDB()) {
+        } else if (DB_TYPE_MSSQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_MSSQL);
-        } else if (isMySqlDB()) {
+        } else if (DB_TYPE_MYSQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_MYSQL);
-        } else if (isOracleDB()) {
+        } else if (DB_TYPE_ORACLE.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_ORACLE);
-        } else if (isPostgreSqlDB()) {
+        } else if (DB_TYPE_POSTGRESQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_POSTGRESQL);
         }
         return dbQueryMap.get(DB_TYPE_DEFAULT);

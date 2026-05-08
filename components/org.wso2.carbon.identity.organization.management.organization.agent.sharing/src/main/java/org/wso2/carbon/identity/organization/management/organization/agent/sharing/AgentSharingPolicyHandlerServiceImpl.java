@@ -157,6 +157,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     public void populateSelectiveAgentShare(SelectiveAgentShareDO selectiveAgentShareDO)
             throws AgentSharingMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating selective agent sharing process.");
+        }
         validateAgentShareInput(selectiveAgentShareDO);
         String sharingInitiatedOrgId = getOrganizationId();
         List<SelectiveAgentShareOrgDetailsDO> organizations = selectiveAgentShareDO.getOrganizations();
@@ -192,6 +195,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     @Override
     public void populateGeneralAgentShare(GeneralAgentShareDO generalAgentShareDO) throws AgentSharingMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating general agent sharing process.");
+        }
         validateAgentShareInput(generalAgentShareDO);
         String sharingInitiatedOrgId = getOrganizationId();
         Map<String, AgentCriteriaType> agentCriteria = generalAgentShareDO.getAgentCriteria();
@@ -219,7 +225,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general agent share processing.", ex);
+                    LOG.error("Error occurred during async selective agent share processing for organization: "
+                            + sharingInitiatedOrgId, ex);
                     return null;
                 });
     }

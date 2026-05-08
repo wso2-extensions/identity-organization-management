@@ -77,13 +77,17 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
     private static final Log LOG = LogFactory.getLog(OrganizationAgentSharingDAOImpl.class);
 
     private final OrganizationUserSharingDAOImpl userSharingDao =
-            new OrganizationUserSharingDAOImpl(AgentDbUtil::getAgentNewTemplate);
+            new OrganizationUserSharingDAOImpl(AgentDbUtil::getAgentNewTemplate, AgentDbUtil::getAgentDbProductType);
 
     @Override
     public void createOrganizationAgentAssociation(String agentId, String orgId, String associatedAgentId,
                                                    String associatedOrgId, SharedType sharedType)
             throws OrganizationManagementServerException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Creating agent association for associatedAgentId: " + associatedAgentId + " in orgId: "
+                    + orgId);
+        }
         userSharingDao.createOrganizationUserAssociation(agentId, orgId, associatedAgentId, associatedOrgId,
                 toUserSharedType(sharedType));
     }
@@ -100,6 +104,13 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
             throws OrganizationManagementServerException {
 
         return userSharingDao.deleteUserAssociationsOfAssociatedUser(associatedAgentId, associatedOrgId);
+    }
+
+    @Override
+    public boolean deleteAgentAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        return userSharingDao.deleteUserAssociationsByOrganizationId(orgId);
     }
 
     @Override

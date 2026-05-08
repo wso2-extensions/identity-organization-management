@@ -220,21 +220,41 @@ public class AgentSharingConstants {
             this.description = description;
         }
 
+        /**
+         * Returns the error code prefixed with {@code SHARING_ERROR_PREFIX}.
+         *
+         * @return the prefixed error code string.
+         */
         public String getCode() {
 
             return SHARING_ERROR_PREFIX + code;
         }
 
+        /**
+         * Returns the human-readable message for this error enum constant.
+         *
+         * @return the error message string.
+         */
         public String getMessage() {
 
             return message;
         }
 
+        /**
+         * Returns the detailed description for this error enum constant.
+         *
+         * @return the error description string.
+         */
         public String getDescription() {
 
             return description;
         }
 
+        /**
+         * Returns a combined string representation containing the error code and message.
+         *
+         * @return a string in the format {@code <code> | <message>}.
+         */
         @Override
         public String toString() {
 

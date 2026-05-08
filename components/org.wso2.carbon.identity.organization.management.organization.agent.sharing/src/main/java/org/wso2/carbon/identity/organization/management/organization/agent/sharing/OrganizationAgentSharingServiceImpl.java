@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
@@ -70,6 +72,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 )
 public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSharingService {
 
+    private static final Log LOG = LogFactory.getLog(OrganizationAgentSharingServiceImpl.class);
+
     private final OrganizationAgentSharingDAO organizationAgentSharingDAO = new OrganizationAgentSharingDAOImpl();
 
     /**
@@ -87,6 +91,10 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
                                        SharedType sharedType) throws OrganizationManagementException {
 
         try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Sharing organization agent with orgId: " + orgId + " and associatedOrgId: "
+                        + associatedOrgId);
+            }
             String sharedOrgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             startTenantFlow(sharedOrgTenantDomain);
             IdentityUtil.threadLocalProperties.get().put(PROCESS_ADD_SHARED_AGENT, true);
@@ -111,8 +119,18 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
 
             // Create the agent association record in the database.
             // Agent ID equals agent username, so associatedAgentId is used directly as the shared agent's ID.
-            organizationAgentSharingDAO.createOrganizationAgentAssociation(sharedUser.getUserID(), orgId,
-                    associatedAgentId, associatedOrgId, sharedType);
+            try {
+                organizationAgentSharingDAO.createOrganizationAgentAssociation(sharedUser.getUserID(), orgId,
+                        associatedAgentId, associatedOrgId, sharedType);
+            } catch (OrganizationManagementException e) {
+                try {
+                    sharedOrgAgentStoreManager.deleteUserWithID(sharedUser.getUserID());
+                } catch (UserStoreException deletionError) {
+                    LOG.error("Failed to delete provisioned shared agent " + sharedUser.getUserID()
+                            + " after association creation failure in org " + orgId + ".", deletionError);
+                }
+                throw e;
+            }
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         } finally {
@@ -128,6 +146,9 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
     public boolean unshareOrganizationAgents(String associatedAgentId, String associatedOrgId)
             throws OrganizationManagementException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unsharing organization agents for associatedOrgId: " + associatedOrgId);
+        }
         List<AgentAssociation> agentAssociationList =
                 organizationAgentSharingDAO.getAgentAssociationsOfAssociatedAgent(associatedAgentId, associatedOrgId);
         for (AgentAssociation agentAssociation : agentAssociationList) {
@@ -148,7 +169,7 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
         }
         removeSharedAgent(agentAssociation);
         return organizationAgentSharingDAO.deleteAgentAssociationOfAgentByAssociatedOrg(
-                agentAssociation.getAgentId(), sharedOrgId);
+                agentAssociation.getAgentId(), agentAssociation.getAgentResidentOrganizationId());
     }
 
     @Override
@@ -156,6 +177,13 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             throws OrganizationManagementException {
 
         return organizationAgentSharingDAO.deleteAgentAssociationOfAgentByAssociatedOrg(agentId, associatedOrgId);
+    }
+
+    @Override
+    public boolean deleteAgentAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementException {
+
+        return organizationAgentSharingDAO.deleteAgentAssociationsByOrganizationId(orgId);
     }
 
     @Override

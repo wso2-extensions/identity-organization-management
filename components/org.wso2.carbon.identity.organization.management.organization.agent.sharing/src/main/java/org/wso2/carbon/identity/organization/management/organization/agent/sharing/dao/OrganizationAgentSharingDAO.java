@@ -127,6 +127,19 @@ public interface OrganizationAgentSharingDAO {
     }
 
     /**
+     * Delete all agent associations for a deleted organization.
+     *
+     * @param orgId The organization ID that is being deleted.
+     * @return True if all the agent associations are deleted successfully.
+     * @throws OrganizationManagementServerException If an error occurs while deleting the agent associations.
+     */
+    default boolean deleteAgentAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException {
+
+        throw new NotImplementedException("deleteAgentAssociationsByOrganizationId method is not implemented.");
+    }
+
+    /**
      * Checks if the given agent has at least one association with any child organization.
      *
      * @param associatedAgentId The ID of the associated agent.
