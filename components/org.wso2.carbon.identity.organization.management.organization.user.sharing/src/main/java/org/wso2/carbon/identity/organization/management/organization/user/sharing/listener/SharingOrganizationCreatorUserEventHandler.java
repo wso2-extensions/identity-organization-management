@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -65,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.InternalRoleDomains.APPLICATION_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.user.mgt.UserMgtConstants.INTERNAL_ROLE;
@@ -164,7 +162,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
 
         // Retrieve the authenticated service provider from thread-local context.
         Object authenticatedAppFromThreadLocal = IdentityUtil.threadLocalProperties.get()
-                .get(FrameworkConstants.SERVICE_PROVIDER);
+                .get(UserSharingConstants.SERVICE_PROVIDER_PROPERTY_NAME);
         // Allow if no service provider is set (indicates Basic Auth usage).
         if (!(authenticatedAppFromThreadLocal instanceof String)) {
             // When organization creation is initiated via basic auth, SP is not set in the thread local.
@@ -321,7 +319,7 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
             for (Group group : groups) {
                 String groupName = group.getGroupName();
                 if (!StringUtils.containsIgnoreCase(groupName, INTERNAL_ROLE) &&
-                        !StringUtils.containsIgnoreCase(groupName, APPLICATION_DOMAIN)) {
+                        !StringUtils.containsIgnoreCase(groupName, UserSharingConstants.APPLICATION_DOMAIN)) {
                     userGroups.add(group.getGroupID());
                 }
             }
