@@ -23,7 +23,6 @@ import org.wso2.carbon.identity.organization.management.organization.agent.shari
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.AgentAssociation;
-import org.wso2.carbon.identity.organization.management.service.exception.NotImplementedException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
@@ -46,12 +45,9 @@ public interface OrganizationAgentSharingDAO {
      * @throws OrganizationManagementServerException If an error occurs while creating the organization agent
      *                                               association.
      */
-    default void createOrganizationAgentAssociation(String agentId, String orgId, String associatedAgentId,
-                                                    String associatedOrgId, SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("createOrganizationAgentAssociation method is not implemented.");
-    }
+    void createOrganizationAgentAssociation(String agentId, String orgId, String associatedAgentId,
+                                            String associatedOrgId, SharedType sharedType)
+            throws OrganizationManagementServerException;
 
     /**
      * Delete the organization agent association for a shared agent in a shared organization.
@@ -98,16 +94,12 @@ public interface OrganizationAgentSharingDAO {
      * @return The list of {@link AgentAssociation}s.
      * @throws OrganizationManagementException If an error occurs while fetching agent associations.
      */
-    default List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                         String associatedOrgId,
-                                                                         List<String> orgIdsScope,
-                                                                         List<ExpressionNode> expressionNodes,
-                                                                         String sortOrder, int limit)
-            throws OrganizationManagementException {
-
-        throw new NotImplementedException(
-                "getAgentAssociationsOfAssociatedAgent method with filters is not implemented.");
-    }
+    List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
+                                                                 String associatedOrgId,
+                                                                 List<String> orgIdsScope,
+                                                                 List<ExpressionNode> expressionNodes,
+                                                                 String sortOrder, int limit)
+            throws OrganizationManagementException;
 
     /**
      * Get all the agent associations for a given agent filtered by shared type.
@@ -118,13 +110,10 @@ public interface OrganizationAgentSharingDAO {
      * @return The list of {@link AgentAssociation}s.
      * @throws OrganizationManagementServerException If an error occurs while fetching agent associations.
      */
-    default List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                         String associatedOrgId,
-                                                                         SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("getAgentAssociationsOfAssociatedAgent method is not implemented.");
-    }
+    List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
+                                                                 String associatedOrgId,
+                                                                 SharedType sharedType)
+            throws OrganizationManagementServerException;
 
     /**
      * Delete all agent associations for a deleted organization.
@@ -133,11 +122,8 @@ public interface OrganizationAgentSharingDAO {
      * @return True if all the agent associations are deleted successfully.
      * @throws OrganizationManagementServerException If an error occurs while deleting the agent associations.
      */
-    default boolean deleteAgentAssociationsByOrganizationId(String orgId)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("deleteAgentAssociationsByOrganizationId method is not implemented.");
-    }
+    boolean deleteAgentAssociationsByOrganizationId(String orgId)
+            throws OrganizationManagementServerException;
 
     /**
      * Checks if the given agent has at least one association with any child organization.
@@ -147,11 +133,8 @@ public interface OrganizationAgentSharingDAO {
      * @return True if the agent has at least one association with any organization.
      * @throws OrganizationManagementServerException If an error occurs while checking agent associations.
      */
-    default boolean hasAgentAssociations(String associatedAgentId, String associatedOrgId)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("hasAgentAssociations method is not implemented.");
-    }
+    boolean hasAgentAssociations(String associatedAgentId, String associatedOrgId)
+            throws OrganizationManagementServerException;
 
     /**
      * Checks if the given agent has at least one association within the specified organization scope.
@@ -162,12 +145,9 @@ public interface OrganizationAgentSharingDAO {
      * @return True if the agent has at least one association within the specified organization scope.
      * @throws OrganizationManagementServerException If an error occurs while checking agent associations.
      */
-    default boolean hasAgentAssociationsInOrganizations(String associatedAgentId, String associatedOrgId,
-                                                        List<String> orgIds)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("hasAgentAssociationsInOrganizations DAO method is not implemented.");
-    }
+    boolean hasAgentAssociationsInOrganizations(String associatedAgentId, String associatedOrgId,
+                                                List<String> orgIds)
+            throws OrganizationManagementServerException;
 
     /**
      * Get the organization agent association of a given agent in a given organization.
@@ -203,13 +183,10 @@ public interface OrganizationAgentSharingDAO {
      * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
      *                                         eligible agent names.
      */
-    default List<String> getNonDeletableAgentRoleAssignments(String roleId,
-                                                             List<String> deletedDomainQualifiedAgentNamesList,
-                                                             String tenantDomain, String requestingOrgId)
-            throws IdentityRoleManagementException {
-
-        throw new NotImplementedException("getNonDeletableAgentRoleAssignments method is not implemented.");
-    }
+    List<String> getNonDeletableAgentRoleAssignments(String roleId,
+                                                     List<String> deletedDomainQualifiedAgentNamesList,
+                                                     String tenantDomain, String requestingOrgId)
+            throws IdentityRoleManagementException;
 
     /**
      * Retrieves the shared agent roles among the given agent roles.
@@ -219,12 +196,9 @@ public interface OrganizationAgentSharingDAO {
      * @return List of shared agent roles.
      * @throws IdentityRoleManagementException If an error occurs while retrieving shared agent roles.
      */
-    default List<String> getSharedAgentRolesFromAgentRoles(List<String> allAgentRolesOfSharedAgent,
-                                                           String tenantDomain)
-            throws IdentityRoleManagementException {
-
-        throw new NotImplementedException("getSharedAgentRolesFromAgentRoles method is not implemented.");
-    }
+    List<String> getSharedAgentRolesFromAgentRoles(List<String> allAgentRolesOfSharedAgent,
+                                                   String tenantDomain)
+            throws IdentityRoleManagementException;
 
     /**
      * Adds edit restrictions for shared agent roles.
@@ -237,13 +211,10 @@ public interface OrganizationAgentSharingDAO {
      * @param permittedOrgId The organization ID with permitted access.
      * @throws AgentSharingMgtServerException If an error occurs while adding edit restrictions.
      */
-    default void addEditRestrictionsForSharedAgentRole(String roleId, String agentName, String tenantDomain,
-                                                       String domainName, EditOperation editOperation,
-                                                       String permittedOrgId)
-            throws AgentSharingMgtServerException {
-
-        throw new NotImplementedException("addEditRestrictionsForSharedAgentRole method is not implemented.");
-    }
+    void addEditRestrictionsForSharedAgentRole(String roleId, String agentName, String tenantDomain,
+                                               String domainName, EditOperation editOperation,
+                                               String permittedOrgId)
+            throws AgentSharingMgtServerException;
 
     /**
      * Retrieves the IDs of roles shared with an agent in a specific organization.
@@ -255,11 +226,8 @@ public interface OrganizationAgentSharingDAO {
      * @throws AgentSharingMgtServerException If an error occurs while retrieving the roles shared with the agent
      *                                        in the organization.
      */
-    default List<String> getRolesSharedWithAgentInOrganization(String agentName, int tenantId, String domainName)
-            throws AgentSharingMgtServerException {
-
-        throw new NotImplementedException("getRolesSharedWithAgentInOrganization method is not implemented.");
-    }
+    List<String> getRolesSharedWithAgentInOrganization(String agentName, int tenantId, String domainName)
+            throws AgentSharingMgtServerException;
 
     /**
      * Get the agent associations of the associated agent in the given organizations.
@@ -269,13 +237,9 @@ public interface OrganizationAgentSharingDAO {
      * @return The list of {@link AgentAssociation}s for the given agent in the specified organizations.
      * @throws OrganizationManagementServerException If an error occurs while retrieving the agent associations.
      */
-    default List<AgentAssociation> getAgentAssociationsOfGivenAgentOnGivenOrgs(String associatedAgentId,
-                                                                                List<String> orgIds)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException(
-                "getAgentAssociationsOfGivenAgentOnGivenOrgs method is not implemented.");
-    }
+    List<AgentAssociation> getAgentAssociationsOfGivenAgentOnGivenOrgs(String associatedAgentId,
+                                                                        List<String> orgIds)
+            throws OrganizationManagementServerException;
 
     /**
      * Updates the shared type of agent association.
@@ -284,9 +248,6 @@ public interface OrganizationAgentSharingDAO {
      * @param sharedType The new shared type to be set for the agent association.
      * @throws OrganizationManagementServerException If an error occurs while updating the shared type.
      */
-    default void updateSharedTypeOfAgentAssociation(int id, SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        throw new NotImplementedException("updateSharedTypeOfAgentAssociation method is not implemented.");
-    }
+    void updateSharedTypeOfAgentAssociation(int id, SharedType sharedType)
+            throws OrganizationManagementServerException;
 }

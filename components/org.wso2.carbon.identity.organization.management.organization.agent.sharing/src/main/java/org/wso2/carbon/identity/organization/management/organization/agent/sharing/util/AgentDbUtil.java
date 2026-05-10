@@ -41,6 +41,9 @@ public class AgentDbUtil {
     private static final String DB_TYPE_ORACLE = "oracle";
     private static final String DB_TYPE_POSTGRESQL = "postgresql";
     private static final String DB_TYPE_DEFAULT = "default";
+    private static final String PRODUCT_NAME_MSSQL = "microsoft sql server";
+    private static final String PRODUCT_NAME_MARIADB = "mariadb";
+    private static final String PRODUCT_NAME_H2 = "h2";
 
     /**
      * Cached agent identity datasource. Resolved once via JNDI so that async threads,
@@ -101,19 +104,20 @@ public class AgentDbUtil {
             return DB_TYPE_DEFAULT;
         }
         String lowerName = productName.toLowerCase(Locale.ENGLISH);
-        if (lowerName.contains("db2")) {
+        if (lowerName.contains(DB_TYPE_DB2)) {
             return DB_TYPE_DB2;
         }
-        if (lowerName.contains("microsoft sql server")) {
+        if (lowerName.contains(PRODUCT_NAME_MSSQL)) {
             return DB_TYPE_MSSQL;
         }
-        if (lowerName.contains("mysql") || lowerName.contains("mariadb") || lowerName.contains("h2")) {
+        if (lowerName.contains(DB_TYPE_MYSQL) || lowerName.contains(PRODUCT_NAME_MARIADB)
+                || lowerName.contains(PRODUCT_NAME_H2)) {
             return DB_TYPE_MYSQL;
         }
-        if (lowerName.contains("oracle")) {
+        if (lowerName.contains(DB_TYPE_ORACLE)) {
             return DB_TYPE_ORACLE;
         }
-        if (lowerName.contains("postgresql")) {
+        if (lowerName.contains(DB_TYPE_POSTGRESQL)) {
             return DB_TYPE_POSTGRESQL;
         }
         return DB_TYPE_DEFAULT;
@@ -125,7 +129,12 @@ public class AgentDbUtil {
             synchronized (AgentDbUtil.class) {
                 if (agentDataSource == null) {
                     try {
-                        agentDataSource = InitialContext.doLookup(AGENT_DB_JNDI_NAME);
+                        try {
+                            agentDataSource = InitialContext.doLookup(AGENT_DB_JNDI_NAME);
+                        } catch (NamingException ignored) {
+                            // Fallback for environments that require java: namespace resolution.
+                            agentDataSource = InitialContext.doLookup("java:comp/env/" + AGENT_DB_JNDI_NAME);
+                        }
                     } catch (NamingException e) {
                         throw new RuntimeException("Error looking up agent datasource: " + AGENT_DB_JNDI_NAME, e);
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -48,6 +48,7 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.common.User;
+import org.wso2.carbon.user.core.config.RealmConfiguration;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.model.UniqueIDUserClaimSearchEntry;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -68,6 +69,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.testng.Assert.assertEquals;
@@ -76,6 +78,7 @@ import static org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants.SH
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_MANAGED_ORGANIZATION_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.user.core.UserCoreConstants.DEFAULT_PROFILE;
+import static org.wso2.carbon.user.core.UserStoreConfigConstants.DOMAIN_NAME;
 
 /**
  * Test cases for SharedUserOperationEventListener.
@@ -165,6 +168,25 @@ public class SharedUserOperationEventListenerTest {
 
         SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
         assertEquals(sharedUserOperationEventListener.getExecutionOrderId(), 128);
+    }
+
+    @Test
+    public void testDoPreDeleteUserWithIDSkipsCleanupForAgentUserStoreDomain() throws UserStoreException {
+
+        RealmConfiguration realmConfiguration = mock(RealmConfiguration.class);
+        when(userStoreManager.getRealmConfiguration()).thenReturn(realmConfiguration);
+        when(realmConfiguration.getUserStoreProperty(DOMAIN_NAME)).thenReturn("agent_user_store");
+
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockListenerEnabledStatus(true, true, identityUtil);
+            identityUtil.when(IdentityUtil::getAgentIdentityUserstoreName).thenReturn("agent_user_store");
+
+            SharedUserOperationEventListener sharedUserOperationEventListener = new SharedUserOperationEventListener();
+            boolean listenerStatus =
+                    sharedUserOperationEventListener.doPreDeleteUserWithID(USER_1_IN_ROOT, userStoreManager);
+            assertTrue(listenerStatus);
+            verifyNoInteractions(organizationUserSharingService);
+        }
     }
 
     @DataProvider(name = "dataProviderForTestSkippingClaimUpdateRestriction")

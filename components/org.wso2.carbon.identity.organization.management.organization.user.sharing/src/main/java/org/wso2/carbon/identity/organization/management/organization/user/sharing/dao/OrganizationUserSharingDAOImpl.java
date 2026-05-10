@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -135,6 +136,8 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
 
+    private static volatile String defaultDbProductType;
+
     private final Supplier<NamedJdbcTemplate> associationTemplateSupplier;
     private final Callable<String> associationDbProductSupplier;
 
@@ -143,7 +146,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
      */
     public OrganizationUserSharingDAOImpl() {
 
-        this.associationTemplateSupplier = () -> getNewTemplate();
+        this.associationTemplateSupplier = Utils::getNewTemplate;
         this.associationDbProductSupplier = OrganizationUserSharingDAOImpl::resolveDefaultDbProductType;
     }
 
@@ -177,28 +180,32 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         } catch (OrganizationManagementServerException e) {
             throw e;
         } catch (Exception e) {
-            throw handleServerException(ERROR_CODE_ERROR_CHECK_ORGANIZATION_USER_ASSOCIATIONS, e);
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
         }
     }
 
     private static String resolveDefaultDbProductType() throws OrganizationManagementServerException {
 
-        if (isDB2DB()) {
-            return DB_TYPE_DB2;
+        if (defaultDbProductType == null) {
+            synchronized (OrganizationUserSharingDAOImpl.class) {
+                if (defaultDbProductType == null) {
+                    if (isDB2DB()) {
+                        defaultDbProductType = DB_TYPE_DB2;
+                    } else if (isMSSqlDB()) {
+                        defaultDbProductType = DB_TYPE_MSSQL;
+                    } else if (isMySqlDB()) {
+                        defaultDbProductType = DB_TYPE_MYSQL;
+                    } else if (isOracleDB()) {
+                        defaultDbProductType = DB_TYPE_ORACLE;
+                    } else if (isPostgreSqlDB()) {
+                        defaultDbProductType = DB_TYPE_POSTGRESQL;
+                    } else {
+                        defaultDbProductType = DB_TYPE_DEFAULT;
+                    }
+                }
+            }
         }
-        if (isMSSqlDB()) {
-            return DB_TYPE_MSSQL;
-        }
-        if (isMySqlDB()) {
-            return DB_TYPE_MYSQL;
-        }
-        if (isOracleDB()) {
-            return DB_TYPE_ORACLE;
-        }
-        if (isPostgreSqlDB()) {
-            return DB_TYPE_POSTGRESQL;
-        }
-        return DB_TYPE_DEFAULT;
+        return defaultDbProductType;
     }
 
     @Override

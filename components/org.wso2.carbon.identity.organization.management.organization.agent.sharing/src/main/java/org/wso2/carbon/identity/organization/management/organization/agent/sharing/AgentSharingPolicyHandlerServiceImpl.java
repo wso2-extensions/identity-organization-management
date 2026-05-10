@@ -184,6 +184,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                 sharingInitiatedUserId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
+                        IdentityUtil.threadLocalProperties.get().clear();
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
@@ -222,6 +223,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                 sharingInitiatedOrgId, sharingInitiatedUserId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
+                        IdentityUtil.threadLocalProperties.get().clear();
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
@@ -256,6 +258,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         processSelectiveAgentUnshare(agentCriteria, organizations, sharingInitiatedOrgId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
+                        IdentityUtil.threadLocalProperties.get().clear();
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
@@ -287,6 +290,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         processGeneralAgentUnshare(agentCriteria, sharingInitiatedOrgId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
+                        IdentityUtil.threadLocalProperties.get().clear();
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
@@ -320,6 +324,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                 agentSharePatchDO);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
+                        IdentityUtil.threadLocalProperties.get().clear();
                     }
                 }, EXECUTOR)
                 .exceptionally(ex -> {
@@ -1525,9 +1530,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     /**
      * Restores thread-local properties for async execution.
      *
-     * @param tenantDomain         Tenant domain.
-     * @param tenantId             Tenant ID.
-     * @param username             Username.
+     * @param tenantDomain          Tenant domain.
+     * @param tenantId              Tenant ID.
+     * @param username              Username.
      * @param threadLocalProperties Thread-local properties to restore.
      */
     private void initiateThreadLocalContext(String tenantDomain, int tenantId, String username,

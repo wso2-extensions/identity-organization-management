@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2025-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,10 +19,13 @@
 package org.wso2.carbon.identity.organization.management.claim.provider;
 
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.organization.management.claim.provider.internal.OrganizationClaimProviderServiceComponentHolder;
@@ -48,6 +51,9 @@ public class OrganizationClaimProviderTest {
     private static final String ORG_ID_CLAIM = "org_id";
     private static final String ORG_NAME_CLAIM = "org_name";
     private static final String ORG_HANDLE_CLAIM = "org_handle";
+    private static final String USER_ORG_CLAIM = "user_org";
+    private static final String AGENT_ORG_CLAIM = "agent_org";
+    private static final String AGENT_USERSTORE_DOMAIN = "AGENT_USER_STORE";
 
     private OrganizationClaimProvider organizationClaimProvider;
 
@@ -94,5 +100,36 @@ public class OrganizationClaimProviderTest {
         assertEquals(AUTH_ORG_ID, additionalClaims.get(ORG_ID_CLAIM));
         assertEquals(AUTHORIZED_ORG_NAME, additionalClaims.get(ORG_NAME_CLAIM));
         assertEquals(AUTHORIZED_ORG_HANDLE, additionalClaims.get(ORG_HANDLE_CLAIM));
+    }
+
+    @Test
+    public void testGetAdditionalClaimsForAgentUserStore() throws IdentityOAuth2Exception,
+            OrganizationManagementException {
+
+        when(organizationManagementInitializeService.isOrganizationManagementEnabled()).thenReturn(true);
+        OrganizationClaimProviderServiceComponentHolder.getInstance()
+                .setOrganizationManagementEnable(organizationManagementInitializeService);
+
+        when(oAuthTokenReqMessageContext.getAuthorizedUser()).thenReturn(authenticatedUser);
+        when(authenticatedUser.getUserResidentOrganization()).thenReturn(USER_ORG_ID);
+        when(authenticatedUser.getAccessingOrganization()).thenReturn(AUTH_ORG_ID);
+        when(authenticatedUser.getUserStoreDomain()).thenReturn(AGENT_USERSTORE_DOMAIN);
+
+        when(organizationManager.getOrganizationNameById(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_NAME);
+        when(organizationManager.resolveTenantDomain(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_HANDLE);
+
+        try (MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            identityUtil.when(IdentityUtil::getAgentIdentityUserstoreName).thenReturn(AGENT_USERSTORE_DOMAIN);
+
+            Map<String, Object> additionalClaims =
+                    organizationClaimProvider.getAdditionalClaims(oAuthTokenReqMessageContext);
+
+            assertTrue(additionalClaims.containsKey(AGENT_ORG_CLAIM));
+            assertTrue(!additionalClaims.containsKey(USER_ORG_CLAIM));
+            assertEquals(USER_ORG_ID, additionalClaims.get(AGENT_ORG_CLAIM));
+            assertEquals(AUTH_ORG_ID, additionalClaims.get(ORG_ID_CLAIM));
+            assertEquals(AUTHORIZED_ORG_NAME, additionalClaims.get(ORG_NAME_CLAIM));
+            assertEquals(AUTHORIZED_ORG_HANDLE, additionalClaims.get(ORG_HANDLE_CLAIM));
+        }
     }
 }
