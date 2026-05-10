@@ -170,6 +170,9 @@ public class SharedUserOperationEventListenerTest {
         assertEquals(sharedUserOperationEventListener.getExecutionOrderId(), 128);
     }
 
+    /**
+     * Tests that shared user cleanup is skipped when deletion is triggered from the agent user store domain.
+     */
     @Test
     public void testDoPreDeleteUserWithIDSkipsCleanupForAgentUserStoreDomain() throws UserStoreException {
 

@@ -63,7 +63,6 @@ public enum AgentSharePatchOperation {
                 return operation;
             }
         }
-
         throw new IllegalArgumentException(
                 "Invalid operation: " + value.trim() + ". Valid operations are: " + VALID_OPERATIONS);
     }

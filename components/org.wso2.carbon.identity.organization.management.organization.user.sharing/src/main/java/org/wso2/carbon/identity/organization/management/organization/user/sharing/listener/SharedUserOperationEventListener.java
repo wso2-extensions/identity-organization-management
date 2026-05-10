@@ -98,8 +98,9 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         // Skip shared user association cleanup for agent flows; agent associations are handled separately.
-        if (IdentityUtil.getAgentIdentityUserstoreName().equalsIgnoreCase(
-                ((AbstractUserStoreManager) userStoreManager).getRealmConfiguration()
+        AbstractUserStoreManager abstractUserStoreManager = (AbstractUserStoreManager) userStoreManager;
+        if (abstractUserStoreManager.getRealmConfiguration() != null &&
+                IdentityUtil.getAgentIdentityUserstoreName().equalsIgnoreCase(userStoreManager.getRealmConfiguration()
                         .getUserStoreProperty(DOMAIN_NAME))) {
             return true;
         }

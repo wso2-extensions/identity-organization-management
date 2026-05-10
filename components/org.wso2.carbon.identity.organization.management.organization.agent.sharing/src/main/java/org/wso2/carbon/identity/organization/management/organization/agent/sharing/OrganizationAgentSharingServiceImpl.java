@@ -22,7 +22,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.annotation.bundle.Capability;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.EditOperation;
@@ -35,7 +34,6 @@ import org.wso2.carbon.identity.organization.management.organization.agent.shari
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -173,13 +171,6 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
     }
 
     @Override
-    public boolean deleteAgentAssociation(String agentId, String associatedOrgId)
-            throws OrganizationManagementException {
-
-        return organizationAgentSharingDAO.deleteAgentAssociationOfAgentByAssociatedOrg(agentId, associatedOrgId);
-    }
-
-    @Override
     public boolean deleteAgentAssociationsByOrganizationId(String orgId)
             throws OrganizationManagementException {
 
@@ -194,44 +185,10 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
     }
 
     @Override
-    public AgentAssociation getAgentAssociation(String agentId, String orgId)
-            throws OrganizationManagementException {
-
-        return organizationAgentSharingDAO.getAgentAssociation(agentId, orgId);
-    }
-
-    @Override
     public List<AgentAssociation> getAgentAssociationsOfGivenAgent(String actualAgentId, String residentOrgId)
             throws OrganizationManagementException {
 
         return organizationAgentSharingDAO.getAgentAssociationsOfAssociatedAgent(actualAgentId, residentOrgId);
-    }
-
-    @Override
-    public List<AgentAssociation> getAgentAssociationsOfGivenAgent(String actualAgentId, String residentOrgId,
-                                                                   List<String> orgIdsScope,
-                                                                   List<ExpressionNode> expressionNodes,
-                                                                   String sortOrder, int limit)
-            throws OrganizationManagementException {
-
-        return organizationAgentSharingDAO.getAgentAssociationsOfAssociatedAgent(actualAgentId, residentOrgId,
-                orgIdsScope, expressionNodes, sortOrder, limit);
-    }
-
-    @Override
-    public List<AgentAssociation> getAgentAssociationsOfGivenAgent(String actualAgentId, String residentOrgId,
-                                                                   SharedType sharedType)
-            throws OrganizationManagementException {
-
-        return organizationAgentSharingDAO.getAgentAssociationsOfAssociatedAgent(actualAgentId, residentOrgId,
-                sharedType);
-    }
-
-    @Override
-    public boolean hasAgentAssociations(String associatedAgentId, String associatedOrgId)
-            throws OrganizationManagementServerException {
-
-        return organizationAgentSharingDAO.hasAgentAssociations(associatedAgentId, associatedOrgId);
     }
 
     @Override
@@ -241,25 +198,6 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
 
         return organizationAgentSharingDAO.hasAgentAssociationsInOrganizations(associatedAgentId, associatedOrgId,
                 orgIds);
-    }
-
-    @Override
-    public List<String> getNonDeletableAgentRoleAssignments(String roleId,
-                                                            List<String> deletedDomainQualifiedAgentNamesList,
-                                                            String tenantDomain, String requestingOrgId)
-            throws IdentityRoleManagementException {
-
-        return organizationAgentSharingDAO.getNonDeletableAgentRoleAssignments(roleId,
-                deletedDomainQualifiedAgentNamesList, tenantDomain, requestingOrgId);
-    }
-
-    @Override
-    public List<String> getSharedAgentRolesFromAgentRoles(List<String> allAgentRolesOfSharedAgent,
-                                                          String tenantDomain)
-            throws IdentityRoleManagementException {
-
-        return organizationAgentSharingDAO.getSharedAgentRolesFromAgentRoles(allAgentRolesOfSharedAgent,
-                tenantDomain);
     }
 
     @Override
@@ -277,21 +215,6 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             throws AgentSharingMgtException {
 
         return organizationAgentSharingDAO.getRolesSharedWithAgentInOrganization(agentName, tenantId, domainName);
-    }
-
-    @Override
-    public List<AgentAssociation> getAgentAssociationsOfGivenAgentOnGivenOrgs(String associatedAgentId,
-                                                                               List<String> orgIds)
-            throws OrganizationManagementServerException {
-
-        return organizationAgentSharingDAO.getAgentAssociationsOfGivenAgentOnGivenOrgs(associatedAgentId, orgIds);
-    }
-
-    @Override
-    public void updateSharedTypeOfAgentAssociation(int id, SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        organizationAgentSharingDAO.updateSharedTypeOfAgentAssociation(id, sharedType);
     }
 
     private void removeSharedAgent(AgentAssociation agentAssociation) throws OrganizationManagementException {

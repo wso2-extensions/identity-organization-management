@@ -18,12 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing.dao;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
-import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SharedType;
@@ -32,24 +30,15 @@ import org.wso2.carbon.identity.organization.management.organization.agent.shari
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.util.AgentDbUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_AGENT_ROLE_ID;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.GET_AGENT_ROLE_IN_TENANT;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.GET_RESTRICTED_AGENT_NAMES_BY_ROLE_AND_ORG;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.GET_SHARED_AGENT_ROLES;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.GET_SHARED_ROLES_OF_SHARED_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.INSERT_RESTRICTED_EDIT_PERMISSION_FOR_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_AGENT_NAME;
@@ -61,10 +50,7 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_PERMITTED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_TENANT_ID;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.COLUMN_NAME_UM_UUID;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_NAME_AGENT_NAMES;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SQLConstants.SQLPlaceholders.PLACEHOLDER_ROLE_IDS;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
-import static org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants.Error.UNEXPECTED_SERVER_ERROR;
 
 /**
  * DAO implementation for managing organization agent associations.
@@ -123,37 +109,6 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
     }
 
     @Override
-    public List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                         String associatedOrgId,
-                                                                         List<String> orgIdsScope,
-                                                                         List<ExpressionNode> expressionNodes,
-                                                                         String sortOrder, int limit)
-            throws OrganizationManagementException {
-
-        return userSharingDao.getUserAssociationsOfAssociatedUser(associatedAgentId, associatedOrgId,
-                        orgIdsScope, expressionNodes, sortOrder, limit)
-                .stream().map(this::toAgentAssociation).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                         String associatedOrgId,
-                                                                         SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        return userSharingDao.getUserAssociationsOfAssociatedUser(associatedAgentId, associatedOrgId,
-                        toUserSharedType(sharedType))
-                .stream().map(this::toAgentAssociation).collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean hasAgentAssociations(String associatedAgentId, String associatedOrgId)
-            throws OrganizationManagementServerException {
-
-        return userSharingDao.hasUserAssociations(associatedAgentId, associatedOrgId);
-    }
-
-    @Override
     public boolean hasAgentAssociationsInOrganizations(String associatedAgentId, String associatedOrgId,
                                                        List<String> orgIds)
             throws OrganizationManagementServerException {
@@ -167,120 +122,6 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
 
         return toAgentAssociation(
                 userSharingDao.getUserAssociationOfAssociatedUserByOrgId(associatedAgentId, orgId));
-    }
-
-    @Override
-    public AgentAssociation getAgentAssociation(String agentId, String organizationId)
-            throws OrganizationManagementServerException {
-
-        return toAgentAssociation(userSharingDao.getUserAssociation(agentId, organizationId));
-    }
-
-    @Override
-    public List<AgentAssociation> getAgentAssociationsOfGivenAgentOnGivenOrgs(String associatedAgentId,
-                                                                               List<String> orgIds)
-            throws OrganizationManagementServerException {
-
-        return userSharingDao.getUserAssociationsOfGivenUserOnGivenOrgs(associatedAgentId, orgIds)
-                .stream().map(this::toAgentAssociation).collect(Collectors.toList());
-    }
-
-    @Override
-    public void updateSharedTypeOfAgentAssociation(int id, SharedType sharedType)
-            throws OrganizationManagementServerException {
-
-        userSharingDao.updateSharedTypeOfUserAssociation(id, toUserSharedType(sharedType));
-    }
-
-    @Override
-    public List<String> getNonDeletableAgentRoleAssignments(String roleId,
-                                                            List<String> deletedDomainQualifiedAgentNames,
-                                                            String tenantDomain, String permittedOrgId)
-            throws IdentityRoleManagementException {
-
-        if (CollectionUtils.isEmpty(deletedDomainQualifiedAgentNames)) {
-            return Collections.emptyList();
-        }
-
-        Map<String, List<String>> domainToAgentNamesMap = groupAgentNamesByDomain(deletedDomainQualifiedAgentNames);
-        List<String> nonDeletableAgentNames = new ArrayList<>();
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-
-        for (Map.Entry<String, List<String>> entry : domainToAgentNamesMap.entrySet()) {
-            String domainName = entry.getKey();
-            List<String> agentNamesInDomain = entry.getValue();
-
-            String agentNamePlaceholder = "AGENT_NAME_";
-            List<String> agentNamePlaceholders = new ArrayList<>();
-            for (int i = 1; i <= agentNamesInDomain.size(); i++) {
-                agentNamePlaceholders.add(":" + agentNamePlaceholder + i + ";");
-            }
-            String sqlStatement = GET_RESTRICTED_AGENT_NAMES_BY_ROLE_AND_ORG.replace(
-                    PLACEHOLDER_NAME_AGENT_NAMES, String.join(", ", agentNamePlaceholders));
-
-            try {
-                nonDeletableAgentNames.addAll(namedJdbcTemplate.executeQuery(sqlStatement,
-                        (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_AGENT_NAME),
-                        namedPreparedStatement -> {
-                            namedPreparedStatement.setString(COLUMN_NAME_UM_UUID, roleId);
-                            namedPreparedStatement.setString(COLUMN_NAME_UM_DOMAIN_NAME, domainName);
-                            namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-                            namedPreparedStatement.setString(COLUMN_NAME_UM_PERMITTED_ORG_ID, permittedOrgId);
-                            namedPreparedStatement.setString(COLUMN_NAME_UM_EDIT_OPERATION,
-                                    EditOperation.DELETE.name());
-                            for (int index = 1; index <= agentNamesInDomain.size(); index++) {
-                                namedPreparedStatement.setString(agentNamePlaceholder + index,
-                                        agentNamesInDomain.get(index - 1));
-                            }
-                        }));
-            } catch (DataAccessException e) {
-                String errorMessage = String.format(
-                        "Error while retrieving permitted agent names for role ID: %s in tenant domain: %s.", roleId,
-                        tenantDomain);
-                throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
-            }
-        }
-        return nonDeletableAgentNames;
-    }
-
-    @Override
-    public List<String> getSharedAgentRolesFromAgentRoles(List<String> roleIds, String tenantDomain)
-            throws IdentityRoleManagementException {
-
-        if (CollectionUtils.isEmpty(roleIds)) {
-            return Collections.emptyList();
-        }
-
-        String roleIdPlaceholder = "ROLE_ID_";
-        List<String> roleIdPlaceholders = new ArrayList<>();
-        for (int i = 1; i <= roleIds.size(); i++) {
-            roleIdPlaceholders.add(":" + roleIdPlaceholder + i + ";");
-        }
-
-        String fetchSharedRolesQuery =
-                GET_SHARED_AGENT_ROLES.replace(PLACEHOLDER_ROLE_IDS, String.join(", ", roleIdPlaceholders));
-
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-
-        try {
-            return namedJdbcTemplate.executeQuery(
-                    fetchSharedRolesQuery,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_UM_UUID),
-                    namedPreparedStatement -> {
-                        namedPreparedStatement.setInt(COLUMN_NAME_UM_TENANT_ID, tenantId);
-                        int index = 1;
-                        for (String roleId : roleIds) {
-                            namedPreparedStatement.setString(roleIdPlaceholder + index, roleId);
-                            index++;
-                        }
-                    });
-        } catch (DataAccessException e) {
-            String errorMessage =
-                    String.format("Error while retrieving shared agent roles for tenant domain: %s.", tenantDomain);
-            throw new IdentityRoleManagementServerException(UNEXPECTED_SERVER_ERROR.getCode(), errorMessage, e);
-        }
     }
 
     @Override
@@ -362,16 +203,4 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
                 .valueOf(agentSharedType.name());
     }
 
-    private Map<String, List<String>> groupAgentNamesByDomain(List<String> deletedDomainQualifiedAgentNames) {
-
-        Map<String, List<String>> domainToAgentNamesMap = new HashMap<>();
-        for (String deletedDomainQualifiedAgentName : deletedDomainQualifiedAgentNames) {
-            String domainName =
-                    org.wso2.carbon.user.core.util.UserCoreUtil.extractDomainFromName(deletedDomainQualifiedAgentName);
-            String agentName =
-                    org.wso2.carbon.user.core.util.UserCoreUtil.removeDomainFromName(deletedDomainQualifiedAgentName);
-            domainToAgentNamesMap.computeIfAbsent(domainName, k -> new ArrayList<>()).add(agentName);
-        }
-        return domainToAgentNamesMap;
-    }
 }

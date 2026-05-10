@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +32,6 @@ public class AgentSharingConstants {
     public static final String ORGANIZATION_ID_REPRESENTATION_2 = "organizationId";
     public static final String ORGANIZATION_ID_REPRESENTATION_3 = "id";
     private static final Map<String, String> attributeColumnMap = new HashMap<>();
-    public static final Map<String, String> SHARED_AGENT_SHARED_ATTRIBUTE_COLUMN_MAP =
-            Collections.unmodifiableMap(attributeColumnMap);
 
     static {
         attributeColumnMap.put(BEFORE, SQLConstants.ID_COLUMN_NAME);
@@ -49,7 +46,6 @@ public class AgentSharingConstants {
     public static final String APPLICATION = "application";
 
     public static final String PATCH_PATH_ROLES = "roles";
-    public static final String PATCH_PATH_NONE = "none";
     public static final String PATCH_PATH_PREFIX = "organizations[orgId eq ";
     public static final String PATCH_PATH_SUFFIX_ROLES = "].roles";
     public static final String SHARING_ERROR_PREFIX = "OAS-";
@@ -179,32 +175,29 @@ public class AgentSharingConstants {
         ERROR_CODE_ORG_ID_INVALID_FORMAT("10033",
                 "Organization ID format is invalid.",
                 "The organization ID must be a valid UUID."),
-        ERROR_CODE_FILTER_NULL("10034",
-                "Filter is null.",
-                "Filter must be provided when specified."),
-        ERROR_CODE_GET_ATTRIBUTES_NULL("10035",
+        ERROR_CODE_GET_ATTRIBUTES_NULL("10034",
                 "Attributes list is null.",
                 "Attributes list must be provided when specified."),
-        ERROR_CODE_GET_ATTRIBUTE_NULL("10036",
+        ERROR_CODE_GET_ATTRIBUTE_NULL("10035",
                 "Attribute is null.",
                 "An attribute in the list is null."),
-        ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED("10037",
+        ERROR_CODE_GET_ATTRIBUTE_UNSUPPORTED("10036",
                 "Attribute '%s' is not supported.",
                 "The requested attribute is not supported."),
-        ERROR_CODE_REQUEST_BODY_NULL("10038",
+        ERROR_CODE_REQUEST_BODY_NULL("10037",
                 "Request body is null.",
                 "Request body must be provided."),
-        ERROR_CODE_AGENT_UNSHARE("10039",
+        ERROR_CODE_AGENT_UNSHARE("10038",
                 "Error occurred during agent unshare operation.",
                 "An unexpected error occurred while unsharing the agent."),
-        ERROR_CODE_GET_ROLE_IDS("10040",
+        ERROR_CODE_GET_ROLE_IDS("10039",
                 "Error occurred while retrieving role IDs.",
                 "An unexpected error occurred during the retrieval of role IDs for the provided roles with " +
                         "audience details."),
-        ERROR_CODE_ERROR_RETRIEVING_AGENT_ROLE_ID("10041",
+        ERROR_CODE_ERROR_RETRIEVING_AGENT_ROLE_ID("10040",
                 "Error occurred while retrieving the agent role ID.",
                 "An unexpected error occurred while retrieving the role assignment ID for the agent."),
-        ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION("10042",
+        ERROR_CODE_ERROR_INSERTING_RESTRICTED_PERMISSION("10041",
                 "Error occurred while inserting the restricted edit permission for the agent role.",
                 "An unexpected error occurred while inserting the restricted edit permission for the shared " +
                         "agent role.");

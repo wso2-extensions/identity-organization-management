@@ -68,7 +68,6 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
-import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,7 +132,6 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ORGANIZATION;
-import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_NONE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_PREFIX;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_ROLES;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_SUFFIX_ROLES;
@@ -151,7 +149,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     private static final Set<String> SUPPORTED_GET_ATTRIBUTES =
             new HashSet<>(java.util.Arrays.asList(SHARED_AGENT_SHARING_MODE_INCLUDED_KEY,
                     SHARED_AGENT_ROLE_INCLUDED_KEY));
-    private final UserIDResolver userIDResolver = new UserIDResolver();
 
     @Override
     public void populateSelectiveAgentShare(SelectiveAgentShareDO selectiveAgentShareDO)
@@ -180,8 +177,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                     try {
                         initiateThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                                 sharingInitiatedUsername, threadLocalProperties);
-                        processSelectiveAgentShare(agentCriteria, validOrganizations, sharingInitiatedOrgId,
-                                sharingInitiatedUserId);
+                        processSelectiveAgentShare(agentCriteria, validOrganizations, sharingInitiatedOrgId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
@@ -220,7 +216,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         initiateThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                                 sharingInitiatedUsername, threadLocalProperties);
                         processGeneralAgentShare(agentCriteria, policy, roleIds, roleAssignmentMode,
-                                sharingInitiatedOrgId, sharingInitiatedUserId);
+                                sharingInitiatedOrgId);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
@@ -237,6 +233,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     public void populateSelectiveAgentUnshare(SelectiveAgentUnshareDO selectiveAgentUnshareDO)
             throws AgentSharingMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating selective agent unsharing process.");
+        }
         validateAgentUnshareInput(selectiveAgentUnshareDO);
         String sharingInitiatedOrgId = getOrganizationId();
         Map<String, AgentCriteriaType> agentCriteria = selectiveAgentUnshareDO.getAgentCriteria();
@@ -271,6 +270,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     public void populateGeneralAgentUnshare(GeneralAgentUnshareDO generalAgentUnshareDO)
             throws AgentSharingMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating general agent unsharing process.");
+        }
         validateAgentUnshareInput(generalAgentUnshareDO);
         String sharingInitiatedOrgId = getOrganizationId();
         Map<String, AgentCriteriaType> agentCriteria = generalAgentUnshareDO.getAgentCriteria();
@@ -302,6 +304,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     @Override
     public void updateSharedAgentAttributes(AgentSharePatchDO agentSharePatchDO) throws AgentSharingMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating shared agent role assignment update process.");
+        }
         validateSharedAgentAttributeUpdateInput(agentSharePatchDO);
         String sharingInitiatedOrgId = getOrganizationId();
         Map<String, AgentCriteriaType> agentCriteria = agentSharePatchDO.getAgentCriteria();
@@ -320,8 +325,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                     try {
                         initiateThreadLocalContext(sharingInitiatedTenantDomain, sharingInitiatedTenantId,
                                 sharingInitiatedUsername, threadLocalProperties);
-                        processUpdateSharedAgentAttributes(agentCriteria, sharingInitiatedOrgId, sharingInitiatedUserId,
-                                agentSharePatchDO);
+                        processUpdateSharedAgentAttributes(agentCriteria, sharingInitiatedOrgId, agentSharePatchDO);
                     } finally {
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
@@ -338,16 +342,57 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             throws AgentSharingMgtException {
 
         validateSharedAgentGetInput(getAgentSharedOrgsDO);
-
         String mainAgentId = getAgentSharedOrgsDO.getAgentId();
         String parentOrgId = getAgentSharedOrgsDO.getParentOrgId();
         List<String> includedAttributes = getAgentSharedOrgsDO.getAttributes();
+        int limit = getAgentSharedOrgsDO.getLimit();
+        int afterCursor = getAgentSharedOrgsDO.getAfter();
+        int beforeCursor = getAgentSharedOrgsDO.getBefore();
+        boolean recursive = getAgentSharedOrgsDO.getRecursive();
         List<ResponseOrgDetailsAgentDO> sharedOrgsList = new ArrayList<>();
 
         try {
             SharingModeDO generalSharingMode = resolveGeneralSharingMode(includedAttributes, parentOrgId, mainAgentId);
-            List<AgentAssociation> agentAssociations =
+            List<AgentAssociation> allAssociations =
                     getOrganizationAgentSharingService().getAgentAssociationsOfGivenAgent(mainAgentId, parentOrgId);
+
+            if (!recursive) {
+                List<String> immediateChildOrgIds =
+                        getOrganizationManager().getChildOrganizationsIds(parentOrgId, false);
+                allAssociations = allAssociations.stream()
+                        .filter(a -> immediateChildOrgIds.contains(a.getOrganizationId()))
+                        .collect(Collectors.toList());
+            }
+
+            List<AgentAssociation> agentAssociations;
+            boolean hasMoreItems;
+
+            if (beforeCursor != 0) {
+                // Backward pagination: collect items with ID < beforeCursor (allAssociations is already ascending).
+                List<AgentAssociation> filtered = allAssociations.stream()
+                        .filter(a -> a.getId() < beforeCursor)
+                        .collect(Collectors.toList());
+                // Take limit+1 items from the END so we can detect whether a further previous page exists.
+                int fetchSize = (limit == 0) ? filtered.size() : Math.min(limit + 1, filtered.size());
+                int fromIndex = Math.max(0, filtered.size() - fetchSize);
+                agentAssociations = new ArrayList<>(filtered.subList(fromIndex, filtered.size()));
+                hasMoreItems = (limit != 0) && (agentAssociations.size() > limit);
+                if (hasMoreItems) {
+                    // Remove the extra item at the front; it was used only to detect the existence of another page.
+                    agentAssociations = agentAssociations.subList(1, agentAssociations.size());
+                }
+            } else {
+                // Forward pagination (or initial load): collect items with ID > afterCursor.
+                long streamLimit = (limit == 0) ? Long.MAX_VALUE : (limit + 1L);
+                agentAssociations = allAssociations.stream()
+                        .filter(a -> afterCursor == 0 || a.getId() > afterCursor)
+                        .limit(streamLimit)
+                        .collect(Collectors.toList());
+                hasMoreItems = (limit != 0) && (agentAssociations.size() > limit);
+                if (hasMoreItems) {
+                    agentAssociations = agentAssociations.subList(0, limit);
+                }
+            }
 
             if (CollectionUtils.isEmpty(agentAssociations)) {
                 return buildEmptyResponseToGet(generalSharingMode);
@@ -356,8 +401,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             for (AgentAssociation agentAssociation : agentAssociations) {
                 sharedOrgsList.add(resolveSharedOrgDetails(agentAssociation, includedAttributes));
             }
-
-            return buildResponseWithCursors(sharedOrgsList, agentAssociations, generalSharingMode);
+            return buildResponseWithCursors(sharedOrgsList, agentAssociations, generalSharingMode, hasMoreItems,
+                    beforeCursor, afterCursor);
         } catch (OrganizationManagementException e) {
             throw new AgentSharingMgtServerException(ERROR_CODE_GET_SHARED_ORGANIZATIONS_OF_AGENT, e);
         }
@@ -369,21 +414,19 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @param agentCriteria          A map containing agent criteria, such as agent IDs.
      * @param organizations          A list of organizations to which agents will be shared selectively.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the agent sharing.
-     * @param sharingInitiatedUserId The ID of the user that initiated the agent sharing.
      */
     private void processSelectiveAgentShare(Map<String, AgentCriteriaType> agentCriteria,
                                             List<SelectiveAgentShareOrgDetailsDO> organizations,
-                                            String sharingInitiatedOrgId, String sharingInitiatedUserId) {
+                                            String sharingInitiatedOrgId) {
 
         for (Map.Entry<String, AgentCriteriaType> criterion : agentCriteria.entrySet()) {
             String criterionKey = criterion.getKey();
             AgentCriteriaType criterionValues = criterion.getValue();
-
             try {
                 if (AGENT_IDS.equals(criterionKey)) {
                     if (criterionValues instanceof AgentIdList) {
                         selectiveAgentShareByAgentIds((AgentIdList) criterionValues, organizations,
-                                sharingInitiatedOrgId, sharingInitiatedUserId);
+                                sharingInitiatedOrgId);
                     } else {
                         LOG.error("Invalid agent criteria provided for selective agent share: " + criterionKey);
                     }
@@ -407,11 +450,10 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @param roleIds                A list of role IDs to be assigned during sharing.
      * @param roleAssignmentMode     The mode for role assignment.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the agent sharing.
-     * @param sharingInitiatedUserId The ID of the user that initiated the agent sharing.
      */
     private void processGeneralAgentShare(Map<String, AgentCriteriaType> agentCriteria, PolicyEnum policy,
                                           List<String> roleIds, RoleAssignmentMode roleAssignmentMode,
-                                          String sharingInitiatedOrgId, String sharingInitiatedUserId) {
+                                          String sharingInitiatedOrgId) {
 
         for (Map.Entry<String, AgentCriteriaType> criterion : agentCriteria.entrySet()) {
             String criterionKey = criterion.getKey();
@@ -421,7 +463,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                 if (AGENT_IDS.equals(criterionKey)) {
                     if (criterionValues instanceof AgentIdList) {
                         generalAgentShareByAgentIds((AgentIdList) criterionValues, policy, roleIds, roleAssignmentMode,
-                                sharingInitiatedOrgId, sharingInitiatedUserId);
+                                sharingInitiatedOrgId);
                     } else {
                         LOG.error("Invalid agent criteria provided for general agent share: " + criterionKey);
                     }
@@ -508,12 +550,10 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      *
      * @param agentCriteria          A map containing agent criteria, such as agent IDs.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the update.
-     * @param sharingInitiatedUserId The ID of the user that initiated the update.
      * @param agentSharePatchDO      The patch data object containing patch operations.
      */
     private void processUpdateSharedAgentAttributes(Map<String, AgentCriteriaType> agentCriteria,
-                                                    String sharingInitiatedOrgId, String sharingInitiatedUserId,
-                                                    AgentSharePatchDO agentSharePatchDO) {
+                                                    String sharingInitiatedOrgId, AgentSharePatchDO agentSharePatchDO) {
 
         for (Map.Entry<String, AgentCriteriaType> criterion : agentCriteria.entrySet()) {
             String criterionKey = criterion.getKey();
@@ -523,7 +563,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                 if (AGENT_IDS.equals(criterionKey)) {
                     if (criterionValues instanceof AgentIdList) {
                         updateSharedAgentAttributesByAgentIds((AgentIdList) criterionValues, sharingInitiatedOrgId,
-                                sharingInitiatedUserId, agentSharePatchDO);
+                                agentSharePatchDO);
                     } else {
                         LOG.error("Invalid agent criteria provided for agent share role assignment update: " +
                                 criterionKey);
@@ -541,29 +581,27 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         }
     }
 
-    // Agent Sharing & Unsharing Helper Methods.
-
     /**
      * Shares agents with selected organizations based on the provided agent list and sharing policies.
      *
      * @param agentIds               The list of agent IDs to be selectively shared.
      * @param organizations          The list of organizations where agents should be shared.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
-     * @param sharingInitiatedUserId The ID of the user that initiated the sharing.
      */
     private void selectiveAgentShareByAgentIds(AgentIdList agentIds,
                                                List<SelectiveAgentShareOrgDetailsDO> organizations,
-                                               String sharingInitiatedOrgId, String sharingInitiatedUserId)
+                                               String sharingInitiatedOrgId)
             throws AgentSharingMgtException {
 
         for (String associatedAgentId : agentIds.getIds()) {
             try {
+                deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, sharingInitiatedOrgId);
                 for (SelectiveAgentShareOrgDetailsDO organization : organizations) {
                     List<String> targetOrgs =
                             extractOrgListBasedOnSharingPolicy(organization.getOrganizationId(),
                                     organization.getPolicy());
                     for (String targetOrgId : targetOrgs) {
-                        if (!isAgentAlreadySharedInOrg(associatedAgentId, sharingInitiatedOrgId, targetOrgId)) {
+                        if (isAgentNotSharedInOrg(associatedAgentId, sharingInitiatedOrgId, targetOrgId)) {
                             getOrganizationAgentSharingService().shareOrganizationAgent(targetOrgId, associatedAgentId,
                                     sharingInitiatedOrgId, SharedType.SHARED);
                             AgentAssociation agentAssociation = getOrganizationAgentSharingService()
@@ -572,8 +610,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                 organization.getRoleAssignments() != null &&
                                 organization.getRoleAssignments().getMode() != RoleAssignmentMode.NONE) {
                                 List<String> roleIds =
-                                    getRoleIds(organization.getRoleAssignments().getRoles(),
-                                        sharingInitiatedOrgId);
+                                    getRoleIds(organization.getRoleAssignments().getRoles(), sharingInitiatedOrgId);
                                 assignRolesIfPresent(agentAssociation, sharingInitiatedOrgId, roleIds);
                             }
                         } else {
@@ -587,7 +624,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                     : RoleAssignmentMode.NONE);
                         }
                     }
-                    if (isApplicableOrganizationScopeForSavingPolicy(organization.getPolicy())) {
+                    if (isSharingPolicyApplicableForSaving(organization.getPolicy())) {
                         saveAgentSharingPolicy(associatedAgentId, sharingInitiatedOrgId,
                                 organization.getOrganizationId(), organization.getPolicy(),
                                 organization.getRoleAssignments() != null
@@ -612,18 +649,17 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @param roleIds                The list of role IDs to be assigned during sharing.
      * @param roleAssignmentMode     The mode for role assignment.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the sharing.
-     * @param sharingInitiatedUserId The ID of the user that initiated the sharing.
      */
     private void generalAgentShareByAgentIds(AgentIdList agentIds, PolicyEnum policy, List<String> roleIds,
-                                             RoleAssignmentMode roleAssignmentMode, String sharingInitiatedOrgId,
-                                             String sharingInitiatedUserId)
+                                             RoleAssignmentMode roleAssignmentMode, String sharingInitiatedOrgId)
             throws AgentSharingMgtException {
 
         for (String associatedAgentId : agentIds.getIds()) {
             try {
+                deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, sharingInitiatedOrgId);
                 List<String> targetOrgs = extractOrgListBasedOnSharingPolicy(sharingInitiatedOrgId, policy);
                 for (String targetOrgId : targetOrgs) {
-                    if (!isAgentAlreadySharedInOrg(associatedAgentId, sharingInitiatedOrgId, targetOrgId)) {
+                    if (isAgentNotSharedInOrg(associatedAgentId, sharingInitiatedOrgId, targetOrgId)) {
                         getOrganizationAgentSharingService().shareOrganizationAgent(targetOrgId, associatedAgentId,
                                 sharingInitiatedOrgId, SharedType.SHARED);
                         AgentAssociation agentAssociation = getOrganizationAgentSharingService()
@@ -636,7 +672,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                 roleAssignmentMode);
                     }
                 }
-                if (isApplicableOrganizationScopeForSavingPolicy(policy)) {
+                if (isSharingPolicyApplicableForSaving(policy)) {
                     saveAgentSharingPolicy(associatedAgentId, sharingInitiatedOrgId, sharingInitiatedOrgId, policy,
                             roleIds);
                 }
@@ -705,17 +741,15 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      *
      * @param agentIds               The list of agent IDs whose attributes should be updated.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the update.
-     * @param sharingInitiatedUserId The ID of the user that initiated the update.
      * @param agentSharePatchDO      The patch data object containing patch operations.
      */
     private void updateSharedAgentAttributesByAgentIds(AgentIdList agentIds, String sharingInitiatedOrgId,
-                                                       String sharingInitiatedUserId,
                                                        AgentSharePatchDO agentSharePatchDO)
             throws AgentSharingMgtException {
 
         for (String associatedAgentId : agentIds.getIds()) {
             try {
-                updateSharedAgentAttributesForAgent(associatedAgentId, sharingInitiatedOrgId, sharingInitiatedUserId,
+                updateSharedAgentAttributesForAgent(associatedAgentId, sharingInitiatedOrgId,
                         agentSharePatchDO.getPatchOperations());
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new AgentSharingMgtServerException(ERROR_CODE_AGENT_SHARE);
@@ -728,18 +762,15 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      *
      * @param associatedAgentId      The ID of the associated agent.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the update.
-     * @param sharingInitiatedUserId The ID of the user that initiated the update.
      * @param patchOperations        The list of patch operations.
      */
     private void updateSharedAgentAttributesForAgent(String associatedAgentId, String sharingInitiatedOrgId,
-                                                     String sharingInitiatedUserId,
                                                      List<PatchOperationDO> patchOperations)
             throws AgentSharingMgtException, OrganizationManagementException, IdentityRoleManagementException {
 
         for (PatchOperationDO patchOperation : patchOperations) {
             if (isPatchOperationPathRoles(patchOperation.getPath().trim())) {
-                updateRoleAssignmentsOfSharedAgent(associatedAgentId, sharingInitiatedOrgId, sharingInitiatedUserId,
-                        patchOperation);
+                updateRoleAssignmentsOfSharedAgent(associatedAgentId, sharingInitiatedOrgId, patchOperation);
             }
         }
     }
@@ -749,19 +780,20 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      *
      * @param associatedAgentId      The ID of the associated agent.
      * @param sharingInitiatedOrgId  The ID of the organization that initiated the update.
-     * @param sharingInitiatedUserId The ID of the user that initiated the update.
      * @param patchOperation         The patch operation containing org-scoped role changes.
      */
     private void updateRoleAssignmentsOfSharedAgent(String associatedAgentId, String sharingInitiatedOrgId,
-                                                    String sharingInitiatedUserId, PatchOperationDO patchOperation)
+                                                    PatchOperationDO patchOperation)
             throws AgentSharingMgtException, OrganizationManagementException, IdentityRoleManagementException {
 
         String orgId = extractOrgIdFromRolesPath(patchOperation.getPath());
         AgentAssociation agentAssociation = getOrganizationAgentSharingService()
                 .getAgentAssociationOfAssociatedAgentByOrgId(associatedAgentId, orgId);
         if (agentAssociation == null) {
-            LOG.warn("No agent association found for agent: " + associatedAgentId + " in organization: " + orgId +
-                    ". Skipping role assignment update.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No agent association found for agent: " + associatedAgentId + " in organization: "
+                        + orgId + ". Skipping role assignment update.");
+            }
             return;
         }
         List<String> roleIds = getRoleIds(castToRoleWithAudienceList(patchOperation.getValues()),
@@ -776,8 +808,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         }
     }
 
-    // GET operation helper methods.
-
     /**
      * Builds the final response object for get agent shared organizations.
      *
@@ -788,7 +818,10 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      */
     private ResponseAgentSharedOrgsDO buildResponseWithCursors(List<ResponseOrgDetailsAgentDO> sharedOrgsList,
                                                                List<AgentAssociation> agentAssociations,
-                                                               SharingModeDO generalSharingMode) {
+                                                               SharingModeDO generalSharingMode,
+                                                               boolean hasNextPage,
+                                                               int before,
+                                                               int after) {
 
         ResponseAgentSharedOrgsDO response = new ResponseAgentSharedOrgsDO();
         response.setSharedOrgs(sharedOrgsList);
@@ -797,7 +830,18 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         int nextToken = 0;
         int previousToken = 0;
 
-        if (!agentAssociations.isEmpty()) {
+        // Is the first page? Either no cursors provided, or 'before' was used but there are no more items
+        // (meaning we have reached the start of the dataset).
+        boolean isFirstPage = (before == 0 && after == 0) || (before != 0 && !hasNextPage);
+
+        // Is the last page? No more items exist and we either used 'after' or started from the beginning.
+        boolean isLastPage = !hasNextPage && (after != 0 || before == 0);
+
+        if (!isFirstPage && !agentAssociations.isEmpty()) {
+            previousToken = agentAssociations.get(0).getId();
+        }
+
+        if (!isLastPage && !agentAssociations.isEmpty()) {
             nextToken = agentAssociations.get(agentAssociations.size() - 1).getId();
         }
 
@@ -855,7 +899,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                 getOrganizationManager().getOrganizationDepthInHierarchy(organization.getId()));
 
         if (includedAttributesList.contains(SHARED_AGENT_SHARING_MODE_INCLUDED_KEY)) {
-            SharingModeDO sharingModeDO = resolveSelectiveSharingMode(organization.getId(),
+            SharingModeDO sharingModeDO = resolveSelectiveSharingMode(
+                    agentAssociation.getAgentResidentOrganizationId(),
                     agentAssociation.getAssociatedAgentId(), organization.getId());
             responseOrgDetailsAgentDO.setSharingModeDO(sharingModeDO);
         }
@@ -863,7 +908,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             responseOrgDetailsAgentDO.setRoleWithAudienceDOList(
                     getAssignedSharedRolesForSharedAgentInOrganization(agentAssociation, organization.getId()));
         }
-
         return responseOrgDetailsAgentDO;
     }
 
@@ -955,19 +999,24 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                                     initiatingOrgId, ResourceType.AGENT.name(), mainAgentId);
 
             if (result != null && !result.isEmpty()) {
-                Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry =
-                        result.entrySet().iterator().next();
-                ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
-                List<SharedResourceAttribute> resourceAttributes = entry.getValue();
-
                 if (isSelectiveShare) {
-                    boolean isPolicyHolderOrg =
-                            Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId);
-                    if (resourceSharingPolicy.getSharingPolicy() ==
-                            PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN && isPolicyHolderOrg) {
-                        return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                    // Iterate all entries to find the matching policy for the specific sub-org.
+                    for (Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry :
+                            result.entrySet()) {
+                        ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                        List<SharedResourceAttribute> resourceAttributes = entry.getValue();
+                        boolean isPolicyHolderOrg =
+                                Objects.equals(resourceSharingPolicy.getPolicyHoldingOrgId(), subOrgId);
+                        if (isPolicyHolderOrg && resourceSharingPolicy.getSharingPolicy() ==
+                                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
+                            return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
+                        }
                     }
                 } else {
+                    Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry =
+                            result.entrySet().iterator().next();
+                    ResourceSharingPolicy resourceSharingPolicy = entry.getKey();
+                    List<SharedResourceAttribute> resourceAttributes = entry.getValue();
                     if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS ||
                             resourceSharingPolicy.getSharingPolicy() == PolicyEnum.IMMEDIATE_EXISTING_AND_FUTURE_ORGS) {
                         return getSharingModeDO(resourceSharingPolicy, resourceAttributes);
@@ -1043,20 +1092,18 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         }
     }
 
-    // Business Logic Methods.
-
     /**
      * Checks if an agent is already shared in the specified organization.
      *
      * @param associatedAgentId The ID of the agent.
      * @param associatedOrgId   The ID of the resident organization.
      * @param subOrgId          The target sub-organization ID.
-     * @return True if the agent is already shared, false otherwise.
+     * @return True if the agent is not yet shared, false otherwise.
      */
-    private boolean isAgentAlreadySharedInOrg(String associatedAgentId, String associatedOrgId, String subOrgId)
+    private boolean isAgentNotSharedInOrg(String associatedAgentId, String associatedOrgId, String subOrgId)
             throws OrganizationManagementException {
 
-        return getOrganizationAgentSharingService().hasAgentAssociationsInOrganizations(associatedAgentId,
+        return !getOrganizationAgentSharingService().hasAgentAssociationsInOrganizations(associatedAgentId,
                 associatedOrgId, Collections.singletonList(subOrgId));
     }
 
@@ -1079,7 +1126,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             if (agentAssociation == null) {
                 return;
             }
-
             List<String> currentSharedRoleIds = getCurrentSharedRoleIdsForSharedAgent(agentAssociation);
             if (roleAssignmentMode != RoleAssignmentMode.NONE) {
                 List<String> newSharedRoleIds =
@@ -1258,7 +1304,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         List<String> skippedOrganizations = organizations.stream()
                 .map(SelectiveAgentShareOrgDetailsDO::getOrganizationId)
                 .filter(orgId -> !immediateChildOrgs.contains(orgId))
-                .collect(Collectors.toList());
+                .toList();
 
         if (!skippedOrganizations.isEmpty() && LOG.isDebugEnabled()) {
             LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrganizations));
@@ -1317,11 +1363,8 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         ERROR_CODE_INVALID_POLICY.getDescription(),
                         ERROR_CODE_INVALID_POLICY.getCode());
         }
-
         return new ArrayList<>(agentSharingOrgList);
     }
-
-    // Resource Sharing Policy Management Methods.
 
     /**
      * Saves a new resource sharing policy for an agent.
@@ -1350,8 +1393,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                             .withSharedAttributeId(roleId).build();
             sharedResourceAttributes.add(sharedResourceAttribute);
         }
-
-        deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, sharingInitiatedOrgId);
         getResourceSharingPolicyHandlerService().addResourceSharingPolicyWithAttributes(resourceSharingPolicy,
                 sharedResourceAttributes);
     }
@@ -1362,7 +1403,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
      * @param policy The policy enumeration containing the organization scope.
      * @return True if the policy allows saving, false otherwise.
      */
-    private boolean isApplicableOrganizationScopeForSavingPolicy(PolicyEnum policy) {
+    private boolean isSharingPolicyApplicableForSaving(PolicyEnum policy) {
 
         return OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope()) ||
                 OrganizationScope.FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope());
@@ -1395,8 +1436,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(ResourceType.AGENT,
                 associatedAgentId, sharingInitiatedOrgId);
     }
-
-    // Role Management Helper Methods.
 
     /**
      * Retrieves a list of role IDs based on the provided role and audience details.
@@ -1493,7 +1532,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         if (audienceId == null) {
             return Optional.empty();
         }
-
         try {
             return Optional.of(
                     getRoleManagementService().getRoleIdByName(roleName, audienceType, audienceId, tenantDomain));
@@ -1525,8 +1563,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         return roleWithAudienceList;
     }
 
-    // Async helpers.
-
     /**
      * Restores thread-local properties for async execution.
      *
@@ -1538,8 +1574,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
     private void initiateThreadLocalContext(String tenantDomain, int tenantId, String username,
                                             Map<String, Object> threadLocalProperties) {
 
-        // startTenantFlow() is called here to push a new context frame. The caller is responsible for
-        // always calling endTenantFlow() in a finally block to guarantee the frame is popped.
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
         carbonContext.setTenantDomain(tenantDomain, true);
@@ -1556,8 +1590,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         }
     }
 
-    // Input Validation Methods.
-
     private <T extends AgentCriteriaType> void validateAgentShareInput(
             org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.dos.BaseAgentShareDO<T>
                     baseAgentShareDO) throws AgentSharingMgtClientException {
@@ -1565,7 +1597,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         if (baseAgentShareDO == null) {
             throwValidationException(ERROR_CODE_NULL_SHARE);
         }
-
         if (baseAgentShareDO instanceof SelectiveAgentShareDO) {
             validateSelectiveAgentShareDO((SelectiveAgentShareDO) baseAgentShareDO);
         } else if (baseAgentShareDO instanceof GeneralAgentShareDO) {
@@ -1589,8 +1620,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             validateNotNull(orgDetails.getPolicy(), ERROR_CODE_POLICY_NULL);
             validateRoleAssignments(orgDetails.getRoleAssignments());
         }
-
-        LOG.debug("Validated selective agent share DO successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Validated selective agent share DO successfully.");
+        }
     }
 
     private void validateGeneralAgentShareDO(GeneralAgentShareDO generalAgentShareDO)
@@ -1604,7 +1636,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         validateNotNull(generalAgentShareDO.getPolicy(), ERROR_CODE_POLICY_NULL);
         validateRoleAssignments(generalAgentShareDO.getRoleAssignments());
 
-        LOG.debug("Validated general agent share DO successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Validated general agent share DO successfully.");
+        }
     }
 
     private <T extends AgentCriteriaType> void validateAgentUnshareInput(
@@ -1614,7 +1648,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         if (agentUnshareDO == null) {
             throwValidationException(ERROR_CODE_NULL_UNSHARE);
         }
-
         if (agentUnshareDO instanceof SelectiveAgentUnshareDO) {
             validateSelectiveAgentUnshareDO((SelectiveAgentUnshareDO) agentUnshareDO);
         } else if (agentUnshareDO instanceof GeneralAgentUnshareDO) {
@@ -1634,7 +1667,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         for (String organization : selectiveAgentUnshareDO.getOrganizations()) {
             validateNotNull(organization, ERROR_CODE_ORG_ID_NULL);
         }
-        LOG.debug("Validated selective agent unshare DO successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Validated selective agent unshare DO successfully.");
+        }
     }
 
     private void validateGeneralAgentUnshareDO(GeneralAgentUnshareDO generalAgentUnshareDO)
@@ -1645,7 +1680,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                 generalAgentUnshareDO.getAgentCriteria().get(AGENT_IDS) == null) {
             throwValidationException(ERROR_CODE_AGENT_CRITERIA_MISSING);
         }
-        LOG.debug("Validated general agent unshare DO successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Validated general agent unshare DO successfully.");
+        }
     }
 
     private void validateSharedAgentAttributeUpdateInput(AgentSharePatchDO agentSharePatchDO)
@@ -1668,8 +1705,9 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             validateNotNull(patchOperation.getValues(), ERROR_CODE_PATCH_OPERATION_VALUE_NULL);
             validatePatchValuesAgainstPath(pathType, patchOperation.getValues());
         }
-
-        LOG.debug("Validated shared agent attribute update input successfully.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Validated shared agent attribute update input successfully.");
+        }
     }
 
     private void validateSharedAgentGetInput(GetAgentSharedOrgsDO getAgentSharedOrgsDO)
@@ -1705,14 +1743,11 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
         if (trimmed.isEmpty()) {
             throwValidationException(ERROR_CODE_PATCH_OPERATION_PATH_INVALID);
         }
-
         if (isPatchOperationPathRoles(trimmed)) {
             validateOrgRolesPath(trimmed);
             return PATCH_PATH_ROLES;
         }
-
-        throwValidationException(ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED);
-        return PATCH_PATH_NONE;
+        throw new AgentSharingMgtClientException(ERROR_CODE_PATCH_OPERATION_PATH_UNSUPPORTED);
     }
 
     private boolean isPatchOperationPathRoles(String path) {
@@ -1805,8 +1840,6 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
 
         throw new AgentSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
     }
-
-    // Service getters.
 
     private OrganizationAgentSharingService getOrganizationAgentSharingService() {
 

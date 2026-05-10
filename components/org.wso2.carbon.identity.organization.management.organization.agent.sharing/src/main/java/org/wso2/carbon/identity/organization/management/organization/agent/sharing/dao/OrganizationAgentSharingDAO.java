@@ -18,14 +18,11 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing.dao;
 
-import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.EditOperation;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.SharedType;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.exception.AgentSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.AgentAssociation;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
-import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 
 import java.util.List;
 
@@ -83,39 +80,6 @@ public interface OrganizationAgentSharingDAO {
             throws OrganizationManagementServerException;
 
     /**
-     * Get all the agent associations for a given agent filtered by expression nodes.
-     *
-     * @param associatedAgentId Actual agent ID of the agent.
-     * @param associatedOrgId   The organization ID where the agent is managed.
-     * @param orgIdsScope       The list of organization IDs to limit the search scope.
-     * @param expressionNodes   The list of expression nodes to filter the agent associations.
-     * @param sortOrder         The order to sort the results.
-     * @param limit             The maximum number of results to return.
-     * @return The list of {@link AgentAssociation}s.
-     * @throws OrganizationManagementException If an error occurs while fetching agent associations.
-     */
-    List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                 String associatedOrgId,
-                                                                 List<String> orgIdsScope,
-                                                                 List<ExpressionNode> expressionNodes,
-                                                                 String sortOrder, int limit)
-            throws OrganizationManagementException;
-
-    /**
-     * Get all the agent associations for a given agent filtered by shared type.
-     *
-     * @param associatedAgentId Actual agent ID of the agent.
-     * @param associatedOrgId   The organization ID where the agent is managed.
-     * @param sharedType        The type of sharing relationship to filter the associations.
-     * @return The list of {@link AgentAssociation}s.
-     * @throws OrganizationManagementServerException If an error occurs while fetching agent associations.
-     */
-    List<AgentAssociation> getAgentAssociationsOfAssociatedAgent(String associatedAgentId,
-                                                                 String associatedOrgId,
-                                                                 SharedType sharedType)
-            throws OrganizationManagementServerException;
-
-    /**
      * Delete all agent associations for a deleted organization.
      *
      * @param orgId The organization ID that is being deleted.
@@ -123,17 +87,6 @@ public interface OrganizationAgentSharingDAO {
      * @throws OrganizationManagementServerException If an error occurs while deleting the agent associations.
      */
     boolean deleteAgentAssociationsByOrganizationId(String orgId)
-            throws OrganizationManagementServerException;
-
-    /**
-     * Checks if the given agent has at least one association with any child organization.
-     *
-     * @param associatedAgentId The ID of the associated agent.
-     * @param associatedOrgId   The organization ID where the agent's identity is managed.
-     * @return True if the agent has at least one association with any organization.
-     * @throws OrganizationManagementServerException If an error occurs while checking agent associations.
-     */
-    boolean hasAgentAssociations(String associatedAgentId, String associatedOrgId)
             throws OrganizationManagementServerException;
 
     /**
@@ -159,46 +112,6 @@ public interface OrganizationAgentSharingDAO {
      */
     AgentAssociation getAgentAssociationOfAssociatedAgentByOrgId(String associatedAgentId, String orgId)
             throws OrganizationManagementServerException;
-
-    /**
-     * Get the shared agent association of a shared agent.
-     *
-     * @param agentId        The agent ID of the shared agent.
-     * @param organizationId The organization ID of the agent.
-     * @return The agent association of the agent.
-     * @throws OrganizationManagementServerException If an error occurs while retrieving the agent association.
-     */
-    AgentAssociation getAgentAssociation(String agentId, String organizationId)
-            throws OrganizationManagementServerException;
-
-    /**
-     * Retrieve the list of agent names that are not eligible to be removed from the specified role within the given
-     * tenant domain, based on the permissions of the requesting organization.
-     *
-     * @param roleId                               The role ID from which the agents are to be removed.
-     * @param deletedDomainQualifiedAgentNamesList The list of agent names with domain intended for removal.
-     * @param tenantDomain                         The tenant domain where the operation is being performed.
-     * @param requestingOrgId                      The ID of the requesting organization performing the operation.
-     * @return A list of agent names that the requesting organization is not permitted to remove from the given role.
-     * @throws IdentityRoleManagementException If an error occurs while validating the permissions or retrieving
-     *                                         eligible agent names.
-     */
-    List<String> getNonDeletableAgentRoleAssignments(String roleId,
-                                                     List<String> deletedDomainQualifiedAgentNamesList,
-                                                     String tenantDomain, String requestingOrgId)
-            throws IdentityRoleManagementException;
-
-    /**
-     * Retrieves the shared agent roles among the given agent roles.
-     *
-     * @param allAgentRolesOfSharedAgent List of all roles associated with the shared agent.
-     * @param tenantDomain               The tenant domain of the shared agent.
-     * @return List of shared agent roles.
-     * @throws IdentityRoleManagementException If an error occurs while retrieving shared agent roles.
-     */
-    List<String> getSharedAgentRolesFromAgentRoles(List<String> allAgentRolesOfSharedAgent,
-                                                   String tenantDomain)
-            throws IdentityRoleManagementException;
 
     /**
      * Adds edit restrictions for shared agent roles.
@@ -229,25 +142,4 @@ public interface OrganizationAgentSharingDAO {
     List<String> getRolesSharedWithAgentInOrganization(String agentName, int tenantId, String domainName)
             throws AgentSharingMgtServerException;
 
-    /**
-     * Get the agent associations of the associated agent in the given organizations.
-     *
-     * @param associatedAgentId The ID of the associated agent.
-     * @param orgIds            The list of organization IDs.
-     * @return The list of {@link AgentAssociation}s for the given agent in the specified organizations.
-     * @throws OrganizationManagementServerException If an error occurs while retrieving the agent associations.
-     */
-    List<AgentAssociation> getAgentAssociationsOfGivenAgentOnGivenOrgs(String associatedAgentId,
-                                                                        List<String> orgIds)
-            throws OrganizationManagementServerException;
-
-    /**
-     * Updates the shared type of agent association.
-     *
-     * @param id         The ID of the agent association.
-     * @param sharedType The new shared type to be set for the agent association.
-     * @throws OrganizationManagementServerException If an error occurs while updating the shared type.
-     */
-    void updateSharedTypeOfAgentAssociation(int id, SharedType sharedType)
-            throws OrganizationManagementServerException;
 }

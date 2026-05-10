@@ -37,6 +37,7 @@ import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -102,6 +103,13 @@ public class OrganizationClaimProviderTest {
         assertEquals(AUTHORIZED_ORG_HANDLE, additionalClaims.get(ORG_HANDLE_CLAIM));
     }
 
+    /**
+     * Test getting additional claims for agent user store.
+     * Verifies that agent_org claim is present and user_org claim is absent for agent users.
+     * <p>
+     * `@throws` IdentityOAuth2Exception if OAuth2 operation fails.
+     * `@throws` OrganizationManagementException if organization management operation fails.
+     */
     @Test
     public void testGetAdditionalClaimsForAgentUserStore() throws IdentityOAuth2Exception,
             OrganizationManagementException {
@@ -125,7 +133,7 @@ public class OrganizationClaimProviderTest {
                     organizationClaimProvider.getAdditionalClaims(oAuthTokenReqMessageContext);
 
             assertTrue(additionalClaims.containsKey(AGENT_ORG_CLAIM));
-            assertTrue(!additionalClaims.containsKey(USER_ORG_CLAIM));
+            assertFalse(additionalClaims.containsKey(USER_ORG_CLAIM));
             assertEquals(USER_ORG_ID, additionalClaims.get(AGENT_ORG_CLAIM));
             assertEquals(AUTH_ORG_ID, additionalClaims.get(ORG_ID_CLAIM));
             assertEquals(AUTHORIZED_ORG_NAME, additionalClaims.get(ORG_NAME_CLAIM));
