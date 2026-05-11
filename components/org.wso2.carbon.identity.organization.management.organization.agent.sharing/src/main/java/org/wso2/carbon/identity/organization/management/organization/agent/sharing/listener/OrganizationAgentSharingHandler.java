@@ -75,7 +75,7 @@ public class OrganizationAgentSharingHandler extends AbstractEventHandler {
 
         int priority = super.getPriority(messageContext);
         if (priority == -1) {
-            priority = 15;
+            priority = 16;
         }
         return priority;
     }
