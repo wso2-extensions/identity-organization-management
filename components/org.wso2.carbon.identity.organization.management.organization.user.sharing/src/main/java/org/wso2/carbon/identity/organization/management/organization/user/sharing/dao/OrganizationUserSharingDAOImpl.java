@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.FilterQueryBuilder;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementServerException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -43,6 +44,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -133,11 +136,83 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     private static final Log LOG = LogFactory.getLog(OrganizationUserSharingDAOImpl.class);
 
+    private static volatile String defaultDbProductType;
+
+    private final Supplier<NamedJdbcTemplate> associationTemplateSupplier;
+    private final Callable<String> associationDbProductSupplier;
+
+    /**
+     * Default constructor. Uses the UM database as the association datasource.
+     */
+    public OrganizationUserSharingDAOImpl() {
+
+        this.associationTemplateSupplier = Utils::getNewTemplate;
+        this.associationDbProductSupplier = OrganizationUserSharingDAOImpl::resolveDefaultDbProductType;
+    }
+
+    /**
+     * Constructor with a custom association datasource supplier.
+     * Allows the association table to be stored in a different database
+     * while role-related queries always target the UM database.
+     *
+     * @param associationTemplateSupplier  Supplier that provides the {@link NamedJdbcTemplate} for the
+     *                                     {@code UM_ORG_USER_ASSOCIATION} table datasource.
+     * @param associationDbProductSupplier Callable that returns the DB product-type key for the association datasource,
+     *                                     so that dialect-specific SQL is selected from the correct datasource
+     *                                     rather than from the global UM database helpers.
+     */
+    public OrganizationUserSharingDAOImpl(Supplier<NamedJdbcTemplate> associationTemplateSupplier,
+                                          Callable<String> associationDbProductSupplier) {
+
+        this.associationTemplateSupplier = associationTemplateSupplier;
+        this.associationDbProductSupplier = associationDbProductSupplier;
+    }
+
+    private NamedJdbcTemplate getAssociationTemplate() {
+
+        return associationTemplateSupplier.get();
+    }
+
+    private String getAssociationDbProductType() throws OrganizationManagementServerException {
+
+        try {
+            return associationDbProductSupplier.call();
+        } catch (OrganizationManagementServerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw handleServerException(ERROR_CODE_ERROR_GET_ORGANIZATION_USER_ASSOCIATIONS, e);
+        }
+    }
+
+    private static String resolveDefaultDbProductType() throws OrganizationManagementServerException {
+
+        if (defaultDbProductType == null) {
+            synchronized (OrganizationUserSharingDAOImpl.class) {
+                if (defaultDbProductType == null) {
+                    if (isDB2DB()) {
+                        defaultDbProductType = DB_TYPE_DB2;
+                    } else if (isMSSqlDB()) {
+                        defaultDbProductType = DB_TYPE_MSSQL;
+                    } else if (isMySqlDB()) {
+                        defaultDbProductType = DB_TYPE_MYSQL;
+                    } else if (isOracleDB()) {
+                        defaultDbProductType = DB_TYPE_ORACLE;
+                    } else if (isPostgreSqlDB()) {
+                        defaultDbProductType = DB_TYPE_POSTGRESQL;
+                    } else {
+                        defaultDbProductType = DB_TYPE_DEFAULT;
+                    }
+                }
+            }
+        }
+        return defaultDbProductType;
+    }
+
     @Override
     public void createOrganizationUserAssociation(String userId, String orgId, String associatedUserId,
                                                   String associatedOrgId) throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION, namedPreparedStatement -> {
@@ -158,7 +233,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                                                   String associatedOrgId, SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(CREATE_ORGANIZATION_USER_ASSOCIATION_WITH_TYPE, namedPreparedStatement -> {
@@ -178,7 +253,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationOfUserByAssociatedOrg(String userId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATION_FOR_SHARED_USER,
                     namedPreparedStatement -> {
@@ -196,7 +271,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_FOR_ROOT_USER,
                     namedPreparedStatement -> {
@@ -213,7 +288,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean deleteUserAssociationsByOrganizationId(String orgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(DELETE_ORGANIZATION_USER_ASSOCIATIONS_BY_ORG_ID,
                     namedPreparedStatement -> {
@@ -232,7 +307,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public List<UserAssociation> getUserAssociationsOfAssociatedUser(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER,
                     (resultSet, rowNumber) -> {
@@ -280,7 +355,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
         String sql = buildGetUserAssociationsSql(filterQuery, orgIdPlaceholders, resolvedSortOrder, limit);
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(sql,
                     (resultSet, rowNumber) -> {
@@ -329,22 +404,21 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
         if (limit <= 0) {
             tail = String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL, sortOrder);
         } else {
-            tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit);
+            tail = getUserAssociationsByFilteringTailWithLimit(sortOrder, limit, getAssociationDbProductType());
         }
 
         return (head + tail).replace(PLACEHOLDER_ORG_IDS, orgIdPlaceholders);
     }
 
-    private String getUserAssociationsByFilteringTailWithLimit(String sortOrder, int limit)
-            throws OrganizationManagementServerException {
+    private String getUserAssociationsByFilteringTailWithLimit(String sortOrder, int limit, String dbProductType) {
 
-        if (isOracleDB()) {
+        if (DB_TYPE_ORACLE.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_ORACLE,
                     sortOrder, limit);
-        } else if (isMSSqlDB()) {
+        } else if (DB_TYPE_MSSQL.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_MSSQL,
                     sortOrder, limit);
-        } else if (isDB2DB()) {
+        } else if (DB_TYPE_DB2.equals(dbProductType)) {
             return String.format(GET_USER_ASSOCIATIONS_FOR_ASSOCIATED_USER_BY_FILTERING_TAIL_WITH_LIMIT_DB2,
                     sortOrder, limit);
         }
@@ -357,7 +431,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                                                                      SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_USER_BY_SHARED_TYPE,
                     (resultSet, rowNumber) -> {
@@ -386,7 +460,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public boolean hasUserAssociations(String associatedUserId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociations();
         String query = getDBSpecificQuery(dbQueryMap);
         try {
@@ -418,7 +492,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
             orgIdPlaceholders.add(":" + PLACEHOLDER_ORG_ID + i + ";");
         }
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         Map<String, String> dbQueryMap = getDBQueryMapOfHasUserAssociationsInOrgScope();
         String query = getDBSpecificQuery(dbQueryMap).replace(
                 PLACEHOLDER_ORG_IDS, String.join(", ", orgIdPlaceholders));
@@ -446,7 +520,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public UserAssociation getUserAssociationOfAssociatedUserByOrgId(String associatedUserId, String orgId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATION_FOR_ROOT_USER_IN_ORG,
                     (resultSet, rowNumber) -> {
@@ -475,7 +549,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public UserAssociation getUserAssociation(String userId, String organizationId)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.fetchSingleRecord(GET_ORGANIZATION_USER_ASSOCIATIONS_FOR_SHARED_USER,
                     (resultSet, rowNumber) -> {
@@ -664,7 +738,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
                 GET_USER_ASSOCIATIONS_OF_USER_IN_GIVEN_ORGS.replace(PLACEHOLDER_ORG_IDS,
                         String.join(", ", orgIdPlaceholders));
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             return namedJdbcTemplate.executeQuery(
                     fetchUserAssociationsQuery,
@@ -697,7 +771,7 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
     public void updateSharedTypeOfUserAssociation(int id, SharedType sharedType)
             throws OrganizationManagementServerException {
 
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
+        NamedJdbcTemplate namedJdbcTemplate = getAssociationTemplate();
         try {
             namedJdbcTemplate.executeUpdate(
                     UPDATE_USER_ASSOCIATION_SHARED_TYPE,
@@ -747,15 +821,16 @@ public class OrganizationUserSharingDAOImpl implements OrganizationUserSharingDA
 
     private String getDBSpecificQuery(Map<String, String> dbQueryMap) throws OrganizationManagementServerException {
 
-        if (isDB2DB()) {
+        String dbProductType = getAssociationDbProductType();
+        if (DB_TYPE_DB2.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_DB2);
-        } else if (isMSSqlDB()) {
+        } else if (DB_TYPE_MSSQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_MSSQL);
-        } else if (isMySqlDB()) {
+        } else if (DB_TYPE_MYSQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_MYSQL);
-        } else if (isOracleDB()) {
+        } else if (DB_TYPE_ORACLE.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_ORACLE);
-        } else if (isPostgreSqlDB()) {
+        } else if (DB_TYPE_POSTGRESQL.equals(dbProductType)) {
             return dbQueryMap.get(DB_TYPE_POSTGRESQL);
         }
         return dbQueryMap.get(DB_TYPE_DEFAULT);

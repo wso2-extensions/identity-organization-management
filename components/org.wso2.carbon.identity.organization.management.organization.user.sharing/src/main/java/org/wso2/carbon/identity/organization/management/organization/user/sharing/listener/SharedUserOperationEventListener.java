@@ -71,6 +71,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
+import static org.wso2.carbon.user.core.UserStoreConfigConstants.DOMAIN_NAME;
 
 /**
  * User operation event listener for shared user management.
@@ -94,6 +95,13 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     public boolean doPreDeleteUserWithID(String userID, UserStoreManager userStoreManager) throws UserStoreException {
 
         if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        // Skip shared user association cleanup for agent flows; agent associations are handled separately.
+        AbstractUserStoreManager abstractUserStoreManager = (AbstractUserStoreManager) userStoreManager;
+        if (abstractUserStoreManager.getRealmConfiguration() != null &&
+                IdentityUtil.getAgentIdentityUserstoreName().equalsIgnoreCase(userStoreManager.getRealmConfiguration()
+                        .getUserStoreProperty(DOMAIN_NAME))) {
             return true;
         }
         try {
