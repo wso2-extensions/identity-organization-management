@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>2.5.3-SNAPSHOT</version>
+    <version>2.5.7-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -53,6 +53,7 @@
         <module>components/org.wso2.carbon.identity.organization.user.invitation.management</module>
         <module>components/org.wso2.carbon.identity.organization.config.service</module>
         <module>components/org.wso2.carbon.identity.organization.discovery.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.organization.agent.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.management.organization.user.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.management.organization.connection.sharing</module>
         <module>components/org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</module>
@@ -126,6 +127,12 @@
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.claim.metadata.mgt</artifactId>
                 <version>${carbon.identity.framework.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.organization.agent.sharing</artifactId>
+                <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -224,6 +231,11 @@
                 <scope>provided</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim2</groupId>
+                <artifactId>org.wso2.carbon.identity.scim2.common</artifactId>
+                <version>${identity.inbound.provisioning.scim2.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
@@ -566,7 +578,7 @@
     <properties>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.10.48</carbon.kernel.version>
+        <carbon.kernel.version>4.12.34</carbon.kernel.version>
         <carbon.kernel.package.import.version.range>[4.7.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
 
@@ -613,6 +625,9 @@
         <carbon.multitenancy.version>4.11.37</carbon.multitenancy.version>
         <carbon.multitenancy.package.import.version.range>[4.7.0,5.0.0)
         </carbon.multitenancy.package.import.version.range>
+
+        <identity.inbound.provisioning.scim2.version>3.7.9</identity.inbound.provisioning.scim2.version>
+        <identity.scim2.imp.pkg.version.range>[3.4.0, 4.0.0)</identity.scim2.imp.pkg.version.range>
 
         <carbon.identity.framework.version>7.10.68</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)

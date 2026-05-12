@@ -71,6 +71,7 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_SHARED_USER_CLAIM_UPDATE_NOT_ALLOWED;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getTenantDomain;
+import static org.wso2.carbon.user.core.UserStoreConfigConstants.DOMAIN_NAME;
 
 /**
  * User operation event listener for shared user management.
@@ -94,6 +95,13 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
     public boolean doPreDeleteUserWithID(String userID, UserStoreManager userStoreManager) throws UserStoreException {
 
         if (!isEnable() || userStoreManager == null) {
+            return true;
+        }
+        // Skip shared user association cleanup for agent flows; agent associations are handled separately.
+        AbstractUserStoreManager abstractUserStoreManager = (AbstractUserStoreManager) userStoreManager;
+        if (abstractUserStoreManager.getRealmConfiguration() != null &&
+                IdentityUtil.getAgentIdentityUserstoreName().equalsIgnoreCase(userStoreManager.getRealmConfiguration()
+                        .getUserStoreProperty(DOMAIN_NAME))) {
             return true;
         }
         try {
@@ -146,12 +154,25 @@ public class SharedUserOperationEventListener extends AbstractIdentityUserOperat
             return true;
         }
         String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        /*
+         * Need to use the app resident org ID to resolve user claims when shared users login to sub-orgs via
+         * sub-org apps or via enhanced organization login.
+         */
+        String accessingOrganizationId =
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getAccessingOrganizationId();
         try {
-            if (!OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
+            if (StringUtils.isBlank(accessingOrganizationId) &&
+                    !OrganizationManagementUtil.isOrganization(currentTenantDomain)) {
                 // There is no shared users in root organizations. Hence, return.
                 return true;
             }
-            String currentOrganizationId = resolveOrganizationId(currentTenantDomain);
+
+            String currentOrganizationId;
+            if (StringUtils.isNotBlank(accessingOrganizationId)) {
+                currentOrganizationId = accessingOrganizationId;
+            } else {
+                currentOrganizationId = resolveOrganizationId(currentTenantDomain);
+            }
             UserAssociation userAssociation = getUserAssociation(userID, currentOrganizationId);
             if (userAssociation == null) {
                 // User is not a shared user. Hence, return.

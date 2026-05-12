@@ -123,8 +123,9 @@ public class OrganizationDiscoveryHandlerImplTest {
                         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getDescription(),
                         ERROR_CODE_ORGANIZATION_NOT_FOUND_FOR_TENANT.getCode()));
 
-        when(organizationManager.getOrganizationIdByName(ORG_NAME)).thenReturn(ORG_ID);
-        when(organizationManager.getOrganizationIdByName(INVALID_ORG_NAME)).thenReturn(null);
+        when(organizationManager.getOrganizationsByName(ORG_NAME)).thenReturn(List.of(organization));
+        when(organizationManager.getRelativeDepthBetweenOrganizationsInSameBranch(ORG_ID, ROOT_ORG_ID)).thenReturn(1);
+        when(organizationManager.getOrganizationsByName(INVALID_ORG_NAME)).thenReturn(List.of());
 
         when(organizationDiscoveryManager.getOrganizationIdByDiscoveryAttribute(
                 ORG_DISCOVERY_TYPE, LOGIN_HINT, ROOT_ORG_ID, authenticationContext)).thenReturn(ORG_ID);
