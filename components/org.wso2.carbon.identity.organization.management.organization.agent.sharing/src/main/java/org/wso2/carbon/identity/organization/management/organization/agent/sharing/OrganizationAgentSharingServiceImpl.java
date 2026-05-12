@@ -71,6 +71,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSharingService {
 
     private static final Log LOG = LogFactory.getLog(OrganizationAgentSharingServiceImpl.class);
+    private static final int AGENT_STORE_WAIT_TIMEOUT_MS = 15000;
+    private static final int AGENT_STORE_POLL_INTERVAL_MS = 50;
 
     private final OrganizationAgentSharingDAO organizationAgentSharingDAO = new OrganizationAgentSharingDAOImpl();
 
@@ -109,9 +111,31 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrgTenantDomain);
             String domainName = IdentityUtil.getAgentIdentityUserstoreName();
             RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+            
+            // The AGENT user store is provisioned via UserStoreConfigService.addUserStore() during tenant
+            // initial activation, which triggers an asynchronous reload of the user store manager chain.
+            // Check immediately first, then poll with short intervals until the store appears or timeout elapses.
+            int waited = 0;
             AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
                     ((UserStoreManager) realmService.getTenantUserRealm(sharedOrgTenantId).getUserStoreManager())
                             .getSecondaryUserStoreManager(domainName);
+            while (sharedOrgAgentStoreManager == null && waited < AGENT_STORE_WAIT_TIMEOUT_MS) {
+                try {
+                    Thread.sleep(AGENT_STORE_POLL_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
+                }
+                waited += AGENT_STORE_POLL_INTERVAL_MS;
+                sharedOrgAgentStoreManager = (AbstractUserStoreManager)
+                        ((UserStoreManager) realmService.getTenantUserRealm(sharedOrgTenantId).getUserStoreManager())
+                                .getSecondaryUserStoreManager(domainName);
+            }
+            if (sharedOrgAgentStoreManager == null) {
+                throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER,
+                        new OrganizationManagementServerException("Agent user store manager not available for domain: "
+                                + domainName + " in organization: " + orgId), orgId);
+            }
             User sharedUser = sharedOrgAgentStoreManager.addUserWithID(
                     associatedAgentId, generatePassword(), null, agentClaims, DEFAULT_PROFILE);
 
@@ -229,9 +253,29 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
         try {
             String domainName = IdentityUtil.getAgentIdentityUserstoreName();
             RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+            
+            // Check immediately first, then poll with short intervals until the store appears or timeout elapses.
+            int waited = 0;
             AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
                     ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
                             .getSecondaryUserStoreManager(domainName);
+            while (sharedOrgAgentStoreManager == null && waited < AGENT_STORE_WAIT_TIMEOUT_MS) {
+                try {
+                    Thread.sleep(AGENT_STORE_POLL_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, agentId, organizationId);
+                }
+                waited += AGENT_STORE_POLL_INTERVAL_MS;
+                sharedOrgAgentStoreManager = (AbstractUserStoreManager)
+                        ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
+                                .getSecondaryUserStoreManager(domainName);
+            }
+            if (sharedOrgAgentStoreManager == null) {
+                throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER,
+                        new OrganizationManagementServerException("Agent user store manager not available for domain: "
+                                + domainName + " in organization: " + organizationId), agentId, organizationId);
+            }
             deleteAgentInTenantFlow(sharedOrgAgentStoreManager, agentId, tenantDomain, organizationId);
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, agentId, organizationId);
