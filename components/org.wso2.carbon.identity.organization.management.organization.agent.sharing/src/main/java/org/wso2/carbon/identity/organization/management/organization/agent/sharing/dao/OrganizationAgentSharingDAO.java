@@ -142,4 +142,14 @@ public interface OrganizationAgentSharingDAO {
     List<String> getRolesSharedWithAgentInOrganization(String agentName, int tenantId, String domainName)
             throws AgentSharingMgtServerException;
 
+    /**
+     * Get the agent association of a shared agent in a given organization, looked up by the shared agent's own ID.
+     *
+     * @param sharedAgentId The ID of the shared agent entry within the organization.
+     * @param sharedOrgId   The organization ID where the agent is shared.
+     * @return The {@link AgentAssociation} for the shared agent, or {@code null} if not found.
+     * @throws OrganizationManagementServerException If an error occurs while retrieving the association.
+     */
+    AgentAssociation getAgentAssociation(String sharedAgentId, String sharedOrgId)
+            throws OrganizationManagementServerException;
 }

@@ -179,6 +179,13 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
         }
     }
 
+    @Override
+    public AgentAssociation getAgentAssociation(String sharedAgentId, String sharedOrgId)
+            throws OrganizationManagementServerException {
+
+        return toAgentAssociation(userSharingDao.getUserAssociation(sharedAgentId, sharedOrgId));
+    }
+
     private AgentAssociation toAgentAssociation(UserAssociation ua) {
 
         if (ua == null) {

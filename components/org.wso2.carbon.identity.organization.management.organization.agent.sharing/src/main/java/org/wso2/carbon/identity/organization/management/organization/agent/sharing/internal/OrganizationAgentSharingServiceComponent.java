@@ -37,11 +37,13 @@ import org.wso2.carbon.identity.organization.management.organization.agent.shari
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.OrganizationAgentSharingService;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.OrganizationAgentSharingServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.listener.OrganizationAgentSharingHandler;
+import org.wso2.carbon.identity.organization.management.organization.agent.sharing.listener.SharedAgentOperationEventListener;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -72,6 +74,8 @@ public class OrganizationAgentSharingServiceComponent {
                     agentSharingPolicyHandlerService, null);
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     new OrganizationAgentSharingHandler(), null);
+            bundleContext.registerService(UserOperationEventListener.class.getName(),
+                    new SharedAgentOperationEventListener(), null);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("OrganizationAgentSharingServiceComponent activated successfully.");
             }
