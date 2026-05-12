@@ -139,8 +139,14 @@ public class OrganizationAgentSharingHandler extends AbstractEventHandler {
 
         List<String> allAncestorOrgs = getOrganizationManager().getAncestorOrganizationIds(createdOrgId);
         int topHierarchyLevel = Utils.getSubOrgStartLevel() >= 1 ? Utils.getSubOrgStartLevel() - 1 : 0;
-        List<String> relevantAncestorOrgs =
-                new ArrayList<>(allAncestorOrgs.subList(1, allAncestorOrgs.size() - topHierarchyLevel));
+        int startIndex = 1;
+        int safeEndIndex = allAncestorOrgs.size() - topHierarchyLevel;
+        List<String> relevantAncestorOrgs;
+        if (safeEndIndex > startIndex && safeEndIndex <= allAncestorOrgs.size()) {
+            relevantAncestorOrgs = new ArrayList<>(allAncestorOrgs.subList(startIndex, safeEndIndex));
+        } else {
+            relevantAncestorOrgs = new ArrayList<>();
+        }
 
         // Get agent resources of each ancestor organization.
         List<ResourceSharingPolicy> agentResources =
@@ -149,6 +155,10 @@ public class OrganizationAgentSharingHandler extends AbstractEventHandler {
 
         for (ResourceSharingPolicy resource : agentResources) {
             if (shouldShareAgent(resource.getSharingPolicy())) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Sharing agent: " + resource.getResourceId() + " from organization: " +
+                            resource.getInitiatingOrgId() + " to organization: " + createdOrgId);
+                }
                 shareAgent(resource, resource.getResourceId(), resource.getInitiatingOrgId(), createdOrgId);
             }
         }
