@@ -51,6 +51,8 @@ public class AgentSharingConstants {
     public static final String SHARING_ERROR_PREFIX = "OAS-";
     public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
             "Skipping agent share for organizations that are not immediate children: %s";
+    public static final String LOG_WARN_NON_RESIDENT_AGENT =
+            "Skipping agent: %s from sharing because it is not a resident agent in organization: %s.";
 
     public static final String ACTION_GENERAL_AGENT_SHARE = "general agent share";
     public static final String ACTION_SELECTIVE_AGENT_SHARE = "selective agent share";

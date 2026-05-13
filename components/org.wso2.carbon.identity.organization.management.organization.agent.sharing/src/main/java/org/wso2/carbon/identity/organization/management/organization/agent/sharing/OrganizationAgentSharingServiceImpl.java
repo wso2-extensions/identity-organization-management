@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.organization.agent.shari
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.internal.OrganizationAgentSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.agent.sharing.models.AgentAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.scim2.common.utils.SCIMCommonUtils;
@@ -45,6 +46,12 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.DEFAULT_PROFILE;
@@ -71,6 +78,8 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSharingService {
 
     private static final Log LOG = LogFactory.getLog(OrganizationAgentSharingServiceImpl.class);
+    private static final int AGENT_STORE_WAIT_TIMEOUT_MS = 15000;
+    private static final int AGENT_STORE_POLL_INTERVAL_MS = 50;
 
     private final OrganizationAgentSharingDAO organizationAgentSharingDAO = new OrganizationAgentSharingDAOImpl();
 
@@ -108,10 +117,8 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
             // Add the shared agent entry to the target organization's agent user store.
             int sharedOrgTenantId = IdentityTenantUtil.getTenantId(sharedOrgTenantDomain);
             String domainName = IdentityUtil.getAgentIdentityUserstoreName();
-            RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
-            AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
-                    ((UserStoreManager) realmService.getTenantUserRealm(sharedOrgTenantId).getUserStoreManager())
-                            .getSecondaryUserStoreManager(domainName);
+            AbstractUserStoreManager sharedOrgAgentStoreManager =
+                    waitForAgentStoreManager(sharedOrgTenantId, domainName, ERROR_CODE_ERROR_CREATE_SHARED_USER, orgId);
             User sharedUser = sharedOrgAgentStoreManager.addUserWithID(
                     associatedAgentId, generatePassword(), null, agentClaims, DEFAULT_PROFILE);
 
@@ -242,13 +249,79 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         try {
             String domainName = IdentityUtil.getAgentIdentityUserstoreName();
-            RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
-            AbstractUserStoreManager sharedOrgAgentStoreManager = (AbstractUserStoreManager)
-                    ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
-                            .getSecondaryUserStoreManager(domainName);
+            AbstractUserStoreManager sharedOrgAgentStoreManager =
+                    waitForAgentStoreManager(tenantId, domainName, ERROR_CODE_ERROR_DELETE_SHARED_USER, agentId,
+                            organizationId);
             deleteAgentInTenantFlow(sharedOrgAgentStoreManager, agentId, tenantDomain, organizationId);
         } catch (UserStoreException e) {
             throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, agentId, organizationId);
+        }
+    }
+
+    /**
+     * Polls for the agent user store manager until it becomes available or the timeout elapses.
+     * Uses a ScheduledExecutorService to schedule repeated checks at AGENT_STORE_POLL_INTERVAL_MS intervals
+     * so the calling thread waits on a CompletableFuture instead of sleeping in a loop.
+     *
+     * @param tenantId    The tenant ID of the target organization.
+     * @param domainName  The domain name of the agent user store.
+     * @param errorCode   The error code to use if the wait fails.
+     * @param contextArgs The context arguments for the error message.
+     * @return The resolved AbstractUserStoreManager for the given domain.
+     * @throws OrganizationManagementException If the store is not available within the timeout or an error occurs.
+     */
+    private AbstractUserStoreManager waitForAgentStoreManager(int tenantId, String domainName,
+            OrganizationManagementConstants.ErrorMessages errorCode, String... contextArgs)
+            throws OrganizationManagementException {
+
+        // Resolve tenant domain on the calling thread (which has a valid CarbonContext) so the background
+        // scheduler thread can establish its own tenant flow without depending on thread-local context.
+        String tenantDomain = IdentityTenantUtil.getTenantDomain(tenantId);
+        RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+        CompletableFuture<AbstractUserStoreManager> future = new CompletableFuture<>();
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        try {
+            long deadline = System.currentTimeMillis() + AGENT_STORE_WAIT_TIMEOUT_MS;
+            scheduler.scheduleAtFixedRate(() -> {
+                if (future.isDone()) {
+                    return;
+                }
+                try {
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
+                    AbstractUserStoreManager manager = (AbstractUserStoreManager)
+                            ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
+                                    .getSecondaryUserStoreManager(domainName);
+                    if (manager != null) {
+                        future.complete(manager);
+                    } else if (System.currentTimeMillis() >= deadline) {
+                        future.completeExceptionally(
+                                new TimeoutException("Agent user store not available within timeout."));
+                    }
+                } catch (UserStoreException e) {
+                    future.completeExceptionally(e);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
+            }, 0, AGENT_STORE_POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
+            return future.get(AGENT_STORE_WAIT_TIMEOUT_MS + AGENT_STORE_POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw handleServerException(errorCode, e, contextArgs);
+        } catch (TimeoutException e) {
+            throw handleServerException(errorCode,
+                    new OrganizationManagementServerException(
+                            "Agent user store manager not available for domain: " + domainName), contextArgs);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof TimeoutException) {
+                throw handleServerException(errorCode,
+                        new OrganizationManagementServerException(
+                                "Agent user store manager not available for domain: " + domainName), contextArgs);
+            }
+            throw handleServerException(errorCode, cause != null ? cause : e, contextArgs);
+        } finally {
+            scheduler.shutdownNow();
         }
     }
 
