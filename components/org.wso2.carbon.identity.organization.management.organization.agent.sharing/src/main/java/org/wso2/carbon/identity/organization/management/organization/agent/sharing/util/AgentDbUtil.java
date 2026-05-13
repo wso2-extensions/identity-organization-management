@@ -18,7 +18,9 @@
 
 package org.wso2.carbon.identity.organization.management.organization.agent.sharing.util;
 
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
+import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.sql.Connection;
 import java.util.Locale;
@@ -129,6 +131,9 @@ public class AgentDbUtil {
             synchronized (AgentDbUtil.class) {
                 if (agentDataSource == null) {
                     try {
+                        PrivilegedCarbonContext.startTenantFlow();
+                        PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                .setTenantId(MultitenantConstants.SUPER_TENANT_ID);
                         try {
                             agentDataSource = InitialContext.doLookup(AGENT_DB_JNDI_NAME);
                         } catch (NamingException ignored) {
@@ -137,6 +142,8 @@ public class AgentDbUtil {
                         }
                     } catch (NamingException e) {
                         throw new RuntimeException("Error looking up agent datasource: " + AGENT_DB_JNDI_NAME, e);
+                    } finally {
+                        PrivilegedCarbonContext.endTenantFlow();
                     }
                 }
             }
