@@ -68,6 +68,10 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,6 +95,8 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.AGENT_IDS;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.APPLICATION;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ASYNC_PROCESSING_LOG_TEMPLATE;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.CLAIM_MANAGED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_CRITERIA_INVALID;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_CRITERIA_MISSING;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_AGENT_SHARE;
@@ -130,6 +136,7 @@ import static org.wso2.carbon.identity.organization.management.organization.agen
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_CODE_ROLE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_GENERAL_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ErrorMessage.ERROR_SELECTIVE_SHARE;
+import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.LOG_WARN_NON_RESIDENT_AGENT;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.agent.sharing.constant.AgentSharingConstants.PATCH_PATH_PREFIX;
@@ -595,6 +602,14 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
 
         for (String associatedAgentId : agentIds.getIds()) {
             try {
+                if (!isExistingAgent(associatedAgentId, sharingInitiatedOrgId) ||
+                        !isResidentAgentInOrg(associatedAgentId, sharingInitiatedOrgId)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(String.format(LOG_WARN_NON_RESIDENT_AGENT, associatedAgentId,
+                                sharingInitiatedOrgId));
+                    }
+                    continue;
+                }
                 deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, sharingInitiatedOrgId);
                 for (SelectiveAgentShareOrgDetailsDO organization : organizations) {
                     List<String> targetOrgs =
@@ -656,6 +671,14 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
 
         for (String associatedAgentId : agentIds.getIds()) {
             try {
+                if (!isExistingAgent(associatedAgentId, sharingInitiatedOrgId) ||
+                        !isResidentAgentInOrg(associatedAgentId, sharingInitiatedOrgId)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(String.format(LOG_WARN_NON_RESIDENT_AGENT, associatedAgentId,
+                                sharingInitiatedOrgId));
+                    }
+                    continue;
+                }
                 deleteAllResourceSharingPoliciesOfAgent(associatedAgentId, sharingInitiatedOrgId);
                 List<String> targetOrgs = extractOrgListBasedOnSharingPolicy(sharingInitiatedOrgId, policy);
                 for (String targetOrgId : targetOrgs) {
@@ -1839,6 +1862,65 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
             throws AgentSharingMgtClientException {
 
         throw new AgentSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
+    }
+
+    /**
+     * Checks whether the specified agent exists in the given organization's agent store.
+     *
+     * @param agentId The ID of the agent.
+     * @param orgId   The ID of the organization.
+     * @return {@code true} if the agent exists in the agent store, {@code false} otherwise.
+     */
+    private boolean isExistingAgent(String agentId, String orgId) {
+
+        try {
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            String domainName = IdentityUtil.getAgentIdentityUserstoreName();
+            RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+            AbstractUserStoreManager agentStoreManager = (AbstractUserStoreManager)
+                    ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
+                            .getSecondaryUserStoreManager(domainName);
+            if (agentStoreManager == null) {
+                return false;
+            }
+            return agentStoreManager.isExistingUserWithID(agentId);
+        } catch (UserStoreException | OrganizationManagementException e) {
+            LOG.error("Error occurred while checking if the agent is an existing agent in organization: " + orgId,
+                    e);
+            return false;
+        }
+    }
+
+    /**
+     * Checks whether the specified agent is a resident (non-shared) agent in the given organization.
+     *
+     * @param agentId The ID of the agent.
+     * @param orgId   The ID of the organization.
+     * @return {@code true} if the agent has no managed-organization claim (i.e. is resident),
+     *         {@code false} if the agent is a shared agent or the check fails.
+     */
+    private boolean isResidentAgentInOrg(String agentId, String orgId) {
+
+        try {
+            String tenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            String domainName = IdentityUtil.getAgentIdentityUserstoreName();
+            RealmService realmService = OrganizationAgentSharingDataHolder.getInstance().getRealmService();
+            AbstractUserStoreManager agentStoreManager = (AbstractUserStoreManager)
+                    ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
+                            .getSecondaryUserStoreManager(domainName);
+            if (agentStoreManager == null) {
+                return false;
+            }
+            String managedOrg = agentStoreManager.getUserClaimValue(agentId, CLAIM_MANAGED_ORGANIZATION,
+                    DEFAULT_PROFILE);
+            return managedOrg == null;
+        } catch (UserStoreException | OrganizationManagementException e) {
+            LOG.error("Error occurred while checking if the agent is a resident agent in organization: " + orgId,
+                    e);
+            return false;
+        }
     }
 
     private OrganizationAgentSharingService getOrganizationAgentSharingService() {
