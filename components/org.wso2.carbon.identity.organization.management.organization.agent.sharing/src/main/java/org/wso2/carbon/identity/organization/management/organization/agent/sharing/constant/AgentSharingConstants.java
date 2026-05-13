@@ -171,8 +171,8 @@ public class AgentSharingConstants {
                 "Request body must be provided."),
         ERROR_CODE_UNAUTHORIZED_DELETION_OF_SHARED_AGENT("10032",
                 "Unauthorized deletion of shared agent.",
-                "Agents shared by ancestor organization requests can only be deleted by that particular " +
-                        "agent's resident organization."),
+                "Agents shared by an ancestor organization can only be deleted by the shared agent's " +
+                        "resident organization."),
 
         // Server errors.
         ERROR_SELECTIVE_SHARE("15001",

@@ -82,6 +82,10 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
     public boolean deleteAgentAssociationOfAgentByAssociatedOrg(String agentId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleting agent association for agentId: " + agentId + " in associatedOrgId: "
+                    + associatedOrgId);
+        }
         return userSharingDao.deleteUserAssociationOfUserByAssociatedOrg(agentId, associatedOrgId);
     }
 

@@ -87,7 +87,9 @@ public class SharedAgentOperationEventListener extends AbstractIdentityUserOpera
                         userStoreManager.getRealmConfiguration().getUserStoreProperty(DOMAIN_NAME))) {
             return true;
         }
-
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing pre-delete operation for agent: " + userID);
+        }
         try {
             // Retrieve the managedOrg claim to determine whether this is a shared agent copy or a master agent.
             String associatedOrgId = getAgentManagedOrganizationClaim(abstractUserStoreManager, userID);
@@ -96,8 +98,10 @@ public class SharedAgentOperationEventListener extends AbstractIdentityUserOpera
             if (associatedOrgId != null) {
                 // This is a shared agent copy – clean up only its association record.
                 AgentAssociation agentAssociation = getAgentAssociation(userID, orgId);
-                SharedType sharedType = agentAssociation != null ? agentAssociation.getSharedType() : null;
-
+                if (agentAssociation == null || agentAssociation.getSharedType() == null) {
+                    throw new UserStoreException("Unable to resolve shared-agent association for deletion.");
+                }
+                SharedType sharedType = agentAssociation.getSharedType();
                 int loginTenantId = IdentityTenantUtil.getLoginTenantId();
                 String tenantDomain = getTenantDomain(loginTenantId);
                 String requestInitiatedOrg = OrganizationAgentSharingDataHolder.getInstance()
