@@ -65,7 +65,7 @@ public class OrganizationAgentSharingHandler extends AbstractEventHandler {
     }
 
     /**
-     * Returns the priority of this handler, defaulting to 15 when the super implementation returns -1.
+     * Returns the priority of this handler, defaulting to 16 when the super implementation returns -1.
      *
      * @param messageContext the message context.
      * @return the handler priority.

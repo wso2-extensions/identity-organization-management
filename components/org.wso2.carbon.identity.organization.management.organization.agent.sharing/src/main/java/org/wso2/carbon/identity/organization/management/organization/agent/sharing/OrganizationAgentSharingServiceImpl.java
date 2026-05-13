@@ -217,6 +217,20 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
         return organizationAgentSharingDAO.getRolesSharedWithAgentInOrganization(agentName, tenantId, domainName);
     }
 
+    @Override
+    public boolean deleteAgentAssociation(String agentId, String associatedOrgId)
+            throws OrganizationManagementException {
+
+        return organizationAgentSharingDAO.deleteAgentAssociationOfAgentByAssociatedOrg(agentId, associatedOrgId);
+    }
+
+    @Override
+    public AgentAssociation getAgentAssociation(String sharedAgentId, String sharedOrgId)
+            throws OrganizationManagementException {
+
+        return organizationAgentSharingDAO.getAgentAssociation(sharedAgentId, sharedOrgId);
+    }
+
     private void removeSharedAgent(AgentAssociation agentAssociation) throws OrganizationManagementException {
 
         if (agentAssociation == null) {
