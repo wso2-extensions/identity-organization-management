@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.organization.agent.shar
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
@@ -52,6 +53,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +64,7 @@ import java.util.stream.Collectors;
 public class OrganizationAgentSharingHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationAgentSharingHandler.class);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     /**
      * Handles agent sharing for newly created organizations and cleanup for deleted organizations.
@@ -83,17 +87,34 @@ public class OrganizationAgentSharingHandler extends AbstractEventHandler {
                 LOG.debug("Handling agent sharing for created organization: " + createdOrganization.getId());
             }
             try {
-                if (OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
-                    shareAgents(createdOrganization.getId());
+                if (!OrganizationManagementUtil.isOrganization(createdOrganization.getOrganizationHandle())) {
+                    return;
                 }
             } catch (OrganizationManagementException e) {
-                throw new IdentityEventException("Error while handling agent sharing for event: " + eventName, e);
-            } catch (ResourceSharingPolicyMgtException e) {
-                throw new IdentityEventException(
-                        "Error while retrieving resource sharing policies for event: " + eventName, e);
-            } catch (IdentityRoleManagementException e) {
-                throw new IdentityEventException("Error while handling role sharing for event: " + eventName, e);
+                throw new IdentityEventException("Error while determining organization type for created " +
+                        "organization: " + createdOrganization.getId() + ".", e);
             }
+            // Capture calling tenant domain before dispatching to the background thread since
+            // CarbonContext is thread-local and won't be available on the executor thread.
+            String callerTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+            String createdOrgId = createdOrganization.getId();
+            executorService.submit(() -> {
+                PrivilegedCarbonContext.startTenantFlow();
+                try {
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(callerTenantDomain, true);
+                    shareAgents(createdOrgId);
+                } catch (OrganizationManagementException e) {
+                    LOG.error("Error while sharing agents to created organization: " + createdOrgId + ".", e);
+                } catch (ResourceSharingPolicyMgtException e) {
+                    LOG.error("Error while retrieving resource sharing policies for created organization: "
+                            + createdOrgId + ".", e);
+                } catch (IdentityRoleManagementException e) {
+                    LOG.error("Error while assigning roles to shared agents for created organization: "
+                            + createdOrgId + ".", e);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
+            });
         }
 
         if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {

@@ -145,7 +145,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(AgentSharingPolicyHandlerServiceImpl.class);
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     private static final Set<String> SUPPORTED_GET_ATTRIBUTES =
             new HashSet<>(java.util.Arrays.asList(SHARED_AGENT_SHARING_MODE_INCLUDED_KEY,
                     SHARED_AGENT_ROLE_INCLUDED_KEY));
@@ -182,7 +182,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
                     }
-                }, EXECUTOR)
+                }, executorService)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async selective agent share processing.", ex);
                     return null;
@@ -221,7 +221,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
                     }
-                }, EXECUTOR)
+                }, executorService)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async selective agent share processing for organization: "
                             + sharingInitiatedOrgId, ex);
@@ -259,7 +259,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
                     }
-                }, EXECUTOR)
+                }, executorService)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async selective agent unshare processing.", ex);
                     return null;
@@ -294,7 +294,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
                     }
-                }, EXECUTOR)
+                }, executorService)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async general agent unshare processing.", ex);
                     return null;
@@ -330,7 +330,7 @@ public class AgentSharingPolicyHandlerServiceImpl implements AgentSharingPolicyH
                         PrivilegedCarbonContext.endTenantFlow();
                         IdentityUtil.threadLocalProperties.get().clear();
                     }
-                }, EXECUTOR)
+                }, executorService)
                 .exceptionally(ex -> {
                     LOG.error("Error occurred during async agent share role assignment update processing.", ex);
                     return null;

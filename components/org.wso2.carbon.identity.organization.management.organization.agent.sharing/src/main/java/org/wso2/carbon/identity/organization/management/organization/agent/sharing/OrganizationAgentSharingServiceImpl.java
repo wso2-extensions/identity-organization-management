@@ -272,8 +272,8 @@ public class OrganizationAgentSharingServiceImpl implements OrganizationAgentSha
                 if (future.isDone()) {
                     return;
                 }
-                PrivilegedCarbonContext.startTenantFlow();
                 try {
+                    PrivilegedCarbonContext.startTenantFlow();
                     PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
                     AbstractUserStoreManager manager = (AbstractUserStoreManager)
                             ((UserStoreManager) realmService.getTenantUserRealm(tenantId).getUserStoreManager())
