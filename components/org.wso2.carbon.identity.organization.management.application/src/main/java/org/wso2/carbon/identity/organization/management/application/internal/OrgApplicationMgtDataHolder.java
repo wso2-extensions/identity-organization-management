@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.organization.management.application.dao.OrgAppli
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListener;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
+import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyEvaluator;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -53,6 +54,7 @@ public class OrgApplicationMgtDataHolder {
     private RoleManagementService roleManagementServiceV2;
     private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
+    private GovernancePolicyEvaluator governancePolicyEvaluator;
 
     private OrgApplicationMgtDataHolder() {
 
@@ -314,5 +316,15 @@ public class OrgApplicationMgtDataHolder {
     public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
+    }
+
+    public GovernancePolicyEvaluator getGovernancePolicyEvaluator() {
+
+        return governancePolicyEvaluator;
+    }
+
+    public void setGovernancePolicyEvaluator(GovernancePolicyEvaluator governancePolicyEvaluator) {
+
+        this.governancePolicyEvaluator = governancePolicyEvaluator;
     }
 }

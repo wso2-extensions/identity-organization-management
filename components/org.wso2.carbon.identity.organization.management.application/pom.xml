@@ -112,6 +112,11 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.framework.async.operation.status.mgt</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.capability.governance</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!--Test Dependencies-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -217,6 +222,9 @@
                             org.wso2.carbon.identity.event.services; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.role.v2.mgt.core.*;
                             version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.capability.governance; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.capability.governance.constant; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.capability.governance.exception; version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon; version="${carbon.kernel.package.import.version.range}",
                         </Import-Package>
                     </instructions>

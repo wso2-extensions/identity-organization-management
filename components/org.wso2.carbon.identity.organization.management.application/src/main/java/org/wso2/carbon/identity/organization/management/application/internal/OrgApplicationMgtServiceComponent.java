@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service
 import org.wso2.carbon.identity.oauth.OAuthAdminServiceImpl;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
+import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyEvaluator;
 import org.wso2.carbon.identity.organization.management.application.dao.impl.OrgApplicationMgtDAOImpl;
 import org.wso2.carbon.identity.organization.management.application.handler.OrgClaimMgtHandler;
 import org.wso2.carbon.identity.organization.management.application.listener.ApplicationSharingManagerListenerImpl;
@@ -299,5 +300,21 @@ public class OrgApplicationMgtServiceComponent {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         OrgApplicationMgtDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+    }
+
+    @Reference(
+            name = "org.governance.policy.evaluator.service",
+            service = GovernancePolicyEvaluator.class,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetGovernancePolicyEvaluator")
+    protected void setGovernancePolicyEvaluator(GovernancePolicyEvaluator governancePolicyEvaluator) {
+
+        OrgApplicationMgtDataHolder.getInstance().setGovernancePolicyEvaluator(governancePolicyEvaluator);
+    }
+
+    protected void unsetGovernancePolicyEvaluator(GovernancePolicyEvaluator governancePolicyEvaluator) {
+
+        OrgApplicationMgtDataHolder.getInstance().setGovernancePolicyEvaluator(null);
     }
 }

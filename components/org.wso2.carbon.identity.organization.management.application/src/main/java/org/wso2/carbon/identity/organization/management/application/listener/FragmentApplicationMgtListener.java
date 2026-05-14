@@ -48,6 +48,8 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
+import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyEvaluator;
+import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.MainApplicationDO;
@@ -100,6 +102,8 @@ import static org.wso2.carbon.identity.organization.management.service.constant.
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.handleServerException;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isB2BApplicationRoleSupportEnabled;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.CAPABILITY_ADAPTIVE_AUTH;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.RESOURCE_TYPE_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.isSubOrganization;
 
 /**
@@ -195,7 +199,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         if (isFragmentApp(existingApplication)) {
             serviceProvider.setSpProperties(existingApplication.getSpProperties());
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
-            if (!Utils.isAdaptiveAuthEnabledForSharedApps()) {
+            if (!Utils.isAdaptiveAuthEnabledForSharedApps() ||
+                    isAdaptiveAuthBlockedByGovernance(tenantDomain, serviceProvider)) {
                 LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
                         serviceProvider.getLocalAndOutBoundAuthenticationConfig();
                 if (localAndOutBoundAuthenticationConfig != null &&
@@ -626,6 +631,23 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private OrganizationManager getOrganizationManager() {
 
         return OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private boolean isAdaptiveAuthBlockedByGovernance(String tenantDomain, ServiceProvider serviceProvider)
+            throws IdentityApplicationManagementException {
+
+        GovernancePolicyEvaluator evaluator = OrgApplicationMgtDataHolder.getInstance().getGovernancePolicyEvaluator();
+        if (evaluator == null) {
+            return false;
+        }
+        try {
+            String orgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            return !evaluator.evaluate(orgId, CAPABILITY_ADAPTIVE_AUTH, RESOURCE_TYPE_APPLICATION,
+                    serviceProvider.getApplicationResourceId());
+        } catch (OrganizationManagementException | GovernancePolicyMgtException e) {
+            throw new IdentityApplicationManagementException(
+                    "Error evaluating governance policy for adaptive auth capability.", e);
+        }
     }
 
     private RoleManagementService getRoleManagementServiceV2() {
