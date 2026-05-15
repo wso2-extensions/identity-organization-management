@@ -58,6 +58,7 @@
         <module>components/org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
         <module>components/org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</module>
+        <module>components/org.wso2.carbon.identity.organization.management.capability.governance</module>
     </modules>
 
     <dependencyManagement>
