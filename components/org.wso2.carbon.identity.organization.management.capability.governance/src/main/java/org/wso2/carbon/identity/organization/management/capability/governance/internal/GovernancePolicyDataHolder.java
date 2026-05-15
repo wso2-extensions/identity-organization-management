@@ -32,16 +32,31 @@ public class GovernancePolicyDataHolder {
 
     }
 
+    /**
+     * Returns the singleton instance of this data holder.
+     *
+     * @return the singleton instance.
+     */
     public static GovernancePolicyDataHolder getInstance() {
 
         return INSTANCE;
     }
 
+    /**
+     * Returns the OrganizationManager OSGi service reference.
+     *
+     * @return the organization manager, or {@code null} if not yet bound.
+     */
     public OrganizationManager getOrganizationManager() {
 
         return organizationManager;
     }
 
+    /**
+     * Sets the OrganizationManager OSGi service reference.
+     *
+     * @param organizationManager the organization manager service.
+     */
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;

@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.organization.management.capability.governance.da
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtServerException;
 import org.wso2.carbon.identity.organization.management.capability.governance.internal.GovernancePolicyDataHolder;
+import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernancePolicyEvaluationResult;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.OrgGovernancePolicy;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.Policy;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -47,14 +48,23 @@ public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator 
     private static final Log LOG = LogFactory.getLog(GovernancePolicyEvaluatorImpl.class);
     private static final GovernancePolicyDAO GOVERNANCE_POLICY_DAO = new GovernancePolicyDAOImpl();
 
+    /**
+     * Evaluates whether the given organization may use the specified capability and resource type.
+     *
+     * @param orgId the ID of the organization being evaluated.
+     * @param capability the capability name.
+     * @param resourceType the resource type.
+     * @return the evaluation result containing the access decision and any additional policy attributes.
+     * @throws GovernancePolicyMgtException if the ancestor hierarchy cannot be traversed.
+     */
     @Override
-    public boolean evaluate(String orgId, String capability, String resourceType)
+    public GovernancePolicyEvaluationResult evaluate(String orgId, String capability, String resourceType)
             throws GovernancePolicyMgtException {
 
         return evaluateInternal(orgId, capability, resourceType);
     }
 
-    private boolean evaluateInternal(String orgId, String capability, String resourceType)
+    private GovernancePolicyEvaluationResult evaluateInternal(String orgId, String capability, String resourceType)
             throws GovernancePolicyMgtException {
 
         OrganizationManager organizationManager = GovernancePolicyDataHolder.getInstance().getOrganizationManager();
@@ -74,10 +84,14 @@ public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator 
             Optional<OrgGovernancePolicy> op = GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(
                     ancestorId, capability, resourceType);
             if (op.isPresent() && op.get().coversOrg(orgId, isDirectChild)) {
-                return !Policy.DENY_ALL.equals(op.get().getPolicy());
+                GovernancePolicyEvaluationResult result = new GovernancePolicyEvaluationResult();
+                result.setAllowed(!Policy.DENY_ALL.equals(op.get().getPolicy()));
+                return result;
             }
         }
         // Default deny — no policy found covering this org.
-        return false;
+        GovernancePolicyEvaluationResult result = new GovernancePolicyEvaluationResult();
+        result.setAllowed(false);
+        return result;
     }
 }

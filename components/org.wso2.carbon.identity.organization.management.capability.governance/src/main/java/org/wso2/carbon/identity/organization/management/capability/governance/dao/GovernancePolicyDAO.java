@@ -28,16 +28,52 @@ import java.util.Optional;
  */
 public interface GovernancePolicyDAO {
 
+    /**
+     * Persists a new organization governance policy.
+     *
+     * @param policy the policy to persist.
+     * @throws GovernancePolicyMgtServerException if the policy could not be persisted.
+     */
     void addOrgGovernancePolicy(OrgGovernancePolicy policy) throws GovernancePolicyMgtServerException;
 
+    /**
+     * Returns all governance policies for the given governing organization.
+     *
+     * @param governingOrgId the ID of the governing organization.
+     * @return list of policies; empty if none exist.
+     * @throws GovernancePolicyMgtServerException if the query fails.
+     */
     List<OrgGovernancePolicy> getOrgGovernancePoliciesByGoverningOrg(String governingOrgId)
             throws GovernancePolicyMgtServerException;
 
+    /**
+     * Updates an existing organization governance policy.
+     *
+     * @param policy the policy with updated fields; must have a valid ID set.
+     * @throws GovernancePolicyMgtServerException if the update fails.
+     */
     void updateOrgGovernancePolicy(OrgGovernancePolicy policy) throws GovernancePolicyMgtServerException;
 
+    /**
+     * Deletes the governance policy matching the given composite key.
+     *
+     * @param governingOrgId the governing organization ID.
+     * @param resourceType the resource type.
+     * @param capability the capability name.
+     * @throws GovernancePolicyMgtServerException if the delete fails.
+     */
     void deleteOrgGovernancePolicyByKey(String governingOrgId, String resourceType, String capability)
             throws GovernancePolicyMgtServerException;
 
+    /**
+     * Finds the governance policy matching the given composite key.
+     *
+     * @param governingOrgId the governing organization ID.
+     * @param capability the capability name.
+     * @param resourceType the resource type.
+     * @return the matching policy wrapped in an Optional, or empty if not found.
+     * @throws GovernancePolicyMgtServerException if the lookup fails.
+     */
     Optional<OrgGovernancePolicy> findOrgGovernancePolicy(String governingOrgId, String capability,
             String resourceType) throws GovernancePolicyMgtServerException;
 }

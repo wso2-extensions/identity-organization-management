@@ -43,6 +43,11 @@ public class GovernancePolicyServiceComponent {
 
     private static final Log LOG = LogFactory.getLog(GovernancePolicyServiceComponent.class);
 
+    /**
+     * Activates the bundle and registers the GovernancePolicyService and GovernancePolicyEvaluator OSGi services.
+     *
+     * @param componentContext the OSGi component context.
+     */
     @Activate
     protected void activate(ComponentContext componentContext) {
 
@@ -62,12 +67,22 @@ public class GovernancePolicyServiceComponent {
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unsetOrganizationManagementService")
+    /**
+     * Binds the OrganizationManager OSGi service.
+     *
+     * @param organizationManager the bound organization manager.
+     */
     protected void setOrganizationManagementService(OrganizationManager organizationManager) {
 
         GovernancePolicyDataHolder.getInstance().setOrganizationManager(organizationManager);
         LOG.debug("Set Organization Management Service");
     }
 
+    /**
+     * Unbinds the OrganizationManager OSGi service.
+     *
+     * @param organizationManager the unbound organization manager.
+     */
     protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {
 
         GovernancePolicyDataHolder.getInstance().setOrganizationManager(null);

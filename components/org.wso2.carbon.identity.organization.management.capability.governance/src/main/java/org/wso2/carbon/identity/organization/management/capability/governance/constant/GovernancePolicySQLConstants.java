@@ -22,9 +22,7 @@ package org.wso2.carbon.identity.organization.management.capability.governance.c
  */
 public class GovernancePolicySQLConstants {
 
-    // -------------------------------------------------------------------------
-    // UM_ORG_GOVERNANCE_POLICY
-    // -------------------------------------------------------------------------
+    // Org governance policy.
 
     public static final String INSERT_ORG_GOVERNANCE_POLICY =
             "INSERT INTO UM_ORG_GOVERNANCE_POLICY " +
@@ -56,9 +54,7 @@ public class GovernancePolicySQLConstants {
                     "AND UM_RESOURCE_TYPE = :UM_RESOURCE_TYPE; " +
                     "AND UM_CAPABILITY = :UM_CAPABILITY;";
 
-    // -------------------------------------------------------------------------
-    // UM_ORG_GOVERNANCE_ORG_SELECTED
-    // -------------------------------------------------------------------------
+    // Org governance selected organizations.
 
     public static final String INSERT_ORG_GOVERNANCE_ORG_SELECTED =
             "INSERT INTO UM_ORG_GOVERNANCE_ORG_SELECTED (UM_POLICY_ID, UM_TARGET_ORG_ID) " +

@@ -18,6 +18,7 @@
 package org.wso2.carbon.identity.organization.management.capability.governance;
 
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
+import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernancePolicyEvaluationResult;
 
 /**
  * OSGi service interface for evaluating organization capability governance policies.
@@ -27,10 +28,12 @@ public interface GovernancePolicyEvaluator {
     /**
      * Evaluates org-level policies to determine whether {@code orgId} has the given capability.
      *
-     * @param orgId        the organization being evaluated
-     * @param capability   the capability being checked
-     * @param resourceType the type of the resource
-     * @return {@code true} if the capability is allowed; {@code false} otherwise
+     * @param orgId the organization being evaluated.
+     * @param capability the capability being checked.
+     * @param resourceType the type of the resource.
+     * @return the evaluation result containing the access decision and any additional policy attributes.
+     * @throws GovernancePolicyMgtException if the ancestor hierarchy cannot be traversed.
      */
-    boolean evaluate(String orgId, String capability, String resourceType) throws GovernancePolicyMgtException;
+    GovernancePolicyEvaluationResult evaluate(String orgId, String capability, String resourceType)
+            throws GovernancePolicyMgtException;
 }

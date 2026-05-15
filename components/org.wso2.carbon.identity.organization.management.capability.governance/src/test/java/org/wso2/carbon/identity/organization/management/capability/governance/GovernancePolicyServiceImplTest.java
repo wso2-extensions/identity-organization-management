@@ -104,9 +104,7 @@ public class GovernancePolicyServiceImplTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Org-level CRUD
-    // -------------------------------------------------------------------------
+    // Org-level CRUD.
 
     @Test
     public void testAddAndGetOrgGovernancePolicyFromRoot() throws Exception {
@@ -196,9 +194,7 @@ public class GovernancePolicyServiceImplTest {
         Assert.assertEquals(fetched.getSelectedOrgs().get(0).getTargetOrgId(), ORG_L1_ID);
     }
 
-    // -------------------------------------------------------------------------
-    // coversOrg helper tests
-    // -------------------------------------------------------------------------
+    // CoversOrg helper tests.
 
     @Test
     public void testCoversOrgAll() {
@@ -238,9 +234,7 @@ public class GovernancePolicyServiceImplTest {
         Assert.assertFalse(policy.coversOrg("other-org", false));
     }
 
-    // -------------------------------------------------------------------------
-    // Natural key lookups
-    // -------------------------------------------------------------------------
+    // Natural key lookups.
 
     @Test
     public void testGetOrgGovernancePolicyByKey() throws Exception {
@@ -307,9 +301,7 @@ public class GovernancePolicyServiceImplTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // 409 Conflict
-    // -------------------------------------------------------------------------
+    // 409 Conflict.
 
     @Test
     public void testAddOrgPolicyConflict() throws Exception {
@@ -328,9 +320,7 @@ public class GovernancePolicyServiceImplTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    // Helpers.
 
     private OrgGovernancePolicy buildOrgPolicy(String governingOrgId, Policy type) {
 
@@ -342,9 +332,7 @@ public class GovernancePolicyServiceImplTest {
         return policy;
     }
 
-    // -------------------------------------------------------------------------
-    // H2 / DataSource setup
-    // -------------------------------------------------------------------------
+    // H2 / DataSource setup.
 
     private void initiateH2Base() throws Exception {
 

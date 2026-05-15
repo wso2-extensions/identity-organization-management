@@ -99,11 +99,10 @@
                             org.wso2.carbon.identity.organization.management.capability.governance.dao
                         </Private-Package>
                         <Export-Package>
-                            org.wso2.carbon.identity.organization.management.capability.governance,
-                            org.wso2.carbon.identity.organization.management.capability.governance.constant,
-                            org.wso2.carbon.identity.organization.management.capability.governance.exception,
-                            org.wso2.carbon.identity.organization.management.capability.governance.model;
-                            version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.capability.governance;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.capability.governance.constant;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.capability.governance.exception;version="${identity.organization.management.exp.pkg.version}",
+                            org.wso2.carbon.identity.organization.management.capability.governance.model;version="${identity.organization.management.exp.pkg.version}"
                         </Export-Package>
                         <Import-Package>
                             javax.sql,
