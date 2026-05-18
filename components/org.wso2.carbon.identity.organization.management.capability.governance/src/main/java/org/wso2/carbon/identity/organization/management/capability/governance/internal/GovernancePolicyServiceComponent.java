@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.organization.management.capability.governance.Go
 import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyService;
 import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyServiceImpl;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 
 /**
  * OSGi service component for the Organization Capability Governance bundle.
@@ -87,5 +88,23 @@ public class GovernancePolicyServiceComponent {
 
         GovernancePolicyDataHolder.getInstance().setOrganizationManager(null);
         LOG.debug("Unset Organization Management Service");
+    }
+
+    @Reference(
+            name = "org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service",
+            service = OrgResourceResolverService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrgResourceResolverService")
+    protected void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        GovernancePolicyDataHolder.getInstance().setOrgResourceResolverService(orgResourceResolverService);
+        LOG.debug("Set Org Resource Resolver Service");
+    }
+
+    protected void unsetOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        GovernancePolicyDataHolder.getInstance().setOrgResourceResolverService(null);
+        LOG.debug("Unset Org Resource Resolver Service");
     }
 }

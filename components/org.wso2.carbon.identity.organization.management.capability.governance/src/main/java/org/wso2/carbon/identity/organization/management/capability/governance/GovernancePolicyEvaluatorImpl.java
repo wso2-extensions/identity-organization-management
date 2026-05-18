@@ -17,8 +17,7 @@
 
 package org.wso2.carbon.identity.organization.management.capability.governance;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.util.LambdaExceptionUtils;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAO;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAOImpl;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
@@ -27,10 +26,10 @@ import org.wso2.carbon.identity.organization.management.capability.governance.in
 import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernancePolicyEvaluationResult;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.OrgGovernancePolicy;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.Policy;
-import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
-import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseException;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy.FirstMatchAggregationStrategy;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED;
@@ -38,60 +37,49 @@ import static org.wso2.carbon.identity.organization.management.capability.govern
 /**
  * Implementation of {@link GovernancePolicyEvaluator}.
  *
- * <p>Walks the ancestor chain from orgId's direct parent up to the root. At each ancestor,
- * the org-level policy is checked. The first matching policy determines the result.</p>
- *
- * <p>If no policy is found in any ancestor, the method returns {@code false} (default deny).</p>
+ * <p>Walks the ancestor chain from orgId's direct parent up to the root via
+ * {@link OrgResourceResolverService}. The first ancestor whose policy passes
+ * {@code coversOrg} determines the result. If no ancestor has a matching policy,
+ * returns {@code false} (default deny).</p>
  */
 public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator {
 
-    private static final Log LOG = LogFactory.getLog(GovernancePolicyEvaluatorImpl.class);
     private static final GovernancePolicyDAO GOVERNANCE_POLICY_DAO = new GovernancePolicyDAOImpl();
 
-    /**
-     * Evaluates whether the given organization may use the specified capability and resource type.
-     *
-     * @param orgId the ID of the organization being evaluated.
-     * @param capability the capability name.
-     * @param resourceType the resource type.
-     * @return the evaluation result containing the access decision and any additional policy attributes.
-     * @throws GovernancePolicyMgtException if the ancestor hierarchy cannot be traversed.
-     */
     @Override
     public GovernancePolicyEvaluationResult evaluate(String orgId, String capability, String resourceType)
             throws GovernancePolicyMgtException {
 
-        return evaluateInternal(orgId, capability, resourceType);
-    }
-
-    private GovernancePolicyEvaluationResult evaluateInternal(String orgId, String capability, String resourceType)
-            throws GovernancePolicyMgtException {
-
-        OrganizationManager organizationManager = GovernancePolicyDataHolder.getInstance().getOrganizationManager();
-        List<String> ancestors;
+        OrgResourceResolverService resolverService =
+                GovernancePolicyDataHolder.getInstance().getOrgResourceResolverService();
+        OrgGovernancePolicy policy;
         try {
-            ancestors = organizationManager.getAncestorOrganizationIds(orgId);
-        } catch (OrganizationManagementException e) {
+            policy = resolverService.getResourcesFromOrgHierarchy(
+                    orgId,
+                    LambdaExceptionUtils.rethrowFunction(
+                            ancestorId -> findOrgGovernancePolicy(ancestorId, capability, resourceType)),
+                    policyMatchStrategy(orgId));
+        } catch (OrgResourceHierarchyTraverseException e) {
             throw new GovernancePolicyMgtServerException(ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getCode(),
                     ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getMessage(),
                     ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getDescription(), e);
         }
-        // ancestors[0] = orgId, ancestors[1] = direct parent, ..., ancestors[n] = root.
-        for (int i = 1; i < ancestors.size(); i++) {
-            String ancestorId = ancestors.get(i);
-            boolean isDirectChild = (i == 1);
 
-            Optional<OrgGovernancePolicy> op = GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(
-                    ancestorId, capability, resourceType);
-            if (op.isPresent() && op.get().coversOrg(orgId, isDirectChild)) {
-                GovernancePolicyEvaluationResult result = new GovernancePolicyEvaluationResult();
-                result.setAllowed(!Policy.DENY_ALL.equals(op.get().getPolicy()));
-                return result;
-            }
-        }
-        // Default deny — no policy found covering this org.
         GovernancePolicyEvaluationResult result = new GovernancePolicyEvaluationResult();
-        result.setAllowed(false);
+        result.setAllowed(policy != null && !Policy.DENY_ALL.equals(policy.getPolicy()));
         return result;
+    }
+
+    private Optional<OrgGovernancePolicy> findOrgGovernancePolicy(String orgId, String capability,
+                                                                   String resourceType)
+            throws GovernancePolicyMgtException {
+
+        return GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(orgId, capability, resourceType);
+    }
+
+    private FirstMatchAggregationStrategy<OrgGovernancePolicy> policyMatchStrategy(String orgId) {
+
+        return new FirstMatchAggregationStrategy<>(false,
+                (p, isDirectParent) -> p.coversOrg(orgId, isDirectParent));
     }
 }

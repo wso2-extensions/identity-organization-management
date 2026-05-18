@@ -18,6 +18,7 @@
 package org.wso2.carbon.identity.organization.management.capability.governance.internal;
 
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 
 /**
  * Singleton data holder for OSGi service references used by the capability governance bundle.
@@ -27,6 +28,7 @@ public class GovernancePolicyDataHolder {
     private static final GovernancePolicyDataHolder INSTANCE = new GovernancePolicyDataHolder();
 
     private OrganizationManager organizationManager;
+    private OrgResourceResolverService orgResourceResolverService;
 
     private GovernancePolicyDataHolder() {
 
@@ -60,5 +62,25 @@ public class GovernancePolicyDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    /**
+     * Returns the OrgResourceResolverService OSGi service reference.
+     *
+     * @return the org resource resolver service, or {@code null} if not yet bound.
+     */
+    public OrgResourceResolverService getOrgResourceResolverService() {
+
+        return orgResourceResolverService;
+    }
+
+    /**
+     * Sets the OrgResourceResolverService OSGi service reference.
+     *
+     * @param orgResourceResolverService the org resource resolver service.
+     */
+    public void setOrgResourceResolverService(OrgResourceResolverService orgResourceResolverService) {
+
+        this.orgResourceResolverService = orgResourceResolverService;
     }
 }
