@@ -82,6 +82,10 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
     public boolean deleteAgentAssociationOfAgentByAssociatedOrg(String agentId, String associatedOrgId)
             throws OrganizationManagementServerException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleting agent association for agentId: " + agentId + " in associatedOrgId: "
+                    + associatedOrgId);
+        }
         return userSharingDao.deleteUserAssociationOfUserByAssociatedOrg(agentId, associatedOrgId);
     }
 
@@ -177,6 +181,13 @@ public class OrganizationAgentSharingDAOImpl implements OrganizationAgentSharing
         } catch (DataAccessException e) {
             throw new AgentSharingMgtServerException(ERROR_CODE_GET_ROLES_SHARED_WITH_SHARED_AGENT);
         }
+    }
+
+    @Override
+    public AgentAssociation getAgentAssociation(String sharedAgentId, String sharedOrgId)
+            throws OrganizationManagementServerException {
+
+        return toAgentAssociation(userSharingDao.getUserAssociation(sharedAgentId, sharedOrgId));
     }
 
     private AgentAssociation toAgentAssociation(UserAssociation ua) {

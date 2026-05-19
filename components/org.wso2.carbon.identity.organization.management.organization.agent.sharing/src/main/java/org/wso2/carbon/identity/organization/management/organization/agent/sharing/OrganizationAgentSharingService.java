@@ -139,4 +139,28 @@ public interface OrganizationAgentSharingService {
     List<String> getRolesSharedWithAgentInOrganization(String agentName, int tenantId, String domainName)
             throws AgentSharingMgtException;
 
+    /**
+     * Deletes the agent association DB record for a shared agent within its resident organization.
+     * This is used during agent deletion cleanup to remove only the association entry without
+     * triggering a secondary userstore deletion.
+     *
+     * @param agentId         The shared agent's ID within the shared organization.
+     * @param associatedOrgId The resident organization ID where the agent's identity is managed.
+     * @return True if the association was deleted successfully.
+     * @throws OrganizationManagementException If an error occurs while deleting the association.
+     */
+    boolean deleteAgentAssociation(String agentId, String associatedOrgId) throws OrganizationManagementException;
+
+    /**
+     * Get the agent association of a shared agent entry in a given organization, looked up by the shared
+     * agent's own ID (not the master/associated agent ID).
+     *
+     * @param sharedAgentId The ID of the shared agent entry within the organization.
+     * @param sharedOrgId   The organization ID where the agent is shared.
+     * @return The {@link AgentAssociation} for the shared agent, or {@code null} if not found.
+     * @throws OrganizationManagementException If an error occurs while retrieving the association.
+     */
+    AgentAssociation getAgentAssociation(String sharedAgentId, String sharedOrgId)
+            throws OrganizationManagementException;
+
 }
