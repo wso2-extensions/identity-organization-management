@@ -74,6 +74,8 @@ public class GovernancePolicyServiceImplTest {
     private GovernancePolicyServiceImpl service;
     private MockedStatic<Utils> mockedUtils;
     private MockedStatic<OrganizationManagementUtil> mockedOrgMgmtUtil;
+    private DataSource originalDatabaseUtilDataSource;
+    private DataSource originalUtilsDataSource;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -98,6 +100,8 @@ public class GovernancePolicyServiceImplTest {
         if (mockedOrgMgmtUtil != null) {
             mockedOrgMgmtUtil.close();
         }
+        setStatic(DatabaseUtil.class.getDeclaredField("dataSource"), originalDatabaseUtilDataSource);
+        setStatic(Utils.class.getDeclaredField("dataSource"), originalUtilsDataSource);
         BasicDataSource dataSource = DATA_SOURCE_MAP.remove(DB_NAME);
         if (dataSource != null) {
             dataSource.close();
@@ -359,7 +363,10 @@ public class GovernancePolicyServiceImplTest {
 
         DataSource dataSource = DATA_SOURCE_MAP.get(DB_NAME);
 
-        setStatic(DatabaseUtil.class.getDeclaredField("dataSource"), dataSource);
+        Field dbUtilField = DatabaseUtil.class.getDeclaredField("dataSource");
+        dbUtilField.setAccessible(true);
+        originalDatabaseUtilDataSource = (DataSource) dbUtilField.get(null);
+        setStatic(dbUtilField, dataSource);
 
         Field carbonContextHolderField =
                 CarbonContext.getThreadLocalCarbonContext().getClass().getDeclaredField("carbonContextHolder");
@@ -368,7 +375,10 @@ public class GovernancePolicyServiceImplTest {
                 (CarbonContextDataHolder) carbonContextHolderField.get(CarbonContext.getThreadLocalCarbonContext());
         carbonContextHolder.setUserRealm(mock(UserRealm.class));
 
-        setStatic(Utils.class.getDeclaredField("dataSource"), dataSource);
+        Field utilsField = Utils.class.getDeclaredField("dataSource");
+        utilsField.setAccessible(true);
+        originalUtilsDataSource = (DataSource) utilsField.get(null);
+        setStatic(utilsField, dataSource);
     }
 
     private static void setStatic(Field field, Object newValue) throws Exception {

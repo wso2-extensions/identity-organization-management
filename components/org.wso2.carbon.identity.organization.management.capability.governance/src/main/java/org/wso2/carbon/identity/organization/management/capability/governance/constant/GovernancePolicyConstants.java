@@ -24,12 +24,6 @@ public class GovernancePolicyConstants {
 
     public static final String ERROR_PREFIX = "OCGM-";
 
-    // Capability names.
-    public static final String CAPABILITY_ADAPTIVE_AUTH = "ADAPTIVE_AUTH";
-
-    // Resource type names.
-    public static final String RESOURCE_TYPE_APPLICATION = "APPLICATION";
-
     // Column names.
     public static final String COL_UM_ID = "UM_ID";
     public static final String COL_UM_POLICY_ID = "UM_POLICY_ID";

@@ -32,70 +32,147 @@ public class OrgGovernancePolicy {
     private Policy policy;
     private List<GovernanceOrgSelected> selectedOrgs = new ArrayList<>();
 
+    /**
+     * Returns the database record ID of this governance policy.
+     *
+     * @return the policy ID
+     */
     public int getId() {
 
         return id;
     }
 
+    /**
+     * Sets the database record ID of this governance policy.
+     *
+     * @param id the policy ID
+     */
     public void setId(int id) {
 
         this.id = id;
     }
 
+    /**
+     * Returns the resource type this policy governs (e.g., an application type).
+     *
+     * @return the resource type string
+     */
     public String getResourceType() {
 
         return resourceType;
     }
 
+    /**
+     * Sets the resource type this policy governs.
+     *
+     * @param resourceType the resource type string
+     */
     public void setResourceType(String resourceType) {
 
         this.resourceType = resourceType;
     }
 
+    /**
+     * Returns the capability identifier this policy controls within the resource type.
+     *
+     * @return the capability string
+     */
     public String getCapability() {
 
         return capability;
     }
 
+    /**
+     * Sets the capability identifier this policy controls.
+     *
+     * @param capability the capability string
+     */
     public void setCapability(String capability) {
 
         this.capability = capability;
     }
 
+    /**
+     * Returns the ID of the organization that owns and enforces this policy.
+     *
+     * @return the governing organization ID
+     */
     public String getGoverningOrgId() {
 
         return governingOrgId;
     }
 
+    /**
+     * Sets the ID of the organization that owns and enforces this policy.
+     *
+     * @param governingOrgId the governing organization ID
+     */
     public void setGoverningOrgId(String governingOrgId) {
 
         this.governingOrgId = governingOrgId;
     }
 
+    /**
+     * Returns the {@link Policy} mode that determines which child organizations this policy covers.
+     *
+     * @return the policy mode
+     */
     public Policy getPolicy() {
 
         return policy;
     }
 
+    /**
+     * Sets the {@link Policy} mode that determines which child organizations this policy covers.
+     *
+     * @param policy the policy mode
+     */
     public void setPolicy(Policy policy) {
 
         this.policy = policy;
     }
 
+    /**
+     * Returns the list of organizations explicitly selected under a {@link Policy#ALLOW_SELECTED} policy.
+     *
+     * @return list of selected organizations; empty when the policy is not {@link Policy#ALLOW_SELECTED}
+     */
     public List<GovernanceOrgSelected> getSelectedOrgs() {
 
         return selectedOrgs;
     }
 
+    /**
+     * Sets the list of organizations explicitly selected under a {@link Policy#ALLOW_SELECTED} policy.
+     *
+     * @param selectedOrgs list of selected organizations
+     */
     public void setSelectedOrgs(List<GovernanceOrgSelected> selectedOrgs) {
 
         this.selectedOrgs = selectedOrgs;
     }
 
     /**
-     * Returns true if this policy covers (applies to) the given org.
-     * "Covers" means the policy is applicable — it does not imply the capability is allowed.
-     * Callers should check {@link Policy#DENY_ALL} separately to determine the final access decision.
+     * Returns {@code true} if this policy covers (applies to) the given organization.
+     *
+     * <p>"Covers" means the policy is applicable to the target org — it does not imply the
+     * capability is allowed. Callers must separately check {@link Policy#DENY_ALL} to determine
+     * the final access decision.
+     *
+     * <ul>
+     *   <li>{@link Policy#ALLOW_ALL} — covers every child organization; returns {@code true}.</li>
+     *   <li>{@link Policy#DENY_ALL} — covers every child organization (capability is denied);
+     *       returns {@code true}. Callers must recognize this case and block access accordingly.</li>
+     *   <li>{@link Policy#ALLOW_IMMEDIATE} — covers only direct children of the governing org;
+     *       returns {@code true} only when {@code isDirectChild} is {@code true}.</li>
+     *   <li>{@link Policy#ALLOW_SELECTED} — covers only the organizations explicitly listed in
+     *       {@link #getSelectedOrgs()}; returns {@code true} when {@code targetOrgId} matches
+     *       any entry in that list.</li>
+     * </ul>
+     *
+     * @param targetOrgId  the ID of the organization being evaluated
+     * @param isDirectChild {@code true} if the target org is a direct child of the governing org
+     * @return {@code true} if this policy applies to the target organization, {@code false} otherwise
      */
     public boolean coversOrg(String targetOrgId, boolean isDirectChild) {
 

@@ -17,6 +17,8 @@
 
 package org.wso2.carbon.identity.organization.management.capability.governance;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.LambdaExceptionUtils;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAO;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAOImpl;
@@ -37,12 +39,15 @@ import static org.wso2.carbon.identity.organization.management.capability.govern
 /**
  * Implementation of {@link GovernancePolicyEvaluator}.
  *
- * <p>Walks the ancestor chain from orgId's direct parent up to the root via
+ * <p>Walks the ancestor chain from the target org's direct parent up to the root via
  * {@link OrgResourceResolverService}. The first ancestor whose policy passes
- * {@code coversOrg} determines the result. If no ancestor has a matching policy,
- * returns {@code false} (default deny).</p>
+ * {@code coversOrg} is used to produce a {@link GovernancePolicyEvaluationResult}
+ * indicating whether a governance policy matched and the associated access decision.
+ * If no ancestor has a matching policy, the result reflects no match (default deny).</p>
  */
 public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator {
+
+    private static final Log LOG = LogFactory.getLog(GovernancePolicyEvaluatorImpl.class);
 
     private static final GovernancePolicyDAO GOVERNANCE_POLICY_DAO = new GovernancePolicyDAOImpl();
 
@@ -50,6 +55,10 @@ public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator 
     public GovernancePolicyEvaluationResult evaluate(String orgId, String capability, String resourceType)
             throws GovernancePolicyMgtException {
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Evaluating governance policy for orgId: " + orgId + ", capability: " + capability +
+                    ", resourceType: " + resourceType);
+        }
         OrgResourceResolverService resolverService =
                 GovernancePolicyDataHolder.getInstance().getOrgResourceResolverService();
         OrgGovernancePolicy policy;
