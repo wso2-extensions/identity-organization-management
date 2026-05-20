@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+  ~ Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
   ~
   ~ WSO2 LLC. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
@@ -18,11 +19,10 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.suite">
-    <test name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.tests" preserve-order="true" parallel="false">
+<suite name="organization-capability-governance">
+    <test name="organization-capability-governance-test-all">
         <classes>
-            <class name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverServiceTest"/>
-            <class name="org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.FirstMatchAggregationStrategyTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyServiceImplTest"/>
         </classes>
     </test>
 </suite>
