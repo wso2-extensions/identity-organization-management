@@ -57,16 +57,16 @@ public class GovernancePolicySQLConstants {
     // Org governance selected organizations.
 
     public static final String INSERT_ORG_GOVERNANCE_ORG_SELECTED =
-            "INSERT INTO UM_ORG_GOVERNANCE_ORG_SELECTED (UM_POLICY_ID, UM_TARGET_ORG_ID) " +
-                    "VALUES (:UM_POLICY_ID;, :UM_TARGET_ORG_ID;)";
+            "INSERT INTO UM_ORG_GOVERNANCE_POLICY_SELECTED_ORGS (UM_POLICY_ID, UM_SELECTED_ORG_ID) " +
+                    "VALUES (:UM_POLICY_ID;, :UM_SELECTED_ORG_ID;)";
 
     public static final String SELECT_ORG_GOVERNANCE_ORG_SELECTED_BY_POLICY =
-            "SELECT UM_ID, UM_POLICY_ID, UM_TARGET_ORG_ID " +
-                    "FROM UM_ORG_GOVERNANCE_ORG_SELECTED " +
+            "SELECT UM_ID, UM_POLICY_ID, UM_SELECTED_ORG_ID " +
+                    "FROM UM_ORG_GOVERNANCE_POLICY_SELECTED_ORGS " +
                     "WHERE UM_POLICY_ID = :UM_POLICY_ID;";
 
     public static final String DELETE_ORG_GOVERNANCE_ORG_SELECTED_BY_POLICY =
-            "DELETE FROM UM_ORG_GOVERNANCE_ORG_SELECTED " +
+            "DELETE FROM UM_ORG_GOVERNANCE_POLICY_SELECTED_ORGS " +
                     "WHERE UM_POLICY_ID = :UM_POLICY_ID;";
 
     private GovernancePolicySQLConstants() {

@@ -27,7 +27,7 @@ public class GovernancePolicyConstants {
     // Column names.
     public static final String COL_UM_ID = "UM_ID";
     public static final String COL_UM_POLICY_ID = "UM_POLICY_ID";
-    public static final String COL_UM_TARGET_ORG_ID = "UM_TARGET_ORG_ID";
+    public static final String COL_UM_SELECTED_ORG_ID = "UM_SELECTED_ORG_ID";
     public static final String COL_UM_POLICY = "UM_POLICY";
     public static final String COL_UM_CAPABILITY = "UM_CAPABILITY";
     public static final String COL_UM_RESOURCE_TYPE = "UM_RESOURCE_TYPE";

@@ -36,7 +36,7 @@ import static org.wso2.carbon.identity.organization.management.capability.govern
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.COL_UM_POLICY;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.COL_UM_POLICY_ID;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.COL_UM_RESOURCE_TYPE;
-import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.COL_UM_TARGET_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.COL_UM_SELECTED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_ADD_ORG_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_DELETE_ORG_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_GET_ORG_POLICY_FAILED;
@@ -86,7 +86,7 @@ public class GovernancePolicyDAOImpl implements GovernancePolicyDAO {
                     for (GovernanceOrgSelected selected : policy.getSelectedOrgs()) {
                         template.executeUpdate(INSERT_ORG_GOVERNANCE_ORG_SELECTED, namedPreparedStatement -> {
                             namedPreparedStatement.setInt(COL_UM_POLICY_ID, policyId);
-                            namedPreparedStatement.setString(COL_UM_TARGET_ORG_ID, selected.getTargetOrgId());
+                            namedPreparedStatement.setString(COL_UM_SELECTED_ORG_ID, selected.getTargetOrgId());
                         });
                     }
                 }
@@ -142,7 +142,7 @@ public class GovernancePolicyDAOImpl implements GovernancePolicyDAO {
                     for (GovernanceOrgSelected selected : policy.getSelectedOrgs()) {
                         template.executeUpdate(INSERT_ORG_GOVERNANCE_ORG_SELECTED, namedPreparedStatement -> {
                             namedPreparedStatement.setInt(COL_UM_POLICY_ID, policy.getId());
-                            namedPreparedStatement.setString(COL_UM_TARGET_ORG_ID, selected.getTargetOrgId());
+                            namedPreparedStatement.setString(COL_UM_SELECTED_ORG_ID, selected.getTargetOrgId());
                         });
                     }
                 }
@@ -235,7 +235,7 @@ public class GovernancePolicyDAOImpl implements GovernancePolicyDAO {
         GovernanceOrgSelected selected = new GovernanceOrgSelected();
         selected.setId(rs.getInt(COL_UM_ID));
         selected.setPolicyId(rs.getInt(COL_UM_POLICY_ID));
-        selected.setTargetOrgId(rs.getString(COL_UM_TARGET_ORG_ID));
+        selected.setTargetOrgId(rs.getString(COL_UM_SELECTED_ORG_ID));
         return selected;
     }
 }
