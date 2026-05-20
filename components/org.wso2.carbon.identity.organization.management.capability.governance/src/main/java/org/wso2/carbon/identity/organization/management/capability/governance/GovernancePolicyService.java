@@ -58,19 +58,6 @@ public interface GovernancePolicyService {
     List<OrgGovernancePolicy> getOrgGovernancePolicies(String governingOrgId) throws GovernancePolicyMgtException;
 
     /**
-     * Updates the governance policy matching the given composite key.
-     *
-     * @param governingOrgId the governing organization ID.
-     * @param resourceType the resource type.
-     * @param capability the capability name.
-     * @param updates the fields to apply; non-null fields overwrite existing values.
-     * @return the updated policy.
-     * @throws GovernancePolicyMgtException if no policy is found for the given key, or if a server error occurs.
-     */
-    OrgGovernancePolicy updateOrgGovernancePolicyByKey(String governingOrgId, String resourceType, String capability,
-            OrgGovernancePolicy updates) throws GovernancePolicyMgtException;
-
-    /**
      * Deletes the governance policy matching the given composite key.
      *
      * @param governingOrgId the governing organization ID.

@@ -41,13 +41,6 @@ public class GovernancePolicySQLConstants {
                     "AND UM_CAPABILITY = :UM_CAPABILITY; " +
                     "AND UM_RESOURCE_TYPE = :UM_RESOURCE_TYPE;";
 
-    public static final String UPDATE_ORG_GOVERNANCE_POLICY =
-            "UPDATE UM_ORG_GOVERNANCE_POLICY " +
-                    "SET UM_POLICY = :UM_POLICY; " +
-                    "WHERE UM_GOVERNING_ORG_ID = :UM_GOVERNING_ORG_ID; " +
-                    "AND UM_RESOURCE_TYPE = :UM_RESOURCE_TYPE; " +
-                    "AND UM_CAPABILITY = :UM_CAPABILITY;";
-
     public static final String DELETE_ORG_GOVERNANCE_POLICY_BY_KEY =
             "DELETE FROM UM_ORG_GOVERNANCE_POLICY " +
                     "WHERE UM_GOVERNING_ORG_ID = :UM_GOVERNING_ORG_ID; " +

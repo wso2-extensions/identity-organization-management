@@ -47,14 +47,6 @@ public interface GovernancePolicyDAO {
             throws GovernancePolicyMgtServerException;
 
     /**
-     * Updates an existing organization governance policy.
-     *
-     * @param policy the policy with updated fields; must have a valid ID set.
-     * @throws GovernancePolicyMgtServerException if the update fails.
-     */
-    void updateOrgGovernancePolicy(OrgGovernancePolicy policy) throws GovernancePolicyMgtServerException;
-
-    /**
      * Deletes the governance policy matching the given composite key.
      *
      * @param governingOrgId the governing organization ID.

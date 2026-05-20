@@ -24,14 +24,21 @@ import org.wso2.carbon.identity.organization.management.capability.governance.da
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtClientException;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtServerException;
+import org.wso2.carbon.identity.organization.management.capability.governance.internal.GovernancePolicyDataHolder;
+import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernanceOrgSelected;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.OrgGovernancePolicy;
+import org.wso2.carbon.identity.organization.management.capability.governance.model.Policy;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_GET_DESCENDANT_ORGS_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_GET_ORG_POLICY_FAILED;
-import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_INVALID_SELECTED_ORG;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_ORG_CHECK_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_POLICY_ALREADY_EXISTS;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_POLICY_MANAGEMENT_NOT_PERMITTED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_POLICY_NOT_FOUND;
@@ -56,6 +63,9 @@ public class GovernancePolicyServiceImpl implements GovernancePolicyService {
                     ERROR_CODE_POLICY_ALREADY_EXISTS.getMessage(),
                     ERROR_CODE_POLICY_ALREADY_EXISTS.getDescription());
         }
+        if (Policy.ALLOW_SELECTED.equals(policy.getPolicy())) {
+            validateSelectedOrgs(policy.getGoverningOrgId(), policy.getSelectedOrgs());
+        }
         GOVERNANCE_POLICY_DAO.addOrgGovernancePolicy(policy);
         return GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(
                         policy.getGoverningOrgId(), policy.getCapability(), policy.getResourceType())
@@ -69,6 +79,7 @@ public class GovernancePolicyServiceImpl implements GovernancePolicyService {
     public OrgGovernancePolicy getOrgGovernancePolicyByKey(String governingOrgId, String resourceType,
             String capability) throws GovernancePolicyMgtException {
 
+        validatePrimaryOrg(governingOrgId);
         return GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(governingOrgId, capability, resourceType)
                 .orElseThrow(() -> new GovernancePolicyMgtClientException(
                         ERROR_CODE_POLICY_NOT_FOUND.getCode(),
@@ -80,25 +91,8 @@ public class GovernancePolicyServiceImpl implements GovernancePolicyService {
     public List<OrgGovernancePolicy> getOrgGovernancePolicies(String governingOrgId)
             throws GovernancePolicyMgtException {
 
-        return GOVERNANCE_POLICY_DAO.getOrgGovernancePoliciesByGoverningOrg(governingOrgId);
-    }
-
-    @Override
-    public OrgGovernancePolicy updateOrgGovernancePolicyByKey(String governingOrgId, String resourceType,
-            String capability, OrgGovernancePolicy updates) throws GovernancePolicyMgtException {
-
         validatePrimaryOrg(governingOrgId);
-        OrgGovernancePolicy existing = getOrgGovernancePolicyByKey(governingOrgId, resourceType, capability);
-        updates.setId(existing.getId());
-        updates.setGoverningOrgId(governingOrgId);
-        updates.setResourceType(resourceType);
-        updates.setCapability(capability);
-        GOVERNANCE_POLICY_DAO.updateOrgGovernancePolicy(updates);
-        return GOVERNANCE_POLICY_DAO.findOrgGovernancePolicy(governingOrgId, capability, resourceType)
-                .orElseThrow(() -> new GovernancePolicyMgtServerException(
-                        ERROR_CODE_GET_ORG_POLICY_FAILED.getCode(),
-                        ERROR_CODE_GET_ORG_POLICY_FAILED.getMessage(),
-                        ERROR_CODE_GET_ORG_POLICY_FAILED.getDescription()));
+        return GOVERNANCE_POLICY_DAO.getOrgGovernancePoliciesByGoverningOrg(governingOrgId);
     }
 
     @Override
@@ -110,9 +104,30 @@ public class GovernancePolicyServiceImpl implements GovernancePolicyService {
         GOVERNANCE_POLICY_DAO.deleteOrgGovernancePolicyByKey(governingOrgId, resourceType, capability);
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    private void validateSelectedOrgs(String governingOrgId, List<GovernanceOrgSelected> selectedOrgs)
+            throws GovernancePolicyMgtException {
+
+        if (selectedOrgs == null || selectedOrgs.isEmpty()) {
+            return;
+        }
+        try {
+            Set<String> descendants = new HashSet<>(GovernancePolicyDataHolder.getInstance()
+                    .getOrganizationManager()
+                    .getChildOrganizationsIds(governingOrgId, true));
+            for (GovernanceOrgSelected selected : selectedOrgs) {
+                if (!descendants.contains(selected.getTargetOrgId())) {
+                    throw new GovernancePolicyMgtClientException(ERROR_CODE_INVALID_SELECTED_ORG.getCode(),
+                            ERROR_CODE_INVALID_SELECTED_ORG.getMessage(),
+                            String.format(ERROR_CODE_INVALID_SELECTED_ORG.getDescription(),
+                                    selected.getTargetOrgId()));
+                }
+            }
+        } catch (OrganizationManagementException e) {
+            throw new GovernancePolicyMgtServerException(ERROR_CODE_GET_DESCENDANT_ORGS_FAILED.getCode(),
+                    ERROR_CODE_GET_DESCENDANT_ORGS_FAILED.getMessage(),
+                    ERROR_CODE_GET_DESCENDANT_ORGS_FAILED.getDescription(), e);
+        }
+    }
 
     private void validatePrimaryOrg(String governingOrgId) throws GovernancePolicyMgtException {
 
@@ -129,9 +144,9 @@ public class GovernancePolicyServiceImpl implements GovernancePolicyService {
                         ERROR_CODE_POLICY_MANAGEMENT_NOT_PERMITTED.getDescription());
             }
         } catch (OrganizationManagementException e) {
-            throw new GovernancePolicyMgtServerException(ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getCode(),
-                    ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getMessage(),
-                    ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED.getDescription(), e);
+            throw new GovernancePolicyMgtServerException(ERROR_CODE_ORG_CHECK_FAILED.getCode(),
+                    ERROR_CODE_ORG_CHECK_FAILED.getMessage(),
+                    ERROR_CODE_ORG_CHECK_FAILED.getDescription(), e);
         }
     }
 }

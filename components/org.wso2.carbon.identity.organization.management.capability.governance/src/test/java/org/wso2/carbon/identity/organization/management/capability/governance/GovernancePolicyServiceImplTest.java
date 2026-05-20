@@ -51,6 +51,7 @@ import javax.sql.DataSource;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
@@ -85,6 +86,8 @@ public class GovernancePolicyServiceImplTest {
         initiateH2Base();
         mockDataSource();
         GovernancePolicyDataHolder.getInstance().setOrganizationManager(organizationManager);
+        when(organizationManager.getChildOrganizationsIds(SUPER_ORG_ID, true))
+                .thenReturn(Collections.singletonList(ORG_L1_ID));
         mockedUtils = mockStatic(Utils.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         mockedUtils.when(Utils::getOrganizationId).thenReturn(SUPER_ORG_ID);
         mockedOrgMgmtUtil = mockStatic(OrganizationManagementUtil.class, org.mockito.Mockito.CALLS_REAL_METHODS);
@@ -135,21 +138,6 @@ public class GovernancePolicyServiceImplTest {
     }
 
     @Test(dependsOnMethods = "testGetOrgGovernancePolicies")
-    public void testUpdateOrgGovernancePolicy() throws Exception {
-
-        OrgGovernancePolicy policy = buildOrgPolicy(SUPER_ORG_ID, Policy.ALLOW_IMMEDIATE);
-        policy.setCapability("SOME_OTHER_CAPABILITY");
-        service.addOrgGovernancePolicy(policy);
-
-        OrgGovernancePolicy updates = new OrgGovernancePolicy();
-        updates.setPolicy(Policy.ALLOW_ALL);
-        OrgGovernancePolicy updated = service.updateOrgGovernancePolicyByKey(
-                SUPER_ORG_ID, RESOURCE_TYPE_APP, "SOME_OTHER_CAPABILITY", updates);
-
-        Assert.assertEquals(updated.getPolicy(), Policy.ALLOW_ALL);
-    }
-
-    @Test(dependsOnMethods = "testUpdateOrgGovernancePolicy")
     public void testDeleteOrgGovernancePolicy() throws Exception {
 
         OrgGovernancePolicy policy = buildOrgPolicy(SUPER_ORG_ID, Policy.DENY_ALL);
@@ -267,19 +255,6 @@ public class GovernancePolicyServiceImplTest {
     }
 
     @Test(dependsOnMethods = "testGetOrgGovernancePolicyByKey")
-    public void testUpdateOrgGovernancePolicyByKey() throws Exception {
-
-        OrgGovernancePolicy updates = new OrgGovernancePolicy();
-        updates.setPolicy(Policy.ALLOW_IMMEDIATE);
-
-        OrgGovernancePolicy updated = service.updateOrgGovernancePolicyByKey(
-                SUPER_ORG_ID, RESOURCE_TYPE_APP, "KEY_LOOKUP_CAPABILITY", updates);
-        Assert.assertEquals(updated.getPolicy(), Policy.ALLOW_IMMEDIATE);
-        Assert.assertEquals(updated.getGoverningOrgId(), SUPER_ORG_ID);
-        Assert.assertEquals(updated.getCapability(), "KEY_LOOKUP_CAPABILITY");
-    }
-
-    @Test(dependsOnMethods = "testUpdateOrgGovernancePolicyByKey")
     public void testDeleteOrgGovernancePolicyByKey() throws Exception {
 
         service.deleteOrgGovernancePolicyByKey(SUPER_ORG_ID, RESOURCE_TYPE_APP, "KEY_LOOKUP_CAPABILITY");

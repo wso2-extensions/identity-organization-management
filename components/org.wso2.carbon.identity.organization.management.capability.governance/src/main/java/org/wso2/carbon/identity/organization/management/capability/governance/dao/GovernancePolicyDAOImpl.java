@@ -40,15 +40,12 @@ import static org.wso2.carbon.identity.organization.management.capability.govern
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_ADD_ORG_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_DELETE_ORG_POLICY_FAILED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_GET_ORG_POLICY_FAILED;
-import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_UPDATE_ORG_POLICY_FAILED;
-import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.DELETE_ORG_GOVERNANCE_ORG_SELECTED_BY_POLICY;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.DELETE_ORG_GOVERNANCE_POLICY_BY_KEY;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.INSERT_ORG_GOVERNANCE_ORG_SELECTED;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.INSERT_ORG_GOVERNANCE_POLICY;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.SELECT_ORG_GOVERNANCE_ORG_SELECTED_BY_POLICY;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.SELECT_ORG_GOVERNANCE_POLICIES_BY_GOVERNING_ORG;
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.SELECT_ORG_GOVERNANCE_POLICY_BY_KEY;
-import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicySQLConstants.UPDATE_ORG_GOVERNANCE_POLICY;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getNewTemplate;
 
 /**
@@ -120,38 +117,6 @@ public class GovernancePolicyDAOImpl implements GovernancePolicyDAO {
             throw new GovernancePolicyMgtServerException(ERROR_CODE_GET_ORG_POLICY_FAILED.getCode(),
                     ERROR_CODE_GET_ORG_POLICY_FAILED.getMessage(),
                     ERROR_CODE_GET_ORG_POLICY_FAILED.getDescription(), e);
-        }
-    }
-
-    @Override
-    public void updateOrgGovernancePolicy(OrgGovernancePolicy policy) throws GovernancePolicyMgtServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            namedJdbcTemplate.withTransaction(template -> {
-                template.executeUpdate(UPDATE_ORG_GOVERNANCE_POLICY, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(COL_UM_POLICY, policy.getPolicy().name());
-                    namedPreparedStatement.setString(COL_UM_GOVERNING_ORG_ID, policy.getGoverningOrgId());
-                    namedPreparedStatement.setString(COL_UM_RESOURCE_TYPE, policy.getResourceType());
-                    namedPreparedStatement.setString(COL_UM_CAPABILITY, policy.getCapability());
-                });
-                template.executeUpdate(DELETE_ORG_GOVERNANCE_ORG_SELECTED_BY_POLICY,
-                        namedPreparedStatement ->
-                                namedPreparedStatement.setInt(COL_UM_POLICY_ID, policy.getId()));
-                if (Policy.ALLOW_SELECTED.equals(policy.getPolicy()) && policy.getSelectedOrgs() != null) {
-                    for (GovernanceOrgSelected selected : policy.getSelectedOrgs()) {
-                        template.executeUpdate(INSERT_ORG_GOVERNANCE_ORG_SELECTED, namedPreparedStatement -> {
-                            namedPreparedStatement.setInt(COL_UM_POLICY_ID, policy.getId());
-                            namedPreparedStatement.setString(COL_UM_SELECTED_ORG_ID, selected.getTargetOrgId());
-                        });
-                    }
-                }
-                return null;
-            });
-        } catch (TransactionException e) {
-            throw new GovernancePolicyMgtServerException(ERROR_CODE_UPDATE_ORG_POLICY_FAILED.getCode(),
-                    ERROR_CODE_UPDATE_ORG_POLICY_FAILED.getMessage(),
-                    ERROR_CODE_UPDATE_ORG_POLICY_FAILED.getDescription(), e);
         }
     }
 

@@ -48,6 +48,12 @@ public class GovernancePolicyConstants {
         ERROR_CODE_POLICY_MANAGEMENT_NOT_PERMITTED("60003",
                 "Policy management not permitted.",
                 "Only the primary organization is allowed to manage governance policies."),
+        ERROR_CODE_INVALID_SELECTED_ORG("60004",
+                "Invalid selected organization.",
+                "Organization '%s' is not a descendant of the governing organization."),
+        ERROR_CODE_POLICY_EVALUATION_NOT_SUPPORTED("60005",
+                "Policy evaluation not permitted.",
+                "Governance policy evaluation is only applicable to sub-organizations."),
 
         // Server errors.
         ERROR_CODE_ADD_ORG_POLICY_FAILED("65001",
@@ -64,7 +70,13 @@ public class GovernancePolicyConstants {
                 "An error occurred while deleting the org governance policy from the database."),
         ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED("65005",
                 "Hierarchy traversal failed.",
-                "An error occurred while traversing the organization hierarchy.");
+                "An error occurred while traversing the organization hierarchy."),
+        ERROR_CODE_ORG_CHECK_FAILED("65006",
+                "Organization check failed.",
+                "An error occurred while checking whether given organization is a sub organization."),
+        ERROR_CODE_GET_DESCENDANT_ORGS_FAILED("65007",
+                "Failed to retrieve descendant organizations.",
+                "An error occurred while retrieving descendant organizations of the governing organization.");
 
         private final String code;
         private final String message;

@@ -22,12 +22,15 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.LambdaExceptionUtils;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAO;
 import org.wso2.carbon.identity.organization.management.capability.governance.dao.GovernancePolicyDAOImpl;
+import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtClientException;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
 import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtServerException;
 import org.wso2.carbon.identity.organization.management.capability.governance.internal.GovernancePolicyDataHolder;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernancePolicyEvaluationResult;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.OrgGovernancePolicy;
 import org.wso2.carbon.identity.organization.management.capability.governance.model.Policy;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.OrgResourceResolverService;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception.OrgResourceHierarchyTraverseException;
 import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy.FirstMatchAggregationStrategy;
@@ -35,6 +38,8 @@ import org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service
 import java.util.Optional;
 
 import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_HIERARCHY_TRAVERSAL_FAILED;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_ORG_CHECK_FAILED;
+import static org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants.ErrorMessage.ERROR_CODE_POLICY_EVALUATION_NOT_SUPPORTED;
 
 /**
  * Implementation of {@link GovernancePolicyEvaluator}.
@@ -55,6 +60,17 @@ public class GovernancePolicyEvaluatorImpl implements GovernancePolicyEvaluator 
     public GovernancePolicyEvaluationResult evaluate(String orgId, String capability, String resourceType)
             throws GovernancePolicyMgtException {
 
+        try {
+            if (!OrganizationManagementUtil.isOrganization(orgId)) {
+                throw new GovernancePolicyMgtClientException(ERROR_CODE_POLICY_EVALUATION_NOT_SUPPORTED.getCode(),
+                        ERROR_CODE_POLICY_EVALUATION_NOT_SUPPORTED.getMessage(),
+                        ERROR_CODE_POLICY_EVALUATION_NOT_SUPPORTED.getDescription());
+            }
+        } catch (OrganizationManagementException e) {
+            throw new GovernancePolicyMgtServerException(ERROR_CODE_ORG_CHECK_FAILED.getCode(),
+                    ERROR_CODE_ORG_CHECK_FAILED.getMessage(),
+                    ERROR_CODE_ORG_CHECK_FAILED.getDescription(), e);
+        }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Evaluating governance policy for orgId: " + orgId + ", capability: " + capability +
                     ", resourceType: " + resourceType);
