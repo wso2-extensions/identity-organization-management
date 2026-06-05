@@ -22,7 +22,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
@@ -72,17 +74,25 @@ public class OrganizationVersionHandlerTest {
     private static final String V1 = "v1.0.0";
     private static final String V0 = "v0.0.0";
 
+    @BeforeClass
+    public void setUpClass() {
+
+        organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
+        idPManagementUtilMockedStatic = mockStatic(IdPManagementUtil.class);
+        identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+    }
+
     @BeforeMethod
     public void setUp() {
 
         autoCloseable = MockitoAnnotations.openMocks(this);
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(organizationManager);
 
-        organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
+        organizationManagementUtilMockedStatic.reset();
         organizationManagementUtilMockedStatic.when(() -> OrganizationManagementUtil.isOrganization(any()))
                 .thenReturn(false);
-        idPManagementUtilMockedStatic = mockStatic(IdPManagementUtil.class);
-        identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+        idPManagementUtilMockedStatic.reset();
+        identityTenantUtilMockedStatic.reset();
         identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantId(any()))
                 .thenReturn(TENANT_ID);
     }
@@ -91,6 +101,11 @@ public class OrganizationVersionHandlerTest {
     public void tearDown() throws Exception {
 
         autoCloseable.close();
+    }
+
+    @AfterClass
+    public void tearDownClass() {
+
         organizationManagementUtilMockedStatic.close();
         idPManagementUtilMockedStatic.close();
         identityTenantUtilMockedStatic.close();

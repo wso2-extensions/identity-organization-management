@@ -43,7 +43,6 @@ import org.wso2.carbon.identity.organization.management.service.util.Organizatio
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
-import org.wso2.carbon.identity.role.v2.mgt.core.model.Role;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.utils.AuditLog;
 
@@ -144,15 +143,9 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                                 }
                             } while (chunkOfRoles.size() == maximumPage);
 
-                            List<String> roleIds = allRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.
-                                    toList());
-                            for (String roleId : roleIds) {
-                                // Get all role details for each role id and create a RoleV2 object.
-                                Role roleBasicInfo = roleManagementService.getRole(roleId, tenantDomain);
-                                if (roleBasicInfo != null) {
-                                    updatedAssociatedRolesList.add(new RoleV2(roleBasicInfo.getId(),
-                                            roleBasicInfo.getName()));
-                                }
+                            for (RoleBasicInfo roleBasicInfo : allRoles) {
+                                updatedAssociatedRolesList.add(new RoleV2(roleBasicInfo.getId(),
+                                        roleBasicInfo.getName()));
                             }
                         }
                         break;

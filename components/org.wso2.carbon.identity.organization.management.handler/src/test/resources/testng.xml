@@ -24,6 +24,7 @@
             <class name="org.wso2.carbon.identity.organization.management.handler.listener.SharedRoleMgtListenerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.GovernanceConfigUpdateHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.SharedRoleMgtHandlerTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.handler.OrganizationVersionHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.SharingPolicyCleanUpHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.OrganizationSessionHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.handler.OrganizationManagementAuditLogHandlerTest"/>

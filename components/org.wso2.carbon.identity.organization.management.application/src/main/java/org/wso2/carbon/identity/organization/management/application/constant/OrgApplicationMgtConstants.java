@@ -188,6 +188,9 @@ public class OrgApplicationMgtConstants {
         ERROR_CODE_INVALID_ROLE_SHARING_OPERATION("60007", "Invalid role sharing operation.",
                 "The role sharing operation is invalid. " +
                         "Ensure that a valid role sharing mode is specified, along with roles and the audience list."),
+        ERROR_CODE_ADAPTIVE_AUTH_NOT_ALLOWED_BY_GOVERNANCE("60008",
+                "Conditional authentication script update is only allowed for root org shared users.",
+                "Conditional authentication script update failed due to governance restrictions."),
 
         // Server errors.
         ERROR_CODE_ERROR_RETRIEVING_SHARED_APP("65001", "Unable to retrieve shared applications.",

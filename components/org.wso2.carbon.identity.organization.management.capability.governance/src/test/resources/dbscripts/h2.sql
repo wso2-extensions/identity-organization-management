@@ -1,0 +1,56 @@
+-- UM_ORG definition (required for FK references and hierarchy traversal tests)
+CREATE TABLE UM_ORG
+(
+    UM_ID              CHARACTER VARYING(36)                   NOT NULL,
+    UM_ORG_NAME        CHARACTER VARYING(255)                  NOT NULL,
+    UM_ORG_DESCRIPTION CHARACTER VARYING(1024),
+    UM_CREATED_TIME    TIMESTAMP                               NOT NULL,
+    UM_LAST_MODIFIED   TIMESTAMP                               NOT NULL,
+    UM_STATUS          CHARACTER VARYING(255) DEFAULT 'ACTIVE' NOT NULL,
+    UM_PARENT_ID       CHARACTER VARYING(36),
+    UM_ORG_TYPE        CHARACTER VARYING(100)                  NOT NULL,
+    PRIMARY KEY (UM_ID),
+    FOREIGN KEY (UM_PARENT_ID) REFERENCES UM_ORG (UM_ID) ON DELETE CASCADE ON UPDATE RESTRICT
+);
+
+-- Org-level governance policy table
+CREATE TABLE UM_ORG_GOVERNANCE_POLICY
+(
+    UM_ID               INT          NOT NULL AUTO_INCREMENT,
+    UM_RESOURCE_TYPE    VARCHAR(100) NOT NULL,
+    UM_CAPABILITY       VARCHAR(100) NOT NULL,
+    UM_GOVERNING_ORG_ID VARCHAR(36) NOT NULL,
+    UM_POLICY      VARCHAR(100) NOT NULL,
+    PRIMARY KEY (UM_ID),
+    CONSTRAINT FK_ORG_GOV_POLICY_GOVERNING_ORG FOREIGN KEY (UM_GOVERNING_ORG_ID)
+        REFERENCES UM_ORG (UM_ID) ON DELETE CASCADE,
+    UNIQUE (UM_GOVERNING_ORG_ID, UM_RESOURCE_TYPE, UM_CAPABILITY)
+);
+
+-- Selected orgs for SELECTED-type org policies
+CREATE TABLE UM_ORG_GOVERNANCE_POLICY_SELECTED_ORGS
+(
+    UM_ID              INT          NOT NULL AUTO_INCREMENT,
+    UM_POLICY_ID       INT          NOT NULL,
+    UM_SELECTED_ORG_ID VARCHAR(36) NOT NULL,
+    PRIMARY KEY (UM_ID),
+    CONSTRAINT FK_ORG_GOV_SELECTED_POLICY FOREIGN KEY (UM_POLICY_ID)
+        REFERENCES UM_ORG_GOVERNANCE_POLICY (UM_ID) ON DELETE CASCADE,
+    CONSTRAINT FK_ORG_GOV_SELECTED_ORG FOREIGN KEY (UM_SELECTED_ORG_ID)
+        REFERENCES UM_ORG (UM_ID) ON DELETE CASCADE,
+    UNIQUE (UM_POLICY_ID, UM_SELECTED_ORG_ID)
+);
+
+-- Sample org hierarchy:
+--   super (root)
+--     └─ org-l1 (direct child of super)
+--          └─ org-l2 (grandchild of super)
+INSERT INTO UM_ORG (UM_ID, UM_ORG_NAME, UM_ORG_DESCRIPTION, UM_CREATED_TIME, UM_LAST_MODIFIED, UM_STATUS,
+                    UM_PARENT_ID, UM_ORG_TYPE)
+VALUES ('super-org-id', 'Super', 'Root organization.', '2026-01-01 00:00:00', '2026-01-01 00:00:00', 'ACTIVE', NULL,
+        'TENANT'),
+       ('org-l1-id', 'org-l1', NULL, '2026-01-01 00:00:00', '2026-01-01 00:00:00', 'ACTIVE', 'super-org-id',
+        'TENANT'),
+       ('org-l2-id', 'org-l2', NULL, '2026-01-01 00:00:00', '2026-01-01 00:00:00', 'ACTIVE', 'org-l1-id', 'TENANT'),
+       ('org-selected-id', 'org-selected', NULL, '2026-01-01 00:00:00', '2026-01-01 00:00:00', 'ACTIVE', 'org-l1-id',
+        'TENANT');

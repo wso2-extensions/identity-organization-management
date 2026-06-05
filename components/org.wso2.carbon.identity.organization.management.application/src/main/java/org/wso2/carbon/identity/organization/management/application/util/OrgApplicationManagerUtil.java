@@ -19,8 +19,11 @@
 package org.wso2.carbon.identity.organization.management.application.util;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
@@ -29,13 +32,22 @@ import org.wso2.carbon.identity.application.common.model.IdentityProviderPropert
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
+import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyEvaluator;
+import org.wso2.carbon.identity.organization.management.capability.governance.constant.GovernancePolicyConstants;
+import org.wso2.carbon.identity.organization.management.capability.governance.exception.GovernancePolicyMgtException;
+import org.wso2.carbon.identity.organization.management.capability.governance.model.GovernancePolicyEvaluationResult;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
+import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.Arrays;
@@ -43,6 +55,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ErrorMessages.ERROR_CODE_ADAPTIVE_AUTH_NOT_ALLOWED_BY_GOVERNANCE;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_SSO_IDP_IMAGE_URL;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ROLE_SHARING_MODE;
@@ -357,5 +370,76 @@ public class OrgApplicationManagerUtil {
             description = String.format(description, data);
         }
         return new OrganizationManagementServerException(error.getMessage(), description, error.getCode(), e);
+    }
+
+    /**
+     * Checks whether the adaptive script in the incoming service provider is unchanged compared to the existing one.
+     *
+     * @param existingServiceProvider The currently persisted service provider; may be {@code null} for creates.
+     * @param newScript               The incoming adaptive script configuration.
+     * @return {@code true} if the script content and enabled state are identical to the existing script.
+     */
+    public static boolean isAdaptiveScriptUnchanged(ServiceProvider existingServiceProvider,
+            AuthenticationScriptConfig newScript) {
+
+        if (existingServiceProvider == null) {
+            return false;
+        }
+        LocalAndOutboundAuthenticationConfig existingConfig =
+                existingServiceProvider.getLocalAndOutBoundAuthenticationConfig();
+        if (existingConfig == null || existingConfig.getAuthenticationScriptConfig() == null) {
+            return false;
+        }
+        AuthenticationScriptConfig existingScript = existingConfig.getAuthenticationScriptConfig();
+        return existingScript.isEnabled() == newScript.isEnabled() &&
+                StringUtils.equals(StringUtils.stripEnd(existingScript.getContent(), null),
+                        StringUtils.stripEnd(newScript.getContent(), null));
+    }
+
+    /**
+     * Checks whether the adaptive authentication is blocked by governance policies for the given tenant domain.
+     *
+     * @param tenantDomain The tenant domain of the organization.
+     * @return {@code true} if adaptive auth is blocked, {@code false} otherwise.
+     * @throws IdentityApplicationManagementException If an error occurs during policy evaluation.
+     */
+    public static boolean isAdaptiveAuthBlockedByGovernance(String tenantDomain)
+            throws IdentityApplicationManagementException {
+
+        if (!Utils.isAdaptiveAuthEnabledForOrgGovernance()) {
+            return true;
+        }
+        GovernancePolicyEvaluator evaluator = OrgApplicationMgtDataHolder.getInstance().getGovernancePolicyEvaluator();
+        if (evaluator == null) {
+            return true;
+        }
+        try {
+            OrganizationManager organizationManager =
+                    OrgApplicationMgtDataHolder.getInstance().getOrganizationManager();
+            String orgId = organizationManager.resolveOrganizationId(tenantDomain);
+            GovernancePolicyEvaluationResult result = evaluator.evaluate(orgId,
+                    GovernancePolicyConstants.ResourceType.Application.ADAPTIVE_AUTH,
+                    GovernancePolicyConstants.ResourceType.APPLICATION);
+            if (!result.isAllowed()) {
+                return true;
+            }
+            String userResidentOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .getUserResidentOrganizationId();
+            if (StringUtils.isNotBlank(userResidentOrgId)) {
+                String userResidentTenantDomain = organizationManager.resolveTenantDomain(userResidentOrgId);
+                // Allow the adaptive script only for root org shared users.
+                if (!OrganizationManagementUtil.isOrganization(userResidentTenantDomain)) {
+                    return false;
+                }
+                throw new IdentityApplicationManagementClientException(
+                        ERROR_CODE_ADAPTIVE_AUTH_NOT_ALLOWED_BY_GOVERNANCE.getCode(),
+                        ERROR_CODE_ADAPTIVE_AUTH_NOT_ALLOWED_BY_GOVERNANCE.getMessage(),
+                        ERROR_CODE_ADAPTIVE_AUTH_NOT_ALLOWED_BY_GOVERNANCE.getDescription());
+            }
+        } catch (OrganizationManagementException | GovernancePolicyMgtException e) {
+            throw new IdentityApplicationManagementException(
+                    "Error evaluating governance policy for adaptive auth capability.", e);
+        }
+        return true;
     }
 }

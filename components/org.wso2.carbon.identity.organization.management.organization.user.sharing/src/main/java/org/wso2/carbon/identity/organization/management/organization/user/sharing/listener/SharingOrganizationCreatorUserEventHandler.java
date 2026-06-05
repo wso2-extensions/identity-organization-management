@@ -110,8 +110,14 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
                     .getRealmConfiguration();
             String associatedUserName = realmConfiguration.getAdminUserName();
             String associatedUserId = realmConfiguration.getAdminUserId();
-            String associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                    .getUserResidentOrganizationId();
+
+            // When the creator is set in the org attributes it resides in the calling org; resolve the associated
+            // org from the current tenant instead of the principal's resident organization.
+            String associatedOrgId = null;
+            if (!isOrgOwnerSetInAttributes) {
+                associatedOrgId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                        .getUserResidentOrganizationId();
+            }
             if (StringUtils.isEmpty(associatedOrgId)) {
                 associatedOrgId = getOrganizationManager().resolveOrganizationId(Utils.getTenantDomain());
             }

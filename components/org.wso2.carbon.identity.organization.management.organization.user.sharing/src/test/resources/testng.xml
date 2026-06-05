@@ -24,6 +24,7 @@
             <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserProfileUpdateGovernanceEventListenerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharedUserOperationEventListener"/>
             <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.OrganizationUserSharingHandlerTest"/>
+            <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.listener.SharingOrganizationCreatorUserEventHandlerTest"/>
             <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingServiceImplTest"/>
             <class name="org.wso2.carbon.identity.organization.management.organization.user.sharing.dao.OrganizationUserSharingDAOImplTest"/>
         </classes>

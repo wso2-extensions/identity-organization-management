@@ -26,17 +26,18 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
-import org.wso2.carbon.identity.organization.management.handler.util.TestUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
@@ -58,6 +59,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Contains unit tests for SharedRoleMgtListener.
  */
+@WithCarbonHome
 public class SharedRoleMgtListenerTest {
 
     private static final String SAMPLE_APPLICATION_NAME = "sampleApplicationName";
@@ -96,7 +98,7 @@ public class SharedRoleMgtListenerTest {
     @BeforeClass
     public void setUpClass() {
 
-        TestUtils.initPrivilegedCarbonContext();
+        PrivilegedCarbonContext.startTenantFlow();
         MockitoAnnotations.openMocks(this);
         OrganizationManagementHandlerDataHolder.getInstance().
                 setApplicationManagementService(mockedApplicationManagementService);

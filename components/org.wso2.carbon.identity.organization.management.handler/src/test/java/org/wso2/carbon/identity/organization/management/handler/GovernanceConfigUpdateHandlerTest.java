@@ -26,6 +26,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.governance.IdentityGovernanceException;
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.when;
 /**
  * Test class for GovernanceConfigUpdateHandler.
  */
+@WithCarbonHome
 public class GovernanceConfigUpdateHandlerTest {
 
     @Mock

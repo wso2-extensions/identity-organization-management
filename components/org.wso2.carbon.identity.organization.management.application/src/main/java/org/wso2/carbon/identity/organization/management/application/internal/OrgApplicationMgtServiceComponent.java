@@ -42,6 +42,8 @@ import org.wso2.carbon.identity.organization.management.application.listener.App
 import org.wso2.carbon.identity.organization.management.application.listener.FragmentApplicationMgtListener;
 import org.wso2.carbon.identity.organization.management.application.listener.MainApplicationEventListener;
 import org.wso2.carbon.identity.organization.management.application.listener.OrganizationCreationHandler;
+import org.wso2.carbon.identity.organization.management.application.listener.SubOrgApplicationMgtListener;
+import org.wso2.carbon.identity.organization.management.capability.governance.GovernancePolicyEvaluator;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.OrganizationUserResidentResolverService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
@@ -80,6 +82,8 @@ public class OrgApplicationMgtServiceComponent {
                     null);
             bundleContext.registerService(ApplicationMgtListener.class.getName(),
                     new MainApplicationEventListener(), null);
+            bundleContext.registerService(ApplicationMgtListener.class.getName(),
+                    new SubOrgApplicationMgtListener(), null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrganizationCreationHandler(),
                     null);
             bundleContext.registerService(AbstractEventHandler.class.getName(), new OrgClaimMgtHandler(), null);
@@ -299,5 +303,21 @@ public class OrgApplicationMgtServiceComponent {
             ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService) {
 
         OrgApplicationMgtDataHolder.getInstance().setResourceSharingPolicyHandlerService(null);
+    }
+
+    @Reference(
+            name = "org.governance.policy.evaluator.service",
+            service = GovernancePolicyEvaluator.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetGovernancePolicyEvaluator")
+    protected void setGovernancePolicyEvaluator(GovernancePolicyEvaluator governancePolicyEvaluator) {
+
+        OrgApplicationMgtDataHolder.getInstance().setGovernancePolicyEvaluator(governancePolicyEvaluator);
+    }
+
+    protected void unsetGovernancePolicyEvaluator(GovernancePolicyEvaluator governancePolicyEvaluator) {
+
+        OrgApplicationMgtDataHolder.getInstance().setGovernancePolicyEvaluator(null);
     }
 }

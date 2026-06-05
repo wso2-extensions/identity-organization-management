@@ -22,7 +22,9 @@ import com.google.gson.Gson;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.context.CarbonContext;
@@ -110,22 +112,31 @@ public class OrganizationManagementAuditLogHandlerTest {
     private Organization organization;
     private Gson gson;
 
+    @BeforeClass
+    public void setUpClass() {
+
+        mockedCarbonContext = mockStatic(CarbonContext.class);
+        mockedIdentityUtil = mockStatic(IdentityUtil.class);
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+    }
+
     @BeforeMethod
     public void setUp(Method method) throws Exception {
 
         auditLogger = OrganizationManagementAuditLogHandler.getInstance();
         gson = new Gson();
-        mockedCarbonContext = mockStatic(CarbonContext.class);
+
         CarbonContext carbonContext = mock(CarbonContext.class);
+        mockedCarbonContext.reset();
         mockedCarbonContext.when(CarbonContext::getThreadLocalCarbonContext).thenReturn(carbonContext);
         when(carbonContext.getUsername()).thenReturn("testUser");
         when(carbonContext.getTenantDomain()).thenReturn("carbon.super");
 
-        mockedIdentityUtil = mockStatic(IdentityUtil.class);
+        mockedIdentityUtil.reset();
         mockedIdentityUtil.when(() -> IdentityUtil.getInitiatorId("testUser", "carbon.super"))
                 .thenReturn(TEST_INITIATOR_ID);
 
-        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.reset();
         mockedLoggerUtils.when(() -> LoggerUtils.getMaskedContent(any(String.class))).thenCallRealMethod();
         mockedLoggerUtils.when(() -> LoggerUtils.getInitiatorType(any(String.class)))
                 .thenReturn(LoggerUtils.Initiator.User.name());
@@ -158,6 +169,11 @@ public class OrganizationManagementAuditLogHandlerTest {
     public void tearDown() {
 
         auditLogger = null;
+    }
+
+    @AfterClass
+    public void tearDownClass() {
+
         mockedCarbonContext.close();
         mockedIdentityUtil.close();
         mockedLoggerUtils.close();
