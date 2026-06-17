@@ -358,7 +358,19 @@ public class UserSharingConstants {
                 "One of the attribute names provided is null and must be valid."),
         ERROR_CODE_INVALID_FILTER_VALUE("10069",
                 "Invalid filter value provided: %s.",
-                "The filter value provided is invalid and cannot be processed.");
+                "The filter value provided is invalid and cannot be processed."),
+        ERROR_CODE_USER_IDS_EMPTY("10070",
+                "User IDs list is empty.",
+                "The user IDs list must contain at least one user ID."),
+        ERROR_CODE_USER_ID_BLANK("10071",
+                "User ID is blank.",
+                "A user ID in the list is null, empty, or contains only whitespace."),
+        ERROR_CODE_ORG_ID_BLANK("10072",
+                "Organization ID is blank.",
+                "An organization ID is empty or contains only whitespace."),
+        ERROR_CODE_ORGANIZATIONS_EMPTY("10073",
+                "Organizations list is empty.",
+                "The organizations list must contain at least one organization.");
 
         private final String code;
         private final String message;
