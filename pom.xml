@@ -625,7 +625,7 @@
         <identity.inbound.provisioning.scim2.version>3.7.9</identity.inbound.provisioning.scim2.version>
         <identity.scim2.imp.pkg.version.range>[3.4.0, 4.0.0)</identity.scim2.imp.pkg.version.range>
 
-        <carbon.identity.framework.version>7.10.68</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.11.126</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 

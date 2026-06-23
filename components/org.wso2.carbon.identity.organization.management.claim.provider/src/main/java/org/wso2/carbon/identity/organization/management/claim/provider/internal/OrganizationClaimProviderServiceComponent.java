@@ -29,6 +29,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.oauth2.token.handlers.claims.JWTAccessTokenClaimProvider;
 import org.wso2.carbon.identity.openidconnect.ClaimProvider;
 import org.wso2.carbon.identity.organization.management.claim.provider.OrganizationClaimProvider;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitialize;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
@@ -97,5 +98,27 @@ public class OrganizationClaimProviderServiceComponent {
 
         OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationManagementEnable(null);
         LOG.debug("Unset organization management enable check service.");
+    }
+
+    @Reference(
+            name = "organization.user.sharing.service",
+            service = OrganizationUserSharingService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationUserSharingService"
+    )
+    protected void setOrganizationUserSharingService(
+            OrganizationUserSharingService organizationUserSharingService) {
+
+        OrganizationClaimProviderServiceComponentHolder.getInstance()
+                .setOrganizationUserSharingService(organizationUserSharingService);
+        LOG.debug("Set the organization user sharing service.");
+    }
+
+    protected void unsetOrganizationUserSharingService(
+            OrganizationUserSharingService organizationUserSharingService) {
+
+        OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationUserSharingService(null);
+        LOG.debug("Unset organization user sharing service.");
     }
 }

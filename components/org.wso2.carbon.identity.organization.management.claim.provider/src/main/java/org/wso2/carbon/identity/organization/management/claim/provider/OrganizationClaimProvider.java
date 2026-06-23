@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.organization.management.claim.provider;
 
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.application.authentication.framework.exception.UserIdNotFoundException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
@@ -28,6 +30,8 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.claims.JWTAccessTokenClaimProvider;
 import org.wso2.carbon.identity.openidconnect.ClaimProvider;
 import org.wso2.carbon.identity.organization.management.claim.provider.internal.OrganizationClaimProviderServiceComponentHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -47,6 +51,7 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
     private static final String AUTHORIZED_ORGANIZATION_HANDLE_ATTRIBUTE = "org_handle";
     private static final String USER_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "user_org";
     private static final String AGENT_RESIDENT_ORGANIZATION_NAME_ATTRIBUTE = "agent_org";
+    private static final String SHARED_USER_ID_ATTRIBUTE = "shared_user_id";
 
     @Override
     public Map<String, Object> getAdditionalClaims(OAuthAuthzReqMessageContext oAuthAuthzReqMessageContext,
@@ -63,11 +68,12 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
         String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        String sharedUserId = resolveSharedUserId(oAuthTokenReqMessageContext.getAuthorizedUser());
         if (StringUtils.isEmpty(authorizedOrgId)) {
             authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
         }
         boolean isAgent = isAgentUser(oAuthTokenReqMessageContext.getAuthorizedUser().getUserStoreDomain());
-        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent);
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent, sharedUserId);
     }
 
     @Override
@@ -78,13 +84,15 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                 .getUserResidentOrganization();
         String authorizedOrgId = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
                 .getAccessingOrganization();
+        String sharedUserId = resolveSharedUserId(oAuthAuthzReqMessageContext.getAuthorizationReqDTO()
+                .getUser());
         if (StringUtils.isEmpty(authorizedOrgId)) {
             String tenantDomain = oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getLoggedInTenantDomain();
             authorizedOrgId = resolveOrganizationId(tenantDomain);
         }
         boolean isAgent = isAgentUser(oAuthAuthzReqMessageContext.getAuthorizationReqDTO().getUser()
                 .getUserStoreDomain());
-        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent);
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent, sharedUserId);
     }
 
     @Override
@@ -93,16 +101,17 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
 
         String userResidentOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getUserResidentOrganization();
         String authorizedOrgId = oAuthTokenReqMessageContext.getAuthorizedUser().getAccessingOrganization();
+        String sharedUserId = resolveSharedUserId(oAuthTokenReqMessageContext.getAuthorizedUser());
         // The below condition is not required once console is modeled as B2B app.
         if (StringUtils.isEmpty(authorizedOrgId)) {
             authorizedOrgId = resolveOrganizationId(oAuthTokenReqMessageContext.getAuthorizedUser().getTenantDomain());
         }
         boolean isAgent = isAgentUser(oAuthTokenReqMessageContext.getAuthorizedUser().getUserStoreDomain());
-        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent);
+        return buildOrganizationInformation(userResidentOrgId, authorizedOrgId, isAgent, sharedUserId);
     }
 
     private Map<String, Object> buildOrganizationInformation(String userResideOrgId, String authorizedOrgId,
-                                                             boolean isAgent)
+                                                             boolean isAgent, String sharedUserId)
             throws IdentityOAuth2Exception {
 
         Map<String, Object> additionalClaims = new HashMap<>();
@@ -119,6 +128,9 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
                 additionalClaims.put(AUTHORIZED_ORGANIZATION_ID_ATTRIBUTE, authorizedOrgId);
                 additionalClaims.put(AUTHORIZED_ORGANIZATION_NAME_ATTRIBUTE, authorizedOrgName);
                 additionalClaims.put(AUTHORIZED_ORGANIZATION_HANDLE_ATTRIBUTE, authorizedOrgHandle);
+            }
+            if (StringUtils.isNotBlank(sharedUserId)) {
+                additionalClaims.put(SHARED_USER_ID_ATTRIBUTE, sharedUserId);
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityOAuth2Exception("Error while resolving organization name by ID.", e);
@@ -150,5 +162,34 @@ public class OrganizationClaimProvider implements ClaimProvider, JWTAccessTokenC
     private OrganizationManager getOrganizationManager() {
 
         return OrganizationClaimProviderServiceComponentHolder.getInstance().getOrganizationManager();
+    }
+
+    private String resolveSharedUserId(AuthenticatedUser authenticatedUser) throws IdentityOAuth2Exception {
+
+        if (authenticatedUser.isSharedUser() && StringUtils.isNotBlank(authenticatedUser.getSharedUserId())) {
+            return authenticatedUser.getSharedUserId();
+        }
+
+        if (!StringUtils.equals(authenticatedUser.getAccessingOrganization(),
+                authenticatedUser.getUserResidentOrganization())) {
+            try {
+                UserAssociation userAssociation = getOrganizationUserSharingService()
+                        .getUserAssociationOfAssociatedUserByOrgId(authenticatedUser.getUserId(),
+                                authenticatedUser.getAccessingOrganization());
+                if (userAssociation != null) {
+                    return userAssociation.getUserId();
+                }
+            } catch (UserIdNotFoundException e) {
+                throw new IdentityOAuth2Exception("Error while resolving the user id of the authenticated user.", e);
+            } catch (OrganizationManagementException e) {
+                throw new IdentityOAuth2Exception("Error while resolving the shared user association for user.", e);
+            }
+        }
+        return null;
+    }
+
+    private OrganizationUserSharingService getOrganizationUserSharingService() {
+
+        return OrganizationClaimProviderServiceComponentHolder.getInstance().getOrganizationUserSharingService();
     }
 }
