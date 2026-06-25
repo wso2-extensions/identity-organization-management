@@ -1739,15 +1739,15 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
             List<SelectiveUserShareOrgDetailsV2DO> organizations, String sharingInitiatedOrgId)
             throws UserSharingMgtServerException {
 
-        List<String> immediateChildOrgs = getImmediateChildOrgsOfSharingInitiatedOrg(sharingInitiatedOrgId);
+        List<String> descendantOrgs = getDescendantOrgsOfSharingInitiatedOrg(sharingInitiatedOrgId);
 
         List<SelectiveUserShareOrgDetailsV2DO> validOrganizations = organizations.stream()
-                .filter(org -> immediateChildOrgs.contains(org.getOrganizationId()))
+                .filter(org -> descendantOrgs.contains(org.getOrganizationId()))
                 .collect(Collectors.toList());
 
         List<String> skippedOrganizations = organizations.stream()
                 .map(SelectiveUserShareOrgDetailsV2DO::getOrganizationId)
-                .filter(orgId -> !immediateChildOrgs.contains(orgId))
+                .filter(orgId -> !descendantOrgs.contains(orgId))
                 .collect(Collectors.toList());
 
         if (!skippedOrganizations.isEmpty() && LOG.isDebugEnabled()) {
@@ -1758,16 +1758,20 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     /**
-     * Retrieves the list of immediate child organizations for a given organization.
+     * Retrieves the list of descendant organizations for a given organization.
+     *
+     * <p>Selective user sharing must accept any organization in the sharing-initiated org's subtree, not just
+     * its immediate children. Restricting to immediate children silently drops second-level (and deeper)
+     * organizations from the request even though the share API reports success, leaving them unshared.</p>
      *
      * @param sharingInitiatedOrgId The ID of the organization that initiated the sharing.
-     * @return A list of organization IDs representing the immediate child organizations.
+     * @return A list of organization IDs representing all descendant organizations (recursive).
      */
-    private List<String> getImmediateChildOrgsOfSharingInitiatedOrg(String sharingInitiatedOrgId)
+    private List<String> getDescendantOrgsOfSharingInitiatedOrg(String sharingInitiatedOrgId)
             throws UserSharingMgtServerException {
 
         try {
-            return getOrganizationManager().getChildOrganizationsIds(sharingInitiatedOrgId, false);
+            return getOrganizationManager().getChildOrganizationsIds(sharingInitiatedOrgId, true);
         } catch (OrganizationManagementException e) {
             String errorMessage = String.format(
                     ERROR_CODE_GET_IMMEDIATE_CHILD_ORGS.getMessage(), sharingInitiatedOrgId);
