@@ -18,12 +18,10 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.connectioncriteria.ConnectionCriteriaType;
-
 /**
  * DTO for unsharing connections from all organizations.
- * No additional fields — the connection criteria on the base class is sufficient.
+ * No additional fields — the connection id and type on the base class are sufficient.
  */
-public class GeneralConnectionUnshareDTO extends BaseConnectionUnshareDTO<ConnectionCriteriaType> {
+public class GeneralConnectionUnshareDTO extends BaseConnectionUnshareDTO {
 
 }

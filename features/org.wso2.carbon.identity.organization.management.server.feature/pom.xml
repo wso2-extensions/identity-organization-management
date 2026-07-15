@@ -81,6 +81,10 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.organization.connection.sharing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
             <artifactId>org.wso2.carbon.identity.organization.resource.sharing.policy.management</artifactId>
         </dependency>
         <dependency>
@@ -139,6 +143,7 @@
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.capability.governance</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.organization.user.sharing</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.organization.agent.sharing</bundleDef>
+                                <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.management.organization.connection.sharing</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.resource.sharing.policy.management</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.user.invitation.management</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.organization.management:org.wso2.carbon.identity.organization.config.service</bundleDef>

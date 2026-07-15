@@ -18,10 +18,21 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.OrganizationConnectionSharingService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.DefaultSharedFederatedAuthenticatorResolver;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.DefaultSharedProvisioningConnectorResolver;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedFederatedAuthenticatorResolver;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedProvisioningConnectorResolver;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.idp.mgt.IdpManager;
+import org.wso2.carbon.user.core.service.RealmService;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Data holder for connection sharing management.
@@ -33,9 +44,22 @@ public class ConnectionSharingDataHolder {
     private OrganizationManager organizationManager;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
     private IdpManager idpManager;
-    private OrganizationConnectionSharingService organizationConnectionSharingService =
-            new OrganizationConnectionSharingService() {
-            };
+    private ConnectionAssociationService connectionAssociationService;
+    private RealmService realmService;
+    private final Map<ConnectionType, ConnectionTypeHandler> connectionTypeHandlers =
+            new EnumMap<>(ConnectionType.class);
+    // Per-resource resolvers contributed via the whiteboard pattern, keyed by the authenticator/connector name they
+    // handle. A shadow IDP can carry several authenticators and connectors at once (and may have no templateId), so
+    // each resource is resolved independently by name. The defaults are the fallbacks held directly by the data
+    // holder, used when no resolver is registered under a resource's name.
+    private final Map<String, SharedFederatedAuthenticatorResolver> sharedFederatedAuthenticatorResolvers =
+            new ConcurrentHashMap<>();
+    private final SharedFederatedAuthenticatorResolver defaultSharedFederatedAuthenticatorResolver =
+            new DefaultSharedFederatedAuthenticatorResolver();
+    private final Map<String, SharedProvisioningConnectorResolver> sharedProvisioningConnectorResolvers =
+            new ConcurrentHashMap<>();
+    private final SharedProvisioningConnectorResolver defaultSharedProvisioningConnectorResolver =
+            new DefaultSharedProvisioningConnectorResolver();
 
     private ConnectionSharingDataHolder() {
 
@@ -77,14 +101,114 @@ public class ConnectionSharingDataHolder {
         this.idpManager = idpManager;
     }
 
-    public OrganizationConnectionSharingService getOrganizationConnectionSharingService() {
+    public ConnectionAssociationService getConnectionAssociationService() {
 
-        return organizationConnectionSharingService;
+        return connectionAssociationService;
     }
 
-    public void setOrganizationConnectionSharingService(
-            OrganizationConnectionSharingService organizationConnectionSharingService) {
+    public void setConnectionAssociationService(ConnectionAssociationService connectionAssociationService) {
 
-        this.organizationConnectionSharingService = organizationConnectionSharingService;
+        this.connectionAssociationService = connectionAssociationService;
+    }
+
+    public RealmService getRealmService() {
+
+        return realmService;
+    }
+
+    public void setRealmService(RealmService realmService) {
+
+        this.realmService = realmService;
+    }
+
+    /**
+     * Registers a {@link ConnectionTypeHandler} for the connection type it handles.
+     *
+     * @param connectionTypeHandler The handler to register.
+     */
+    public void addConnectionTypeHandler(ConnectionTypeHandler connectionTypeHandler) {
+
+        if (connectionTypeHandler != null && connectionTypeHandler.getConnectionType() != null) {
+            connectionTypeHandlers.put(connectionTypeHandler.getConnectionType(), connectionTypeHandler);
+        }
+    }
+
+    /**
+     * Removes a previously registered {@link ConnectionTypeHandler}.
+     *
+     * @param connectionTypeHandler The handler to remove.
+     */
+    public void removeConnectionTypeHandler(ConnectionTypeHandler connectionTypeHandler) {
+
+        if (connectionTypeHandler != null && connectionTypeHandler.getConnectionType() != null) {
+            connectionTypeHandlers.remove(connectionTypeHandler.getConnectionType(), connectionTypeHandler);
+        }
+    }
+
+    /**
+     * Returns the {@link ConnectionTypeHandler} registered for the given {@link ConnectionType}.
+     *
+     * @param connectionType The connection type.
+     * @return The registered handler, or {@code null} if none is registered.
+     */
+    public ConnectionTypeHandler getConnectionTypeHandler(ConnectionType connectionType) {
+
+        return connectionType == null ? null : connectionTypeHandlers.get(connectionType);
+    }
+
+    public void addSharedFederatedAuthenticatorResolver(SharedFederatedAuthenticatorResolver resolver) {
+
+        if (resolver != null && resolver.getAuthenticatorName() != null) {
+            sharedFederatedAuthenticatorResolvers.put(resolver.getAuthenticatorName(), resolver);
+        }
+    }
+
+    public void removeSharedFederatedAuthenticatorResolver(SharedFederatedAuthenticatorResolver resolver) {
+
+        if (resolver != null && resolver.getAuthenticatorName() != null) {
+            sharedFederatedAuthenticatorResolvers.remove(resolver.getAuthenticatorName(), resolver);
+        }
+    }
+
+    /**
+     * Resolves the {@link SharedFederatedAuthenticatorResolver} registered under the given federated authenticator
+     * name, or the default resolver when none is registered under that name.
+     *
+     * @param authenticatorName The (parent) federated authenticator name; may be {@code null}.
+     * @return The resolver to use; never {@code null}.
+     */
+    public SharedFederatedAuthenticatorResolver getSharedFederatedAuthenticatorResolver(String authenticatorName) {
+
+        SharedFederatedAuthenticatorResolver resolver = authenticatorName == null ? null
+                : sharedFederatedAuthenticatorResolvers.get(authenticatorName);
+        return resolver != null ? resolver : defaultSharedFederatedAuthenticatorResolver;
+    }
+
+    public void addSharedProvisioningConnectorResolver(SharedProvisioningConnectorResolver resolver) {
+
+        if (resolver != null && resolver.getConnectorName() != null) {
+            sharedProvisioningConnectorResolvers.put(resolver.getConnectorName(), resolver);
+        }
+    }
+
+    public void removeSharedProvisioningConnectorResolver(SharedProvisioningConnectorResolver resolver) {
+
+        if (resolver != null && resolver.getConnectorName() != null) {
+            sharedProvisioningConnectorResolvers.remove(resolver.getConnectorName(), resolver);
+        }
+    }
+
+    /**
+     * Resolves the {@link SharedProvisioningConnectorResolver} registered under the given outbound provisioning
+     * connector name, or the default resolver when none is registered under that name.
+     *
+     * @param connectorName The (parent) provisioning connector name; may be {@code null}.
+     * @return The resolver to use; never {@code null}.
+     */
+    public SharedProvisioningConnectorResolver getSharedProvisioningConnectorResolver(String connectorName) {
+
+        SharedProvisioningConnectorResolver resolver = connectorName == null ? null
+                : sharedProvisioningConnectorResolvers.get(connectorName);
+        return resolver != null ? resolver : defaultSharedProvisioningConnectorResolver;
     }
 }

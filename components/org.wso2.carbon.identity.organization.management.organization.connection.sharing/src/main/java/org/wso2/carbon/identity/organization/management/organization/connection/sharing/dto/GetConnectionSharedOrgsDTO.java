@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+
 import java.util.List;
 
 /**
@@ -26,6 +28,7 @@ import java.util.List;
 public class GetConnectionSharedOrgsDTO {
 
     private String connectionId;
+    private ConnectionType connectionType;
     private String initiatingOrgId;
     private int before;
     private int after;
@@ -42,6 +45,16 @@ public class GetConnectionSharedOrgsDTO {
     public void setConnectionId(String connectionId) {
 
         this.connectionId = connectionId;
+    }
+
+    public ConnectionType getConnectionType() {
+
+        return connectionType;
+    }
+
+    public void setConnectionType(ConnectionType connectionType) {
+
+        this.connectionType = connectionType;
     }
 
     public String getInitiatingOrgId() {

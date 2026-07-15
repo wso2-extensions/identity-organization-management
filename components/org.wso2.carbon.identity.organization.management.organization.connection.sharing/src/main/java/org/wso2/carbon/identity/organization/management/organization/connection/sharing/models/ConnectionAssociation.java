@@ -23,20 +23,31 @@ package org.wso2.carbon.identity.organization.management.organization.connection
  */
 public class ConnectionAssociation {
 
-    private int id;
-    private String sharedConnectionId;
-    private String organizationId;
-    private String parentConnectionId;
-    private String connectionResidentOrganizationId;
+    private final int id;
+    private final String resourceType;
+    private final String sharedConnectionId;
+    private final String organizationId;
+    private final String parentConnectionId;
+    private final String connectionResidentOrganizationId;
+
+    private ConnectionAssociation(Builder builder) {
+
+        this.id = builder.id;
+        this.resourceType = builder.resourceType;
+        this.sharedConnectionId = builder.sharedConnectionId;
+        this.organizationId = builder.organizationId;
+        this.parentConnectionId = builder.parentConnectionId;
+        this.connectionResidentOrganizationId = builder.connectionResidentOrganizationId;
+    }
 
     public int getId() {
 
         return id;
     }
 
-    public void setId(int id) {
+    public String getResourceType() {
 
-        this.id = id;
+        return resourceType;
     }
 
     public String getSharedConnectionId() {
@@ -44,19 +55,9 @@ public class ConnectionAssociation {
         return sharedConnectionId;
     }
 
-    public void setSharedConnectionId(String sharedConnectionId) {
-
-        this.sharedConnectionId = sharedConnectionId;
-    }
-
     public String getOrganizationId() {
 
         return organizationId;
-    }
-
-    public void setOrganizationId(String organizationId) {
-
-        this.organizationId = organizationId;
     }
 
     public String getParentConnectionId() {
@@ -64,18 +65,62 @@ public class ConnectionAssociation {
         return parentConnectionId;
     }
 
-    public void setParentConnectionId(String parentConnectionId) {
-
-        this.parentConnectionId = parentConnectionId;
-    }
-
     public String getConnectionResidentOrganizationId() {
 
         return connectionResidentOrganizationId;
     }
 
-    public void setConnectionResidentOrganizationId(String connectionResidentOrganizationId) {
+    /**
+     * Builder class for constructing ConnectionAssociation instances.
+     */
+    public static class Builder {
 
-        this.connectionResidentOrganizationId = connectionResidentOrganizationId;
+        private int id;
+        private String resourceType;
+        private String sharedConnectionId;
+        private String organizationId;
+        private String parentConnectionId;
+        private String connectionResidentOrganizationId;
+
+        public Builder id(int id) {
+
+            this.id = id;
+            return this;
+        }
+
+        public Builder resourceType(String resourceType) {
+
+            this.resourceType = resourceType;
+            return this;
+        }
+
+        public Builder sharedConnectionId(String sharedConnectionId) {
+
+            this.sharedConnectionId = sharedConnectionId;
+            return this;
+        }
+
+        public Builder organizationId(String organizationId) {
+
+            this.organizationId = organizationId;
+            return this;
+        }
+
+        public Builder parentConnectionId(String parentConnectionId) {
+
+            this.parentConnectionId = parentConnectionId;
+            return this;
+        }
+
+        public Builder connectionResidentOrganizationId(String connectionResidentOrganizationId) {
+
+            this.connectionResidentOrganizationId = connectionResidentOrganizationId;
+            return this;
+        }
+
+        public ConnectionAssociation build() {
+
+            return new ConnectionAssociation(this);
+        }
     }
 }

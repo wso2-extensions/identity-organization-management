@@ -18,28 +18,54 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.connectioncriteria.ConnectionCriteriaType;
-
-import java.util.Map;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 
 /**
- * Abstract base DTO for connection unshare operations.
- * The {@code connectionCriteria} map keys correspond to criteria type names
- * (e.g., {@code "CONNECTION_IDS"}, {@code "CONNECTION_NAMES"}).
- *
- * @param <T> the connection criteria type
+ * Abstract base DTO for connection unshare operations. An unshare operation targets a single connection
+ * (identified by {@code connectionId}) of a single {@link ConnectionType}.
  */
-public abstract class BaseConnectionUnshareDTO<T extends ConnectionCriteriaType> {
+public abstract class BaseConnectionUnshareDTO {
 
-    private Map<String, T> connectionCriteria;
+    private String connectionId;
+    private ConnectionType connectionType;
 
-    public Map<String, T> getConnectionCriteria() {
+    /**
+     * Returns the ID of the connection being unshared.
+     *
+     * @return the connection resource ID
+     */
+    public String getConnectionId() {
 
-        return connectionCriteria;
+        return connectionId;
     }
 
-    public void setConnectionCriteria(Map<String, T> connectionCriteria) {
+    /**
+     * Sets the ID of the connection being unshared.
+     *
+     * @param connectionId the connection resource ID
+     */
+    public void setConnectionId(String connectionId) {
 
-        this.connectionCriteria = connectionCriteria;
+        this.connectionId = connectionId;
+    }
+
+    /**
+     * Returns the type of the connection being unshared.
+     *
+     * @return the {@link ConnectionType}
+     */
+    public ConnectionType getConnectionType() {
+
+        return connectionType;
+    }
+
+    /**
+     * Sets the type of the connection being unshared.
+     *
+     * @param connectionType the {@link ConnectionType}
+     */
+    public void setConnectionType(ConnectionType connectionType) {
+
+        this.connectionType = connectionType;
     }
 }

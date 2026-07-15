@@ -18,13 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.connectioncriteria.ConnectionCriteriaType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 
 /**
  * DTO for sharing connections with all organizations under a given policy.
  */
-public class GeneralConnectionShareDTO extends BaseConnectionShareDTO<ConnectionCriteriaType> {
+public class GeneralConnectionShareDTO extends BaseConnectionShareDTO {
 
     private PolicyEnum policy;
 

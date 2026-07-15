@@ -18,14 +18,12 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.connectioncriteria.ConnectionCriteriaType;
-
 import java.util.List;
 
 /**
  * DTO for unsharing connections from a selected set of organizations.
  */
-public class SelectiveConnectionUnshareDTO extends BaseConnectionUnshareDTO<ConnectionCriteriaType> {
+public class SelectiveConnectionUnshareDTO extends BaseConnectionUnshareDTO {
 
     private List<String> orgIds;
 

@@ -18,40 +18,54 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.connectioncriteria.ConnectionCriteriaType;
-
-import java.util.Map;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 
 /**
- * Abstract base DTO for connection share operations.
- * The {@code connectionCriteria} map keys correspond to criteria type names
- * (e.g., {@code "CONNECTION_IDS"}, {@code "CONNECTION_NAMES"}).
- *
- * @param <T> the connection criteria type
+ * Abstract base DTO for connection share operations. A share operation targets a single connection
+ * (identified by {@code connectionId}) of a single {@link ConnectionType}.
  */
-public abstract class BaseConnectionShareDTO<T extends ConnectionCriteriaType> {
+public abstract class BaseConnectionShareDTO {
 
-    private Map<String, T> connectionCriteria;
+    private String connectionId;
+    private ConnectionType connectionType;
 
     /**
-     * Returns the connection criteria map used to identify connections for sharing.
+     * Returns the ID of the connection being shared.
      *
-     * @return map keyed by criteria type name (e.g., {@code "CONNECTION_IDS"}, {@code "CONNECTION_NAMES"})
-     *         with values of type {@code T}
+     * @return the connection resource ID
      */
-    public Map<String, T> getConnectionCriteria() {
+    public String getConnectionId() {
 
-        return connectionCriteria;
+        return connectionId;
     }
 
     /**
-     * Sets the connection criteria map used to identify connections for sharing.
+     * Sets the ID of the connection being shared.
      *
-     * @param connectionCriteria map keyed by criteria type name (e.g., {@code "CONNECTION_IDS"},
-     *                           {@code "CONNECTION_NAMES"}) with values of type {@code T}
+     * @param connectionId the connection resource ID
      */
-    public void setConnectionCriteria(Map<String, T> connectionCriteria) {
+    public void setConnectionId(String connectionId) {
 
-        this.connectionCriteria = connectionCriteria;
+        this.connectionId = connectionId;
+    }
+
+    /**
+     * Returns the type of the connection being shared.
+     *
+     * @return the {@link ConnectionType}
+     */
+    public ConnectionType getConnectionType() {
+
+        return connectionType;
+    }
+
+    /**
+     * Sets the type of the connection being shared.
+     *
+     * @param connectionType the {@link ConnectionType}
+     */
+    public void setConnectionType(ConnectionType connectionType) {
+
+        this.connectionType = connectionType;
     }
 }

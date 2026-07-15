@@ -23,14 +23,15 @@ package org.wso2.carbon.identity.organization.management.organization.connection
  */
 public class ConnectionSharingConstants {
 
-    public static final String ERROR_PREFIX = "CSH-";
+    public static final String ERROR_PREFIX = "CONNECTION_SHARE-";
 
-    public static final String CONNECTION_IDS = "CONNECTION_IDS";
-    public static final String CONNECTION_NAMES = "CONNECTION_NAMES";
     public static final String SHARING_MODE_ATTRIBUTE = "sharingMode";
 
-    public static final String AUDIT_MESSAGE =
-            "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : %s ";
+    // IdP property flag set on a shadow connection so the UI can render a "Shared" badge. Runtime auth logic does
+    // not depend on it; resolution is driven by the connection association table.
+    public static final String IS_SHARED_PROPERTY = "isShared";
+
+    // Audit log result values (v2 audit logs are published via LoggerUtils.triggerAuditLogEvent).
     public static final String AUDIT_SUCCESS = "Success";
     public static final String AUDIT_FAILURE = "Failure";
 
@@ -49,39 +50,55 @@ public class ConnectionSharingConstants {
      */
     public enum ErrorMessage {
 
-        ERROR_CODE_NULL_INPUT("10001",
+        // Client errors (60xxx).
+        ERROR_CODE_NULL_INPUT("60001",
                 "Input is null.",
                 "The provided input is null and must be provided."),
-        ERROR_CODE_CONNECTION_ID_NULL("10002",
+        ERROR_CODE_CONNECTION_ID_NULL("60002",
                 "Connection ID is null.",
                 "Connection ID must be provided."),
-        ERROR_CODE_ORG_ID_NULL("10003",
+        ERROR_CODE_CONNECTION_TYPE_NULL("60003",
+                "Connection type is null.",
+                "Connection type must be provided."),
+        ERROR_CODE_NO_HANDLER_FOR_CONNECTION_TYPE("60004",
+                "Unsupported connection type.",
+                "No handler is registered for the provided connection type."),
+        ERROR_CODE_ORG_ID_NULL("60005",
                 "Organization ID is null.",
                 "Organization ID must be provided."),
-        ERROR_CODE_POLICY_NULL("10004",
+        ERROR_CODE_POLICY_NULL("60006",
                 "Policy is null.",
                 "Policy must be provided."),
-        ERROR_CODE_ORGANIZATIONS_NULL("10005",
+        ERROR_CODE_ORGANIZATIONS_NULL("60007",
                 "Organizations list is null.",
                 "Organizations list must be provided."),
-        ERROR_CODE_CONNECTION_CRITERIA_NULL("10006",
-                "Connection criteria is null.",
-                "Connection criteria must be provided."),
-        ERROR_CODE_INTERNAL_ERROR("10007",
-                "Internal server error.",
-                "An unexpected error occurred during the connection sharing operation."),
-        ERROR_CODE_CONNECTION_NOT_FOUND("10008",
+        ERROR_CODE_UNSUPPORTED_POLICY("60008",
+                "Policy is not supported.",
+                "The provided policy is not supported for the connection sharing operation."),
+        ERROR_CODE_CONNECTION_NOT_FOUND("60009",
                 "Connection not found.",
                 "The specified connection was not found in the organization."),
-        ERROR_CODE_GET_CHILD_ORGS("10009",
+        ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE("60010",
+                "Unsupported attribute.",
+                "The specified attribute is not supported for the get shared organizations operation."),
+        ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR("60011",
+                "Connection share client error.",
+                "%s"),
+        ERROR_CODE_SHARED_IDP_HAS_CONNECTED_APPS("60014",
+                "Cannot unshare a connection that has connected applications.",
+                "The shared identity provider cannot be unshared because it has applications connected to it in " +
+                        "the shared organization. Disconnect the applications before unsharing."),
+
+        // Server errors (65xxx).
+        ERROR_CODE_INTERNAL_ERROR("65001",
+                "Internal server error.",
+                "An unexpected error occurred during the connection sharing operation."),
+        ERROR_CODE_GET_CHILD_ORGS("65002",
                 "Failed to retrieve child organizations.",
                 "An error occurred while retrieving child organizations of the initiating organization."),
-        ERROR_CODE_GET_SHARED_CONNECTIONS("10010",
+        ERROR_CODE_GET_SHARED_CONNECTIONS("65003",
                 "Failed to retrieve shared connection organizations.",
-                "An error occurred while retrieving the organizations a connection has been shared with."),
-        ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE("10011",
-                "Unsupported attribute.",
-                "The specified attribute is not supported for the get shared organizations operation.");
+                "An error occurred while retrieving the organizations a connection has been shared with.");
 
         private final String code;
         private final String message;
