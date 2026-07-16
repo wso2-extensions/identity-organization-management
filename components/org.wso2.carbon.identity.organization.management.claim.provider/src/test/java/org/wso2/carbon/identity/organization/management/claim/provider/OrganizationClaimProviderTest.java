@@ -29,6 +29,8 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.organization.management.claim.provider.internal.OrganizationClaimProviderServiceComponentHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitialize;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -55,6 +57,9 @@ public class OrganizationClaimProviderTest {
     private static final String USER_ORG_CLAIM = "user_org";
     private static final String AGENT_ORG_CLAIM = "agent_org";
     private static final String AGENT_USERSTORE_DOMAIN = "AGENT_USER_STORE";
+    private static final String SHARED_USER_ID_CLAIM = "shared_user_id";
+    private static final String SHARED_USER_ID = "sharedUserId";
+    private static final String RESIDENT_USER_ID = "residentUserId";
 
     private OrganizationClaimProvider organizationClaimProvider;
 
@@ -68,6 +73,9 @@ public class OrganizationClaimProviderTest {
     private OrganizationManager organizationManager;
 
     @Mock
+    private OrganizationUserSharingService organizationUserSharingService;
+
+    @Mock
     private OrganizationManagementInitialize organizationManagementInitializeService;
 
     @BeforeMethod
@@ -76,6 +84,8 @@ public class OrganizationClaimProviderTest {
         MockitoAnnotations.openMocks(this);
         organizationClaimProvider = new OrganizationClaimProvider();
         OrganizationClaimProviderServiceComponentHolder.getInstance().setOrganizationManager(organizationManager);
+        OrganizationClaimProviderServiceComponentHolder.getInstance()
+                .setOrganizationUserSharingService(organizationUserSharingService);
     }
 
     @Test
@@ -101,6 +111,71 @@ public class OrganizationClaimProviderTest {
         assertEquals(AUTH_ORG_ID, additionalClaims.get(ORG_ID_CLAIM));
         assertEquals(AUTHORIZED_ORG_NAME, additionalClaims.get(ORG_NAME_CLAIM));
         assertEquals(AUTHORIZED_ORG_HANDLE, additionalClaims.get(ORG_HANDLE_CLAIM));
+        assertFalse(additionalClaims.containsKey(SHARED_USER_ID_CLAIM));
+    }
+
+    /**
+     * Test that the shared_user_id claim is added for a shared user that carries a shared user id.
+     *
+     * `@throws` IdentityOAuth2Exception if OAuth2 operation fails.
+     * `@throws` OrganizationManagementException if organization management operation fails.
+     */
+    @Test
+    public void testGetAdditionalClaimsForSharedUser() throws IdentityOAuth2Exception,
+            OrganizationManagementException {
+
+        when(organizationManagementInitializeService.isOrganizationManagementEnabled()).thenReturn(true);
+        OrganizationClaimProviderServiceComponentHolder.getInstance()
+                .setOrganizationManagementEnable(organizationManagementInitializeService);
+
+        when(oAuthTokenReqMessageContext.getAuthorizedUser()).thenReturn(authenticatedUser);
+        when(authenticatedUser.getUserResidentOrganization()).thenReturn(USER_ORG_ID);
+        when(authenticatedUser.getAccessingOrganization()).thenReturn(AUTH_ORG_ID);
+        when(authenticatedUser.isSharedUser()).thenReturn(true);
+        when(authenticatedUser.getSharedUserId()).thenReturn(SHARED_USER_ID);
+
+        when(organizationManager.getOrganizationNameById(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_NAME);
+        when(organizationManager.resolveTenantDomain(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_HANDLE);
+
+        Map<String, Object> additionalClaims =
+                organizationClaimProvider.getAdditionalClaims(oAuthTokenReqMessageContext);
+
+        assertTrue(additionalClaims.containsKey(SHARED_USER_ID_CLAIM));
+        assertEquals(additionalClaims.get(SHARED_USER_ID_CLAIM), SHARED_USER_ID);
+    }
+
+    /**
+     * Test that the shared_user_id claim is resolved from the user association for an organization login user
+     * accessing a different organization than the resident organization.
+     *
+     * `@throws` Exception if any operation fails.
+     */
+    @Test
+    public void testGetAdditionalClaimsForOrganizationLoginUser() throws Exception {
+
+        when(organizationManagementInitializeService.isOrganizationManagementEnabled()).thenReturn(true);
+        OrganizationClaimProviderServiceComponentHolder.getInstance()
+                .setOrganizationManagementEnable(organizationManagementInitializeService);
+
+        when(oAuthTokenReqMessageContext.getAuthorizedUser()).thenReturn(authenticatedUser);
+        when(authenticatedUser.getUserResidentOrganization()).thenReturn(USER_ORG_ID);
+        when(authenticatedUser.getAccessingOrganization()).thenReturn(AUTH_ORG_ID);
+        when(authenticatedUser.isSharedUser()).thenReturn(false);
+        when(authenticatedUser.getUserId()).thenReturn(RESIDENT_USER_ID);
+
+        UserAssociation userAssociation = Mockito.mock(UserAssociation.class);
+        when(userAssociation.getUserId()).thenReturn(SHARED_USER_ID);
+        when(organizationUserSharingService.getUserAssociationOfAssociatedUserByOrgId(RESIDENT_USER_ID, AUTH_ORG_ID))
+                .thenReturn(userAssociation);
+
+        when(organizationManager.getOrganizationNameById(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_NAME);
+        when(organizationManager.resolveTenantDomain(AUTH_ORG_ID)).thenReturn(AUTHORIZED_ORG_HANDLE);
+
+        Map<String, Object> additionalClaims =
+                organizationClaimProvider.getAdditionalClaims(oAuthTokenReqMessageContext);
+
+        assertTrue(additionalClaims.containsKey(SHARED_USER_ID_CLAIM));
+        assertEquals(additionalClaims.get(SHARED_USER_ID_CLAIM), SHARED_USER_ID);
     }
 
     /**

@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.claim.provider.internal;
 
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManagementInitialize;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 
@@ -29,6 +30,7 @@ public class OrganizationClaimProviderServiceComponentHolder {
     private static final OrganizationClaimProviderServiceComponentHolder INSTANCE =
             new OrganizationClaimProviderServiceComponentHolder();
     private OrganizationManager organizationManager;
+    private OrganizationUserSharingService organizationUserSharingService;
     private boolean isOrganizationManagementEnable = false;
     
     private OrganizationClaimProviderServiceComponentHolder() {
@@ -48,6 +50,16 @@ public class OrganizationClaimProviderServiceComponentHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    public OrganizationUserSharingService getOrganizationUserSharingService() {
+
+        return organizationUserSharingService;
+    }
+
+    public void setOrganizationUserSharingService(OrganizationUserSharingService organizationUserSharingService) {
+
+        this.organizationUserSharingService = organizationUserSharingService;
     }
 
     public boolean isOrganizationManagementEnable() {

@@ -25,7 +25,7 @@
 
     <groupId>org.wso2.carbon.identity.organization.management</groupId>
     <artifactId>identity-organization-management</artifactId>
-    <version>2.5.14-SNAPSHOT</version>
+    <version>2.5.15-SNAPSHOT</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Organization Management</name>
@@ -636,7 +636,7 @@
         <identity.inbound.provisioning.scim2.version>3.7.9</identity.inbound.provisioning.scim2.version>
         <identity.scim2.imp.pkg.version.range>[3.4.0, 4.0.0)</identity.scim2.imp.pkg.version.range>
 
-        <carbon.identity.framework.version>7.11.119-SNAPSHOT</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.11.126</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 
