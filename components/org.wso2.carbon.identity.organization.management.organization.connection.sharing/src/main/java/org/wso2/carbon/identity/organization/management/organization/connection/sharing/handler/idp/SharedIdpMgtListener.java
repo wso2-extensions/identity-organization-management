@@ -26,7 +26,6 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
-import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
@@ -55,7 +54,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.IS_SHARED_PROPERTY;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_CREATION;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_DELETION;
 
@@ -219,7 +217,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
 
     @Override
     public List<IdentityProvider> doPostGetIdPs(List<IdentityProvider> identityProviders, String tenantDomain,
-                                                SharedIdPResolveType resolveType)
+                                                List<String> requiredAttributes, SharedIdPResolveType resolveType)
             throws IdentityProviderManagementException {
 
         if (identityProviders == null) {
@@ -489,16 +487,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
      */
     private boolean isSharedConnection(IdentityProvider identityProvider) {
 
-        IdentityProviderProperty[] properties = identityProvider.getIdpProperties();
-        if (properties == null) {
-            return false;
-        }
-        for (IdentityProviderProperty property : properties) {
-            if (IS_SHARED_PROPERTY.equals(property.getName())) {
-                return Boolean.parseBoolean(property.getValue());
-            }
-        }
-        return false;
+        return identityProvider.isShared();
     }
 
     private OrganizationManager getOrganizationManager() {

@@ -27,10 +27,6 @@ public class ConnectionSharingConstants {
 
     public static final String SHARING_MODE_ATTRIBUTE = "sharingMode";
 
-    // IdP property flag set on a shadow connection so the UI can render a "Shared" badge. Runtime auth logic does
-    // not depend on it; resolution is driven by the connection association table.
-    public static final String IS_SHARED_PROPERTY = "isShared";
-
     // Audit log result values (v2 audit logs are published via LoggerUtils.triggerAuditLogEvent).
     public static final String AUDIT_SUCCESS = "Success";
     public static final String AUDIT_FAILURE = "Failure";

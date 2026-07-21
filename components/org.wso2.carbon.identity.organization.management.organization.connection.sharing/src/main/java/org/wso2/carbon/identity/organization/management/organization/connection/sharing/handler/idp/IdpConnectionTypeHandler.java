@@ -41,7 +41,6 @@ import java.util.List;
 
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.IS_SHARED_PROPERTY;
 
 /**
  * {@link org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler}
@@ -127,7 +126,7 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
         setIdpGroups(sharedIdp, parentIdp);
 
         IdentityProviderProperty sharedConnectionProperty = new IdentityProviderProperty();
-        sharedConnectionProperty.setName(IS_SHARED_PROPERTY);
+        sharedConnectionProperty.setName(IdentityProvider.IS_SHARED_IDP_PROPERTY);
         sharedConnectionProperty.setValue(Boolean.TRUE.toString());
         sharedIdp.setIdpProperties(new IdentityProviderProperty[]{sharedConnectionProperty});
 
