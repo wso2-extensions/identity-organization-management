@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -30,12 +30,13 @@ import java.util.function.Predicate;
  * to decide whether the shadow has configured it locally.
  *
  * <p>A resolver declares its attributes as a list of these; both the read-time overlay and the write-time
- * deny-guard are driven by the same list via {@link ConfigAttributes}.</p>
+ * deny-guard are driven by the same list via {@link ConfigAttributes}. It is container-type-agnostic so it can be
+ * reused by any connection type handler's resolvers.</p>
  *
  * @param <C> The container type the attribute lives on.
  * @param <T> The type of the attribute value.
  */
-final class ConfigAttribute<C, T> {
+public final class ConfigAttribute<C, T> {
 
     /**
      * How a shadow connection derives an attribute's value from its parent.
@@ -75,8 +76,8 @@ final class ConfigAttribute<C, T> {
      * An inherited attribute that is always taken from the parent and that a sub-organization may NOT modify on a
      * shadow connection.
      */
-    static <C, T> ConfigAttribute<C, T> inherited(String displayName, Function<C, T> getter,
-                                                  BiConsumer<C, T> setter) {
+    public static <C, T> ConfigAttribute<C, T> inherited(String displayName, Function<C, T> getter,
+                                                         BiConsumer<C, T> setter) {
 
         return new ConfigAttribute<>(displayName, getter, setter, Inheritance.INHERITED, null);
     }
@@ -85,8 +86,8 @@ final class ConfigAttribute<C, T> {
      * An attribute a sub-organization may override locally; {@code locallyConfigured} decides whether the shadow's
      * value should win over the parent's during read-time resolution.
      */
-    static <C, T> ConfigAttribute<C, T> overridable(String displayName, Function<C, T> getter,
-                                                    BiConsumer<C, T> setter, Predicate<T> locallyConfigured) {
+    public static <C, T> ConfigAttribute<C, T> overridable(String displayName, Function<C, T> getter,
+                                                           BiConsumer<C, T> setter, Predicate<T> locallyConfigured) {
 
         return new ConfigAttribute<>(displayName, getter, setter, Inheritance.OVERRIDABLE, locallyConfigured);
     }
@@ -96,7 +97,8 @@ final class ConfigAttribute<C, T> {
      * sub-organization may modify it freely (e.g. the outbound provisioning role, which is meaningful only within
      * the sub-organization).
      */
-    static <C, T> ConfigAttribute<C, T> local(String displayName, Function<C, T> getter, BiConsumer<C, T> setter) {
+    public static <C, T> ConfigAttribute<C, T> local(String displayName, Function<C, T> getter,
+                                                     BiConsumer<C, T> setter) {
 
         return new ConfigAttribute<>(displayName, getter, setter, Inheritance.LOCAL, null);
     }

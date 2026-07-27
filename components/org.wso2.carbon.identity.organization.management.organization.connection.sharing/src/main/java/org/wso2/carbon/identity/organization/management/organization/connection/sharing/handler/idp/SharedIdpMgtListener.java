@@ -26,8 +26,9 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedIdpResolver;
@@ -41,6 +42,7 @@ import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.idp.mgt.listener.AbstractIdentityProviderMgtListener;
 import org.wso2.carbon.idp.mgt.model.SharedIdPResolveType;
+import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -148,8 +150,9 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
 
         IdentityProvider parentIdp;
         try {
-            Optional<ConnectionAssociation> association = getConnectionAssociationService()
-                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP, resourceId);
+            Optional<ConnectionAssociation> association = getConnectionAssociationManager()
+                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                            resourceId);
             if (association.isEmpty()) {
                 throw new IdentityProviderManagementException(
                         "Shared identity provider: " + resourceId + " has no connection association.");
@@ -158,7 +161,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
                     .resolveTenantDomain(association.get().getConnectionResidentOrganizationId());
 
             parentIdp = getIdpManager().getIdPByResourceId(association.get().getParentConnectionId(),
-                    parentTenantDomain, true, SharedIdPResolveType.FULL_PARENT);
+                    parentTenantDomain, true, SharedIdPResolveType.FULL_RESOLVED);
         } catch (ConnectionSharingMgtException | OrganizationManagementException e) {
             throw new IdentityProviderManagementException("Error while resolving parent idp of the shared idp: "
                     + resourceId, e);
@@ -177,8 +180,9 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             return true;
         }
         try {
-            boolean isShadow = getConnectionAssociationService()
-                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP, resourceId).isPresent();
+            boolean isShadow = getConnectionAssociationManager()
+                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                            resourceId).isPresent();
             if (isShadow) {
                 throw new IdentityProviderManagementClientException(
                         ERROR_CODE_SHARED_IDP_DIRECT_DELETION.getCode(),
@@ -239,11 +243,11 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
      *   <li>{@link SharedIdPResolveType#RAW} — the stored shadow is returned as-is (no overlay). This is the true
      *       persisted state, used by the update flow and the name-sync propagation, so parent-derived values are
      *       never round-tripped into the shadow's row.</li>
-     *   <li>{@link SharedIdPResolveType#BASE_PARENT} (management view) — only the always-parent-derived attributes
+     *   <li>{@link SharedIdPResolveType#BASE_RESOLVED} (management view) — only the always-parent-derived attributes
      *       are overlaid (image URL, description, effective enabled state and the per-resource basic identities via
      *       {@code SharedIdpResolver.overlayBasicParentAttributes}); everything else stays as the raw stored
      *       shadow.</li>
-     *   <li>{@link SharedIdPResolveType#FULL_PARENT} (runtime engagement view) — the parent's full configuration is
+     *   <li>{@link SharedIdPResolveType#FULL_RESOLVED} (runtime engagement view) — the parent's full configuration is
      *       overlaid, preserving the locally-owned identity and the locally-overridable sections.</li>
      * </ul>
      * The overlay rules are owned by the {@link SharedIdpResolver}.
@@ -275,11 +279,11 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             // The resolver owns the overlay rules and resolves each authenticator/connector per-resource.
             IdentityProvider resolvedIdp = cloneIdentityProvider(identityProvider);
             switch (resolveType) {
-                case BASE_PARENT:
+                case BASE_RESOLVED:
                     SharedIdpResolver.getInstance()
                             .overlayBasicParentAttributes(parentIdp, resolvedIdp, tenantDomain);
                     break;
-                case FULL_PARENT:
+                case FULL_RESOLVED:
                     SharedIdpResolver.getInstance()
                             .overlayParentConfiguration(parentIdp, resolvedIdp, tenantDomain);
                     break;
@@ -371,8 +375,8 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         CompletableFuture.runAsync(() -> {
             try {
                 String residentOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-                List<ConnectionAssociation> shadows = getConnectionAssociationService().getConnectionAssociations(
-                        ConnectionType.IDP, connectionId, residentOrgId);
+                List<ConnectionAssociation> shadows = getConnectionAssociationManager().getConnectionAssociations(
+                        ConnectionType.IDP.getResourceType().name(), connectionId, residentOrgId);
                 for (ConnectionAssociation shadow : shadows) {
                     syncSharedIdp(shadow, parentName, parentGroups);
                 }
@@ -460,8 +464,9 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             throws ConnectionSharingMgtException, OrganizationManagementException, IdentityProviderManagementException {
 
         String sharedResourceId = shadowIdp.getResourceId();
-        Optional<ConnectionAssociation> association = getConnectionAssociationService()
-                .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP, sharedResourceId);
+        Optional<ConnectionAssociation> association = getConnectionAssociationManager()
+                .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                        sharedResourceId);
         if (association.isEmpty()) {
             LOG.warn("No connection association found for shared identity provider: " + sharedResourceId +
                     " in tenant: " + tenantDomain + ".");
@@ -473,7 +478,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         // The parent is a regular identity provider (no sharing marker), so this does not recurse into this
         // listener's shadow-resolution branch.
         IdentityProvider parentIdp = getIdpManager().getIdPByResourceId(association.get().getParentConnectionId(),
-                residentTenantDomain, true, SharedIdPResolveType.FULL_PARENT);
+                residentTenantDomain, true, SharedIdPResolveType.FULL_RESOLVED);
         if (parentIdp == null) {
             LOG.warn("Parent identity provider: " + association.get().getParentConnectionId() +
                     " could not be resolved for shared identity provider: " + sharedResourceId + ".");
@@ -487,7 +492,16 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
      */
     private boolean isSharedConnection(IdentityProvider identityProvider) {
 
-        return identityProvider.isShared();
+        IdentityProviderProperty[] properties = identityProvider.getIdpProperties();
+        if (properties == null) {
+            return false;
+        }
+        for (IdentityProviderProperty property : properties) {
+            if (IdPManagementConstants.IS_SHARED_IDP_PROPERTY.equals(property.getName())) {
+                return Boolean.parseBoolean(property.getValue());
+            }
+        }
+        return false;
     }
 
     private OrganizationManager getOrganizationManager() {
@@ -500,9 +514,9 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         return ConnectionSharingDataHolder.getInstance().getIdpManager();
     }
 
-    private ConnectionAssociationService getConnectionAssociationService() {
+    private ConnectionAssociationManager getConnectionAssociationManager() {
 
-        return ConnectionSharingDataHolder.getInstance().getConnectionAssociationService();
+        return ConnectionSharingDataHolder.getInstance().getConnectionAssociationManager();
     }
 
 }

@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
+import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,7 +127,7 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
         setIdpGroups(sharedIdp, parentIdp);
 
         IdentityProviderProperty sharedConnectionProperty = new IdentityProviderProperty();
-        sharedConnectionProperty.setName(IdentityProvider.IS_SHARED_IDP_PROPERTY);
+        sharedConnectionProperty.setName(IdPManagementConstants.IS_SHARED_IDP_PROPERTY);
         sharedConnectionProperty.setValue(Boolean.TRUE.toString());
         sharedIdp.setIdpProperties(new IdentityProviderProperty[]{sharedConnectionProperty});
 

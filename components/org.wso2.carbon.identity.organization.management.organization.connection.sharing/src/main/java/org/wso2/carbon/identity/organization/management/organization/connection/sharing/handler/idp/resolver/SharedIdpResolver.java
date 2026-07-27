@@ -31,6 +31,9 @@ import org.wso2.carbon.identity.application.common.model.JustInTimeProvisioningC
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.RestrictedAttributeModificationException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConfigAttribute;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConfigAttributes;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -214,7 +217,7 @@ public class SharedIdpResolver {
             ConfigAttributes.validateRestrictedModifications(updatingShadowIdp, existingShadowIdp,
                     INHERITED_CONFIG_ATTRIBUTES);
             validateIdpPropertiesUpdate(updatingShadowIdp.getIdpProperties(), existingShadowIdp.getIdpProperties());
-        } catch (IllegalArgumentException e) {
+        } catch (RestrictedAttributeModificationException e) {
             throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),
                     e.getMessage(), e);
         }
@@ -225,7 +228,7 @@ public class SharedIdpResolver {
 
     private void validateIdpPropertiesUpdate(IdentityProviderProperty[] updatingIdpProperties,
                                              IdentityProviderProperty[] existingIdpProperties)
-        throws IllegalArgumentException {
+        throws RestrictedAttributeModificationException {
 
         Set<String> existingPropertyNames = Arrays.stream(existingIdpProperties)
                 .filter(property -> property != null && property.getName() != null)
@@ -234,8 +237,7 @@ public class SharedIdpResolver {
 
         for (IdentityProviderProperty property: updatingIdpProperties) {
             if (property != null && property.getName() != null && !existingPropertyNames.contains(property.getName())) {
-                throw new IllegalArgumentException("Attribute: '" + property.getName() +
-                        "' is not allowed to be modified as it is inherited from the parent.");
+                throw new RestrictedAttributeModificationException(property.getName());
             }
         }
     }

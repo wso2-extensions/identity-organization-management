@@ -30,8 +30,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationService;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationServiceImpl;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerServiceImpl;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
@@ -71,10 +70,8 @@ public class ConnectionSharingServiceComponent {
             serviceRegistration = bundleContext.registerService(
                     ConnectionSharingPolicyHandlerService.class.getName(),
                     new ConnectionSharingPolicyHandlerServiceImpl(), null);
-            ConnectionAssociationService connectionAssociationService = new ConnectionAssociationServiceImpl();
-            bundleContext.registerService(ConnectionAssociationService.class.getName(),
-                    connectionAssociationService, null);
-            ConnectionSharingDataHolder.getInstance().setConnectionAssociationService(connectionAssociationService);
+            ConnectionSharingDataHolder.getInstance()
+                    .setConnectionAssociationManager(new ConnectionAssociationManager());
             bundleContext.registerService(AbstractEventHandler.class.getName(),
                     new OrganizationLifecycleHandler(), null);
             bundleContext.registerService(IdentityProviderMgtListener.class.getName(),

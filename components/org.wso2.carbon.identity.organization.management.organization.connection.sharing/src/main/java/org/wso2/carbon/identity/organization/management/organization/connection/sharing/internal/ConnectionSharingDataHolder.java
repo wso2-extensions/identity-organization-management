@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.DefaultSharedFederatedAuthenticatorResolver;
@@ -44,7 +44,7 @@ public class ConnectionSharingDataHolder {
     private OrganizationManager organizationManager;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
     private IdpManager idpManager;
-    private ConnectionAssociationService connectionAssociationService;
+    private ConnectionAssociationManager connectionAssociationManager;
     private RealmService realmService;
     private final Map<ConnectionType, ConnectionTypeHandler> connectionTypeHandlers =
             new EnumMap<>(ConnectionType.class);
@@ -101,14 +101,14 @@ public class ConnectionSharingDataHolder {
         this.idpManager = idpManager;
     }
 
-    public ConnectionAssociationService getConnectionAssociationService() {
+    public ConnectionAssociationManager getConnectionAssociationManager() {
 
-        return connectionAssociationService;
+        return connectionAssociationManager;
     }
 
-    public void setConnectionAssociationService(ConnectionAssociationService connectionAssociationService) {
+    public void setConnectionAssociationManager(ConnectionAssociationManager connectionAssociationManager) {
 
-        this.connectionAssociationService = connectionAssociationService;
+        this.connectionAssociationManager = connectionAssociationManager;
     }
 
     public RealmService getRealmService() {

@@ -16,10 +16,11 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.RestrictedAttributeModificationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,10 @@ import java.util.List;
 /**
  * The generic inheritance engine that drives both the read-time overlay and the write-time deny-guard off a
  * {@link ConfigAttribute} registry, for any shared-connection container type {@code C} (an
- * {@code IdentityProvider}, a {@code FederatedAuthenticatorConfig} or a {@code ProvisioningConnectorConfig}).
+ * {@code IdentityProvider}, a {@code FederatedAuthenticatorConfig} or a {@code ProvisioningConnectorConfig}). It is
+ * container-type-agnostic so it can be reused by any connection type handler's resolvers.
  */
-final class ConfigAttributes {
+public final class ConfigAttributes {
 
     private static final Gson GSON = new Gson();
 
@@ -52,7 +54,7 @@ final class ConfigAttributes {
      * @param registry The attribute registry.
      * @param <C>      The container type.
      */
-    static <C> void applyOverlay(C parent, C target, List<ConfigAttribute<C, ?>> registry) {
+    public static <C> void applyOverlay(C parent, C target, List<ConfigAttribute<C, ?>> registry) {
 
         // Capture the locally-overridden attributes from the target before the parent configuration is overlaid,
         // so that sub-organization edits win over the parent.
@@ -81,7 +83,8 @@ final class ConfigAttributes {
      * @param <C>      The container type.
      * @return The display names of the restricted attributes that were modified; empty if none.
      */
-    static <C> List<String> restrictedModifications(C incoming, C stored, List<ConfigAttribute<C, ?>> registry) {
+    public static <C> List<String> restrictedModifications(C incoming, C stored,
+                                                           List<ConfigAttribute<C, ?>> registry) {
 
         List<String> restrictedModifications = new ArrayList<>();
         for (ConfigAttribute<C, ?> attribute : registry) {
@@ -94,8 +97,19 @@ final class ConfigAttributes {
         return restrictedModifications;
     }
 
-    static <C> void validateRestrictedModifications(C incoming, C stored, List<ConfigAttribute<C, ?>> registry)
-            throws IllegalArgumentException {
+    /**
+     * Verifies that an incoming update does not change any inherited (non-overridable) attribute relative to the
+     * stored shadow, failing fast on the first restricted modification.
+     *
+     * @param incoming The incoming (to-be-persisted) container.
+     * @param stored   The stored shadow container (the baseline).
+     * @param registry The inherited/overridable attribute registry.
+     * @param <C>      The container type.
+     * @throws RestrictedAttributeModificationException If an inherited attribute was modified.
+     */
+    public static <C> void validateRestrictedModifications(C incoming, C stored,
+                                                           List<ConfigAttribute<C, ?>> registry)
+            throws RestrictedAttributeModificationException {
 
         for (ConfigAttribute<C, ?> attribute : registry) {
             // Only INHERITED attributes are restricted; OVERRIDABLE and LOCAL are the sub-organization's to edit.
@@ -103,8 +117,7 @@ final class ConfigAttributes {
                 continue;
             }
             if (isModified(attribute.getter.apply(incoming), attribute.getter.apply(stored))) {
-                throw new IllegalArgumentException("Attribute: '" + attribute.displayName +
-                        "' is not allowed to be modified as it is inherited from the parent.");
+                throw new RestrictedAttributeModificationException(attribute.displayName);
             }
         }
     }

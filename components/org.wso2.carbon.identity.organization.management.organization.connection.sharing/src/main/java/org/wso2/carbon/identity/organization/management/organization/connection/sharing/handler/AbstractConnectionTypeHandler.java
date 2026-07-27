@@ -26,9 +26,8 @@ import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.ConnectionAssociationDAO;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.impl.ConnectionAssociationDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
@@ -50,15 +49,13 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 
 /**
  * Base {@link ConnectionTypeHandler} that owns all the connection-type-agnostic orchestration: the shadow
- * connection association persistence (via {@link ConnectionAssociationDAO}), organization scoping and tenant-flow
+ * connection association persistence (via {@link ConnectionAssociationManager}), organization scoping and tenant-flow
  * handling. Concrete handlers only implement the type-specific resource operations
  * ({@link #createSharedResource} / {@link #deleteSharedResource}) and declare their {@link #getConnectionType()}.
  */
 public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHandler {
 
     private static final Log LOG = LogFactory.getLog(AbstractConnectionTypeHandler.class);
-
-    private final ConnectionAssociationDAO connectionAssociationDAO = new ConnectionAssociationDAOImpl();
 
     @Override
     public void shareConnectionToOrg(String connectionId, String targetOrgId, PolicyEnum policy,
@@ -138,7 +135,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
         try {
             ConnectionSharingUtil.startConnectionShareFlow();
             // Skip if the connection is already shared with the target organization.
-            if (connectionAssociationDAO.getSharedConnectionId(resourceType, connectionId, initiatingOrgId,
+            if (getConnectionAssociationManager().getSharedConnectionId(resourceType, connectionId, initiatingOrgId,
                     targetOrgId).isPresent()) {
                 LOG.debug("Connection: " + connectionId + " is already shared with organization: " + targetOrgId +
                         ". Skip sharing.");
@@ -168,7 +165,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
                 .sharedConnectionId(sharedResourceId)
                 .organizationId(targetOrgId)
                 .build();
-        connectionAssociationDAO.addConnectionAssociation(association);
+        getConnectionAssociationManager().addConnectionAssociation(association);
     }
 
     private void logAndSkipChildOrgIds(Deque<String> pendingOrgIds, String connectionId, String initiatingOrgId,
@@ -195,7 +192,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             throws ConnectionSharingMgtException {
 
         String resourceType = getResourceType().name();
-        Optional<String> sharedConnectionId = connectionAssociationDAO.getSharedConnectionId(resourceType,
+        Optional<String> sharedConnectionId = getConnectionAssociationManager().getSharedConnectionId(resourceType,
                 connectionId, initiatingOrgId, targetOrgId);
         if (sharedConnectionId.isPresent()) {
             unshareSharedConnection(resourceType, connectionId, initiatingOrgId, targetOrgId,
@@ -218,8 +215,8 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
         }
         for (String childOrgId : childOrgIds) {
-            Optional<String> childSharedConnectionId = connectionAssociationDAO.getSharedConnectionId(resourceType,
-                    connectionId, initiatingOrgId, childOrgId);
+            Optional<String> childSharedConnectionId = getConnectionAssociationManager().getSharedConnectionId(
+                    resourceType, connectionId, initiatingOrgId, childOrgId);
             if (childSharedConnectionId.isEmpty()) {
                 LOG.debug("Connection: " + connectionId + " is not shared with organization: " + childOrgId +
                             ". Skipping unshare.");
@@ -235,8 +232,8 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             throws ConnectionSharingMgtException {
 
         String resourceType = getResourceType().name();
-        List<ConnectionAssociation> associations =
-                connectionAssociationDAO.getConnectionAssociations(resourceType, connectionId, initiatingOrgId);
+        List<ConnectionAssociation> associations = getConnectionAssociationManager()
+                .getConnectionAssociations(resourceType, connectionId, initiatingOrgId);
         for (ConnectionAssociation association : associations) {
             unshareSharedConnection(resourceType, connectionId, initiatingOrgId, association.getOrganizationId(),
                     association.getSharedConnectionId());
@@ -254,7 +251,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             } finally {
                 ConnectionSharingUtil.endConnectionUnshareFlow();
             }
-            connectionAssociationDAO.deleteConnectionAssociation(resourceType, connectionId, initiatingOrgId,
+            getConnectionAssociationManager().deleteConnectionAssociation(resourceType, connectionId, initiatingOrgId,
                     targetOrgId);
             ConnectionSharingAuditLogger.logConnectionUnshared(resourceType, connectionId, initiatingOrgId,
                     targetOrgId, sharedConnectionId);
@@ -280,7 +277,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             return Collections.emptyList();
         }
         try {
-            return connectionAssociationDAO.getConnectionAssociations(getResourceType().name(), connectionId,
+            return getConnectionAssociationManager().getConnectionAssociations(getResourceType().name(), connectionId,
                     initiatingOrgId, orgIdsScope, expressionNodes, sortOrder, limit);
         } catch (ConnectionSharingMgtServerException e) {
             throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode(), e);
@@ -352,6 +349,11 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
     protected OrganizationManager getOrganizationManager() {
 
         return ConnectionSharingDataHolder.getInstance().getOrganizationManager();
+    }
+
+    protected ConnectionAssociationManager getConnectionAssociationManager() {
+
+        return ConnectionSharingDataHolder.getInstance().getConnectionAssociationManager();
     }
 
     /**

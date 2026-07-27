@@ -20,6 +20,9 @@ package org.wso2.carbon.identity.organization.management.organization.connection
 
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.RestrictedAttributeModificationException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConfigAttribute;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConfigAttributes;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 
@@ -114,7 +117,7 @@ public class DefaultSharedProvisioningConnectorResolver implements SharedProvisi
         try {
             ConfigAttributes.validateRestrictedModifications(updatingConnector, storedConnector,
                     INHERITED_CONFIG_ATTRIBUTES);
-        } catch (IllegalArgumentException e) {
+        } catch (RestrictedAttributeModificationException e) {
             throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),
                     e.getMessage(), e);
         }

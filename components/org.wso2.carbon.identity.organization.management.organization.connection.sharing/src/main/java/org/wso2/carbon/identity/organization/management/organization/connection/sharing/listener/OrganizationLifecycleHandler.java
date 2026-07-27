@@ -27,10 +27,9 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.ConnectionAssociationDAO;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.impl.ConnectionAssociationDAOImpl;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
@@ -73,8 +72,6 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
     // organization creation is not blocked by (potentially many) cross-tenant shadow creations.
     private static final ExecutorService CONNECTION_SHARE_EXECUTOR = Executors.newFixedThreadPool(5);
 
-    private final ConnectionAssociationDAO connectionAssociationDAO = new ConnectionAssociationDAOImpl();
-
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
 
@@ -102,7 +99,7 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                  * orphaned.
                  */
                 unshareConnectionsOwnedByOrganization(deletingOrgId);
-                connectionAssociationDAO.deleteConnectionAssociationsByOrganizationId(deletingOrgId);
+                getConnectionAssociationManager().deleteConnectionAssociationsByOrganizationId(deletingOrgId);
             } catch (ConnectionSharingMgtException e) {
                 throw new IdentityEventException("Error while cleaning up connection sharing for the organization " +
                         "being deleted: " + deletingOrgId, e);
@@ -118,7 +115,7 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
     private void unshareConnectionsOwnedByOrganization(String residentOrgId) throws ConnectionSharingMgtException {
 
         List<ConnectionAssociation> associations =
-                connectionAssociationDAO.getConnectionAssociationsByResidentOrg(residentOrgId);
+                getConnectionAssociationManager().getConnectionAssociationsByResidentOrg(residentOrgId);
         Set<String> processedConnections = new HashSet<>();
         for (ConnectionAssociation association : associations) {
             String resourceType = association.getResourceType();
@@ -208,7 +205,7 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                 }
                 try {
                     String parentOrgId = ancestorOrgs.getFirst();
-                    if (connectionAssociationDAO.getSharedConnectionId(policy.getResourceType().name(),
+                    if (getConnectionAssociationManager().getSharedConnectionId(policy.getResourceType().name(),
                                     policy.getResourceId(), policy.getInitiatingOrgId(), ancestorOrgs.getFirst())
                             .isEmpty()) {
                         LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
@@ -262,6 +259,11 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
     private OrganizationManager getOrganizationManager() {
 
         return ConnectionSharingDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private ConnectionAssociationManager getConnectionAssociationManager() {
+
+        return ConnectionSharingDataHolder.getInstance().getConnectionAssociationManager();
     }
 
     private ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
