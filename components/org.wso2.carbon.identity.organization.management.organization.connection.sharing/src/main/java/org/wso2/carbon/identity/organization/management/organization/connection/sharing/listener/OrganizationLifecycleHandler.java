@@ -27,18 +27,18 @@ import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.ext.Constants;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingInitiatorContext;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
 
@@ -236,9 +236,9 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
         if (resourceType == null) {
             return null;
         }
-        for (ConnectionType connectionType : ConnectionType.values()) {
-            if (connectionType.getResourceType().name().equals(resourceType)) {
-                return ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(connectionType);
+        for (ResourceType type : ResourceType.values()) {
+            if (type.name().equals(resourceType)) {
+                return ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(type);
             }
         }
         return null;

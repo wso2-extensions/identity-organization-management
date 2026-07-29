@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.impl;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.dao.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -26,9 +26,9 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.ConnectionAssociationDAO;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.dao.ConnectionAssociationDAO;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingUtil;
 
 import java.sql.Connection;
@@ -50,7 +50,6 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.COLUMN_NAME_RESOURCE_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.COLUMN_NAME_SHARED_ORG_ID;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.COLUMN_NAME_SHARED_RESOURCE_UUID;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.DELETE_ALL_CONNECTION_ASSOCIATIONS;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.DELETE_CONNECTION_ASSOCIATIONS_BY_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.DELETE_CONNECTION_ASSOCIATION_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_BY_FILTERING_HEAD;
@@ -237,25 +236,6 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_RESOURCE_UUID, connectionId);
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                     namedPreparedStatement.setString(COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
-                });
-                return null;
-            });
-        } catch (TransactionException e) {
-            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
-        }
-    }
-
-    @Override
-    public void deleteConnectionAssociations(String resourceType, String connectionId, String associatedOrgId)
-            throws ConnectionSharingMgtServerException {
-
-        NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
-        try {
-            namedJdbcTemplate.withTransaction(template -> {
-                template.executeUpdate(DELETE_ALL_CONNECTION_ASSOCIATIONS, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
-                    namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_RESOURCE_UUID, connectionId);
-                    namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                 });
                 return null;
             });

@@ -18,16 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 
 /**
  * Abstract base DTO for connection unshare operations. An unshare operation targets a single connection
- * (identified by {@code connectionId}) of a single {@link ConnectionType}.
+ * (identified by {@code connectionId}) of a single {@link ResourceType}.
  */
 public abstract class BaseConnectionUnshareDTO {
 
     private String connectionId;
-    private ConnectionType connectionType;
+    private ResourceType resourceType;
 
     /**
      * Returns the ID of the connection being unshared.
@@ -52,20 +52,20 @@ public abstract class BaseConnectionUnshareDTO {
     /**
      * Returns the type of the connection being unshared.
      *
-     * @return the {@link ConnectionType}
+     * @return the {@link ResourceType}
      */
-    public ConnectionType getConnectionType() {
+    public ResourceType getResourceType() {
 
-        return connectionType;
+        return resourceType;
     }
 
     /**
      * Sets the type of the connection being unshared.
      *
-     * @param connectionType the {@link ConnectionType}
+     * @param resourceType the {@link ResourceType}
      */
-    public void setConnectionType(ConnectionType connectionType) {
+    public void setResourceType(ResourceType resourceType) {
 
-        this.connectionType = connectionType;
+        this.resourceType = resourceType;
     }
 }

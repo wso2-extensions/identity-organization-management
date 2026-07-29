@@ -16,13 +16,13 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.association;
 
 import org.wso2.carbon.identity.core.model.ExpressionNode;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.ConnectionAssociationDAO;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao.impl.ConnectionAssociationDAOImpl;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.dao.ConnectionAssociationDAO;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.dao.impl.ConnectionAssociationDAOImpl;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 
 import java.util.List;
 import java.util.Optional;
@@ -123,6 +123,20 @@ public class ConnectionAssociationManager {
     }
 
     /**
+     * Retrieves all shadow connection associations whose original (parent) connection resides in the given
+     * organization — i.e. the connections that organization owns and has shared with other organizations.
+     *
+     * @param residentOrgId The ID of the organization that owns the original connections.
+     * @return The list of associations (across all connection types and shared organizations).
+     * @throws ConnectionSharingMgtServerException If an error occurs while retrieving the associations.
+     */
+    public List<ConnectionAssociation> getConnectionAssociationsByResidentOrg(String residentOrgId)
+            throws ConnectionSharingMgtServerException {
+
+        return connectionAssociationDAO.getConnectionAssociationsByResidentOrg(residentOrgId);
+    }
+
+    /**
      * Removes the shadow connection association of a connection in a specific shared organization.
      *
      * @param resourceType    The type of the connection.
@@ -135,34 +149,6 @@ public class ConnectionAssociationManager {
                                             String sharedOrgId) throws ConnectionSharingMgtServerException {
 
         connectionAssociationDAO.deleteConnectionAssociation(resourceType, connectionId, associatedOrgId, sharedOrgId);
-    }
-
-    /**
-     * Removes all shadow connection associations of a connection.
-     *
-     * @param resourceType    The type of the connection.
-     * @param connectionId    The ID of the associated (parent) connection.
-     * @param associatedOrgId The ID of the organization the connection resides in.
-     * @throws ConnectionSharingMgtServerException If an error occurs while removing the associations.
-     */
-    public void deleteConnectionAssociations(String resourceType, String connectionId, String associatedOrgId)
-            throws ConnectionSharingMgtServerException {
-
-        connectionAssociationDAO.deleteConnectionAssociations(resourceType, connectionId, associatedOrgId);
-    }
-
-    /**
-     * Retrieves all shadow connection associations whose original (parent) connection resides in the given
-     * organization — i.e. the connections that organization owns and has shared with other organizations.
-     *
-     * @param residentOrgId The ID of the organization that owns the original connections.
-     * @return The list of associations (across all connection types and shared organizations).
-     * @throws ConnectionSharingMgtServerException If an error occurs while retrieving the associations.
-     */
-    public List<ConnectionAssociation> getConnectionAssociationsByResidentOrg(String residentOrgId)
-            throws ConnectionSharingMgtServerException {
-
-        return connectionAssociationDAO.getConnectionAssociationsByResidentOrg(residentOrgId);
     }
 
     /**

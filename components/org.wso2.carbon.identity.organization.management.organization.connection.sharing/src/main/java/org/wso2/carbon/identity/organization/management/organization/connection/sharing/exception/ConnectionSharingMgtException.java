@@ -35,13 +35,6 @@ public class ConnectionSharingMgtException extends Exception {
         this.description = error.getDescription();
     }
 
-    public ConnectionSharingMgtException(ConnectionSharingConstants.ErrorMessage error, String specificMessage) {
-
-        super(specificMessage);
-        this.errorCode = error.getCode();
-        this.description = error.getDescription();
-    }
-
     public ConnectionSharingMgtException(ConnectionSharingConstants.ErrorMessage error, Throwable cause) {
 
         super(error.getMessage(), cause);
@@ -59,14 +52,6 @@ public class ConnectionSharingMgtException extends Exception {
     public ConnectionSharingMgtException(String errorCode, String message, String description, Throwable cause) {
 
         super(message, cause);
-        this.errorCode = errorCode;
-        this.description = description;
-    }
-
-    public ConnectionSharingMgtException(String errorCode, String message, String description, Throwable cause,
-                                         boolean enableSuppression, boolean writableStackTrace) {
-
-        super(message, cause, enableSuppression, writableStackTrace);
         this.errorCode = errorCode;
         this.description = description;
     }

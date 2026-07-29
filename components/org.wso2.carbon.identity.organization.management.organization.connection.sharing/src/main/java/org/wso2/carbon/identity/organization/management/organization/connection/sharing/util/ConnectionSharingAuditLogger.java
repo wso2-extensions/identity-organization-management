@@ -52,9 +52,7 @@ public class ConnectionSharingAuditLogger {
     private enum Action {
 
         SHARE_CONNECTION("share-connection"),
-        UNSHARE_CONNECTION("unshare-connection"),
-        SAVE_CONNECTION_SHARING_POLICY("save-connection-sharing-policy"),
-        DELETE_ALL_CONNECTION_SHARING_POLICIES("delete-all-connection-sharing-policies");
+        UNSHARE_CONNECTION("unshare-connection");
 
         private final String logAction;
 
@@ -150,31 +148,6 @@ public class ConnectionSharingAuditLogger {
 
         log(Action.UNSHARE_CONNECTION, resourceType, connectionId, residentOrgId, sharedOrgId, sharedResourceId,
                 false, reason);
-    }
-
-    /**
-     * Logs the persistence of a connection sharing policy.
-     *
-     * @param resourceType  The connection's resource type (e.g. {@code IDP}).
-     * @param connectionId  The connection (target) ID.
-     * @param residentOrgId The organization that owns the connection.
-     */
-    public static void logSharingPolicySaved(String resourceType, String connectionId, String residentOrgId) {
-
-        log(Action.SAVE_CONNECTION_SHARING_POLICY, resourceType, connectionId, residentOrgId, null, null, true);
-    }
-
-    /**
-     * Logs the removal of all sharing policies of a connection.
-     *
-     * @param resourceType  The connection's resource type (e.g. {@code IDP}).
-     * @param connectionId  The connection (target) ID.
-     * @param residentOrgId The organization that owns the connection.
-     */
-    public static void logSharingPoliciesDeleted(String resourceType, String connectionId, String residentOrgId) {
-
-        log(Action.DELETE_ALL_CONNECTION_SHARING_POLICIES, resourceType, connectionId, residentOrgId, null, null,
-                true);
     }
 
     private static void log(Action action, String resourceType, String connectionId, String residentOrgId,

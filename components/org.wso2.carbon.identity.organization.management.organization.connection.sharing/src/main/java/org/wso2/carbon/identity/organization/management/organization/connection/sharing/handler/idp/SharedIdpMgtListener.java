@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp;
 
 import com.google.gson.Gson;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,15 +29,15 @@ import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedIdpResolver;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -58,6 +59,7 @@ import java.util.concurrent.Executors;
 
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_CREATION;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_DELETION;
+import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_PARENT_IDP_DELETION;
 
 /**
  * {@link org.wso2.carbon.idp.mgt.listener.IdentityProviderMgtListener} implementation that resolves shared (shadow)
@@ -117,7 +119,8 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
     public boolean doPreUpdateIdP(String oldIdPName, IdentityProvider updatingIdp, String tenantDomain)
             throws IdentityProviderManagementException {
 
-        IdentityProvider existingIdp = getIdpManager().getIdPByName(oldIdPName, tenantDomain, true);
+        IdentityProvider existingIdp = getIdpManager().getIdPByName(oldIdPName, tenantDomain, true,
+                SharedIdPResolveType.RAW);
         return doPreUpdateIdPByResourceId(existingIdp.getResourceId(), updatingIdp, tenantDomain);
     }
 
@@ -151,7 +154,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         IdentityProvider parentIdp;
         try {
             Optional<ConnectionAssociation> association = getConnectionAssociationManager()
-                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                    .getConnectionAssociationBySharedConnectionId(ResourceType.CONNECTION_IDENTITY_PROVIDER.name(),
                             resourceId);
             if (association.isEmpty()) {
                 throw new IdentityProviderManagementException(
@@ -181,16 +184,27 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         }
         try {
             boolean isShadow = getConnectionAssociationManager()
-                    .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                    .getConnectionAssociationBySharedConnectionId(ResourceType.CONNECTION_IDENTITY_PROVIDER.name(),
                             resourceId).isPresent();
             if (isShadow) {
                 throw new IdentityProviderManagementClientException(
                         ERROR_CODE_SHARED_IDP_DIRECT_DELETION.getCode(),
                         ERROR_CODE_SHARED_IDP_DIRECT_DELETION.getMessage());
             }
-        } catch (ConnectionSharingMgtException e) {
+
+            // A parent connection that has been shared with organizations cannot be deleted while its shared
+            // connections still exist; it must be unshared from all organizations first.
+            String residentOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
+            List<ConnectionAssociation> sharedConnections = getConnectionAssociationManager().getConnectionAssociations(
+                    ResourceType.CONNECTION_IDENTITY_PROVIDER.name(), resourceId, residentOrgId);
+            if (CollectionUtils.isNotEmpty(sharedConnections)) {
+                throw new IdentityProviderManagementClientException(
+                        ERROR_CODE_SHARED_PARENT_IDP_DELETION.getCode(),
+                        ERROR_CODE_SHARED_PARENT_IDP_DELETION.getMessage());
+            }
+        } catch (ConnectionSharingMgtException | OrganizationManagementException e) {
             throw new IdentityProviderManagementException("Error while checking whether identity provider: "
-                    + resourceId + " is a shared connection.", e);
+                    + resourceId + " has shared connections.", e);
         }
         return true;
     }
@@ -376,7 +390,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             try {
                 String residentOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
                 List<ConnectionAssociation> shadows = getConnectionAssociationManager().getConnectionAssociations(
-                        ConnectionType.IDP.getResourceType().name(), connectionId, residentOrgId);
+                        ResourceType.CONNECTION_IDENTITY_PROVIDER.name(), connectionId, residentOrgId);
                 for (ConnectionAssociation shadow : shadows) {
                     syncSharedIdp(shadow, parentName, parentGroups);
                 }
@@ -465,7 +479,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
 
         String sharedResourceId = shadowIdp.getResourceId();
         Optional<ConnectionAssociation> association = getConnectionAssociationManager()
-                .getConnectionAssociationBySharedConnectionId(ConnectionType.IDP.getResourceType().name(),
+                .getConnectionAssociationBySharedConnectionId(ResourceType.CONNECTION_IDENTITY_PROVIDER.name(),
                         sharedResourceId);
         if (association.isEmpty()) {
             LOG.warn("No connection association found for shared identity provider: " + sharedResourceId +

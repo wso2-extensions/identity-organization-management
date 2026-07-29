@@ -30,30 +30,8 @@ public class ConnectionSharingMgtClientException extends ConnectionSharingMgtExc
         super(error);
     }
 
-    public ConnectionSharingMgtClientException(ConnectionSharingConstants.ErrorMessage error, String specificMessage) {
-
-        super(error, specificMessage);
-    }
-
-    public ConnectionSharingMgtClientException(ConnectionSharingConstants.ErrorMessage error, Throwable cause) {
-
-        super(error, cause);
-    }
-
     public ConnectionSharingMgtClientException(String errorCode, String message, String description) {
 
         super(errorCode, message, description);
-    }
-
-    public ConnectionSharingMgtClientException(String errorCode, String message, String description,
-                                               Throwable cause) {
-
-        super(errorCode, message, description, cause);
-    }
-
-    public ConnectionSharingMgtClientException(String errorCode, String message, String description, Throwable cause,
-                                               boolean enableSuppression, boolean writableStackTrace) {
-
-        super(errorCode, message, description, cause, enableSuppression, writableStackTrace);
     }
 }

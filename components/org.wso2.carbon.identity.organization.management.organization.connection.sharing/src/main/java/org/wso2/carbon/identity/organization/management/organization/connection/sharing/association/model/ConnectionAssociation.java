@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing.models;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model;
 
 /**
  * Model class representing a shadow connection association.

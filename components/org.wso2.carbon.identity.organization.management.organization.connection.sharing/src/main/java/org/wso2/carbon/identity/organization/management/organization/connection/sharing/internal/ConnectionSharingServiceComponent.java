@@ -30,10 +30,10 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerServiceImpl;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.IdpConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.SharedIdpMgtListener;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedFederatedAuthenticatorResolver;
@@ -108,7 +108,7 @@ public class ConnectionSharingServiceComponent {
 
         ConnectionSharingDataHolder.getInstance().addConnectionTypeHandler(connectionTypeHandler);
         if (LOG.isDebugEnabled() && connectionTypeHandler != null) {
-            LOG.debug("Registered connection type handler for: " + connectionTypeHandler.getConnectionType());
+            LOG.debug("Registered connection type handler for: " + connectionTypeHandler.getResourceType());
         }
     }
 

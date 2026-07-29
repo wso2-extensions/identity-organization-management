@@ -18,16 +18,16 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 
 /**
  * Abstract base DTO for connection share operations. A share operation targets a single connection
- * (identified by {@code connectionId}) of a single {@link ConnectionType}.
+ * (identified by {@code connectionId}) of a single {@link ResourceType}.
  */
 public abstract class BaseConnectionShareDTO {
 
     private String connectionId;
-    private ConnectionType connectionType;
+    private ResourceType resourceType;
 
     /**
      * Returns the ID of the connection being shared.
@@ -52,20 +52,20 @@ public abstract class BaseConnectionShareDTO {
     /**
      * Returns the type of the connection being shared.
      *
-     * @return the {@link ConnectionType}
+     * @return the {@link ResourceType}
      */
-    public ConnectionType getConnectionType() {
+    public ResourceType getResourceType() {
 
-        return connectionType;
+        return resourceType;
     }
 
     /**
      * Sets the type of the connection being shared.
      *
-     * @param connectionType the {@link ConnectionType}
+     * @param resourceType the {@link ResourceType}
      */
-    public void setConnectionType(ConnectionType connectionType) {
+    public void setResourceType(ResourceType resourceType) {
 
-        this.connectionType = connectionType;
+        this.resourceType = resourceType;
     }
 }

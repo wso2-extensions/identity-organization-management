@@ -16,11 +16,11 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing.dao;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.dao;
 
 import org.wso2.carbon.identity.core.model.ExpressionNode;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 
 import java.util.List;
 import java.util.Optional;
@@ -109,17 +109,6 @@ public interface ConnectionAssociationDAO {
      */
     void deleteConnectionAssociation(String resourceType, String connectionId, String associatedOrgId,
                                      String sharedOrgId) throws ConnectionSharingMgtServerException;
-
-    /**
-     * Removes all shadow connection associations of a connection.
-     *
-     * @param resourceType    The type of the connection.
-     * @param connectionId    The ID of the associated (parent) connection.
-     * @param associatedOrgId The ID of the organization the connection resides in.
-     * @throws ConnectionSharingMgtServerException If an error occurs while removing the associations.
-     */
-    void deleteConnectionAssociations(String resourceType, String connectionId, String associatedOrgId)
-            throws ConnectionSharingMgtServerException;
 
     /**
      * Retrieves all shadow connection associations whose original (parent) connection resides in the given

@@ -38,8 +38,6 @@ public class ConnectionSharingConstants {
 
     public static final String ASYNC_PROCESSING_LOG_TEMPLATE =
             "Processing async %s initiated by user: %s in organization: %s.";
-    public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
-            "Skipping connection share for organizations that are not immediate children: %s";
 
     // Server Configuration properties.
     public static final String ENABLE_IDP_SHARING_PROPERTY = "ConnectionSharing.IDP.Enable";
@@ -94,7 +92,7 @@ public class ConnectionSharingConstants {
                 "Internal server error.",
                 "An unexpected error occurred during the connection sharing operation."),
         ERROR_CODE_GET_CHILD_ORGS("65002",
-                "Failed to retrieve child organizations.",
+                "Failed to retrieve child organizations of the organization: %s.",
                 "An error occurred while retrieving child organizations of the initiating organization."),
         ERROR_CODE_GET_SHARED_CONNECTIONS("65003",
                 "Failed to retrieve shared connection organizations.",

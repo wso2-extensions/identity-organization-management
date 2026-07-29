@@ -18,15 +18,15 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal;
 
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.DefaultSharedFederatedAuthenticatorResolver;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.DefaultSharedProvisioningConnectorResolver;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedFederatedAuthenticatorResolver;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedProvisioningConnectorResolver;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -46,8 +46,8 @@ public class ConnectionSharingDataHolder {
     private IdpManager idpManager;
     private ConnectionAssociationManager connectionAssociationManager;
     private RealmService realmService;
-    private final Map<ConnectionType, ConnectionTypeHandler> connectionTypeHandlers =
-            new EnumMap<>(ConnectionType.class);
+    private final Map<ResourceType, ConnectionTypeHandler> connectionTypeHandlers =
+            new EnumMap<>(ResourceType.class);
     // Per-resource resolvers contributed via the whiteboard pattern, keyed by the authenticator/connector name they
     // handle. A shadow IDP can carry several authenticators and connectors at once (and may have no templateId), so
     // each resource is resolved independently by name. The defaults are the fallbacks held directly by the data
@@ -128,8 +128,8 @@ public class ConnectionSharingDataHolder {
      */
     public void addConnectionTypeHandler(ConnectionTypeHandler connectionTypeHandler) {
 
-        if (connectionTypeHandler != null && connectionTypeHandler.getConnectionType() != null) {
-            connectionTypeHandlers.put(connectionTypeHandler.getConnectionType(), connectionTypeHandler);
+        if (connectionTypeHandler != null && connectionTypeHandler.getResourceType() != null) {
+            connectionTypeHandlers.put(connectionTypeHandler.getResourceType(), connectionTypeHandler);
         }
     }
 
@@ -140,20 +140,20 @@ public class ConnectionSharingDataHolder {
      */
     public void removeConnectionTypeHandler(ConnectionTypeHandler connectionTypeHandler) {
 
-        if (connectionTypeHandler != null && connectionTypeHandler.getConnectionType() != null) {
-            connectionTypeHandlers.remove(connectionTypeHandler.getConnectionType(), connectionTypeHandler);
+        if (connectionTypeHandler != null && connectionTypeHandler.getResourceType() != null) {
+            connectionTypeHandlers.remove(connectionTypeHandler.getResourceType(), connectionTypeHandler);
         }
     }
 
     /**
-     * Returns the {@link ConnectionTypeHandler} registered for the given {@link ConnectionType}.
+     * Returns the {@link ConnectionTypeHandler} registered for the given {@link ResourceType}.
      *
-     * @param connectionType The connection type.
+     * @param resourceType The resource type.
      * @return The registered handler, or {@code null} if none is registered.
      */
-    public ConnectionTypeHandler getConnectionTypeHandler(ConnectionType connectionType) {
+    public ConnectionTypeHandler getConnectionTypeHandler(ResourceType resourceType) {
 
-        return connectionType == null ? null : connectionTypeHandlers.get(connectionType);
+        return resourceType == null ? null : connectionTypeHandlers.get(resourceType);
     }
 
     public void addSharedFederatedAuthenticatorResolver(SharedFederatedAuthenticatorResolver resolver) {

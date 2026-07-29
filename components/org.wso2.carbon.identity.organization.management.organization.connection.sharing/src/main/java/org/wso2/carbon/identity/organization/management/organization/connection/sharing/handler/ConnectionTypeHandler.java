@@ -16,12 +16,12 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.organization.management.organization.connection.sharing;
+package org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler;
 
 import org.wso2.carbon.identity.core.model.ExpressionNode;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionSharingPolicyHandlerService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
@@ -40,21 +40,12 @@ import java.util.List;
 public interface ConnectionTypeHandler {
 
     /**
-     * Returns the {@link ConnectionType} this handler is responsible for.
+     * Returns the {@link ResourceType} this handler is responsible for, under which its sharing policies are
+     * persisted.
      *
-     * @return The handled {@link ConnectionType}.
+     * @return The handled {@link ResourceType}.
      */
-    ConnectionType getConnectionType();
-
-    /**
-     * Returns the {@link ResourceType} under which this connection type's sharing policies are persisted.
-     *
-     * @return The mapped {@link ResourceType}.
-     */
-    default ResourceType getResourceType() {
-
-        return getConnectionType().getResourceType();
-    }
+    ResourceType getResourceType();
 
     /**
      * Validates that the given connection is eligible to be shared, before any sharing is initiated. Implementations

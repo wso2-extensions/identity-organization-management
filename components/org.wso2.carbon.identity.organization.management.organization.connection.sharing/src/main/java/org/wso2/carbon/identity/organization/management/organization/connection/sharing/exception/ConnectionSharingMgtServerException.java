@@ -25,16 +25,6 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
  */
 public class ConnectionSharingMgtServerException extends ConnectionSharingMgtException {
 
-    public ConnectionSharingMgtServerException(ConnectionSharingConstants.ErrorMessage error) {
-
-        super(error);
-    }
-
-    public ConnectionSharingMgtServerException(ConnectionSharingConstants.ErrorMessage error, String specificMessage) {
-
-        super(error, specificMessage);
-    }
-
     public ConnectionSharingMgtServerException(ConnectionSharingConstants.ErrorMessage error, Throwable cause) {
 
         super(error, cause);
@@ -49,11 +39,5 @@ public class ConnectionSharingMgtServerException extends ConnectionSharingMgtExc
                                                Throwable cause) {
 
         super(errorCode, message, description, cause);
-    }
-
-    public ConnectionSharingMgtServerException(String errorCode, String message, String description, Throwable cause,
-                                               boolean enableSuppression, boolean writableStackTrace) {
-
-        super(errorCode, message, description, cause, enableSuppression, writableStackTrace);
     }
 }

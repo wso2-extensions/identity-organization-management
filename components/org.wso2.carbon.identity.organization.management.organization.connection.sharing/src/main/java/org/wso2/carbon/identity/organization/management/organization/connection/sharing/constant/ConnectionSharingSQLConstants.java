@@ -69,10 +69,6 @@ public class ConnectionSharingSQLConstants {
                     "ASSOCIATED_RESOURCE_UUID = :ASSOCIATED_RESOURCE_UUID; AND " +
                     "ASSOCIATED_ORG_ID = :ASSOCIATED_ORG_ID; AND SHARED_ORG_ID = :SHARED_ORG_ID;";
 
-    public static final String DELETE_ALL_CONNECTION_ASSOCIATIONS =
-            "DELETE FROM IDN_ORG_CONNECTION_ASSOCIATION WHERE RESOURCE_TYPE = :RESOURCE_TYPE; AND " +
-                    "ASSOCIATED_RESOURCE_UUID = :ASSOCIATED_RESOURCE_UUID; AND ASSOCIATED_ORG_ID = :ASSOCIATED_ORG_ID;";
-
     // Removes every association referencing a (deleted) organization, whether it held the shadow (SHARED_ORG_ID)
     // or owned the original connection (ASSOCIATED_ORG_ID).
     public static final String DELETE_CONNECTION_ASSOCIATIONS_BY_ORG =

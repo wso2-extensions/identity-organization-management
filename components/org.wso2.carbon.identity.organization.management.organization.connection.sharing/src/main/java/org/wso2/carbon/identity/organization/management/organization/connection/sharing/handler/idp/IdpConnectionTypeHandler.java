@@ -28,12 +28,13 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.AbstractConnectionTypeHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -52,7 +53,7 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
 
 /**
- * {@link org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler}
+ * {@link ConnectionTypeHandler}
  * implementation for identity provider connections. Only the identity-provider-specific shadow-resource
  * operations live here; the association persistence and orchestration are inherited from
  * {@link AbstractConnectionTypeHandler}.
@@ -66,9 +67,9 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
     private static final Log LOG = LogFactory.getLog(IdpConnectionTypeHandler.class);
 
     @Override
-    public ConnectionType getConnectionType() {
+    public ResourceType getResourceType() {
 
-        return ConnectionType.IDP;
+        return ResourceType.CONNECTION_IDENTITY_PROVIDER;
     }
 
     @Override

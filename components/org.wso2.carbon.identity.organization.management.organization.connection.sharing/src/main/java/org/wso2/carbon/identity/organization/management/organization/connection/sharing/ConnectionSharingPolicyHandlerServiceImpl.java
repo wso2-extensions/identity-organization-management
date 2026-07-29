@@ -29,8 +29,8 @@ import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
 import org.wso2.carbon.identity.core.model.OperationNode;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto.ConnectionSharingModeDTO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto.GeneralConnectionShareDTO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.dto.GeneralConnectionUnshareDTO;
@@ -43,16 +43,14 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingAuditLogger;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingInitiatorContext;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
-import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.OrganizationScope;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
@@ -70,7 +68,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ACTION_GENERAL_CONNECTION_SHARE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ACTION_GENERAL_CONNECTION_UNSHARE;
@@ -88,7 +85,6 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_POLICY;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.LOG_WARN_SKIP_ORG_SHARE_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.SHARING_MODE_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.AND;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ASC_SORT_ORDER;
@@ -110,7 +106,7 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
  * Implementation of {@link ConnectionSharingPolicyHandlerService}.
  * Handles policy persistence and org-scope resolution for connection sharing operations, dispatching the
  * resource-type specific work to the {@link ConnectionTypeHandler} resolved for the request's
- * {@link ConnectionType}. Deep shadow-resource creation/propagation internals are deferred to the handler
+ * {@link ResourceType}. Deep shadow-resource creation/propagation internals are deferred to the handler
  * implementations.
  */
 public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionSharingPolicyHandlerService {
@@ -118,10 +114,6 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
     private static final Log LOG = LogFactory.getLog(ConnectionSharingPolicyHandlerServiceImpl.class);
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
     private static final Set<String> SUPPORTED_GET_ATTRIBUTES = Collections.singleton(SHARING_MODE_ATTRIBUTE);
-
-    // =========================================================
-    // Public Interface Methods
-    // =========================================================
 
     @Override
     public void populateSelectiveConnectionShare(SelectiveConnectionShareDTO dto)
@@ -135,28 +127,24 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         String connectionId = dto.getConnectionId();
-        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getResourceType());
         handler.validateConnectionShareEligibility(connectionId, ctx.getSharingInitiatedOrgId());
-        List<SelectiveConnectionShareOrgConfigDTO> validOrgs =
-                filterValidOrganizations(dto.getOrganizations(), ctx.getSharingInitiatedOrgId());
+        List<SelectiveConnectionShareOrgConfigDTO> validOrgs = filterValidOrganizations(dto.getOrganizations(),
+                ctx.getSharingInitiatedOrgId());
 
         CompletableFuture.runAsync(() -> {
-                    logAsyncProcessing(ACTION_SELECTIVE_CONNECTION_SHARE, ctx.getSharingInitiatedUserId(),
-                            ctx.getSharingInitiatedOrgId());
-                    try {
-                        initiateThreadLocalContext(ctx.getSharingInitiatedTenantDomain(),
-                                ctx.getSharingInitiatedTenantId(), ctx.getSharingInitiatedUsername(),
-                                threadLocalProperties);
-                        processSelectiveConnectionShare(connectionId, handler, validOrgs,
-                                ctx.getSharingInitiatedOrgId());
-                    } finally {
-                        PrivilegedCarbonContext.endTenantFlow();
-                    }
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async selective connection share processing.", ex);
-                    return null;
-                });
+            logAsyncProcessing(ACTION_SELECTIVE_CONNECTION_SHARE, ctx.getSharingInitiatedUserId(),
+                    ctx.getSharingInitiatedOrgId());
+            try {
+                initiateThreadLocalContext(ctx, threadLocalProperties);
+                processSelectiveConnectionShare(connectionId, handler, validOrgs, ctx.getSharingInitiatedOrgId());
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
+        }, EXECUTOR).exceptionally(ex -> {
+            LOG.error("Error occurred during async selective connection share processing.", ex);
+            return null;
+        });
     }
 
     @Override
@@ -171,27 +159,22 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         String connectionId = dto.getConnectionId();
-        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getResourceType());
         handler.validateConnectionShareEligibility(connectionId, ctx.getSharingInitiatedOrgId());
-        PolicyEnum policy = dto.getPolicy();
 
         CompletableFuture.runAsync(() -> {
-                    logAsyncProcessing(ACTION_GENERAL_CONNECTION_SHARE, ctx.getSharingInitiatedUserId(),
+            logAsyncProcessing(ACTION_GENERAL_CONNECTION_SHARE, ctx.getSharingInitiatedUserId(),
                             ctx.getSharingInitiatedOrgId());
-                    try {
-                        initiateThreadLocalContext(ctx.getSharingInitiatedTenantDomain(),
-                                ctx.getSharingInitiatedTenantId(), ctx.getSharingInitiatedUsername(),
-                                threadLocalProperties);
-                        processGeneralConnectionShare(connectionId, handler, policy,
-                                ctx.getSharingInitiatedOrgId());
-                    } finally {
-                        PrivilegedCarbonContext.endTenantFlow();
-                    }
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general connection share processing.", ex);
-                    return null;
-                });
+            try {
+                initiateThreadLocalContext(ctx, threadLocalProperties);
+                processGeneralConnectionShare(connectionId, handler, dto.getPolicy(), ctx.getSharingInitiatedOrgId());
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
+        }, EXECUTOR).exceptionally(ex -> {
+            LOG.error("Error occurred during async general connection share processing.", ex);
+            return null;
+        });
     }
 
     @Override
@@ -206,26 +189,23 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         String connectionId = dto.getConnectionId();
-        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
-        List<String> orgIds = dto.getOrgIds();
+        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getResourceType());
 
         CompletableFuture.runAsync(() -> {
-                    logAsyncProcessing(ACTION_SELECTIVE_CONNECTION_UNSHARE, ctx.getSharingInitiatedUserId(),
-                            ctx.getSharingInitiatedOrgId());
-                    try {
-                        initiateThreadLocalContext(ctx.getSharingInitiatedTenantDomain(),
-                                ctx.getSharingInitiatedTenantId(), ctx.getSharingInitiatedUsername(),
-                                threadLocalProperties);
-                        processSelectiveConnectionUnshare(connectionId, handler, orgIds,
-                                ctx.getSharingInitiatedOrgId());
-                    } finally {
-                        PrivilegedCarbonContext.endTenantFlow();
-                    }
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async selective connection unshare processing.", ex);
-                    return null;
-                });
+            logAsyncProcessing(ACTION_SELECTIVE_CONNECTION_UNSHARE, ctx.getSharingInitiatedUserId(),
+                    ctx.getSharingInitiatedOrgId());
+            try {
+                initiateThreadLocalContext(ctx, threadLocalProperties);
+                processSelectiveConnectionUnshare(connectionId, handler, dto.getOrgIds(),
+                        ctx.getSharingInitiatedOrgId());
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
+        }, EXECUTOR)
+        .exceptionally(ex -> {
+            LOG.error("Error occurred during async selective connection unshare processing.", ex);
+            return null;
+        });
     }
 
     @Override
@@ -240,24 +220,22 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
 
         String connectionId = dto.getConnectionId();
-        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getResourceType());
 
         CompletableFuture.runAsync(() -> {
-                    logAsyncProcessing(ACTION_GENERAL_CONNECTION_UNSHARE, ctx.getSharingInitiatedUserId(),
-                            ctx.getSharingInitiatedOrgId());
-                    try {
-                        initiateThreadLocalContext(ctx.getSharingInitiatedTenantDomain(),
-                                ctx.getSharingInitiatedTenantId(), ctx.getSharingInitiatedUsername(),
-                                threadLocalProperties);
-                        processGeneralConnectionUnshare(connectionId, handler, ctx.getSharingInitiatedOrgId());
-                    } finally {
-                        PrivilegedCarbonContext.endTenantFlow();
-                    }
-                }, EXECUTOR)
-                .exceptionally(ex -> {
-                    LOG.error("Error occurred during async general connection unshare processing.", ex);
-                    return null;
-                });
+            logAsyncProcessing(ACTION_GENERAL_CONNECTION_UNSHARE, ctx.getSharingInitiatedUserId(),
+                    ctx.getSharingInitiatedOrgId());
+            try {
+                initiateThreadLocalContext(ctx, threadLocalProperties);
+                processGeneralConnectionUnshare(connectionId, handler, ctx.getSharingInitiatedOrgId());
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
+        }, EXECUTOR)
+        .exceptionally(ex -> {
+            LOG.error("Error occurred during async general connection unshare processing.", ex);
+            return null;
+        });
     }
 
     @Override
@@ -276,7 +254,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         String connectionId = dto.getConnectionId();
         String initiatingOrgId = dto.getInitiatingOrgId();
         List<String> attributes = dto.getAttributes();
-        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getResourceType());
         ResourceType resourceType = handler.getResourceType();
         List<ResponseConnectionOrgDetailsDTO> sharedOrgsList = new ArrayList<>();
 
@@ -302,7 +280,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
             boolean hasMoreItems = (limit != 0) && (connectionAssociations.size() > limit);
             if (hasMoreItems) {
-                connectionAssociations.remove(connectionAssociations.size() - 1);
+                connectionAssociations.removeLast();
             }
 
             if (beforeCursor != 0) {
@@ -316,7 +294,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
                 int parentOrgDepth = getOrganizationManager().getOrganizationDepthInHierarchy(parentOrgId);
                 List<ResponseConnectionOrgDetailsDTO> directChildOrgs = sharedOrgsList.stream()
                         .filter(orgDetails -> orgDetails.getDepthFromRoot() - parentOrgDepth == 1)
-                        .collect(Collectors.toList());
+                        .toList();
                 for (ResponseConnectionOrgDetailsDTO orgDetails : directChildOrgs) {
                     ConnectionSharingModeDTO sharingMode = resolveSelectiveSharingMode(
                             parentOrgId, connectionId, orgDetails.getOrgId(), resourceType);
@@ -326,7 +304,6 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
             return buildResponseWithCursors(sharedOrgsList, connectionAssociations, generalSharingMode,
                     beforeCursor, afterCursor, hasMoreItems);
-
         } catch (OrganizationManagementException e) {
             throw new ConnectionSharingMgtServerException(ERROR_CODE_GET_SHARED_CONNECTIONS.getCode(),
                     ERROR_CODE_GET_SHARED_CONNECTIONS.getMessage(),
@@ -334,20 +311,16 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         }
     }
 
-    // =========================================================
-    // Async Process Methods
-    // =========================================================
-
     private void processSelectiveConnectionShare(String connectionId, ConnectionTypeHandler handler,
                                                  List<SelectiveConnectionShareOrgConfigDTO> organizations,
                                                  String initiatingOrgId) {
 
         try {
             for (SelectiveConnectionShareOrgConfigDTO orgConfig : organizations) {
-                if (isApplicableOrganizationScopeForSavingPolicy(orgConfig.getPolicy())) {
-                    saveConnectionSharingPolicy(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
-                            initiatingOrgId, handler.getResourceType());
-                }
+                LOG.debug("Processing selective connection share for connection: " + connectionId + " to organization: "
+                        + orgConfig.getOrgId() + " with policy: " + orgConfig.getPolicy());
+                saveConnectionSharingPolicy(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
+                        initiatingOrgId, handler.getResourceType());
                 handler.shareConnectionToOrg(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
                         initiatingOrgId);
                 // When the selected organization is shared with its children, also share with its existing
@@ -370,7 +343,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
                                                PolicyEnum policy, String initiatingOrgId) {
 
         try {
-            deleteAllResourceSharingPoliciesOfConnection(connectionId, initiatingOrgId, handler.getResourceType());
+            deleteExistingSharingPoliciesOfConnection(connectionId, initiatingOrgId, handler.getResourceType());
             saveConnectionSharingPolicy(connectionId, initiatingOrgId, policy, initiatingOrgId,
                     handler.getResourceType());
             handler.shareConnectionToAllOrgs(connectionId, policy, initiatingOrgId);
@@ -404,7 +377,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
                                                  String initiatingOrgId) {
 
         try {
-            deleteAllResourceSharingPoliciesOfConnection(connectionId, initiatingOrgId, handler.getResourceType());
+            deleteExistingSharingPoliciesOfConnection(connectionId, initiatingOrgId, handler.getResourceType());
             handler.unshareConnectionFromAllOrgs(connectionId, initiatingOrgId);
         } catch (ResourceSharingPolicyMgtException | ConnectionSharingMgtException e) {
             LOG.error("Error occurred while processing general connection unshare for connection: " + connectionId,
@@ -414,10 +387,6 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             LOG.debug("Completed general connection unshare initiated from " + initiatingOrgId + ".");
         }
     }
-
-    // =========================================================
-    // GET Helpers
-    // =========================================================
 
     private ConnectionSharingModeDTO resolveGeneralSharingMode(String parentOrgId, String connectionId,
                                                                ResourceType resourceType)
@@ -546,10 +515,6 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         return response;
     }
 
-    // =========================================================
-    // Filter Parsing Helpers (mirrors V2 pattern exactly)
-    // =========================================================
-
     private List<ExpressionNode> getExpressionNodes(String filter, int after, int before)
             throws OrganizationManagementClientException {
 
@@ -655,10 +620,6 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         return Optional.ofNullable(organizationName);
     }
 
-    // =========================================================
-    // Share/Unshare Helpers
-    // =========================================================
-
     private List<SelectiveConnectionShareOrgConfigDTO> filterValidOrganizations(
             List<SelectiveConnectionShareOrgConfigDTO> organizations, String initiatingOrgId)
             throws ConnectionSharingMgtServerException {
@@ -682,7 +643,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
                 .toList();
 
         if (!skippedOrgs.isEmpty() && LOG.isDebugEnabled()) {
-            LOG.debug(String.format(LOG_WARN_SKIP_ORG_SHARE_MESSAGE, skippedOrgs));
+            LOG.debug("Skipping connection share for organizations that are not immediate children: " + skippedOrgs);
         }
         return validOrgs;
     }
@@ -701,17 +662,14 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         getResourceSharingPolicyHandlerService().addResourceSharingPolicyWithAttributes(
                 resourceSharingPolicy, Collections.emptyList());
-
-        ConnectionSharingAuditLogger.logSharingPolicySaved(resourceType.name(), connectionId, initiatingOrgId);
     }
 
-    private void deleteAllResourceSharingPoliciesOfConnection(String connectionId, String initiatingOrgId,
-                                                              ResourceType resourceType)
+    private void deleteExistingSharingPoliciesOfConnection(String connectionId, String initiatingOrgId,
+                                                           ResourceType resourceType)
             throws ResourceSharingPolicyMgtException {
 
         getResourceSharingPolicyHandlerService().deleteResourceSharingPolicyByResourceTypeAndId(
                 resourceType, connectionId, initiatingOrgId);
-        ConnectionSharingAuditLogger.logSharingPoliciesDeleted(resourceType.name(), connectionId, initiatingOrgId);
     }
 
     private void deleteResourceSharingPolicyOfConnectionInOrg(String policyHoldingOrgId, String connectionId,
@@ -722,35 +680,25 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
                 policyHoldingOrgId, resourceType, connectionId, initiatingOrgId);
     }
 
-    private boolean isApplicableOrganizationScopeForSavingPolicy(PolicyEnum policy) {
-
-        return OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope()) ||
-                OrganizationScope.FUTURE_ORGS_ONLY.equals(policy.getOrganizationScope());
-    }
-
-    private ConnectionTypeHandler resolveConnectionTypeHandler(ConnectionType connectionType)
+    private ConnectionTypeHandler resolveConnectionTypeHandler(ResourceType resourceType)
             throws ConnectionSharingMgtClientException {
 
-        ConnectionTypeHandler handler =
-                ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(connectionType);
+        ConnectionTypeHandler handler = ConnectionSharingDataHolder.getInstance()
+                .getConnectionTypeHandler(resourceType);
         if (handler == null) {
-            throwValidationException(ERROR_CODE_NO_HANDLER_FOR_CONNECTION_TYPE);
+            throw new ConnectionSharingMgtClientException(ERROR_CODE_NO_HANDLER_FOR_CONNECTION_TYPE);
         }
         return handler;
     }
 
-    // =========================================================
-    // Async Thread Setup
-    // =========================================================
-
-    private void initiateThreadLocalContext(String tenantDomain, int tenantId, String username,
+    private void initiateThreadLocalContext(ConnectionSharingInitiatorContext connectionSharingInitiatorContext,
                                             Map<String, Object> threadLocalProperties) {
 
         PrivilegedCarbonContext.startTenantFlow();
         PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
-        carbonContext.setTenantDomain(tenantDomain, true);
-        carbonContext.setTenantId(tenantId);
-        carbonContext.setUsername(username);
+        carbonContext.setTenantDomain(connectionSharingInitiatorContext.getSharingInitiatedTenantDomain(), true);
+        carbonContext.setTenantId(connectionSharingInitiatorContext.getSharingInitiatedTenantId());
+        carbonContext.setUsername(connectionSharingInitiatorContext.getSharingInitiatedUsername());
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
     }
 
@@ -761,16 +709,12 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         }
     }
 
-    // =========================================================
-    // Validation Helpers
-    // =========================================================
-
     private void validateSelectiveConnectionShareInput(SelectiveConnectionShareDTO dto)
             throws ConnectionSharingMgtClientException {
 
         validateNotNull(dto, ERROR_CODE_NULL_INPUT);
         validateNotNull(dto.getConnectionId(), ERROR_CODE_CONNECTION_ID_NULL);
-        validateNotNull(dto.getConnectionType(), ERROR_CODE_CONNECTION_TYPE_NULL);
+        validateNotNull(dto.getResourceType(), ERROR_CODE_CONNECTION_TYPE_NULL);
         validateNotNull(dto.getOrganizations(), ERROR_CODE_ORGANIZATIONS_NULL);
         for (SelectiveConnectionShareOrgConfigDTO orgConfig : dto.getOrganizations()) {
             validateNotNull(orgConfig, ERROR_CODE_NULL_INPUT);
@@ -779,7 +723,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             validateNotNull(policy, ERROR_CODE_POLICY_NULL);
             if (!(policy == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN
                     || policy == PolicyEnum.SELECTED_ORG_ONLY)) {
-                throwValidationException(ERROR_CODE_UNSUPPORTED_POLICY);
+                throw new ConnectionSharingMgtClientException(ERROR_CODE_UNSUPPORTED_POLICY);
             }
         }
         LOG.debug("Validated selective connection share input successfully.");
@@ -790,10 +734,10 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         validateNotNull(dto, ERROR_CODE_NULL_INPUT);
         validateNotNull(dto.getConnectionId(), ERROR_CODE_CONNECTION_ID_NULL);
-        validateNotNull(dto.getConnectionType(), ERROR_CODE_CONNECTION_TYPE_NULL);
+        validateNotNull(dto.getResourceType(), ERROR_CODE_CONNECTION_TYPE_NULL);
         validateNotNull(dto.getPolicy(), ERROR_CODE_POLICY_NULL);
         if (dto.getPolicy() != PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
-            throwValidationException(ERROR_CODE_UNSUPPORTED_POLICY);
+            throw new ConnectionSharingMgtClientException(ERROR_CODE_UNSUPPORTED_POLICY);
         }
         LOG.debug("Validated general connection share input successfully.");
     }
@@ -803,7 +747,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         validateNotNull(dto, ERROR_CODE_NULL_INPUT);
         validateNotNull(dto.getConnectionId(), ERROR_CODE_CONNECTION_ID_NULL);
-        validateNotNull(dto.getConnectionType(), ERROR_CODE_CONNECTION_TYPE_NULL);
+        validateNotNull(dto.getResourceType(), ERROR_CODE_CONNECTION_TYPE_NULL);
         validateNotNull(dto.getOrgIds(), ERROR_CODE_ORGANIZATIONS_NULL);
         for (String orgId : dto.getOrgIds()) {
             validateNotNull(orgId, ERROR_CODE_ORG_ID_NULL);
@@ -816,7 +760,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         validateNotNull(dto, ERROR_CODE_NULL_INPUT);
         validateNotNull(dto.getConnectionId(), ERROR_CODE_CONNECTION_ID_NULL);
-        validateNotNull(dto.getConnectionType(), ERROR_CODE_CONNECTION_TYPE_NULL);
+        validateNotNull(dto.getResourceType(), ERROR_CODE_CONNECTION_TYPE_NULL);
         LOG.debug("Validated general connection unshare input successfully.");
     }
 
@@ -825,7 +769,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         validateNotNull(dto, ERROR_CODE_NULL_INPUT);
         validateNotNull(dto.getConnectionId(), ERROR_CODE_CONNECTION_ID_NULL);
-        validateNotNull(dto.getConnectionType(), ERROR_CODE_CONNECTION_TYPE_NULL);
+        validateNotNull(dto.getResourceType(), ERROR_CODE_CONNECTION_TYPE_NULL);
         validateNotNull(dto.getInitiatingOrgId(), ERROR_CODE_ORG_ID_NULL);
         if (dto.getFilter() == null) {
             if (LOG.isDebugEnabled()) {
@@ -844,7 +788,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         for (String attribute : attributes) {
             validateNotNull(attribute, ERROR_CODE_NULL_INPUT);
             if (!SUPPORTED_GET_ATTRIBUTES.contains(attribute)) {
-                throwValidationException(ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE);
+                throw new ConnectionSharingMgtClientException(ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE);
             }
         }
     }
@@ -852,18 +796,9 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
     private void validateNotNull(Object obj, ErrorMessage error) throws ConnectionSharingMgtClientException {
 
         if (obj == null) {
-            throwValidationException(error);
+            throw new ConnectionSharingMgtClientException(error);
         }
     }
-
-    private void throwValidationException(ErrorMessage error) throws ConnectionSharingMgtClientException {
-
-        throw new ConnectionSharingMgtClientException(error.getCode(), error.getMessage(), error.getDescription());
-    }
-
-    // =========================================================
-    // Service Accessors
-    // =========================================================
 
     private OrganizationManager getOrganizationManager() {
 

@@ -26,13 +26,12 @@ import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionAssociationManager;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.ConnectionTypeHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.models.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingAuditLogger;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -48,10 +47,10 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
 
 /**
- * Base {@link ConnectionTypeHandler} that owns all the connection-type-agnostic orchestration: the shadow
+ * Base {@link ConnectionTypeHandler} that owns all the connection-type-agnostic orchestration: the shared
  * connection association persistence (via {@link ConnectionAssociationManager}), organization scoping and tenant-flow
  * handling. Concrete handlers only implement the type-specific resource operations
- * ({@link #createSharedResource} / {@link #deleteSharedResource}) and declare their {@link #getConnectionType()}.
+ * ({@link #createSharedResource} / {@link #deleteSharedResource}) and declare their {@link #getResourceType()}.
  */
 public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHandler {
 
