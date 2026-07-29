@@ -21,11 +21,13 @@ package org.wso2.carbon.identity.organization.management.organization.connection
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionType;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
@@ -38,8 +40,14 @@ import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.DISABLED_AUTHENTICATORS_PROPERTY;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ENABLE_IDP_SHARING_PROPERTY;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_FOUND;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_SHAREABLE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
 
@@ -61,6 +69,80 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
     public ConnectionType getConnectionType() {
 
         return ConnectionType.IDP;
+    }
+
+    @Override
+    public void validateConnectionShareEligibility(String connectionId, String initiatingOrgId)
+            throws ConnectionSharingMgtException {
+
+        String idpSharingEnabled = IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY);
+        if (StringUtils.isNotBlank(idpSharingEnabled) && !Boolean.parseBoolean(idpSharingEnabled)) {
+            throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
+                    ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(), "Identity Provider sharing is disabled.");
+        }
+
+        IdentityProvider identityProvider = resolveParentIdp(connectionId);
+        // A shared connection resolved from a parent organization must not be shared again.
+        if (isSharedConnection(identityProvider)) {
+            throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
+                    ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(), "Cannot reshare a shared connection.");
+        }
+
+        // Trusted token issuers must not be shared with organizations.
+        if (identityProvider.isTrustedTokenIssuer()) {
+            throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
+                    ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(),
+                    "Trusted token issuer connections cannot be shared with organizations.");
+        }
+
+        // Connections carrying a disabled federated authenticator must not be shared with organizations.
+        Set<String> disabledAuthenticators = getShareDisabledAuthenticators();
+        if (!disabledAuthenticators.isEmpty() && identityProvider.getFederatedAuthenticatorConfigs() != null) {
+            for (FederatedAuthenticatorConfig authenticator : identityProvider.getFederatedAuthenticatorConfigs()) {
+                if (authenticator != null && disabledAuthenticators.contains(authenticator.getName())) {
+                    throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
+                            ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(),
+                            "Identity provider with the authenticator: '" + authenticator.getName() +
+                                    "' cannot be shared with organizations.");
+                }
+            }
+        }
+    }
+
+    private IdentityProvider resolveParentIdp(String idpId) throws ConnectionSharingMgtException {
+
+        try {
+            IdentityProvider identityProvider = getIdpManager().getIdPByResourceId(idpId,
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain(), false);
+            if (identityProvider == null) {
+                throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_FOUND);
+            }
+            return identityProvider;
+        } catch (IdentityProviderManagementException e) {
+            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
+        }
+    }
+
+    private boolean isSharedConnection(IdentityProvider identityProvider) {
+
+        IdentityProviderProperty[] idpProperties = identityProvider.getIdpProperties();
+        if (idpProperties == null) {
+            return false;
+        }
+        for (IdentityProviderProperty idpProperty : idpProperties) {
+            if (idpProperty != null && IdPManagementConstants.IS_SHARED_IDP_PROPERTY.equals(idpProperty.getName())) {
+                return Boolean.parseBoolean(idpProperty.getValue());
+            }
+        }
+        return false;
+    }
+
+    private Set<String> getShareDisabledAuthenticators() {
+
+        List<String> disabledAuthenticators = IdentityUtil.getPropertyAsList(DISABLED_AUTHENTICATORS_PROPERTY);
+        LOG.debug("Disabled authenticators for sharing: " + disabledAuthenticators);
+        return new HashSet<>(disabledAuthenticators);
+
     }
 
     @Override

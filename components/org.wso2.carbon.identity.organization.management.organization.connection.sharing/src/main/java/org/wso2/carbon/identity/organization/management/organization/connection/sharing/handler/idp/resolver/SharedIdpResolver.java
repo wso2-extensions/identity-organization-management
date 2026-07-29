@@ -208,7 +208,8 @@ public class SharedIdpResolver {
                                        IdentityProvider parentIdp) throws IdentityProviderManagementException {
 
         try {
-            if (updatingShadowIdp.isEnable() && !parentIdp.isEnable()) {
+            boolean isSharedIdpEnabling = !existingShadowIdp.isEnable() && updatingShadowIdp.isEnable();
+            if (isSharedIdpEnabling && !parentIdp.isEnable()) {
                 throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),
                         "Cannot enable the shared idp as the parent is disabled.");
             }

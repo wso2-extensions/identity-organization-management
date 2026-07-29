@@ -136,6 +136,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         String connectionId = dto.getConnectionId();
         ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        handler.validateConnectionShareEligibility(connectionId, ctx.getSharingInitiatedOrgId());
         List<SelectiveConnectionShareOrgConfigDTO> validOrgs =
                 filterValidOrganizations(dto.getOrganizations(), ctx.getSharingInitiatedOrgId());
 
@@ -171,6 +172,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
         String connectionId = dto.getConnectionId();
         ConnectionTypeHandler handler = resolveConnectionTypeHandler(dto.getConnectionType());
+        handler.validateConnectionShareEligibility(connectionId, ctx.getSharingInitiatedOrgId());
         PolicyEnum policy = dto.getPolicy();
 
         CompletableFuture.runAsync(() -> {

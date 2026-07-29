@@ -41,6 +41,11 @@ public class ConnectionSharingConstants {
     public static final String LOG_WARN_SKIP_ORG_SHARE_MESSAGE =
             "Skipping connection share for organizations that are not immediate children: %s";
 
+    // Server Configuration properties.
+    public static final String ENABLE_IDP_SHARING_PROPERTY = "ConnectionSharing.IDP.Enable";
+    public static final String DISABLED_AUTHENTICATORS_PROPERTY =
+            "ConnectionSharing.IDP.DisabledAuthenticators.Authenticator";
+
     /**
      * Error messages for connection sharing management.
      */
@@ -80,10 +85,9 @@ public class ConnectionSharingConstants {
         ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR("60011",
                 "Connection share client error.",
                 "%s"),
-        ERROR_CODE_SHARED_IDP_HAS_CONNECTED_APPS("60014",
-                "Cannot unshare a connection that has connected applications.",
-                "The shared identity provider cannot be unshared because it has applications connected to it in " +
-                        "the shared organization. Disconnect the applications before unsharing."),
+        ERROR_CODE_CONNECTION_NOT_SHAREABLE("60012",
+                "Connection cannot be shared.",
+                "%s"),
 
         // Server errors (65xxx).
         ERROR_CODE_INTERNAL_ERROR("65001",

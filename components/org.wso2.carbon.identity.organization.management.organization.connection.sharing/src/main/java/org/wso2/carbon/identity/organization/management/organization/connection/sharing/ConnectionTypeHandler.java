@@ -57,6 +57,24 @@ public interface ConnectionTypeHandler {
     }
 
     /**
+     * Validates that the given connection is eligible to be shared, before any sharing is initiated. Implementations
+     * reject connections that must not be shared (e.g. trusted token issuers or restricted authenticators) with a
+     * client error. This is invoked synchronously by the policy handler before the asynchronous sharing process is
+     * started, so the caller receives an immediate, actionable error. The default implementation applies no
+     * connection-type-specific restrictions.
+     *
+     * @param connectionId    The ID of the connection to be shared.
+     * @param initiatingOrgId The ID of the organization that owns the connection.
+     * @throws ConnectionSharingMgtException If the connection is not eligible to be shared, or an error occurs while
+     *                                       validating its eligibility.
+     */
+    default void validateConnectionShareEligibility(String connectionId, String initiatingOrgId)
+            throws ConnectionSharingMgtException {
+
+        // No connection-type-specific sharing restrictions by default.
+    }
+
+    /**
      * Propagates the connection to a single target organization, creating the shadow resource as required.
      *
      * @param connectionId    The ID of the parent connection being shared.
