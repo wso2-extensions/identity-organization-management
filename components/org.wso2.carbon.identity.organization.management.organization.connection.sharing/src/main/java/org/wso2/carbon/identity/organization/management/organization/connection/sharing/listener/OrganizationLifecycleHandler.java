@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.ConnectionSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingAuditLogger;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingInitiatorContext;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -67,9 +68,6 @@ import java.util.concurrent.Executors;
 public class OrganizationLifecycleHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationLifecycleHandler.class);
-
-    // Propagates future-organization connection inheritance off the organization-creation request thread, so
-    // organization creation is not blocked by (potentially many) cross-tenant shadow creations.
     private static final ExecutorService CONNECTION_SHARE_EXECUTOR = Executors.newFixedThreadPool(5);
 
     @Override
@@ -118,10 +116,10 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                 getConnectionAssociationManager().getConnectionAssociationsByResidentOrg(residentOrgId);
         Set<String> processedConnections = new HashSet<>();
         for (ConnectionAssociation association : associations) {
-            String resourceType = association.getResourceType();
+            ResourceType resourceType = association.getResourceType();
             String connectionId = association.getParentConnectionId();
             // The same connection appears once per shared organization; unshare it from all organizations only once.
-            if (!processedConnections.add(resourceType + ":" + connectionId)) {
+            if (!processedConnections.add(resourceType.name() + ":" + connectionId)) {
                 continue;
             }
             ConnectionTypeHandler handler = resolveConnectionTypeHandler(resourceType);
@@ -195,17 +193,18 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
 
         for (List<ResourceSharingPolicy> policies : policiesByHoldingOrg.values()) {
             for (ResourceSharingPolicy policy : policies) {
-                if (!isFutureApplicablePolicy(policy.getSharingPolicy()) || policy.getResourceType() == null) {
+                ResourceType resourceType = policy.getResourceType();
+                if (!isFutureApplicablePolicy(policy.getSharingPolicy()) || resourceType == null) {
                     continue;
                 }
-                ConnectionTypeHandler handler = resolveConnectionTypeHandler(policy.getResourceType().name());
+                ConnectionTypeHandler handler = resolveConnectionTypeHandler(resourceType);
                 if (handler == null) {
                     // Not a connection resource type (e.g. USER / APPLICATION) or no handler registered for it.
                     continue;
                 }
                 try {
                     String parentOrgId = ancestorOrgs.getFirst();
-                    if (getConnectionAssociationManager().getSharedConnectionId(policy.getResourceType().name(),
+                    if (getConnectionAssociationManager().getSharedConnectionId(resourceType.name(),
                                     policy.getResourceId(), policy.getInitiatingOrgId(), ancestorOrgs.getFirst())
                             .isEmpty()) {
                         LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
@@ -213,13 +212,14 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                                 policy.getInitiatingOrgId() + " to the created organization: " + createdOrgId +
                                 " because it is not shared with the parent organization: " + parentOrgId +
                                 " (the first ancestor).");
+                        ConnectionSharingAuditLogger.logConnectionShareFailure(resourceType.name(),
+                                policy.getResourceId(), policy.getInitiatingOrgId(), createdOrgId,
+                                "Connection is not shared with the immediate parent organization: " + parentOrgId);
                         continue;
                     }
                     handler.shareConnectionToOrg(policy.getResourceId(), createdOrgId, policy.getSharingPolicy(),
                             policy.getInitiatingOrgId());
                 } catch (ConnectionSharingMgtException e) {
-                    // A single connection failing to propagate must not abort organization creation or the sharing
-                    // of the remaining connections.
                     LOG.error("Error while sharing connection: " + policy.getResourceId() + " of type: " +
                             policy.getResourceType() + " to the created organization: " + createdOrgId + ".", e);
                 }
@@ -227,21 +227,9 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
         }
     }
 
-    /**
-     * Resolves the registered {@link ConnectionTypeHandler} for the connection type mapped to the given resource
-     * type name, or {@code null} if the resource type is not a connection type (or has no handler).
-     */
-    private ConnectionTypeHandler resolveConnectionTypeHandler(String resourceType) {
+    private ConnectionTypeHandler resolveConnectionTypeHandler(ResourceType resourceType) {
 
-        if (resourceType == null) {
-            return null;
-        }
-        for (ResourceType type : ResourceType.values()) {
-            if (type.name().equals(resourceType)) {
-                return ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(type);
-            }
-        }
-        return null;
+        return ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(resourceType);
     }
 
     /**

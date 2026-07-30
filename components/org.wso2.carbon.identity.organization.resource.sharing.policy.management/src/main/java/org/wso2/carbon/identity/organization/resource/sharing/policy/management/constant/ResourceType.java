@@ -30,10 +30,7 @@ public enum ResourceType {
     USER(Collections.singletonList(SharedAttributeType.ROLE)),
     AGENT(Collections.singletonList(SharedAttributeType.ROLE)),
     APPLICATION(Collections.singletonList(SharedAttributeType.ROLE)),
-    CONNECTION_IDENTITY_PROVIDER(Collections.emptyList()),
-    CONNECTION_IDENTITY_VERIFICATION_PROVIDER(Collections.emptyList()),
-    CONNECTION_USER_DEFINED_CUSTOM_AUTHENTICATOR(Collections.emptyList()),
-    CONNECTION_FLOW_EXTENSION(Collections.emptyList());
+    CONNECTION_IDENTITY_PROVIDER(Collections.emptyList());
 
     private static final String VALID_RESOURCE_TYPES =
             Arrays.stream(values()).map(Enum::name).collect(Collectors.joining(", "));

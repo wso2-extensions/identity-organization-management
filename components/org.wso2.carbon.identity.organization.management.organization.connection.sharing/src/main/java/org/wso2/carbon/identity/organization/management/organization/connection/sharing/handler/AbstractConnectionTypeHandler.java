@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -145,7 +146,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
 
             String sharedResourceId = createSharedResource(connectionId, initiatingOrgId, residentTenantDomain,
                     targetTenantDomain);
-            addConnectionAssociation(connectionId, targetOrgId, initiatingOrgId, resourceType, sharedResourceId);
+            addConnectionAssociation(connectionId, targetOrgId, initiatingOrgId, getResourceType(), sharedResourceId);
 
             ConnectionSharingAuditLogger.logConnectionShared(resourceType, connectionId, initiatingOrgId,
                     targetOrgId, sharedResourceId);
@@ -155,7 +156,7 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
     }
 
     private void addConnectionAssociation(String connectionId, String targetOrgId, String initiatingOrgId,
-                                          String resourceType, String sharedResourceId)
+                                          ResourceType resourceType, String sharedResourceId)
             throws ConnectionSharingMgtServerException {
 
         ConnectionAssociation association = new ConnectionAssociation.Builder()

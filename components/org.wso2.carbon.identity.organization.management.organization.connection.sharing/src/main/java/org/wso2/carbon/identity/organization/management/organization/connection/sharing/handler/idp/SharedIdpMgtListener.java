@@ -442,7 +442,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         ProvisioningConnectorConfig defaultConnector = identityProvider.getDefaultProvisioningConnectorConfig();
         return defaultConnector != null ? defaultConnector.getName() : null;
     }
-    
+
     private void syncSharedIdps(String connectionId, IdentityProvider parentIdp, String tenantDomain,
                                 boolean syncAuthenticators, boolean syncConnectors) {
 

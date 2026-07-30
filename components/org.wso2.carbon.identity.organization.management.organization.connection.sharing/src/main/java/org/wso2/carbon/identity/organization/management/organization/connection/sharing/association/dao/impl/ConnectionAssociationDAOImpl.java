@@ -30,6 +30,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.util.ConnectionSharingUtil;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -83,7 +84,8 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_CONNECTION_ASSOCIATION, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, association.getResourceType());
+                    namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE,
+                            association.getResourceType().name());
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_RESOURCE_UUID,
                             association.getParentConnectionId());
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID,
@@ -295,7 +297,7 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
 
         return new ConnectionAssociation.Builder()
                 .id(resultSet.getInt(COLUMN_NAME_ID))
-                .resourceType(resultSet.getString(COLUMN_NAME_RESOURCE_TYPE))
+                .resourceType(ResourceType.valueOf(resultSet.getString(COLUMN_NAME_RESOURCE_TYPE)))
                 .parentConnectionId(resultSet.getString(COLUMN_NAME_ASSOCIATED_RESOURCE_UUID))
                 .connectionResidentOrganizationId(resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID))
                 .sharedConnectionId(resultSet.getString(COLUMN_NAME_SHARED_RESOURCE_UUID))

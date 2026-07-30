@@ -18,13 +18,15 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model;
 
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
+
 /**
  * Model class representing a shadow connection association.
  */
 public class ConnectionAssociation {
 
     private final int id;
-    private final String resourceType;
+    private final ResourceType resourceType;
     private final String sharedConnectionId;
     private final String organizationId;
     private final String parentConnectionId;
@@ -45,7 +47,7 @@ public class ConnectionAssociation {
         return id;
     }
 
-    public String getResourceType() {
+    public ResourceType getResourceType() {
 
         return resourceType;
     }
@@ -76,7 +78,7 @@ public class ConnectionAssociation {
     public static class Builder {
 
         private int id;
-        private String resourceType;
+        private ResourceType resourceType;
         private String sharedConnectionId;
         private String organizationId;
         private String parentConnectionId;
@@ -88,7 +90,7 @@ public class ConnectionAssociation {
             return this;
         }
 
-        public Builder resourceType(String resourceType) {
+        public Builder resourceType(ResourceType resourceType) {
 
             this.resourceType = resourceType;
             return this;
@@ -120,6 +122,10 @@ public class ConnectionAssociation {
 
         public ConnectionAssociation build() {
 
+            if (this.resourceType != ResourceType.CONNECTION_IDENTITY_PROVIDER) {
+                throw new IllegalArgumentException("Provided resource type: " + this.resourceType +
+                        "is not allowed for connection associations.");
+            }
             return new ConnectionAssociation(this);
         }
     }

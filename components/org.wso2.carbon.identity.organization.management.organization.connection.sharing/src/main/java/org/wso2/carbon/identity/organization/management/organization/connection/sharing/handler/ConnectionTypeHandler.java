@@ -26,16 +26,14 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Strategy interface encapsulating the resource-type specific operations required to share a connection across
  * organizations. Each connection type (IDP, identity verification provider, custom authenticator, flow extension)
  * provides its own implementation; the type-agnostic orchestration (validation, organization scoping, async
- * processing and sharing-policy persistence) lives in
- * {@link ConnectionSharingPolicyHandlerService} and dispatches to the handler resolved for the request's
- * {@link ConnectionType}.
+ * processing and sharing-policy persistence) lives in {@link ConnectionSharingPolicyHandlerService} and dispatches
+ * to the handler resolved for the request's {@link ResourceType}.
  */
 public interface ConnectionTypeHandler {
 
@@ -142,11 +140,8 @@ public interface ConnectionTypeHandler {
      * @return A list of {@link ConnectionAssociation}s representing shadow connections.
      * @throws OrganizationManagementException If an error occurs while fetching associations.
      */
-    default List<ConnectionAssociation> getConnectionAssociations(
+    List<ConnectionAssociation> getConnectionAssociations(
             String connectionId, String initiatingOrgId, List<String> orgIdsScope,
             List<ExpressionNode> expressionNodes, String sortOrder, int limit)
-            throws OrganizationManagementException {
-
-        return Collections.emptyList();
-    }
+            throws OrganizationManagementException;
 }
