@@ -46,7 +46,6 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -380,19 +379,19 @@ public class SharedIdpResolver {
 
     }
 
-    private void resolveAuthenticators(IdentityProvider parentIdp, IdentityProvider shadowIdp,
+    private void resolveAuthenticators(IdentityProvider parentIdp, IdentityProvider sharedIdp,
                                        boolean resolveWithParent) {
 
         FederatedAuthenticatorConfig[] parentAuthenticators = parentIdp.getFederatedAuthenticatorConfigs();
         FederatedAuthenticatorConfig parentDefault = parentIdp.getDefaultAuthenticatorConfig();
         if (parentAuthenticators == null) {
-            shadowIdp.setFederatedAuthenticatorConfigs(null);
-            shadowIdp.setDefaultAuthenticatorConfig(null);
+            sharedIdp.setFederatedAuthenticatorConfigs(null);
+            sharedIdp.setDefaultAuthenticatorConfig(null);
             return;
         }
         // Whatever the sub-organization stored locally (nothing by default); matched to its parent by name.
-        Map<String, FederatedAuthenticatorConfig> shadowAuthenticators =
-                Arrays.stream(shadowIdp.getFederatedAuthenticatorConfigs())
+        Map<String, FederatedAuthenticatorConfig> sharedIdpAuthenticators =
+                Arrays.stream(sharedIdp.getFederatedAuthenticatorConfigs())
                         .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
                                 (existing, replacement) -> existing));
 
@@ -401,53 +400,49 @@ public class SharedIdpResolver {
             if (parentAuthenticator == null) {
                 continue;
             }
-            FederatedAuthenticatorConfig shadowAuthenticator = shadowAuthenticators.get(parentAuthenticator.getName());
+            FederatedAuthenticatorConfig shadowAuthenticator =
+                    sharedIdpAuthenticators.get(parentAuthenticator.getName());
             FederatedAuthenticatorConfig resolvedAuthenticator = getAuthenticatorResolver(parentAuthenticator)
                     .resolveAuthenticator(parentAuthenticator, shadowAuthenticator, resolveWithParent);
             resolved.add(resolvedAuthenticator);
 
             if (parentDefault != null && StringUtils.equals(parentDefault.getName(), parentAuthenticator.getName())) {
-                shadowIdp.setDefaultAuthenticatorConfig(resolvedAuthenticator);
+                sharedIdp.setDefaultAuthenticatorConfig(resolvedAuthenticator);
             }
         }
-        shadowIdp.setFederatedAuthenticatorConfigs(resolved.toArray(new FederatedAuthenticatorConfig[0]));
+        sharedIdp.setFederatedAuthenticatorConfigs(resolved.toArray(new FederatedAuthenticatorConfig[0]));
     }
 
-    private void resolveConnectors(IdentityProvider parentIdp, IdentityProvider shadowIdp,
-                                   boolean resolveWithParent) {
+    private void resolveConnectors(IdentityProvider parentIdp, IdentityProvider sharedIdp, boolean resolveWithParent) {
 
         ProvisioningConnectorConfig[] parentConnectors = parentIdp.getProvisioningConnectorConfigs();
+        ProvisioningConnectorConfig parentDefault = parentIdp.getDefaultProvisioningConnectorConfig();
         if (parentConnectors == null) {
-            shadowIdp.setProvisioningConnectorConfigs(null);
-            shadowIdp.setDefaultProvisioningConnectorConfig(null);
+            sharedIdp.setProvisioningConnectorConfigs(null);
+            sharedIdp.setDefaultProvisioningConnectorConfig(null);
             return;
         }
-        Map<String, ProvisioningConnectorConfig> storedByName =
-                indexByName(shadowIdp.getProvisioningConnectorConfigs(), ProvisioningConnectorConfig::getName);
+        // Whatever the sub-organization stored locally (nothing by default); matched to its parent by name.
+        Map<String, ProvisioningConnectorConfig> sharedIdpConnectors =
+                Arrays.stream(sharedIdp.getProvisioningConnectorConfigs())
+                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
+                                (existing, replacement) -> existing));
+
         List<ProvisioningConnectorConfig> resolved = new ArrayList<>();
         for (ProvisioningConnectorConfig parentConnector : parentConnectors) {
             if (parentConnector == null) {
                 continue;
             }
-            ProvisioningConnectorConfig storedConnector = storedByName.get(parentConnector.getName());
-            resolved.add(getConnectorResolver(parentConnector)
-                    .resolveConnector(parentConnector, storedConnector, resolveWithParent));
-        }
-        shadowIdp.setProvisioningConnectorConfigs(resolved.toArray(new ProvisioningConnectorConfig[0]));
+            ProvisioningConnectorConfig storedConnector = sharedIdpConnectors.get(parentConnector.getName());
+            ProvisioningConnectorConfig resolvedConnector = getConnectorResolver(parentConnector)
+                    .resolveConnector(parentConnector, storedConnector, resolveWithParent);
+            resolved.add(resolvedConnector);
 
-        ProvisioningConnectorConfig parentDefault = parentIdp.getDefaultProvisioningConnectorConfig();
-        shadowIdp.setDefaultProvisioningConnectorConfig(parentDefault == null ? null
-                : pickByName(resolved, parentDefault.getName(), ProvisioningConnectorConfig::getName));
-    }
-
-    private static <T> T pickByName(List<T> items, String name, Function<T, String> nameGetter) {
-
-        for (T item : items) {
-            if (StringUtils.equals(nameGetter.apply(item), name)) {
-                return item;
+            if (parentDefault != null && StringUtils.equals(parentDefault.getName(), parentConnector.getName())) {
+                sharedIdp.setDefaultProvisioningConnectorConfig(resolvedConnector);
             }
         }
-        return null;
+        sharedIdp.setProvisioningConnectorConfigs(resolved.toArray(new ProvisioningConnectorConfig[0]));
     }
 
     private SharedFederatedAuthenticatorResolver getAuthenticatorResolver(FederatedAuthenticatorConfig authenticator) {
@@ -460,19 +455,6 @@ public class SharedIdpResolver {
 
         return ConnectionSharingDataHolder.getInstance()
                 .getSharedProvisioningConnectorResolver(connector.getName());
-    }
-
-    private static <T> Map<String, T> indexByName(T[] items, Function<T, String> nameGetter) {
-
-        Map<String, T> byName = new HashMap<>();
-        if (items != null) {
-            for (T item : items) {
-                if (item != null && nameGetter.apply(item) != null) {
-                    byName.put(nameGetter.apply(item), item);
-                }
-            }
-        }
-        return byName;
     }
 
     /**

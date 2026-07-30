@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorC
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
+import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
 import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.association.model.ConnectionAssociation;
@@ -46,6 +47,7 @@ import org.wso2.carbon.idp.mgt.model.SharedIdPResolveType;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +58,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_CREATION;
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_IDP_DIRECT_DELETION;
@@ -143,11 +147,14 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             return true;
         }
         if (!isSharedConnection(existingIdp)) {
-            // A (potential) parent connection update: record whether its name and/or idp groups are changing so the
-            // post-update hook can propagate them to its shared connections.
+            // A (potential) parent connection update: record whether its name, idp groups, federated authenticators
+            // or provisioning connectors are changing so the post-update hook can propagate them to its shared
+            // connections.
             initializeIdpNameUpdatingThreadLocal(updatingIdp.getIdentityProviderName(),
                     existingIdp.getIdentityProviderName());
             initializeIdpGroupUpdatingThreadLocal(updatingIdp.getIdPGroupConfig(), existingIdp.getIdPGroupConfig());
+            initializeIdpAuthenticatorsUpdatingThreadLocal(updatingIdp, existingIdp);
+            initializeIdpProvisioningConnectorsUpdatingThreadLocal(updatingIdp, existingIdp);
             return true;
         }
 
@@ -317,13 +324,15 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
                                                IdentityProvider newIdentityProvider, String tenantDomain)
             throws IdentityProviderManagementException {
 
-        // The name / idp-group changes were already detected in the pre-update listener; act only if either was.
-        // Both markers are consumed unconditionally (no short-circuit).
+        // The name / idp-group / authenticator / connector changes were already detected in the pre-update listener;
+        // act only if any was. All markers are consumed unconditionally.
         boolean nameUpdated = ConnectionSharingUtil.consumeConnectionNameUpdated();
         boolean groupsUpdated = ConnectionSharingUtil.consumeConnectionGroupsUpdated();
-        if ((nameUpdated || groupsUpdated) && newIdentityProvider != null) {
-            syncSharedIdps(resourceId, newIdentityProvider.getIdentityProviderName(),
-                    newIdentityProvider.getIdPGroupConfig(), tenantDomain);
+        boolean authenticatorsUpdated = ConnectionSharingUtil.consumeConnectionAuthenticatorsUpdated();
+        boolean connectorsUpdated = ConnectionSharingUtil.consumeConnectionProvisioningConnectorsUpdated();
+        if ((nameUpdated || groupsUpdated || authenticatorsUpdated || connectorsUpdated)
+                && newIdentityProvider != null) {
+            syncSharedIdps(resourceId, newIdentityProvider, tenantDomain, authenticatorsUpdated, connectorsUpdated);
         }
         return true;
     }
@@ -334,11 +343,13 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
 
         boolean nameUpdated = ConnectionSharingUtil.consumeConnectionNameUpdated();
         boolean groupsUpdated = ConnectionSharingUtil.consumeConnectionGroupsUpdated();
-        if ((nameUpdated || groupsUpdated) && updatingIdp != null) {
+        boolean authenticatorsUpdated = ConnectionSharingUtil.consumeConnectionAuthenticatorsUpdated();
+        boolean connectorsUpdated = ConnectionSharingUtil.consumeConnectionProvisioningConnectorsUpdated();
+        if ((nameUpdated || groupsUpdated || authenticatorsUpdated || connectorsUpdated) && updatingIdp != null) {
             IdentityProvider existingIdp = getIdpManager().getIdPByName(updatingIdp.getIdentityProviderName(),
                     tenantDomain, true);
-            syncSharedIdps(existingIdp.getResourceId(), updatingIdp.getIdentityProviderName(),
-                    updatingIdp.getIdPGroupConfig(), tenantDomain);
+            syncSharedIdps(existingIdp.getResourceId(), updatingIdp, tenantDomain, authenticatorsUpdated,
+                    connectorsUpdated);
         }
         return true;
     }
@@ -374,14 +385,66 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         return names;
     }
 
-    /**
-     * Propagates the (updated) parent connection's name and idp groups to all of its shadow connections. The new
-     * name and groups are captured on the request thread (where the carbon context is correct) and passed in. A
-     * single pass per shadow applies both attributes together (fetch-modify-write once) so that a parent update
-     * changing both cannot race two writes on the same shadow row. Runs off the request thread; failures are logged.
-     */
-    private void syncSharedIdps(String connectionId, String parentName, IdPGroup[] parentGroups,
-                                String tenantDomain) {
+    private void initializeIdpAuthenticatorsUpdatingThreadLocal(IdentityProvider updatingIdp,
+                                                                IdentityProvider existingIdp) {
+
+        boolean isAuthenticatorsUpdating = !authenticatorNames(updatingIdp.getFederatedAuthenticatorConfigs())
+                .equals(authenticatorNames(existingIdp.getFederatedAuthenticatorConfigs()))
+                || !StringUtils.equals(defaultAuthenticatorName(updatingIdp), defaultAuthenticatorName(existingIdp));
+        ConnectionSharingUtil.setIsConnectionAuthenticatorsUpdating(isAuthenticatorsUpdating);
+    }
+
+    private void initializeIdpProvisioningConnectorsUpdatingThreadLocal(IdentityProvider updatingIdp,
+                                                                        IdentityProvider existingIdp) {
+
+        boolean isConnectorsUpdating = !connectorNames(updatingIdp.getProvisioningConnectorConfigs())
+                .equals(connectorNames(existingIdp.getProvisioningConnectorConfigs()))
+                || !StringUtils.equals(defaultConnectorName(updatingIdp), defaultConnectorName(existingIdp));
+        ConnectionSharingUtil.setIsConnectionProvisioningConnectorsUpdating(isConnectorsUpdating);
+    }
+
+    private Set<String> authenticatorNames(FederatedAuthenticatorConfig[] authenticators) {
+
+        if (authenticators == null) {
+            return Collections.emptySet();
+        }
+        Set<String> names = new HashSet<>();
+        for (FederatedAuthenticatorConfig authenticator : authenticators) {
+            if (authenticator != null && StringUtils.isNotBlank(authenticator.getName())) {
+                names.add(authenticator.getName());
+            }
+        }
+        return names;
+    }
+
+    private String defaultAuthenticatorName(IdentityProvider identityProvider) {
+
+        FederatedAuthenticatorConfig defaultAuthenticator = identityProvider.getDefaultAuthenticatorConfig();
+        return defaultAuthenticator != null ? defaultAuthenticator.getName() : null;
+    }
+
+    private Set<String> connectorNames(ProvisioningConnectorConfig[] connectors) {
+
+        if (connectors == null) {
+            return Collections.emptySet();
+        }
+        Set<String> names = new HashSet<>();
+        for (ProvisioningConnectorConfig connector : connectors) {
+            if (connector != null && StringUtils.isNotBlank(connector.getName())) {
+                names.add(connector.getName());
+            }
+        }
+        return names;
+    }
+
+    private String defaultConnectorName(IdentityProvider identityProvider) {
+
+        ProvisioningConnectorConfig defaultConnector = identityProvider.getDefaultProvisioningConnectorConfig();
+        return defaultConnector != null ? defaultConnector.getName() : null;
+    }
+    
+    private void syncSharedIdps(String connectionId, IdentityProvider parentIdp, String tenantDomain,
+                                boolean syncAuthenticators, boolean syncConnectors) {
 
         if (StringUtils.isBlank(connectionId)) {
             return;
@@ -389,10 +452,10 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         CompletableFuture.runAsync(() -> {
             try {
                 String residentOrgId = getOrganizationManager().resolveOrganizationId(tenantDomain);
-                List<ConnectionAssociation> shadows = getConnectionAssociationManager().getConnectionAssociations(
+                List<ConnectionAssociation> associations = getConnectionAssociationManager().getConnectionAssociations(
                         ResourceType.CONNECTION_IDENTITY_PROVIDER.name(), connectionId, residentOrgId);
-                for (ConnectionAssociation shadow : shadows) {
-                    syncSharedIdp(shadow, parentName, parentGroups);
+                for (ConnectionAssociation association : associations) {
+                    syncSharedIdp(association, parentIdp, syncAuthenticators, syncConnectors);
                 }
             } catch (OrganizationManagementException | ConnectionSharingMgtException e) {
                 LOG.error("Error while propagating the update of connection: " + connectionId +
@@ -401,10 +464,11 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
         }, SHADOW_SYNC_EXECUTOR);
     }
 
-    private void syncSharedIdp(ConnectionAssociation shadow, String parentName, IdPGroup[] parentGroups) {
+    private void syncSharedIdp(ConnectionAssociation association, IdentityProvider parentIdp,
+                               boolean syncAuthenticators, boolean syncConnectors) {
 
-        String shadowResourceId = shadow.getSharedConnectionId();
-        String sharedOrgId = shadow.getOrganizationId();
+        String shadowResourceId = association.getSharedConnectionId();
+        String sharedOrgId = association.getOrganizationId();
         try {
             String sharedTenantDomain = getOrganizationManager().resolveTenantDomain(sharedOrgId);
             PrivilegedCarbonContext.startTenantFlow();
@@ -413,15 +477,22 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
                 ConnectionSharingUtil.startSharedConnectionSyncFlow();
                 try {
                     // Fetch the raw stub (no parent overlay) so only the synced attributes change and no
-                    // parent-derived values are persisted back to the shadow's row.
-                    IdentityProvider shadowIdp = getIdpManager().getIdPByResourceId(shadowResourceId,
+                    // parent-derived values are persisted back to the association's row.
+                    IdentityProvider sharedIdp = getIdpManager().getIdPByResourceId(shadowResourceId,
                             sharedTenantDomain, true, SharedIdPResolveType.RAW);
-                    if (shadowIdp == null) {
+                    if (sharedIdp == null) {
                         return;
                     }
-                    IdentityProvider shadowIdpUpdate = cloneIdentityProvider(shadowIdp);
-                    shadowIdpUpdate.setIdentityProviderName(parentName);
-                    shadowIdpUpdate.setIdPGroupConfig(mergeGroups(parentGroups, shadowIdp.getIdPGroupConfig()));
+                    IdentityProvider shadowIdpUpdate = cloneIdentityProvider(sharedIdp);
+                    shadowIdpUpdate.setIdentityProviderName(parentIdp.getIdentityProviderName());
+                    shadowIdpUpdate.setIdPGroupConfig(
+                            mergeGroups(parentIdp.getIdPGroupConfig(), sharedIdp.getIdPGroupConfig()));
+                    if (syncAuthenticators) {
+                        syncShadowAuthenticators(shadowIdpUpdate, parentIdp);
+                    }
+                    if (syncConnectors) {
+                        syncShadowConnectors(shadowIdpUpdate, parentIdp);
+                    }
                     getIdpManager().updateIdPByResourceId(shadowResourceId, shadowIdpUpdate, sharedTenantDomain);
                 } finally {
                     ConnectionSharingUtil.endSharedConnectionSyncFlow();
@@ -430,9 +501,77 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
                 PrivilegedCarbonContext.endTenantFlow();
             }
         } catch (OrganizationManagementException | IdentityProviderManagementException e) {
-            LOG.error("Error while propagating the update to shadow connection: " + shadowResourceId +
+            LOG.error("Error while propagating the update to shared connection: " + shadowResourceId +
                     " in organization: " + sharedOrgId + ".", e);
         }
+    }
+
+    private void syncShadowAuthenticators(IdentityProvider sharedIdp, IdentityProvider parentIdp) {
+
+        FederatedAuthenticatorConfig parentDefaultAuthenticator = parentIdp.getDefaultAuthenticatorConfig();
+        FederatedAuthenticatorConfig[] parentAuthenticators = parentIdp.getFederatedAuthenticatorConfigs();
+        if (parentAuthenticators == null) {
+            sharedIdp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[0]);
+            sharedIdp.setDefaultAuthenticatorConfig(null);
+            return;
+        }
+
+        Map<String, FederatedAuthenticatorConfig> existingSharedIdpAuthenticators =
+                Arrays.stream(sharedIdp.getFederatedAuthenticatorConfigs())
+                        .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
+                                (existing, replacement) -> existing));
+        List<FederatedAuthenticatorConfig> resolved = new ArrayList<>();
+        for (FederatedAuthenticatorConfig parentAuthenticator : parentAuthenticators) {
+            if (parentAuthenticator == null || StringUtils.isBlank(parentAuthenticator.getName())) {
+                continue;
+            }
+            // Preserve the existing shared config (with its local overrides); add a name-only config when the parent
+            // authenticator is newly added.
+            FederatedAuthenticatorConfig config = existingSharedIdpAuthenticators.get(parentAuthenticator.getName());
+            if (config == null) {
+                config = new FederatedAuthenticatorConfig();
+                config.setName(parentAuthenticator.getName());
+            }
+            resolved.add(config);
+
+            if (StringUtils.equals(parentDefaultAuthenticator.getName(), config.getName())) {
+                sharedIdp.setDefaultAuthenticatorConfig(config);
+            }
+        }
+        sharedIdp.setFederatedAuthenticatorConfigs(resolved.toArray(new FederatedAuthenticatorConfig[0]));
+    }
+
+    private void syncShadowConnectors(IdentityProvider sharedIdp, IdentityProvider parentIdp) {
+
+        ProvisioningConnectorConfig[] parentConnectors = parentIdp.getProvisioningConnectorConfigs();
+        ProvisioningConnectorConfig parentDefaultConnector = parentIdp.getDefaultProvisioningConnectorConfig();
+        if (parentConnectors == null) {
+            sharedIdp.setProvisioningConnectorConfigs(new ProvisioningConnectorConfig[0]);
+            sharedIdp.setDefaultProvisioningConnectorConfig(null);
+            return;
+        }
+
+        Map<String, ProvisioningConnectorConfig> sharedIdpConnectors =
+                Arrays.stream(sharedIdp.getProvisioningConnectorConfigs())
+                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
+                                (existing, replacement) -> existing));
+        List<ProvisioningConnectorConfig> resolved = new ArrayList<>();
+        for (ProvisioningConnectorConfig parentConnector : parentConnectors) {
+            if (parentConnector == null || StringUtils.isBlank(parentConnector.getName())) {
+                continue;
+            }
+            ProvisioningConnectorConfig connectorConfig = sharedIdpConnectors.get(parentConnector.getName());
+            if (connectorConfig == null) {
+                connectorConfig = new ProvisioningConnectorConfig();
+                connectorConfig.setName(parentConnector.getName());
+            }
+            resolved.add(connectorConfig);
+
+            if (StringUtils.equals(parentDefaultConnector.getName(), connectorConfig.getName())) {
+                sharedIdp.setDefaultProvisioningConnectorConfig(connectorConfig);
+            }
+        }
+        sharedIdp.setProvisioningConnectorConfigs(resolved.toArray(new ProvisioningConnectorConfig[0]));
     }
 
     private IdPGroup[] mergeGroups(IdPGroup[] parentGroups, IdPGroup[] sharedGroups) {

@@ -55,6 +55,17 @@ public class ConnectionSharingUtil {
     // post-update listener knows to propagate the new groups to its shadow connections.
     private static final String CONNECTION_GROUPS_UPDATING = "connectionGroupsUpdating";
 
+    // Property key: set by the pre-update listener when a (parent) connection's federated authenticators are being
+    // structurally changed (an authenticator added or removed, or the default authenticator changed), so the
+    // post-update listener knows to propagate the change to its shadow connections.
+    private static final String CONNECTION_AUTHENTICATORS_UPDATING = "connectionAuthenticatorsUpdating";
+
+    // Property key: set by the pre-update listener when a (parent) connection's provisioning connectors are being
+    // structurally changed (a connector added or removed, or the default connector changed), so the post-update
+    // listener knows to propagate the change to its shadow connections.
+    private static final String CONNECTION_PROVISIONING_CONNECTORS_UPDATING =
+            "connectionProvisioningConnectorsUpdating";
+
     private ConnectionSharingUtil() {
 
     }
@@ -202,5 +213,60 @@ public class ConnectionSharingUtil {
     public static boolean consumeConnectionGroupsUpdated() {
 
         return Boolean.TRUE.equals(THREAD_LOCAL_PROPERTIES.get().remove(CONNECTION_GROUPS_UPDATING));
+    }
+
+    /**
+     * Records (in the pre-update listener) whether a connection's federated authenticators are being structurally
+     * changed, so the post-update listener can decide whether to propagate the change to shadow connections. Always
+     * set explicitly per update (true or false) so a value cannot leak across operations on a pooled thread.
+     *
+     * @param isAuthenticatorsUpdating Whether the connection's federated authenticators are being structurally
+     *                                 changed.
+     */
+    public static void setIsConnectionAuthenticatorsUpdating(boolean isAuthenticatorsUpdating) {
+
+        if (isAuthenticatorsUpdating) {
+            THREAD_LOCAL_PROPERTIES.get().put(CONNECTION_AUTHENTICATORS_UPDATING, Boolean.TRUE);
+        } else {
+            THREAD_LOCAL_PROPERTIES.get().remove(CONNECTION_AUTHENTICATORS_UPDATING);
+        }
+    }
+
+    /**
+     * Returns whether a connection federated authenticators change was recorded by the pre-update listener, clearing
+     * the marker.
+     *
+     * @return {@code true} if the connection's federated authenticators were structurally changed in this update.
+     */
+    public static boolean consumeConnectionAuthenticatorsUpdated() {
+
+        return Boolean.TRUE.equals(THREAD_LOCAL_PROPERTIES.get().remove(CONNECTION_AUTHENTICATORS_UPDATING));
+    }
+
+    /**
+     * Records (in the pre-update listener) whether a connection's provisioning connectors are being structurally
+     * changed, so the post-update listener can decide whether to propagate the change to shadow connections. Always
+     * set explicitly per update (true or false) so a value cannot leak across operations on a pooled thread.
+     *
+     * @param isConnectorsUpdating Whether the connection's provisioning connectors are being structurally changed.
+     */
+    public static void setIsConnectionProvisioningConnectorsUpdating(boolean isConnectorsUpdating) {
+
+        if (isConnectorsUpdating) {
+            THREAD_LOCAL_PROPERTIES.get().put(CONNECTION_PROVISIONING_CONNECTORS_UPDATING, Boolean.TRUE);
+        } else {
+            THREAD_LOCAL_PROPERTIES.get().remove(CONNECTION_PROVISIONING_CONNECTORS_UPDATING);
+        }
+    }
+
+    /**
+     * Returns whether a connection provisioning connectors change was recorded by the pre-update listener, clearing
+     * the marker.
+     *
+     * @return {@code true} if the connection's provisioning connectors were structurally changed in this update.
+     */
+    public static boolean consumeConnectionProvisioningConnectorsUpdated() {
+
+        return Boolean.TRUE.equals(THREAD_LOCAL_PROPERTIES.get().remove(CONNECTION_PROVISIONING_CONNECTORS_UPDATING));
     }
 }
