@@ -38,7 +38,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.SharedIdpMgtListener;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedFederatedAuthenticatorResolver;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.idp.resolver.SharedProvisioningConnectorResolver;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.listener.OrganizationLifecycleHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.listener.OrganizationSharedConnectionHandler;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -73,7 +73,7 @@ public class ConnectionSharingServiceComponent {
             ConnectionSharingDataHolder.getInstance()
                     .setConnectionAssociationManager(new ConnectionAssociationManager());
             bundleContext.registerService(AbstractEventHandler.class.getName(),
-                    new OrganizationLifecycleHandler(), null);
+                    new OrganizationSharedConnectionHandler(), null);
             bundleContext.registerService(IdentityProviderMgtListener.class.getName(),
                     new SharedIdpMgtListener(), null);
             ConnectionSharingDataHolder.getInstance().addConnectionTypeHandler(new IdpConnectionTypeHandler());

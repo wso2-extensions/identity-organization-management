@@ -53,21 +53,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Event handler for organization lifecycle events that keeps shared connections consistent, reusing the
- * already-registered {@link ConnectionTypeHandler}s:
- * <ul>
- *   <li><b>Create</b> — materializes shadow connections in a newly created organization (future-organization
- *       inheritance): any connection an ancestor shared with a future-applicable policy is propagated to it. This
- *       runs asynchronously so organization creation is not blocked by the shadow creations.</li>
- *   <li><b>Delete</b> — on {@code PRE_DELETE}, unshares the connections the organization owns (removing their
- *       shadow copies from descendant organizations) and cleans up the association rows referencing it.</li>
- * </ul>
- * This mirrors {@code OrganizationCreationHandler} in application sharing and
- * {@code OrganizationUserSharingHandler} in user sharing.
- */
-public class OrganizationLifecycleHandler extends AbstractEventHandler {
+ * Event handler for sharing connections to newly created organizations and unsharing connections owned by
+ * organizations being deleted.
+ **/
+public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
 
-    private static final Log LOG = LogFactory.getLog(OrganizationLifecycleHandler.class);
+    private static final Log LOG = LogFactory.getLog(OrganizationSharedConnectionHandler.class);
     private static final ExecutorService CONNECTION_SHARE_EXECUTOR = Executors.newFixedThreadPool(5);
 
     @Override
@@ -88,14 +79,6 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                 return;
             }
             try {
-                /*
-                 * Before the organization (and its tenant) is deleted, while it and its descendants still exist:
-                 * (1) unshare the connections it owns so their shadow copies in descendant organizations are
-                 * removed (otherwise those shadows would point at a connection that no longer exists), and
-                 * (2) clean up every association row referencing this organization (as connection owner or shadow
-                 * holder) — the organization's own shadow IDPs are removed with its tenant, leaving the rows
-                 * orphaned.
-                 */
                 unshareConnectionsOwnedByOrganization(deletingOrgId);
                 getConnectionAssociationManager().deleteConnectionAssociationsByOrganizationId(deletingOrgId);
             } catch (ConnectionSharingMgtException e) {
@@ -129,8 +112,6 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
             try {
                 handler.unshareConnectionFromAllOrgs(connectionId, residentOrgId);
             } catch (ConnectionSharingMgtException e) {
-                // A single connection failing to unshare must not abort organization deletion or the unsharing of
-                // the remaining connections.
                 LOG.error("Error while unsharing connection: " + connectionId + " of type: " + resourceType +
                         " owned by the organization being deleted: " + residentOrgId + ".", e);
             }
@@ -207,11 +188,13 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
                     if (getConnectionAssociationManager().getSharedConnectionId(resourceType.name(),
                                     policy.getResourceId(), policy.getInitiatingOrgId(), ancestorOrgs.getFirst())
                             .isEmpty()) {
-                        LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
-                                policy.getResourceType() + " from the holding organization: " +
-                                policy.getInitiatingOrgId() + " to the created organization: " + createdOrgId +
-                                " because it is not shared with the parent organization: " + parentOrgId +
-                                " (the first ancestor).");
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
+                                    policy.getResourceType() + " from the holding organization: " +
+                                    policy.getInitiatingOrgId() + " to the created organization: " + createdOrgId +
+                                    " because it is not shared with the parent organization: " + parentOrgId +
+                                    " (the first ancestor).");
+                        }
                         ConnectionSharingAuditLogger.logConnectionShareFailure(resourceType.name(),
                                 policy.getResourceId(), policy.getInitiatingOrgId(), createdOrgId,
                                 "Connection is not shared with the immediate parent organization: " + parentOrgId);
@@ -232,12 +215,6 @@ public class OrganizationLifecycleHandler extends AbstractEventHandler {
         return ConnectionSharingDataHolder.getInstance().getConnectionTypeHandler(resourceType);
     }
 
-    /**
-     * Whether a connection sharing policy propagates to organizations created later. Connection sharing supports
-     * {@code SELECTED_ORG_ONLY}, {@code SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN} and
-     * {@code ALL_EXISTING_AND_FUTURE_ORGS}; only the latter two apply to future organizations
-     * ({@code SELECTED_ORG_ONLY} targets a specific existing organization).
-     */
     private boolean isFutureApplicablePolicy(PolicyEnum policy) {
 
         return PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS.equals(policy) ||
