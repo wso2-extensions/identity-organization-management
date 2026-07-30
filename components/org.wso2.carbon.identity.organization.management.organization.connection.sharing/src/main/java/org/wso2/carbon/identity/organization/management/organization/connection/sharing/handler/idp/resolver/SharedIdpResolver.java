@@ -46,6 +46,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -236,8 +237,17 @@ public class SharedIdpResolver {
                 .collect(Collectors.toSet());
 
         for (IdentityProviderProperty property: updatingIdpProperties) {
-            if (property != null && property.getName() != null && !existingPropertyNames.contains(property.getName())) {
+            if (property == null || property.getName() == null) {
+                continue;
+            }
+
+            if (!existingPropertyNames.contains(property.getName())) {
                 throw new RestrictedAttributeModificationException(property.getName());
+            }
+
+            if (IdPManagementConstants.IS_SHARED_IDP_PROPERTY.equals(property.getName()) &&
+                    !Boolean.parseBoolean(property.getValue())) {
+                throw new RestrictedAttributeModificationException(IdPManagementConstants.IS_SHARED_IDP_PROPERTY);
             }
         }
     }
@@ -256,14 +266,10 @@ public class SharedIdpResolver {
             return;
         }
 
-        Map<String, FederatedAuthenticatorConfig> existingAuthenticators =
-                Arrays.stream(existingShadowIdp.getFederatedAuthenticatorConfigs())
-                        .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+        Map<String, FederatedAuthenticatorConfig> existingAuthenticators = indexByName(
+                existingShadowIdp.getFederatedAuthenticatorConfigs(), FederatedAuthenticatorConfig::getName);
         Map<String, FederatedAuthenticatorConfig> parentAuthenticators =
-                Arrays.stream(parentIdp.getFederatedAuthenticatorConfigs())
-                        .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                indexByName(parentIdp.getFederatedAuthenticatorConfigs(), FederatedAuthenticatorConfig::getName);
 
         for (FederatedAuthenticatorConfig updatingAuthenticator : updatingAuthenticators) {
             if (updatingAuthenticator == null || updatingAuthenticator.getName() == null) {
@@ -326,13 +332,9 @@ public class SharedIdpResolver {
         }
 
         Map<String, ProvisioningConnectorConfig> existingConnectors =
-                Arrays.stream(existingShadowIdp.getProvisioningConnectorConfigs())
-                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                indexByName(existingShadowIdp.getProvisioningConnectorConfigs(), ProvisioningConnectorConfig::getName);
         Map<String, ProvisioningConnectorConfig> parentConnectors =
-                Arrays.stream(parentIdp.getProvisioningConnectorConfigs())
-                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                indexByName(parentIdp.getProvisioningConnectorConfigs(), ProvisioningConnectorConfig::getName);
 
         for (ProvisioningConnectorConfig updatingConnector : updatingConnectors) {
             if (updatingConnector == null || updatingConnector.getName() == null) {
@@ -391,9 +393,7 @@ public class SharedIdpResolver {
         }
         // Whatever the sub-organization stored locally (nothing by default); matched to its parent by name.
         Map<String, FederatedAuthenticatorConfig> sharedIdpAuthenticators =
-                Arrays.stream(sharedIdp.getFederatedAuthenticatorConfigs())
-                        .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                indexByName(sharedIdp.getFederatedAuthenticatorConfigs(), FederatedAuthenticatorConfig::getName);
 
         List<FederatedAuthenticatorConfig> resolved = new ArrayList<>();
         for (FederatedAuthenticatorConfig parentAuthenticator : parentAuthenticators) {
@@ -424,9 +424,7 @@ public class SharedIdpResolver {
         }
         // Whatever the sub-organization stored locally (nothing by default); matched to its parent by name.
         Map<String, ProvisioningConnectorConfig> sharedIdpConnectors =
-                Arrays.stream(sharedIdp.getProvisioningConnectorConfigs())
-                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                indexByName(sharedIdp.getProvisioningConnectorConfigs(), ProvisioningConnectorConfig::getName);
 
         List<ProvisioningConnectorConfig> resolved = new ArrayList<>();
         for (ProvisioningConnectorConfig parentConnector : parentConnectors) {
@@ -443,6 +441,20 @@ public class SharedIdpResolver {
             }
         }
         sharedIdp.setProvisioningConnectorConfigs(resolved.toArray(new ProvisioningConnectorConfig[0]));
+    }
+
+    private <T> Map<String, T> indexByName(T[] items, Function<T, String> nameGetter) {
+
+        Map<String, T> itemsByName = new HashMap<>();
+        if (items == null) {
+            return itemsByName;
+        }
+        for (T item : items) {
+            if (item != null && StringUtils.isNotBlank(nameGetter.apply(item))) {
+                itemsByName.putIfAbsent(nameGetter.apply(item), item);
+            }
+        }
+        return itemsByName;
     }
 
     private SharedFederatedAuthenticatorResolver getAuthenticatorResolver(FederatedAuthenticatorConfig authenticator) {
@@ -491,8 +503,10 @@ public class SharedIdpResolver {
                 || StringUtils.isNotBlank(jitConfig.getUserStoreClaimUri())
                 || StringUtils.isNotBlank(jitConfig.getProvisioningUserStore())
                 || ArrayUtils.isNotEmpty(jitConfig.getAccountLookupAttributeMappings())
-                || !IdPManagementConstants.DEFAULT_SYNC_ATTRIBUTE.equals(jitConfig.getAttributeSyncMethod())
-                || !IdPManagementConstants.DEFAULT_SYNC_IDP_GROUP.equals(jitConfig.getIdpGroupSyncMethod());
+                || (StringUtils.isNotBlank(jitConfig.getAttributeSyncMethod())
+                        && !IdPManagementConstants.DEFAULT_SYNC_ATTRIBUTE.equals(jitConfig.getAttributeSyncMethod()))
+                || (StringUtils.isNotBlank(jitConfig.getIdpGroupSyncMethod())
+                        && !IdPManagementConstants.DEFAULT_SYNC_IDP_GROUP.equals(jitConfig.getIdpGroupSyncMethod()));
     }
 
     /**

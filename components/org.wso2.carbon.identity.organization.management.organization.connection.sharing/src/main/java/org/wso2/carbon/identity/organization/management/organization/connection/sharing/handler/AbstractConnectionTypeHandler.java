@@ -137,8 +137,10 @@ public abstract class AbstractConnectionTypeHandler implements ConnectionTypeHan
             // Skip if the connection is already shared with the target organization.
             if (getConnectionAssociationManager().getSharedConnectionId(resourceType, connectionId, initiatingOrgId,
                     targetOrgId).isPresent()) {
-                LOG.debug("Connection: " + connectionId + " is already shared with organization: " + targetOrgId +
-                        ". Skip sharing.");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Connection: " + connectionId + " is already shared with organization: " + targetOrgId +
+                            ". Skip sharing.");
+                }
                 return;
             }
             String residentTenantDomain = getOrganizationManager().resolveTenantDomain(initiatingOrgId);

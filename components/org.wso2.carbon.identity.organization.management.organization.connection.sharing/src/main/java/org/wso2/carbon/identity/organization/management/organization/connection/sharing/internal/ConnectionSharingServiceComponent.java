@@ -206,13 +206,17 @@ public class ConnectionSharingServiceComponent {
     protected void addSharedFederatedAuthenticatorResolver(SharedFederatedAuthenticatorResolver resolver) {
 
         ConnectionSharingDataHolder.getInstance().addSharedFederatedAuthenticatorResolver(resolver);
-        LOG.debug("Added shared federated authenticator resolver: " + resolver.getClass().getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Added shared federated authenticator resolver: " + resolver.getClass().getName());
+        }
     }
 
     protected void removeSharedFederatedAuthenticatorResolver(SharedFederatedAuthenticatorResolver resolver) {
 
         ConnectionSharingDataHolder.getInstance().removeSharedFederatedAuthenticatorResolver(resolver);
-        LOG.debug("Removed shared federated authenticator resolver: " + resolver.getClass().getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Removed shared federated authenticator resolver: " + resolver.getClass().getName());
+        }
     }
 
     @Reference(
@@ -225,12 +229,16 @@ public class ConnectionSharingServiceComponent {
     protected void addSharedProvisioningConnectorResolver(SharedProvisioningConnectorResolver resolver) {
 
         ConnectionSharingDataHolder.getInstance().addSharedProvisioningConnectorResolver(resolver);
-        LOG.debug("Added shared provisioning connector resolver: " + resolver.getClass().getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Added shared provisioning connector resolver: " + resolver.getClass().getName());
+        }
     }
 
     protected void removeSharedProvisioningConnectorResolver(SharedProvisioningConnectorResolver resolver) {
 
         ConnectionSharingDataHolder.getInstance().removeSharedProvisioningConnectorResolver(resolver);
-        LOG.debug("Removed shared provisioning connector resolver: " + resolver.getClass().getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Removed shared provisioning connector resolver: " + resolver.getClass().getName());
+        }
     }
 }

@@ -516,10 +516,14 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             return;
         }
 
+        FederatedAuthenticatorConfig[] sharedIdpAuthenticatorConfigs = sharedIdp.getFederatedAuthenticatorConfigs();
         Map<String, FederatedAuthenticatorConfig> existingSharedIdpAuthenticators =
-                Arrays.stream(sharedIdp.getFederatedAuthenticatorConfigs())
-                        .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                sharedIdpAuthenticatorConfigs == null ? new HashMap<>() :
+                        Arrays.stream(sharedIdpAuthenticatorConfigs)
+                                .filter(authenticator -> authenticator != null
+                                        && StringUtils.isNotBlank(authenticator.getName()))
+                                .collect(Collectors.toMap(FederatedAuthenticatorConfig::getName, Function.identity(),
+                                        (existing, replacement) -> existing));
         List<FederatedAuthenticatorConfig> resolved = new ArrayList<>();
         for (FederatedAuthenticatorConfig parentAuthenticator : parentAuthenticators) {
             if (parentAuthenticator == null || StringUtils.isBlank(parentAuthenticator.getName())) {
@@ -534,7 +538,8 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             }
             resolved.add(config);
 
-            if (StringUtils.equals(parentDefaultAuthenticator.getName(), config.getName())) {
+            if (parentDefaultAuthenticator != null
+                    && StringUtils.equals(parentDefaultAuthenticator.getName(), config.getName())) {
                 sharedIdp.setDefaultAuthenticatorConfig(config);
             }
         }
@@ -551,10 +556,14 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             return;
         }
 
+        ProvisioningConnectorConfig[] sharedIdpConnectorConfigs = sharedIdp.getProvisioningConnectorConfigs();
         Map<String, ProvisioningConnectorConfig> sharedIdpConnectors =
-                Arrays.stream(sharedIdp.getProvisioningConnectorConfigs())
-                        .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
-                                (existing, replacement) -> existing));
+                sharedIdpConnectorConfigs == null ? new HashMap<>() :
+                        Arrays.stream(sharedIdpConnectorConfigs)
+                                .filter(connector -> connector != null
+                                        && StringUtils.isNotBlank(connector.getName()))
+                                .collect(Collectors.toMap(ProvisioningConnectorConfig::getName, Function.identity(),
+                                        (existing, replacement) -> existing));
         List<ProvisioningConnectorConfig> resolved = new ArrayList<>();
         for (ProvisioningConnectorConfig parentConnector : parentConnectors) {
             if (parentConnector == null || StringUtils.isBlank(parentConnector.getName())) {
@@ -567,7 +576,8 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             }
             resolved.add(connectorConfig);
 
-            if (StringUtils.equals(parentDefaultConnector.getName(), connectorConfig.getName())) {
+            if (parentDefaultConnector != null
+                    && StringUtils.equals(parentDefaultConnector.getName(), connectorConfig.getName())) {
                 sharedIdp.setDefaultProvisioningConnectorConfig(connectorConfig);
             }
         }
