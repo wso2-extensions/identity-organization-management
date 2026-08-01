@@ -298,21 +298,21 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
             // Overlay onto a clone, never the supplied (cached) instance — otherwise the resolution would corrupt
             // the cached shadow and that parent configuration would be round-tripped into its DB row on update.
             // The resolver owns the overlay rules and resolves each authenticator/connector per-resource.
-            IdentityProvider resolvedIdp = cloneIdentityProvider(identityProvider);
+            IdentityProvider clonedIdp = cloneIdentityProvider(identityProvider);
             switch (resolveType) {
                 case BASE_RESOLVED:
                     SharedIdpResolver.getInstance()
-                            .overlayBasicParentAttributes(parentIdp, resolvedIdp, tenantDomain);
+                            .overlayBasicParentAttributes(parentIdp, clonedIdp);
                     break;
                 case FULL_RESOLVED:
                     SharedIdpResolver.getInstance()
-                            .overlayParentConfiguration(parentIdp, resolvedIdp, tenantDomain);
+                            .overlayParentConfiguration(parentIdp, clonedIdp);
                     break;
                 default:
                     throw new IdentityProviderManagementException(
                             "Unsupported shared identity provider resolve type: " + resolveType);
             }
-            return resolvedIdp;
+            return clonedIdp;
         } catch (ConnectionSharingMgtException | OrganizationManagementException e) {
             throw new IdentityProviderManagementException(
                     "Error while resolving shared identity provider: " + sharedResourceId, e);

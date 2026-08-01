@@ -123,6 +123,18 @@ public interface ConnectionAssociationDAO {
             throws ConnectionSharingMgtServerException;
 
     /**
+     * Retrieves all shadow connection associations whose shadow connection resides in the given organization —
+     * i.e. the connections that organization holds as shadows shared to it from its ancestors. Used to remove the
+     * shadow connections held by an organization before it is deleted.
+     *
+     * @param sharedOrgId The ID of the organization that holds the shadow connections.
+     * @return The list of associations (across all connection types and resident organizations).
+     * @throws ConnectionSharingMgtServerException If an error occurs while retrieving the associations.
+     */
+    List<ConnectionAssociation> getConnectionAssociationsBySharedOrg(String sharedOrgId)
+            throws ConnectionSharingMgtServerException;
+
+    /**
      * Removes all shadow connection associations referencing the given organization, whether it held the shadow
      * connection or owned the original (parent) connection. Used to clean up associations when an organization is
      * deleted.

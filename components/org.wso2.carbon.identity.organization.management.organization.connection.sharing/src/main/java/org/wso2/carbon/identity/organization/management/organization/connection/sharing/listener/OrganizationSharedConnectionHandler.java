@@ -59,7 +59,7 @@ import java.util.concurrent.Executors;
 public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationSharedConnectionHandler.class);
-    private static final ExecutorService CONNECTION_SHARE_EXECUTOR = Executors.newFixedThreadPool(5);
+    private static final ExecutorService CONNECTION_SHARING_EXECUTOR = Executors.newFixedThreadPool(5);
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -73,18 +73,12 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
                 return;
             }
             shareConnectionsToOrganizationAsync(createdOrganization.getId());
-        } else if (Constants.EVENT_PRE_DELETE_ORGANIZATION.equals(eventName)) {
+        } else if (Constants.EVENT_POST_DELETE_ORGANIZATION.equals(eventName)) {
             String deletingOrgId = (String) event.getEventProperties().get(Constants.EVENT_PROP_ORGANIZATION_ID);
             if (StringUtils.isBlank(deletingOrgId)) {
                 return;
             }
-            try {
-                unshareConnectionsOwnedByOrganization(deletingOrgId);
-                getConnectionAssociationManager().deleteConnectionAssociationsByOrganizationId(deletingOrgId);
-            } catch (ConnectionSharingMgtException e) {
-                throw new IdentityEventException("Error while cleaning up connection sharing for the organization " +
-                        "being deleted: " + deletingOrgId, e);
-            }
+            cleanupSharedConnectionsForOrganizationAsync(deletingOrgId);
         }
     }
 
@@ -117,6 +111,50 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
             }
         }
     }
+    
+    private void deleteConnectionsSharedToOrganization(String deletedOrgId) throws ConnectionSharingMgtException {
+
+        List<ConnectionAssociation> associations =
+                getConnectionAssociationManager().getConnectionAssociationsBySharedOrg(deletedOrgId);
+        for (ConnectionAssociation association : associations) {
+            ResourceType resourceType = association.getResourceType();
+            ConnectionTypeHandler handler = resolveConnectionTypeHandler(resourceType);
+            if (handler == null) {
+                continue;
+            }
+            try {
+                handler.unshareConnectionFromOrg(association.getParentConnectionId(), deletedOrgId,
+                        association.getConnectionResidentOrganizationId());
+            } catch (ConnectionSharingMgtException e) {
+                LOG.error("Error while removing connection: " + association.getParentConnectionId() + " of type: " +
+                        resourceType + " shared to the organization being deleted: " + deletedOrgId + ".", e);
+            }
+        }
+    }
+
+    private void cleanupSharedConnectionsForOrganizationAsync(String deletingOrgId) {
+
+        ConnectionSharingInitiatorContext initiatorContext = ConnectionSharingInitiatorContext.capture();
+        Map<String, Object> threadLocalProperties = new HashMap<>(IdentityUtil.threadLocalProperties.get());
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                initiateThreadLocalContext(initiatorContext, threadLocalProperties);
+                unshareConnectionsOwnedByOrganization(deletingOrgId);
+                deleteConnectionsSharedToOrganization(deletingOrgId);
+                getConnectionAssociationManager().deleteConnectionAssociationsByOrganizationId(deletingOrgId);
+            } catch (ConnectionSharingMgtException e) {
+                LOG.error("Error while cleaning up connection sharing for the organization being deleted: " +
+                        deletingOrgId + ".", e);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
+            }
+        }, CONNECTION_SHARING_EXECUTOR).exceptionally(ex -> {
+            LOG.error("Error occurred during async connection sharing cleanup for the deleted organization: " +
+                    deletingOrgId + ".", ex);
+            return null;
+        });
+    }
 
     private void shareConnectionsToOrganizationAsync(String createdOrgId) {
 
@@ -132,7 +170,7 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, CONNECTION_SHARE_EXECUTOR).exceptionally(ex -> {
+        }, CONNECTION_SHARING_EXECUTOR).exceptionally(ex -> {
             LOG.error("Error occurred during async connection sharing to the created organization: " + createdOrgId +
                     ".", ex);
             return null;
@@ -185,9 +223,7 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
                 }
                 try {
                     String parentOrgId = ancestorOrgs.getFirst();
-                    if (getConnectionAssociationManager().getSharedConnectionId(resourceType.name(),
-                                    policy.getResourceId(), policy.getInitiatingOrgId(), ancestorOrgs.getFirst())
-                            .isEmpty()) {
+                    if (isConnectionSharedWithParent(resourceType, policy, parentOrgId)) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
                                     policy.getResourceType() + " from the holding organization: " +
@@ -208,6 +244,20 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
                 }
             }
         }
+    }
+
+    private boolean isConnectionSharedWithParent(ResourceType resourceType, ResourceSharingPolicy policy,
+                                                 String parentOrgId) throws ConnectionSharingMgtException {
+
+        // If the immediate parent is the resource holding organization, the parent connection is the original
+        // connection itself.
+        if (StringUtils.equals(parentOrgId, policy.getInitiatingOrgId())) {
+            return true;
+        }
+
+        return getConnectionAssociationManager().getSharedConnectionId(resourceType.name(),
+                        policy.getResourceId(), policy.getInitiatingOrgId(), parentOrgId).isPresent();
+
     }
 
     private ConnectionTypeHandler resolveConnectionTypeHandler(ResourceType resourceType) {

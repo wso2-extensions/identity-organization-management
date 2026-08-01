@@ -24,12 +24,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
-import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.JustInTimeProvisioningConfig;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.exception.RestrictedAttributeModificationException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.handler.ConfigAttribute;
@@ -38,11 +36,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
-import org.wso2.carbon.user.api.UserRealm;
-import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
-import org.wso2.carbon.user.core.UserStoreManager;
-import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,11 +59,10 @@ public class SharedIdpResolver {
     private static final Log LOG = LogFactory.getLog(SharedIdpResolver.class);
     private static final SharedIdpResolver INSTANCE = new SharedIdpResolver();
     /**
-     * identity.xml configuration key for the fallback provisioning user store applied when a shared IDP's inherited
-     * JIT provisioning user store does not exist in the sub-organization. When unset, the primary user store domain
-     * is used.
+     * identity.xml configuration key for the default provisioning user store applied to a shared IDP's inherited
+     * (non-overridden) JIT provisioning configuration.
      */
-    private static final String DEFAULT_PROVISIONING_USERSTORE_CONFIG =
+    private static final String DEFAULT_PROVISIONING_USER_STORE_CONFIG =
             "ConnectionSharing.DefaultProvisioningUserStore";
     /**
      * The <b>base</b> IDP-level attributes shown in the management (base) view: the always-parent-derived display
@@ -85,7 +78,9 @@ public class SharedIdpResolver {
             ConfigAttribute.inherited("image URL", IdentityProvider::getImageUrl, IdentityProvider::setImageUrl),
             ConfigAttribute.inherited("template ID", IdentityProvider::getTemplateId,
                     IdentityProvider::setTemplateId),
-            ConfigAttribute.inherited("identity provider groups",
+            // The identity provider groups are the shadow's own: a sub-organization persists them locally with its
+            // own group ids, so they are never overlaid from the parent.
+            ConfigAttribute.local("identity provider groups",
                     IdentityProvider::getIdPGroupConfig, IdentityProvider::setIdPGroupConfig),
             // Locally-overridable sections shown in the management view: the shadow's value wins when configured
             // locally, else the parent's is shown.
@@ -143,65 +138,47 @@ public class SharedIdpResolver {
         return INSTANCE;
     }
 
-    public void overlayParentConfiguration(IdentityProvider parentIdp, IdentityProvider sharedIdp,
-                                           String tenantDomain) {
+    public void overlayParentConfiguration(IdentityProvider parentIdp, IdentityProvider sharedIdp) {
 
-        // 1. Preserve the shadow's locally-owned identity and merged properties. The name and the identity provider
-        //    groups are always taken from the shadow (persisted locally with sub-org group ids and kept in sync with
-        //    the parent via propagation) rather than overlaid from the parent.
-        String localId = sharedIdp.getId();
-        String localResourceId = sharedIdp.getResourceId();
-        String localName = sharedIdp.getIdentityProviderName();
-        boolean localEnabled = sharedIdp.isEnable();
-        IdPGroup[] localIdPGroups = sharedIdp.getIdPGroupConfig();
-        IdentityProviderProperty[] mergedProperties = mergeProperties(parentIdp.getIdpProperties(),
-                sharedIdp.getIdpProperties());
+        // Whether the sub-organization has overridden the JIT provisioning configuration on the shadow must be
+        // captured before the overlay, since the overlay replaces an un-overridden JIT config with the parent's.
+        boolean jitLocallyOverridden = isJitProvisioningConfigLocallyConfigured(
+                sharedIdp.getJustInTimeProvisioningConfig());
 
-        // 2. Overlay the IDP-level sections (base + the rest) from the parent, preserving the shadow's
-        //    locally-overridable ones.
+        // 1. Overlay the IDP-level sections (base + the rest) from the parent. The attribute registries preserve the
+        //    shadow's locally-owned (LOCAL) and locally-overridden (OVERRIDABLE) values automatically.
         ConfigAttributes.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
         ConfigAttributes.applyOverlay(parentIdp, sharedIdp, INHERITED_CONFIG_ATTRIBUTES);
 
-        // 3. Re-apply the shadow's locally-owned identity. The effective enabled state is the AND of the parent's
-        //    and the shadow's local flags: a disabled parent forces the shadow disabled, while an enabled parent
-        //    lets the sub-organization keep the shadow disabled locally.
-        sharedIdp.setId(localId);
-        sharedIdp.setResourceId(localResourceId);
-        sharedIdp.setIdentityProviderName(localName);
-        sharedIdp.setEnable(parentIdp.isEnable() && localEnabled);
-        sharedIdp.setIdPGroupConfig(localIdPGroups);
-        sharedIdp.setIdpProperties(mergedProperties);
+        // 2. Apply the two derivations the inheritance engine cannot express.
+        sharedIdp.setEnable(parentIdp.isEnable() && sharedIdp.isEnable());
+        sharedIdp.setIdpProperties(mergeProperties(parentIdp.getIdpProperties(), sharedIdp.getIdpProperties()));
 
-        // 4. Populate each federated authenticator and outbound provisioning connector from the parent (runtime
-        //    depth), honoring any locally-stored overridable values on the shadow.
+        // 3. Populate each federated authenticator and outbound provisioning connector from the parent, honoring any
+        // locally-stored overridable values on the shadow.
         resolveAuthenticators(parentIdp, sharedIdp, true);
         resolveConnectors(parentIdp, sharedIdp, true);
 
-        // 5. The inherited JIT provisioning user store may not exist in the sub-organization; fall back to the
-        //    configurable default when it does not.
-        resolveJitProvisioningUserStore(sharedIdp, tenantDomain);
+        // 4. Fall back to the configured default provisioning user store when the JIT config is inherited.
+        resolveJitProvisioningUserStore(sharedIdp, jitLocallyOverridden);
     }
 
-    public void overlayBasicParentAttributes(IdentityProvider parentIdp, IdentityProvider sharedIdp,
-                                             String tenantDomain) {
+    public void overlayBasicParentAttributes(IdentityProvider parentIdp, IdentityProvider sharedIdp) {
 
+        // Capture the JIT override state before the overlay replaces an un-overridden JIT config with the parent's.
+        boolean jitLocallyOverridden = isJitProvisioningConfigLocallyConfigured(
+                sharedIdp.getJustInTimeProvisioningConfig());
 
-        boolean localEnabled = sharedIdp.isEnable();
-        IdPGroup[] localIdPGroups = sharedIdp.getIdPGroupConfig();
-        // Apply only the base parent attributes (description, image URL, claim/JIT); everything else stays as the
-        // raw shadow.
+        // Apply only the base parent attributes (description, image URL, template ID, claim/JIT); the identity
+        // provider groups (LOCAL) and everything else stay as the raw shadow.
         ConfigAttributes.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
         // The effective enabled state is the AND of the parent's and the shadow's local flags.
         sharedIdp.setEnable(parentIdp.isEnable() && sharedIdp.isEnable());
         // Populate basic values of each authenticator/connector from the parent.
         resolveAuthenticators(parentIdp, sharedIdp, false);
         resolveConnectors(parentIdp, sharedIdp, false);
-        // The inherited JIT provisioning user store may not exist in the sub-organization; fall back to the
-        // configurable default when it does not.
-        resolveJitProvisioningUserStore(sharedIdp, tenantDomain);
-        // Re-apply locally configured values.
-        sharedIdp.setEnable(parentIdp.isEnable() && localEnabled);
-        sharedIdp.setIdPGroupConfig(localIdPGroups);
+        // Fall back to the configured default provisioning user store when the JIT config is inherited.
+        resolveJitProvisioningUserStore(sharedIdp, jitLocallyOverridden);
     }
 
     public void doPreUpdateValidations(IdentityProvider updatingShadowIdp, IdentityProvider existingShadowIdp,
@@ -509,69 +486,18 @@ public class SharedIdpResolver {
                         && !IdPManagementConstants.DEFAULT_SYNC_IDP_GROUP.equals(jitConfig.getIdpGroupSyncMethod()));
     }
 
-    /**
-     * Verifies that the shadow's (inherited) JIT provisioning user store exists in the sub-organization and, when it
-     * does not, falls back to the configurable default provisioning user store (read from identity.xml, defaulting to
-     * the primary user store domain). This keeps JIT provisioning targeting a user store that actually exists in the
-     * sub-organization, since the parent's provisioning user store need not be present there.
-     *
-     * @param shadowIdp    The (already overlaid) shadow identity provider whose JIT config is verified in place.
-     * @param tenantDomain The tenant domain of the sub-organization the shadow belongs to.
-     */
-    private void resolveJitProvisioningUserStore(IdentityProvider shadowIdp, String tenantDomain) {
+    private void resolveJitProvisioningUserStore(IdentityProvider shadowIdp, boolean jitLocallyOverridden) {
 
         JustInTimeProvisioningConfig jitConfig = shadowIdp.getJustInTimeProvisioningConfig();
-        if (jitConfig == null) {
+        if (jitLocallyOverridden || jitConfig == null) {
             return;
         }
-        String provisioningUserStore = jitConfig.getProvisioningUserStore();
-        if (StringUtils.isBlank(provisioningUserStore)
-                || userStoreDomainExists(provisioningUserStore, tenantDomain)) {
-            return;
-        }
-
-        String defaultProvisioningUserStore = getDefaultProvisioningUserStore();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Provisioning user store: " + provisioningUserStore + " of shared identity provider: "
-                    + shadowIdp.getIdentityProviderName() + " does not exist in tenant: " + tenantDomain
-                    + ". Falling back to the default provisioning user store: " + defaultProvisioningUserStore + ".");
-        }
-        jitConfig.setProvisioningUserStore(defaultProvisioningUserStore);
+        jitConfig.setProvisioningUserStore(getDefaultProvisioningUserStore());
     }
 
-    /**
-     * Returns whether the given user store domain exists in the given tenant. The primary user store domain always
-     * exists. On any lookup failure the domain is treated as existing (best-effort), so a transient realm error never
-     * rewrites a possibly-valid provisioning user store.
-     */
-    private boolean userStoreDomainExists(String domain, String tenantDomain) {
-
-        if (UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME.equalsIgnoreCase(domain)) {
-            return true;
-        }
-        try {
-            RealmService realmService = ConnectionSharingDataHolder.getInstance().getRealmService();
-            UserRealm userRealm = realmService.getTenantUserRealm(IdentityTenantUtil.getTenantId(tenantDomain));
-            if (userRealm == null) {
-                return false;
-            }
-            org.wso2.carbon.user.api.UserStoreManager userStoreManager = userRealm.getUserStoreManager();
-            return userStoreManager instanceof UserStoreManager
-                    && ((UserStoreManager) userStoreManager).getSecondaryUserStoreManager(domain) != null;
-        } catch (UserStoreException e) {
-            LOG.warn("Error while checking whether user store domain: " + domain + " exists in tenant: "
-                    + tenantDomain + ". Keeping the configured provisioning user store.", e);
-            return true;
-        }
-    }
-
-    /**
-     * Returns the configured default provisioning user store from identity.xml
-     * ({@value #DEFAULT_PROVISIONING_USERSTORE_CONFIG}), or the primary user store domain when it is not configured.
-     */
     private String getDefaultProvisioningUserStore() {
 
-        String configuredUserStore = IdentityUtil.getProperty(DEFAULT_PROVISIONING_USERSTORE_CONFIG);
+        String configuredUserStore = IdentityUtil.getProperty(DEFAULT_PROVISIONING_USER_STORE_CONFIG);
         return StringUtils.isNotBlank(configuredUserStore) ? configuredUserStore.trim()
                 : UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
     }

@@ -90,7 +90,7 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
         }
 
         // Trusted token issuers must not be shared with organizations.
-        if (identityProvider.isTrustedTokenIssuer()) {
+        if (isTrustedTokenIssuer(identityProvider)) {
             throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
                     ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(),
                     "Trusted token issuer connections cannot be shared with organizations.");
@@ -132,6 +132,24 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
         }
         for (IdentityProviderProperty idpProperty : idpProperties) {
             if (idpProperty != null && IdPManagementConstants.IS_SHARED_IDP_PROPERTY.equals(idpProperty.getName())) {
+                return Boolean.parseBoolean(idpProperty.getValue());
+            }
+        }
+        return false;
+    }
+
+    private boolean isTrustedTokenIssuer(IdentityProvider identityProvider) {
+
+        if (identityProvider.isTrustedTokenIssuer()) {
+            return true;
+        }
+
+        IdentityProviderProperty[] idpProperties = identityProvider.getIdpProperties();
+        if (idpProperties == null) {
+            return false;
+        }
+        for (IdentityProviderProperty idpProperty : idpProperties) {
+            if (idpProperty != null && IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER.equals(idpProperty.getName())) {
                 return Boolean.parseBoolean(idpProperty.getValue());
             }
         }

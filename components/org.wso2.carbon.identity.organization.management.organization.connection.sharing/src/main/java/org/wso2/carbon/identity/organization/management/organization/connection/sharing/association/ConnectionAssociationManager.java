@@ -137,6 +137,20 @@ public class ConnectionAssociationManager {
     }
 
     /**
+     * Retrieves all shadow connection associations whose shadow connection resides in the given organization — i.e.
+     * the connections that organization holds as shadows shared to it from its ancestors.
+     *
+     * @param sharedOrgId The ID of the organization that holds the shadow connections.
+     * @return The list of associations (across all connection types and resident organizations).
+     * @throws ConnectionSharingMgtServerException If an error occurs while retrieving the associations.
+     */
+    public List<ConnectionAssociation> getConnectionAssociationsBySharedOrg(String sharedOrgId)
+            throws ConnectionSharingMgtServerException {
+
+        return connectionAssociationDAO.getConnectionAssociationsBySharedOrg(sharedOrgId);
+    }
+
+    /**
      * Removes the shadow connection association of a connection in a specific shared organization.
      *
      * @param resourceType    The type of the connection.
