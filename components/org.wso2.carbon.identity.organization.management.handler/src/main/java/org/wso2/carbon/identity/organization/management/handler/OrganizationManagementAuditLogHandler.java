@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.organization.management.handler;
 
-import com.google.gson.Gson;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.context.CarbonContext;
@@ -69,8 +68,6 @@ public class OrganizationManagementAuditLogHandler extends AbstractEventHandler 
     private static final String PATCH_ADDED = "Added";
     private static final String PATCH_REPLACED = "Replaced";
     private static final String PATCH_REMOVED = "Removed";
-
-    private static final Gson GSON = new Gson();
 
     private OrganizationManagementAuditLogHandler() {
 
