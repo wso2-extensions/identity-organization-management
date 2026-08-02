@@ -56,7 +56,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -66,38 +66,30 @@ import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.E
 import static org.wso2.carbon.idp.mgt.util.IdPManagementConstants.ErrorMessage.ERROR_CODE_SHARED_PARENT_IDP_DELETION;
 
 /**
- * {@link org.wso2.carbon.idp.mgt.listener.IdentityProviderMgtListener} implementation that resolves shared (shadow)
- * identity providers at read time. A shadow identity provider stores only minimal local state (name, enabled flag
+ * {@link org.wso2.carbon.idp.mgt.listener.IdentityProviderMgtListener} implementation that resolves shared
+ * identity providers at read time. A shared identity provider stores only minimal local state (name, enabled flag
  * and the {@code isShared} marker); its full configuration lives on the parent identity provider in the resident
  * organization.
- *
- * <p>On {@code getIdPByResourceId}, this listener detects a shadow identity provider, resolves it back to its parent
- * via the {@code IDN_ORG_CONNECTION_ASSOCIATION} table, and overlays the parent's configuration onto the returned
- * object while preserving the shadow's locally-owned state (resource ID, internal ID, name, enabled flag and the
- * sharing markers). The result is the parent's configuration with the sub-organization's local edits applied.</p>
- *
- * <p>On {@code updateIdPByResourceId}, this listener enforces a <b>deny-by-default</b> policy: only the
- * locally-owned identity and the locally-overridable sections may be changed on a shadow; any modification to a
- * parent-inherited section is rejected with a client error. The read-time overlays and the write-time restriction
- * rules are owned by the {@link SharedIdpResolver}, which resolves each authenticator/connector through its
- * per-resource resolver.</p>
- *
- * <p>On {@code addIdP} and {@code deleteIdPByResourceId}, this listener is a guard rail that prevents creating or
- * deleting a shared (shadow) identity provider directly (e.g. via the REST API). A shadow may only be created by
- * the connection sharing process and deleted by the connection unsharing process, both of which mark their flow
- * via {@link ConnectionSharingUtil}; any other attempt (an add carrying the {@code isSharedConnection} marker, or
- * a delete of a resource that has a connection association) is rejected.</p>
+ * This class holds all the logics related to the shared identity provider resolution and propagation of updates
+ * to shared connections.
  */
 public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
 
     private static final Log LOG = LogFactory.getLog(SharedIdpMgtListener.class);
     private static final int DEFAULT_LISTENER_ORDER = 301;
-
-    // Propagates parent connection changes (name / idp groups) to shadow connections off the parent-update
-    // request thread.
-    private static final ExecutorService SHADOW_SYNC_EXECUTOR = Executors.newFixedThreadPool(5);
-
     private static final Gson GSON = new Gson();
+
+    private final Executor shadowSyncExecutor;
+
+    public SharedIdpMgtListener() {
+
+        this(Executors.newFixedThreadPool(5));
+    }
+
+    SharedIdpMgtListener(Executor shadowSyncExecutor) {
+
+        this.shadowSyncExecutor = shadowSyncExecutor;
+    }
 
     @Override
     public int getDefaultOrderId() {
@@ -461,7 +453,7 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
                 LOG.error("Error while propagating the update of connection: " + connectionId +
                         " to its shared connections.", e);
             }
-        }, SHADOW_SYNC_EXECUTOR);
+        }, shadowSyncExecutor);
     }
 
     private void syncSharedIdp(ConnectionAssociation association, IdentityProvider parentIdp,

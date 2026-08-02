@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ACTION_GENERAL_CONNECTION_SHARE;
@@ -113,8 +113,19 @@ import static org.wso2.carbon.identity.organization.management.service.util.Util
 public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionSharingPolicyHandlerService {
 
     private static final Log LOG = LogFactory.getLog(ConnectionSharingPolicyHandlerServiceImpl.class);
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(5);
     private static final Set<String> SUPPORTED_GET_ATTRIBUTES = Collections.singleton(SHARING_MODE_ATTRIBUTE);
+
+    private final Executor asyncExecutor;
+
+    public ConnectionSharingPolicyHandlerServiceImpl() {
+
+        this(Executors.newFixedThreadPool(5));
+    }
+
+    ConnectionSharingPolicyHandlerServiceImpl(Executor asyncExecutor) {
+
+        this.asyncExecutor = asyncExecutor;
+    }
 
     @Override
     public void populateSelectiveConnectionShare(SelectiveConnectionShareDTO dto)
@@ -142,7 +153,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, EXECUTOR).exceptionally(ex -> {
+        }, asyncExecutor).exceptionally(ex -> {
             LOG.error("Error occurred during async selective connection share processing.", ex);
             return null;
         });
@@ -172,7 +183,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, EXECUTOR).exceptionally(ex -> {
+        }, asyncExecutor).exceptionally(ex -> {
             LOG.error("Error occurred during async general connection share processing.", ex);
             return null;
         });
@@ -202,7 +213,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, EXECUTOR)
+        }, asyncExecutor)
         .exceptionally(ex -> {
             LOG.error("Error occurred during async selective connection unshare processing.", ex);
             return null;
@@ -232,7 +243,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, EXECUTOR)
+        }, asyncExecutor)
         .exceptionally(ex -> {
             LOG.error("Error occurred during async general connection unshare processing.", ex);
             return null;

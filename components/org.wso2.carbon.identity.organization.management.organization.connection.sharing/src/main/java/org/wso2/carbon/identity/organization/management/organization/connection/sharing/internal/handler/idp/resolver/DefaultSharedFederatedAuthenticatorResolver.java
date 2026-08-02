@@ -21,8 +21,8 @@ package org.wso2.carbon.identity.organization.management.organization.connection
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.exception.RestrictedAttributeModificationException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.AttributeInheritanceEngine;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttribute;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttributes;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 
@@ -108,7 +108,7 @@ public class DefaultSharedFederatedAuthenticatorResolver implements SharedFedera
     public List<String> getRestrictedModifications(FederatedAuthenticatorConfig incomingAuthenticator,
                                                    FederatedAuthenticatorConfig storedAuthenticator) {
 
-        return ConfigAttributes.restrictedModifications(incomingAuthenticator, storedAuthenticator,
+        return AttributeInheritanceEngine.restrictedModifications(incomingAuthenticator, storedAuthenticator,
                 getInheritedConfigAttributes());
     }
 
@@ -118,7 +118,7 @@ public class DefaultSharedFederatedAuthenticatorResolver implements SharedFedera
             throws IdentityProviderManagementException {
 
         try {
-            ConfigAttributes.validateRestrictedModifications(updatingAuthenticator, existingAuthenticator,
+            AttributeInheritanceEngine.validateRestrictedModifications(updatingAuthenticator, existingAuthenticator,
                     INHERITED_CONFIG_ATTRIBUTES);
         } catch (RestrictedAttributeModificationException e) {
             throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),

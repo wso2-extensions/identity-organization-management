@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -59,7 +59,18 @@ import java.util.concurrent.Executors;
 public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
 
     private static final Log LOG = LogFactory.getLog(OrganizationSharedConnectionHandler.class);
-    private static final ExecutorService CONNECTION_SHARING_EXECUTOR = Executors.newFixedThreadPool(5);
+
+    private final Executor connectionSharingExecutor;
+
+    public OrganizationSharedConnectionHandler() {
+
+        this(Executors.newFixedThreadPool(5));
+    }
+
+    OrganizationSharedConnectionHandler(Executor connectionSharingExecutor) {
+
+        this.connectionSharingExecutor = connectionSharingExecutor;
+    }
 
     @Override
     public void handleEvent(Event event) throws IdentityEventException {
@@ -149,7 +160,7 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, CONNECTION_SHARING_EXECUTOR).exceptionally(ex -> {
+        }, connectionSharingExecutor).exceptionally(ex -> {
             LOG.error("Error occurred during async connection sharing cleanup for the deleted organization: " +
                     deletingOrgId + ".", ex);
             return null;
@@ -170,7 +181,7 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
             } finally {
                 PrivilegedCarbonContext.endTenantFlow();
             }
-        }, CONNECTION_SHARING_EXECUTOR).exceptionally(ex -> {
+        }, connectionSharingExecutor).exceptionally(ex -> {
             LOG.error("Error occurred during async connection sharing to the created organization: " + createdOrgId +
                     ".", ex);
             return null;

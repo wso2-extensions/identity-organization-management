@@ -30,8 +30,8 @@ import java.util.function.Predicate;
  * to decide whether the shadow has configured it locally.
  *
  * <p>A resolver declares its attributes as a list of these; both the read-time overlay and the write-time
- * deny-guard are driven by the same list via {@link ConfigAttributes}. It is container-type-agnostic so it can be
- * reused by any connection type handler's resolvers.</p>
+ * deny-guard are driven by the same list via {@link AttributeInheritanceEngine}. It is container-type-agnostic
+ * so it can be reused by any connection type handler's resolvers.</p>
  *
  * @param <C> The container type the attribute lives on.
  * @param <T> The type of the attribute value.

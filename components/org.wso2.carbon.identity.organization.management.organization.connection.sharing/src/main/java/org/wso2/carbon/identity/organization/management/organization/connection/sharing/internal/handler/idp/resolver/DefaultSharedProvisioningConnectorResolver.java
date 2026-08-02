@@ -21,8 +21,8 @@ package org.wso2.carbon.identity.organization.management.organization.connection
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.exception.RestrictedAttributeModificationException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.AttributeInheritanceEngine;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttribute;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttributes;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 
@@ -105,7 +105,7 @@ public class DefaultSharedProvisioningConnectorResolver implements SharedProvisi
     public List<String> getRestrictedModifications(ProvisioningConnectorConfig incomingConnector,
                                                    ProvisioningConnectorConfig storedConnector) {
 
-        return ConfigAttributes.restrictedModifications(incomingConnector, storedConnector,
+        return AttributeInheritanceEngine.restrictedModifications(incomingConnector, storedConnector,
                 getInheritedConfigAttributes());
     }
 
@@ -115,7 +115,7 @@ public class DefaultSharedProvisioningConnectorResolver implements SharedProvisi
             throws IdentityProviderManagementException {
 
         try {
-            ConfigAttributes.validateRestrictedModifications(updatingConnector, storedConnector,
+            AttributeInheritanceEngine.validateRestrictedModifications(updatingConnector, storedConnector,
                     INHERITED_CONFIG_ATTRIBUTES);
         } catch (RestrictedAttributeModificationException e) {
             throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),

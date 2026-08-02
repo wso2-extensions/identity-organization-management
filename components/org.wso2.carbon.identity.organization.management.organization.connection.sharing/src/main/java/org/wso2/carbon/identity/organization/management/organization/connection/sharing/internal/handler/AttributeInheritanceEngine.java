@@ -31,11 +31,11 @@ import java.util.List;
  * {@code IdentityProvider}, a {@code FederatedAuthenticatorConfig} or a {@code ProvisioningConnectorConfig}). It is
  * container-type-agnostic so it can be reused by any connection type handler's resolvers.
  */
-public final class ConfigAttributes {
+public final class AttributeInheritanceEngine {
 
     private static final Gson GSON = new Gson();
 
-    private ConfigAttributes() {
+    private AttributeInheritanceEngine() {
 
     }
 

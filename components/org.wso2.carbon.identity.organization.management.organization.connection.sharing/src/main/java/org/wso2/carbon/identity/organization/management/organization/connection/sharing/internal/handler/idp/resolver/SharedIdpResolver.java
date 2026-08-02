@@ -31,8 +31,8 @@ import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorCo
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.exception.RestrictedAttributeModificationException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.AttributeInheritanceEngine;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttribute;
-import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConfigAttributes;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
@@ -147,8 +147,8 @@ public class SharedIdpResolver {
 
         // 1. Overlay the IDP-level sections (base + the rest) from the parent. The attribute registries preserve the
         //    shadow's locally-owned (LOCAL) and locally-overridden (OVERRIDABLE) values automatically.
-        ConfigAttributes.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
-        ConfigAttributes.applyOverlay(parentIdp, sharedIdp, INHERITED_CONFIG_ATTRIBUTES);
+        AttributeInheritanceEngine.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
+        AttributeInheritanceEngine.applyOverlay(parentIdp, sharedIdp, INHERITED_CONFIG_ATTRIBUTES);
 
         // 2. Apply the two derivations the inheritance engine cannot express.
         sharedIdp.setEnable(parentIdp.isEnable() && sharedIdp.isEnable());
@@ -171,7 +171,7 @@ public class SharedIdpResolver {
 
         // Apply only the base parent attributes (description, image URL, template ID, claim/JIT); the identity
         // provider groups (LOCAL) and everything else stay as the raw shadow.
-        ConfigAttributes.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
+        AttributeInheritanceEngine.applyOverlay(parentIdp, sharedIdp, BASE_PARENT_CONFIG_ATTRIBUTES);
         // The effective enabled state is the AND of the parent's and the shadow's local flags.
         sharedIdp.setEnable(parentIdp.isEnable() && sharedIdp.isEnable());
         // Populate basic values of each authenticator/connector from the parent.
@@ -190,9 +190,9 @@ public class SharedIdpResolver {
                 throw new IdentityProviderManagementClientException(ERROR_CODE_RESTRICTED_SHARED_IDP_UPDATE.getCode(),
                         "Cannot enable the shared idp as the parent is disabled.");
             }
-            ConfigAttributes.validateRestrictedModifications(updatingShadowIdp, existingShadowIdp,
+            AttributeInheritanceEngine.validateRestrictedModifications(updatingShadowIdp, existingShadowIdp,
                     BASE_PARENT_CONFIG_ATTRIBUTES);
-            ConfigAttributes.validateRestrictedModifications(updatingShadowIdp, existingShadowIdp,
+            AttributeInheritanceEngine.validateRestrictedModifications(updatingShadowIdp, existingShadowIdp,
                     INHERITED_CONFIG_ATTRIBUTES);
             validateIdpPropertiesUpdate(updatingShadowIdp.getIdpProperties(), existingShadowIdp.getIdpProperties());
         } catch (RestrictedAttributeModificationException e) {
