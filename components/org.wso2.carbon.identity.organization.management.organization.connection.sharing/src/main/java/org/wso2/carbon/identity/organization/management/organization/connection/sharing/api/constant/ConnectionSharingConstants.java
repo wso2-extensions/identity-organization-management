@@ -86,6 +86,10 @@ public class ConnectionSharingConstants {
         ERROR_CODE_CONNECTION_NOT_SHAREABLE("60012",
                 "Connection cannot be shared.",
                 "%s"),
+        ERROR_CODE_PARENT_NOT_SHARED("60013",
+                "Connection is not shared with Immediate parent.",
+                "Cannot share the connection with organization: %s without also sharing it with its immediate " +
+                        "parent organization: %s."),
 
         // Server errors (65xxx).
         ERROR_CODE_INTERNAL_ERROR("65001",

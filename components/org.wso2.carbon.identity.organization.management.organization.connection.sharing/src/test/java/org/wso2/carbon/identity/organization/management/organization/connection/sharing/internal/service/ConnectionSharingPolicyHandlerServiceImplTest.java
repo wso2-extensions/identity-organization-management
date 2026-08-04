@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.dto.SelectiveConnectionShareOrgConfigDTO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.dto.SelectiveConnectionUnshareDTO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConnectionTypeHandler;
@@ -79,6 +80,7 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
     private ConnectionTypeHandler handler;
     private ResourceSharingPolicyHandlerService policyService;
     private OrganizationManager organizationManager;
+    private ConnectionAssociationManager associationManager;
 
     private ConnectionSharingPolicyHandlerServiceImpl service;
 
@@ -92,7 +94,7 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
     }
 
     @BeforeMethod
-    public void setUp() {
+    public void setUp() throws Exception {
 
         mockedDataHolder = mockStatic(ConnectionSharingDataHolder.class);
         mockedInitiatorContext = mockStatic(ConnectionSharingInitiatorContext.class);
@@ -101,13 +103,20 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
         handler = mock(ConnectionTypeHandler.class);
         policyService = mock(ResourceSharingPolicyHandlerService.class);
         organizationManager = mock(OrganizationManager.class);
+        associationManager = mock(ConnectionAssociationManager.class);
         dataHolder = mock(ConnectionSharingDataHolder.class);
 
         mockedDataHolder.when(ConnectionSharingDataHolder::getInstance).thenReturn(dataHolder);
         when(dataHolder.getConnectionTypeHandler(RESOURCE_TYPE)).thenReturn(handler);
         when(dataHolder.getResourceSharingPolicyHandlerService()).thenReturn(policyService);
         when(dataHolder.getOrganizationManager()).thenReturn(organizationManager);
+        when(dataHolder.getConnectionAssociationManager()).thenReturn(associationManager);
         when(handler.getResourceType()).thenReturn(RESOURCE_TYPE);
+        // By default nothing is shared yet, and every organization is an immediate child of the initiating org.
+        when(associationManager.getConnectionAssociations(anyString(), anyString(), anyString()))
+                .thenReturn(Collections.emptyList());
+        when(organizationManager.getAncestorOrganizationIds(anyString()))
+                .thenAnswer(invocation -> java.util.Arrays.asList(invocation.getArgument(0), INITIATING_ORG_ID));
 
         ConnectionSharingInitiatorContext context = mock(ConnectionSharingInitiatorContext.class);
         when(context.getSharingInitiatedOrgId()).thenReturn(INITIATING_ORG_ID);
@@ -222,10 +231,10 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
     }
 
     @Test
-    public void testSelectiveConnectionShareDispatchesToImmediateChildOrganization() throws Exception {
+    public void testSelectiveConnectionShareDispatchesToChildOrganization() throws Exception {
 
-        // Only immediate children are eligible for selective sharing.
-        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, false))
+        // Any organization within the sharing hierarchy is eligible for selective sharing.
+        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, true))
                 .thenReturn(Collections.singletonList(CHILD_ORG_ID));
 
         SelectiveConnectionShareOrgConfigDTO orgConfig = new SelectiveConnectionShareOrgConfigDTO();
@@ -243,10 +252,99 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
     }
 
     @Test
-    public void testSelectiveConnectionShareSkipsNonChildOrganization() throws Exception {
+    public void testSelectiveConnectionShareDispatchesToDescendantOrganization() throws Exception {
 
-        // The target organization is not an immediate child, so it must be filtered out (never shared).
-        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, false))
+        // A deep descendant (not an immediate child) is now eligible, matching application sharing.
+        String midOrgId = "mid-org-id";
+        String grandChildOrgId = "grand-child-org-id";
+        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, true))
+                .thenReturn(java.util.Arrays.asList(midOrgId, grandChildOrgId));
+        // The grandchild sits under mid-org, which is already shared from a previous operation.
+        when(organizationManager.getAncestorOrganizationIds(grandChildOrgId))
+                .thenReturn(java.util.Arrays.asList(grandChildOrgId, midOrgId, INITIATING_ORG_ID));
+        ConnectionAssociation midAssociation = new ConnectionAssociation.Builder()
+                .resourceType(RESOURCE_TYPE)
+                .parentConnectionId(CONNECTION_ID)
+                .connectionResidentOrganizationId(INITIATING_ORG_ID)
+                .sharedConnectionId("mid-shadow-id")
+                .organizationId(midOrgId)
+                .build();
+        when(associationManager.getConnectionAssociations(RESOURCE_TYPE.name(), CONNECTION_ID, INITIATING_ORG_ID))
+                .thenReturn(Collections.singletonList(midAssociation));
+
+        SelectiveConnectionShareOrgConfigDTO orgConfig = new SelectiveConnectionShareOrgConfigDTO();
+        orgConfig.setOrgId(grandChildOrgId);
+        orgConfig.setPolicy(PolicyEnum.SELECTED_ORG_ONLY);
+        SelectiveConnectionShareDTO dto = new SelectiveConnectionShareDTO();
+        dto.setConnectionId(CONNECTION_ID);
+        dto.setResourceType(RESOURCE_TYPE);
+        dto.setOrganizations(Collections.singletonList(orgConfig));
+
+        service.populateSelectiveConnectionShare(dto);
+
+        verify(handler).shareConnectionToOrg(CONNECTION_ID, grandChildOrgId, PolicyEnum.SELECTED_ORG_ONLY,
+                INITIATING_ORG_ID);
+    }
+
+    @Test(expectedExceptions = ConnectionSharingMgtException.class)
+    public void testSelectiveConnectionShareRejectsOrgWhoseImmediateParentIsNotShared() throws Exception {
+
+        // A grandchild is targeted, but its immediate parent is neither the owner, already shared, nor in the
+        // request, so the share must be rejected.
+        String midOrgId = "mid-org-id";
+        String grandChildOrgId = "grand-child-org-id";
+        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, true))
+                .thenReturn(java.util.Arrays.asList(midOrgId, grandChildOrgId));
+        when(organizationManager.getAncestorOrganizationIds(grandChildOrgId))
+                .thenReturn(java.util.Arrays.asList(grandChildOrgId, midOrgId, INITIATING_ORG_ID));
+
+        SelectiveConnectionShareOrgConfigDTO orgConfig = new SelectiveConnectionShareOrgConfigDTO();
+        orgConfig.setOrgId(grandChildOrgId);
+        orgConfig.setPolicy(PolicyEnum.SELECTED_ORG_ONLY);
+        SelectiveConnectionShareDTO dto = new SelectiveConnectionShareDTO();
+        dto.setConnectionId(CONNECTION_ID);
+        dto.setResourceType(RESOURCE_TYPE);
+        dto.setOrganizations(Collections.singletonList(orgConfig));
+
+        service.populateSelectiveConnectionShare(dto);
+    }
+
+    @Test
+    public void testSelectiveConnectionShareProcessesAncestorsBeforeDescendants() throws Exception {
+
+        String parentOrgId = "parent-org-id";
+        String childOrgId = "descendant-org-id";
+        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, true))
+                .thenReturn(java.util.Arrays.asList(parentOrgId, childOrgId));
+        when(organizationManager.getOrganizationDepthInHierarchy(parentOrgId)).thenReturn(1);
+        when(organizationManager.getOrganizationDepthInHierarchy(childOrgId)).thenReturn(2);
+
+        // The request lists the deeper descendant FIRST; it must still be shared after its ancestor.
+        SelectiveConnectionShareOrgConfigDTO childConfig = new SelectiveConnectionShareOrgConfigDTO();
+        childConfig.setOrgId(childOrgId);
+        childConfig.setPolicy(PolicyEnum.SELECTED_ORG_ONLY);
+        SelectiveConnectionShareOrgConfigDTO parentConfig = new SelectiveConnectionShareOrgConfigDTO();
+        parentConfig.setOrgId(parentOrgId);
+        parentConfig.setPolicy(PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN);
+        SelectiveConnectionShareDTO dto = new SelectiveConnectionShareDTO();
+        dto.setConnectionId(CONNECTION_ID);
+        dto.setResourceType(RESOURCE_TYPE);
+        dto.setOrganizations(java.util.Arrays.asList(childConfig, parentConfig));
+
+        service.populateSelectiveConnectionShare(dto);
+
+        org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(handler);
+        inOrder.verify(handler).shareConnectionToOrg(CONNECTION_ID, parentOrgId,
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN, INITIATING_ORG_ID);
+        inOrder.verify(handler).shareConnectionToOrg(CONNECTION_ID, childOrgId, PolicyEnum.SELECTED_ORG_ONLY,
+                INITIATING_ORG_ID);
+    }
+
+    @Test
+    public void testSelectiveConnectionShareSkipsOrganizationOutsideHierarchy() throws Exception {
+
+        // The target organization is not within the initiating organization's sub-tree, so it is filtered out.
+        when(organizationManager.getChildOrganizationsIds(INITIATING_ORG_ID, true))
                 .thenReturn(Collections.emptyList());
 
         SelectiveConnectionShareOrgConfigDTO orgConfig = new SelectiveConnectionShareOrgConfigDTO();

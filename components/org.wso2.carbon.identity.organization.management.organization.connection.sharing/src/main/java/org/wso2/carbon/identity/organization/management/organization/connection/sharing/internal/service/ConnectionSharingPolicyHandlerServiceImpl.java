@@ -43,6 +43,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.service.ConnectionSharingPolicyHandlerService;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConnectionTypeHandler;
@@ -61,7 +62,9 @@ import org.wso2.carbon.identity.organization.resource.sharing.policy.management.
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,10 +82,12 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_TYPE_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_GET_CHILD_ORGS;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_GET_SHARED_CONNECTIONS;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_NO_HANDLER_FOR_CONNECTION_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_NULL_INPUT;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_ORGANIZATIONS_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_ORG_ID_NULL;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_PARENT_NOT_SHARED;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_POLICY_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_GET_ATTRIBUTE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_UNSUPPORTED_POLICY;
@@ -143,6 +148,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         handler.validateConnectionShareEligibility(connectionId, ctx.getSharingInitiatedOrgId());
         List<SelectiveConnectionShareOrgConfigDTO> validOrgs = filterValidOrganizations(dto.getOrganizations(),
                 ctx.getSharingInitiatedOrgId());
+        validateImmediateParentShared(connectionId, dto.getResourceType(), validOrgs, ctx.getSharingInitiatedOrgId());
 
         CompletableFuture.runAsync(() -> {
             logAsyncProcessing(ACTION_SELECTIVE_CONNECTION_SHARE, ctx.getSharingInitiatedUserId(),
@@ -331,10 +337,12 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             for (SelectiveConnectionShareOrgConfigDTO orgConfig : organizations) {
                 LOG.debug("Processing selective connection share for connection: " + connectionId + " to organization: "
                         + orgConfig.getOrgId() + " with policy: " + orgConfig.getPolicy());
-                saveConnectionSharingPolicy(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
-                        initiatingOrgId, handler.getResourceType());
                 handler.shareConnectionToOrg(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
                         initiatingOrgId);
+                deleteResourceSharingPolicyOfConnectionInOrg(orgConfig.getOrgId(), connectionId, initiatingOrgId,
+                        handler.getResourceType());
+                saveConnectionSharingPolicy(connectionId, orgConfig.getOrgId(), orgConfig.getPolicy(),
+                        initiatingOrgId, handler.getResourceType());
                 // When the selected organization is shared with its children, also share with its existing
                 // descendants now (future children are materialized on organization creation).
                 if (orgConfig.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
@@ -636,28 +644,78 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             List<SelectiveConnectionShareOrgConfigDTO> organizations, String initiatingOrgId)
             throws ConnectionSharingMgtServerException {
 
-        List<String> immediateChildOrgs;
+        List<SelectiveConnectionShareOrgConfigDTO> validOrgs;
+        Map<String, Integer> depthByOrgId = new HashMap<>();
         try {
-            immediateChildOrgs = getOrganizationManager().getChildOrganizationsIds(initiatingOrgId, false);
+            Set<String> hierarchyOrgIds =
+                    new HashSet<>(getOrganizationManager().getChildOrganizationsIds(initiatingOrgId, true));
+
+            validOrgs = new ArrayList<>(organizations.stream()
+                    .filter(org -> hierarchyOrgIds.contains(org.getOrgId()))
+                    .toList());
+
+            List<String> skippedOrgs = organizations.stream()
+                    .map(SelectiveConnectionShareOrgConfigDTO::getOrgId)
+                    .filter(orgId -> !hierarchyOrgIds.contains(orgId))
+                    .toList();
+            if (!skippedOrgs.isEmpty() && LOG.isDebugEnabled()) {
+                LOG.debug("Skipping connection share for organizations outside the sharing hierarchy: " + skippedOrgs);
+            }
+
+            for (SelectiveConnectionShareOrgConfigDTO org : validOrgs) {
+                depthByOrgId.put(org.getOrgId(),
+                        getOrganizationManager().getOrganizationDepthInHierarchy(org.getOrgId()));
+            }
         } catch (OrganizationManagementException e) {
             String errorMessage = String.format(ERROR_CODE_GET_CHILD_ORGS.getMessage(), initiatingOrgId);
             throw new ConnectionSharingMgtServerException(ERROR_CODE_GET_CHILD_ORGS.getCode(),
                     errorMessage, ERROR_CODE_GET_CHILD_ORGS.getDescription(), e);
         }
 
-        List<SelectiveConnectionShareOrgConfigDTO> validOrgs = organizations.stream()
-                .filter(org -> immediateChildOrgs.contains(org.getOrgId()))
-                .toList();
+        // Share ancestors before their descendants, so ordering by depth guarantees a parent is shared before any of
+        // its descendants.
+        validOrgs.sort(Comparator.comparingInt(org -> depthByOrgId.get(org.getOrgId())));
 
-        List<String> skippedOrgs = organizations.stream()
-                .map(SelectiveConnectionShareOrgConfigDTO::getOrgId)
-                .filter(orgId -> !immediateChildOrgs.contains(orgId))
-                .toList();
-
-        if (!skippedOrgs.isEmpty() && LOG.isDebugEnabled()) {
-            LOG.debug("Skipping connection share for organizations that are not immediate children: " + skippedOrgs);
-        }
         return validOrgs;
+    }
+
+    private void validateImmediateParentShared(String connectionId, ResourceType resourceType,
+                                               List<SelectiveConnectionShareOrgConfigDTO> validOrgs,
+                                               String initiatingOrgId) throws ConnectionSharingMgtException {
+
+        if (validOrgs.isEmpty()) {
+            return;
+        }
+        String resourceTypeName = resourceType.name();
+        Set<String> sharedOrgIds = new HashSet<>();
+        for (ConnectionAssociation association : getConnectionAssociationManager()
+                .getConnectionAssociations(resourceTypeName, connectionId, initiatingOrgId)) {
+            sharedOrgIds.add(association.getOrganizationId());
+        }
+        try {
+            for (SelectiveConnectionShareOrgConfigDTO org : validOrgs) {
+                sharedOrgIds.add(org.getOrgId());
+                if (org.getPolicy() == PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
+                    sharedOrgIds.addAll(getOrganizationManager().getChildOrganizationsIds(org.getOrgId(), true));
+                }
+            }
+            for (SelectiveConnectionShareOrgConfigDTO org : validOrgs) {
+                List<String> ancestorOrgIds = getOrganizationManager().getAncestorOrganizationIds(org.getOrgId());
+                // The immediate parent is the second entry.
+                String parentOrgId = ancestorOrgIds.size() > 1 ? ancestorOrgIds.get(1) : null;
+                // The connection owner holds the original connection, so sharing to its immediate children is valid.
+                if (StringUtils.equals(parentOrgId, initiatingOrgId)) {
+                    continue;
+                }
+                if (parentOrgId == null || !sharedOrgIds.contains(parentOrgId)) {
+                    throw new ConnectionSharingMgtClientException(ERROR_CODE_PARENT_NOT_SHARED.getCode(),
+                            ERROR_CODE_PARENT_NOT_SHARED.getMessage(),
+                            String.format(ERROR_CODE_PARENT_NOT_SHARED.getDescription(), org.getOrgId(), parentOrgId));
+                }
+            }
+        } catch (OrganizationManagementException e) {
+            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
+        }
     }
 
     private void saveConnectionSharingPolicy(String connectionId, String policyHoldingOrgId, PolicyEnum policy,
@@ -820,5 +878,10 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
     private ResourceSharingPolicyHandlerService getResourceSharingPolicyHandlerService() {
 
         return ConnectionSharingDataHolder.getInstance().getResourceSharingPolicyHandlerService();
+    }
+
+    private ConnectionAssociationManager getConnectionAssociationManager() {
+
+        return ConnectionSharingDataHolder.getInstance().getConnectionAssociationManager();
     }
 }
