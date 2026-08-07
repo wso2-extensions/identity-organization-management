@@ -47,10 +47,10 @@ import java.util.stream.IntStream;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_INTERNAL_ERROR;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_ASSOCIATED_CONNECTION_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_ASSOCIATED_ORG_ID;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_CONNECTION_TYPE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_ID;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_RESOURCE_TYPE;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_SHARED_CONNECTION_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_SHARED_ORG_ID;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.COLUMN_NAME_SHARED_RESOURCE_UUID;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.DELETE_CONNECTION_ASSOCIATIONS_BY_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.DELETE_CONNECTION_ASSOCIATION_IN_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_BY_FILTERING_HEAD;
@@ -85,13 +85,13 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeInsert(INSERT_CONNECTION_ASSOCIATION, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE,
+                    namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE,
                             association.getResourceType().name());
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID,
                             association.getParentConnectionId());
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID,
                             association.getConnectionResidentOrganizationId());
-                    namedPreparedStatement.setString(COLUMN_NAME_SHARED_RESOURCE_UUID,
+                    namedPreparedStatement.setString(COLUMN_NAME_SHARED_CONNECTION_UUID,
                             association.getSharedConnectionId());
                     namedPreparedStatement.setString(COLUMN_NAME_SHARED_ORG_ID, association.getOrganizationId());
                 }, association, false);
@@ -109,9 +109,9 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
         NamedJdbcTemplate namedJdbcTemplate = getNewTemplate();
         try {
             String sharedConnectionId = namedJdbcTemplate.fetchSingleRecord(GET_SHARED_CONNECTION_ID,
-                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_SHARED_RESOURCE_UUID),
+                    (resultSet, rowNumber) -> resultSet.getString(COLUMN_NAME_SHARED_CONNECTION_UUID),
                     namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
+                        namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE, resourceType);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID, connectionId);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                         namedPreparedStatement.setString(COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
@@ -163,8 +163,8 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
                     GET_CONNECTION_ASSOCIATION_BY_SHARED_RESOURCE,
                     (resultSet, rowNumber) -> mapConnectionAssociation(resultSet),
                     namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
-                        namedPreparedStatement.setString(COLUMN_NAME_SHARED_RESOURCE_UUID, sharedConnectionId);
+                        namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE, resourceType);
+                        namedPreparedStatement.setString(COLUMN_NAME_SHARED_CONNECTION_UUID, sharedConnectionId);
                     });
             return Optional.ofNullable(association);
         } catch (DataAccessException e) {
@@ -182,7 +182,7 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
             return namedJdbcTemplate.executeQuery(GET_CONNECTION_ASSOCIATIONS_BY_PARENT,
                     (resultSet, rowNumber) -> mapConnectionAssociation(resultSet),
                     namedPreparedStatement -> {
-                        namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
+                        namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE, resourceType);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID, connectionId);
                         namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                     });
@@ -221,7 +221,7 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
              NamedPreparedStatement namedPreparedStatement =
                      new NamedPreparedStatement(connection, sqlBuilder.toString())) {
 
-            namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
+            namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE, resourceType);
             namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID, connectionId);
             namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
             for (int i = 0; i < sharedOrgIds.size(); i++) {
@@ -250,7 +250,7 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
         try {
             namedJdbcTemplate.withTransaction(template -> {
                 template.executeUpdate(DELETE_CONNECTION_ASSOCIATION_IN_ORG, namedPreparedStatement -> {
-                    namedPreparedStatement.setString(COLUMN_NAME_RESOURCE_TYPE, resourceType);
+                    namedPreparedStatement.setString(COLUMN_NAME_CONNECTION_TYPE, resourceType);
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID, connectionId);
                     namedPreparedStatement.setString(COLUMN_NAME_ASSOCIATED_ORG_ID, associatedOrgId);
                     namedPreparedStatement.setString(COLUMN_NAME_SHARED_ORG_ID, sharedOrgId);
@@ -313,10 +313,10 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
 
         return new ConnectionAssociation.Builder()
                 .id(resultSet.getInt(COLUMN_NAME_ID))
-                .resourceType(ResourceType.valueOf(resultSet.getString(COLUMN_NAME_RESOURCE_TYPE)))
+                .resourceType(ResourceType.valueOf(resultSet.getString(COLUMN_NAME_CONNECTION_TYPE)))
                 .parentConnectionId(resultSet.getString(COLUMN_NAME_ASSOCIATED_CONNECTION_UUID))
                 .connectionResidentOrganizationId(resultSet.getString(COLUMN_NAME_ASSOCIATED_ORG_ID))
-                .sharedConnectionId(resultSet.getString(COLUMN_NAME_SHARED_RESOURCE_UUID))
+                .sharedConnectionId(resultSet.getString(COLUMN_NAME_SHARED_CONNECTION_UUID))
                 .organizationId(resultSet.getString(COLUMN_NAME_SHARED_ORG_ID))
                 .build();
     }
