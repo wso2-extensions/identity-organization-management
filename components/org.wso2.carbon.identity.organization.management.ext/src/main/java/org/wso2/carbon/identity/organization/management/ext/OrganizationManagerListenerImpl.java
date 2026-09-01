@@ -101,9 +101,19 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
     public void postDeleteOrganization(String organizationId, int organizationDepthInHierarchy)
             throws OrganizationManagementException {
 
+        postDeleteOrganization(organizationId, null, organizationDepthInHierarchy);
+    }
+
+    @Override
+    public void postDeleteOrganization(String organizationId, Organization organization,
+                                       int organizationDepthInHierarchy) throws OrganizationManagementException {
+
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_DEPTH_IN_HIERARCHY, organizationDepthInHierarchy);
+        if (organization != null) {
+            eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
+        }
         fireEvent(Constants.EVENT_POST_DELETE_ORGANIZATION, eventProperties);
     }
 
@@ -141,9 +151,19 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
     public void postUpdateOrganization(String organizationId, Organization organization)
             throws OrganizationManagementException {
 
+        postUpdateOrganization(organizationId, organization, null);
+    }
+
+    @Override
+    public void postUpdateOrganization(String organizationId, Organization organization,
+                                       Organization previousOrganization) throws OrganizationManagementException {
+
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION, organization);
+        if (previousOrganization != null) {
+            eventProperties.put(Constants.EVENT_PROP_PREVIOUS_ORGANIZATION, previousOrganization);
+        }
         fireEvent(Constants.EVENT_POST_UPDATE_ORGANIZATION, eventProperties);
     }
 
