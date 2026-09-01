@@ -107,9 +107,13 @@
 
                             org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.constant;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.exception;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.strategy;
+                            version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.resource.hierarchy.traverse.service.util;
                             version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                         </Import-Package>
                         <Export-Package>
