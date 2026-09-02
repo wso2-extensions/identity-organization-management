@@ -109,6 +109,7 @@ public class OrganizationSharedConnectionHandlerTest {
         when(dataHolder.getResourceSharingPolicyHandlerService()).thenReturn(policyService);
         when(dataHolder.getConnectionTypeHandler(RESOURCE_TYPE)).thenReturn(handler);
         when(handler.getResourceType()).thenReturn(RESOURCE_TYPE);
+        when(handler.isSharingEnabled()).thenReturn(true);
 
         ConnectionSharingInitiatorContext context = mock(ConnectionSharingInitiatorContext.class);
         when(context.getSharingInitiatedTenantDomain()).thenReturn("carbon.super");
@@ -250,6 +251,41 @@ public class OrganizationSharedConnectionHandlerTest {
 
         verify(handler).shareConnectionToOrg(CONNECTION_ID, CREATED_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
                 OWNER_ORG_ID);
+    }
+
+    @Test
+    public void testPostAddSkipsWhenSharingDisabledForConnectionType() throws Exception {
+
+        // Sharing is switched off for the connection type in this server, so nothing is propagated to the created
+        // organization.
+        when(handler.isSharingEnabled()).thenReturn(false);
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        ResourceSharingPolicy futurePolicy = policy(RESOURCE_TYPE, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, futurePolicy));
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler, never()).shareConnectionToOrg(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPostDeleteCleansUpEvenWhenSharingDisabledForConnectionType() throws Exception {
+
+        // Cleanup of already shared connections is never gated on the connection type being shareable, so no
+        // shadow connections are orphaned when the connection type is disabled.
+        when(handler.isSharingEnabled()).thenReturn(false);
+        when(associationManager.getConnectionAssociationsByResidentOrg(DELETING_ORG_ID)).thenReturn(
+                Collections.singletonList(association(CONNECTION_ID, DELETING_ORG_ID, "shadow-a", "shared-org-a")));
+        when(associationManager.getConnectionAssociationsBySharedOrg(DELETING_ORG_ID)).thenReturn(
+                Collections.singletonList(association(CONNECTION_ID, OWNER_ORG_ID, "shadow-c", DELETING_ORG_ID)));
+
+        eventHandler.handleEvent(deleteEvent(DELETING_ORG_ID));
+
+        verify(handler).unshareConnectionFromAllOrgs(CONNECTION_ID, DELETING_ORG_ID);
+        verify(handler).unshareConnectionFromOrg(CONNECTION_ID, DELETING_ORG_ID, OWNER_ORG_ID);
+        verify(associationManager).deleteConnectionAssociationsByOrganizationId(DELETING_ORG_ID);
     }
 
     // ----- Routing -----

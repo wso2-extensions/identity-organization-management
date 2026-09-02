@@ -44,9 +44,14 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.exception.ResourceSharingPolicyMgtException;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.ResourceSharingPolicy;
+import org.wso2.carbon.identity.organization.resource.sharing.policy.management.model.SharedResourceAttribute;
 
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -57,6 +62,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +79,7 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
     private static final String CONNECTION_ID = "connection-id";
     private static final String INITIATING_ORG_ID = "initiating-org-id";
     private static final String CHILD_ORG_ID = "child-org-id";
+    private static final String GRAND_CHILD_ORG_ID = "grand-child-org-id";
 
     private MockedStatic<ConnectionSharingDataHolder> mockedDataHolder;
     private MockedStatic<ConnectionSharingInitiatorContext> mockedInitiatorContext;
@@ -452,6 +460,122 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
         ResponseSharedConnectionOrgsDTO response = service.getConnectionSharedOrganizations(dto);
 
         Assert.assertEquals(response.getSharedOrgs().size(), 1);
+    }
+
+    @Test
+    public void testGetConnectionSharedOrganizationsResolvesSharingModeForDescendantOrganizations() throws Exception {
+
+        // The connection is shared with a direct child as SELECTED_ORG_ONLY and with a grandchild, which is deeper
+        // in the hierarchy, as SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN. Every organization in the page
+        // reports the policy it holds, irrespective of its depth.
+        when(organizationManager.getChildOrganizationsIds(anyString(), anyBoolean()))
+                .thenReturn(java.util.Arrays.asList(CHILD_ORG_ID, GRAND_CHILD_ORG_ID));
+        when(handler.getConnectionAssociations(anyString(), anyString(), anyList(), anyList(), anyString(), anyInt()))
+                .thenReturn(new java.util.ArrayList<>(java.util.Arrays.asList(
+                        associationOfOrg(CHILD_ORG_ID), associationOfOrg(GRAND_CHILD_ORG_ID))));
+        mockOrganization(CHILD_ORG_ID, 1);
+        mockOrganization(GRAND_CHILD_ORG_ID, 2);
+
+        Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policies = new java.util.LinkedHashMap<>();
+        policies.put(sharingPolicy(CHILD_ORG_ID, PolicyEnum.SELECTED_ORG_ONLY), Collections.emptyList());
+        policies.put(sharingPolicy(GRAND_CHILD_ORG_ID,
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN), Collections.emptyList());
+        when(policyService.getResourceSharingPolicyAndAttributesByInitiatingOrgId(INITIATING_ORG_ID,
+                RESOURCE_TYPE.name(), CONNECTION_ID)).thenReturn(policies);
+
+        GetConnectionSharedOrgsDTO dto = getSharedOrgsDto();
+        dto.setAttributes(Collections.singletonList("sharingMode"));
+
+        ResponseSharedConnectionOrgsDTO response = service.getConnectionSharedOrganizations(dto);
+
+        Assert.assertNull(response.getSharingMode());
+        Assert.assertEquals(response.getSharedOrgs().size(), 2);
+        Assert.assertNotNull(response.getSharedOrgs().get(0).getSharingMode());
+        Assert.assertEquals(response.getSharedOrgs().get(0).getSharingMode().getPolicy(),
+                PolicyEnum.SELECTED_ORG_ONLY);
+        Assert.assertNotNull(response.getSharedOrgs().get(1).getSharingMode());
+        Assert.assertEquals(response.getSharedOrgs().get(1).getSharingMode().getPolicy(),
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN);
+        // The sharing policies are read once for the whole page.
+        verify(policyService, times(1)).getResourceSharingPolicyAndAttributesByInitiatingOrgId(anyString(),
+                anyString(), anyString());
+    }
+
+    @Test
+    public void testGetConnectionSharedOrganizationsResolvesGeneralSharingMode() throws Exception {
+
+        when(organizationManager.getChildOrganizationsIds(anyString(), anyBoolean()))
+                .thenReturn(Collections.singletonList(CHILD_ORG_ID));
+        when(handler.getConnectionAssociations(anyString(), anyString(), anyList(), anyList(), anyString(), anyInt()))
+                .thenReturn(new java.util.ArrayList<>(
+                        Collections.singletonList(associationOfOrg(CHILD_ORG_ID))));
+        mockOrganization(CHILD_ORG_ID, 1);
+
+        Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policies = new java.util.LinkedHashMap<>();
+        policies.put(sharingPolicy(INITIATING_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS),
+                Collections.emptyList());
+        when(policyService.getResourceSharingPolicyAndAttributesByInitiatingOrgId(INITIATING_ORG_ID,
+                RESOURCE_TYPE.name(), CONNECTION_ID)).thenReturn(policies);
+
+        GetConnectionSharedOrgsDTO dto = getSharedOrgsDto();
+        dto.setAttributes(Collections.singletonList("sharingMode"));
+
+        ResponseSharedConnectionOrgsDTO response = service.getConnectionSharedOrganizations(dto);
+
+        Assert.assertNotNull(response.getSharingMode());
+        Assert.assertEquals(response.getSharingMode().getPolicy(), PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        // Organization level sharing modes are not resolved when the connection is shared with all organizations.
+        Assert.assertNull(response.getSharedOrgs().get(0).getSharingMode());
+    }
+
+    @Test
+    public void testGetConnectionSharedOrganizationsSkipsSharingModeLookupWhenNotRequested() throws Exception {
+
+        when(organizationManager.getChildOrganizationsIds(anyString(), anyBoolean()))
+                .thenReturn(Collections.singletonList(CHILD_ORG_ID));
+        when(handler.getConnectionAssociations(anyString(), anyString(), anyList(), anyList(), anyString(), anyInt()))
+                .thenReturn(new java.util.ArrayList<>(
+                        Collections.singletonList(associationOfOrg(CHILD_ORG_ID))));
+        mockOrganization(CHILD_ORG_ID, 1);
+
+        ResponseSharedConnectionOrgsDTO response = service.getConnectionSharedOrganizations(getSharedOrgsDto());
+
+        Assert.assertNull(response.getSharedOrgs().get(0).getSharingMode());
+        verify(policyService, never()).getResourceSharingPolicyAndAttributesByInitiatingOrgId(anyString(),
+                anyString(), anyString());
+    }
+
+    private ConnectionAssociation associationOfOrg(String orgId) {
+
+        return new ConnectionAssociation.Builder()
+                .resourceType(RESOURCE_TYPE)
+                .parentConnectionId(CONNECTION_ID)
+                .connectionResidentOrganizationId(INITIATING_ORG_ID)
+                .sharedConnectionId("shadow-" + orgId)
+                .organizationId(orgId)
+                .build();
+    }
+
+    private void mockOrganization(String orgId, int depthFromRoot) throws Exception {
+
+        Organization organization = mock(Organization.class);
+        when(organization.getId()).thenReturn(orgId);
+        when(organization.getName()).thenReturn(orgId);
+        when(organizationManager.getOrganization(orgId, true, false)).thenReturn(organization);
+        when(organizationManager.resolveTenantDomain(orgId)).thenReturn(orgId + "-tenant");
+        when(organizationManager.getOrganizationDepthInHierarchy(orgId)).thenReturn(depthFromRoot);
+    }
+
+    private ResourceSharingPolicy sharingPolicy(String policyHoldingOrgId, PolicyEnum policy)
+            throws ResourceSharingPolicyMgtException {
+
+        return new ResourceSharingPolicy.Builder()
+                .withResourceType(RESOURCE_TYPE)
+                .withResourceId(CONNECTION_ID)
+                .withInitiatingOrgId(INITIATING_ORG_ID)
+                .withPolicyHoldingOrgId(policyHoldingOrgId)
+                .withSharingPolicy(policy)
+                .build();
     }
 
     private GeneralConnectionShareDTO generalShareDto() {

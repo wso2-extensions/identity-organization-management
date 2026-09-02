@@ -282,11 +282,10 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             String parentOrgId = resolveParentOrgId(expressionNodes, initiatingOrgId);
             List<String> childOrgIds = getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive);
 
-            ConnectionSharingModeDTO generalSharingMode = null;
-            if (attributes.contains(SHARING_MODE_ATTRIBUTE)) {
-                generalSharingMode = resolveGeneralSharingMode(parentOrgId, connectionId, resourceType);
-            }
-            boolean includeGeneralSharingMode = (generalSharingMode != null);
+            Map<String, PolicyEnum> sharingPolicyByOrgId = attributes.contains(SHARING_MODE_ATTRIBUTE)
+                    ? getSharingPoliciesByPolicyHoldingOrgId(parentOrgId, connectionId, resourceType)
+                    : Collections.emptyMap();
+            ConnectionSharingModeDTO generalSharingMode = resolveSharingMode(sharingPolicyByOrgId.get(parentOrgId));
 
             int fetchLimit = (limit == 0) ? limit : limit + 1;
             List<ConnectionAssociation> connectionAssociations = handler.getConnectionAssociations(
@@ -306,23 +305,18 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             }
 
             for (ConnectionAssociation connectionAssociation : connectionAssociations) {
-                sharedOrgsList.add(resolveConnectionOrgDetails(connectionAssociation, attributes));
-            }
-            if (!includeGeneralSharingMode && attributes.contains(SHARING_MODE_ATTRIBUTE)) {
-                int parentOrgDepth = getOrganizationManager().getOrganizationDepthInHierarchy(parentOrgId);
-                List<ResponseConnectionOrgDetailsDTO> directChildOrgs = sharedOrgsList.stream()
-                        .filter(orgDetails -> orgDetails.getDepthFromRoot() - parentOrgDepth == 1)
-                        .toList();
-                for (ResponseConnectionOrgDetailsDTO orgDetails : directChildOrgs) {
-                    ConnectionSharingModeDTO sharingMode = resolveSelectiveSharingMode(
-                            parentOrgId, connectionId, orgDetails.getOrgId(), resourceType);
-                    orgDetails.setSharingMode(sharingMode);
+                ResponseConnectionOrgDetailsDTO orgDetails = resolveConnectionOrgDetails(connectionAssociation);
+                if (generalSharingMode == null) {
+                    // The connection is selectively shared, hence the sharing mode is resolved for every organization.
+                    PolicyEnum policy = sharingPolicyByOrgId.get(orgDetails.getOrgId());
+                    orgDetails.setSharingMode(resolveSharingMode(policy));
                 }
+                sharedOrgsList.add(orgDetails);
             }
 
             return buildResponseWithCursors(sharedOrgsList, connectionAssociations, generalSharingMode,
                     beforeCursor, afterCursor, hasMoreItems);
-        } catch (OrganizationManagementException e) {
+        } catch (OrganizationManagementException | ResourceSharingPolicyMgtException e) {
             throw new ConnectionSharingMgtServerException(ERROR_CODE_GET_SHARED_CONNECTIONS.getCode(),
                     ERROR_CODE_GET_SHARED_CONNECTIONS.getMessage(),
                     ERROR_CODE_GET_SHARED_CONNECTIONS.getDescription(), e);
@@ -408,54 +402,33 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         }
     }
 
-    private ConnectionSharingModeDTO resolveGeneralSharingMode(String parentOrgId, String connectionId,
-                                                               ResourceType resourceType)
-            throws OrganizationManagementException {
+    private Map<String, PolicyEnum> getSharingPoliciesByPolicyHoldingOrgId(String parentOrgId, String connectionId,
+                                                                           ResourceType resourceType)
+            throws ResourceSharingPolicyMgtException {
 
-        try {
-            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result =
-                    getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
-                            parentOrgId, resourceType.name(), connectionId);
-
-            if (result != null && result.size() == 1) {
-                ResourceSharingPolicy resourceSharingPolicy = result.entrySet().iterator().next().getKey();
-                if (resourceSharingPolicy.getSharingPolicy() == PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS) {
-                    ConnectionSharingModeDTO modeDTO = new ConnectionSharingModeDTO();
-                    modeDTO.setPolicy(resourceSharingPolicy.getSharingPolicy());
-                    return modeDTO;
-                }
-            }
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result =
+                getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
+                        parentOrgId, resourceType.name(), connectionId);
+        if (result == null || result.isEmpty()) {
+            return Collections.emptyMap();
         }
-        return null;
+        Map<String, PolicyEnum> sharingPolicyByOrgId = new HashMap<>();
+        for (ResourceSharingPolicy resourceSharingPolicy : result.keySet()) {
+            sharingPolicyByOrgId.put(resourceSharingPolicy.getPolicyHoldingOrgId(),
+                    resourceSharingPolicy.getSharingPolicy());
+        }
+        return sharingPolicyByOrgId;
     }
 
-    private ConnectionSharingModeDTO resolveSelectiveSharingMode(String initiatingOrgId, String connectionId,
-                                                                 String subOrgId, ResourceType resourceType)
-            throws OrganizationManagementException {
+    private ConnectionSharingModeDTO resolveSharingMode(PolicyEnum policy) {
 
-        try {
-            Map<ResourceSharingPolicy, List<SharedResourceAttribute>> result =
-                    getResourceSharingPolicyHandlerService().getResourceSharingPolicyAndAttributesByInitiatingOrgId(
-                            initiatingOrgId, resourceType.name(), connectionId);
-
-            if (result != null && !result.isEmpty()) {
-                for (Map.Entry<ResourceSharingPolicy, List<SharedResourceAttribute>> entry : result.entrySet()) {
-                    ResourceSharingPolicy policy = entry.getKey();
-                    if (subOrgId.equals(policy.getPolicyHoldingOrgId()) &&
-                            policy.getSharingPolicy() ==
-                                    PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN) {
-                        ConnectionSharingModeDTO modeDTO = new ConnectionSharingModeDTO();
-                        modeDTO.setPolicy(policy.getSharingPolicy());
-                        return modeDTO;
-                    }
-                }
-            }
-        } catch (ResourceSharingPolicyMgtException e) {
-            throw new OrganizationManagementException(e.getMessage(), e.getDescription(), e.getErrorCode());
+        if (policy == null) {
+            return null;
         }
-        return null;
+
+        ConnectionSharingModeDTO modeDTO = new ConnectionSharingModeDTO();
+        modeDTO.setPolicy(policy);
+        return modeDTO;
     }
 
     private String resolveParentOrgId(List<ExpressionNode> expressionNodes, String initiatingOrgId)
@@ -482,8 +455,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         return response;
     }
 
-    private ResponseConnectionOrgDetailsDTO resolveConnectionOrgDetails(
-            ConnectionAssociation connectionAssociation, List<String> attributes)
+    private ResponseConnectionOrgDetailsDTO resolveConnectionOrgDetails(ConnectionAssociation connectionAssociation)
             throws OrganizationManagementException {
 
         ResponseConnectionOrgDetailsDTO details = new ResponseConnectionOrgDetailsDTO();
@@ -494,7 +466,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         details.setOrgId(org.getId());
         details.setOrgName(org.getName());
         details.setOrgHandle(org.getOrganizationHandle());
-        details.setStatus(org.getStatus() != null ? org.getStatus().toString() : null);
+        details.setStatus(org.getStatus() != null ? org.getStatus() : null);
         details.setOrgRef("/t/" + tenantDomain + "/api/server/v1/organizations/" + org.getId());
         details.setHasChildren(org.hasChildren());
         details.setDepthFromRoot(getOrganizationManager().getOrganizationDepthInHierarchy(org.getId()));
@@ -522,11 +494,11 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
         boolean isLastPage = !hasMoreItems && (after != 0 || before == 0);
 
         if (!isFirstPage && !connectionAssociations.isEmpty()) {
-            previousToken = connectionAssociations.get(0).getId();
+            previousToken = connectionAssociations.getFirst().getId();
         }
 
         if (!isLastPage && !connectionAssociations.isEmpty()) {
-            nextToken = connectionAssociations.get(connectionAssociations.size() - 1).getId();
+            nextToken = connectionAssociations.getLast().getId();
         }
 
         response.setNextPageCursor(nextToken);
@@ -558,8 +530,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
     private void setExpressionNodeList(Node node, List<ExpressionNode> expression)
             throws OrganizationManagementClientException {
 
-        if (node instanceof ExpressionNode) {
-            ExpressionNode expressionNode = (ExpressionNode) node;
+        if (node instanceof ExpressionNode expressionNode) {
             String attributeValue = expressionNode.getAttributeValue();
             if (StringUtils.isNotBlank(attributeValue)) {
                 if (attributeValue.startsWith(ORGANIZATION_ATTRIBUTES_FIELD_PREFIX)) {
