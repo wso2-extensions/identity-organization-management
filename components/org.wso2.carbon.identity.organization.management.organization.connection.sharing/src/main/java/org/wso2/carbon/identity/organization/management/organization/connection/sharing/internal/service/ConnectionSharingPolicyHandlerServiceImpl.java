@@ -283,13 +283,13 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             List<String> childOrgIds = getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive);
 
             Map<String, PolicyEnum> sharingPolicyByOrgId = attributes.contains(SHARING_MODE_ATTRIBUTE)
-                    ? getSharingPoliciesByPolicyHoldingOrgId(parentOrgId, connectionId, resourceType)
+                    ? getSharingPoliciesByPolicyHoldingOrgId(initiatingOrgId, connectionId, resourceType)
                     : Collections.emptyMap();
-            ConnectionSharingModeDTO generalSharingMode = resolveSharingMode(sharingPolicyByOrgId.get(parentOrgId));
+            ConnectionSharingModeDTO generalSharingMode = resolveSharingMode(sharingPolicyByOrgId.get(initiatingOrgId));
 
             int fetchLimit = (limit == 0) ? limit : limit + 1;
             List<ConnectionAssociation> connectionAssociations = handler.getConnectionAssociations(
-                    connectionId, parentOrgId, childOrgIds, expressionNodes, sortOrder, fetchLimit);
+                    connectionId, initiatingOrgId, childOrgIds, expressionNodes, sortOrder, fetchLimit);
 
             if (CollectionUtils.isEmpty(connectionAssociations)) {
                 return buildEmptyResponseToGet(generalSharingMode);
@@ -530,7 +530,8 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
     private void setExpressionNodeList(Node node, List<ExpressionNode> expression)
             throws OrganizationManagementClientException {
 
-        if (node instanceof ExpressionNode expressionNode) {
+        if (node instanceof ExpressionNode) {
+            ExpressionNode expressionNode = (ExpressionNode) node;
             String attributeValue = expressionNode.getAttributeValue();
             if (StringUtils.isNotBlank(attributeValue)) {
                 if (attributeValue.startsWith(ORGANIZATION_ATTRIBUTES_FIELD_PREFIX)) {

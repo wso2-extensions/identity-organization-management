@@ -545,6 +545,43 @@ public class ConnectionSharingPolicyHandlerServiceImplTest {
                 anyString(), anyString());
     }
 
+    @Test
+    public void testGetConnectionSharedOrganizationsWithParentFilterUsesConnectionOwner() throws Exception {
+
+        // A parent filter selects a descendant organization: it scopes the listed organizations, while the
+        // connection and its sharing policies stay with the initiating (owner) organization.
+        when(organizationManager.getChildOrganizationsIds(CHILD_ORG_ID, false))
+                .thenReturn(Collections.singletonList(GRAND_CHILD_ORG_ID));
+        when(handler.getConnectionAssociations(anyString(), anyString(), anyList(), anyList(), anyString(), anyInt()))
+                .thenReturn(new java.util.ArrayList<>(
+                        Collections.singletonList(associationOfOrg(GRAND_CHILD_ORG_ID))));
+        mockOrganization(GRAND_CHILD_ORG_ID, 2);
+
+        Map<ResourceSharingPolicy, List<SharedResourceAttribute>> policies = new java.util.LinkedHashMap<>();
+        policies.put(sharingPolicy(GRAND_CHILD_ORG_ID,
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN), Collections.emptyList());
+        when(policyService.getResourceSharingPolicyAndAttributesByInitiatingOrgId(INITIATING_ORG_ID,
+                RESOURCE_TYPE.name(), CONNECTION_ID)).thenReturn(policies);
+
+        GetConnectionSharedOrgsDTO dto = getSharedOrgsDto();
+        dto.setAttributes(Collections.singletonList("sharingMode"));
+        dto.setFilter("parentId eq " + CHILD_ORG_ID);
+
+        ResponseSharedConnectionOrgsDTO response = service.getConnectionSharedOrganizations(dto);
+
+        // The organizations are scoped to the children of the filtered parent, while the associations and the
+        // sharing policies are read against the connection owner.
+        verify(organizationManager).getChildOrganizationsIds(CHILD_ORG_ID, false);
+        verify(handler).getConnectionAssociations(eq(CONNECTION_ID), eq(INITIATING_ORG_ID), anyList(), anyList(),
+                anyString(), anyInt());
+        verify(policyService).getResourceSharingPolicyAndAttributesByInitiatingOrgId(INITIATING_ORG_ID,
+                RESOURCE_TYPE.name(), CONNECTION_ID);
+        Assert.assertEquals(response.getSharedOrgs().size(), 1);
+        Assert.assertNotNull(response.getSharedOrgs().get(0).getSharingMode());
+        Assert.assertEquals(response.getSharedOrgs().get(0).getSharingMode().getPolicy(),
+                PolicyEnum.SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN);
+    }
+
     private ConnectionAssociation associationOfOrg(String orgId) {
 
         return new ConnectionAssociation.Builder()
