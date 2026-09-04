@@ -232,9 +232,18 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
                     // Not a connection resource type (e.g. USER / APPLICATION) or no handler registered for it.
                     continue;
                 }
+                if (!handler.isSharingEnabled()) {
+                    // Sharing is switched off for this connection type in this server.
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
+                                resourceType + " to the created organization: " + createdOrgId +
+                                " because sharing is disabled for the connection type.");
+                    }
+                    continue;
+                }
                 try {
                     String parentOrgId = ancestorOrgs.getFirst();
-                    if (isConnectionSharedWithParent(resourceType, policy, parentOrgId)) {
+                    if (!isConnectionSharedWithParent(resourceType, policy, parentOrgId)) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
                                     policy.getResourceType() + " from the holding organization: " +
