@@ -224,9 +224,8 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
                     String invitedTenantDomain = resolveTenantDomain(invitedOrganizationId);
                     int invitedTenantId = IdentityTenantUtil.getTenantId(invitedTenantDomain);
                     AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(invitedTenantId);
-                    String userDomainQualifiedUserName = UserCoreUtil
-                            .addDomainToName(invitation.getUsername(), invitation.getUserDomain());
-                    if (userStoreManager.isExistingUser(userDomainQualifiedUserName)) {
+                    String invitedOrgQualifiedUserName = getInvitedOrgQualifiedUserName(invitation.getUsername());
+                    if (userStoreManager.isExistingUser(invitedOrgQualifiedUserName)) {
                         LOG.error("User: " + invitation.getUsername() + " exists in the organization: "
                                 + invitedOrganizationId + ". Hence deleting the invitation with the " +
                                 "confirmation code: " + confirmationCode);
@@ -625,6 +624,23 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         return groupAssignments;
     }
 
+    /**
+     * Qualify the given user name with the user store domain of the invited organization.
+     * <p>
+     * The shared user is always created in the domain configured by
+     * {@code OrganizationUserInvitation.PrimaryUserDomain} in the invited organization, so any lookup against the
+     * invited organization's user realm has to use that domain. The user store domain carried by the invitation is
+     * the one the user resides in at the parent organization, and it is not guaranteed to exist in the invited
+     * organization.
+     *
+     * @param username Username of the invited user.
+     * @return Username qualified with the user store domain of the invited organization.
+     */
+    private String getInvitedOrgQualifiedUserName(String username) {
+
+        return UserCoreUtil.addDomainToName(username, IdentityUtil.getProperty(ORG_USER_INVITATION_USER_DOMAIN));
+    }
+
     private boolean isUserExistAtInvitedOrganization(String domainQualifiedUserName)
             throws UserStoreException {
 
@@ -775,7 +791,7 @@ public class InvitationCoreServiceImpl implements InvitationCoreService {
         InvitationResult result = new InvitationResult();
         result.setUsername(username);
         try {
-            if (isUserExistAtInvitedOrganization(userDomainQualifiedUserName)) {
+            if (isUserExistAtInvitedOrganization(getInvitedOrgQualifiedUserName(username))) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("User " + invitedUserId + " is already exists in the organization "
                             + invitedOrgId);
