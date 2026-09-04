@@ -127,7 +127,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test(description = "The happy path persists the organization and reports the new ID forward.")
+    @Test(description = "The happy path persists the organization with the details the flow collected.")
     public void testSuccessfulCreation() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -135,8 +135,6 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
-        Assert.assertEquals(response.getContextProperties().get("org.created.id"), GENERATED_ORG_ID);
-        Assert.assertEquals(response.getContextProperties().get("org.created.name"), ORG_NAME);
 
         Organization created = captureCreatedOrganization();
         Assert.assertTrue(created instanceof TenantTypeOrganization);

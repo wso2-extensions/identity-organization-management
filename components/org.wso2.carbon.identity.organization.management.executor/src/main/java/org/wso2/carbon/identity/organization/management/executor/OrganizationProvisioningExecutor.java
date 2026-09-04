@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.organization.management.service.util.Utils;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,9 +62,6 @@ public class OrganizationProvisioningExecutor implements Executor {
     private static final Log LOG = LogFactory.getLog(OrganizationProvisioningExecutor.class);
 
     private static final String EXECUTOR_NAME = "OrganizationProvisioningExecutor";
-
-    private static final String CTX_ORGANIZATION_ID = "org.created.id";
-    private static final String CTX_ORGANIZATION_NAME = "org.created.name";
 
     /**
      * Handle rules mirrored from the organization handle field in the console and the flow UI, which
@@ -122,16 +118,10 @@ public class OrganizationProvisioningExecutor implements Executor {
         }
 
         try {
-            String createdOrganizationId = createOrganization(context, parentOrganizationId);
+            createOrganization(context, parentOrganizationId);
 
             ExecutorResponse response = new ExecutorResponse();
             response.setResult(Constants.ExecutorStatus.STATUS_COMPLETE);
-
-            Map<String, Object> properties = new HashMap<>();
-            properties.put(CTX_ORGANIZATION_ID, createdOrganizationId);
-            properties.put(CTX_ORGANIZATION_NAME, organizationName);
-            response.setContextProperty(properties);
-
             return response;
         } catch (OrganizationManagementException e) {
             LOG.error("Failed to create organization: " + organizationName, e);
@@ -146,10 +136,9 @@ public class OrganizationProvisioningExecutor implements Executor {
      *
      * @param context              Flow execution context carrying the organization and user details.
      * @param parentOrganizationId ID of the organization the new organization is created under.
-     * @return ID of the created organization.
      * @throws OrganizationManagementException If the organization could not be created.
      */
-    private String createOrganization(FlowExecutionContext context, String parentOrganizationId)
+    private void createOrganization(FlowExecutionContext context, String parentOrganizationId)
             throws OrganizationManagementException {
 
         OrganizationManager organizationManager =
@@ -184,8 +173,6 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         organizationManager.addOrganization(organization);
         LOG.debug("Organization created via onboarding flow. ID: " + organization.getId());
-
-        return organization.getId();
     }
 
     /**
