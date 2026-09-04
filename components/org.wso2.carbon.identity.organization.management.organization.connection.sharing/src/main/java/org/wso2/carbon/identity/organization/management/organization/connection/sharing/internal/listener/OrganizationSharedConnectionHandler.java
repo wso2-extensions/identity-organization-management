@@ -243,7 +243,7 @@ public class OrganizationSharedConnectionHandler extends AbstractEventHandler {
                 }
                 try {
                     String parentOrgId = ancestorOrgs.getFirst();
-                    if (isConnectionSharedWithParent(resourceType, policy, parentOrgId)) {
+                    if (!isConnectionSharedWithParent(resourceType, policy, parentOrgId)) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Skipping sharing connection: " + policy.getResourceId() + " of type: " +
                                     policy.getResourceType() + " from the holding organization: " +

@@ -282,10 +282,13 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
             String parentOrgId = resolveParentOrgId(expressionNodes, initiatingOrgId);
             List<String> childOrgIds = getOrganizationManager().getChildOrganizationsIds(parentOrgId, recursive);
 
-            Map<String, PolicyEnum> sharingPolicyByOrgId = attributes.contains(SHARING_MODE_ATTRIBUTE)
-                    ? getSharingPoliciesByPolicyHoldingOrgId(initiatingOrgId, connectionId, resourceType)
-                    : Collections.emptyMap();
-            ConnectionSharingModeDTO generalSharingMode = resolveSharingMode(sharingPolicyByOrgId.get(initiatingOrgId));
+            Map<String, PolicyEnum> sharingPolicyByOrgId = new HashMap<>();
+            ConnectionSharingModeDTO generalSharingMode = null;
+            if (attributes.contains(SHARING_MODE_ATTRIBUTE)) {
+                sharingPolicyByOrgId = getSharingPoliciesByPolicyHoldingOrgId(initiatingOrgId, connectionId,
+                        resourceType);
+                generalSharingMode = resolveSharingMode(sharingPolicyByOrgId.get(initiatingOrgId));
+            }
 
             int fetchLimit = (limit == 0) ? limit : limit + 1;
             List<ConnectionAssociation> connectionAssociations = handler.getConnectionAssociations(
@@ -306,7 +309,7 @@ public class ConnectionSharingPolicyHandlerServiceImpl implements ConnectionShar
 
             for (ConnectionAssociation connectionAssociation : connectionAssociations) {
                 ResponseConnectionOrgDetailsDTO orgDetails = resolveConnectionOrgDetails(connectionAssociation);
-                if (generalSharingMode == null) {
+                if (generalSharingMode == null && attributes.contains(SHARING_MODE_ATTRIBUTE)) {
                     // The connection is selectively shared, hence the sharing mode is resolved for every organization.
                     PolicyEnum policy = sharingPolicyByOrgId.get(orgDetails.getOrgId());
                     orgDetails.setSharingMode(resolveSharingMode(policy));

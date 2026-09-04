@@ -244,13 +244,54 @@ public class OrganizationSharedConnectionHandlerTest {
         when(inheritedPolicy.getInitiatingOrgId()).thenReturn(OWNER_ORG_ID);
         when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
                 .thenReturn(policyMap(PARENT_ORG_ID, inheritedPolicy));
-        when(associationManager.getSharedConnectionId(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(java.util.Optional.empty());
+        // The connection is shared with the immediate parent, so the created organization inherits it.
+        when(associationManager.getSharedConnectionId(RESOURCE_TYPE.name(), CONNECTION_ID, OWNER_ORG_ID,
+                PARENT_ORG_ID)).thenReturn(java.util.Optional.of("shadow-in-parent"));
 
         eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
 
         verify(handler).shareConnectionToOrg(CONNECTION_ID, CREATED_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
                 OWNER_ORG_ID);
+    }
+
+    @Test
+    public void testPostAddSkipsWhenConnectionNotSharedWithImmediateParent() throws Exception {
+
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        ResourceSharingPolicy inheritedPolicy = mock(ResourceSharingPolicy.class);
+        when(inheritedPolicy.getResourceType()).thenReturn(RESOURCE_TYPE);
+        when(inheritedPolicy.getSharingPolicy()).thenReturn(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(inheritedPolicy.getResourceId()).thenReturn(CONNECTION_ID);
+        when(inheritedPolicy.getInitiatingOrgId()).thenReturn(OWNER_ORG_ID);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, inheritedPolicy));
+        // No shadow of the connection exists in the immediate parent, so the created organization must not get one
+        // either; a shadow may only be created below an organization that already holds the connection.
+        when(associationManager.getSharedConnectionId(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(java.util.Optional.empty());
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler, never()).shareConnectionToOrg(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPostAddSharesWhenImmediateParentOwnsTheConnection() throws Exception {
+
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        // The immediate parent owns the connection, hence the parent connection is the original connection itself
+        // and no association lookup is required.
+        ResourceSharingPolicy ownedPolicy = policy(RESOURCE_TYPE, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, ownedPolicy));
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler).shareConnectionToOrg(CONNECTION_ID, CREATED_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
+                PARENT_ORG_ID);
+        verify(associationManager, never()).getSharedConnectionId(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
