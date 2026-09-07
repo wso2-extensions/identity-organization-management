@@ -46,6 +46,16 @@ public interface ConnectionTypeHandler {
     ResourceType getResourceType();
 
     /**
+     * Returns whether sharing is enabled for this connection type in the current server.
+     *
+     * @return {@code true} if connections of this type may be shared with organizations.
+     */
+    default boolean isSharingEnabled() {
+
+        return true;
+    }
+
+    /**
      * Validates that the given connection is eligible to be shared, before any sharing is initiated. Implementations
      * reject connections that must not be shared (e.g. trusted token issuers or restricted authenticators) with a
      * client error. This is invoked synchronously by the policy handler before the asynchronous sharing process is

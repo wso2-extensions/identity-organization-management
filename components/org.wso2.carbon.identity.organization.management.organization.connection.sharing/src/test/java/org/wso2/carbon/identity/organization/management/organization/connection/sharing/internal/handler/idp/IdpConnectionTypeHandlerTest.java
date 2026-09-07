@@ -119,6 +119,29 @@ public class IdpConnectionTypeHandlerTest {
     }
 
     @Test
+    public void testIsSharingEnabledWhenConfigurationIsUnset() {
+
+        // Identity provider sharing is enabled unless the configuration is explicitly disabled.
+        Assert.assertTrue(handler.isSharingEnabled());
+    }
+
+    @Test
+    public void testIsSharingEnabledWhenConfigurationIsDisabled() {
+
+        mockedIdentityUtil.when(() -> IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY)).thenReturn("false");
+
+        Assert.assertFalse(handler.isSharingEnabled());
+    }
+
+    @Test
+    public void testIsSharingEnabledWhenConfigurationIsEnabled() {
+
+        mockedIdentityUtil.when(() -> IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY)).thenReturn("true");
+
+        Assert.assertTrue(handler.isSharingEnabled());
+    }
+
+    @Test
     public void testValidatePassesForShareableConnection() throws Exception {
 
         stubResolvedIdp(shareableIdp());

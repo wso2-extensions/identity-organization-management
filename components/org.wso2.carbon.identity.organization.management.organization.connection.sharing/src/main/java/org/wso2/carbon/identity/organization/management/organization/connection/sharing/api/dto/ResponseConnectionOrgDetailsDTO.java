@@ -20,8 +20,8 @@ package org.wso2.carbon.identity.organization.management.organization.connection
 
 /**
  * DTO representing details of a single organization that a connection has been shared with.
- * {@code sharingMode} is nullable — only populated when {@code attributes=sharingMode} was requested
- * and the policy is {@code SELECTED_ORG_WITH_ALL_EXISTING_AND_FUTURE_CHILDREN}.
+ * {@code sharingMode} is nullable — only populated when {@code attributes=sharingMode} was requested and the
+ * organization holds a sharing policy of its own.
  */
 public class ResponseConnectionOrgDetailsDTO {
 

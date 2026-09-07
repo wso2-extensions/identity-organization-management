@@ -109,6 +109,7 @@ public class OrganizationSharedConnectionHandlerTest {
         when(dataHolder.getResourceSharingPolicyHandlerService()).thenReturn(policyService);
         when(dataHolder.getConnectionTypeHandler(RESOURCE_TYPE)).thenReturn(handler);
         when(handler.getResourceType()).thenReturn(RESOURCE_TYPE);
+        when(handler.isSharingEnabled()).thenReturn(true);
 
         ConnectionSharingInitiatorContext context = mock(ConnectionSharingInitiatorContext.class);
         when(context.getSharingInitiatedTenantDomain()).thenReturn("carbon.super");
@@ -243,13 +244,89 @@ public class OrganizationSharedConnectionHandlerTest {
         when(inheritedPolicy.getInitiatingOrgId()).thenReturn(OWNER_ORG_ID);
         when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
                 .thenReturn(policyMap(PARENT_ORG_ID, inheritedPolicy));
-        when(associationManager.getSharedConnectionId(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(java.util.Optional.empty());
+        // The connection is shared with the immediate parent, so the created organization inherits it.
+        when(associationManager.getSharedConnectionId(RESOURCE_TYPE.name(), CONNECTION_ID, OWNER_ORG_ID,
+                PARENT_ORG_ID)).thenReturn(java.util.Optional.of("shadow-in-parent"));
 
         eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
 
         verify(handler).shareConnectionToOrg(CONNECTION_ID, CREATED_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
                 OWNER_ORG_ID);
+    }
+
+    @Test
+    public void testPostAddSkipsWhenConnectionNotSharedWithImmediateParent() throws Exception {
+
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        ResourceSharingPolicy inheritedPolicy = mock(ResourceSharingPolicy.class);
+        when(inheritedPolicy.getResourceType()).thenReturn(RESOURCE_TYPE);
+        when(inheritedPolicy.getSharingPolicy()).thenReturn(PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(inheritedPolicy.getResourceId()).thenReturn(CONNECTION_ID);
+        when(inheritedPolicy.getInitiatingOrgId()).thenReturn(OWNER_ORG_ID);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, inheritedPolicy));
+        // No shadow of the connection exists in the immediate parent, so the created organization must not get one
+        // either; a shadow may only be created below an organization that already holds the connection.
+        when(associationManager.getSharedConnectionId(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(java.util.Optional.empty());
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler, never()).shareConnectionToOrg(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPostAddSharesWhenImmediateParentOwnsTheConnection() throws Exception {
+
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        // The immediate parent owns the connection, hence the parent connection is the original connection itself
+        // and no association lookup is required.
+        ResourceSharingPolicy ownedPolicy = policy(RESOURCE_TYPE, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, ownedPolicy));
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler).shareConnectionToOrg(CONNECTION_ID, CREATED_ORG_ID, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS,
+                PARENT_ORG_ID);
+        verify(associationManager, never()).getSharedConnectionId(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void testPostAddSkipsWhenSharingDisabledForConnectionType() throws Exception {
+
+        // Sharing is switched off for the connection type in this server, so nothing is propagated to the created
+        // organization.
+        when(handler.isSharingEnabled()).thenReturn(false);
+        when(organizationManager.getAncestorOrganizationIds(CREATED_ORG_ID))
+                .thenReturn(Arrays.asList(CREATED_ORG_ID, PARENT_ORG_ID));
+        ResourceSharingPolicy futurePolicy = policy(RESOURCE_TYPE, PolicyEnum.ALL_EXISTING_AND_FUTURE_ORGS);
+        when(policyService.getResourceSharingPoliciesGroupedByPolicyHoldingOrgId(any()))
+                .thenReturn(policyMap(PARENT_ORG_ID, futurePolicy));
+
+        eventHandler.handleEvent(addEvent(CREATED_ORG_ID));
+
+        verify(handler, never()).shareConnectionToOrg(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPostDeleteCleansUpEvenWhenSharingDisabledForConnectionType() throws Exception {
+
+        // Cleanup of already shared connections is never gated on the connection type being shareable, so no
+        // shadow connections are orphaned when the connection type is disabled.
+        when(handler.isSharingEnabled()).thenReturn(false);
+        when(associationManager.getConnectionAssociationsByResidentOrg(DELETING_ORG_ID)).thenReturn(
+                Collections.singletonList(association(CONNECTION_ID, DELETING_ORG_ID, "shadow-a", "shared-org-a")));
+        when(associationManager.getConnectionAssociationsBySharedOrg(DELETING_ORG_ID)).thenReturn(
+                Collections.singletonList(association(CONNECTION_ID, OWNER_ORG_ID, "shadow-c", DELETING_ORG_ID)));
+
+        eventHandler.handleEvent(deleteEvent(DELETING_ORG_ID));
+
+        verify(handler).unshareConnectionFromAllOrgs(CONNECTION_ID, DELETING_ORG_ID);
+        verify(handler).unshareConnectionFromOrg(CONNECTION_ID, DELETING_ORG_ID, OWNER_ORG_ID);
+        verify(associationManager).deleteConnectionAssociationsByOrganizationId(DELETING_ORG_ID);
     }
 
     // ----- Routing -----

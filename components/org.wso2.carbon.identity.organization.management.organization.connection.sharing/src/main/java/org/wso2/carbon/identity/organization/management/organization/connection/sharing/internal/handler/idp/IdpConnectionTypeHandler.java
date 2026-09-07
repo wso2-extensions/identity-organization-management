@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.organization.management.organization.connection.
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.AbstractConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConnectionTypeHandler;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.util.ConnectionSharingUtil;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.DISABLED_AUTHENTICATORS_PROPERTY;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ENABLE_IDP_SHARING_PROPERTY;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_SHAREABLE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR;
@@ -73,11 +73,16 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
     }
 
     @Override
+    public boolean isSharingEnabled() {
+
+        return ConnectionSharingUtil.isIdpSharingEnabled();
+    }
+
+    @Override
     public void validateConnectionShareEligibility(String connectionId, String initiatingOrgId)
             throws ConnectionSharingMgtException {
 
-        String idpSharingEnabled = IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY);
-        if (StringUtils.isNotBlank(idpSharingEnabled) && !Boolean.parseBoolean(idpSharingEnabled)) {
+        if (!isSharingEnabled()) {
             throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
                     ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(), "Identity Provider sharing is disabled.");
         }
