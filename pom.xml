@@ -60,6 +60,7 @@
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
         <module>components/org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.capability.governance</module>
+        <module>components/org.wso2.carbon.identity.organization.management.executor</module>
     </modules>
 
     <dependencyManagement>
@@ -209,6 +210,12 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.executor</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.user.invitation.management</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
@@ -246,6 +253,11 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.flow.execution.engine</artifactId>
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
