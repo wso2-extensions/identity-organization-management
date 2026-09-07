@@ -132,6 +132,13 @@ public class EmailDomainValidationHandler extends AbstractPostAuthnHandler {
     public PostAuthnHandlerFlowStatus handle(HttpServletRequest request, HttpServletResponse response,
                                              AuthenticationContext context) throws PostAuthenticationFailedException {
 
+        if (!FrameworkUtils.isStepBasedSequenceHandlerExecuted(context)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Step based sequence handler has not been executed. Skipping email domain validation.");
+            }
+            return PostAuthnHandlerFlowStatus.SUCCESS_COMPLETED;
+        }
+
         SequenceConfig sequenceConfig = context.getSequenceConfig();
         for (Map.Entry<Integer, StepConfig> entry : sequenceConfig.getStepMap().entrySet()) {
             StepConfig stepConfig = entry.getValue();
@@ -155,8 +162,10 @@ public class EmailDomainValidationHandler extends AbstractPostAuthnHandler {
                             context.getExternalIdP());
                 }
 
-                Optional<String> emailDomain =
-                        extractEmailDomain(localClaimValues.get(FrameworkConstants.EMAIL_ADDRESS_CLAIM));
+                Optional<String> emailDomain = Optional.empty();
+                if (localClaimValues != null) {
+                    emailDomain = extractEmailDomain(localClaimValues.get(FrameworkConstants.EMAIL_ADDRESS_CLAIM));
+                }
 
                 if (!emailDomain.isPresent()) {
                     if (LOG.isDebugEnabled()) {
