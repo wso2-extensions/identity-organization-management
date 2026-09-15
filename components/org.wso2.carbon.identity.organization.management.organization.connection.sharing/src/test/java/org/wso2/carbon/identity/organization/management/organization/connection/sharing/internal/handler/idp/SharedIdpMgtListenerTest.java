@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
 import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
@@ -59,6 +60,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ENABLE_IDP_SHARING_PROPERTY;
 
 /**
  * Unit tests for {@link SharedIdpMgtListener}: the guard rails that prevent direct creation / deletion of a shared
@@ -124,6 +126,33 @@ public class SharedIdpMgtListenerTest {
     public void testGetDefaultOrderId() {
 
         Assert.assertEquals(listener.getDefaultOrderId(), 301);
+    }
+
+    // ----- isEnable -----
+
+    @Test
+    public void testIsEnableWhenIdpSharingConfigurationIsUnset() throws Exception {
+
+        try (MockedStatic<IdentityUtil> mockedIdentityUtil = mockStatic(IdentityUtil.class)) {
+            // Neither the listener configuration nor the identity provider sharing configuration is set.
+            mockedIdentityUtil.when(() -> IdentityUtil.readEventListenerProperty(anyString(), anyString()))
+                    .thenReturn(null);
+            mockedIdentityUtil.when(() -> IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY)).thenReturn(null);
+
+            Assert.assertTrue(listener.isEnable());
+        }
+    }
+
+    @Test
+    public void testIsEnableFalseWhenIdpSharingDisabled() throws Exception {
+
+        try (MockedStatic<IdentityUtil> mockedIdentityUtil = mockStatic(IdentityUtil.class)) {
+            mockedIdentityUtil.when(() -> IdentityUtil.readEventListenerProperty(anyString(), anyString()))
+                    .thenReturn(null);
+            mockedIdentityUtil.when(() -> IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY)).thenReturn("false");
+
+            Assert.assertFalse(listener.isEnable());
+        }
     }
 
     // ----- doPreAddIdP -----

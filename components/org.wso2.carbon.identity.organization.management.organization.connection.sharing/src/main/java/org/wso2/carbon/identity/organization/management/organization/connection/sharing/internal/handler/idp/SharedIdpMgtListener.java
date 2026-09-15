@@ -98,6 +98,12 @@ public class SharedIdpMgtListener extends AbstractIdentityProviderMgtListener {
     }
 
     @Override
+    public boolean isEnable() {
+
+        return ConnectionSharingUtil.isIdpSharingEnabled();
+    }
+
+    @Override
     public boolean doPreAddIdP(IdentityProvider identityProvider, String tenantDomain)
             throws IdentityProviderManagementException {
 

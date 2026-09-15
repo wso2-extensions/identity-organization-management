@@ -70,6 +70,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -77,6 +78,8 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.CLAIM_EMAIL_ADDRESS;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ErrorMessage.ERROR_CODE_USER_ALREADY_EXISTS_INVITED_ORGANIZATION;
+import static org.wso2.carbon.identity.organization.user.invitation.management.constant.UserInvitationMgtConstants.ORG_USER_INVITATION_USER_DOMAIN;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_CONF_CODE;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_EMAIL;
 import static org.wso2.carbon.identity.organization.user.invitation.management.constants.InvitationTestConstants.INV_01_INVITATION_ID;
@@ -511,6 +514,237 @@ public class InvitationCoreServiceImplTest {
         }
     }
 
+
+    /**
+     * The invited organization does not have the user store domain the parent user resides in. The existence check
+     * against the invited organization must therefore use the invited organization's own invitation domain, not the
+     * parent's. Before the fix this check was made with the parent-qualified name, and the kernel answered with
+     * {@code UserStoreException("Invalid Domain Name")}, which surfaced as a server error.
+     * <p>
+     * See <a href="https://github.com/wso2/product-is/issues/28387">wso2/product-is#28387</a>.
+     */
+    @Test(priority = 14)
+    public void testCreateInvitationForUserInSecondaryUserStoreOfParent() throws Exception {
+
+        String username = "alexsec";
+        String parentUserStoreDomain = "SECONDARY";
+        String parentQualifiedUsername = parentUserStoreDomain + "/" + username;
+        String userId = "de828181-e1a8-4f5e-8936-f154f4ae5678";
+        String subOrgId = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
+        String parentOrgId = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
+        String tenantDomainOfSubOrg = "subOrg";
+        String tenantDomainOfParentOrg = "parentOrg";
+
+        InvitationDO invitation = new InvitationDO();
+        invitation.setUsernamesList(Collections.singletonList(username));
+        invitation.setUserDomain(parentUserStoreDomain);
+        invitation.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
+        invitation.setInvitationProperties(Collections.singletonMap("manageNotificationsInternally", "false"));
+
+        // The invited organization has no SECONDARY store, so the kernel rejects a name qualified with it.
+        when(userStoreManager.isExistingUser(parentQualifiedUsername))
+                .thenThrow(new UserStoreException("Invalid Domain Name"));
+        when(userStoreManager.isExistingUser(username)).thenReturn(false);
+
+        OrganizationManager organizationManager = mock(OrganizationManager.class);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
+        List<String> ancestors = new ArrayList<>();
+        ancestors.add(subOrgId);
+        ancestors.add(parentOrgId);
+        when(organizationManager.getAncestorOrganizationIds(anyString())).thenReturn(ancestors);
+        when(organizationManager.getParentOrganizationId(subOrgId)).thenReturn(parentOrgId);
+
+        try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtil = Mockito.mockStatic(IdentityTenantUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class);
+             MockedStatic<Utils> utils = Mockito.mockStatic(Utils.class);
+             MockedStatic<OrganizationSharedUserUtil> orgSharedUserUtil =
+                     Mockito.mockStatic(OrganizationSharedUserUtil.class)) {
+
+            identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(true))
+                    .thenAnswer(invocation -> getConnection());
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(false))
+                    .thenAnswer(invocation -> getConnection());
+            identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
+            identityUtil.when(() -> IdentityUtil.getProperty(ORG_USER_INVITATION_USER_DOMAIN))
+                    .thenReturn("PRIMARY");
+            utils.when(() -> Utils.getConnectorConfig(EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
+                    "carbon.super")).thenReturn("false");
+
+            UserRealm userRealmParentOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+            mockParentOrgDetails(userStoreManagerParentOrg, parentQualifiedUsername, userId, userRealmParentOrg,
+                    realmService, tenantDomainOfParentOrg, organizationManager, parentOrgId, identityDBUtil);
+            when(userStoreManagerParentOrg.getSecondaryUserStoreManager(parentUserStoreDomain))
+                    .thenReturn(mock(AbstractUserStoreManager.class));
+
+            UserRealm userRealmSubOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerSubOrg = mock(AbstractUserStoreManager.class);
+            mockSubOrgDetails(userStoreManagerSubOrg, parentQualifiedUsername, userRealmSubOrg, realmService,
+                    tenantDomainOfSubOrg, organizationManager, subOrgId, identityDBUtil);
+
+            orgSharedUserUtil.when(() -> OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim(userStoreManagerParentOrg, userId)).thenReturn(null);
+
+            List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation);
+            assertNotNull(createdInvitation);
+            assertEquals(createdInvitation.get(0).getStatus(), "Successful");
+            assertNotNull(createdInvitation.get(0).getConfirmationCode());
+
+            // Clean the stored invitation.
+            Invitation storedInvitation = userInvitationDAO
+                    .getInvitationWithAssignmentsByConfirmationCode(createdInvitation.get(0).getConfirmationCode());
+            userInvitationDAO.deleteInvitation(storedInvitation.getInvitationId());
+        }
+    }
+
+    /**
+     * A user with the same name already exists in the invited organization. The duplicate has to be reported as a
+     * per-user failure, not as a server error, and the check has to keep working for a parent user who resides in a
+     * secondary user store.
+     */
+    @Test(priority = 15)
+    public void testCreateInvitationWhenSharedUserAlreadyExistsInInvitedOrg() throws Exception {
+
+        String username = "alexdup";
+        String parentUserStoreDomain = "SECONDARY";
+        String parentQualifiedUsername = parentUserStoreDomain + "/" + username;
+        String userId = "de828181-e1a8-4f5e-8936-f154f4ae9012";
+        String subOrgId = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
+        String parentOrgId = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
+        String tenantDomainOfSubOrg = "subOrg";
+        String tenantDomainOfParentOrg = "parentOrg";
+
+        InvitationDO invitation = new InvitationDO();
+        invitation.setUsernamesList(Collections.singletonList(username));
+        invitation.setUserDomain(parentUserStoreDomain);
+        invitation.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
+
+        when(userStoreManager.isExistingUser(parentQualifiedUsername))
+                .thenThrow(new UserStoreException("Invalid Domain Name"));
+        // The shared user was created in the invited organization's own invitation domain.
+        when(userStoreManager.isExistingUser(username)).thenReturn(true);
+
+        OrganizationManager organizationManager = mock(OrganizationManager.class);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
+        List<String> ancestors = new ArrayList<>();
+        ancestors.add(subOrgId);
+        ancestors.add(parentOrgId);
+        when(organizationManager.getAncestorOrganizationIds(anyString())).thenReturn(ancestors);
+        when(organizationManager.getParentOrganizationId(subOrgId)).thenReturn(parentOrgId);
+
+        try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtil = Mockito.mockStatic(IdentityTenantUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class);
+             MockedStatic<OrganizationSharedUserUtil> orgSharedUserUtil =
+                     Mockito.mockStatic(OrganizationSharedUserUtil.class)) {
+
+            identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean()))
+                    .thenAnswer(invocation -> getConnection());
+            identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
+            identityUtil.when(() -> IdentityUtil.getProperty(ORG_USER_INVITATION_USER_DOMAIN))
+                    .thenReturn("PRIMARY");
+
+            UserRealm userRealmParentOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+            mockParentOrgDetails(userStoreManagerParentOrg, parentQualifiedUsername, userId, userRealmParentOrg,
+                    realmService, tenantDomainOfParentOrg, organizationManager, parentOrgId, identityDBUtil);
+            when(userStoreManagerParentOrg.getSecondaryUserStoreManager(parentUserStoreDomain))
+                    .thenReturn(mock(AbstractUserStoreManager.class));
+
+            UserRealm userRealmSubOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerSubOrg = mock(AbstractUserStoreManager.class);
+            mockSubOrgDetails(userStoreManagerSubOrg, parentQualifiedUsername, userRealmSubOrg, realmService,
+                    tenantDomainOfSubOrg, organizationManager, subOrgId, identityDBUtil);
+
+            orgSharedUserUtil.when(() -> OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim(userStoreManagerParentOrg, userId)).thenReturn(null);
+
+            List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation);
+            assertNotNull(createdInvitation);
+            assertEquals(createdInvitation.get(0).getStatus(), "Failed");
+            assertEquals(createdInvitation.get(0).getErrorMsg(),
+                    ERROR_CODE_USER_ALREADY_EXISTS_INVITED_ORGANIZATION);
+        }
+    }
+
+    /**
+     * Backward compatibility. A parent user in the primary user store, invited without an explicit user store domain,
+     * has to behave exactly as before: the invited organization is queried with the unqualified user name.
+     */
+    @Test(priority = 16)
+    public void testCreateInvitationForPrimaryStoreUserQueriesInvitedOrgWithUnqualifiedName() throws Exception {
+
+        String username = "alexpri";
+        String userId = "de828181-e1a8-4f5e-8936-f154f4ae3456";
+        String subOrgId = "dc828181-e1a8-4f5e-8936-f154f4aefa75";
+        String parentOrgId = "8d94ff8a-031f-4719-8713-c6a9819b23b2";
+        String tenantDomainOfSubOrg = "subOrg";
+        String tenantDomainOfParentOrg = "parentOrg";
+
+        InvitationDO invitation = new InvitationDO();
+        invitation.setUsernamesList(Collections.singletonList(username));
+        invitation.setUserRedirectUrl("https://localhost:8080/travel-manager-001/invitations/accept");
+        invitation.setInvitationProperties(Collections.singletonMap("manageNotificationsInternally", "false"));
+
+        when(userStoreManager.isExistingUser(username)).thenReturn(false);
+
+        OrganizationManager organizationManager = mock(OrganizationManager.class);
+        UserInvitationMgtDataHolder.getInstance().setOrganizationManagerService(organizationManager);
+        List<String> ancestors = new ArrayList<>();
+        ancestors.add(subOrgId);
+        ancestors.add(parentOrgId);
+        when(organizationManager.getAncestorOrganizationIds(anyString())).thenReturn(ancestors);
+        when(organizationManager.getParentOrganizationId(subOrgId)).thenReturn(parentOrgId);
+
+        try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
+             MockedStatic<IdentityTenantUtil> identityTenantUtil = Mockito.mockStatic(IdentityTenantUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class);
+             MockedStatic<Utils> utils = Mockito.mockStatic(Utils.class);
+             MockedStatic<OrganizationSharedUserUtil> orgSharedUserUtil =
+                     Mockito.mockStatic(OrganizationSharedUserUtil.class)) {
+
+            identityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(-1234);
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(true))
+                    .thenAnswer(invocation -> getConnection());
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(false))
+                    .thenAnswer(invocation -> getConnection());
+            identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
+            identityUtil.when(() -> IdentityUtil.getProperty(ORG_USER_INVITATION_USER_DOMAIN))
+                    .thenReturn("PRIMARY");
+            utils.when(() -> Utils.getConnectorConfig(EMAIL_VERIFICATION_NOTIFICATION_INTERNALLY_MANAGE,
+                    "carbon.super")).thenReturn("false");
+
+            UserRealm userRealmParentOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerParentOrg = mock(AbstractUserStoreManager.class);
+            mockParentOrgDetails(userStoreManagerParentOrg, username, userId, userRealmParentOrg, realmService,
+                    tenantDomainOfParentOrg, organizationManager, parentOrgId, identityDBUtil);
+            when(userStoreManagerParentOrg.getSecondaryUserStoreManager(anyString()))
+                    .thenReturn(mock(AbstractUserStoreManager.class));
+
+            UserRealm userRealmSubOrg = mock(UserRealm.class);
+            AbstractUserStoreManager userStoreManagerSubOrg = mock(AbstractUserStoreManager.class);
+            mockSubOrgDetails(userStoreManagerSubOrg, username, userRealmSubOrg, realmService, tenantDomainOfSubOrg,
+                    organizationManager, subOrgId, identityDBUtil);
+
+            orgSharedUserUtil.when(() -> OrganizationSharedUserUtil
+                    .getUserManagedOrganizationClaim(userStoreManagerParentOrg, userId)).thenReturn(null);
+
+            List<InvitationResult> createdInvitation = invitationCoreService.createInvitations(invitation);
+            assertNotNull(createdInvitation);
+            assertEquals(createdInvitation.get(0).getStatus(), "Successful");
+            // The invited organization was queried with the unqualified name, exactly as before the fix.
+            verify(userStoreManager).isExistingUser(username);
+
+            // Clean the stored invitation.
+            Invitation storedInvitation = userInvitationDAO
+                    .getInvitationWithAssignmentsByConfirmationCode(createdInvitation.get(0).getConfirmationCode());
+            userInvitationDAO.deleteInvitation(storedInvitation.getInvitationId());
+        }
+    }
+
     private void mockParentOrgDetails(AbstractUserStoreManager userStoreManagerParentOrg,
                                              String userStoreQualifiedUsername,
                                              String userId, UserRealm userRealmParentOrg, RealmService realmService,
@@ -559,7 +793,8 @@ public class InvitationCoreServiceImplTest {
         try (MockedStatic<IdentityDatabaseUtil> identityDBUtil = Mockito.mockStatic(IdentityDatabaseUtil.class);
              MockedStatic<IdentityUtil> identityUtil = Mockito.mockStatic(IdentityUtil.class)) {
 
-            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenReturn(getConnection());
+            identityDBUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean()))
+                    .thenAnswer(invocation -> getConnection());
             identityUtil.when(() -> IdentityUtil.getProperty(anyString())).thenReturn("1440");
             if (invitation.getRoleAssignments() != null) {
                 for (RoleAssignments roleAssignments : invitation.getRoleAssignments()) {

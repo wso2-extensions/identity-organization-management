@@ -18,11 +18,15 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.util;
 
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.NamedJdbcTemplate;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ENABLE_IDP_SHARING_PROPERTY;
 
 /**
  * Utility methods for connection sharing management.
@@ -68,6 +72,22 @@ public class ConnectionSharingUtil {
 
     private ConnectionSharingUtil() {
 
+    }
+
+    /**
+     * Returns whether identity provider sharing is enabled for this server, as configured by the
+     * {@code ConnectionSharing.IDP.Enable} server configuration. Sharing is enabled unless the configuration is
+     * explicitly set to {@code false}.
+     *
+     * @return {@code true} if identity provider sharing is enabled.
+     */
+    public static boolean isIdpSharingEnabled() {
+
+        String idpSharingEnabled = IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY);
+        if (StringUtils.isBlank(idpSharingEnabled)) {
+            return true;
+        }
+        return Boolean.parseBoolean(idpSharingEnabled);
     }
 
     /**
