@@ -329,6 +329,60 @@ public class OrganizationProvisioningExecutorTest {
         return captor.getValue();
     }
 
+    @Test(description = "Rolling back after a successful creation deletes the organization it created.")
+    public void testRollbackDeletesTheCreatedOrganization() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        executor.execute(context);
+        when(organizationManager.resolveOrganizationId(GENERATED_ORG_ID)).thenReturn(GENERATED_ORG_ID);
+        when(organizationManager.isOrganizationExistById(GENERATED_ORG_ID)).thenReturn(true);
+
+        executor.rollback(context);
+
+        verify(organizationManager).deleteOrganization(GENERATED_ORG_ID);
+        Assert.assertNull(context.getFlowOrganization().getOrganizationHandle(),
+                "Clearing the handle keeps a repeated rollback from deleting something else.");
+    }
+
+    @Test(description = "Without a handle there is no organization to resolve, so nothing is deleted.")
+    public void testRollbackDeletesNothingWhenTheOrganizationWasNeverCreated() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        executor.rollback(context);
+
+        verify(organizationManager, never()).deleteOrganization(anyString());
+    }
+
+    @Test(description = "A handle that resolves to no organization must not lead to a delete.")
+    public void testRollbackDeletesNothingWhenTheOrganizationIsAlreadyGone() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        executor.execute(context);
+        when(organizationManager.resolveOrganizationId(GENERATED_ORG_ID)).thenReturn(GENERATED_ORG_ID);
+        when(organizationManager.isOrganizationExistById(GENERATED_ORG_ID)).thenReturn(false);
+
+        executor.rollback(context);
+
+        verify(organizationManager, never()).deleteOrganization(anyString());
+    }
+
+    @Test(description = "A rollback that fails must not throw, or it would replace the failure that "
+            + "caused the rollback in the first place.")
+    public void testRollbackFailureIsContainedAndDoesNotThrow() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        executor.execute(context);
+        when(organizationManager.resolveOrganizationId(GENERATED_ORG_ID)).thenReturn(GENERATED_ORG_ID);
+        when(organizationManager.isOrganizationExistById(GENERATED_ORG_ID)).thenReturn(true);
+        doThrow(new OrganizationManagementServerException("Delete failed", "ERR_02"))
+                .when(organizationManager).deleteOrganization(GENERATED_ORG_ID);
+
+        executor.rollback(context);
+
+        verify(organizationManager).deleteOrganization(GENERATED_ORG_ID);
+    }
+
     /**
      * Builds a context carrying a provisioned user, mirroring a flow where the user provisioning step
      * has already run.

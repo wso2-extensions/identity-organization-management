@@ -23,7 +23,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.flow.execution.engine.Constants;
-import org.wso2.carbon.identity.flow.execution.engine.exception.FlowEngineException;
 import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
@@ -249,9 +248,46 @@ public class OrganizationProvisioningExecutor implements Executor {
         return Collections.emptyList();
     }
 
+    /**
+     * Deletes the organization this executor created. Call only after {@link #execute} completed: a handle
+     * submitted through the flow is present before creation, and can name an existing organization.
+     */
     @Override
-    public ExecutorResponse rollback(FlowExecutionContext context) throws FlowEngineException {
+    public ExecutorResponse rollback(FlowExecutionContext context) {
 
+        FlowOrganization flowOrganization = context.getFlowOrganization();
+        if (flowOrganization == null) {
+            return null;
+        }
+
+        String organizationHandle = flowOrganization.getOrganizationHandle();
+        if (StringUtils.isBlank(organizationHandle)) {
+            return null;
+        }
+
+        try {
+            OrganizationManager organizationManager =
+                    OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager();
+            String organizationId = organizationManager.resolveOrganizationId(organizationHandle);
+            if (StringUtils.isBlank(organizationId)
+                    || !organizationManager.isOrganizationExistById(organizationId)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("No organization found for handle: " + organizationHandle + ". Nothing to roll back.");
+                }
+                return null;
+            }
+
+            organizationManager.deleteOrganization(organizationId);
+            // Clearing the handle keeps a second rollback a no-op rather than a second delete attempt.
+            flowOrganization.setOrganizationHandle(null);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Rolled back the organization created via onboarding flow. ID: " + organizationId);
+            }
+        } catch (OrganizationManagementException e) {
+            // A failed rollback must not replace the failure that caused it, so it is logged and the
+            // caller reports its own outcome.
+            LOG.error("Failed to roll back the organization created for handle: " + organizationHandle, e);
+        }
         return null;
     }
 }
