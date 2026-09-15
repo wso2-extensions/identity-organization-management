@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.organization.management.executor.internal;
 
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * Holds the OSGi services this bundle's executors depend on.
@@ -29,6 +30,7 @@ public class OrganizationManagementExecutorDataHolder {
             new OrganizationManagementExecutorDataHolder();
 
     private OrganizationManager organizationManager;
+    private RealmService realmService;
 
     private OrganizationManagementExecutorDataHolder() {
 
@@ -57,5 +59,25 @@ public class OrganizationManagementExecutorDataHolder {
     public void setOrganizationManager(OrganizationManager organizationManager) {
 
         this.organizationManager = organizationManager;
+    }
+
+    /**
+     * Get the realm service.
+     *
+     * @return RealmService.
+     */
+    public RealmService getRealmService() {
+
+        return realmService;
+    }
+
+    /**
+     * Set the realm service.
+     *
+     * @param realmService Instance of {@link RealmService}.
+     */
+    public void setRealmService(RealmService realmService) {
+
+        this.realmService = realmService;
     }
 }

@@ -29,6 +29,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.organization.management.executor.OrganizationProvisioningExecutor;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.user.core.service.RealmService;
 
 /**
  * OSGi service component for the organization management flow executors.
@@ -70,5 +71,24 @@ public class OrganizationManagementExecutorServiceComponent {
 
         OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(null);
         LOG.debug("Unset the organization management service.");
+    }
+
+    @Reference(
+            name = "realm.service",
+            service = RealmService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRealmService"
+    )
+    protected void setRealmService(RealmService realmService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setRealmService(realmService);
+        LOG.debug("Set the realm service.");
+    }
+
+    protected void unsetRealmService(RealmService realmService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setRealmService(null);
+        LOG.debug("Unset the realm service.");
     }
 }

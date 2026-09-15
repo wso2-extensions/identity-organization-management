@@ -23,8 +23,9 @@ import org.mockito.MockedStatic;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.base.CarbonBaseConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.flow.execution.engine.Constants;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
@@ -33,15 +34,23 @@ import org.wso2.carbon.identity.flow.execution.engine.model.FlowUser;
 import org.wso2.carbon.identity.organization.management.executor.internal.OrganizationManagementExecutorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.model.TenantTypeOrganization;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.user.api.RealmConfiguration;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.service.RealmService;
+
+import java.nio.file.Paths;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -58,7 +67,10 @@ public class OrganizationProvisioningExecutorTest {
     private static final String USER_ID = "aaaa1111-bbbb-2222-cccc-333344445555";
     private static final String USERNAME = "jane";
     private static final String ORG_NAME = "Acme Corporation";
-    private static final String DERIVED_HANDLE = "acmecorporation";
+    private static final String TENANT_DOMAIN = "parentorg";
+    private static final String ADMIN_USER_ID = "dddd4444-eeee-5555-ffff-666677778888";
+    private static final String ADMIN_USERNAME = "parent-admin";
+    private static final int PARENT_TENANT_ID = 34;
 
     private OrganizationProvisioningExecutor executor;
     private OrganizationManager organizationManager;
@@ -67,13 +79,26 @@ public class OrganizationProvisioningExecutorTest {
     @BeforeMethod
     public void setUp() throws Exception {
 
+        // PrivilegedCarbonContext cannot be instrumented until carbon home is set.
+        System.setProperty(CarbonBaseConstants.CARBON_HOME,
+                Paths.get(System.getProperty("user.dir"), "target", "test-classes").toString());
+
         executor = new OrganizationProvisioningExecutor();
         organizationManager = mock(OrganizationManager.class);
         OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(organizationManager);
 
+        RealmService realmService = mock(RealmService.class);
+        UserRealm userRealm = mock(UserRealm.class);
+        RealmConfiguration realmConfiguration = mock(RealmConfiguration.class);
+        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
+        when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
+        when(realmConfiguration.getAdminUserId()).thenReturn(ADMIN_USER_ID);
+        when(realmConfiguration.getAdminUserName()).thenReturn(ADMIN_USERNAME);
+        OrganizationManagementExecutorDataHolder.getInstance().setRealmService(realmService);
+
         utils = mockStatic(Utils.class);
-        utils.when(Utils::getOrganizationId).thenReturn(PARENT_ORG_ID);
         utils.when(Utils::generateUniqueID).thenReturn(GENERATED_ORG_ID);
+        when(organizationManager.resolveOrganizationId(TENANT_DOMAIN)).thenReturn(PARENT_ORG_ID);
 
         // No handle is taken unless a test says otherwise.
         when(organizationManager.isOrganizationExistByHandle(anyString())).thenReturn(false);
@@ -92,33 +117,57 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(executor.getName(), "OrganizationProvisioningExecutor");
     }
 
-    @Test(description = "A blank organization name cannot be derived, so the user is asked again.")
-    public void testBlankOrganizationNameReturnsRetry() throws Exception {
+    @Test(description = "A blank name cannot be derived, and this node has no page to send the caller back to.")
+    public void testBlankOrganizationNameReturnsUserError() throws Exception {
 
         FlowExecutionContext context = buildContext(null, null);
 
         ExecutorResponse response = executor.execute(context);
 
-        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_RETRY);
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test(description = "Without an upstream provisioning step the flow is misconfigured, so it errors.")
-    public void testMissingUserIdReturnsError() throws Exception {
+    @Test(description = "With no user provisioned yet, the organization is created under the administrator "
+            + "of the organization the flow is executing in, so a user can be provisioned inside it after.")
+    public void testCreatorFallsBackToCurrentOrganizationAdmin() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
         context.getFlowUser().setUserId(null);
+        context.getFlowUser().setUsername(null);
 
-        ExecutorResponse response = executor.execute(context);
+        try (MockedStatic<PrivilegedCarbonContext> carbonContext = mockStatic(PrivilegedCarbonContext.class)) {
+            PrivilegedCarbonContext threadLocalContext = mock(PrivilegedCarbonContext.class);
+            carbonContext.when(PrivilegedCarbonContext::getThreadLocalCarbonContext)
+                    .thenReturn(threadLocalContext);
+            when(threadLocalContext.getTenantId()).thenReturn(PARENT_TENANT_ID);
 
-        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_ERROR);
-        verify(organizationManager, never()).addOrganization(any());
+            ExecutorResponse response = executor.execute(context);
+
+            Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+            Organization created = captureCreatedOrganization();
+            Assert.assertEquals(created.getCreatorId(), ADMIN_USER_ID);
+            Assert.assertEquals(created.getCreatorUsername(), ADMIN_USERNAME);
+        }
+    }
+
+    @Test(description = "A user provisioned earlier in the flow stays the creator, and so the owner.")
+    public void testProvisionedUserRemainsCreator() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        executor.execute(context);
+
+        Organization created = captureCreatedOrganization();
+        Assert.assertEquals(created.getCreatorId(), USER_ID);
+        Assert.assertEquals(created.getCreatorUsername(), USERNAME);
     }
 
     @Test(description = "An unresolvable parent must abort rather than create the org in the wrong place.")
     public void testUnresolvableParentReturnsError() throws Exception {
 
-        utils.when(Utils::getOrganizationId).thenThrow(new RuntimeException("no carbon context"));
+        when(organizationManager.resolveOrganizationId(TENANT_DOMAIN)).thenThrow(
+                new OrganizationManagementClientException("Not found.", "Not found.", "60024"));
         FlowExecutionContext context = buildContext(ORG_NAME, null);
 
         ExecutorResponse response = executor.execute(context);
@@ -148,112 +197,61 @@ public class OrganizationProvisioningExecutorTest {
                 OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
     }
 
-    @Test(description = "The parent is the organization the flow runs in, so sub-organizations can onboard children.")
-    public void testParentIsTheExecutingOrganization() throws Exception {
+    @Test(description = "The parent is the organization that initiated the request, so sub-organizations can "
+            + "onboard children.")
+    public void testParentIsTheRequestInitiatedOrganization() throws Exception {
 
-        FlowExecutionContext context = buildContext(ORG_NAME, null);
-
+        String subOrgTenantDomain = "suborg";
         String subOrgId = "5555aaaa-6666-bbbb-7777-cccc8888dddd";
-        utils.when(Utils::getOrganizationId).thenReturn(subOrgId);
+        when(organizationManager.resolveOrganizationId(subOrgTenantDomain)).thenReturn(subOrgId);
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.setTenantDomain(subOrgTenantDomain);
 
         executor.execute(context);
 
         Assert.assertEquals(captureCreatedOrganization().getParent().getId(), subOrgId);
     }
 
-    @Test(description = "A handle submitted through the flow wins over a derived one.")
-    public void testSubmittedHandleWins() throws Exception {
+    @Test(description = "A handle submitted through the flow is used when it is not taken.")
+    public void testSubmittedHandleIsUsed() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, "  customHandle  ");
 
         executor.execute(context);
 
         Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), "customHandle");
+        verify(organizationManager).isOrganizationExistByHandle("customHandle");
+    }
+
+    @Test(description = "A submitted handle that is taken is a caller fault, and no organization is created.")
+    public void testTakenSubmittedHandleReturnsUserError() throws Exception {
+
+        when(organizationManager.isOrganizationExistByHandle("takenhandle")).thenReturn(true);
+        utils.when(() -> Utils.handleClientException(
+                        OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EXISTING_ORGANIZATION_HANDLE,
+                        "takenhandle"))
+                .thenCallRealMethod();
+        FlowExecutionContext context = buildContext(ORG_NAME, "takenhandle");
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
+        verify(organizationManager, never()).addOrganization(any());
+    }
+
+    @Test(description = "Without a submitted handle the organization ID is the handle, as in admin initiated "
+            + "organization creation, and it is recorded so a later step can act inside the organization.")
+    public void testOrganizationIdIsTheHandleWhenNoneIsSubmitted() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        executor.execute(context);
+
+        Organization created = captureCreatedOrganization();
+        Assert.assertEquals(created.getId(), GENERATED_ORG_ID);
+        Assert.assertEquals(created.getOrganizationHandle(), GENERATED_ORG_ID);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationHandle(), GENERATED_ORG_ID);
         verify(organizationManager, never()).isOrganizationExistByHandle(anyString());
-    }
-
-    @Test(dataProvider = "handleDerivationProvider",
-            description = "Derived handles must match what the console handle field would produce.")
-    public void testHandleDerivation(String organizationName, String expectedHandle) throws Exception {
-
-        FlowExecutionContext context = buildContext(organizationName, null);
-
-        executor.execute(context);
-
-        Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), expectedHandle);
-    }
-
-    @DataProvider(name = "handleDerivationProvider")
-    public Object[][] handleDerivationProvider() {
-
-        return new Object[][]{
-                {"Acme Corporation", DERIVED_HANDLE},
-                {"Acme Corp Ltd.", "acmecorpltd"},
-                {"  Hello World  ", "helloworld"},
-                {"123 Acme Corp", "acmecorp"},
-                {"acme-corp_1.0", "acmecorp10"},
-                {"The Very Long Organization Name That Exceeds Thirty", "theverylongorganizationnametha"}
-        };
-    }
-
-    @Test(description = "A name with nothing usable leaves the handle to the server, which uses the org ID.")
-    public void testUnusableNameYieldsNullHandle() throws Exception {
-
-        FlowExecutionContext context = buildContext("!!! ???", null);
-
-        executor.execute(context);
-
-        Assert.assertNull(captureCreatedOrganization().getOrganizationHandle());
-    }
-
-    @Test(description = "A short but usable name is padded, rather than left to a server generated handle.")
-    public void testShortNameIsPaddedToMinimumLength() throws Exception {
-
-        FlowExecutionContext context = buildContext("IBM", null);
-
-        executor.execute(context);
-
-        Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), "ibm0");
-    }
-
-    @Test(description = "A name yielding a single usable character is padded up to the minimum length.")
-    public void testVeryShortNameIsPaddedToMinimumLength() throws Exception {
-
-        FlowExecutionContext context = buildContext("A B", null);
-
-        executor.execute(context);
-
-        Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), "ab00");
-    }
-
-    @Test(description = "A taken handle gets a numeric suffix rather than failing.")
-    public void testHandleCollisionAppendsSuffix() throws Exception {
-
-        when(organizationManager.isOrganizationExistByHandle(DERIVED_HANDLE)).thenReturn(true);
-        FlowExecutionContext context = buildContext(ORG_NAME, null);
-
-        executor.execute(context);
-
-        Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), DERIVED_HANDLE + "1");
-    }
-
-    @Test(description = "When the short suffixes are exhausted a random token is used, not endless probing.")
-    public void testExhaustedSuffixesFallBackToRandomToken() throws Exception {
-
-        when(organizationManager.isOrganizationExistByHandle(anyString())).thenAnswer(
-                invocation -> {
-                    String candidate = invocation.getArgument(0);
-                    // Every numeric suffix is taken; only the random token is free.
-                    return candidate.length() <= DERIVED_HANDLE.length() + 1;
-                });
-        FlowExecutionContext context = buildContext(ORG_NAME, null);
-
-        executor.execute(context);
-
-        String handle = captureCreatedOrganization().getOrganizationHandle();
-        Assert.assertNotNull(handle);
-        Assert.assertTrue(handle.startsWith(DERIVED_HANDLE));
-        Assert.assertEquals(handle.length(), DERIVED_HANDLE.length() + 6);
     }
 
     @Test(description = "The description is a first class flow organization field, carried straight over.")
@@ -281,31 +279,46 @@ public class OrganizationProvisioningExecutorTest {
     public void testCustomAttributesArePersisted() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
-        context.getFlowOrganization().setAttributes("industry", "software");
+        context.getFlowOrganization().setAttribute("industry", "software");
 
         executor.execute(context);
 
         Organization created = captureCreatedOrganization();
         Assert.assertEquals(created.getAttributes().size(), 1);
-        OrganizationAttribute attribute = created.getAttributes().get(0);
+        OrganizationAttribute attribute = created.getAttributes().getFirst();
         Assert.assertEquals(attribute.getKey(), "industry");
         Assert.assertEquals(attribute.getValue(), "software");
     }
 
-    @Test(description = "A failure from the organization manager is surfaced as a retry, not a crash.")
-    public void testCreationFailureReturnsRetry() throws Exception {
+    @Test(description = "A name taken since validation is a caller fault, not a server failure.")
+    public void testClientFailureReturnsUserError() throws Exception {
+
+        doThrow(new OrganizationManagementClientException(
+                        "Organization name already in use.", "Organization name already in use.", "60116"))
+                .when(organizationManager).addOrganization(any());
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
+    }
+
+    @Test(description = "Retrying cannot resolve a server failure, and its message is not for the user.")
+    public void testServerFailureReturnsError() throws Exception {
 
         doThrowOnAdd();
         FlowExecutionContext context = buildContext(ORG_NAME, null);
 
         ExecutorResponse response = executor.execute(context);
 
-        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_RETRY);
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_ERROR);
+        Assert.assertFalse(response.getErrorMessage().contains("Creation failed"),
+                "The internal failure message must not reach the end user.");
     }
 
     private void doThrowOnAdd() throws OrganizationManagementException {
 
-        org.mockito.Mockito.doThrow(new OrganizationManagementServerException("Creation failed", "ERR_01"))
+        doThrow(new OrganizationManagementServerException("Creation failed", "ERR_01"))
                 .when(organizationManager).addOrganization(any());
     }
 
@@ -322,7 +335,6 @@ public class OrganizationProvisioningExecutorTest {
      *
      * @param organizationName   Organization name collected by the flow.
      * @param organizationHandle Organization handle collected by the flow, or {@code null}.
-     * @return The flow execution context.
      */
     private FlowExecutionContext buildContext(String organizationName, String organizationHandle) {
 
@@ -335,6 +347,7 @@ public class OrganizationProvisioningExecutorTest {
         organization.setOrganizationHandle(organizationHandle);
 
         FlowExecutionContext context = new FlowExecutionContext();
+        context.setTenantDomain(TENANT_DOMAIN);
         context.setFlowUser(user);
         context.setFlowOrganization(organization);
         return context;
