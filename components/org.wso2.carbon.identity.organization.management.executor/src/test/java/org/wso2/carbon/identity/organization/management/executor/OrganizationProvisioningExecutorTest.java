@@ -114,13 +114,13 @@ public class OrganizationProvisioningExecutorTest {
         OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(null);
     }
 
-    @Test(description = "Executor name is referenced by string from persisted flows and must not change.")
+    @Test
     public void testExecutorName() {
 
         Assert.assertEquals(executor.getName(), "OrganizationProvisioningExecutor");
     }
 
-    @Test(description = "A blank name cannot be derived, and this node has no page to send the caller back to.")
+    @Test
     public void testBlankOrganizationNameReturnsUserError() throws Exception {
 
         FlowExecutionContext context = buildContext(null, null);
@@ -131,8 +131,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test(description = "With no user provisioned yet, the organization is created under the administrator "
-            + "of the organization the flow is executing in, so a user can be provisioned inside it after.")
+    @Test
     public void testCreatorFallsBackToCurrentOrganizationAdmin() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -179,7 +178,7 @@ public class OrganizationProvisioningExecutorTest {
         }
     }
 
-    @Test(description = "A user provisioned earlier in the flow stays the creator, and so the owner.")
+    @Test
     public void testProvisionedUserRemainsCreator() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -191,7 +190,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(created.getCreatorUsername(), USERNAME);
     }
 
-    @Test(description = "An unresolvable parent must abort rather than create the org in the wrong place.")
+    @Test
     public void testUnresolvableParentReturnsError() throws Exception {
 
         when(organizationManager.resolveOrganizationId(TENANT_DOMAIN)).thenThrow(
@@ -204,7 +203,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test(description = "The happy path persists the organization with the details the flow collected.")
+    @Test
     public void testSuccessfulCreation() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -225,8 +224,7 @@ public class OrganizationProvisioningExecutorTest {
                 OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
     }
 
-    @Test(description = "The parent is the organization that initiated the request, so sub-organizations can "
-            + "onboard children.")
+    @Test
     public void testParentIsTheRequestInitiatedOrganization() throws Exception {
 
         String subOrgTenantDomain = "suborg";
@@ -240,7 +238,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(captureCreatedOrganization().getParent().getId(), subOrgId);
     }
 
-    @Test(description = "A handle submitted through the flow is used when it is not taken.")
+    @Test
     public void testSubmittedHandleIsUsed() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, "  customHandle  ");
@@ -251,7 +249,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager).isOrganizationExistByHandle("customHandle");
     }
 
-    @Test(description = "A submitted handle that is taken is a caller fault, and no organization is created.")
+    @Test
     public void testTakenSubmittedHandleReturnsUserError() throws Exception {
 
         when(organizationManager.isOrganizationExistByHandle("takenhandle")).thenReturn(true);
@@ -267,8 +265,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test(description = "Without a submitted handle the organization ID is the handle, as in admin initiated "
-            + "organization creation, and it is recorded so a later step can act inside the organization.")
+    @Test
     public void testOrganizationIdIsTheHandleWhenNoneIsSubmitted() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -282,7 +279,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).isOrganizationExistByHandle(anyString());
     }
 
-    @Test(description = "The description is a first class flow organization field, carried straight over.")
+    @Test
     public void testDescriptionFromFlowOrganization() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -293,7 +290,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(captureCreatedOrganization().getDescription(), "A real business");
     }
 
-    @Test(description = "A flow that collects no description leaves the organization description unset.")
+    @Test
     public void testNoDescriptionCollected() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -303,7 +300,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertNull(captureCreatedOrganization().getDescription());
     }
 
-    @Test(description = "Custom attributes collected by the flow are persisted on the organization.")
+    @Test
     public void testCustomAttributesArePersisted() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -318,7 +315,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(attribute.getValue(), "software");
     }
 
-    @Test(description = "A name taken since validation is a caller fault, not a server failure.")
+    @Test
     public void testClientFailureReturnsUserError() throws Exception {
 
         doThrow(new OrganizationManagementClientException(
@@ -331,7 +328,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
     }
 
-    @Test(description = "Retrying cannot resolve a server failure, and its message is not for the user.")
+    @Test
     public void testServerFailureReturnsError() throws Exception {
 
         doThrowOnAdd();
@@ -357,7 +354,7 @@ public class OrganizationProvisioningExecutorTest {
         return captor.getValue();
     }
 
-    @Test(description = "Rolling back after a successful creation deletes the organization it created.")
+    @Test
     public void testRollbackDeletesTheCreatedOrganization() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -372,7 +369,7 @@ public class OrganizationProvisioningExecutorTest {
                 "Clearing the handle keeps a repeated rollback from deleting something else.");
     }
 
-    @Test(description = "Without a handle there is no organization to resolve, so nothing is deleted.")
+    @Test
     public void testRollbackDeletesNothingWhenTheOrganizationWasNeverCreated() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -382,7 +379,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).deleteOrganization(anyString());
     }
 
-    @Test(description = "A handle that resolves to no organization must not lead to a delete.")
+    @Test
     public void testRollbackDeletesNothingWhenTheOrganizationIsAlreadyGone() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
@@ -395,8 +392,7 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).deleteOrganization(anyString());
     }
 
-    @Test(description = "A rollback that fails must not throw, or it would replace the failure that "
-            + "caused the rollback in the first place.")
+    @Test
     public void testRollbackFailureIsContainedAndDoesNotThrow() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
