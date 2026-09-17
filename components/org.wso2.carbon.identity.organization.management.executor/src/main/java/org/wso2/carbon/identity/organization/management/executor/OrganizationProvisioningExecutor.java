@@ -37,7 +37,9 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.TenantTypeOrganization;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.RealmConfiguration;
+import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -190,10 +192,18 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
         try {
-            RealmConfiguration realmConfiguration = OrganizationManagementExecutorDataHolder.getInstance()
-                    .getRealmService().getTenantUserRealm(tenantId).getRealmConfiguration();
-            organization.setCreatorId(realmConfiguration.getAdminUserId());
-            organization.setCreatorUsername(realmConfiguration.getAdminUserName());
+            UserRealm userRealm = OrganizationManagementExecutorDataHolder.getInstance().getRealmService()
+                    .getTenantUserRealm(tenantId);
+            RealmConfiguration realmConfiguration = userRealm.getRealmConfiguration();
+            String adminUserName = realmConfiguration.getAdminUserName();
+            String adminUserId = realmConfiguration.getAdminUserId();
+            // Realms not migrated after https://github.com/wso2/product-is/issues/14001 hold only the admin username.
+            if (StringUtils.isBlank(adminUserId)) {
+                adminUserId = ((AbstractUserStoreManager) userRealm.getUserStoreManager())
+                        .getUserIDFromUserName(adminUserName);
+            }
+            organization.setCreatorId(adminUserId);
+            organization.setCreatorUsername(adminUserName);
         } catch (UserStoreException e) {
             throw Utils.handleServerException(
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_ERROR_VALIDATING_ORGANIZATION_OWNER,

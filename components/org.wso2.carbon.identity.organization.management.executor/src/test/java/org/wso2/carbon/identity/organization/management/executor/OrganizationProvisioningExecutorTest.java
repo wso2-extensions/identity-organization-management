@@ -43,6 +43,7 @@ import org.wso2.carbon.identity.organization.management.service.model.TenantType
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.nio.file.Paths;
@@ -74,6 +75,8 @@ public class OrganizationProvisioningExecutorTest {
 
     private OrganizationProvisioningExecutor executor;
     private OrganizationManager organizationManager;
+    private UserRealm userRealm;
+    private RealmConfiguration realmConfiguration;
     private MockedStatic<Utils> utils;
 
     @BeforeMethod
@@ -88,8 +91,8 @@ public class OrganizationProvisioningExecutorTest {
         OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(organizationManager);
 
         RealmService realmService = mock(RealmService.class);
-        UserRealm userRealm = mock(UserRealm.class);
-        RealmConfiguration realmConfiguration = mock(RealmConfiguration.class);
+        userRealm = mock(UserRealm.class);
+        realmConfiguration = mock(RealmConfiguration.class);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
         when(userRealm.getRealmConfiguration()).thenReturn(realmConfiguration);
         when(realmConfiguration.getAdminUserId()).thenReturn(ADMIN_USER_ID);
@@ -145,6 +148,31 @@ public class OrganizationProvisioningExecutorTest {
             ExecutorResponse response = executor.execute(context);
 
             Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+            Organization created = captureCreatedOrganization();
+            Assert.assertEquals(created.getCreatorId(), ADMIN_USER_ID);
+            Assert.assertEquals(created.getCreatorUsername(), ADMIN_USERNAME);
+        }
+    }
+
+    @Test
+    public void testCreatorIdIsResolvedWhenRealmHasNoAdminUserId() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.getFlowUser().setUserId(null);
+        context.getFlowUser().setUsername(null);
+        AbstractUserStoreManager userStoreManager = mock(AbstractUserStoreManager.class);
+        when(realmConfiguration.getAdminUserId()).thenReturn(null);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(userStoreManager.getUserIDFromUserName(ADMIN_USERNAME)).thenReturn(ADMIN_USER_ID);
+
+        try (MockedStatic<PrivilegedCarbonContext> carbonContext = mockStatic(PrivilegedCarbonContext.class)) {
+            PrivilegedCarbonContext threadLocalContext = mock(PrivilegedCarbonContext.class);
+            carbonContext.when(PrivilegedCarbonContext::getThreadLocalCarbonContext)
+                    .thenReturn(threadLocalContext);
+            when(threadLocalContext.getTenantId()).thenReturn(PARENT_TENANT_ID);
+
+            executor.execute(context);
+
             Organization created = captureCreatedOrganization();
             Assert.assertEquals(created.getCreatorId(), ADMIN_USER_ID);
             Assert.assertEquals(created.getCreatorUsername(), ADMIN_USERNAME);
