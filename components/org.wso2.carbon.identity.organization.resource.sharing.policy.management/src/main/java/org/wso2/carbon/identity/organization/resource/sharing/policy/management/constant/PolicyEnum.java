@@ -43,7 +43,8 @@ public enum PolicyEnum {
             "AllExistingAndFutureOrgs",
             "ALL_EXISTING_AND_FUTURE_ORGS",
             OrganizationScope.EXISTING_ORGS_AND_FUTURE_ORGS_ONLY,
-            Collections.unmodifiableList(Arrays.asList(ResourceType.USER, ResourceType.APPLICATION)),
+            Collections.unmodifiableList(
+                    Arrays.asList(ResourceType.USER, ResourceType.APPLICATION, ResourceType.WEBHOOK_CHANNEL)),
             "This policy allows sharing the resource with all current and any future organizations. It " +
                     "ensures that any new organizations created after the policy is set are automatically included."),
     IMMEDIATE_EXISTING_ORGS_ONLY(
