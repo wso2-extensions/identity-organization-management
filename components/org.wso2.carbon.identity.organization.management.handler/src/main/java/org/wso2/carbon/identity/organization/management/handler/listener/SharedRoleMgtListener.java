@@ -625,9 +625,21 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (StringUtils.isEmpty(mainAppId)) {
                 return true;
             }
-            // Resolve the associated roles of shared application from main application details.
             int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
             String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+            /*
+            For organization audience applications, every organization role of the organization is associated with
+            the application. Hence the shared application is associated with the organization roles of the shared
+            organization, which covers both the roles shared down from the main application's organization and the
+            roles created within the shared organization itself.
+            */
+            if (RoleConstants.ORGANIZATION.equalsIgnoreCase(applicationManagementService
+                    .getAllowedAudienceForRoleAssociation(mainAppId, mainAppTenantDomain))) {
+                associatedRolesOfApplication.clear();
+                associatedRolesOfApplication.addAll(getOrganizationAudienceRoles(tenantDomain));
+                return true;
+            }
+            // Resolve the associated roles of shared application from main application details.
             List<RoleV2> resolvedAssociatedRolesFromMainApp =
                     applicationManagementService.getAssociatedRolesOfApplication(mainAppId, mainAppTenantDomain);
             List<String> mainAppRoleIds =
@@ -661,6 +673,28 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
         return true;
 
+    }
+
+    /**
+     * Get all the organization audience roles of the given organization.
+     *
+     * @param tenantDomain Tenant domain of the organization.
+     * @return Organization audience roles of the organization.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
+     */
+    private List<RoleV2> getOrganizationAudienceRoles(String tenantDomain) throws IdentityRoleManagementException {
+
+        String filter = RoleConstants.AUDIENCE + SPACE + RoleConstants.EQ + SPACE + RoleConstants.ORGANIZATION;
+        int maximumItemPerPage = IdentityUtil.getMaximumItemPerPage();
+        List<RoleV2> organizationAudienceRoles = new ArrayList<>();
+        List<RoleBasicInfo> chunkOfRoles;
+        int offset = 1;
+        do {
+            chunkOfRoles = roleManagementService.getRoles(filter, maximumItemPerPage, offset, null, null, tenantDomain);
+            chunkOfRoles.forEach(role -> organizationAudienceRoles.add(new RoleV2(role.getId(), role.getName())));
+            offset += chunkOfRoles.size();
+        } while (chunkOfRoles.size() == maximumItemPerPage);
+        return organizationAudienceRoles;
     }
 
     private static boolean isFragmentApp(ServiceProvider serviceProvider) {
