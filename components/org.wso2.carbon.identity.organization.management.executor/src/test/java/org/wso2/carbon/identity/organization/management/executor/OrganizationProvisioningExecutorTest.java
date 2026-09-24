@@ -316,6 +316,23 @@ public class OrganizationProvisioningExecutorTest {
     }
 
     @Test
+    public void testFlowCollectedCreatorAttributesDoNotOverrideCreator() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.getFlowOrganization().setAttribute(OrganizationManagementConstants.CREATOR_ID, "spoofed-id");
+        context.getFlowOrganization().setAttribute(OrganizationManagementConstants.CREATOR_USERNAME, "spoofed-user");
+        context.getFlowOrganization().setAttribute(OrganizationManagementConstants.CREATOR_EMAIL, "spoofed@mail.com");
+
+        executor.execute(context);
+
+        Organization created = captureCreatedOrganization();
+        Assert.assertEquals(created.getCreatorId(), USER_ID);
+        Assert.assertEquals(created.getCreatorUsername(), USERNAME);
+        Assert.assertTrue(created.getAttributes().isEmpty(),
+                "Creator details set by the executor must not be overridden by flow collected attributes.");
+    }
+
+    @Test
     public void testClientFailureReturnsUserError() throws Exception {
 
         doThrow(new OrganizationManagementClientException(

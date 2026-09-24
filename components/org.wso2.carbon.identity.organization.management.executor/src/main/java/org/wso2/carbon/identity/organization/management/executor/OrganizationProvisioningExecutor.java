@@ -47,19 +47,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Flow executor that creates an organization from the details collected by the flow.
- * <p>
- * It is registered as an OSGi {@link Executor} service by
- * {@code OrganizationManagementExecutorServiceComponent} and is bound to a flow step by the name
- * returned from {@link #getName()}. The organization name, handle and attributes are read from
- * {@link FlowOrganization}; the creating user is read from {@link FlowUser}. Fields are routed into
- * {@link FlowOrganization} by the flow engine based on the {@code identifierType} of each input, so this
- * executor never inspects raw user input itself.
- * <p>
- * This executor does not provision users. When the flow has already provisioned one, that user creates
- * the organization and becomes its owner; when it has not, the organization is created under the
- * administrator of the organization the flow is executing in, so a user can be provisioned inside it
- * afterwards.
+ * Flow executor that creates an organization from the details collected by a flow. The organization is
+ * created under the organization that initiated the request, by the provisioned user or, when the flow
+ * has not provisioned one, by that organization's administrator.
  */
 public class OrganizationProvisioningExecutor implements Executor {
 
@@ -78,17 +68,12 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         String organizationName = context.getFlowOrganization().getOrganizationName();
 
-        // The organization name is user supplied and cannot be derived. Input validation rejects a
-        // blank name before the flow reaches this executor, so reaching here means the caller bypassed
-        // it, and this node has no page to send them back to.
+        // Input validation rejects a blank name earlier, so reaching here means the flow is misconfigured.
         if (StringUtils.isBlank(organizationName)) {
             return executorResponse(Constants.ExecutorStatus.STATUS_USER_ERROR,
                     "Please provide a valid organization name.");
         }
 
-        // The new organization is created under the organization that initiated the request, so a
-        // sub-organization can onboard its own children. Creating it under an unintended parent is worse
-        // than not creating it at all.
         String requestInitiatedOrgId;
         try {
             requestInitiatedOrgId = OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager()
@@ -107,24 +92,16 @@ public class OrganizationProvisioningExecutor implements Executor {
             response.setResult(Constants.ExecutorStatus.STATUS_COMPLETE);
             return response;
         } catch (OrganizationManagementClientException e) {
-            // The caller's input is at fault, most often a name taken since it was validated.
+            // The submitted name or handle was rejected by organization management.
             return executorResponse(Constants.ExecutorStatus.STATUS_USER_ERROR, e.getMessage());
         } catch (OrganizationManagementException e) {
-            // Retrying cannot resolve a server side failure, and its message is not for the end user.
+            // A server side failure. The internal message is not surfaced to the user.
             LOG.error("Failed to create organization: " + organizationName, e);
             return executorResponse(Constants.ExecutorStatus.STATUS_ERROR,
                     "Organization creation failed.");
         }
     }
 
-    /**
-     * Builds and persists the organization through the {@link OrganizationManager} bound into this
-     * bundle's own data holder by {@code OrganizationManagementExecutorServiceComponent}.
-     *
-     * @param context              Flow execution context carrying the organization and user details.
-     * @param parentOrganizationId ID of the organization the new organization is created under.
-     * @throws OrganizationManagementException If the organization could not be created.
-     */
     private void createOrganization(FlowExecutionContext context, String parentOrganizationId)
             throws OrganizationManagementException {
 
@@ -150,37 +127,25 @@ public class OrganizationProvisioningExecutor implements Executor {
         organization.setOrganizationHandle(organizationHandle);
         setCreator(organization, flowUser);
 
-        // Carry the custom organization attributes collected by the flow onto the organization.
+        // Custom attributes, excluding the creator details set above.
         if (attributes != null) {
             for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+                if (isCreatorAttribute(attribute.getKey())) {
+                    continue;
+                }
                 organization.setAttribute(new OrganizationAttribute(attribute.getKey(), attribute.getValue()));
             }
         }
 
         organizationManager.addOrganization(organization);
 
-        // The handle is the new organization's tenant domain. Recording it lets a later step in the flow act
-        // inside the organization, and lets a rollback find it.
+        // The handle is the tenant domain of the new organization, used by later flow steps and rollback.
         flowOrganization.setOrganizationHandle(organizationHandle);
         if (LOG.isDebugEnabled()) {
             LOG.debug("Organization created via onboarding flow. ID: " + organization.getId());
         }
     }
 
-    /**
-     * Sets the user the organization is created under. The creator becomes the owner and the
-     * administrator of the new organization's tenant, and organization management requires it to be an
-     * existing user of the organization the flow is executing in.
-     * <p>
-     * When the flow has already provisioned a user, that user is the creator. When it has not, the
-     * organization is created under the administrator of the organization the flow is executing in, so
-     * that a user can be provisioned inside the new organization afterwards.
-     *
-     * @param organization Organization being created.
-     * @param flowUser     User collected by the flow, which may not have been provisioned yet.
-     * @throws OrganizationManagementException If the administrator of the current organization cannot
-     *                                         be resolved.
-     */
     private void setCreator(TenantTypeOrganization organization, FlowUser flowUser)
             throws OrganizationManagementException {
 
@@ -197,7 +162,6 @@ public class OrganizationProvisioningExecutor implements Executor {
             RealmConfiguration realmConfiguration = userRealm.getRealmConfiguration();
             String adminUserName = realmConfiguration.getAdminUserName();
             String adminUserId = realmConfiguration.getAdminUserId();
-            // Realms not migrated after https://github.com/wso2/product-is/issues/14001 hold only the admin username.
             if (StringUtils.isBlank(adminUserId)) {
                 adminUserId = ((AbstractUserStoreManager) userRealm.getUserStoreManager())
                         .getUserIDFromUserName(adminUserName);
@@ -211,16 +175,6 @@ public class OrganizationProvisioningExecutor implements Executor {
         }
     }
 
-    /**
-     * Returns the handle to create the organization with. A handle submitted through the flow is used if it
-     * is not taken; otherwise the organization ID is the handle, as in admin initiated organization creation.
-     *
-     * @param organizationManager Organization manager used to check handle availability.
-     * @param flowOrganization    Organization details collected by the flow.
-     * @param organizationId      ID of the organization being created.
-     * @return The organization handle.
-     * @throws OrganizationManagementException If the submitted handle is taken, or the check fails.
-     */
     private String resolveOrganizationHandle(OrganizationManager organizationManager,
                                              FlowOrganization flowOrganization, String organizationId)
             throws OrganizationManagementException {
@@ -237,13 +191,14 @@ public class OrganizationProvisioningExecutor implements Executor {
         return handle;
     }
 
-    /**
-     * Builds an executor response carrying a status and a user facing message.
-     *
-     * @param status  One of {@link Constants.ExecutorStatus}.
-     * @param message Message surfaced to the caller.
-     * @return The executor response.
-     */
+    /** Guards the creator set by this executor from being overridden by a flow collected attribute. */
+    private static boolean isCreatorAttribute(String attributeKey) {
+
+        return OrganizationManagementConstants.CREATOR_ID.equals(attributeKey)
+                || OrganizationManagementConstants.CREATOR_USERNAME.equals(attributeKey)
+                || OrganizationManagementConstants.CREATOR_EMAIL.equals(attributeKey);
+    }
+
     private ExecutorResponse executorResponse(String status, String message) {
 
         ExecutorResponse response = new ExecutorResponse();
@@ -258,10 +213,7 @@ public class OrganizationProvisioningExecutor implements Executor {
         return Collections.emptyList();
     }
 
-    /**
-     * Deletes the organization this executor created. Call only after {@link #execute} completed: a handle
-     * submitted through the flow is present before creation, and can name an existing organization.
-     */
+    /** Deletes the organization this executor created. Call only after {@link #execute} completed. */
     @Override
     public ExecutorResponse rollback(FlowExecutionContext context) {
 
@@ -294,8 +246,7 @@ public class OrganizationProvisioningExecutor implements Executor {
                 LOG.debug("Rolled back the organization created via onboarding flow. ID: " + organizationId);
             }
         } catch (OrganizationManagementException e) {
-            // A failed rollback must not replace the failure that caused it, so it is logged and the
-            // caller reports its own outcome.
+            // A failed rollback must not replace the failure that caused it.
             LOG.error("Failed to roll back the organization created for handle: " + organizationHandle, e);
         }
         return null;
