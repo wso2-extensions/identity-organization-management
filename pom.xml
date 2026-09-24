@@ -60,6 +60,7 @@
         <module>components/org.wso2.carbon.identity.organization.resource.sharing.policy.management</module>
         <module>components/org.wso2.carbon.identity.organization.application.resource.hierarchy.traverse.service</module>
         <module>components/org.wso2.carbon.identity.organization.management.capability.governance</module>
+        <module>components/org.wso2.carbon.identity.organization.management.executor</module>
     </modules>
 
     <dependencyManagement>
@@ -209,6 +210,12 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.organization.management</groupId>
+                <artifactId>org.wso2.carbon.identity.organization.management.executor</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.organization.management</groupId>
                 <artifactId>org.wso2.carbon.identity.organization.user.invitation.management</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
@@ -246,6 +253,11 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.flow.execution.engine</artifactId>
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
@@ -636,7 +648,7 @@
         <identity.inbound.provisioning.scim2.version>3.7.9</identity.inbound.provisioning.scim2.version>
         <identity.scim2.imp.pkg.version.range>[3.4.0, 4.0.0)</identity.scim2.imp.pkg.version.range>
 
-        <carbon.identity.framework.version>7.11.172</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.11.201</carbon.identity.framework.version>
         <carbon.identity.package.import.version.range>[5.20.0, 8.0.0)
         </carbon.identity.package.import.version.range>
 
