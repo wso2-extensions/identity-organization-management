@@ -30,7 +30,13 @@ public enum ResourceType {
     USER(Collections.singletonList(SharedAttributeType.ROLE)),
     AGENT(Collections.singletonList(SharedAttributeType.ROLE)),
     APPLICATION(Collections.singletonList(SharedAttributeType.ROLE)),
-    CONNECTION_IDENTITY_PROVIDER(Collections.emptyList());
+    CONNECTION_IDENTITY_PROVIDER(Collections.emptyList()),
+
+    /**
+     * A channel of a webhook, subscribed so that events raised in descendant organizations are
+     * delivered to a webhook configured in an ancestor organization.
+     */
+    WEBHOOK_CHANNEL(Collections.emptyList());
 
     private static final String VALID_RESOURCE_TYPES =
             Arrays.stream(values()).map(Enum::name).collect(Collectors.joining(", "));
