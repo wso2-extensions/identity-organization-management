@@ -57,6 +57,16 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_INVALID_ORGANIZATION_NAME;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_HANDLE_ALREADY_EXISTS;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE;
 
 /**
  * Unit tests for {@link OrganizationProvisioningExecutor}.
@@ -128,6 +138,7 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_INVALID_ORGANIZATION_NAME.getCode());
         verify(organizationManager, never()).addOrganization(any());
     }
 
@@ -200,6 +211,7 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE.getCode());
         verify(organizationManager, never()).addOrganization(any());
     }
 
@@ -262,6 +274,7 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_HANDLE_ALREADY_EXISTS.getCode());
         verify(organizationManager, never()).addOrganization(any());
     }
 
@@ -343,6 +356,7 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE.getCode());
     }
 
     @Test
@@ -354,6 +368,7 @@ public class OrganizationProvisioningExecutorTest {
         ExecutorResponse response = executor.execute(context);
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE.getCode());
         Assert.assertFalse(response.getErrorMessage().contains("Creation failed"),
                 "The internal failure message must not reach the end user.");
     }

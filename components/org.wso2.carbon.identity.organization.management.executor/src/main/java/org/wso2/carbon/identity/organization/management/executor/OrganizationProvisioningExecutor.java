@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.organization.management.executor;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +29,7 @@ import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowOrganization;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowUser;
+import org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages;
 import org.wso2.carbon.identity.organization.management.executor.internal.OrganizationManagementExecutorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
@@ -45,6 +47,17 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_INVALID_ORGANIZATION_NAME;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_HANDLE_ALREADY_EXISTS;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE;
+import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
+        .ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE;
 
 /**
  * Flow executor that creates an organization from the details collected by a flow. The organization is
@@ -66,12 +79,13 @@ public class OrganizationProvisioningExecutor implements Executor {
     @Override
     public ExecutorResponse execute(FlowExecutionContext context) {
 
+        ExecutorResponse response = new ExecutorResponse();
         String organizationName = context.getFlowOrganization().getOrganizationName();
 
         // Input validation rejects a blank name earlier, so reaching here means the flow is misconfigured.
         if (StringUtils.isBlank(organizationName)) {
-            return executorResponse(Constants.ExecutorStatus.STATUS_USER_ERROR,
-                    "Please provide a valid organization name.");
+            return userErrorResponse(response, ERROR_CODE_INVALID_ORGANIZATION_NAME,
+                    context.getContextIdentifier());
         }
 
         String requestInitiatedOrgId;
@@ -79,26 +93,25 @@ public class OrganizationProvisioningExecutor implements Executor {
             requestInitiatedOrgId = OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager()
                     .resolveOrganizationId(context.getTenantDomain());
         } catch (OrganizationManagementException e) {
-            LOG.error("Could not resolve the organization the flow is executing in, so the parent of the "
-                    + "new organization is unknown. Organization creation is aborted.", e);
-            return executorResponse(Constants.ExecutorStatus.STATUS_ERROR,
-                    "Could not resolve the parent organization.");
+            return errorResponse(response, ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE, e,
+                    context.getTenantDomain(), context.getContextIdentifier());
         }
 
         try {
             createOrganization(context, requestInitiatedOrgId);
 
-            ExecutorResponse response = new ExecutorResponse();
             response.setResult(Constants.ExecutorStatus.STATUS_COMPLETE);
             return response;
         } catch (OrganizationManagementClientException e) {
-            // The submitted name or handle was rejected by organization management.
-            return executorResponse(Constants.ExecutorStatus.STATUS_USER_ERROR, e.getMessage());
+            if (OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EXISTING_ORGANIZATION_HANDLE.getCode()
+                    .equals(e.getErrorCode())) {
+                return userErrorResponse(response, ERROR_CODE_ORGANIZATION_HANDLE_ALREADY_EXISTS);
+            }
+            return userErrorResponse(response, ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE,
+                    context.getContextIdentifier());
         } catch (OrganizationManagementException e) {
-            // A server side failure. The internal message is not surfaced to the user.
-            LOG.error("Failed to create organization: " + organizationName, e);
-            return executorResponse(Constants.ExecutorStatus.STATUS_ERROR,
-                    "Organization creation failed.");
+            return errorResponse(response, ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE, e,
+                    context.getContextIdentifier());
         }
     }
 
@@ -199,11 +212,32 @@ public class OrganizationProvisioningExecutor implements Executor {
                 || OrganizationManagementConstants.CREATOR_EMAIL.equals(attributeKey);
     }
 
-    private ExecutorResponse executorResponse(String status, String message) {
+    private ExecutorResponse errorResponse(ExecutorResponse response, ExecutorErrorMessages error,
+                                           Throwable e, Object... data) {
 
-        ExecutorResponse response = new ExecutorResponse();
-        response.setResult(status);
-        response.setErrorMessage(message);
+        String description = error.getDescription();
+        if (ArrayUtils.isNotEmpty(data)) {
+            description = String.format(description, data);
+        }
+        response.setErrorCode(error.getCode());
+        response.setErrorMessage(error.getMessage());
+        response.setErrorDescription(description);
+        response.setThrowable(e);
+        response.setResult(Constants.ExecutorStatus.STATUS_ERROR);
+        return response;
+    }
+
+    private ExecutorResponse userErrorResponse(ExecutorResponse response, ExecutorErrorMessages error,
+                                               Object... data) {
+
+        String description = error.getDescription();
+        if (ArrayUtils.isNotEmpty(data)) {
+            description = String.format(description, data);
+        }
+        response.setErrorCode(error.getCode());
+        response.setErrorMessage(error.getMessage());
+        response.setErrorDescription(description);
+        response.setResult(Constants.ExecutorStatus.STATUS_USER_ERROR);
         return response;
     }
 
