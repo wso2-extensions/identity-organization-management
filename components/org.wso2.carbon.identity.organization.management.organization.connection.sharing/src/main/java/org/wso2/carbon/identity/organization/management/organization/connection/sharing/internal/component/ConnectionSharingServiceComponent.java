@@ -77,7 +77,7 @@ public class ConnectionSharingServiceComponent {
             bundleContext.registerService(IdentityProviderMgtListener.class.getName(),
                     new SharedIdpMgtListener(), null);
             ConnectionSharingDataHolder.getInstance().addConnectionTypeHandler(new IdpConnectionTypeHandler());
-            LOG.info("ConnectionSharingServiceComponent activated successfully.");
+            LOG.debug("ConnectionSharingServiceComponent activated successfully.");
         } catch (Throwable e) {
             LOG.error("Failed to activate ConnectionSharingServiceComponent.", e);
             if (serviceRegistration != null) {
