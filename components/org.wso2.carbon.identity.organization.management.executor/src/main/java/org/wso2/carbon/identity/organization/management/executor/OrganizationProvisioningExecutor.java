@@ -88,17 +88,23 @@ public class OrganizationProvisioningExecutor implements Executor {
                     context.getContextIdentifier());
         }
 
+        OrganizationManager organizationManager =
+                OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager();
+        if (organizationManager == null) {
+            return errorResponse(response, ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE,
+                    null, context.getContextIdentifier());
+        }
+
         String requestInitiatedOrgId;
         try {
-            requestInitiatedOrgId = OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager()
-                    .resolveOrganizationId(context.getTenantDomain());
+            requestInitiatedOrgId = organizationManager.resolveOrganizationId(context.getTenantDomain());
         } catch (OrganizationManagementException e) {
             return errorResponse(response, ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE, e,
                     context.getTenantDomain(), context.getContextIdentifier());
         }
 
         try {
-            createOrganization(context, requestInitiatedOrgId);
+            createOrganization(context, requestInitiatedOrgId, organizationManager);
 
             response.setResult(Constants.ExecutorStatus.STATUS_COMPLETE);
             return response;
@@ -115,11 +121,9 @@ public class OrganizationProvisioningExecutor implements Executor {
         }
     }
 
-    private void createOrganization(FlowExecutionContext context, String parentOrganizationId)
+    private void createOrganization(FlowExecutionContext context, String parentOrganizationId,
+                                    OrganizationManager organizationManager)
             throws OrganizationManagementException {
-
-        OrganizationManager organizationManager =
-                OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager();
 
         FlowUser flowUser = context.getFlowUser();
         FlowOrganization flowOrganization = context.getFlowOrganization();

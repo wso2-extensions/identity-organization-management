@@ -56,6 +56,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
         .ERROR_CODE_INVALID_ORGANIZATION_NAME;
@@ -199,6 +200,36 @@ public class OrganizationProvisioningExecutorTest {
         Organization created = captureCreatedOrganization();
         Assert.assertEquals(created.getCreatorId(), USER_ID);
         Assert.assertEquals(created.getCreatorUsername(), USERNAME);
+    }
+
+    @Test
+    public void testUnavailableOrganizationManagerReturnsError() {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(null);
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_ERROR);
+        Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE.getCode());
+        verifyNoInteractions(organizationManager);
+    }
+
+    @Test
+    public void testCapturedOrganizationManagerIsUsedAfterUnbinding() throws Exception {
+
+        when(organizationManager.resolveOrganizationId(TENANT_DOMAIN)).thenAnswer(invocation -> {
+            OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(null);
+            return PARENT_ORG_ID;
+        });
+        FlowExecutionContext context = buildContext(ORG_NAME, "customHandle");
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertNull(OrganizationManagementExecutorDataHolder.getInstance().getOrganizationManager());
+        verify(organizationManager).isOrganizationExistByHandle("customHandle");
+        Assert.assertEquals(captureCreatedOrganization().getParent().getId(), PARENT_ORG_ID);
     }
 
     @Test
