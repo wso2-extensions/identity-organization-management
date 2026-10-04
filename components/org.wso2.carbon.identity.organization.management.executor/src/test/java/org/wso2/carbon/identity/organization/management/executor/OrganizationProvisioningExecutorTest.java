@@ -57,6 +57,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -281,7 +282,7 @@ public class OrganizationProvisioningExecutorTest {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
         String organizationId = "5555aaaa-6666-bbbb-7777-cccc8888dddd";
-        context.getFlowOrganization().setOrganizationId(organizationId);
+        when(context.getFlowOrganization().getOrganizationId()).thenReturn(organizationId);
         utils.clearInvocations();
 
         ExecutorResponse response = executor.execute(context);
@@ -511,9 +512,11 @@ public class OrganizationProvisioningExecutorTest {
         when(organizationManager.isOrganizationExistById(GENERATED_ORG_ID)).thenReturn(true);
 
         executor.rollback(context);
+        executor.rollback(context);
 
         verify(organizationManager).deleteOrganization(GENERATED_ORG_ID);
-        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
+        verify(organizationManager).resolveOrganizationId(GENERATED_ORG_ID);
         Assert.assertNull(context.getFlowOrganization().getOrganizationHandle(),
                 "Clearing the handle keeps a repeated rollback from deleting something else.");
     }
@@ -570,9 +573,9 @@ public class OrganizationProvisioningExecutorTest {
         user.setUserId(USER_ID);
         user.setUsername(USERNAME);
 
-        FlowOrganization organization = new FlowOrganization();
-        // Supply the ID assigned by the flow engine before organization provisioning.
-        organization.setOrganizationId(GENERATED_ORG_ID);
+        FlowOrganization organization = spy(new FlowOrganization());
+        // Mock the framework-assigned ID until the dependency includes framework PR #8327.
+        when(organization.getOrganizationId()).thenReturn(GENERATED_ORG_ID);
         organization.setOrganizationName(organizationName);
         organization.setOrganizationHandle(organizationHandle);
 
