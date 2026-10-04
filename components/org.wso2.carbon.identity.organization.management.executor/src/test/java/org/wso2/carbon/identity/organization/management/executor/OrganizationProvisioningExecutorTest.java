@@ -23,6 +23,7 @@ import org.mockito.MockedStatic;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -51,6 +52,7 @@ import java.nio.file.Paths;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -116,6 +118,13 @@ public class OrganizationProvisioningExecutorTest {
 
         // No handle is taken unless a test says otherwise.
         when(organizationManager.isOrganizationExistByHandle(anyString())).thenReturn(false);
+        when(organizationManager.addOrganization(any())).thenAnswer(invocation -> {
+            Organization organization = invocation.getArgument(0);
+            if (organization.getOrganizationHandle() == null) {
+                organization.setOrganizationHandle(organization.getId());
+            }
+            return organization;
+        });
     }
 
     @AfterMethod
@@ -311,10 +320,24 @@ public class OrganizationProvisioningExecutorTest {
         verify(organizationManager, never()).addOrganization(any());
     }
 
-    @Test
-    public void testOrganizationIdIsTheHandleWhenNoneIsSubmitted() throws Exception {
+    @DataProvider(name = "missingOrganizationHandles")
+    public Object[][] missingOrganizationHandles() {
 
-        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        return new Object[][]{{null}, {""}, {"   "}, {"\t\n"}};
+    }
+
+    @Test(dataProvider = "missingOrganizationHandles")
+    public void testOrganizationManagerDefaultsMissingHandle(String submittedHandle) throws Exception {
+
+        doAnswer(invocation -> {
+            TenantTypeOrganization organization = invocation.getArgument(0);
+            Assert.assertNull(organization.getOrganizationHandle(),
+                    "The executor must leave handle defaulting to the organization manager.");
+            Assert.assertNull(organization.getDomainName());
+            organization.setOrganizationHandle(organization.getId());
+            return organization;
+        }).when(organizationManager).addOrganization(any());
+        FlowExecutionContext context = buildContext(ORG_NAME, submittedHandle);
 
         executor.execute(context);
 
@@ -324,6 +347,23 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(context.getFlowOrganization().getOrganizationHandle(), GENERATED_ORG_ID);
         Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
         verify(organizationManager, never()).isOrganizationExistByHandle(anyString());
+    }
+
+    @Test
+    public void testHandlePopulatedByOrganizationManagerIsStoredInContext() throws Exception {
+
+        doAnswer(invocation -> {
+            Organization organization = invocation.getArgument(0);
+            organization.setOrganizationHandle("managerHandle");
+            return organization;
+        }).when(organizationManager).addOrganization(any());
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationHandle(), "managerHandle");
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
     }
 
     @Test

@@ -128,7 +128,7 @@ public class OrganizationProvisioningExecutor implements Executor {
         FlowUser flowUser = context.getFlowUser();
         FlowOrganization flowOrganization = context.getFlowOrganization();
         String organizationId = Utils.generateUniqueID();
-        String organizationHandle = resolveOrganizationHandle(organizationManager, flowOrganization, organizationId);
+        String organizationHandle = resolveOrganizationHandle(organizationManager, flowOrganization);
         Map<String, String> attributes = flowOrganization.getAttributes();
 
         TenantTypeOrganization organization = new TenantTypeOrganization(organizationHandle);
@@ -158,7 +158,7 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         flowOrganization.setOrganizationId(organization.getId());
         // The handle is the tenant domain of the new organization, used by later flow steps and rollback.
-        flowOrganization.setOrganizationHandle(organizationHandle);
+        flowOrganization.setOrganizationHandle(organization.getOrganizationHandle());
         if (LOG.isDebugEnabled()) {
             LOG.debug("Organization created via onboarding flow. ID: " + organization.getId());
         }
@@ -194,15 +194,11 @@ public class OrganizationProvisioningExecutor implements Executor {
     }
 
     private String resolveOrganizationHandle(OrganizationManager organizationManager,
-                                             FlowOrganization flowOrganization, String organizationId)
+                                             FlowOrganization flowOrganization)
             throws OrganizationManagementException {
 
-        String submittedHandle = flowOrganization.getOrganizationHandle();
-        if (StringUtils.isBlank(submittedHandle)) {
-            return organizationId;
-        }
-        String handle = submittedHandle.trim();
-        if (organizationManager.isOrganizationExistByHandle(handle)) {
+        String handle = StringUtils.trimToNull(flowOrganization.getOrganizationHandle());
+        if (handle != null && organizationManager.isOrganizationExistByHandle(handle)) {
             throw Utils.handleClientException(
                     OrganizationManagementConstants.ErrorMessages.ERROR_CODE_EXISTING_ORGANIZATION_HANDLE, handle);
         }
