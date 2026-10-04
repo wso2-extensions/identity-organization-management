@@ -380,6 +380,31 @@ public class OrganizationProvisioningExecutorTest {
     }
 
     @Test
+    public void testWhitespacePaddedCreatorAttributesDoNotOverrideCreator() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.getFlowOrganization().setAttribute(" " + OrganizationManagementConstants.CREATOR_ID + " ",
+                "spoofed-id");
+        context.getFlowOrganization().setAttribute(" " + OrganizationManagementConstants.CREATOR_USERNAME + " ",
+                "spoofed-user");
+        context.getFlowOrganization().setAttribute("\t" + OrganizationManagementConstants.CREATOR_EMAIL + "\n",
+                "spoofed@mail.com");
+        context.getFlowOrganization().setAttribute("industry", "software");
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Organization created = captureCreatedOrganization();
+        Assert.assertEquals(created.getCreatorId(), USER_ID);
+        Assert.assertEquals(created.getCreatorUsername(), USERNAME);
+        Assert.assertNull(created.getCreatorEmail());
+        Assert.assertEquals(created.getAttributes().size(), 1,
+                "Whitespace-padded creator attributes must be excluded before the service trims their keys.");
+        Assert.assertEquals(created.getAttributes().getFirst().getKey(), "industry");
+        Assert.assertEquals(created.getAttributes().getFirst().getValue(), "software");
+    }
+
+    @Test
     public void testClientFailureReturnsUserError() throws Exception {
 
         doThrow(new OrganizationManagementClientException(

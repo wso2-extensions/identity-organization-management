@@ -212,6 +212,7 @@ public class OrganizationProvisioningExecutor implements Executor {
     /** Guards the creator set by this executor from being overridden by a flow collected attribute. */
     private static boolean isCreatorAttribute(String attributeKey) {
 
+        attributeKey = StringUtils.trim(attributeKey);
         return OrganizationManagementConstants.CREATOR_ID.equals(attributeKey)
                 || OrganizationManagementConstants.CREATOR_USERNAME.equals(attributeKey)
                 || OrganizationManagementConstants.CREATOR_EMAIL.equals(attributeKey);
