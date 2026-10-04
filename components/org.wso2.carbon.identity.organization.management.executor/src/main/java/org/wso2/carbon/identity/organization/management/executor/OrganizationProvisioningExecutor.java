@@ -156,6 +156,7 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         organizationManager.addOrganization(organization);
 
+        flowOrganization.setOrganizationId(organization.getId());
         // The handle is the tenant domain of the new organization, used by later flow steps and rollback.
         flowOrganization.setOrganizationHandle(organizationHandle);
         if (LOG.isDebugEnabled()) {
@@ -278,7 +279,8 @@ public class OrganizationProvisioningExecutor implements Executor {
             }
 
             organizationManager.deleteOrganization(organizationId);
-            // Clearing the handle keeps a second rollback a no-op rather than a second delete attempt.
+            // Clearing the created organization details keeps a second rollback a no-op.
+            flowOrganization.setOrganizationId(null);
             flowOrganization.setOrganizationHandle(null);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Rolled back the organization created via onboarding flow. ID: " + organizationId);

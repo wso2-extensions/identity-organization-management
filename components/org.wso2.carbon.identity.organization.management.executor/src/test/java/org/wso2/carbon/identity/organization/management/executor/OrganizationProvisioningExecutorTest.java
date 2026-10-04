@@ -257,6 +257,7 @@ public class OrganizationProvisioningExecutorTest {
 
         Organization created = captureCreatedOrganization();
         Assert.assertTrue(created instanceof TenantTypeOrganization);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), created.getId());
         Assert.assertEquals(created.getName(), ORG_NAME);
         Assert.assertEquals(created.getParent().getId(), PARENT_ORG_ID);
         Assert.assertEquals(created.getCreatorId(), USER_ID);
@@ -289,6 +290,7 @@ public class OrganizationProvisioningExecutorTest {
         executor.execute(context);
 
         Assert.assertEquals(captureCreatedOrganization().getOrganizationHandle(), "customHandle");
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
         verify(organizationManager).isOrganizationExistByHandle("customHandle");
     }
 
@@ -320,6 +322,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(created.getId(), GENERATED_ORG_ID);
         Assert.assertEquals(created.getOrganizationHandle(), GENERATED_ORG_ID);
         Assert.assertEquals(context.getFlowOrganization().getOrganizationHandle(), GENERATED_ORG_ID);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
         verify(organizationManager, never()).isOrganizationExistByHandle(anyString());
     }
 
@@ -388,6 +391,7 @@ public class OrganizationProvisioningExecutorTest {
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
         Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE.getCode());
+        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
     }
 
     @Test
@@ -402,6 +406,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE.getCode());
         Assert.assertFalse(response.getErrorMessage().contains("Creation failed"),
                 "The internal failure message must not reach the end user.");
+        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
     }
 
     private void doThrowOnAdd() throws OrganizationManagementException {
@@ -428,6 +433,7 @@ public class OrganizationProvisioningExecutorTest {
         executor.rollback(context);
 
         verify(organizationManager).deleteOrganization(GENERATED_ORG_ID);
+        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
         Assert.assertNull(context.getFlowOrganization().getOrganizationHandle(),
                 "Clearing the handle keeps a repeated rollback from deleting something else.");
     }
@@ -468,6 +474,7 @@ public class OrganizationProvisioningExecutorTest {
         executor.rollback(context);
 
         verify(organizationManager).deleteOrganization(GENERATED_ORG_ID);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
     }
 
     /**
