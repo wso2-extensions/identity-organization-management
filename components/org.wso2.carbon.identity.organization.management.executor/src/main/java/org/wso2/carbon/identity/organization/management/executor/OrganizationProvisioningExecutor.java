@@ -127,7 +127,7 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         FlowUser flowUser = context.getFlowUser();
         FlowOrganization flowOrganization = context.getFlowOrganization();
-        String organizationId = Utils.generateUniqueID();
+        String organizationId = flowOrganization.getOrganizationId();
         String organizationHandle = resolveOrganizationHandle(organizationManager, flowOrganization);
         Map<String, String> attributes = flowOrganization.getAttributes();
 

@@ -113,7 +113,6 @@ public class OrganizationProvisioningExecutorTest {
         OrganizationManagementExecutorDataHolder.getInstance().setRealmService(realmService);
 
         utils = mockStatic(Utils.class);
-        utils.when(Utils::generateUniqueID).thenReturn(GENERATED_ORG_ID);
         when(organizationManager.resolveOrganizationId(TENANT_DOMAIN)).thenReturn(PARENT_ORG_ID);
 
         // No handle is taken unless a test says otherwise.
@@ -275,6 +274,22 @@ public class OrganizationProvisioningExecutorTest {
                 OrganizationManagementConstants.OrganizationTypes.TENANT.toString());
         Assert.assertEquals(created.getStatus(),
                 OrganizationManagementConstants.OrganizationStatus.ACTIVE.toString());
+    }
+
+    @Test
+    public void testPreassignedOrganizationIdIsUsed() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        String organizationId = "5555aaaa-6666-bbbb-7777-cccc8888dddd";
+        context.getFlowOrganization().setOrganizationId(organizationId);
+        utils.clearInvocations();
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertEquals(captureCreatedOrganization().getId(), organizationId);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), organizationId);
+        utils.verify(Utils::generateUniqueID, never());
     }
 
     @Test
@@ -456,7 +471,7 @@ public class OrganizationProvisioningExecutorTest {
 
         Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_USER_ERROR);
         Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE.getCode());
-        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
     }
 
     @Test
@@ -471,7 +486,7 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(response.getErrorCode(), ERROR_CODE_ORGANIZATION_ONBOARD_FAILURE.getCode());
         Assert.assertFalse(response.getErrorMessage().contains("Creation failed"),
                 "The internal failure message must not reach the end user.");
-        Assert.assertNull(context.getFlowOrganization().getOrganizationId());
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationId(), GENERATED_ORG_ID);
     }
 
     private void doThrowOnAdd() throws OrganizationManagementException {
@@ -556,6 +571,8 @@ public class OrganizationProvisioningExecutorTest {
         user.setUsername(USERNAME);
 
         FlowOrganization organization = new FlowOrganization();
+        // Supply the ID assigned by the flow engine before organization provisioning.
+        organization.setOrganizationId(GENERATED_ORG_ID);
         organization.setOrganizationName(organizationName);
         organization.setOrganizationHandle(organizationHandle);
 
