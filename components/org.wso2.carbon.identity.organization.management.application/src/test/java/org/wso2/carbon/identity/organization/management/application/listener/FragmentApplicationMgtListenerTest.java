@@ -77,6 +77,7 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.MAIN_APPLICATION_ID;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.IS_APP_SHARED;
@@ -111,6 +112,7 @@ public class FragmentApplicationMgtListenerTest {
     private static final String updatedApplicationName = "updatedSampleApp";
     private static final String applicationResourceID = "fcb0c1d7-28c0-46f7-bc2d-345678a1b23c";
     private static final String organizationID = "10084a8d-113f-4211-a0d5-efe36b082211";
+    private static final String mainApplicationID = "5d2f9c61-7a3e-4b8f-9e1d-0c4b2a6f8e17";
     private static final String sampleClaimURI = "http://wso2.org/claims/sampleClaim1";
     private static final String TRUE = "true";
     private static final String FALSE = "false";
@@ -1000,6 +1002,155 @@ public class FragmentApplicationMgtListenerTest {
         assertFalse(hasIdf, "OrganizationIdentifierHandler should be removed from the first step");
         assertEquals(1, resultStep.getLocalAuthenticatorConfigs().length);
         assertEquals("BasicAuthenticator", resultStep.getLocalAuthenticatorConfigs()[0].getName());
+    }
+
+    @DataProvider(name = "mainApplicationIdConfigDataProvider")
+    public Object[][] mainApplicationIdConfigDataProvider() {
+
+        return new Object[][]{
+                {true},
+                {false}
+        };
+    }
+
+    @Test(dataProvider = "mainApplicationIdConfigDataProvider")
+    public void testMainApplicationIdSetOnceOnGetServiceProvider(boolean isMainApplicationIdEnabled)
+            throws Exception {
+
+        try (MockedStatic<Utils> utils = mockStatic(Utils.class, Mockito.CALLS_REAL_METHODS)) {
+            utils.when(Utils::isMainApplicationIdEnabledForSharedApps).thenReturn(isMainApplicationIdEnabled);
+            assertMainApplicationIdOnGetServiceProvider(isMainApplicationIdEnabled);
+        }
+    }
+
+    private void assertMainApplicationIdOnGetServiceProvider(boolean isMainApplicationIdEnabled) throws Exception {
+
+        ServiceProvider sharedSP = new ServiceProvider();
+        sharedSP.setApplicationResourceId(applicationResourceID);
+        sharedSP.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+        sharedSP.setSpProperties(new ServiceProviderProperty[]{mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)});
+
+        ServiceProvider mainSp = new ServiceProvider();
+        mainSp.setClaimConfig(new ClaimConfig());
+        mainSp.getClaimConfig().setClaimMappings(new ClaimMapping[0]);
+        mainSp.setSpProperties(new ServiceProviderProperty[0]);
+
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+        when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                .thenReturn(Optional.of(new MainApplicationDO(organizationID, mainApplicationID)));
+        when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+        when(applicationManagementService.getApplicationByResourceId(any(), anyString())).thenReturn(mainSp);
+
+        fragmentApplicationMgtListener.doPostGetServiceProvider(sharedSP, applicationName, tenantDomain);
+        assertMainApplicationIdProperty(sharedSP.getSpProperties(), mainApplicationID, isMainApplicationIdEnabled);
+
+        // The property should not be duplicated on repeated reads.
+        fragmentApplicationMgtListener.doPostGetServiceProvider(sharedSP, applicationName, tenantDomain);
+        assertMainApplicationIdProperty(sharedSP.getSpProperties(), mainApplicationID, isMainApplicationIdEnabled);
+    }
+
+    @Test(dataProvider = "mainApplicationIdConfigDataProvider")
+    public void testMainApplicationIdReplacedOnGetApplicationWithRequiredAttributes(
+            boolean isMainApplicationIdEnabled) throws Exception {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class);
+             MockedStatic<Utils> utils = mockStatic(Utils.class, Mockito.CALLS_REAL_METHODS)) {
+
+            utils.when(Utils::isMainApplicationIdEnabledForSharedApps).thenReturn(isMainApplicationIdEnabled);
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+
+            ServiceProvider sharedSP = new ServiceProvider();
+            sharedSP.setApplicationResourceId(applicationResourceID);
+            sharedSP.setSpProperties(new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE),
+                    mockServiceProviderProperty(MAIN_APPLICATION_ID, "staleValue")
+            });
+            ServiceProvider mainSp = new ServiceProvider();
+
+            when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+            when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                    .thenReturn(Optional.of(new MainApplicationDO(organizationID, mainApplicationID)));
+            when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString())).thenReturn(mainSp);
+
+            // The existing value should be retained when the config is disabled.
+            String expectedValue = isMainApplicationIdEnabled ? mainApplicationID : "staleValue";
+            assertTrue(fragmentApplicationMgtListener.doPostGetApplicationWithRequiredAttributes(sharedSP,
+                    tenantDomain));
+            assertMainApplicationIdProperty(sharedSP.getSpProperties(), expectedValue);
+
+            assertTrue(fragmentApplicationMgtListener.doPostGetApplicationWithRequiredAttributes(sharedSP,
+                    tenantDomain));
+            assertMainApplicationIdProperty(sharedSP.getSpProperties(), expectedValue);
+
+            // The property should not be added to non-shared applications.
+            ServiceProvider listedSP = new ServiceProvider();
+            listedSP.setApplicationResourceId(applicationResourceID);
+            listedSP.setSpProperties(new ServiceProviderProperty[0]);
+            assertTrue(fragmentApplicationMgtListener.doPostGetApplicationWithRequiredAttributes(listedSP,
+                    tenantDomain));
+            assertEquals(0, listedSP.getSpProperties().length);
+        }
+    }
+
+    @Test
+    public void testMainApplicationIdNotCopiedOnUpdate() throws Exception {
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class)) {
+
+            mockUtils(tenantDomain);
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+
+            ServiceProvider existingApp = new ServiceProvider();
+            existingApp.setApplicationName(applicationName);
+            existingApp.setApplicationResourceId(applicationResourceID);
+            existingApp.setSpProperties(new ServiceProviderProperty[]{
+                    mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE),
+                    mockServiceProviderProperty(MAIN_APPLICATION_ID, mainApplicationID)
+            });
+            when(applicationManagementService.getApplicationByResourceId(any(), anyString()))
+                    .thenReturn(existingApp);
+
+            ServiceProvider updatedApp = new ServiceProvider();
+            updatedApp.setApplicationName(applicationName);
+            updatedApp.setApplicationResourceId(applicationResourceID);
+            updatedApp.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+
+            assertTrue(fragmentApplicationMgtListener.doPreUpdateApplication(updatedApp, tenantDomain, userName));
+
+            assertTrue(Arrays.stream(updatedApp.getSpProperties())
+                    .anyMatch(p -> IS_FRAGMENT_APP.equals(p.getName())));
+            assertFalse(Arrays.stream(updatedApp.getSpProperties())
+                    .anyMatch(p -> MAIN_APPLICATION_ID.equals(p.getName())));
+            // The existing application should not be modified.
+            assertEquals(2, existingApp.getSpProperties().length);
+        }
+    }
+
+    private void assertMainApplicationIdProperty(ServiceProviderProperty[] properties, String expectedValue,
+                                                 boolean isMainApplicationIdEnabled) {
+
+        if (isMainApplicationIdEnabled) {
+            assertMainApplicationIdProperty(properties, expectedValue);
+            return;
+        }
+        assertFalse(Arrays.stream(properties).anyMatch(p -> MAIN_APPLICATION_ID.equals(p.getName())));
+    }
+
+    private void assertMainApplicationIdProperty(ServiceProviderProperty[] properties, String expectedValue) {
+
+        List<ServiceProviderProperty> matches = new ArrayList<>();
+        for (ServiceProviderProperty property : properties) {
+            if (MAIN_APPLICATION_ID.equals(property.getName())) {
+                matches.add(property);
+            }
+        }
+        assertEquals(1, matches.size());
+        assertEquals(expectedValue, matches.get(0).getValue());
     }
 
     private AuthenticationStep buildAuthStep(boolean hasOrgSSO, boolean hasOrgIdf, boolean hasBasicAuth) {
