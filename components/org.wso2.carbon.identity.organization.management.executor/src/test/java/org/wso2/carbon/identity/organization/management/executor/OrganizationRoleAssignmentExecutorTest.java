@@ -39,11 +39,15 @@ import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagemen
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -66,6 +70,7 @@ public class OrganizationRoleAssignmentExecutorTest {
     private OrganizationManager organizationManager;
     private OrganizationUserSharingService userSharingService;
     private MockedStatic<PrivilegedCarbonContext> carbonContext;
+    private Deque<String> tenantDomains;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -81,8 +86,25 @@ public class OrganizationRoleAssignmentExecutorTest {
         dataHolder.setOrganizationManager(organizationManager);
         dataHolder.setOrganizationUserSharingService(userSharingService);
         carbonContext = mockStatic(PrivilegedCarbonContext.class);
+        tenantDomains = new ArrayDeque<>();
+        tenantDomains.push(PARENT_TENANT);
+        PrivilegedCarbonContext threadLocalContext = mock(PrivilegedCarbonContext.class);
         carbonContext.when(PrivilegedCarbonContext::getThreadLocalCarbonContext)
-                .thenReturn(mock(PrivilegedCarbonContext.class));
+                .thenReturn(threadLocalContext);
+        carbonContext.when(PrivilegedCarbonContext::startTenantFlow).thenAnswer(invocation -> {
+            tenantDomains.push(tenantDomains.peek());
+            return null;
+        });
+        carbonContext.when(PrivilegedCarbonContext::endTenantFlow).thenAnswer(invocation -> {
+            tenantDomains.pop();
+            return null;
+        });
+        when(threadLocalContext.getTenantDomain()).thenAnswer(invocation -> tenantDomains.peek());
+        doAnswer(invocation -> {
+            tenantDomains.pop();
+            tenantDomains.push(invocation.getArgument(0));
+            return null;
+        }).when(threadLocalContext).setTenantDomain(anyString(), eq(true));
         when(roleManagementService.getRoleBasicInfoById(anyString(), anyString()))
                 .thenReturn(mock(RoleBasicInfo.class));
         when(roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(anyList(), anyString()))
@@ -122,7 +144,7 @@ public class OrganizationRoleAssignmentExecutorTest {
         verifyAssignment("child-role-2", USER_ID);
         verifyNoInteractions(userSharingService);
         Assert.assertEquals(context.getTenantDomain(), PARENT_TENANT);
-        carbonContext.verify(PrivilegedCarbonContext::endTenantFlow);
+        carbonContext.verify(PrivilegedCarbonContext::endTenantFlow, times(3));
     }
 
     @Test
@@ -198,7 +220,7 @@ public class OrganizationRoleAssignmentExecutorTest {
         Assert.assertEquals(executor.execute(context).getResult(), STATUS_COMPLETE);
 
         verifyAssignment("child-role-2", USER_ID);
-        carbonContext.verify(PrivilegedCarbonContext::endTenantFlow);
+        carbonContext.verify(PrivilegedCarbonContext::endTenantFlow, times(3));
     }
 
     @Test
@@ -316,6 +338,53 @@ public class OrganizationRoleAssignmentExecutorTest {
         Assert.assertEquals(context.getTenantDomain(), PARENT_TENANT);
         carbonContext.verify(PrivilegedCarbonContext::endTenantFlow);
         verify(roleManagementService, never()).updateUserListOfRole(anyString(), anyList(), anyList(), anyString());
+    }
+
+    @Test
+    public void testParentRoleLookupsUseParentTenantAndAssignmentsUseChildTenant() throws Exception {
+
+        FlowExecutionContext context = context("[\"parent-shared-role\"]", true);
+        when(roleManagementService.getRoleBasicInfoById("parent-shared-role", PARENT_TENANT))
+                .thenAnswer(invocation -> {
+                    Assert.assertEquals(tenantDomains.peek(), PARENT_TENANT);
+                    return mock(RoleBasicInfo.class);
+                });
+        when(roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
+                Collections.singletonList("parent-shared-role"), PARENT_TENANT)).thenAnswer(invocation -> {
+                    Assert.assertEquals(tenantDomains.peek(), PARENT_TENANT);
+                    return Collections.singletonMap("parent-shared-role", "main-role");
+                });
+        when(roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList("main-role"), CHILD_TENANT)).thenAnswer(invocation -> {
+                    Assert.assertEquals(tenantDomains.peek(), CHILD_TENANT);
+                    return Collections.singletonMap("main-role", "child-role");
+                });
+        when(roleManagementService.updateUserListOfRole("child-role", Collections.singletonList(USER_ID),
+                Collections.emptyList(), CHILD_TENANT)).thenAnswer(invocation -> {
+                    Assert.assertEquals(tenantDomains.peek(), CHILD_TENANT);
+                    return null;
+                });
+
+        Assert.assertEquals(executor.execute(context).getResult(), STATUS_COMPLETE);
+        verifyAssignment("child-role", USER_ID);
+        Assert.assertEquals(tenantDomains.peek(), PARENT_TENANT);
+        Assert.assertEquals(tenantDomains.size(), 1);
+        Assert.assertEquals(context.getTenantDomain(), PARENT_TENANT);
+    }
+
+    @Test
+    public void testParentRoleLookupFailureRestoresTenantAndContinues() throws Exception {
+
+        FlowExecutionContext context = context("[\"deleted-role\",\"role-2\"]", true);
+        when(roleManagementService.getRoleBasicInfoById("deleted-role", PARENT_TENANT))
+                .thenThrow(mock(IdentityRoleManagementException.class));
+        shareRole("role-2", "child-role-2");
+
+        Assert.assertEquals(executor.execute(context).getResult(), STATUS_COMPLETE);
+        verifyAssignment("child-role-2", USER_ID);
+        Assert.assertEquals(tenantDomains.peek(), PARENT_TENANT);
+        Assert.assertEquals(tenantDomains.size(), 1);
+        carbonContext.verify(PrivilegedCarbonContext::endTenantFlow, times(3));
     }
 
     private FlowExecutionContext context(String roleIds, boolean newOrganization) {

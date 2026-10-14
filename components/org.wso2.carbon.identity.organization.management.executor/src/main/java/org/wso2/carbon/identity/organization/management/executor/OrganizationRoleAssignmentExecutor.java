@@ -50,6 +50,7 @@ import static org.wso2.carbon.identity.flow.execution.engine.Constants.ExecutorS
 public class OrganizationRoleAssignmentExecutor implements Executor {
 
     private static final Log LOG = LogFactory.getLog(OrganizationRoleAssignmentExecutor.class);
+    private static final String EXECUTOR_NAME = "OrganizationRoleAssignmentExecutor";
     private static final String ROLE_IDS = "roleIds";
     private static final String PROVISION_TARGET = "provisionTarget";
     private static final String NEW_ORGANIZATION = "NEW_ORGANIZATION";
@@ -57,7 +58,7 @@ public class OrganizationRoleAssignmentExecutor implements Executor {
     @Override
     public String getName() {
 
-        return "OrganizationRoleAssignmentExecutor";
+        return EXECUTOR_NAME;
     }
 
     @Override
@@ -114,15 +115,22 @@ public class OrganizationRoleAssignmentExecutor implements Executor {
                             FlowExecutionContext context, String targetTenantDomain, Set<String> assignedRoles) {
 
         try {
-            if (roleManagementService.getRoleBasicInfoById(roleId, context.getTenantDomain()) == null) {
-                LOG.warn("Skipping configured role unavailable in the parent tenant. Role: " + roleId
-                        + ", tenant: " + context.getTenantDomain() + ", flow: " + context.getContextIdentifier());
-                return;
+            String mainRoleId;
+            // Parent role listeners must run in the parent tenant, not the surrounding child tenant flow.
+            PrivilegedCarbonContext.startTenantFlow();
+            try {
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(context.getTenantDomain(), true);
+                if (roleManagementService.getRoleBasicInfoById(roleId, context.getTenantDomain()) == null) {
+                    LOG.warn("Skipping configured role unavailable in the parent tenant. Role: " + roleId
+                            + ", tenant: " + context.getTenantDomain() + ", flow: " + context.getContextIdentifier());
+                    return;
+                }
+                Map<String, String> sourceMappings = roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
+                        Collections.singletonList(roleId), context.getTenantDomain());
+                mainRoleId = sourceMappings.getOrDefault(roleId, roleId);
+            } finally {
+                PrivilegedCarbonContext.endTenantFlow();
             }
-            List<String> sourceRoleIds = Collections.singletonList(roleId);
-            Map<String, String> sourceMappings = roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
-                    sourceRoleIds, context.getTenantDomain());
-            String mainRoleId = sourceMappings.getOrDefault(roleId, roleId);
             Map<String, String> targetMappings = roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
                     Collections.singletonList(mainRoleId), targetTenantDomain);
             String sharedRoleId = targetMappings.get(mainRoleId);
