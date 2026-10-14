@@ -27,11 +27,14 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.flow.execution.engine.Constants;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowOrganization;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowUser;
+import org.wso2.carbon.identity.flow.mgt.model.ExecutorDTO;
+import org.wso2.carbon.identity.flow.mgt.model.NodeConfig;
 import org.wso2.carbon.identity.organization.management.executor.internal.OrganizationManagementExecutorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
@@ -71,6 +74,7 @@ import static org.wso2.carbon.identity.organization.management.executor.Executor
         .ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE;
 import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
         .ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT;
 
 /**
  * Unit tests for {@link OrganizationProvisioningExecutor}.
@@ -99,6 +103,7 @@ public class OrganizationProvisioningExecutorTest {
         // PrivilegedCarbonContext cannot be instrumented until carbon home is set.
         System.setProperty(CarbonBaseConstants.CARBON_HOME,
                 Paths.get(System.getProperty("user.dir"), "target", "test-classes").toString());
+        IdentityUtil.threadLocalProperties.get().remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
 
         executor = new OrganizationProvisioningExecutor();
         organizationManager = mock(OrganizationManager.class);
@@ -130,6 +135,7 @@ public class OrganizationProvisioningExecutorTest {
     @AfterMethod
     public void tearDown() {
 
+        IdentityUtil.threadLocalProperties.get().remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
         utils.close();
         OrganizationManagementExecutorDataHolder.getInstance().setOrganizationManager(null);
     }
@@ -209,6 +215,119 @@ public class OrganizationProvisioningExecutorTest {
         Organization created = captureCreatedOrganization();
         Assert.assertEquals(created.getCreatorId(), USER_ID);
         Assert.assertEquals(created.getCreatorUsername(), USERNAME);
+    }
+
+    @DataProvider(name = "onboardingProvisionTargets")
+    public Object[][] onboardingProvisionTargets() {
+
+        return new Object[][]{{null}, {"NEW_ORGANIZATION"}};
+    }
+
+    @Test(dataProvider = "onboardingProvisionTargets")
+    public void testOnboardingSkipsAutoAdminAssignmentOnlyDuringCreation(String provisionTarget) throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        setCurrentExecutor(context, "ProvisioningDispatchExecutor");
+        if (provisionTarget != null) {
+            context.getCurrentNode().getExecutorConfig().addMetadata("provisionTarget", provisionTarget);
+        }
+        doAnswer(invocation -> {
+            Assert.assertEquals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
+                    Boolean.TRUE);
+            Organization organization = invocation.getArgument(0);
+            organization.setOrganizationHandle(GENERATED_ORG_ID);
+            return organization;
+        }).when(organizationManager).addOrganization(any());
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertEquals(captureCreatedOrganization().getCreatorId(), USER_ID);
+        Assert.assertEquals(context.getFlowOrganization().getOrganizationHandle(), GENERATED_ORG_ID);
+        Assert.assertFalse(IdentityUtil.threadLocalProperties.get().containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT));
+    }
+
+    @DataProvider(name = "otherExecutors")
+    public Object[][] otherExecutors() {
+
+        return new Object[][]{{null}, {"OrganizationProvisioningExecutor"}, {"UserProvisioningExecutor"}, {""}};
+    }
+
+    @Test(dataProvider = "otherExecutors")
+    public void testOtherExecutorsDoNotSetAutoAdminAssignmentFlag(String executorName) throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        if (executorName != null) {
+            setCurrentExecutor(context, executorName);
+        }
+        doAnswer(invocation -> {
+            Assert.assertFalse(IdentityUtil.threadLocalProperties.get()
+                    .containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT));
+            return invocation.getArgument(0);
+        }).when(organizationManager).addOrganization(any());
+
+        Assert.assertEquals(executor.execute(context).getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertFalse(IdentityUtil.threadLocalProperties.get().containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT));
+    }
+
+    @Test
+    public void testNodeWithoutExecutorConfigurationDoesNotSetAutoAdminAssignmentFlag() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.setCurrentNode(new NodeConfig.Builder().id("END").build());
+        doAnswer(invocation -> {
+            Assert.assertFalse(IdentityUtil.threadLocalProperties.get()
+                    .containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT));
+            return invocation.getArgument(0);
+        }).when(organizationManager).addOrganization(any());
+
+        Assert.assertEquals(executor.execute(context).getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
+    }
+
+    @DataProvider(name = "previousAutoAdminAssignmentFlags")
+    public Object[][] previousAutoAdminAssignmentFlags() {
+
+        return new Object[][]{
+                {false, null, false}, {false, null, true},
+                {true, Boolean.FALSE, false}, {true, Boolean.FALSE, true},
+                {true, Boolean.TRUE, false}, {true, Boolean.TRUE, true},
+                {true, null, false}, {true, null, true}
+        };
+    }
+
+    @Test(dataProvider = "previousAutoAdminAssignmentFlags")
+    public void testOnboardingRestoresPreviousFlagAfterCreation(boolean wasPresent, Object previousValue,
+                                                               boolean failCreation) throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        setCurrentExecutor(context, "ProvisioningDispatchExecutor");
+        if (wasPresent) {
+            IdentityUtil.threadLocalProperties.get().put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, previousValue);
+        }
+        doAnswer(invocation -> {
+            Assert.assertEquals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
+                    Boolean.TRUE);
+            if (failCreation) {
+                throw new OrganizationManagementServerException("Creation failed", "ERR_01");
+            }
+            return invocation.getArgument(0);
+        }).when(organizationManager).addOrganization(any());
+
+        ExecutorResponse response = executor.execute(context);
+
+        Assert.assertEquals(response.getResult(), failCreation ? Constants.ExecutorStatus.STATUS_ERROR :
+                Constants.ExecutorStatus.STATUS_COMPLETE);
+        Assert.assertEquals(IdentityUtil.threadLocalProperties.get().containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
+                wasPresent);
+        Assert.assertEquals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
+                previousValue);
+    }
+
+    private void setCurrentExecutor(FlowExecutionContext context, String executorName) {
+
+        NodeConfig node = new NodeConfig.Builder().id("END").build();
+        node.setExecutorConfig(new ExecutorDTO(executorName));
+        context.setCurrentNode(node);
     }
 
     @Test

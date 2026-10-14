@@ -23,12 +23,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.flow.execution.engine.Constants;
 import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowOrganization;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowUser;
+import org.wso2.carbon.identity.flow.mgt.model.NodeConfig;
 import org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages;
 import org.wso2.carbon.identity.organization.management.executor.internal.OrganizationManagementExecutorDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -58,6 +60,7 @@ import static org.wso2.carbon.identity.organization.management.executor.Executor
         .ERROR_CODE_ORGANIZATION_PROVISIONING_FAILURE;
 import static org.wso2.carbon.identity.organization.management.executor.ExecutorConstants.ExecutorErrorMessages
         .ERROR_CODE_RESOLVE_PARENT_ORGANIZATION_FAILURE;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT;
 
 /**
  * Flow executor that creates an organization from the details collected by a flow. The organization is
@@ -69,6 +72,7 @@ public class OrganizationProvisioningExecutor implements Executor {
     private static final Log LOG = LogFactory.getLog(OrganizationProvisioningExecutor.class);
 
     private static final String EXECUTOR_NAME = "OrganizationProvisioningExecutor";
+    private static final String PROVISIONING_DISPATCH_EXECUTOR = "ProvisioningDispatchExecutor";
 
     @Override
     public String getName() {
@@ -154,12 +158,37 @@ public class OrganizationProvisioningExecutor implements Executor {
             }
         }
 
-        organizationManager.addOrganization(organization);
+        addOrganization(context, organization, organizationManager);
 
         // The handle is the tenant domain of the new organization, used by later flow steps and rollback.
         flowOrganization.setOrganizationHandle(organization.getOrganizationHandle());
         if (LOG.isDebugEnabled()) {
             LOG.debug("Organization created via onboarding flow. ID: " + organization.getId());
+        }
+    }
+
+    private void addOrganization(FlowExecutionContext context, TenantTypeOrganization organization,
+                                 OrganizationManager organizationManager) throws OrganizationManagementException {
+
+        NodeConfig currentNode = context.getCurrentNode();
+        if (currentNode == null || currentNode.getExecutorConfig() == null ||
+                !PROVISIONING_DISPATCH_EXECUTOR.equals(currentNode.getExecutorConfig().getName())) {
+            organizationManager.addOrganization(organization);
+            return;
+        }
+
+        // Onboarding assigns only explicitly configured roles, not the automatic Console Administrator role.
+        Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
+        boolean wasPresent = threadLocalProperties.containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
+        Object previousValue = threadLocalProperties.put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, true);
+        try {
+            organizationManager.addOrganization(organization);
+        } finally {
+            if (wasPresent) {
+                threadLocalProperties.put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, previousValue);
+            } else {
+                threadLocalProperties.remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
+            }
         }
     }
 
