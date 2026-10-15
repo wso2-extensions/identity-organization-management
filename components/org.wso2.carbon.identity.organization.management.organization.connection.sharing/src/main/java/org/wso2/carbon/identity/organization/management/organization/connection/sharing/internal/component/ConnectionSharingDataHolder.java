@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component;
 
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticationService;
+import org.wso2.carbon.identity.application.authentication.framework.UserDefinedAuthenticatorService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.ConnectionAssociationManager;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.ConnectionTypeHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.handler.idp.resolver.DefaultSharedFederatedAuthenticatorResolver;
@@ -46,6 +48,8 @@ public class ConnectionSharingDataHolder {
     private IdpManager idpManager;
     private ConnectionAssociationManager connectionAssociationManager;
     private RealmService realmService;
+    private ApplicationAuthenticationService applicationAuthenticationService;
+    private UserDefinedAuthenticatorService userDefinedAuthenticatorService;
     private final Map<ResourceType, ConnectionTypeHandler> connectionTypeHandlers =
             new EnumMap<>(ResourceType.class);
     // Per-resource resolvers contributed via the whiteboard pattern, keyed by the authenticator/connector name they
@@ -119,6 +123,26 @@ public class ConnectionSharingDataHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    public ApplicationAuthenticationService getApplicationAuthenticationService() {
+
+        return applicationAuthenticationService;
+    }
+
+    public void setApplicationAuthenticationService(ApplicationAuthenticationService applicationAuthenticationService) {
+
+        this.applicationAuthenticationService = applicationAuthenticationService;
+    }
+
+    public UserDefinedAuthenticatorService getUserDefinedAuthenticatorService() {
+
+        return userDefinedAuthenticatorService;
+    }
+
+    public void setUserDefinedAuthenticatorService(UserDefinedAuthenticatorService userDefinedAuthenticatorService) {
+
+        this.userDefinedAuthenticatorService = userDefinedAuthenticatorService;
     }
 
     /**

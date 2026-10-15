@@ -41,8 +41,6 @@ public class ConnectionSharingConstants {
 
     // Server Configuration properties.
     public static final String ENABLE_IDP_SHARING_PROPERTY = "ConnectionSharing.IDP.Enable";
-    public static final String DISABLED_AUTHENTICATORS_PROPERTY =
-            "ConnectionSharing.IDP.DisabledAuthenticators.Authenticator";
 
     /**
      * Error messages for connection sharing management.

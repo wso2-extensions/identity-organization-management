@@ -26,21 +26,26 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticationService;
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
+import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
+import org.wso2.carbon.identity.application.authentication.framework.UserDefinedAuthenticatorService;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
+import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtException;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.component.ConnectionSharingDataHolder;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.nio.file.Paths;
-import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -48,29 +53,34 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.DISABLED_AUTHENTICATORS_PROPERTY;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ENABLE_IDP_SHARING_PROPERTY;
 
 /**
  * Unit tests for {@link IdpConnectionTypeHandler#validateConnectionShareEligibility(String, String)} — the guard
  * that rejects connections which must not be shared: when identity-provider sharing is disabled, when the connection
- * is itself a shared (shadow) connection, when it is a trusted token issuer, or when it carries a share-disabled
- * federated authenticator.
+ * is itself a shared (shadow) connection, when it is a trusted token issuer, or when it carries a federated
+ * authenticator which is not shareable with child organizations.
  */
 public class IdpConnectionTypeHandlerTest {
 
     private static final String CONNECTION_ID = "idp-resource-id";
     private static final String INITIATING_ORG_ID = "initiating-org-id";
     private static final String TENANT_DOMAIN = "carbon.super";
-    private static final String DISABLED_AUTHENTICATOR = "GoogleOIDCAuthenticator";
+    private static final String SHAREABLE_AUTHENTICATOR = "SAMLSSOAuthenticator";
+    private static final String NON_SHAREABLE_AUTHENTICATOR = "GoogleOIDCAuthenticator";
+    private static final String USER_DEFINED_AUTHENTICATOR = "custom-authenticator";
 
     private MockedStatic<IdentityUtil> mockedIdentityUtil;
     private MockedStatic<IdentityTenantUtil> mockedIdentityTenantUtil;
     private MockedStatic<ConnectionSharingDataHolder> mockedDataHolder;
     private MockedStatic<PrivilegedCarbonContext> mockedCarbonContext;
     private IdpManager idpManager;
+    private ApplicationAuthenticationService applicationAuthenticationService;
+    private UserDefinedAuthenticatorService userDefinedAuthenticatorService;
+    private ConnectionSharingDataHolder dataHolder;
 
     private IdpConnectionTypeHandler handler;
 
@@ -84,7 +94,7 @@ public class IdpConnectionTypeHandlerTest {
     }
 
     @BeforeMethod
-    public void setUp() {
+    public void setUp() throws Exception {
 
         mockedIdentityUtil = mockStatic(IdentityUtil.class);
         mockedIdentityTenantUtil = mockStatic(IdentityTenantUtil.class);
@@ -93,18 +103,23 @@ public class IdpConnectionTypeHandlerTest {
         mockedCarbonContext = mockStatic(PrivilegedCarbonContext.class);
 
         idpManager = mock(IdpManager.class);
-        ConnectionSharingDataHolder dataHolder = mock(ConnectionSharingDataHolder.class);
+        applicationAuthenticationService = mock(ApplicationAuthenticationService.class);
+        userDefinedAuthenticatorService = mock(UserDefinedAuthenticatorService.class);
+        dataHolder = mock(ConnectionSharingDataHolder.class);
         mockedDataHolder.when(ConnectionSharingDataHolder::getInstance).thenReturn(dataHolder);
         when(dataHolder.getIdpManager()).thenReturn(idpManager);
+        when(dataHolder.getApplicationAuthenticationService()).thenReturn(applicationAuthenticationService);
+        when(dataHolder.getUserDefinedAuthenticatorService()).thenReturn(userDefinedAuthenticatorService);
 
         PrivilegedCarbonContext carbonContext = mock(PrivilegedCarbonContext.class);
         when(carbonContext.getTenantDomain()).thenReturn(TENANT_DOMAIN);
         mockedCarbonContext.when(PrivilegedCarbonContext::getThreadLocalCarbonContext).thenReturn(carbonContext);
 
-        // Defaults: sharing enabled (property unset) and no share-disabled authenticators.
+        // Defaults: sharing enabled (property unset) and the system defined authenticator is shareable.
         mockedIdentityUtil.when(() -> IdentityUtil.getProperty(ENABLE_IDP_SHARING_PROPERTY)).thenReturn(null);
-        mockedIdentityUtil.when(() -> IdentityUtil.getPropertyAsList(DISABLED_AUTHENTICATORS_PROPERTY))
-                .thenReturn(Collections.emptyList());
+        ApplicationAuthenticator shareableAuthenticator = mockAuthenticator(ApplicationAuthenticator.class, true);
+        when(applicationAuthenticationService.getAuthenticator(SHAREABLE_AUTHENTICATOR))
+                .thenReturn(shareableAuthenticator);
 
         handler = new IdpConnectionTypeHandler();
     }
@@ -180,15 +195,91 @@ public class IdpConnectionTypeHandlerTest {
     }
 
     @Test(expectedExceptions = ConnectionSharingMgtClientException.class)
-    public void testValidateThrowsForShareDisabledAuthenticator() throws Exception {
+    public void testValidateThrowsForNonShareableSystemDefinedAuthenticator() throws Exception {
 
-        mockedIdentityUtil.when(() -> IdentityUtil.getPropertyAsList(DISABLED_AUTHENTICATORS_PROPERTY))
-                .thenReturn(Collections.singletonList(DISABLED_AUTHENTICATOR));
+        ApplicationAuthenticator nonShareableAuthenticator = mockAuthenticator(ApplicationAuthenticator.class, false);
+        when(applicationAuthenticationService.getAuthenticator(NON_SHAREABLE_AUTHENTICATOR))
+                .thenReturn(nonShareableAuthenticator);
 
         IdentityProvider idp = shareableIdp();
         FederatedAuthenticatorConfig authenticator = new FederatedAuthenticatorConfig();
-        authenticator.setName(DISABLED_AUTHENTICATOR);
+        authenticator.setName(NON_SHAREABLE_AUTHENTICATOR);
         idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticator});
+        stubResolvedIdp(idp);
+
+        handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
+    }
+
+    @Test
+    public void testValidatePassesWhenSystemDefinedAuthenticatorIsNotRegistered() throws Exception {
+
+        IdentityProvider idp = shareableIdp();
+        FederatedAuthenticatorConfig authenticator = new FederatedAuthenticatorConfig();
+        authenticator.setName("UnregisteredAuthenticator");
+        idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticator});
+        stubResolvedIdp(idp);
+
+        // An authenticator without a registered implementation does not block sharing.
+        handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
+    }
+
+    @Test(expectedExceptions = ConnectionSharingMgtClientException.class)
+    public void testValidateThrowsForNonShareableUserDefinedAuthenticator() throws Exception {
+
+        UserDefinedFederatedAuthenticatorConfig authenticatorConfig = new UserDefinedFederatedAuthenticatorConfig();
+        authenticatorConfig.setName(USER_DEFINED_AUTHENTICATOR);
+        FederatedApplicationAuthenticator nonShareableAuthenticator =
+                mockAuthenticator(FederatedApplicationAuthenticator.class, false);
+        when(userDefinedAuthenticatorService.getUserDefinedFederatedAuthenticator(authenticatorConfig))
+                .thenReturn(nonShareableAuthenticator);
+
+        IdentityProvider idp = shareableIdp();
+        idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticatorConfig});
+        stubResolvedIdp(idp);
+
+        try {
+            handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
+        } finally {
+            // User defined authenticators must be resolved via the user defined authenticator service only.
+            verify(applicationAuthenticationService, never()).getAuthenticator(USER_DEFINED_AUTHENTICATOR);
+        }
+    }
+
+    @Test
+    public void testValidatePassesForShareableUserDefinedAuthenticator() throws Exception {
+
+        UserDefinedFederatedAuthenticatorConfig authenticatorConfig = new UserDefinedFederatedAuthenticatorConfig();
+        authenticatorConfig.setName(USER_DEFINED_AUTHENTICATOR);
+        FederatedApplicationAuthenticator shareableAuthenticator =
+                mockAuthenticator(FederatedApplicationAuthenticator.class, true);
+        when(userDefinedAuthenticatorService.getUserDefinedFederatedAuthenticator(authenticatorConfig))
+                .thenReturn(shareableAuthenticator);
+
+        IdentityProvider idp = shareableIdp();
+        idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticatorConfig});
+        stubResolvedIdp(idp);
+
+        handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
+    }
+
+    @Test(expectedExceptions = ConnectionSharingMgtServerException.class)
+    public void testValidateThrowsWhenApplicationAuthenticationServiceUnavailable() throws Exception {
+
+        when(dataHolder.getApplicationAuthenticationService()).thenReturn(null);
+        stubResolvedIdp(shareableIdp());
+
+        handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
+    }
+
+    @Test(expectedExceptions = ConnectionSharingMgtServerException.class)
+    public void testValidateThrowsWhenUserDefinedAuthenticatorServiceUnavailable() throws Exception {
+
+        when(dataHolder.getUserDefinedAuthenticatorService()).thenReturn(null);
+
+        UserDefinedFederatedAuthenticatorConfig authenticatorConfig = new UserDefinedFederatedAuthenticatorConfig();
+        authenticatorConfig.setName(USER_DEFINED_AUTHENTICATOR);
+        IdentityProvider idp = shareableIdp();
+        idp.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticatorConfig});
         stubResolvedIdp(idp);
 
         handler.validateConnectionShareEligibility(CONNECTION_ID, INITIATING_ORG_ID);
@@ -245,8 +336,16 @@ public class IdpConnectionTypeHandlerTest {
         identityProvider.setResourceId(CONNECTION_ID);
         identityProvider.setIdentityProviderName("google-connection");
         FederatedAuthenticatorConfig authenticator = new FederatedAuthenticatorConfig();
-        authenticator.setName("SAMLSSOAuthenticator");
+        authenticator.setName(SHAREABLE_AUTHENTICATOR);
         identityProvider.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{authenticator});
         return identityProvider;
+    }
+
+    private <T extends ApplicationAuthenticator> T mockAuthenticator(Class<T> authenticatorClass,
+                                                                      boolean shareable) {
+
+        T authenticator = mock(authenticatorClass);
+        when(authenticator.isShareableWithChildOrganizations()).thenReturn(shareable);
+        return authenticator;
     }
 }
