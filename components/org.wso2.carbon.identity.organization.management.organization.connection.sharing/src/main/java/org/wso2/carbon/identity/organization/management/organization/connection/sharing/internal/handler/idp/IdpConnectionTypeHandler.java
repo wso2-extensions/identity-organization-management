@@ -22,12 +22,16 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticationService;
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
+import org.wso2.carbon.identity.application.authentication.framework.UserDefinedAuthenticatorService;
+import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticationException;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdPGroup;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.ProvisioningConnectorConfig;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.application.common.model.UserDefinedFederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtClientException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtServerException;
@@ -42,11 +46,8 @@ import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.DISABLED_AUTHENTICATORS_PROPERTY;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_NOT_SHAREABLE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.constant.ConnectionSharingConstants.ErrorMessage.ERROR_CODE_CONNECTION_SHARE_CLIENT_ERROR;
@@ -101,17 +102,65 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
                     "Trusted token issuer connections cannot be shared with organizations.");
         }
 
-        // Connections carrying a disabled federated authenticator must not be shared with organizations.
-        Set<String> disabledAuthenticators = getShareDisabledAuthenticators();
-        if (!disabledAuthenticators.isEmpty() && identityProvider.getFederatedAuthenticatorConfigs() != null) {
-            for (FederatedAuthenticatorConfig authenticator : identityProvider.getFederatedAuthenticatorConfigs()) {
-                if (authenticator != null && disabledAuthenticators.contains(authenticator.getName())) {
+        // Connections carrying a federated authenticator that is not shareable must not be shared with organizations.
+        if (identityProvider.getFederatedAuthenticatorConfigs() != null) {
+            for (FederatedAuthenticatorConfig authenticatorConfig :
+                    identityProvider.getFederatedAuthenticatorConfigs()) {
+                if (authenticatorConfig == null) {
+                    continue;
+                }
+                ApplicationAuthenticator authenticator = resolveAuthenticator(authenticatorConfig);
+                if (authenticator != null && !authenticator.isShareableWithChildOrganizations()) {
                     throw new ConnectionSharingMgtClientException(ERROR_CODE_CONNECTION_NOT_SHAREABLE.getCode(),
                             ERROR_CODE_CONNECTION_NOT_SHAREABLE.getMessage(),
-                            "Identity provider with the authenticator: '" + authenticator.getName() +
+                            "Identity provider with the authenticator: '" + authenticatorConfig.getName() +
                                     "' cannot be shared with organizations.");
                 }
             }
+        }
+    }
+
+    /**
+     * Resolves the {@link ApplicationAuthenticator} implementation of the given federated authenticator config.
+     * System defined authenticators are resolved from the {@link ApplicationAuthenticationService}, while user
+     * defined authenticators are built through the {@link UserDefinedAuthenticatorService}.
+     *
+     * @param authenticatorConfig Federated authenticator config of the identity provider.
+     * @return The resolved authenticator, or {@code null} if no system defined authenticator is registered under
+     * the config name.
+     * @throws ConnectionSharingMgtServerException If an error occurs while resolving the authenticator.
+     */
+    private ApplicationAuthenticator resolveAuthenticator(FederatedAuthenticatorConfig authenticatorConfig)
+            throws ConnectionSharingMgtServerException {
+
+        if (authenticatorConfig instanceof UserDefinedFederatedAuthenticatorConfig) {
+            UserDefinedAuthenticatorService userDefinedAuthenticatorService =
+                    ConnectionSharingDataHolder.getInstance().getUserDefinedAuthenticatorService();
+            if (userDefinedAuthenticatorService == null) {
+                throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR.getCode(),
+                        "User defined authenticator service is not available to resolve the authenticator: " +
+                                authenticatorConfig.getName() + ".", ERROR_CODE_INTERNAL_ERROR.getDescription());
+            }
+            return userDefinedAuthenticatorService.getUserDefinedFederatedAuthenticator(
+                    (UserDefinedFederatedAuthenticatorConfig) authenticatorConfig);
+        }
+
+        ApplicationAuthenticationService applicationAuthenticationService =
+                ConnectionSharingDataHolder.getInstance().getApplicationAuthenticationService();
+        if (applicationAuthenticationService == null) {
+            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR.getCode(),
+                    "Application authentication service is not available to resolve the authenticator: " +
+                            authenticatorConfig.getName() + ".", ERROR_CODE_INTERNAL_ERROR.getDescription());
+        }
+        try {
+            ApplicationAuthenticator authenticator =
+                    applicationAuthenticationService.getAuthenticator(authenticatorConfig.getName());
+            if (authenticator == null && LOG.isDebugEnabled()) {
+                LOG.debug("No system defined authenticator found for the name: " + authenticatorConfig.getName());
+            }
+            return authenticator;
+        } catch (ApplicationAuthenticationException e) {
+            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
         }
     }
 
@@ -159,14 +208,6 @@ public class IdpConnectionTypeHandler extends AbstractConnectionTypeHandler {
             }
         }
         return false;
-    }
-
-    private Set<String> getShareDisabledAuthenticators() {
-
-        List<String> disabledAuthenticators = IdentityUtil.getPropertyAsList(DISABLED_AUTHENTICATORS_PROPERTY);
-        LOG.debug("Disabled authenticators for sharing: " + disabledAuthenticators);
-        return new HashSet<>(disabledAuthenticators);
-
     }
 
     @Override
