@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2022-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -41,4 +41,6 @@ public class Constants {
     public static final String EVENT_PROP_PATCH_OPERATIONS = "PATCH_OPERATIONS";
     public static final String EVENT_PROP_PREVIOUS_ORGANIZATION = "PREVIOUS_ORGANIZATION";
     public static final String IS_SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION = "SUBSEQUENT_OPERATION_OF_ADD_ORGANIZATION";
+    // Thread-local policy used while creating an organization through the onboarding dispatcher.
+    public static final String SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT = "SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT";
 }

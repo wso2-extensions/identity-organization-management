@@ -42,6 +42,14 @@
             <artifactId>org.wso2.carbon.identity.flow.execution.engine</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.ext</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.user.core</artifactId>
         </dependency>
@@ -84,10 +92,12 @@
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.core.util;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine.graph;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine.exception;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.flow.mgt.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.organization.management.service;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
