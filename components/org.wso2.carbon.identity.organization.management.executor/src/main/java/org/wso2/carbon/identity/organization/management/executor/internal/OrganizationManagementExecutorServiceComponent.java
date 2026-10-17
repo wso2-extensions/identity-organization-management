@@ -28,7 +28,10 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.organization.management.executor.OrganizationProvisioningExecutor;
+import org.wso2.carbon.identity.organization.management.executor.OrganizationRoleAssignmentExecutor;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -48,6 +51,8 @@ public class OrganizationManagementExecutorServiceComponent {
         try {
             context.getBundleContext().registerService(Executor.class.getName(),
                     new OrganizationProvisioningExecutor(), null);
+            context.getBundleContext().registerService(Executor.class.getName(),
+                    new OrganizationRoleAssignmentExecutor(), null);
             LOG.debug("Organization management executor bundle is activated successfully.");
         } catch (Exception e) {
             LOG.error("Error while activating the organization management executor component.", e);
@@ -90,5 +95,40 @@ public class OrganizationManagementExecutorServiceComponent {
 
         OrganizationManagementExecutorDataHolder.getInstance().setRealmService(null);
         LOG.debug("Unset the realm service.");
+    }
+
+    @Reference(
+            name = "role.management.service",
+            service = RoleManagementService.class,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetRoleManagementService"
+    )
+    protected void setRoleManagementService(RoleManagementService roleManagementService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setRoleManagementService(roleManagementService);
+    }
+
+    protected void unsetRoleManagementService(RoleManagementService roleManagementService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setRoleManagementService(null);
+    }
+
+    @Reference(
+            name = "organization.user.sharing.service",
+            service = OrganizationUserSharingService.class,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationUserSharingService"
+    )
+    protected void setOrganizationUserSharingService(OrganizationUserSharingService organizationUserSharingService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance()
+                .setOrganizationUserSharingService(organizationUserSharingService);
+    }
+
+    protected void unsetOrganizationUserSharingService(OrganizationUserSharingService organizationUserSharingService) {
+
+        OrganizationManagementExecutorDataHolder.getInstance().setOrganizationUserSharingService(null);
     }
 }

@@ -55,6 +55,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.role.v2.mgt.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.organization.management</groupId>
+            <artifactId>org.wso2.carbon.identity.organization.management.organization.user.sharing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.minidev</groupId>
+            <artifactId>json-smart</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
@@ -80,6 +92,8 @@
                             org.wso2.carbon.identity.organization.management.executor.*;version="${project.version}"
                         </Export-Package>
                         <Import-Package>
+                            net.minidev.json;version="[2.4.0,3.0.0)",
+                            net.minidev.json.parser;version="[2.4.0,3.0.0)",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
@@ -88,6 +102,12 @@
                             org.wso2.carbon.identity.flow.execution.engine.graph;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.flow.execution.engine.exception;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.flow.mgt.model;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core.exception;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.role.v2.mgt.core.model;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.organization.management.organization.user.sharing.models;version="${org.wso2.identity.organization.mgt.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.constant;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
                             org.wso2.carbon.identity.organization.management.service.exception;version="${org.wso2.identity.organization.mgt.core.imp.pkg.version.range}",
