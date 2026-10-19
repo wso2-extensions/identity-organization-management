@@ -179,16 +179,11 @@ public class OrganizationProvisioningExecutor implements Executor {
 
         // Onboarding assigns only explicitly configured roles, not the automatic Console Administrator role.
         Map<String, Object> threadLocalProperties = IdentityUtil.threadLocalProperties.get();
-        boolean wasPresent = threadLocalProperties.containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
-        Object previousValue = threadLocalProperties.put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, true);
+        threadLocalProperties.put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, true);
         try {
             organizationManager.addOrganization(organization);
         } finally {
-            if (wasPresent) {
-                threadLocalProperties.put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, previousValue);
-            } else {
-                threadLocalProperties.remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
-            }
+            threadLocalProperties.remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
         }
     }
 

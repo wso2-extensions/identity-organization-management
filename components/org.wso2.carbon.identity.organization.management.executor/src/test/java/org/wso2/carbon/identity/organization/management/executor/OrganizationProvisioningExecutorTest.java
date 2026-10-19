@@ -284,26 +284,17 @@ public class OrganizationProvisioningExecutorTest {
         Assert.assertEquals(executor.execute(context).getResult(), Constants.ExecutorStatus.STATUS_COMPLETE);
     }
 
-    @DataProvider(name = "previousAutoAdminAssignmentFlags")
-    public Object[][] previousAutoAdminAssignmentFlags() {
+    @DataProvider(name = "organizationCreationOutcomes")
+    public Object[][] organizationCreationOutcomes() {
 
-        return new Object[][]{
-                {false, null, false}, {false, null, true},
-                {true, Boolean.FALSE, false}, {true, Boolean.FALSE, true},
-                {true, Boolean.TRUE, false}, {true, Boolean.TRUE, true},
-                {true, null, false}, {true, null, true}
-        };
+        return new Object[][]{{false}, {true}};
     }
 
-    @Test(dataProvider = "previousAutoAdminAssignmentFlags")
-    public void testOnboardingRestoresPreviousFlagAfterCreation(boolean wasPresent, Object previousValue,
-                                                               boolean failCreation) throws Exception {
+    @Test(dataProvider = "organizationCreationOutcomes")
+    public void testOnboardingRemovesFlagAfterCreation(boolean failCreation) throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
         setCurrentExecutor(context, "ProvisioningDispatchExecutor");
-        if (wasPresent) {
-            IdentityUtil.threadLocalProperties.get().put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, previousValue);
-        }
         doAnswer(invocation -> {
             Assert.assertEquals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
                     Boolean.TRUE);
@@ -317,10 +308,7 @@ public class OrganizationProvisioningExecutorTest {
 
         Assert.assertEquals(response.getResult(), failCreation ? Constants.ExecutorStatus.STATUS_ERROR :
                 Constants.ExecutorStatus.STATUS_COMPLETE);
-        Assert.assertEquals(IdentityUtil.threadLocalProperties.get().containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
-                wasPresent);
-        Assert.assertEquals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT),
-                previousValue);
+        Assert.assertFalse(IdentityUtil.threadLocalProperties.get().containsKey(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT));
     }
 
     private void setCurrentExecutor(FlowExecutionContext context, String executorName) {
