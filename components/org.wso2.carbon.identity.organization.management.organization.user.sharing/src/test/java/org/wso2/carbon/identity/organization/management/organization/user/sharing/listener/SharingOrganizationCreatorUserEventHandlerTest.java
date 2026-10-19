@@ -24,15 +24,23 @@ import org.mockito.MockedStatic;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.event.IdentityEventException;
 import org.wso2.carbon.identity.event.event.Event;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.SharedType;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -40,16 +48,23 @@ import org.wso2.carbon.identity.organization.management.service.model.Organizati
 import org.wso2.carbon.identity.organization.management.service.model.OrganizationAttribute;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.util.UserIDResolver;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -60,11 +75,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT;
 
 /**
- * Tests for {@link SharingOrganizationCreatorUserEventHandler} (issue #6955): {@code associatedOrgId} must
- * resolve from the calling tenant when the creator is set in the org attributes, not from the principal's
- * resident organization.
+ * Tests for creator sharing, associated organization resolution (#6955), and automatic Administrator assignment.
  */
 public class SharingOrganizationCreatorUserEventHandlerTest {
 
@@ -80,6 +94,9 @@ public class SharingOrganizationCreatorUserEventHandlerTest {
     private static final String CREATOR_USERNAME = "creatoruser6955";
     private static final String REALM_ADMIN_USERNAME = "admin";
     private static final String REALM_ADMIN_USER_ID = "realm-admin-id";
+    private static final String SHARED_USER_ID = "shared-user-id";
+    private static final String CONSOLE_APP_ID = "console-app-id";
+    private static final String ADMIN_ROLE_ID = "console-admin-role-id";
 
     @Mock
     private OrganizationManager organizationManager;
@@ -108,6 +125,8 @@ public class SharingOrganizationCreatorUserEventHandlerTest {
 
         openMocks(this);
         setUpCarbonHome();
+        IdentityUtil.threadLocalProperties.get().remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
+        IdentityUtil.threadLocalProperties.get().remove(UserSharingConstants.SERVICE_PROVIDER_PROPERTY_NAME);
 
         dataHolderStatic = mockStatic(OrganizationUserSharingDataHolder.class);
         dataHolderStatic.when(OrganizationUserSharingDataHolder::getInstance).thenReturn(dataHolder);
@@ -152,6 +171,8 @@ public class SharingOrganizationCreatorUserEventHandlerTest {
     @AfterMethod
     public void tearDown() {
 
+        IdentityUtil.threadLocalProperties.get().remove(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT);
+        IdentityUtil.threadLocalProperties.get().remove(UserSharingConstants.SERVICE_PROVIDER_PROPERTY_NAME);
         if (dataHolderStatic != null) {
             dataHolderStatic.close();
         }
@@ -243,6 +264,100 @@ public class SharingOrganizationCreatorUserEventHandlerTest {
         verifyNoInteractions(organizationManager);
         verifyNoInteractions(userSharingService);
         dataHolderStatic.verify(OrganizationUserSharingDataHolder::getInstance, never());
+    }
+
+    @DataProvider(name = "administratorAssignmentScenarios")
+    public Object[][] administratorAssignmentScenarios() {
+
+        return new Object[][]{
+                // Onboarding never auto-assigns Administrator, regardless of roles or authentication context.
+                {Boolean.TRUE, false, false, false},
+                {Boolean.TRUE, true, false, false},
+                {Boolean.TRUE, false, true, false},
+                {Boolean.TRUE, true, true, false},
+                // Absent or false flags preserve the existing role and service-provider checks.
+                {null, false, false, true},
+                {null, true, true, true},
+                {null, false, true, false},
+                {Boolean.FALSE, false, false, true},
+                {Boolean.FALSE, true, true, true},
+                {Boolean.FALSE, false, true, false}
+        };
+    }
+
+    @Test(dataProvider = "administratorAssignmentScenarios")
+    public void testOwnerSharingAndAdministratorAssignment(Boolean skipAutoAssignment, boolean hasConsoleRole,
+                                                           boolean hasServiceProvider, boolean expectedAssignment)
+            throws Exception {
+
+        Organization childOrg = newOrganizationWithCreatorAttributes(CHILD_ORG_ID, CREATOR_USER_ID, CREATOR_USERNAME);
+        when(organizationManager.getOrganization(CHILD_ORG_ID, false, false)).thenReturn(childOrg);
+        UserAssociation association = mock(UserAssociation.class);
+        when(association.getUserId()).thenReturn(SHARED_USER_ID);
+        when(userSharingService.getUserAssociationOfAssociatedUserByOrgId(REALM_ADMIN_USER_ID, CHILD_ORG_ID))
+                .thenReturn(association);
+        when(dataHolder.getOrganizationUserSharingService()).thenReturn(userSharingService);
+
+        ApplicationManagementService applicationManagementService = mock(ApplicationManagementService.class);
+        RoleManagementService roleManagementService = mock(RoleManagementService.class);
+        AbstractUserStoreManager userStoreManager = mock(AbstractUserStoreManager.class);
+        when(dataHolder.getApplicationManagementService()).thenReturn(applicationManagementService);
+        when(dataHolder.getRoleManagementService()).thenReturn(roleManagementService);
+        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+        when(userStoreManager.getGroupListOfUser(REALM_ADMIN_USER_ID, null, null))
+                .thenReturn(Collections.emptyList());
+        when(roleManagementService.getRoleIdListOfGroups(Collections.emptyList(), PARENT_TENANT_DOMAIN))
+                .thenReturn(Collections.emptyList());
+        when(roleManagementService.getRoleIdListOfUser(REALM_ADMIN_USER_ID, PARENT_TENANT_DOMAIN))
+                .thenReturn(hasConsoleRole ? Collections.singletonList("source-console-role") :
+                        Collections.emptyList());
+
+        ServiceProvider console = mock(ServiceProvider.class);
+        when(console.getApplicationResourceId()).thenReturn(CONSOLE_APP_ID);
+        when(applicationManagementService.getApplicationExcludingFileBasedSPs(
+                eq(ApplicationConstants.CONSOLE_APPLICATION_NAME), anyString())).thenReturn(console);
+        RoleV2 consoleRole = mock(RoleV2.class);
+        when(consoleRole.getId()).thenReturn("source-console-role");
+        when(consoleRole.getName()).thenReturn("Console Viewer");
+        when(applicationManagementService.getAssociatedRolesOfApplication(CONSOLE_APP_ID, PARENT_TENANT_DOMAIN))
+                .thenReturn(Collections.singletonList(consoleRole));
+        when(roleManagementService.getRoleIdByName(RoleConstants.ADMINISTRATOR, RoleConstants.APPLICATION,
+                CONSOLE_APP_ID, CHILD_TENANT_DOMAIN)).thenReturn(ADMIN_ROLE_ID);
+
+        UserIDResolver userIDResolver = mock(UserIDResolver.class);
+        when(userIDResolver.getNameByID(SHARED_USER_ID, CHILD_TENANT_DOMAIN)).thenReturn("PRIMARY/creator");
+        Field resolverField = SharingOrganizationCreatorUserEventHandler.class.getDeclaredField("userIDResolver");
+        resolverField.setAccessible(true);
+        resolverField.set(handler, userIDResolver);
+
+        if (skipAutoAssignment != null) {
+            IdentityUtil.threadLocalProperties.get().put(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT, skipAutoAssignment);
+        }
+        if (hasServiceProvider) {
+            IdentityUtil.threadLocalProperties.get()
+                    .put(UserSharingConstants.SERVICE_PROVIDER_PROPERTY_NAME, "Console");
+        }
+        try (MockedStatic<UserCoreUtil> userCoreUtil = mockStatic(UserCoreUtil.class)) {
+            userCoreUtil.when(UserCoreUtil::getRealmService).thenReturn(realmService);
+            userCoreUtil.when(() -> UserCoreUtil.removeDomainFromName("PRIMARY/creator")).thenReturn("creator");
+            userCoreUtil.when(() -> UserCoreUtil.extractDomainFromName("PRIMARY/creator")).thenReturn("PRIMARY");
+
+            handler.handleEvent(buildEvent(POST_SHARED_CONSOLE_APP, CHILD_ORG_ID));
+        }
+
+        verify(userSharingService).shareOrganizationUser(
+                CHILD_ORG_ID, REALM_ADMIN_USER_ID, PARENT_ORG_ID, SharedType.OWNER);
+        if (expectedAssignment) {
+            verify(roleManagementService).updateUserListOfRole(ADMIN_ROLE_ID, Collections.singletonList(SHARED_USER_ID),
+                    Collections.emptyList(), CHILD_TENANT_DOMAIN);
+        } else {
+            verify(roleManagementService, never()).updateUserListOfRole(anyString(), any(), any(), anyString());
+            verify(userSharingService, never()).addEditRestrictionsForSharedUserRole(
+                    anyString(), anyString(), anyString(), anyString(), any(), anyString());
+        }
+        if (Boolean.TRUE.equals(skipAutoAssignment)) {
+            verifyNoInteractions(applicationManagementService, roleManagementService, userStoreManager);
+        }
     }
 
     private Organization newOrganizationWithCreatorAttributes(String orgId, String creatorId, String creatorUsername) {

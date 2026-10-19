@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2023-2026, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ORGANIZATION_ID;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
 import static org.wso2.carbon.user.mgt.UserMgtConstants.INTERNAL_ROLE;
 
@@ -147,7 +148,8 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
     /**
      * Determines whether the shared Console Administrator role can be assigned to a user.
      * <p>
-     * Role assignment is permitted if any of the following conditions are met:
+     * Automatic role assignment is skipped during organization onboarding, which assigns only configured roles.
+     * Otherwise, role assignment is permitted if any of the following conditions are met:
      * <ul>
      *     <li>The user already has any role with the Console application's audience.</li>
      *     <li>The user is authenticated using Basic Auth (i.e., no service provider is set).</li>
@@ -160,6 +162,10 @@ public class SharingOrganizationCreatorUserEventHandler extends AbstractEventHan
      */
     private boolean isConsoleAdministratorRoleAssignmentAllowed(String userId, String tenantDomain)
             throws IdentityEventException {
+
+        if (Boolean.TRUE.equals(IdentityUtil.threadLocalProperties.get().get(SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT))) {
+            return false;
+        }
 
         String[] userRolesAssociatedWithConsole = getConsoleRolesForLocalUser(userId, tenantDomain);
         if (userRolesAssociatedWithConsole.length > 0) {
