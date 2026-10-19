@@ -55,6 +55,8 @@ public class OrgApplicationMgtConstants {
     public static final String TENANT = "TENANT";
     public static final String AUTH_TYPE_OAUTH_2 = "oauth2";
     public static final String IS_FRAGMENT_APP = "isFragmentApp";
+    public static final String MAIN_APPLICATION_ID = "mainApplicationId";
+    public static final String MAIN_APPLICATION_ID_DISPLAY_NAME = "Main Application ID";
     public static final String SHARE_WITH_ALL_CHILDREN = "shareWithAllChildren";
     public static final String ROLE_SHARING_MODE = "roleSharingMode";
     public static final String CORRELATION_ID_MDC = "Correlation-ID";

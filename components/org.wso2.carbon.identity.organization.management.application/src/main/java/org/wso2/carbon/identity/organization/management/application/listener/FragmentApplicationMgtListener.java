@@ -86,6 +86,8 @@ import static org.wso2.carbon.identity.organization.management.application.const
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.DELETE_SHARE_FOR_MAIN_APPLICATION;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.IS_FRAGMENT_APP;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.MAIN_APPLICATION_ID;
+import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.MAIN_APPLICATION_ID_DISPLAY_NAME;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_IDENTIFIER_HANDLER;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.ORGANIZATION_LOGIN_AUTHENTICATOR;
 import static org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants.SHARE_WITH_ALL_CHILDREN;
@@ -194,7 +196,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         the organization login authenticator needs some configurations unchanged. Hence, the listener will override
         any configs changes that are required for organization login. */
         if (isFragmentApp(existingApplication)) {
-            serviceProvider.setSpProperties(existingApplication.getSpProperties());
+            // The main application ID is a read-only property. Hence, it should not be persisted.
+            serviceProvider.setSpProperties(removeMainApplicationIdProperty(existingApplication.getSpProperties()));
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
             if (!Utils.isAdaptiveAuthEnabledForSharedApps()) {
                 LocalAndOutboundAuthenticationConfig localAndOutBoundAuthenticationConfig =
@@ -354,6 +357,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     Set the application version to inherit parent app version.
                      */
                     serviceProvider.setApplicationVersion(mainApplication.getApplicationVersion());
+                    setMainApplicationIdProperty(serviceProvider, mainApplicationDO.get().getMainApplicationId());
                 }
             } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                 throw new IdentityApplicationManagementException
@@ -392,6 +396,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
                     serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
                 }
+                setMainApplicationIdProperty(serviceProvider, mainApplicationDO.get().getMainApplicationId());
             }
         } catch (OrganizationManagementException e) {
             throw new IdentityApplicationManagementException(
@@ -451,6 +456,44 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             sharedApplication.setSpProperties(properties);
             sharedApplication.setAPIBasedAuthenticationEnabled(mainApplication.isAPIBasedAuthenticationEnabled());
         }
+    }
+
+    /**
+     * Set the main application ID as an SP property of the shared application, if enabled.
+     *
+     * @param sharedApplication The shared application.
+     * @param mainApplicationId The main application ID.
+     */
+    private void setMainApplicationIdProperty(ServiceProvider sharedApplication, String mainApplicationId) {
+
+        if (!Utils.isMainApplicationIdEnabledForSharedApps() || StringUtils.isBlank(mainApplicationId)) {
+            return;
+        }
+        ServiceProviderProperty mainApplicationIdProperty = new ServiceProviderProperty();
+        mainApplicationIdProperty.setName(MAIN_APPLICATION_ID);
+        mainApplicationIdProperty.setDisplayName(MAIN_APPLICATION_ID_DISPLAY_NAME);
+        mainApplicationIdProperty.setValue(mainApplicationId);
+
+        List<ServiceProviderProperty> properties =
+                new ArrayList<>(Arrays.asList(removeMainApplicationIdProperty(sharedApplication.getSpProperties())));
+        properties.add(mainApplicationIdProperty);
+        sharedApplication.setSpProperties(properties.toArray(new ServiceProviderProperty[0]));
+    }
+
+    /**
+     * Remove the main application ID property from the given SP properties.
+     *
+     * @param properties The SP properties.
+     * @return The SP properties without the main application ID property.
+     */
+    private ServiceProviderProperty[] removeMainApplicationIdProperty(ServiceProviderProperty[] properties) {
+
+        if (properties == null) {
+            return new ServiceProviderProperty[0];
+        }
+        return Arrays.stream(properties)
+                .filter(p -> p == null || !MAIN_APPLICATION_ID.equals(p.getName()))
+                .toArray(ServiceProviderProperty[]::new);
     }
 
     private void inheritApplicationEnabledProperty(ServiceProvider mainApplication, ServiceProvider sharedApplication) {

@@ -29,6 +29,8 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticationService;
+import org.wso2.carbon.identity.application.authentication.framework.UserDefinedAuthenticatorService;
 import org.wso2.carbon.identity.event.handler.AbstractEventHandler;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.service.ConnectionSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.ConnectionAssociationManager;
@@ -194,6 +196,48 @@ public class ConnectionSharingServiceComponent {
 
         ConnectionSharingDataHolder.getInstance().setRealmService(null);
         LOG.debug("Unset Realm Service.");
+    }
+
+    @Reference(
+            name = "identity.application.authentication.framework.application.authentication.service",
+            service = ApplicationAuthenticationService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetApplicationAuthenticationService"
+    )
+    protected void setApplicationAuthenticationService(
+            ApplicationAuthenticationService applicationAuthenticationService) {
+
+        ConnectionSharingDataHolder.getInstance().setApplicationAuthenticationService(
+                applicationAuthenticationService);
+        LOG.debug("Set Application Authentication Service.");
+    }
+
+    protected void unsetApplicationAuthenticationService(
+            ApplicationAuthenticationService applicationAuthenticationService) {
+
+        ConnectionSharingDataHolder.getInstance().setApplicationAuthenticationService(null);
+        LOG.debug("Unset Application Authentication Service.");
+    }
+
+    @Reference(
+            name = "identity.application.authentication.framework.user.defined.authenticator.service",
+            service = UserDefinedAuthenticatorService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetUserDefinedAuthenticatorService"
+    )
+    protected void setUserDefinedAuthenticatorService(UserDefinedAuthenticatorService userDefinedAuthenticatorService) {
+
+        ConnectionSharingDataHolder.getInstance().setUserDefinedAuthenticatorService(userDefinedAuthenticatorService);
+        LOG.debug("Set User Defined Authenticator Service.");
+    }
+
+    protected void unsetUserDefinedAuthenticatorService(
+            UserDefinedAuthenticatorService userDefinedAuthenticatorService) {
+
+        ConnectionSharingDataHolder.getInstance().setUserDefinedAuthenticatorService(null);
+        LOG.debug("Unset User Defined Authenticator Service.");
     }
 
     @Reference(
