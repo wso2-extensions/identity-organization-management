@@ -26,6 +26,7 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.database.utils.jdbc.exceptions.TransactionException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.JdbcUtils;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.dao.ConnectionAssociationDAO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.model.ConnectionAssociation;
@@ -58,6 +59,8 @@ import static org.wso2.carbon.identity.organization.management.organization.conn
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_BY_RESIDENT_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_BY_SHARED_ORG;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_LIMIT;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_LIMIT_MSSQL;
+import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_LIMIT_ORACLE_DB2;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATIONS_ORDER_BY;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_CONNECTION_ASSOCIATION_BY_SHARED_RESOURCE;
 import static org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.constant.ConnectionSharingSQLConstants.GET_SHARED_CONNECTION_ID;
@@ -213,7 +216,7 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
         sqlBuilder.append(filterConditions);
         sqlBuilder.append(String.format(GET_CONNECTION_ASSOCIATIONS_ORDER_BY, sortOrder));
         if (limit > 0) {
-            sqlBuilder.append(String.format(GET_CONNECTION_ASSOCIATIONS_LIMIT, limit));
+            sqlBuilder.append(getLimitClause(limit));
         }
 
         List<ConnectionAssociation> associations = new ArrayList<>();
@@ -240,6 +243,20 @@ public class ConnectionAssociationDAOImpl implements ConnectionAssociationDAO {
             throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
         }
         return associations;
+    }
+
+    private String getLimitClause(int limit) throws ConnectionSharingMgtServerException {
+
+        try {
+            if (JdbcUtils.isOracleDB() || JdbcUtils.isDB2DB()) {
+                return String.format(GET_CONNECTION_ASSOCIATIONS_LIMIT_ORACLE_DB2, limit);
+            } else if (JdbcUtils.isMSSqlDB()) {
+                return String.format(GET_CONNECTION_ASSOCIATIONS_LIMIT_MSSQL, limit);
+            }
+        } catch (DataAccessException e) {
+            throw new ConnectionSharingMgtServerException(ERROR_CODE_INTERNAL_ERROR, e);
+        }
+        return String.format(GET_CONNECTION_ASSOCIATIONS_LIMIT, limit);
     }
 
     @Override
