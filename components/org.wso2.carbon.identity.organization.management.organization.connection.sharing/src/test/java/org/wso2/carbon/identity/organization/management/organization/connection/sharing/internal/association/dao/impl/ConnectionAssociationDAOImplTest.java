@@ -19,15 +19,20 @@
 package org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.dao.impl;
 
 import org.h2.jdbcx.JdbcDataSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.JdbcUtils;
+import org.wso2.carbon.identity.organization.management.organization.connection.sharing.api.exception.ConnectionSharingMgtServerException;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.dao.ConnectionAssociationDAO;
 import org.wso2.carbon.identity.organization.management.organization.connection.sharing.internal.association.model.ConnectionAssociation;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
@@ -39,8 +44,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ORGANIZATION_ID_FIELD;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_AFTER;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.PAGINATION_BEFORE;
@@ -73,6 +81,7 @@ public class ConnectionAssociationDAOImplTest {
     private JdbcDataSource dataSource;
     private ConnectionAssociationDAO connectionAssociationDAO;
     private MockedStatic<IdentityDatabaseUtil> mockedIdentityDatabaseUtil;
+    private MockedStatic<JdbcUtils> mockedJdbcUtils;
 
     @BeforeClass
     public void setUpClass() throws Exception {
@@ -104,12 +113,15 @@ public class ConnectionAssociationDAOImplTest {
         mockedIdentityDatabaseUtil.when(IdentityDatabaseUtil::getDataSource).thenReturn(dataSource);
         mockedIdentityDatabaseUtil.when(() -> IdentityDatabaseUtil.getDBConnection(false))
                 .thenAnswer(invocation -> dataSource.getConnection());
+        // The DB type checks default to false, so the LIMIT syntax (supported by H2) is used unless overridden.
+        mockedJdbcUtils = mockStatic(JdbcUtils.class);
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
 
         mockedIdentityDatabaseUtil.close();
+        mockedJdbcUtils.close();
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate("DELETE FROM IDN_ORG_CONNECTION_ASSOCIATION");
@@ -237,6 +249,46 @@ public class ConnectionAssociationDAOImplTest {
         List<ConnectionAssociation> empty = connectionAssociationDAO.getConnectionAssociations(RESOURCE_TYPE,
                 PARENT_CONNECTION_ID, RESIDENT_ORG_ID, Collections.emptyList(), Collections.emptyList(), "ASC", 0);
         Assert.assertTrue(empty.isEmpty());
+    }
+
+    @DataProvider(name = "dbTypeLimitClauseData")
+    public Object[][] dbTypeLimitClauseData() {
+
+        return new Object[][]{
+                {false, false, false, " LIMIT 1"},
+                {true, false, false, " FETCH FIRST 1 ROWS ONLY"},
+                {false, true, false, " OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY"},
+                {false, false, true, " FETCH FIRST 1 ROWS ONLY"},
+        };
+    }
+
+    @Test(dataProvider = "dbTypeLimitClauseData")
+    public void testGetConnectionAssociationsWithLimitUsesDbDialect(boolean isOracle, boolean isMSSql, boolean isDB2,
+                                                                   String expectedClause) throws Exception {
+
+        seedThreeAssociations();
+        List<String> scope = Arrays.asList(SHARED_ORG_ID_1, SHARED_ORG_ID_2, SHARED_ORG_ID_3);
+        AtomicReference<Connection> connectionRef = spyDBConnection();
+        mockedJdbcUtils.when(JdbcUtils::isOracleDB).thenReturn(isOracle);
+        mockedJdbcUtils.when(JdbcUtils::isMSSqlDB).thenReturn(isMSSql);
+        mockedJdbcUtils.when(JdbcUtils::isDB2DB).thenReturn(isDB2);
+
+        // H2 accepts every dialect's row limiting clause, so the query runs regardless of the DB type.
+        List<ConnectionAssociation> limited = connectionAssociationDAO.getConnectionAssociations(RESOURCE_TYPE,
+                PARENT_CONNECTION_ID, RESIDENT_ORG_ID, scope, Collections.emptyList(), "ASC", 1);
+
+        Assert.assertEquals(limited.size(), 1);
+        Assert.assertEquals(limited.get(0).getOrganizationId(), SHARED_ORG_ID_1);
+        Assert.assertTrue(getExecutedSql(connectionRef.get()).endsWith(expectedClause));
+    }
+
+    @Test(expectedExceptions = ConnectionSharingMgtServerException.class)
+    public void testGetConnectionAssociationsWithLimitWhenDbTypeCheckFails() throws Exception {
+
+        mockedJdbcUtils.when(JdbcUtils::isOracleDB).thenThrow(new DataAccessException("error"));
+
+        connectionAssociationDAO.getConnectionAssociations(RESOURCE_TYPE, PARENT_CONNECTION_ID, RESIDENT_ORG_ID,
+                Collections.singletonList(SHARED_ORG_ID_1), Collections.emptyList(), "ASC", 1);
     }
 
     @Test
@@ -384,6 +436,27 @@ public class ConnectionAssociationDAOImplTest {
         Assert.assertTrue(ascending.get(1).getId() < ascending.get(2).getId());
         Assert.assertTrue(descending.get(0).getId() > descending.get(1).getId());
         Assert.assertTrue(descending.get(1).getId() > descending.get(2).getId());
+    }
+
+    /**
+     * Wraps the H2 connections handed to the DAO in spies so the executed SQL can be inspected.
+     */
+    private AtomicReference<Connection> spyDBConnection() {
+
+        AtomicReference<Connection> connectionRef = new AtomicReference<>();
+        mockedIdentityDatabaseUtil.when(() -> IdentityDatabaseUtil.getDBConnection(false)).thenAnswer(invocation -> {
+            Connection connection = spy(dataSource.getConnection());
+            connectionRef.set(connection);
+            return connection;
+        });
+        return connectionRef;
+    }
+
+    private String getExecutedSql(Connection connection) throws Exception {
+
+        ArgumentCaptor<String> executedSql = ArgumentCaptor.forClass(String.class);
+        verify(connection).prepareStatement(executedSql.capture());
+        return executedSql.getValue();
     }
 
     private void seedThreeAssociations() throws Exception {

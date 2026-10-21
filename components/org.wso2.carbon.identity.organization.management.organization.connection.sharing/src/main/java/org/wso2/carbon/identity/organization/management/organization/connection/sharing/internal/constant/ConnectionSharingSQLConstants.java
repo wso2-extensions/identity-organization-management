@@ -87,4 +87,6 @@ public class ConnectionSharingSQLConstants {
 
     public static final String GET_CONNECTION_ASSOCIATIONS_ORDER_BY = " ORDER BY ID %s";
     public static final String GET_CONNECTION_ASSOCIATIONS_LIMIT = " LIMIT %d";
+    public static final String GET_CONNECTION_ASSOCIATIONS_LIMIT_ORACLE_DB2 = " FETCH FIRST %d ROWS ONLY";
+    public static final String GET_CONNECTION_ASSOCIATIONS_LIMIT_MSSQL = " OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY";
 }
