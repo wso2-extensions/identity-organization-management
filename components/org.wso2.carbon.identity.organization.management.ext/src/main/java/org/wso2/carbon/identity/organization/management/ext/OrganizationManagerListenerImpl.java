@@ -138,11 +138,22 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
     public void postPatchOrganization(String organizationId, List<PatchOperation> patchOperations)
             throws OrganizationManagementException {
 
+        postPatchOrganization(organizationId, patchOperations, null);
+    }
+
+    @Override
+    public void postPatchOrganization(String organizationId, List<PatchOperation> patchOperations,
+                                      Organization previousOrganization) throws OrganizationManagementException {
+
         Map<String, Object> eventProperties = new HashMap<>();
         eventProperties.put(Constants.EVENT_PROP_ORGANIZATION_ID, organizationId);
         eventProperties.put(Constants.EVENT_PROP_PATCH_OPERATIONS, patchOperations);
+        if (previousOrganization != null) {
+            eventProperties.put(Constants.EVENT_PROP_PREVIOUS_ORGANIZATION, previousOrganization);
+        }
         fireEvent(Constants.EVENT_POST_PATCH_ORGANIZATION, eventProperties);
-        fireOrganizationStatusChangeEvent(organizationId, null, resolvePatchedStatus(patchOperations));
+        fireOrganizationStatusChangeEvent(organizationId, null,
+                resolvePatchedStatus(patchOperations, previousOrganization));
     }
 
     @Override
@@ -248,7 +259,7 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
      * @param patchOperations Patch operations applied to the organization.
      * @return The status the organization holds after the patch, or null when the patch did not change it.
      */
-    private String resolvePatchedStatus(List<PatchOperation> patchOperations) {
+    private String resolvePatchedStatus(List<PatchOperation> patchOperations, Organization previousOrganization) {
 
         if (patchOperations == null) {
             return null;
@@ -258,7 +269,16 @@ public class OrganizationManagerListenerImpl implements OrganizationManagerListe
                     .equals(StringUtils.trimToEmpty(patchOperation.getPath()))) {
                 continue;
             }
-            return StringUtils.trimToNull(patchOperation.getValue());
+            String status = StringUtils.trimToNull(patchOperation.getValue());
+            /*
+             A patch which set the status to the value the organization already held changed nothing, so it is not
+             reported as a status change. The previous state is unavailable when the patch was published without
+             it, and the status is then reported as a change, as it was before.
+            */
+            if (status == null || previousOrganization == null) {
+                return status;
+            }
+            return !status.equals(previousOrganization.getStatus()) ? status : null;
         }
         return null;
     }
