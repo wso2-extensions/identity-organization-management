@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
@@ -59,8 +60,10 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementClientException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
@@ -333,9 +336,21 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     // Set application's associated roles.
                     AssociatedRolesConfig associatedRolesConfigOfMainApp = mainApplication.getAssociatedRolesConfig();
                     if (associatedRolesConfigOfMainApp != null) {
-                        AssociatedRolesConfig associatedRolesConfigForSharedApp =
-                                getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp, tenantDomain);
-                        serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
+                        if (ApplicationMgtUtil.isSharedAppRoleManagementEnabled(mainApplication)) {
+                            // Inherited and organization created application roles.
+                            serviceProvider.setAssociatedRolesConfig(getAssociatedRolesConfigByRoleAudience(
+                                    associatedRolesConfigOfMainApp, serviceProvider.getApplicationResourceId(),
+                                    tenantDomain));
+                        } else if (ApplicationMgtUtil.isSharedAppOrganizationRoleManagementEnabled(
+                                mainApplication)) {
+                            // All organization roles of the organization, shared and organization created.
+                            serviceProvider.setAssociatedRolesConfig(getAssociatedRolesConfigOfOrganizationRoles(
+                                    associatedRolesConfigOfMainApp, tenantDomain));
+                        } else {
+                            AssociatedRolesConfig associatedRolesConfigForSharedApp =
+                                    getAssociatedRolesConfigForSharedApp(associatedRolesConfigOfMainApp, tenantDomain);
+                            serviceProvider.setAssociatedRolesConfig(associatedRolesConfigForSharedApp);
+                        }
                     }
                     // Inherit API based authentication enabled property from the main application.
                     inheritAPIBasedAuthenticationEnabledProperty(mainApplication, serviceProvider);
@@ -526,6 +541,64 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 .toArray(RoleV2[]::new);
 
         associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
+        return associatedRolesConfigForSharedApp;
+    }
+
+    /**
+     * Get the associated roles config of the shared application, where the roles are the application audience roles
+     * of the shared application in its organization. This includes the roles inherited from the main application
+     * and the roles created by the organization.
+     *
+     * @param associatedRolesConfigOfMainApp Associated roles config of the main application.
+     * @param sharedAppId                    ID of the shared application.
+     * @param tenantDomainOfSharedApp        Tenant domain of the shared application.
+     * @return Associated roles config of the shared application.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles of the shared application.
+     */
+    private AssociatedRolesConfig getAssociatedRolesConfigByRoleAudience(
+            AssociatedRolesConfig associatedRolesConfigOfMainApp, String sharedAppId, String tenantDomainOfSharedApp)
+            throws IdentityRoleManagementException {
+
+        AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
+        associatedRolesConfigForSharedApp.setAllowedAudience(associatedRolesConfigOfMainApp.getAllowedAudience());
+        RoleV2[] associatedRolesOfSharedApp = getRoleManagementServiceV2()
+                .getRolesByApplication(sharedAppId, tenantDomainOfSharedApp).stream()
+                .map(role -> new RoleV2(role.getId(), role.getName()))
+                .toArray(RoleV2[]::new);
+        associatedRolesConfigForSharedApp.setRoles(associatedRolesOfSharedApp);
+        return associatedRolesConfigForSharedApp;
+    }
+
+    /**
+     * Get the associated roles config of the shared application, where the roles are all the organization audience
+     * roles of the shared application's organization. This includes the roles shared from the main application's
+     * organization and the roles created by the organization.
+     *
+     * @param associatedRolesConfigOfMainApp Associated roles config of the main application.
+     * @param tenantDomainOfSharedApp        Tenant domain of the shared application.
+     * @return Associated roles config of the shared application.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the organization roles.
+     */
+    private AssociatedRolesConfig getAssociatedRolesConfigOfOrganizationRoles(
+            AssociatedRolesConfig associatedRolesConfigOfMainApp, String tenantDomainOfSharedApp)
+            throws IdentityRoleManagementException {
+
+        AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
+        associatedRolesConfigForSharedApp.setAllowedAudience(associatedRolesConfigOfMainApp.getAllowedAudience());
+        String filter = RoleConstants.AUDIENCE + " " + RoleConstants.EQ + " " + RoleConstants.ORGANIZATION;
+        int maximumPage = IdentityUtil.getMaximumItemPerPage();
+        int offset = 1;
+        List<RoleV2> organizationRoles = new ArrayList<>();
+        List<RoleBasicInfo> chunkOfRoles;
+        do {
+            chunkOfRoles = getRoleManagementServiceV2().getRoles(filter, maximumPage, offset, null, null,
+                    tenantDomainOfSharedApp);
+            for (RoleBasicInfo role : chunkOfRoles) {
+                organizationRoles.add(new RoleV2(role.getId(), role.getName()));
+            }
+            offset += chunkOfRoles.size();
+        } while (!chunkOfRoles.isEmpty() && chunkOfRoles.size() == maximumPage);
+        associatedRolesConfigForSharedApp.setRoles(organizationRoles.toArray(new RoleV2[0]));
         return associatedRolesConfigForSharedApp;
     }
 
@@ -769,7 +842,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         }
     }
 
-    private void removeOrganizationSSOAuthenticator(ServiceProvider rootApplication) 
+    private void removeOrganizationSSOAuthenticator(ServiceProvider rootApplication)
             throws OrganizationManagementServerException {
 
         LocalAndOutboundAuthenticationConfig outboundAuthenticationConfig =
@@ -801,10 +874,10 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         first.setFederatedIdentityProviders(identityProviders);
 
         // Check if any authenticators remain after removing organization SSO
-        boolean hasLocalAuthenticators = first.getLocalAuthenticatorConfigs() != null && 
+        boolean hasLocalAuthenticators = first.getLocalAuthenticatorConfigs() != null &&
                 first.getLocalAuthenticatorConfigs().length > 0;
         boolean hasFederatedAuthenticators = identityProviders.length > 0;
-        
+
         // If no authenticators remain, add default authentication as fallback
         if (!hasLocalAuthenticators && !hasFederatedAuthenticators) {
             LocalAndOutboundAuthenticationConfig defaultAuthConfig = getDefaultAuthenticationConfig();
