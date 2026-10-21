@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -44,6 +45,7 @@ import org.wso2.carbon.identity.organization.management.application.model.operat
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareUpdateOperation;
 import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
+import org.wso2.carbon.identity.organization.management.handler.util.SharedRoleMgtUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.BasicOrganization;
@@ -318,12 +320,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             boolean roleRelationshipExistsInSharedOrg =
                     mainRoleToSharedRoleMappingsInSharedOrg.get(role.getId()) != null;
             if (roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
-                // Add relationship between main role and shared role.
-                String roleIdInSharedOrg =
-                        getRoleManagementServiceV2().getRoleIdByName(role.getName(), RoleConstants.ORGANIZATION,
-                                sharedAppOrgId, sharedAppTenantDomain);
-                getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(role.getId(),
-                        roleIdInSharedOrg, mainAppTenantDomain, sharedAppTenantDomain);
+                /*
+                 The role with the same name is created by the shared organization itself. Linking it to the main role
+                 would make it an inherited role, which is deleted when the application is unshared or the main role
+                 is deleted. Hence, the conflict is audited and the role is not shared.
+                 */
+                auditOrganizationRoleConflict(role, mainAppTenantDomain, sharedAppOrgId);
             } else if (!roleExistsInSharedOrg && !roleRelationshipExistsInSharedOrg) {
 
                 if (role.getName().contains(DOMAIN_NAME_SEPARATOR) || role.getName().startsWith(SYSTEM_PREFIX)) {
@@ -483,12 +485,15 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
      * @param sharedAppId                          ID of the shared application.
      * @param sharedAppTenantDomain                Tenant domain of the shared organization.
      * @param successfullyProvisionedOrExistingRoles (Output) List to track roles that are successfully shared.
+     * @param isOrganizationCustomRolesEnabled Whether the organization can have its own application roles for the
+     *                                       shared application.
      * @throws IdentityRoleManagementException If an error occurs during role management operations.
      */
     private void provisionOrVerifyApplicationRolesInSharedOrg(List<RoleBasicInfo> rolesToShare,
                                                               String mainTenantDomain, String sharedAppId,
                                                               String sharedAppTenantDomain, List<RoleBasicInfo>
-                                                                      successfullyProvisionedOrExistingRoles)
+                                                                      successfullyProvisionedOrExistingRoles,
+                                                              boolean isOrganizationCustomRolesEnabled)
             throws IdentityRoleManagementException {
 
         for (RoleBasicInfo roleToBeShared : rolesToShare) {
@@ -496,6 +501,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
 
             if (isRoleAlreadyExist) {
+                if (isOrganizationCustomRolesEnabled && !SharedRoleMgtUtil.isInheritedRoleExists(
+                        getRoleManagementServiceV2(), roleToBeShared.getId(), sharedAppTenantDomain)) {
+                    // The existing role is authored by the sub organization. Hence, skip sharing the role.
+                    auditApplicationRoleConflict(roleToBeShared, mainTenantDomain, sharedAppTenantDomain);
+                    continue;
+                }
                 successfullyProvisionedOrExistingRoles.add(roleToBeShared);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Role '" + roleToBeShared.getName() + "' already exists in the shared sub org: '" +
@@ -505,9 +516,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 continue;
             }
 
-            RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(roleToBeShared.getName(),
-                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-                    RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
+            RoleBasicInfo subOrgRole = SharedRoleMgtUtil.addSharedApplicationRole(getRoleManagementServiceV2(),
+                    roleToBeShared.getName(), sharedAppId, sharedAppTenantDomain);
             getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(roleToBeShared.getId(),
                     subOrgRole.getId(), mainTenantDomain, sharedAppTenantDomain);
             successfullyProvisionedOrExistingRoles.add(subOrgRole);
@@ -538,6 +548,12 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         String subOrgAppRolesFilter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + sharedAppId;
         List<RoleBasicInfo> alreadySharedSubOrgAppRoles = getRoleManagementServiceV2().getRoles(subOrgAppRolesFilter,
                 null, 0, null, null, sharedAppTenantDomain);
+        boolean isOrganizationCustomRolesEnabled = isOrganizationCustomRolesEnabled(mainAppId, mainTenantDomain);
+        if (isOrganizationCustomRolesEnabled) {
+            // Roles authored by the sub organization for the shared application are not managed by role sharing.
+            alreadySharedSubOrgAppRoles = SharedRoleMgtUtil.filterInheritedRoles(getRoleManagementServiceV2(),
+                    alreadySharedSubOrgAppRoles, sharedAppTenantDomain);
+        }
 
         ApplicationShareRolePolicy currentConfig = applicationShareRolePolicy;
         if (currentConfig == null) {
@@ -596,7 +612,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         List<RoleBasicInfo> provisionedOrExistingSharedRoles = new ArrayList<>();
         if (!filteredRolesToBeShared.isEmpty()) {
             provisionOrVerifyApplicationRolesInSharedOrg(filteredRolesToBeShared, mainTenantDomain, sharedAppId,
-                    sharedAppTenantDomain, provisionedOrExistingSharedRoles);
+                    sharedAppTenantDomain, provisionedOrExistingSharedRoles, isOrganizationCustomRolesEnabled);
         }
         // Remove roles from sub-org that are no longer meant to be shared based on the current configuration.
         for (RoleBasicInfo alreadySharedRoleInSubOrg : alreadySharedSubOrgAppRoles) {
@@ -681,7 +697,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
         if (!filteredRolesToBeAdded.isEmpty()) {
             addNewApplicationRolesToSharedOrgInternal(filteredRolesToBeAdded, mainTenantDomain, sharedAppId,
-                    sharedAppTenantDomain);
+                    sharedAppTenantDomain, isOrganizationCustomRolesEnabled(mainAppId, mainTenantDomain));
         } else {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("No roles to add to shared app " + sharedAppId + " after filtering.");
@@ -694,21 +710,27 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
      */
     private void addNewApplicationRolesToSharedOrgInternal(List<RoleBasicInfo> rolesToAdd,
                                                            String mainTenantDomain, String sharedAppId,
-                                                           String sharedAppTenantDomain)
+                                                           String sharedAppTenantDomain,
+                                                           boolean isOrganizationCustomRolesEnabled)
             throws IdentityRoleManagementException {
         for (RoleBasicInfo roleToBeShared : rolesToAdd) {
             boolean isRoleAlreadyExist = getRoleManagementServiceV2().isExistingRoleName(roleToBeShared.getName(),
                     RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
             if (isRoleAlreadyExist) {
+                if (isOrganizationCustomRolesEnabled && !SharedRoleMgtUtil.isInheritedRoleExists(
+                        getRoleManagementServiceV2(), roleToBeShared.getId(), sharedAppTenantDomain)) {
+                    // The existing role is authored by the sub organization. Hence, skip sharing the role.
+                    auditApplicationRoleConflict(roleToBeShared, mainTenantDomain, sharedAppTenantDomain);
+                    continue;
+                }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Role '" + roleToBeShared.getName() + "' already exists in the shared sub org: '" +
                             sharedAppTenantDomain + "' for app ID '" + sharedAppId + "'. Skipping creation.");
                 }
                 continue;
             }
-            RoleBasicInfo subOrgRole = getRoleManagementServiceV2().addRole(roleToBeShared.getName(),
-                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-                    RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
+            RoleBasicInfo subOrgRole = SharedRoleMgtUtil.addSharedApplicationRole(getRoleManagementServiceV2(),
+                    roleToBeShared.getName(), sharedAppId, sharedAppTenantDomain);
             getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(roleToBeShared.getId(),
                     subOrgRole.getId(), mainTenantDomain, sharedAppTenantDomain);
             if (LOG.isDebugEnabled()) {
@@ -760,7 +782,10 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
             return;
         }
         Organization subOrg = getOrganization(sharedOrganizationId, true);
-        deleteSharedAppRolesInternal(sharedAppTenantDomain, sharedAppId, rolesToBeRemoved);
+        boolean isOrganizationCustomRolesEnabled = isOrganizationCustomRolesEnabled(mainApplicationId,
+                resolveTenantDomain(mainOrganizationId));
+        deleteSharedAppRolesInternal(sharedAppTenantDomain, sharedAppId, rolesToBeRemoved,
+                isOrganizationCustomRolesEnabled);
 
         List<ChildOrganizationDO> childOrganizations = subOrg.getChildOrganizations();
         if (childOrganizations != null) {
@@ -771,7 +796,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     ServiceProvider childOrgApp = getOrgApplicationManager().resolveSharedApplicationByMainAppUUID(
                             mainApplicationId, mainOrganizationId, childOrgId);
                     deleteSharedAppRolesInternal(childOrgTenantDomain, childOrgApp.getApplicationResourceId(),
-                            rolesToBeRemoved);
+                            rolesToBeRemoved, isOrganizationCustomRolesEnabled);
                 } catch (OrganizationManagementException | IdentityRoleManagementException e) {
                     LOG.error("Error removing roles from child organization " + childOrgId + " for app " +
                             sharedAppId, e);
@@ -786,10 +811,13 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
      * @param tenantDomain          The tenant domain of the shared application.
      * @param applicationResourceId The ID of the application in this tenant.
      * @param rolesToDelete         List of {@link RoleWithAudienceDO} criteria for roles to delete.
+     * @param isOrganizationCustomRolesEnabled Whether the organization can have its own application roles for the
+     *                                       shared application.
      * @throws IdentityRoleManagementException If a role management error occurs.
      */
     private void deleteSharedAppRolesInternal(String tenantDomain, String applicationResourceId,
-                                              List<RoleWithAudienceDO> rolesToDelete)
+                                              List<RoleWithAudienceDO> rolesToDelete,
+                                              boolean isOrganizationCustomRolesEnabled)
             throws IdentityRoleManagementException {
 
         if (rolesToDelete == null || rolesToDelete.isEmpty()) {
@@ -798,6 +826,11 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         String appRolesFilter = RoleConstants.AUDIENCE_ID + " " + RoleConstants.EQ + " " + applicationResourceId;
         List<RoleBasicInfo> existingAppRoles = getRoleManagementServiceV2().getRoles(appRolesFilter, null,
                 0, null, null, tenantDomain);
+        if (isOrganizationCustomRolesEnabled) {
+            // Roles authored by the sub organization for the shared application are not managed by role sharing.
+            existingAppRoles = SharedRoleMgtUtil.filterInheritedRoles(getRoleManagementServiceV2(), existingAppRoles,
+                    tenantDomain);
+        }
 
         if (existingAppRoles.isEmpty()) {
             return;
@@ -1004,6 +1037,17 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     // If this is a shared application, create the role in the shared apps' org space.
                     List<SharedApplication> sharedApplications =
                             getOrgApplicationManager().getSharedApplications(roleOrgId, roleAudienceId);
+                    // Organizations can have their own application roles only if the main application allows it.
+                    boolean isOrganizationCustomRolesEnabled = !sharedApplications.isEmpty()
+                            && ApplicationMgtUtil.isOrganizationCustomRolesEnabled(getApplicationManagementService()
+                            .getApplicationByResourceId(roleAudienceId, roleTenantDomain), RoleConstants.APPLICATION);
+                    /*
+                     Resolve the initiator of a role conflict audit log in the request thread, as the user is not
+                     available in the carbon context of the async tasks.
+                    */
+                    String initiatorId = isOrganizationCustomRolesEnabled ? getInitiatorId(
+                            PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername(), roleTenantDomain) :
+                            null;
                     int noOfSharedApps = sharedApplications.size();
                     for (int i = 0; i < noOfSharedApps; i++) {
                         final int taskId = i;
@@ -1038,11 +1082,18 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                                         return;
                                     }
 
-                                    RoleBasicInfo sharedRoleInfo =
-                                        getRoleManagementServiceV2().addRole(mainRoleName, Collections.emptyList(),
-                                                Collections.emptyList(),
-                                                Collections.emptyList(), RoleConstants.APPLICATION, sharedApplicationId,
-                                                shareAppTenantDomain);
+                                    if (isOrganizationCustomRolesEnabled && getRoleManagementServiceV2()
+                                            .isExistingRoleName(mainRoleName, RoleConstants.APPLICATION,
+                                                    sharedApplicationId, shareAppTenantDomain)) {
+                                        // The sub organization has authored a role with the same name.
+                                        RoleBasicInfo mainRole = new RoleBasicInfo(mainRoleUUID, mainRoleName);
+                                        auditApplicationRoleConflict(mainRole, roleTenantDomain,
+                                                shareAppTenantDomain, initiatorId);
+                                        return;
+                                    }
+                                    RoleBasicInfo sharedRoleInfo = SharedRoleMgtUtil.addSharedApplicationRole(
+                                            getRoleManagementServiceV2(), mainRoleName, sharedApplicationId,
+                                            shareAppTenantDomain);
                                     // Add relationship between main role and shared role.
                                     getRoleManagementServiceV2().addMainRoleToSharedRoleRelationship(mainRoleUUID,
                                             sharedRoleInfo.getId(), roleTenantDomain, shareAppTenantDomain);
@@ -1246,6 +1297,121 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
     private ApplicationManagementService getApplicationManagementService() {
 
         return OrganizationManagementHandlerDataHolder.getInstance().getApplicationManagementService();
+    }
+
+    /**
+     * Check whether organizations can have their own application roles for the shared applications of the given main
+     * application.
+     *
+     * @param mainAppId        ID of the main application.
+     * @param mainTenantDomain Tenant domain of the main application.
+     * @return True if application role creation is enabled for the shared applications.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the main application.
+     */
+    private boolean isOrganizationCustomRolesEnabled(String mainAppId, String mainTenantDomain)
+            throws IdentityRoleManagementException {
+
+        try {
+            return ApplicationMgtUtil.isOrganizationCustomRolesEnabled(
+                    getApplicationManagementService().getApplicationByResourceId(mainAppId, mainTenantDomain),
+                    RoleConstants.APPLICATION);
+        } catch (IdentityApplicationManagementException e) {
+            throw new IdentityRoleManagementException("Error while getting the application by resource id: " +
+                    mainAppId, e);
+        }
+    }
+
+    /**
+     * Audit a conflict between an organization audience role of the main organization and a role with the same name
+     * created by the shared organization itself. The role is not shared to the organization.
+     *
+     * @param mainRole            Organization audience role of the main organization.
+     * @param mainAppTenantDomain Tenant domain of the main application.
+     * @param sharedAppOrgId      Organization ID of the shared application.
+     */
+    private void auditOrganizationRoleConflict(RoleV2 mainRole, String mainAppTenantDomain, String sharedAppOrgId) {
+
+        String mainOrganizationId = null;
+        try {
+            mainOrganizationId = getOrganizationManager().resolveOrganizationId(mainAppTenantDomain);
+        } catch (OrganizationManagementException e) {
+            LOG.debug("Error while resolving the organization id for the role conflict audit log.", e);
+        }
+        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                IdentityUtil.getInitiatorId(username, tenantDomain),
+                LoggerUtils.Target.User.name(), mainRole.getName(), LoggerUtils.Target.Role.name(),
+                LogConstants.UserManagement.ADD_ROLE_ACTION)
+                .data(buildAuditData(mainOrganizationId, null, sharedAppOrgId, mainRole.getName(),
+                        mainRole.getId(), "Role conflict"));
+        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+        LOG.warn(String.format("Organization %s has a non shared role with name %s. Skipping sharing the role.",
+                sharedAppOrgId, mainRole.getName()));
+    }
+
+    /**
+     * Audit and log a conflict where a sub organization has authored an application role for a shared application
+     * with the same name as a main application role being shared.
+     *
+     * @param mainRole              Main application role.
+     * @param mainTenantDomain      Tenant domain of the main application.
+     * @param sharedAppTenantDomain Tenant domain of the shared application.
+     */
+    private void auditApplicationRoleConflict(RoleBasicInfo mainRole, String mainTenantDomain,
+                                              String sharedAppTenantDomain) {
+
+        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        auditApplicationRoleConflict(mainRole, mainTenantDomain, sharedAppTenantDomain,
+                getInitiatorId(username, tenantDomain));
+    }
+
+    /**
+     * Audit and log a conflict where a sub organization has authored an application role for a shared application
+     * with the same name as a main application role being shared.
+     *
+     * @param mainRole              Main application role.
+     * @param mainTenantDomain      Tenant domain of the main application.
+     * @param sharedAppTenantDomain Tenant domain of the shared application.
+     * @param initiatorId           ID of the initiator of the operation.
+     */
+    private void auditApplicationRoleConflict(RoleBasicInfo mainRole, String mainTenantDomain,
+                                              String sharedAppTenantDomain, String initiatorId) {
+
+        String mainOrganizationId = null;
+        String sharedOrganizationId = null;
+        try {
+            mainOrganizationId = getOrganizationManager().resolveOrganizationId(mainTenantDomain);
+            sharedOrganizationId = getOrganizationManager().resolveOrganizationId(sharedAppTenantDomain);
+        } catch (OrganizationManagementException e) {
+            LOG.debug("Error while resolving organization ids for the role conflict audit log.", e);
+        }
+        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(initiatorId,
+                LoggerUtils.Target.User.name(), mainRole.getName(), LoggerUtils.Target.Role.name(),
+                LogConstants.UserManagement.ADD_ROLE_ACTION)
+                .data(buildAuditData(mainOrganizationId, null, sharedOrganizationId, mainRole.getName(),
+                        mainRole.getId(), "Role conflict"));
+        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+        LOG.warn(String.format("Organization %s has a non shared application role with name %s. Skipping sharing " +
+                "the role.", sharedOrganizationId, mainRole.getName()));
+    }
+
+    /**
+     * Get the ID of the initiator of an operation. The system is considered the initiator if the user is not available
+     * in the carbon context.
+     *
+     * @param username     Username of the user.
+     * @param tenantDomain Tenant domain of the user.
+     * @return ID of the initiator.
+     */
+    private String getInitiatorId(String username, String tenantDomain) {
+
+        if (StringUtils.isBlank(username) &&
+                StringUtils.isBlank(PrivilegedCarbonContext.getThreadLocalCarbonContext().getUserId())) {
+            return LoggerUtils.Initiator.System.name();
+        }
+        return IdentityUtil.getInitiatorId(username, tenantDomain);
     }
 
     private Map<String, String> buildAuditData(String parentOrganizationId, String parentApplicationId,

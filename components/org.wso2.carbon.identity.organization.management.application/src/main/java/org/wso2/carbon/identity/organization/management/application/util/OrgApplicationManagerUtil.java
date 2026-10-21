@@ -30,11 +30,13 @@ import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorC
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.constant.OrgApplicationMgtConstants;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
@@ -48,8 +50,13 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -441,5 +448,53 @@ public class OrgApplicationManagerUtil {
                     "Error evaluating governance policy for adaptive auth capability.", e);
         }
         return true;
+    }
+
+    /**
+     * Get the application audience roles of the given shared application in its organization. This includes the roles
+     * inherited from the main application and the roles created by the organization.
+     *
+     * @param roleManagementService Role management service.
+     * @param sharedAppId           ID of the shared application.
+     * @param tenantDomain          Tenant domain of the shared application.
+     * @return Roles of the shared application.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
+     */
+    public static List<RoleV2> getRolesOfSharedApplication(RoleManagementService roleManagementService,
+                                                           String sharedAppId, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        List<RoleV2> roles = new ArrayList<>();
+        for (RoleBasicInfo role : roleManagementService.getRolesByApplication(sharedAppId, tenantDomain)) {
+            roles.add(new RoleV2(role.getId(), role.getName()));
+        }
+        return roles;
+    }
+
+    /**
+     * Get all the organization audience roles of the given organization. This includes the roles shared from the
+     * parent organization and the roles created by the organization.
+     *
+     * @param roleManagementService Role management service.
+     * @param tenantDomain          Tenant domain of the organization.
+     * @return Organization audience roles of the organization.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
+     */
+    public static List<RoleV2> getOrganizationRoles(RoleManagementService roleManagementService, String tenantDomain)
+            throws IdentityRoleManagementException {
+
+        String filter = RoleConstants.AUDIENCE + " " + RoleConstants.EQ + " " + RoleConstants.ORGANIZATION;
+        int maximumPage = IdentityUtil.getMaximumItemPerPage();
+        int offset = 1;
+        List<RoleV2> organizationRoles = new ArrayList<>();
+        List<RoleBasicInfo> chunkOfRoles;
+        do {
+            chunkOfRoles = roleManagementService.getRoles(filter, maximumPage, offset, null, null, tenantDomain);
+            for (RoleBasicInfo role : chunkOfRoles) {
+                organizationRoles.add(new RoleV2(role.getId(), role.getName()));
+            }
+            offset += chunkOfRoles.size();
+        } while (!chunkOfRoles.isEmpty() && chunkOfRoles.size() == maximumPage);
+        return organizationRoles;
     }
 }

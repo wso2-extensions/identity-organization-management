@@ -29,6 +29,7 @@ import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
+import org.wso2.carbon.identity.application.mgt.ApplicationMgtUtil;
 import org.wso2.carbon.identity.application.mgt.listener.AbstractApplicationMgtListener;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
@@ -36,7 +37,9 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
+import org.wso2.carbon.identity.organization.management.application.util.OrgApplicationManagerUtil;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
+import org.wso2.carbon.identity.organization.management.handler.util.SharedRoleMgtUtil;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
@@ -71,6 +74,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
     private static final String ADDED_APPLICATION_AUDIENCE_ROLES = "addedApplicationAudienceRoles";
     private static final String REMOVED_ORGANIZATION_AUDIENCE_ROLES = "removedOrganizationAudienceRoles";
     private static final String ADDED_ORGANIZATION_AUDIENCE_ROLES = "addedOrganizationAudienceRoles";
+    private static final String ORGANIZATION_CUSTOM_ROLES_DISABLED = "organizationCustomRolesDisabled";
     private static final String SPACE = " ";
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     ApplicationManagementService applicationManagementService =
@@ -97,6 +101,7 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (isFragmentApp(serviceProvider)) {
                 return true;
             }
+            markIfOrganizationCustomRolesDisabled(serviceProvider, tenantDomain);
             String applicationResourceId = serviceProvider.getApplicationResourceId();
             // Get the currently associated roles set from DB/cache.
             String existingAllowedAudienceForRoleAssociation =
@@ -286,6 +291,11 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
                 List<RoleV2> removedOrgRolesList = (List<RoleV2>) removedOrgRoles;
                 handleRemovedOrganizationAudienceRolesOnAppUpdate(removedOrgRolesList, serviceProvider, tenantDomain);
             }
+
+            if (Boolean.TRUE.equals(
+                    IdentityUtil.threadLocalProperties.get().get(ORGANIZATION_CUSTOM_ROLES_DISABLED))) {
+                handleDisabledOrganizationCustomRolesOnAppUpdate(serviceProvider, tenantDomain);
+            }
         } catch (OrganizationManagementException | IdentityRoleManagementException e) {
             throw new IdentityApplicationManagementException(
                     String.format("Error while updating shared roles related to application %s update.",
@@ -295,8 +305,143 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             IdentityUtil.threadLocalProperties.get().remove(REMOVED_APPLICATION_AUDIENCE_ROLES);
             IdentityUtil.threadLocalProperties.get().remove(ADDED_ORGANIZATION_AUDIENCE_ROLES);
             IdentityUtil.threadLocalProperties.get().remove(REMOVED_ORGANIZATION_AUDIENCE_ROLES);
+            IdentityUtil.threadLocalProperties.get().remove(ORGANIZATION_CUSTOM_ROLES_DISABLED);
         }
         return true;
+    }
+
+    /**
+     * Mark the update if organizations will no longer be able to create custom application roles for the shared
+     * applications of the main application, i.e. organization custom roles were enabled for the stored application and
+     * are not enabled for the updated application. This happens when the flag, enhanced organization authentication or
+     * the application audience of the roles is turned off. The framework sets the stored flag to the updated
+     * application if the update does not carry it, so only an explicit change turns it off.
+     *
+     * @param updatedApplication Updated main application.
+     * @param tenantDomain       Tenant domain of the main application.
+     * @throws IdentityApplicationManagementException If an error occurs while retrieving the stored application.
+     */
+    private void markIfOrganizationCustomRolesDisabled(ServiceProvider updatedApplication, String tenantDomain)
+            throws IdentityApplicationManagementException {
+
+        // Clear a marker left on the thread by an earlier update which failed before the post update listener.
+        IdentityUtil.threadLocalProperties.get().remove(ORGANIZATION_CUSTOM_ROLES_DISABLED);
+        if (StringUtils.isBlank(updatedApplication.getApplicationResourceId())) {
+            return;
+        }
+        ServiceProvider storedApplication = applicationManagementService.getApplicationByResourceId(
+                updatedApplication.getApplicationResourceId(), tenantDomain);
+        if (!ApplicationMgtUtil.isOrganizationCustomRolesEnabled(storedApplication, RoleConstants.APPLICATION)) {
+            return;
+        }
+        // The updated application uses application audience roles if the audience is not given.
+        String updatedAllowedAudience = updatedApplication.getAssociatedRolesConfig() == null ||
+                updatedApplication.getAssociatedRolesConfig().getAllowedAudience() == null ?
+                RoleConstants.APPLICATION : updatedApplication.getAssociatedRolesConfig().getAllowedAudience();
+        boolean isEnabledForUpdatedApplication = updatedApplication.isEnhancedOrganizationAuthenticationEnabled()
+                && updatedApplication.isOrganizationCustomRolesEnabled()
+                && RoleConstants.APPLICATION.equalsIgnoreCase(updatedAllowedAudience);
+        if (!isEnabledForUpdatedApplication) {
+            IdentityUtil.threadLocalProperties.get().put(ORGANIZATION_CUSTOM_ROLES_DISABLED, true);
+        }
+    }
+
+    /**
+     * Delete the application roles created by the organizations for the shared applications of the main application,
+     * as organizations are no longer allowed to create custom application roles for them. The roles inherited from the
+     * main application are not deleted. The deletion is done asynchronously per shared application.
+     *
+     * @param mainApplication Main application.
+     * @param tenantDomain    Tenant domain of the main application.
+     * @throws OrganizationManagementException If an error occurs while retrieving the shared applications.
+     */
+    private void handleDisabledOrganizationCustomRolesOnAppUpdate(ServiceProvider mainApplication,
+                                                                  String tenantDomain)
+            throws OrganizationManagementException {
+
+        String mainAppId = mainApplication.getApplicationResourceId();
+        String mainAppOrgId = organizationManager.resolveOrganizationId(tenantDomain);
+        List<SharedApplication> sharedApplications =
+                orgApplicationManager.getSharedApplications(mainAppOrgId, mainAppId);
+        if (CollectionUtils.isEmpty(sharedApplications)) {
+            return;
+        }
+        // Resolve the initiator in the request thread, as the carbon context is not available in the async tasks.
+        String initiatorId = IdentityUtil.getInitiatorId(
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername(),
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain());
+        for (SharedApplication sharedApplication : sharedApplications) {
+            CompletableFuture.runAsync(() -> {
+                String sharedAppOrgId = sharedApplication.getOrganizationId();
+                try {
+                    String sharedAppTenantDomain = organizationManager.resolveTenantDomain(sharedAppOrgId);
+                    PrivilegedCarbonContext.startTenantFlow();
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(sharedAppTenantDomain, true);
+                    deleteOrganizationCustomRoles(sharedApplication.getSharedApplicationId(),
+                            sharedAppTenantDomain, sharedAppOrgId, initiatorId);
+                } catch (IdentityRoleManagementException | OrganizationManagementException e) {
+                    LOG.error(String.format("Exception occurred while deleting the application roles created by " +
+                            "organization: %s", sharedAppOrgId), e);
+                } finally {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
+            }, executorService).exceptionally(throwable -> {
+                LOG.error(String.format("Exception occurred while deleting the application roles created by " +
+                        "organization: %s", sharedApplication.getOrganizationId()), throwable);
+                return null;
+            });
+        }
+    }
+
+    /**
+     * Delete the application roles created by the organization for the shared application, and audit each deletion.
+     *
+     * @param sharedAppId           Shared application ID.
+     * @param sharedAppTenantDomain Tenant domain of the shared application.
+     * @param sharedAppOrgId        Organization ID of the shared application.
+     * @param initiatorId           ID of the initiator of the deletion.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
+     */
+    private void deleteOrganizationCustomRoles(String sharedAppId, String sharedAppTenantDomain,
+                                               String sharedAppOrgId, String initiatorId)
+            throws IdentityRoleManagementException {
+
+        for (RoleBasicInfo role : getOrganizationCustomRoles(sharedAppId, sharedAppTenantDomain)) {
+            try {
+                roleManagementService.deleteRole(role.getId(), sharedAppTenantDomain);
+            } catch (IdentityRoleManagementException e) {
+                // Continue with the other roles, as a failed role must not block their deletion.
+                LOG.error(String.format("Error while deleting the role %s created by organization %s for the shared " +
+                        "application %s.", role.getName(), sharedAppOrgId, sharedAppId), e);
+                continue;
+            }
+            auditOrganizationCustomRoleDeletion(role, sharedAppId, sharedAppOrgId, initiatorId,
+                    "Organization custom roles disabled");
+            LOG.info(String.format("Role %s created by organization %s for the shared application %s is deleted, " +
+                    "as organization custom roles are disabled.", role.getName(), sharedAppOrgId,
+                    sharedAppId));
+        }
+    }
+
+    /**
+     * Get the application roles created by the organization for the shared application, i.e. the roles of the shared
+     * application which are not inherited from a main application role.
+     *
+     * @param sharedAppId           Shared application ID.
+     * @param sharedAppTenantDomain Tenant domain of the shared application.
+     * @return Application roles created by the organization.
+     * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
+     */
+    private List<RoleBasicInfo> getOrganizationCustomRoles(String sharedAppId, String sharedAppTenantDomain)
+            throws IdentityRoleManagementException {
+
+        List<RoleBasicInfo> sharedAppRoles = roleManagementService.getRolesByApplication(sharedAppId,
+                sharedAppTenantDomain);
+        List<String> inheritedRoleIds = SharedRoleMgtUtil.filterInheritedRoles(roleManagementService, sharedAppRoles,
+                sharedAppTenantDomain).stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
+        return sharedAppRoles.stream()
+                .filter(role -> !inheritedRoleIds.contains(role.getId()))
+                .collect(Collectors.toList());
     }
 
     private void handleRemovedOrganizationAudienceRolesOnAppUpdate(List<RoleV2> removedOrgRolesList,
@@ -446,17 +591,27 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             return;
         }
 
+        // Organizations can have their own application roles only if the main application allows it.
+        boolean isOrganizationCustomRolesEnabled =
+                ApplicationMgtUtil.isOrganizationCustomRolesEnabled(serviceProvider, RoleConstants.APPLICATION);
         for (RoleV2 parentRole : addedAppRolesList) {
             for (SharedApplication sharedApplication : sharedApplications) {
                 String sharedAppOrgId = sharedApplication.getOrganizationId();
                 String sharedAppTenantDomain = organizationManager.resolveTenantDomain(sharedAppOrgId);
                 String parentAppRoleName = parentRole.getName();
+                if (isOrganizationCustomRolesEnabled && roleManagementService.isExistingRoleName(parentAppRoleName,
+                        RoleConstants.APPLICATION, sharedApplication.getSharedApplicationId(),
+                        sharedAppTenantDomain)) {
+                    /*
+                     The organization has authored a role with the same name for the shared application. This is
+                     considered as a conflict of roles. Hence, logging the conflict and moving forward.
+                    */
+                    auditApplicationRoleConflict(parentRole, tenantDomain, mainAppId, sharedAppOrgId);
+                    continue;
+                }
                 // Create the role in the shared org.
-                RoleBasicInfo subOrgRole =
-                        roleManagementService.addRole(parentAppRoleName, Collections.emptyList(),
-                                Collections.emptyList(), Collections.emptyList(), RoleConstants.APPLICATION,
-                                sharedApplication.getSharedApplicationId(),
-                                sharedAppTenantDomain);
+                RoleBasicInfo subOrgRole = SharedRoleMgtUtil.addSharedApplicationRole(roleManagementService,
+                        parentAppRoleName, sharedApplication.getSharedApplicationId(), sharedAppTenantDomain);
                 // Add relationship between main role and the shared role.
                 roleManagementService.addMainRoleToSharedRoleRelationship(parentRole.getId(), subOrgRole.getId(),
                         tenantDomain, sharedAppTenantDomain);
@@ -500,6 +655,11 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             boolean hasAppAudiencedRoles =
                     RoleConstants.APPLICATION.equalsIgnoreCase(allowedAudienceForRoleAssociationInMainApp);
             if (hasAppAudiencedRoles) {
+                if (ApplicationMgtUtil.isOrganizationCustomRolesEnabled(
+                        applicationManagementService.getApplicationByResourceId(mainAppId, mainAppTenantDomain),
+                        RoleConstants.APPLICATION)) {
+                    auditOrganizationCustomRolesDeletion(sharedAppId, tenantDomain, sharedAppOrgId);
+                }
                 // Handle role deletion in application deletion post actions.
                 return true;
             }
@@ -628,6 +788,25 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             // Resolve the associated roles of shared application from main application details.
             int mainAppTenantId = applicationManagementService.getTenantIdByApp(mainAppId);
             String mainAppTenantDomain = IdentityTenantUtil.getTenantDomain(mainAppTenantId);
+            /*
+             When the main application enables organization custom roles, the roles of a shared application are
+             resolved by the role audience. They include the roles shared from the main application and the roles
+             created by the organization.
+             */
+            ServiceProvider mainApplication =
+                    applicationManagementService.getApplicationByResourceId(mainAppId, mainAppTenantDomain);
+            if (ApplicationMgtUtil.isOrganizationCustomRolesEnabled(mainApplication, RoleConstants.APPLICATION)) {
+                associatedRolesOfApplication.clear();
+                associatedRolesOfApplication.addAll(OrgApplicationManagerUtil.getRolesOfSharedApplication(
+                        roleManagementService, applicationUUID, tenantDomain));
+                return true;
+            }
+            if (ApplicationMgtUtil.isOrganizationCustomRolesEnabled(mainApplication, RoleConstants.ORGANIZATION)) {
+                associatedRolesOfApplication.clear();
+                associatedRolesOfApplication.addAll(
+                        OrgApplicationManagerUtil.getOrganizationRoles(roleManagementService, tenantDomain));
+                return true;
+            }
             List<RoleV2> resolvedAssociatedRolesFromMainApp =
                     applicationManagementService.getAssociatedRolesOfApplication(mainAppId, mainAppTenantDomain);
             List<String> mainAppRoleIds =
@@ -661,6 +840,74 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
         }
         return true;
 
+    }
+
+    /**
+     * Audit and log a conflict where an organization has authored an application role for a shared application with
+     * the same name as a main application role being shared.
+     */
+    private void auditApplicationRoleConflict(RoleV2 mainRole, String mainAppTenantDomain, String mainAppId,
+                                              String sharedAppOrgId) throws OrganizationManagementException {
+
+        String username = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(
+                IdentityUtil.getInitiatorId(username, tenantDomain),
+                LoggerUtils.Target.User.name(), mainRole.getName(), LoggerUtils.Target.Role.name(),
+                LogConstants.UserManagement.ADD_ROLE_ACTION)
+                .data(buildAuditData(organizationManager.resolveOrganizationId(mainAppTenantDomain), mainAppId,
+                        sharedAppOrgId, mainRole.getName(), mainRole.getId(), "Role conflict"));
+        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
+        LOG.warn(String.format("Organization %s has a non shared application role with name %s.", sharedAppOrgId,
+                mainRole.getName()));
+    }
+
+    /**
+     * Audit the application roles created by the organization for a shared application, which are deleted along with
+     * the shared application.
+     */
+    private void auditOrganizationCustomRolesDeletion(String sharedAppId, String sharedAppTenantDomain,
+                                                      String sharedAppOrgId)
+            throws IdentityRoleManagementException {
+
+        List<RoleBasicInfo> organizationCustomRoles = getOrganizationCustomRoles(sharedAppId,
+                sharedAppTenantDomain);
+        if (organizationCustomRoles.isEmpty()) {
+            return;
+        }
+        String initiatorId = IdentityUtil.getInitiatorId(
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername(),
+                PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain());
+        for (RoleBasicInfo role : organizationCustomRoles) {
+            auditOrganizationCustomRoleDeletion(role, sharedAppId, sharedAppOrgId, initiatorId,
+                    "Shared application deleted");
+            LOG.info(String.format("Role %s created by organization %s for the shared application %s is deleted " +
+                    "with the application.", role.getName(), sharedAppOrgId, sharedAppId));
+        }
+    }
+
+    /**
+     * Audit the deletion of an application role created by the organization for a shared application.
+     *
+     * @param role           Deleted role.
+     * @param sharedAppId    Shared application ID.
+     * @param sharedAppOrgId Organization ID of the shared application.
+     * @param initiatorId    ID of the initiator of the deletion.
+     * @param reason         Reason for the deletion.
+     */
+    private void auditOrganizationCustomRoleDeletion(RoleBasicInfo role, String sharedAppId, String sharedAppOrgId,
+                                                     String initiatorId, String reason) {
+
+        Map<String, String> auditData = new HashMap<>();
+        auditData.put(RoleConstants.SHARED_ORG_ID, sharedAppOrgId);
+        auditData.put(RoleConstants.PARENT_APP_ID, sharedAppId);
+        auditData.put(RoleConstants.CONFLICT_ROLE_ID, role.getId());
+        auditData.put(RoleConstants.CONFLICT_ROLE_NAME, role.getName());
+        auditData.put(RoleConstants.FAILURE_REASON, reason);
+        AuditLog.AuditLogBuilder auditLogBuilder = new AuditLog.AuditLogBuilder(initiatorId,
+                LoggerUtils.Target.User.name(), role.getName(), LoggerUtils.Target.Role.name(),
+                LogConstants.UserManagement.DELETE_ROLE_ACTION).data(auditData);
+        LoggerUtils.triggerAuditLogEvent(auditLogBuilder, true);
     }
 
     private static boolean isFragmentApp(ServiceProvider serviceProvider) {
