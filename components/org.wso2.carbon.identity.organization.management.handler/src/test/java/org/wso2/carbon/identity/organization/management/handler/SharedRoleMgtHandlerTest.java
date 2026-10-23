@@ -22,6 +22,7 @@ import org.mockito.MockedStatic;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
@@ -44,6 +45,7 @@ import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -451,6 +453,10 @@ public class SharedRoleMgtHandlerTest {
                 createMockRoleBasicInfo("existingRole", "shared-role-id", SHARED_ORG_APP_ID));
         when(mockedRoleManagementService.getRoles(anyString(), eq(null), eq(0), eq(null), eq(null),
                 eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(sharedAppRoles);
+        // The existing role is inherited from a main application role.
+        when(mockedRoleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
+                Collections.singletonList("shared-role-id"), SHARED_ORG_TENANT_DOMAIN))
+                .thenReturn(Collections.singletonMap("shared-role-id", "main-role-id"));
 
         // Execute the handler.
         SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
@@ -458,6 +464,134 @@ public class SharedRoleMgtHandlerTest {
 
         // Verify the role was deleted.
         verify(mockedRoleManagementService, times(1)).deleteRole("shared-role-id", SHARED_ORG_TENANT_DOMAIN);
+    }
+
+    @Test
+    public void testRemoveAppRolesFromSharedApplicationSkipsOrgAuthoredRole() throws Exception {
+
+        Event event = createUpdateRolesOfSharedApplicationEvent(
+                ApplicationShareUpdateOperation.Operation.REMOVE,
+                Collections.singletonList(createRoleWithAudience("localRole", APPLICATION_AUD, SHARED_ORG_APP_ID)));
+
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, true, false))
+                .thenReturn(createMockOrganization(SHARED_ORG_ID, PARENT_ORG_ID));
+
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(APPLICATION_AUD);
+        when(mockedApplicationManagementService.getApplicationByResourceId(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(buildMainApplication(true));
+        ServiceProvider mockSharedSP = mock(ServiceProvider.class);
+        ServiceProviderProperty spProperty = new ServiceProviderProperty();
+        spProperty.setName(ROLE_SHARING_MODE);
+        spProperty.setValue(ApplicationShareRolePolicy.Mode.SELECTED.name());
+        when(mockSharedSP.getSpProperties()).thenReturn(new ServiceProviderProperty[]{spProperty});
+        when(mockedApplicationManagementService.getApplicationByResourceId(SHARED_ORG_APP_ID,
+                SHARED_ORG_TENANT_DOMAIN)).thenReturn(mockSharedSP);
+
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+        // The organization has authored a role for the shared application, which has no main role.
+        List<RoleBasicInfo> sharedAppRoles = Collections.singletonList(
+                createMockRoleBasicInfo("localRole", "local-role-id", SHARED_ORG_APP_ID));
+        when(mockedRoleManagementService.getRoles(anyString(), eq(null), eq(0), eq(null), eq(null),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(sharedAppRoles);
+        when(mockedRoleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
+                Collections.singletonList("local-role-id"), SHARED_ORG_TENANT_DOMAIN))
+                .thenReturn(Collections.emptyMap());
+
+        new SharedRoleMgtHandler().handleEvent(event);
+
+        verify(mockedRoleManagementService, never()).deleteRole(anyString(), anyString());
+    }
+
+    @Test
+    public void testPostShareApplicationWithNoneModeKeepsOrgAuthoredRoles() throws Exception {
+
+        Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.NONE, null);
+
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(APPLICATION_AUD);
+        when(mockedApplicationManagementService.getApplicationByResourceId(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(buildMainApplication(true));
+
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+        List<RoleBasicInfo> sharedAppRoles = Arrays.asList(
+                createMockRoleBasicInfo("role1", "shared-role1-id", SHARED_ORG_APP_ID),
+                createMockRoleBasicInfo("localRole", "local-role-id", SHARED_ORG_APP_ID));
+        when(mockedRoleManagementService.getRoles(anyString(), eq(null), eq(0), eq(null), eq(null),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(sharedAppRoles);
+        when(mockedRoleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(
+                Arrays.asList("shared-role1-id", "local-role-id"), SHARED_ORG_TENANT_DOMAIN))
+                .thenReturn(Collections.singletonMap("shared-role1-id", "app-role1-id"));
+
+        new SharedRoleMgtHandler().handleEvent(event);
+
+        // Only the inherited role is removed. The organization authored role is kept.
+        verify(mockedRoleManagementService, times(1)).deleteRole("shared-role1-id", SHARED_ORG_TENANT_DOMAIN);
+        verify(mockedRoleManagementService, never()).deleteRole("local-role-id", SHARED_ORG_TENANT_DOMAIN);
+    }
+
+    @Test
+    public void testPostShareApplicationSkipsRoleConflictingWithOrgAuthoredRole() throws Exception {
+
+        Event event = createPostShareApplicationEvent(false, ApplicationShareRolePolicy.Mode.ALL, null);
+
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(PARENT_ORG_ID)).thenReturn(PARENT_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
+                .thenReturn(createMockOrganization(SHARED_ORG_ID, PARENT_ORG_ID));
+
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(APPLICATION_AUD);
+        when(mockedApplicationManagementService.getApplicationByResourceId(MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN))
+                .thenReturn(buildMainApplication(true));
+
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+        List<RoleBasicInfo> mainAppRoles = Collections.singletonList(
+                createMockRoleBasicInfo("role1", "app-role1-id", MAIN_APP_ID));
+        when(mockedRoleManagementService.getRoles(anyString(), eq(null), eq(0), eq(null), eq(null),
+                eq(MAIN_ORG_TENANT_DOMAIN))).thenReturn(mainAppRoles);
+        when(mockedRoleManagementService.getRoles(anyString(), eq(null), eq(0), eq(null), eq(null),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(Collections.emptyList());
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList("app-role1-id"), PARENT_ORG_TENANT_DOMAIN))
+                .thenReturn(Collections.singletonMap("app-role1-id", "parent-shared-role-id"));
+        // A role with the same name exists for the shared application, but it is not inherited from the main role.
+        when(mockedRoleManagementService.isExistingRoleName("role1", RoleConstants.APPLICATION, SHARED_ORG_APP_ID,
+                SHARED_ORG_TENANT_DOMAIN)).thenReturn(true);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList("app-role1-id"), SHARED_ORG_TENANT_DOMAIN))
+                .thenReturn(Collections.emptyMap());
+
+        new SharedRoleMgtHandler().handleEvent(event);
+
+        verify(mockedRoleManagementService, never()).addRole(anyString(), anyList(), anyList(), anyList(),
+                eq(RoleConstants.APPLICATION), eq(SHARED_ORG_APP_ID), eq(SHARED_ORG_TENANT_DOMAIN));
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(anyString(), anyString(),
+                anyString(), anyString());
     }
 
     /**
@@ -536,6 +670,83 @@ public class SharedRoleMgtHandlerTest {
                 anyList(), eq(RoleConstants.ORGANIZATION), eq(SHARED_ORG_ID), eq(SHARED_ORG_TENANT_DOMAIN));
         verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(
                 eq("org-role-id"), eq("shared-org-role-id"), eq(MAIN_ORG_TENANT_DOMAIN), eq(SHARED_ORG_TENANT_DOMAIN));
+    }
+
+    /**
+     * Test that adding an org role to a shared application does not link a role with the same name created by the
+     * shared organization itself to the main role.
+     */
+    @Test
+    public void testAddOrgRolesToSharedApplicationSkipsOrgAuthoredRole() throws Exception {
+
+        // Create an event for adding org roles to a shared application with SELECTED role sharing policy.
+        Event event = createUpdateRolesOfSharedApplicationEvent(
+                ApplicationShareUpdateOperation.Operation.ADD,
+                Collections.singletonList(createRoleWithAudience("newOrgRole", ORGANIZATION_AUD, SHARED_ORG_ID)));
+
+        // Mock the organization manager.
+        OrganizationManager mockedOrganizationManager = mock(OrganizationManager.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
+        when(mockedOrganizationManager.resolveTenantDomain(MAIN_ORG_ID)).thenReturn(MAIN_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(SHARED_ORG_ID)).thenReturn(SHARED_ORG_TENANT_DOMAIN);
+        when(mockedOrganizationManager.resolveTenantDomain(PARENT_ORG_ID)).thenReturn(PARENT_ORG_TENANT_DOMAIN);
+
+        // Properly create the organization with parent relation.
+        org.wso2.carbon.identity.organization.management.service.model.Organization sharedOrg =
+                createMockOrganization(SHARED_ORG_ID, MAIN_ORG_ID); // Setting MAIN_ORG as direct parent.
+        when(mockedOrganizationManager.getOrganization(SHARED_ORG_ID, false, false))
+                .thenReturn(sharedOrg);
+
+        // Mock the application management service.
+        ApplicationManagementService mockedApplicationManagementService = mock(ApplicationManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance()
+                .setApplicationManagementService(mockedApplicationManagementService);
+
+        // Setup to return ORGANIZATION audience type.
+        when(mockedApplicationManagementService.getAllowedAudienceForRoleAssociation(MAIN_APP_ID,
+                MAIN_ORG_TENANT_DOMAIN)).thenReturn(ORGANIZATION_AUD);
+
+        // Create a service provider with SELECTED role sharing mode.
+        ServiceProvider mockSharedSP = mock(ServiceProvider.class);
+        ServiceProviderProperty[] spProperties = new ServiceProviderProperty[1];
+        ServiceProviderProperty spProperty = new ServiceProviderProperty();
+        spProperty.setName(ROLE_SHARING_MODE);
+        spProperty.setValue(ApplicationShareRolePolicy.Mode.SELECTED.name());
+        spProperties[0] = spProperty;
+        when(mockSharedSP.getSpProperties()).thenReturn(spProperties);
+        when(mockedApplicationManagementService.getApplicationByResourceId(SHARED_ORG_APP_ID,
+                SHARED_ORG_TENANT_DOMAIN)).thenReturn(mockSharedSP);
+
+        // Mock the role management service.
+        RoleManagementService mockedRoleManagementService = mock(RoleManagementService.class);
+        OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+
+        // Setup associated org roles in the main app.
+        List<RoleV2> mainAppOrgRoles = new ArrayList<>();
+        RoleV2 orgRole = new RoleV2();
+        orgRole.setId("org-role-id");
+        orgRole.setName("newOrgRole");
+        mainAppOrgRoles.add(orgRole);
+        when(mockedApplicationManagementService.getAssociatedRolesOfApplication(
+                MAIN_APP_ID, MAIN_ORG_TENANT_DOMAIN)).thenReturn(mainAppOrgRoles);
+
+        // The shared org has created a role with the same name itself, i.e. a role without a main role relationship.
+        when(mockedRoleManagementService.isExistingRoleName("newOrgRole", RoleConstants.ORGANIZATION,
+                SHARED_ORG_ID, SHARED_ORG_TENANT_DOMAIN)).thenReturn(true);
+        when(mockedRoleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(anyList(),
+                eq(SHARED_ORG_TENANT_DOMAIN))).thenReturn(Collections.emptyMap());
+
+        // Execute the handler.
+        SharedRoleMgtHandler sharedRoleMgtHandler = new SharedRoleMgtHandler();
+        sharedRoleMgtHandler.handleEvent(event);
+
+        // The org authored role is neither linked to the main role nor replaced.
+        verify(mockedRoleManagementService, never()).getRoleIdByName(anyString(), anyString(), anyString(),
+                anyString());
+        verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(anyString(), anyString(),
+                anyString(), anyString());
+        verify(mockedRoleManagementService, never()).addRole(anyString(), anyList(), anyList(), anyList(),
+                anyString(), anyString(), anyString());
     }
 
     /**
@@ -922,5 +1133,22 @@ public class SharedRoleMgtHandlerTest {
                 eq("system-role-id"), anyString(), anyString(), anyString());
         verify(mockedRoleManagementService, never()).addMainRoleToSharedRoleRelationship(
                 eq("domain-role-id"), anyString(), anyString(), anyString());
+    }
+
+    /**
+     * Build a main application which allows organizations to create application roles for its shared applications.
+     *
+     * @param isSharedAppRoleManagementEnabled Whether application role creation is enabled.
+     * @return Main application.
+     */
+    private static ServiceProvider buildMainApplication(boolean isSharedAppRoleManagementEnabled) {
+
+        ServiceProvider mainApplication = new ServiceProvider();
+        mainApplication.setEnhancedOrganizationAuthenticationEnabled(isSharedAppRoleManagementEnabled);
+        mainApplication.setSharedAppRoleManagementEnabled(isSharedAppRoleManagementEnabled);
+        AssociatedRolesConfig associatedRolesConfig = new AssociatedRolesConfig();
+        associatedRolesConfig.setAllowedAudience(RoleConstants.APPLICATION);
+        mainApplication.setAssociatedRolesConfig(associatedRolesConfig);
+        return mainApplication;
     }
 }

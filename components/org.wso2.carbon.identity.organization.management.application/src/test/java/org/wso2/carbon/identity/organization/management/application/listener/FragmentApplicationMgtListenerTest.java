@@ -31,6 +31,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.AssociatedRolesConfig;
 import org.wso2.carbon.identity.application.common.model.AuthenticationStep;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
@@ -39,6 +40,7 @@ import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorC
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.LocalAndOutboundAuthenticationConfig;
 import org.wso2.carbon.identity.application.common.model.LocalAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.RoleV2;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.model.script.AuthenticationScriptConfig;
@@ -54,10 +56,13 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationMana
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
+import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -229,6 +234,146 @@ public class FragmentApplicationMgtListenerTest {
                 .doPostGetServiceProvider(sharedApplication, applicationName, tenantDomain);
         AssertJUnit.assertTrue(result);
         AssertJUnit.assertEquals(expectedResult, sharedApplication.isAPIBasedAuthenticationEnabled());
+    }
+
+    @DataProvider(name = "sharedAppRoleManagementDataProvider")
+    public Object[][] sharedAppRoleManagementDataProvider() {
+
+        return new Object[][]{
+                // isSharedAppRoleManagementEnabled, expected role IDs.
+                {true, new String[]{"inherited-role-id", "org-role-id"}},
+                {false, new String[]{"inherited-role-id"}}
+        };
+    }
+
+    @Test(dataProvider = "sharedAppRoleManagementDataProvider")
+    public void testAssociatedRolesOfSharedAppWithApplicationAudience(boolean isSharedAppRoleManagementEnabled,
+                                                                      String[] expectedRoleIds) throws Exception {
+
+        mockClaimConfig(serviceProvider);
+        mockUtils(primaryTenantDomain);
+
+        MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
+        ServiceProvider sharedApplication = new ServiceProvider();
+        sharedApplication.setSpProperties(new ServiceProviderProperty[]{
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)});
+        sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+        sharedApplication.setApplicationResourceId(applicationResourceID);
+        /*
+         Stale roles of a cached shared application, resolved while the main application did not allow
+         organizations to create application roles. Only the inherited role is present.
+         */
+        AssociatedRolesConfig sharedAppRolesConfig = new AssociatedRolesConfig();
+        sharedAppRolesConfig.setAllowedAudience("application");
+        sharedAppRolesConfig.setRoles(new RoleV2[]{new RoleV2("inherited-role-id", "Root_App")});
+        sharedApplication.setAssociatedRolesConfig(sharedAppRolesConfig);
+
+        AssociatedRolesConfig mainAppRolesConfig = new AssociatedRolesConfig();
+        mainAppRolesConfig.setAllowedAudience("application");
+        mainAppRolesConfig.setRoles(new RoleV2[]{new RoleV2("main-role-id", "Root_App")});
+        when(serviceProvider.getSpProperties()).thenReturn(new ServiceProviderProperty[0]);
+        when(serviceProvider.getAssociatedRolesConfig()).thenReturn(mainAppRolesConfig);
+        when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled())
+                .thenReturn(isSharedAppRoleManagementEnabled);
+        when(serviceProvider.isSharedAppRoleManagementEnabled()).thenReturn(isSharedAppRoleManagementEnabled);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+        when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+        when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                .thenReturn(Optional.of(mainApplicationDO));
+        when(applicationManagementService.getApplicationByResourceId(anyString(), anyString()))
+                .thenReturn(serviceProvider);
+        // Inherited roles of the main application roles in the organization.
+        RoleManagementService roleManagementService = mock(RoleManagementService.class);
+        OrgApplicationMgtDataHolder.getInstance().setRoleManagementServiceV2(roleManagementService);
+        when(roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList("main-role-id"), tenantDomain))
+                .thenReturn(Collections.singletonMap("main-role-id", "inherited-role-id"));
+        // Roles of the shared application audience: an inherited role and a role created by the organization.
+        when(roleManagementService.getRolesByApplication(applicationResourceID, tenantDomain))
+                .thenReturn(Arrays.asList(new RoleBasicInfo("inherited-role-id", "Root_App"),
+                        new RoleBasicInfo("org-role-id", "Sub_App_Role")));
+
+        AssertJUnit.assertTrue(fragmentApplicationMgtListener
+                .doPostGetServiceProvider(sharedApplication, applicationName, tenantDomain));
+
+        /*
+         When the main application allows organizations to create application roles, the roles are resolved by
+         the role audience, regardless of the roles of the given shared application. Hence, the roles created by
+         the organization are included along with the inherited roles. Otherwise, the roles are resolved through
+         the main application roles, as before.
+         */
+        String[] roleIds = Arrays.stream(sharedApplication.getAssociatedRolesConfig().getRoles())
+                .map(RoleV2::getId).toArray(String[]::new);
+        AssertJUnit.assertEquals(Arrays.asList(expectedRoleIds), Arrays.asList(roleIds));
+        AssertJUnit.assertEquals("application", sharedApplication.getAssociatedRolesConfig().getAllowedAudience());
+    }
+
+    @DataProvider(name = "sharedAppOrganizationRoleManagementDataProvider")
+    public Object[][] sharedAppOrganizationRoleManagementDataProvider() {
+
+        return new Object[][]{
+                // isSharedAppRoleManagementEnabled, expected role IDs.
+                {true, new String[]{"shared-org-role-id", "local-org-role-id"}},
+                {false, new String[]{"shared-org-role-id"}}
+        };
+    }
+
+    @Test(dataProvider = "sharedAppOrganizationRoleManagementDataProvider")
+    public void testAssociatedRolesOfSharedAppWithOrganizationAudience(boolean isSharedAppRoleManagementEnabled,
+                                                                       String[] expectedRoleIds) throws Exception {
+
+        mockClaimConfig(serviceProvider);
+        mockUtils(primaryTenantDomain);
+
+        MainApplicationDO mainApplicationDO = new MainApplicationDO(organizationID, applicationResourceID);
+        ServiceProvider sharedApplication = new ServiceProvider();
+        sharedApplication.setSpProperties(new ServiceProviderProperty[]{
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)});
+        sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+        sharedApplication.setApplicationResourceId(applicationResourceID);
+        // Stale roles of a cached shared application, resolved while organization roles were not honoured.
+        AssociatedRolesConfig sharedAppRolesConfig = new AssociatedRolesConfig();
+        sharedAppRolesConfig.setAllowedAudience("organization");
+        sharedAppRolesConfig.setRoles(new RoleV2[]{new RoleV2("shared-org-role-id", "Root_Org_Role")});
+        sharedApplication.setAssociatedRolesConfig(sharedAppRolesConfig);
+
+        AssociatedRolesConfig mainAppRolesConfig = new AssociatedRolesConfig();
+        mainAppRolesConfig.setAllowedAudience("organization");
+        mainAppRolesConfig.setRoles(new RoleV2[]{new RoleV2("main-org-role-id", "Root_Org_Role")});
+        when(serviceProvider.getSpProperties()).thenReturn(new ServiceProviderProperty[0]);
+        when(serviceProvider.getAssociatedRolesConfig()).thenReturn(mainAppRolesConfig);
+        when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled())
+                .thenReturn(isSharedAppRoleManagementEnabled);
+        when(serviceProvider.isSharedAppRoleManagementEnabled()).thenReturn(isSharedAppRoleManagementEnabled);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+        when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+        when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                .thenReturn(Optional.of(mainApplicationDO));
+        when(applicationManagementService.getApplicationByResourceId(anyString(), anyString()))
+                .thenReturn(serviceProvider);
+        RoleManagementService roleManagementService = mock(RoleManagementService.class);
+        OrgApplicationMgtDataHolder.getInstance().setRoleManagementServiceV2(roleManagementService);
+        // The organization's copy of the main application's organization role.
+        when(roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
+                Collections.singletonList("main-org-role-id"), tenantDomain))
+                .thenReturn(Collections.singletonMap("main-org-role-id", "shared-org-role-id"));
+        // Organization roles of the organization: the shared role and a role created by the organization.
+        when(roleManagementService.getRoles(anyString(), any(), any(), any(), any(), anyString()))
+                .thenReturn(Arrays.asList(new RoleBasicInfo("shared-org-role-id", "Root_Org_Role"),
+                        new RoleBasicInfo("local-org-role-id", "Sub_Org_Role")));
+
+        AssertJUnit.assertTrue(fragmentApplicationMgtListener
+                .doPostGetServiceProvider(sharedApplication, applicationName, tenantDomain));
+
+        /*
+         When the main application allows organizations to manage roles, all organization roles of the organization
+         are associated, including the roles created by it. Otherwise, only the organization's copies of the main
+         application's roles are associated, as before.
+         */
+        String[] roleIds = Arrays.stream(sharedApplication.getAssociatedRolesConfig().getRoles())
+                .map(RoleV2::getId).toArray(String[]::new);
+        AssertJUnit.assertEquals(Arrays.asList(expectedRoleIds), Arrays.asList(roleIds));
+        AssertJUnit.assertEquals("organization", sharedApplication.getAssociatedRolesConfig().getAllowedAudience());
     }
 
     @DataProvider(name = "testSharedAppNameModificationDataProvider")
