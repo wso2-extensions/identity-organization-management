@@ -178,8 +178,7 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
 
         UserAssociation existingUserAssociation =
                 userSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, createdOrgId);
-        boolean isNewlyShared = existingUserAssociation == null;
-        if (isNewlyShared) {
+        if (existingUserAssociation == null) {
             userSharingService.shareOrganizationUser(createdOrgId, userId, residentOrgId, SharedType.SHARED);
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("User: " + userId + " is already shared with the organization: " + createdOrgId);
@@ -190,7 +189,7 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
         }
 
         // Published once the roles are assigned, so that the event carries them.
-        if (isNewlyShared) {
+        if (existingUserAssociation == null) {
             UserSharingEventPublisher.publishUserSharedEvent(
                     userSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, createdOrgId));
         }
