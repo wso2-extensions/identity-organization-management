@@ -2331,10 +2331,8 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
     }
 
     /**
-     * Restores the request context of the request that initiated the sharing on the thread the sharing is processed
-     * on, so that the events published from this thread are attributed to that request: the flow, the correlation ID,
-     * the request (for the initiator IP address) and the root organization (for the issuer).
-     * The caller is responsible for calling {@link #clearRequestContext()} in a finally block.
+     * Restores the flow, correlation ID, request and root organization of the initiating request on the processing
+     * thread, so its events are attributed to that request. Call {@link #clearRequestContext()} in a finally block.
      */
     private void restoreRequestContext(SharingInitiatorContext sharingInitiatorContext) {
 

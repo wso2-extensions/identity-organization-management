@@ -51,14 +51,8 @@ import static org.wso2.carbon.identity.organization.management.ext.Constants.EVE
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_USER_ID;
 
 /**
- * Publishes identity events for users shared into, and unshared from, organizations.
- * <p>
- * One event is published per user per organization, after the shared user has been created in or removed from the
- * organization. The event is published under the tenant of the organization the user was shared from, and also
- * carries the tenant of the organization the user was shared to, so that it can be delivered to the webhooks of both.
- * A share event is published once the roles of the shared user are assigned, and carries them.
- * <p>
- * Event publishing is best effort. A failure to publish never fails the operation that triggered it.
+ * Publishes the user sharing events, once per user per organization, carrying the tenants of both organizations.
+ * Publishing is best effort: a failure to publish never fails the operation that triggered it.
  */
 public class UserSharingEventPublisher {
 
@@ -141,10 +135,8 @@ public class UserSharingEventPublisher {
     }
 
     /**
-     * Resolve the roles assigned to the shared user by the sharing, each as the role of the organization the user was
-     * shared to and the corresponding role of the organization the user was shared from. Roles the shared user was
-     * given in its organization directly are not included. Resolution is best effort: on failure no roles are
-     * reported, and the event is still published.
+     * Resolve the roles the sharing assigned to the shared user, as the roles of both organizations.
+     * Best effort: on failure no roles are reported, and the event is still published.
      */
     private static List<Map<String, String>> resolveSharedRoles(UserAssociation userAssociation,
                                                                 String sharedTenantDomain,

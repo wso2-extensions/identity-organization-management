@@ -44,11 +44,8 @@ public class Constants {
     // Thread-local policy used while creating an organization through the onboarding dispatcher.
     public static final String SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT = "SKIP_AUTO_CONSOLE_ADMIN_ASSIGNMENT";
 
-    /*
-     Organization user sharing events. Published once per user per organization, when a shared user is created in
-     (POST_SHARE_USER) or removed from (POST_UNSHARE_USER) an organization by user sharing. The events carry the
-     shared user and the organization it was shared to, and the user it was shared from and that user's organization.
-    */
+    // User sharing events, published once per user per organization when a shared user is created or removed.
+    // They carry the shared user and its organization, and the user it was shared from and that user's organization.
     public static final String EVENT_POST_SHARE_USER = "POST_SHARE_USER";
     public static final String EVENT_POST_UNSHARE_USER = "POST_UNSHARE_USER";
     public static final String EVENT_PROP_SHARED_USER_ID = "SHARED_USER_ID";
@@ -56,12 +53,8 @@ public class Constants {
     public static final String EVENT_PROP_SHARED_TENANT_DOMAIN = "SHARED_TENANT_DOMAIN";
     public static final String EVENT_PROP_ASSOCIATED_USER_ID = "ASSOCIATED_USER_ID";
     public static final String EVENT_PROP_ASSOCIATED_ORGANIZATION_ID = "ASSOCIATED_ORGANIZATION_ID";
-    /*
-     POST_SHARE_USER only: the roles assigned to the shared user by the sharing, as a List<Map<String, String>> keyed
-     by EVENT_PROP_ROLE_ID (the role of the organization the user was shared from) and EVENT_PROP_SHARED_ROLE_ID (the
-     role of the organization the user was shared to), with EVENT_PROP_ROLE_IS_SHARED and
-     EVENT_PROP_SHARED_ROLE_IS_SHARED ("true" or "false") telling whether each is a shared role.
-    */
+    // POST_SHARE_USER only: the assigned roles, as a List<Map<String, String>> of the role IDs in both organizations
+    // (ROLE_ID, SHARED_ROLE_ID) and whether each is shared (ROLE_IS_SHARED, SHARED_ROLE_IS_SHARED).
     public static final String EVENT_PROP_ROLES = "ROLES";
     public static final String EVENT_PROP_ROLE_ID = "ROLE_ID";
     public static final String EVENT_PROP_ROLE_IS_SHARED = "ROLE_IS_SHARED";
