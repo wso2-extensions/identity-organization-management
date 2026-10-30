@@ -43,8 +43,10 @@ import static org.wso2.carbon.identity.organization.management.ext.Constants.EVE
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ASSOCIATED_USER_ID;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ROLES;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_ROLE_IS_SHARED;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_ROLE_ID;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_ROLE_IS_SHARED;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_PROP_SHARED_USER_ID;
 
@@ -172,9 +174,14 @@ public class UserSharingEventPublisher {
             for (String sharedRoleId : sharedRoleIds) {
                 String mainRoleId = sharedToMainRoleIds.get(sharedRoleId);
                 Map<String, String> role = new HashMap<>();
+                // A role of the organization the user was shared to is a shared role when it maps to a main role.
                 role.put(EVENT_PROP_SHARED_ROLE_ID, sharedRoleId);
+                role.put(EVENT_PROP_SHARED_ROLE_IS_SHARED, String.valueOf(mainRoleId != null));
+                // A role of the organization the user was shared from is a shared role when that organization is a
+                // sub organization, and the main role otherwise.
                 role.put(EVENT_PROP_ROLE_ID, mainToResidentRoleIds != null && mainRoleId != null ?
                         mainToResidentRoleIds.get(mainRoleId) : mainRoleId);
+                role.put(EVENT_PROP_ROLE_IS_SHARED, String.valueOf(mainToResidentRoleIds != null));
                 roles.add(role);
             }
             return roles;

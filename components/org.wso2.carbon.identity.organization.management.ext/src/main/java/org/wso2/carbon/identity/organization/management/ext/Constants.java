@@ -59,11 +59,14 @@ public class Constants {
     /*
      POST_SHARE_USER only: the roles assigned to the shared user by the sharing, as a List<Map<String, String>> keyed
      by EVENT_PROP_ROLE_ID (the role of the organization the user was shared from) and EVENT_PROP_SHARED_ROLE_ID (the
-     role of the organization the user was shared to).
+     role of the organization the user was shared to), with EVENT_PROP_ROLE_IS_SHARED and
+     EVENT_PROP_SHARED_ROLE_IS_SHARED ("true" or "false") telling whether each is a shared role.
     */
     public static final String EVENT_PROP_ROLES = "ROLES";
     public static final String EVENT_PROP_ROLE_ID = "ROLE_ID";
+    public static final String EVENT_PROP_ROLE_IS_SHARED = "ROLE_IS_SHARED";
     public static final String EVENT_PROP_SHARED_ROLE_ID = "SHARED_ROLE_ID";
+    public static final String EVENT_PROP_SHARED_ROLE_IS_SHARED = "SHARED_ROLE_IS_SHARED";
     // Thread-local flag set while a shared user is created or removed by user sharing.
     public static final String USER_SHARING_OPERATION = "userSharingOperation";
 }
