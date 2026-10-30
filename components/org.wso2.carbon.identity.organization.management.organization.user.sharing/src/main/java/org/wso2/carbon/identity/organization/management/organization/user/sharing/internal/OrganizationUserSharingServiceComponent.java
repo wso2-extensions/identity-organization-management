@@ -265,12 +265,12 @@ public class OrganizationUserSharingServiceComponent {
     protected void setIdentityEventService(IdentityEventService identityEventService) {
 
         OrganizationUserSharingDataHolder.getInstance().setIdentityEventService(identityEventService);
-        LOG.debug("Set Identity Event Service.");
+        LOG.debug("Set Identity Event Service in organization user sharing component.");
     }
 
     protected void unsetIdentityEventService(IdentityEventService identityEventService) {
 
         OrganizationUserSharingDataHolder.getInstance().setIdentityEventService(null);
-        LOG.debug("Unset Identity Event Service.");
+        LOG.debug("Unset Identity Event Service in organization user sharing component.");
     }
 }
