@@ -22,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.MDC;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -30,6 +31,7 @@ import org.wso2.carbon.identity.application.common.model.ApplicationBasicInfo;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.context.IdentityContext;
 import org.wso2.carbon.identity.core.model.ExpressionNode;
 import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
 import org.wso2.carbon.identity.core.model.Node;
@@ -68,6 +70,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.SharingInitiatorContext;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.UserSharingEventPublisher;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -119,6 +122,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_FAILURE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_MESSAGE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.AUDIT_SUCCESS;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NAME_NULL;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_NOT_FOUND;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ErrorMessage.ERROR_CODE_AUDIENCE_TYPE_NULL;
@@ -231,10 +235,12 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                         initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
                                 sharingInitiatorContext.getSharingInitiatedTenantId(),
                                 sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        restoreRequestContext(sharingInitiatorContext);
                         processSelectiveUserShare(userCriteria, validOrganizations,
                                 sharingInitiatorContext.getSharingInitiatedOrgId(),
                                 sharingInitiatorContext.getSharingInitiatedUserId());
                     } finally {
+                        clearRequestContext();
                         PrivilegedCarbonContext.endTenantFlow();
                     }
                 }, EXECUTOR)
@@ -277,10 +283,12 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                         initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
                                 sharingInitiatorContext.getSharingInitiatedTenantId(),
                                 sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        restoreRequestContext(sharingInitiatorContext);
                         processGeneralUserShare(userCriteria, policy, roleIds, roleAssignmentMode,
                                 sharingInitiatorContext.getSharingInitiatedOrgId(),
                                 sharingInitiatorContext.getSharingInitiatedUserId());
                     } finally {
+                        clearRequestContext();
                         PrivilegedCarbonContext.endTenantFlow();
                     }
                 }, EXECUTOR)
@@ -316,9 +324,11 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                         initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
                                 sharingInitiatorContext.getSharingInitiatedTenantId(),
                                 sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        restoreRequestContext(sharingInitiatorContext);
                         processSelectiveUserUnshare(userCriteria, organizations,
                                 sharingInitiatorContext.getSharingInitiatedOrgId());
                     } finally {
+                        clearRequestContext();
                         PrivilegedCarbonContext.endTenantFlow();
                     }
                 }, EXECUTOR)
@@ -352,8 +362,10 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
                         initiateThreadLocalContext(sharingInitiatorContext.getSharingInitiatedTenantDomain(),
                                 sharingInitiatorContext.getSharingInitiatedTenantId(),
                                 sharingInitiatorContext.getSharingInitiatedUsername(), threadLocalProperties);
+                        restoreRequestContext(sharingInitiatorContext);
                         processGeneralUserUnshare(userCriteria, sharingInitiatorContext.getSharingInitiatedOrgId());
                     } finally {
+                        clearRequestContext();
                         PrivilegedCarbonContext.endTenantFlow();
                     }
                 }, EXECUTOR)
@@ -2031,6 +2043,7 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
         if (roleAssignmentMode != RoleAssignmentMode.NONE) {
             assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds);
         }
+        UserSharingEventPublisher.publishUserSharedEvent(userAssociation);
     }
 
     /**
@@ -2315,6 +2328,39 @@ public class UserSharingPolicyHandlerServiceImplV2 implements UserSharingPolicyH
 
         // Restore all thread-local properties.
         IdentityUtil.threadLocalProperties.get().putAll(threadLocalProperties);
+    }
+
+    /**
+     * Restores the request context of the request that initiated the sharing on the thread the sharing is processed
+     * on, so that the events published from this thread are attributed to that request: the flow, the correlation ID,
+     * the request (for the initiator IP address) and the root organization (for the issuer).
+     * The caller is responsible for calling {@link #clearRequestContext()} in a finally block.
+     */
+    private void restoreRequestContext(SharingInitiatorContext sharingInitiatorContext) {
+
+        if (sharingInitiatorContext.getCorrelationId() != null) {
+            MDC.put(CORRELATION_ID_MDC, sharingInitiatorContext.getCorrelationId());
+        }
+        IdentityContext identityContext = IdentityContext.getThreadLocalIdentityContext();
+        if (sharingInitiatorContext.getRequest() != null && identityContext.getRequest() == null) {
+            identityContext.setRequest(sharingInitiatorContext.getRequest());
+        }
+        if (sharingInitiatorContext.getRootOrganization() != null && identityContext.getRootOrganization() == null) {
+            identityContext.setRootOrganization(sharingInitiatorContext.getRootOrganization());
+        }
+        if (sharingInitiatorContext.getFlow() != null) {
+            identityContext.enterFlow(sharingInitiatorContext.getFlow());
+        }
+    }
+
+    /**
+     * Clears the request context restored by {@link #restoreRequestContext(SharingInitiatorContext)}, since the
+     * processing threads are pooled.
+     */
+    private void clearRequestContext() {
+
+        IdentityContext.destroyCurrentContext();
+        MDC.remove(CORRELATION_ID_MDC);
     }
 
     // User Share Input Validation Methods.
