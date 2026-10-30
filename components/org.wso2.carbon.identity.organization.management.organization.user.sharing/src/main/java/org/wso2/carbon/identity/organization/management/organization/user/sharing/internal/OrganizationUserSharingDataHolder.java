@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.organization.management.organization.user.shari
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
+import org.wso2.carbon.identity.event.services.IdentityEventService;
 import org.wso2.carbon.identity.framework.async.operation.status.mgt.api.service.AsyncOperationStatusMgtService;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.OrganizationUserSharingService;
 import org.wso2.carbon.identity.organization.management.role.management.service.RoleManager;
@@ -45,6 +46,7 @@ public class OrganizationUserSharingDataHolder {
     private OrgResourceResolverService orgResourceResolverService;
     private ResourceSharingPolicyHandlerService resourceSharingPolicyHandlerService;
     private AsyncOperationStatusMgtService asyncOperationStatusMgtService;
+    private IdentityEventService identityEventService;
 
     private OrganizationUserSharingDataHolder() {
         
@@ -256,5 +258,25 @@ public class OrganizationUserSharingDataHolder {
     public void setAsyncOperationStatusMgtService(AsyncOperationStatusMgtService asyncOperationStatusMgtService) {
 
         this.asyncOperationStatusMgtService = asyncOperationStatusMgtService;
+    }
+
+    /**
+     * Get the identity event service.
+     *
+     * @return IdentityEventService identity event service.
+     */
+    public IdentityEventService getIdentityEventService() {
+
+        return identityEventService;
+    }
+
+    /**
+     * Set the identity event service.
+     *
+     * @param identityEventService IdentityEventService identity event service.
+     */
+    public void setIdentityEventService(IdentityEventService identityEventService) {
+
+        this.identityEventService = identityEventService;
     }
 }

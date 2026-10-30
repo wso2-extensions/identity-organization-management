@@ -65,6 +65,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserCriteriaType;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.usercriteria.UserIdList;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.OrganizationSharedUserUtil;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.UserSharingEventPublisher;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementClientException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
@@ -1571,6 +1572,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         // Assign roles if any are present.
         assignRolesIfPresent(userAssociation, sharingInitiatedOrgId, roleIds, resultDO);
+        UserSharingEventPublisher.publishUserSharedEvent(userAssociation);
     }
 
     /**

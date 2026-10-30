@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.UserSharingEventPublisher;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -183,9 +184,20 @@ public class OrganizationUserSharingHandler extends AbstractEventHandler {
             LOG.debug("User: " + userId + " is already shared with the organization: " + createdOrgId);
         }
 
-        if (roleIds.isEmpty()) {
-            return;
+        if (!roleIds.isEmpty()) {
+            assignSharedRoles(resource, userId, createdOrgId, roleIds);
         }
+
+        // Published once the roles are assigned, so that the event carries them.
+        if (existingUserAssociation == null) {
+            UserSharingEventPublisher.publishUserSharedEvent(
+                    userSharingService.getUserAssociationOfAssociatedUserByOrgId(userId, createdOrgId));
+        }
+    }
+
+    private void assignSharedRoles(ResourceSharingPolicy resource, String userId, String createdOrgId,
+                                   List<String> roleIds)
+            throws OrganizationManagementException, IdentityRoleManagementException {
 
         // Get the corresponding shared role IDs in the created organization.
         List<String> sharedRoleIds = getSharedRoleIds(roleIds, createdOrgId);

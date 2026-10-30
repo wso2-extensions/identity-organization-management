@@ -30,6 +30,7 @@ import org.wso2.carbon.identity.organization.management.organization.user.sharin
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.exception.UserSharingMgtException;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.internal.OrganizationUserSharingDataHolder;
 import org.wso2.carbon.identity.organization.management.organization.user.sharing.models.UserAssociation;
+import org.wso2.carbon.identity.organization.management.organization.user.sharing.util.UserSharingEventPublisher;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementServerException;
@@ -45,6 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import static org.wso2.carbon.identity.organization.management.ext.Constants.EVENT_POST_UNSHARE_USER;
+import static org.wso2.carbon.identity.organization.management.ext.Constants.USER_SHARING_OPERATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.CLAIM_MANAGED_ORGANIZATION;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.DEFAULT_PROFILE;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ID_CLAIM_READ_ONLY;
@@ -253,11 +256,21 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             String organizationId = userAssociation.getOrganizationId();
             String tenantDomain = getOrganizationManager().resolveTenantDomain(organizationId);
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            // Only users shared by user sharing are reported as unshared, not invited users or organization owners.
+            boolean isUserSharing = SharedType.SHARED.equals(userAssociation.getSharedType());
             try {
+                if (isUserSharing) {
+                    IdentityUtil.threadLocalProperties.get().put(USER_SHARING_OPERATION, true);
+                }
                 AbstractUserStoreManager sharedOrgUserStoreManager = getAbstractUserStoreManager(tenantId);
                 deleteUserInTenantFlow(sharedOrgUserStoreManager, userId, tenantDomain, organizationId);
             } catch (UserStoreException e) {
                 throw handleServerException(ERROR_CODE_ERROR_DELETE_SHARED_USER, e, userId, organizationId);
+            } finally {
+                IdentityUtil.threadLocalProperties.get().remove(USER_SHARING_OPERATION);
+            }
+            if (isUserSharing) {
+                UserSharingEventPublisher.publish(EVENT_POST_UNSHARE_USER, userAssociation);
             }
         }
     }
@@ -290,10 +303,16 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
     private void shareOrganizationUserWithOrWithoutType(String orgId, String associatedUserId, String associatedOrgId,
                                                         SharedType sharedType) throws OrganizationManagementException {
 
+        // Users shared by user sharing are reported by the user sharing events, published by the callers once the
+        // roles of the shared user are assigned, so they are not reported again as created users.
+        boolean isUserSharing = SharedType.SHARED.equals(sharedType);
         try {
             String suborgTenantDomain = getOrganizationManager().resolveTenantDomain(orgId);
             startTenantFlow(suborgTenantDomain);
             IdentityUtil.threadLocalProperties.get().put(PROCESS_ADD_SHARED_USER, true);
+            if (isUserSharing) {
+                IdentityUtil.threadLocalProperties.get().put(USER_SHARING_OPERATION, true);
+            }
             int associatedUserTenantId =
                     IdentityTenantUtil.getTenantId(getOrganizationManager().resolveTenantDomain(associatedOrgId));
             AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(associatedUserTenantId);
@@ -344,6 +363,7 @@ public class OrganizationUserSharingServiceImpl implements OrganizationUserShari
             throw handleServerException(ERROR_CODE_ERROR_CREATE_SHARED_USER, e, orgId);
         } finally {
             IdentityUtil.threadLocalProperties.get().remove(PROCESS_ADD_SHARED_USER);
+            IdentityUtil.threadLocalProperties.get().remove(USER_SHARING_OPERATION);
             endTenantFlow();
         }
     }
