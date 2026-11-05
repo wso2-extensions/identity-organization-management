@@ -198,7 +198,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 boolean isAppShared = isAppShared(mainApplication);
                 if (!isAppShared) {
                     // Update the `isAppShared` property of the main application to true.
-                    updateApplicationWithIsAppSharedProperty(true, mainApplication);
+                    updateApplicationWithIsAppSharedProperty(true, mainApplication,
+                            organization.getCreatorUsername());
                 }
             }
         }
@@ -247,7 +248,8 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 if (!isAppShared) {
                     // Update the `isAppShared` property of the main application to true if it hasn't been shared
                     // previously.
-                    updateApplicationWithIsAppSharedProperty(true, mainApplication);
+                    updateApplicationWithIsAppSharedProperty(true, mainApplication,
+                            organization.getCreatorUsername());
                 }
             }
         }
@@ -377,6 +379,25 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
     private void updateApplicationWithIsAppSharedProperty(boolean isAppShared, ServiceProvider mainApplication)
             throws IdentityApplicationManagementException {
 
+        updateApplicationWithIsAppSharedProperty(isAppShared, mainApplication, null);
+    }
+
+    /**
+     * Update the `isAppShared` property of the application.
+     *
+     * @param isAppShared      Value of the `isAppShared` property.
+     * @param mainApplication  Application to be updated.
+     * @param fallbackUsername Username used as the initiator when there is no authenticated user in the context,
+     *                         e.g. the organization creator in an unauthenticated self-registration flow.
+     */
+    private void updateApplicationWithIsAppSharedProperty(boolean isAppShared, ServiceProvider mainApplication,
+                                                          String fallbackUsername)
+            throws IdentityApplicationManagementException {
+
+        String username = getAuthenticatedUsername();
+        if (StringUtils.isBlank(username)) {
+            username = fallbackUsername;
+        }
         setIsAppSharedProperty(mainApplication, isAppShared);
         boolean systemApplication = OrgApplicationManagerUtil.isSystemApplication(mainApplication.getApplicationName());
         try {
@@ -384,7 +405,7 @@ public class OrganizationCreationHandler extends AbstractEventHandler {
                 IdentityApplicationManagementUtil.setAllowUpdateSystemApplicationThreadLocal(true);
             }
             getApplicationManagementService().updateApplication(mainApplication,
-                    mainApplication.getTenantDomain(), getAuthenticatedUsername());
+                    mainApplication.getTenantDomain(), username);
         } finally {
             if (systemApplication) {
                 IdentityApplicationManagementUtil.removeAllowUpdateSystemApplicationThreadLocal();
