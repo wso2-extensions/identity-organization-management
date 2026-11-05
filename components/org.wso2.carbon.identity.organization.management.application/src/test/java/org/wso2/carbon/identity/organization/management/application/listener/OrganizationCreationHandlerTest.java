@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.organization.management.application.listener;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -35,6 +36,7 @@ import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.event.event.Event;
+import org.wso2.carbon.identity.organization.management.application.OrgApplicationManagerImpl;
 import org.wso2.carbon.identity.organization.management.application.dao.OrgApplicationMgtDAO;
 import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.operation.ApplicationShareRolePolicy;
@@ -44,6 +46,7 @@ import org.wso2.carbon.identity.organization.management.service.OrganizationUser
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.model.Organization;
 import org.wso2.carbon.identity.organization.management.service.model.ParentOrganizationDO;
+import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.ResourceSharingPolicyHandlerService;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.PolicyEnum;
 import org.wso2.carbon.identity.organization.resource.sharing.policy.management.constant.ResourceType;
@@ -62,6 +65,8 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -239,6 +244,53 @@ public class OrganizationCreationHandlerTest {
 
         verify(applicationSharingManagerListener, never()).preShareApplication(
                 anyString(), anyString(), anyString(), any(ApplicationShareRolePolicy.class));
+    }
+
+    @DataProvider(name = "initiatorUsernameProvider")
+    public Object[][] initiatorUsernameProvider() {
+
+        return new Object[][]{
+                // Authenticated username, organization creator username, expected initiator username.
+                {"", "creator-user", "creator-user"},
+                {null, "creator-user", "creator-user"},
+                {USERNAME, "creator-user", USERNAME}
+        };
+    }
+
+    @Test(dataProvider = "initiatorUsernameProvider")
+    public void testIsAppSharedUpdateInitiatorUsername(String authenticatedUsername, String creatorUsername,
+                                                       String expectedUsername) throws Exception {
+
+        try (MockedStatic<Utils> utils = mockStatic(Utils.class);
+             MockedConstruction<OrgApplicationManagerImpl> ignored =
+                     mockConstruction(OrgApplicationManagerImpl.class)) {
+            utils.when(Utils::getAuthenticatedUsername).thenReturn(authenticatedUsername);
+
+            when(organization.getId()).thenReturn(organizationID);
+            when(organization.getCreatorUsername()).thenReturn(creatorUsername);
+            when(organization.getParent()).thenReturn(parentOrganizationDO);
+            // The parent organization is the main organization, so the application is not a fragment application.
+            when(parentOrganizationDO.getId()).thenReturn(SUPER_ORG_ID);
+            when(organizationManager.getAncestorOrganizationIds(any()))
+                    .thenReturn(Collections.singletonList(SUPER_ORG_ID));
+            when(resourceSharingPolicyHandlerService.getResourceSharingPoliciesByResourceType(
+                    Collections.singletonList(SUPER_ORG_ID), ResourceType.APPLICATION.name()))
+                    .thenReturn(getResourceSharingPolicies());
+            ServiceProvider mainApplication = getApplication(ApplicationShareRolePolicy.Mode.ALL.name());
+            mainApplication.setTenantDomain(SUPER_TENANT);
+            when(applicationManagementService.getApplicationByResourceId(any(), any()))
+                    .thenReturn(mainApplication);
+            when(applicationManagementService.getApplicationBasicInfoBySPProperty(any(), any(),
+                    eq(SHARE_WITH_ALL_CHILDREN), eq("true"))).thenReturn(new ApplicationBasicInfo[0]);
+
+            Map<String, Object> properties = new HashMap<>();
+            properties.put(EVENT_PROP_ORGANIZATION_ID, organizationID);
+            properties.put(EVENT_PROP_ORGANIZATION, organization);
+            organizationCreationHandler.handleEvent(new Event(Constants.EVENT_POST_ADD_ORGANIZATION, properties));
+
+            verify(applicationManagementService).updateApplication(any(ServiceProvider.class), any(),
+                    eq(expectedUsername));
+        }
     }
 
     private ServiceProvider getApplication(String mode) {
