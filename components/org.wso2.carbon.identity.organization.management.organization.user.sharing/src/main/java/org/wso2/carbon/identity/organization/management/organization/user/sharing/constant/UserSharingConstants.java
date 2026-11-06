@@ -149,6 +149,8 @@ public class UserSharingConstants {
             "/api/server/v1/users/%s/shared-roles?orgId=%s";
 
     public static final String PROCESS_ADD_SHARED_USER = "processAddSharedUser";
+    // Thread-local flag set by the deprecated V1 API, whose user sharing operations publish no user sharing events.
+    public static final String SKIP_USER_SHARING_EVENTS = "skipUserSharingEvents";
 
     /*
     Minimum permissions required for org creator to logged in to the console and view user, groups, roles, SP,
