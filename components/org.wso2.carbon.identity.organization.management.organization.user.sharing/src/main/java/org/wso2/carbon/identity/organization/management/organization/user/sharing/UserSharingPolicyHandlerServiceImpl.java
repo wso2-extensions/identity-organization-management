@@ -142,6 +142,7 @@ import static org.wso2.carbon.identity.organization.management.organization.user
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_FAIL_FOR_EXISTING_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_FAIL_FOR_NEW_SHARED_USER;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.ROLE_UPDATE_SUCCESS_FOR_EXISTING_SHARED_USER;
+import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.SKIP_USER_SHARING_EVENTS;
 import static org.wso2.carbon.identity.organization.management.organization.user.sharing.constant.UserSharingConstants.USER_IDS;
 import static org.wso2.carbon.identity.organization.management.service.constant.OrganizationManagementConstants.ErrorMessages.ERROR_CODE_INVALID_ORGANIZATION_ID;
 import static org.wso2.carbon.identity.organization.management.service.util.Utils.getOrganizationId;
@@ -650,8 +651,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             try {
                 for (String organizationId : organizations) {
 
-                    getOrganizationUserSharingService().unshareOrganizationUserInSharedOrganization(associatedUserId,
-                            organizationId);
+                    IdentityUtil.threadLocalProperties.get().put(SKIP_USER_SHARING_EVENTS, true);
+                    try {
+                        getOrganizationUserSharingService().unshareOrganizationUserInSharedOrganization(
+                                associatedUserId, organizationId);
+                    } finally {
+                        IdentityUtil.threadLocalProperties.get().remove(SKIP_USER_SHARING_EVENTS);
+                    }
 
                     // Delete resource sharing policy if it has been stored for future shares.
                     deleteResourceSharingPolicyOfUserInOrg(organizationId, associatedUserId, unsharingInitiatedOrgId);
@@ -682,7 +688,13 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
 
         for (String associatedUserId : userIds.getIds()) {
             try {
-                getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId, unsharingInitiatedOrgId);
+                IdentityUtil.threadLocalProperties.get().put(SKIP_USER_SHARING_EVENTS, true);
+                try {
+                    getOrganizationUserSharingService().unshareOrganizationUsers(associatedUserId,
+                            unsharingInitiatedOrgId);
+                } finally {
+                    IdentityUtil.threadLocalProperties.get().remove(SKIP_USER_SHARING_EVENTS);
+                }
 
                 // Delete all resource sharing policies if it has been stored for future shares.
                 deleteAllResourceSharingPoliciesOfUser(associatedUserId, unsharingInitiatedOrgId);
@@ -1549,6 +1561,7 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
                 OperationStatus.SUCCESS, StringUtils.EMPTY);
 
         try {
+            IdentityUtil.threadLocalProperties.get().put(SKIP_USER_SHARING_EVENTS, true);
             userAssociation = shareUserWithOrganization(orgId, associatedUserId, sharingInitiatedOrgId);
             String tenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             AUDIT_LOG.info(String.format(AUDIT_MESSAGE, getInitiator(tenantDomain),
@@ -1567,6 +1580,8 @@ public class UserSharingPolicyHandlerServiceImpl implements UserSharingPolicyHan
             registerOperationStatusUnit(operationId, associatedUserId, orgId, OperationStatus.FAILED,
                     errorMessage);
             return;
+        } finally {
+            IdentityUtil.threadLocalProperties.get().remove(SKIP_USER_SHARING_EVENTS);
         }
 
         // Assign roles if any are present.
