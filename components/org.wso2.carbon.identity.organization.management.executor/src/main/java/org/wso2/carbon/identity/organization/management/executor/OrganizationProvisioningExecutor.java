@@ -148,10 +148,10 @@ public class OrganizationProvisioningExecutor implements Executor {
         organization.setOrganizationHandle(organizationHandle);
         setCreator(organization, flowUser);
 
-        // Custom attributes, excluding the creator details set above.
+        // Custom attributes, excluding the creator details set above and attributes without a value.
         if (attributes != null) {
             for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-                if (isCreatorAttribute(attribute.getKey())) {
+                if (isCreatorAttribute(attribute.getKey()) || StringUtils.isBlank(attribute.getValue())) {
                     continue;
                 }
                 organization.setAttribute(new OrganizationAttribute(attribute.getKey(), attribute.getValue()));

@@ -526,6 +526,24 @@ public class OrganizationProvisioningExecutorTest {
     }
 
     @Test
+    public void testBlankCustomAttributesAreNotPersisted() throws Exception {
+
+        FlowExecutionContext context = buildContext(ORG_NAME, null);
+        context.getFlowOrganization().setAttribute("industry", "");
+        context.getFlowOrganization().setAttribute("taxId", " ");
+        context.getFlowOrganization().setAttribute("registrationNumber", null);
+        context.getFlowOrganization().setAttribute("country", "US");
+
+        executor.execute(context);
+
+        Organization created = captureCreatedOrganization();
+        Assert.assertEquals(created.getAttributes().size(), 1,
+                "Custom attributes without a value must not be persisted.");
+        Assert.assertEquals(created.getAttributes().getFirst().getKey(), "country");
+        Assert.assertEquals(created.getAttributes().getFirst().getValue(), "US");
+    }
+
+    @Test
     public void testFlowCollectedCreatorAttributesDoNotOverrideCreator() throws Exception {
 
         FlowExecutionContext context = buildContext(ORG_NAME, null);
