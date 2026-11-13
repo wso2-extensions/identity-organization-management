@@ -72,6 +72,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
@@ -311,6 +312,9 @@ public class FragmentApplicationMgtListenerTest {
                 .map(RoleV2::getId).toArray(String[]::new);
         AssertJUnit.assertEquals(Arrays.asList(expectedRoleIds), Arrays.asList(roleIds));
         AssertJUnit.assertEquals("application", sharedApplication.getAssociatedRolesConfig().getAllowedAudience());
+        // The organization custom roles configuration is inherited from the main application.
+        AssertJUnit.assertEquals(isOrganizationCustomRolesEnabled,
+                sharedApplication.isOrganizationCustomRolesEnabled());
     }
 
     @DataProvider(name = "sharedAppOrganizationRoleManagementDataProvider")
@@ -383,6 +387,8 @@ public class FragmentApplicationMgtListenerTest {
                 .map(RoleV2::getId).toArray(String[]::new);
         AssertJUnit.assertEquals(Arrays.asList(expectedRoleIds), Arrays.asList(roleIds));
         AssertJUnit.assertEquals("organization", sharedApplication.getAssociatedRolesConfig().getAllowedAudience());
+        // Organizations cannot create application roles for a main application with organization audience roles.
+        AssertJUnit.assertFalse(sharedApplication.isOrganizationCustomRolesEnabled());
     }
 
     @DataProvider(name = "testSharedAppNameModificationDataProvider")
@@ -425,10 +431,14 @@ public class FragmentApplicationMgtListenerTest {
                         thrownException.getMessage());
             } else {
                 sharedApplication.setLocalAndOutBoundAuthenticationConfig(new LocalAndOutboundAuthenticationConfig());
+                // Configuration inherited from the main application when the application was retrieved.
+                sharedApplication.setOrganizationCustomRolesEnabled(true);
 
                 boolean result = fragmentApplicationMgtListener
                         .doPreUpdateApplication(sharedApplication, tenantDomain, userName);
                 assertTrue(result);
+                // The inherited configuration is not persisted for a shared application.
+                assertEquals(!Boolean.parseBoolean(isSharedApp), sharedApplication.isOrganizationCustomRolesEnabled());
             }
         }
     }
@@ -521,6 +531,104 @@ public class FragmentApplicationMgtListenerTest {
         method.setAccessible(true);
         method.invoke(fragmentApplicationMgtListener, mainApplication, serviceProvider);
         verify(serviceProvider).setDiscoverable(true);
+    }
+
+    @DataProvider(name = "organizationCustomRolesInheritanceForListDataProvider")
+    public Object[][] organizationCustomRolesInheritanceForListDataProvider() {
+
+        return new Object[][]{
+                // isFeatureEnabled, isEnabledForMainApp, mainAppRoleAudience, expected.
+                {true, true, "application", true},
+                {true, true, "organization", false},
+                {true, false, "application", false},
+                {false, true, "application", false}
+        };
+    }
+
+    @Test(dataProvider = "organizationCustomRolesInheritanceForListDataProvider")
+    public void testOrganizationCustomRolesInheritanceForApplicationWithRequiredAttributes(
+            boolean isFeatureEnabled, boolean isEnabledForMainApp, String mainAppRoleAudience, boolean expected)
+            throws Exception {
+
+        ServiceProvider sharedApplication = new ServiceProvider();
+        sharedApplication.setApplicationResourceId(applicationResourceID);
+        sharedApplication.setSpProperties(new ServiceProviderProperty[]{
+                mockServiceProviderProperty(IS_FRAGMENT_APP, TRUE)});
+        // Stale value persisted for the shared application, which should be overridden.
+        sharedApplication.setOrganizationCustomRolesEnabled(!expected);
+
+        AssociatedRolesConfig mainAppRolesConfig = new AssociatedRolesConfig();
+        mainAppRolesConfig.setAllowedAudience(mainAppRoleAudience);
+        when(serviceProvider.getAssociatedRolesConfig()).thenReturn(mainAppRolesConfig);
+        when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled()).thenReturn(true);
+        when(serviceProvider.isOrganizationCustomRolesEnabled()).thenReturn(isEnabledForMainApp);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+        when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+        when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                .thenReturn(Optional.of(new MainApplicationDO(organizationID, applicationResourceID)));
+        when(applicationManagementService.getApplicationByResourceId(anyString(), anyString()))
+                .thenReturn(serviceProvider);
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = mockStatic(IdentityUtil.class, Mockito.CALLS_REAL_METHODS)) {
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+            identityUtil.when(() -> IdentityUtil.getProperty(ORGANIZATION_CUSTOM_ROLES_FEATURE_ENABLED_PROPERTY))
+                    .thenReturn(String.valueOf(isFeatureEnabled));
+            assertTrue(fragmentApplicationMgtListener
+                    .doPostGetApplicationWithRequiredAttributes(sharedApplication, tenantDomain));
+        }
+
+        assertEquals(expected, sharedApplication.isOrganizationCustomRolesEnabled());
+    }
+
+    @DataProvider(name = "organizationCustomRolesInheritanceWithoutPropertiesDataProvider")
+    public Object[][] organizationCustomRolesInheritanceWithoutPropertiesDataProvider() {
+
+        return new Object[][]{
+                // isFeatureEnabled, expected.
+                {true, true},
+                {false, false}
+        };
+    }
+
+    @Test(dataProvider = "organizationCustomRolesInheritanceWithoutPropertiesDataProvider")
+    public void testOrganizationCustomRolesInheritanceForApplicationWithoutProperties(boolean isFeatureEnabled,
+                                                                                    boolean expected)
+            throws Exception {
+
+        // The application properties are not retrieved when the advanced configurations are not requested.
+        ServiceProvider sharedApplication = new ServiceProvider();
+        sharedApplication.setApplicationResourceId(applicationResourceID);
+
+        AssociatedRolesConfig mainAppRolesConfig = new AssociatedRolesConfig();
+        mainAppRolesConfig.setAllowedAudience("application");
+        when(serviceProvider.getAssociatedRolesConfig()).thenReturn(mainAppRolesConfig);
+        when(serviceProvider.isEnhancedOrganizationAuthenticationEnabled()).thenReturn(true);
+        when(serviceProvider.isOrganizationCustomRolesEnabled()).thenReturn(true);
+        when(organizationManager.resolveOrganizationId(tenantDomain)).thenReturn(organizationID);
+        when(organizationManager.resolveTenantDomain(organizationID)).thenReturn(tenantDomain);
+        when(orgApplicationMgtDAO.getMainApplication(applicationResourceID, organizationID))
+                .thenReturn(Optional.of(new MainApplicationDO(organizationID, applicationResourceID)));
+        when(applicationManagementService.getApplicationByResourceId(anyString(), anyString()))
+                .thenReturn(serviceProvider);
+
+        try (MockedStatic<OrganizationManagementUtil> organizationManagementUtil =
+                     mockStatic(OrganizationManagementUtil.class);
+             MockedStatic<IdentityUtil> identityUtil = mockStatic(IdentityUtil.class, Mockito.CALLS_REAL_METHODS)) {
+            organizationManagementUtil.when(() -> OrganizationManagementUtil.isOrganization(tenantDomain))
+                    .thenReturn(true);
+            identityUtil.when(() -> IdentityUtil.getProperty(ORGANIZATION_CUSTOM_ROLES_FEATURE_ENABLED_PROPERTY))
+                    .thenReturn(String.valueOf(isFeatureEnabled));
+            assertTrue(fragmentApplicationMgtListener
+                    .doPostGetApplicationWithRequiredAttributes(sharedApplication, tenantDomain));
+        }
+
+        assertEquals(expected, sharedApplication.isOrganizationCustomRolesEnabled());
+        // Nothing is resolved when the feature is disabled.
+        verify(orgApplicationMgtDAO, times(isFeatureEnabled ? 1 : 0))
+                .getMainApplication(applicationResourceID, organizationID);
     }
 
     private void mockUtils(String requestInitiatedDomain) {
