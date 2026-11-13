@@ -198,6 +198,8 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         the organization login authenticator needs some configurations unchanged. Hence, the listener will override
         any configs changes that are required for organization login. */
         if (isFragmentApp(existingApplication)) {
+            /* This configuration is inherited from the main application. Hence, it should not be persisted.*/
+            serviceProvider.setOrganizationCustomRolesEnabled(false);
             // The main application ID is a read-only property. Hence, it should not be persisted.
             serviceProvider.setSpProperties(removeMainApplicationIdProperty(existingApplication.getSpProperties()));
             serviceProvider.setInboundAuthenticationConfig(existingApplication.getInboundAuthenticationConfig());
@@ -360,6 +362,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                     // Inherit Application enabled property from the main application.
                     inheritApplicationEnabledProperty(mainApplication, serviceProvider);
                     inheritDiscoverabilityProperty(mainApplication, serviceProvider);
+                    inheritOrganizationCustomRolesProperty(mainApplication, serviceProvider);
 
                     /*
                     If the shared application doesn't have a configured access URL,
@@ -395,6 +398,25 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
             throws IdentityApplicationManagementException {
 
         try {
+            /*
+             The application properties are not retrieved unless the advanced configurations are requested. Hence, a
+             shared application cannot be identified by them, and the organization custom roles configuration is
+             inherited by resolving the main application directly.
+            */
+            if (ArrayUtils.isEmpty(serviceProvider.getSpProperties())
+                    && ApplicationMgtUtil.isOrganizationCustomRolesFeatureEnabled()
+                    && OrganizationManagementUtil.isOrganization(tenantDomain)) {
+                Optional<MainApplicationDO> mainApplicationDO = getOrgApplicationMgtDAO().getMainApplication(
+                        serviceProvider.getApplicationResourceId(),
+                        getOrganizationManager().resolveOrganizationId(tenantDomain));
+                if (mainApplicationDO.isPresent()) {
+                    ServiceProvider mainApplication = getApplicationByResourceId(
+                            mainApplicationDO.get().getMainApplicationId(),
+                            getOrganizationManager().resolveTenantDomain(mainApplicationDO.get().getOrganizationId()));
+                    inheritOrganizationCustomRolesProperty(mainApplication, serviceProvider);
+                }
+                return true;
+            }
             if (!OrganizationManagementUtil.isOrganization(tenantDomain) || !isFragmentApp(serviceProvider)) {
                 return true;
             }
@@ -408,6 +430,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
                 ServiceProvider mainApplication = getApplicationByResourceId(
                         mainApplicationDO.get().getMainApplicationId(), mainApplicationTenantDomain);
                 inheritDiscoverabilityProperty(mainApplication, serviceProvider);
+                inheritOrganizationCustomRolesProperty(mainApplication, serviceProvider);
                 if (StringUtils.isBlank(serviceProvider.getAccessUrl())) {
                     serviceProvider.setAccessUrl(mainApplication.getAccessUrl());
                 }
@@ -514,6 +537,20 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
     private void inheritApplicationEnabledProperty(ServiceProvider mainApplication, ServiceProvider sharedApplication) {
 
         sharedApplication.setApplicationEnabled(mainApplication.isApplicationEnabled());
+    }
+
+    /**
+     * Inherit whether the organization can create custom application roles for the shared application, from the
+     * main application. The configuration is not persisted for the shared application.
+     *
+     * @param mainApplication   Main application.
+     * @param sharedApplication Shared application.
+     */
+    private void inheritOrganizationCustomRolesProperty(ServiceProvider mainApplication,
+                                                        ServiceProvider sharedApplication) {
+
+        sharedApplication.setOrganizationCustomRolesEnabled(
+                ApplicationMgtUtil.isOrganizationCustomRolesEnabled(mainApplication, RoleConstants.APPLICATION));
     }
 
     /**
