@@ -642,7 +642,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
         associatedRolesConfigForSharedApp.setAllowedAudience(associatedRolesConfigOfMainApp.getAllowedAudience());
         associatedRolesConfigForSharedApp.setRoles(OrgApplicationManagerUtil.getRolesOfSharedApplication(
-                getRoleManagementServiceV2(), sharedAppId, tenantDomainOfSharedApp).toArray(new RoleV2[0]));
+                sharedAppId, tenantDomainOfSharedApp).toArray(new RoleV2[0]));
         return associatedRolesConfigForSharedApp;
     }
 
@@ -663,7 +663,7 @@ public class FragmentApplicationMgtListener extends AbstractApplicationMgtListen
         AssociatedRolesConfig associatedRolesConfigForSharedApp = new AssociatedRolesConfig();
         associatedRolesConfigForSharedApp.setAllowedAudience(associatedRolesConfigOfMainApp.getAllowedAudience());
         associatedRolesConfigForSharedApp.setRoles(OrgApplicationManagerUtil.getOrganizationRoles(
-                getRoleManagementServiceV2(), tenantDomainOfSharedApp).toArray(new RoleV2[0]));
+                tenantDomainOfSharedApp).toArray(new RoleV2[0]));
         return associatedRolesConfigForSharedApp;
     }
 

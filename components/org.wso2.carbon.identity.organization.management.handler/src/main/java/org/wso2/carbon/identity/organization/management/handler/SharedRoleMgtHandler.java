@@ -512,7 +512,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
 
             if (isRoleAlreadyExist) {
                 if (isOrganizationCustomRolesEnabled && !SharedRoleMgtUtil.isInheritedRoleExists(
-                        getRoleManagementServiceV2(), roleToBeShared.getId(), sharedAppTenantDomain)) {
+                        roleToBeShared.getId(), sharedAppTenantDomain)) {
                     // The existing role is authored by the sub organization. Hence, skip sharing the role.
                     auditApplicationRoleConflict(roleToBeShared, mainTenantDomain, sharedAppTenantDomain);
                     continue;
@@ -562,8 +562,8 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
         boolean isOrganizationCustomRolesEnabled = isOrganizationCustomRolesEnabled(mainAppId, mainTenantDomain);
         if (isOrganizationCustomRolesEnabled) {
             // Roles authored by the sub organization for the shared application are not managed by role sharing.
-            alreadySharedSubOrgAppRoles = SharedRoleMgtUtil.filterSharedRoles(getRoleManagementServiceV2(),
-                    alreadySharedSubOrgAppRoles, sharedAppTenantDomain);
+            alreadySharedSubOrgAppRoles = SharedRoleMgtUtil.filterSharedRoles(alreadySharedSubOrgAppRoles,
+                    sharedAppTenantDomain);
         }
 
         ApplicationShareRolePolicy currentConfig = applicationShareRolePolicy;
@@ -729,7 +729,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                     RoleConstants.APPLICATION, sharedAppId, sharedAppTenantDomain);
             if (isRoleAlreadyExist) {
                 if (isOrganizationCustomRolesEnabled && !SharedRoleMgtUtil.isInheritedRoleExists(
-                        getRoleManagementServiceV2(), roleToBeShared.getId(), sharedAppTenantDomain)) {
+                        roleToBeShared.getId(), sharedAppTenantDomain)) {
                     // The existing role is authored by the sub organization. Hence, skip sharing the role.
                     auditApplicationRoleConflict(roleToBeShared, mainTenantDomain, sharedAppTenantDomain);
                     continue;
@@ -840,8 +840,7 @@ public class SharedRoleMgtHandler extends AbstractEventHandler {
                 0, null, null, tenantDomain);
         if (isOrganizationCustomRolesEnabled) {
             // Roles authored by the sub organization for the shared application are not managed by role sharing.
-            existingAppRoles = SharedRoleMgtUtil.filterSharedRoles(getRoleManagementServiceV2(), existingAppRoles,
-                    tenantDomain);
+            existingAppRoles = SharedRoleMgtUtil.filterSharedRoles(existingAppRoles, tenantDomain);
         }
 
         if (existingAppRoles.isEmpty()) {

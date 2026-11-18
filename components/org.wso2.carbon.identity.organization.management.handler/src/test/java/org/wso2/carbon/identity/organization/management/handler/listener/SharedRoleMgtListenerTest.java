@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.organization.management.application.OrgApplicationManager;
+import org.wso2.carbon.identity.organization.management.application.internal.OrgApplicationMgtDataHolder;
 import org.wso2.carbon.identity.organization.management.application.model.SharedApplication;
 import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
@@ -123,6 +124,8 @@ public class SharedRoleMgtListenerTest {
         OrganizationManagementHandlerDataHolder.getInstance().setOrganizationManager(mockedOrganizationManager);
         OrganizationManagementHandlerDataHolder.getInstance().setOrgApplicationManager(mockedOrgApplicationManager);
         OrganizationManagementHandlerDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
+        // OrgApplicationManagerUtil resolves the role management service from the application bundle's data holder.
+        OrgApplicationMgtDataHolder.getInstance().setRoleManagementServiceV2(mockedRoleManagementService);
         organizationManagementUtilMockedStatic = mockStatic(OrganizationManagementUtil.class);
         identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
     }

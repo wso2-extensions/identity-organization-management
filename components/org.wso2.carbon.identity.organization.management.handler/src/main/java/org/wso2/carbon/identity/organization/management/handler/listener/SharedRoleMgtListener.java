@@ -433,8 +433,8 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
 
         List<RoleBasicInfo> sharedAppRoles = roleManagementService.getRolesAssociatedWithApplication(sharedAppId,
                 sharedAppTenantDomain);
-        List<String> inheritedRoleIds = SharedRoleMgtUtil.filterSharedRoles(roleManagementService, sharedAppRoles,
-                sharedAppTenantDomain).stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
+        List<String> inheritedRoleIds = SharedRoleMgtUtil.filterSharedRoles(sharedAppRoles, sharedAppTenantDomain)
+                .stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
         return sharedAppRoles.stream()
                 .filter(role -> !inheritedRoleIds.contains(role.getId()))
                 .collect(Collectors.toList());
@@ -797,13 +797,13 @@ public class SharedRoleMgtListener extends AbstractApplicationMgtListener {
             if (ApplicationMgtUtil.isOrganizationCustomRolesEnabled(mainApplication, RoleConstants.APPLICATION)) {
                 associatedRolesOfApplication.clear();
                 associatedRolesOfApplication.addAll(OrgApplicationManagerUtil.getRolesOfSharedApplication(
-                        roleManagementService, applicationUUID, tenantDomain));
+                        applicationUUID, tenantDomain));
                 return true;
             }
             if (ApplicationMgtUtil.isOrganizationCustomRolesEnabled(mainApplication, RoleConstants.ORGANIZATION)) {
                 associatedRolesOfApplication.clear();
                 associatedRolesOfApplication.addAll(
-                        OrgApplicationManagerUtil.getOrganizationRoles(roleManagementService, tenantDomain));
+                        OrgApplicationManagerUtil.getOrganizationRoles(tenantDomain));
                 return true;
             }
             List<RoleV2> resolvedAssociatedRolesFromMainApp =

@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.organization.management.handler.util;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
-import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
+import org.wso2.carbon.identity.organization.management.handler.internal.OrganizationManagementHandlerDataHolder;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 
@@ -44,15 +44,12 @@ public class SharedRoleMgtUtil {
      * Filter the given sub organization roles to the roles inherited from a main role. Roles authored by the sub
      * organization itself are excluded.
      *
-     * @param roleManagementService Role management service.
-     * @param subOrgRoles           Roles in the sub organization.
-     * @param subOrgTenantDomain    Tenant domain of the sub organization.
+     * @param subOrgRoles        Roles in the sub organization.
+     * @param subOrgTenantDomain Tenant domain of the sub organization.
      * @return Inherited roles.
      * @throws IdentityRoleManagementException If an error occurs while resolving the main roles.
      */
-    public static List<RoleBasicInfo> filterSharedRoles(RoleManagementService roleManagementService,
-                                                        List<RoleBasicInfo> subOrgRoles,
-                                                        String subOrgTenantDomain)
+    public static List<RoleBasicInfo> filterSharedRoles(List<RoleBasicInfo> subOrgRoles, String subOrgTenantDomain)
             throws IdentityRoleManagementException {
 
         if (CollectionUtils.isEmpty(subOrgRoles)) {
@@ -60,7 +57,8 @@ public class SharedRoleMgtUtil {
         }
         List<String> subOrgRoleIds = subOrgRoles.stream().map(RoleBasicInfo::getId).collect(Collectors.toList());
         Map<String, String> sharedRoleToMainRoleMappings =
-                roleManagementService.getSharedRoleToMainRoleMappingsBySubOrg(subOrgRoleIds, subOrgTenantDomain);
+                OrganizationManagementHandlerDataHolder.getInstance().getRoleManagementServiceV2()
+                        .getSharedRoleToMainRoleMappingsBySubOrg(subOrgRoleIds, subOrgTenantDomain);
         if (MapUtils.isEmpty(sharedRoleToMainRoleMappings)) {
             return new ArrayList<>();
         }
@@ -72,16 +70,15 @@ public class SharedRoleMgtUtil {
     /**
      * Check whether the main role is already inherited into the sub organization.
      *
-     * @param roleManagementService Role management service.
-     * @param mainRoleId            ID of the main role.
-     * @param subOrgTenantDomain    Tenant domain of the sub organization.
+     * @param mainRoleId         ID of the main role.
+     * @param subOrgTenantDomain Tenant domain of the sub organization.
      * @return True if the sub organization has a role inherited from the main role.
      * @throws IdentityRoleManagementException If an error occurs while resolving the shared role.
      */
-    public static boolean isInheritedRoleExists(RoleManagementService roleManagementService, String mainRoleId,
-                                                String subOrgTenantDomain) throws IdentityRoleManagementException {
+    public static boolean isInheritedRoleExists(String mainRoleId, String subOrgTenantDomain)
+            throws IdentityRoleManagementException {
 
-        return MapUtils.isNotEmpty(roleManagementService.getMainRoleToSharedRoleMappingsBySubOrg(
-                Collections.singletonList(mainRoleId), subOrgTenantDomain));
+        return MapUtils.isNotEmpty(OrganizationManagementHandlerDataHolder.getInstance().getRoleManagementServiceV2()
+                .getMainRoleToSharedRoleMappingsBySubOrg(Collections.singletonList(mainRoleId), subOrgTenantDomain));
     }
 }

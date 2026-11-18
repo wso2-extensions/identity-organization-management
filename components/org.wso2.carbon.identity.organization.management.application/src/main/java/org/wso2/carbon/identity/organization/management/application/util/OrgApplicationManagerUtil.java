@@ -51,7 +51,6 @@ import org.wso2.carbon.identity.organization.management.service.exception.Organi
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
 import org.wso2.carbon.identity.organization.management.service.util.Utils;
 import org.wso2.carbon.identity.role.v2.mgt.core.RoleConstants;
-import org.wso2.carbon.identity.role.v2.mgt.core.RoleManagementService;
 import org.wso2.carbon.identity.role.v2.mgt.core.exception.IdentityRoleManagementException;
 import org.wso2.carbon.identity.role.v2.mgt.core.model.RoleBasicInfo;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -454,18 +453,17 @@ public class OrgApplicationManagerUtil {
      * Get the application audience roles of the given shared application in its organization. This includes the roles
      * inherited from the main application and the roles created by the organization.
      *
-     * @param roleManagementService Role management service.
-     * @param sharedAppId           ID of the shared application.
-     * @param tenantDomain          Tenant domain of the shared application.
+     * @param sharedAppId  ID of the shared application.
+     * @param tenantDomain Tenant domain of the shared application.
      * @return Roles of the shared application.
      * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
      */
-    public static List<RoleV2> getRolesOfSharedApplication(RoleManagementService roleManagementService,
-                                                           String sharedAppId, String tenantDomain)
+    public static List<RoleV2> getRolesOfSharedApplication(String sharedAppId, String tenantDomain)
             throws IdentityRoleManagementException {
 
         List<RoleV2> roles = new ArrayList<>();
-        for (RoleBasicInfo role : roleManagementService.getRolesAssociatedWithApplication(sharedAppId, tenantDomain)) {
+        for (RoleBasicInfo role : OrgApplicationMgtDataHolder.getInstance().getRoleManagementServiceV2()
+                .getRolesAssociatedWithApplication(sharedAppId, tenantDomain)) {
             roles.add(new RoleV2(role.getId(), role.getName()));
         }
         return roles;
@@ -475,13 +473,11 @@ public class OrgApplicationManagerUtil {
      * Get all the organization audience roles of the given organization. This includes the roles shared from the
      * parent organization and the roles created by the organization.
      *
-     * @param roleManagementService Role management service.
-     * @param tenantDomain          Tenant domain of the organization.
+     * @param tenantDomain Tenant domain of the organization.
      * @return Organization audience roles of the organization.
      * @throws IdentityRoleManagementException If an error occurs while retrieving the roles.
      */
-    public static List<RoleV2> getOrganizationRoles(RoleManagementService roleManagementService, String tenantDomain)
-            throws IdentityRoleManagementException {
+    public static List<RoleV2> getOrganizationRoles(String tenantDomain) throws IdentityRoleManagementException {
 
         String filter = RoleConstants.AUDIENCE + " " + RoleConstants.EQ + " " + RoleConstants.ORGANIZATION;
         int maximumPage = IdentityUtil.getMaximumItemPerPage();
@@ -489,7 +485,8 @@ public class OrgApplicationManagerUtil {
         List<RoleV2> organizationRoles = new ArrayList<>();
         List<RoleBasicInfo> chunkOfRoles;
         do {
-            chunkOfRoles = roleManagementService.getRoles(filter, maximumPage, offset, null, null, tenantDomain);
+            chunkOfRoles = OrgApplicationMgtDataHolder.getInstance().getRoleManagementServiceV2()
+                    .getRoles(filter, maximumPage, offset, null, null, tenantDomain);
             for (RoleBasicInfo role : chunkOfRoles) {
                 organizationRoles.add(new RoleV2(role.getId(), role.getName()));
             }
