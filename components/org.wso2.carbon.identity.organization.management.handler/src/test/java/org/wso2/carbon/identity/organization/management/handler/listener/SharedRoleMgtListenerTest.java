@@ -627,7 +627,7 @@ public class SharedRoleMgtListenerTest {
     }
 
     @Test
-    public void testDoPostUpdateApplicationWithAddedAppRoleNotMarkedAsOrganizationCustomRole() throws Exception {
+    public void testDoPostUpdateApplicationWithAddedAppRole() throws Exception {
 
         clearInvocations(mockedRoleManagementService);
         RoleV2 mainRole = new RoleV2(SAMPLE_ROLE_ID, SAMPLE_ROLE_NAME);
@@ -635,21 +635,15 @@ public class SharedRoleMgtListenerTest {
         when(mockedRoleManagementService.isExistingRoleName(SAMPLE_ROLE_NAME, RoleConstants.APPLICATION,
                 SAMPLE_SHARED_APP_ID, SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(false);
         RoleBasicInfo sharedRoleBasicInfo = new RoleBasicInfo(SAMPLE_SHARED_ROLE_ID, SAMPLE_ROLE_NAME);
-        List<Object> organizationCustomRoleMarkers = new ArrayList<>();
         when(mockedRoleManagementService.addRole(SAMPLE_ROLE_NAME, Collections.emptyList(), Collections.emptyList(),
                 Collections.emptyList(), RoleConstants.APPLICATION, SAMPLE_SHARED_APP_ID,
-                SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenAnswer(invocation -> {
-                    organizationCustomRoleMarkers.add(IdentityUtil.threadLocalProperties.get()
-                            .get(RoleConstants.IS_ORGANIZATION_CUSTOM_ROLE_CREATION_FLOW));
-                    return sharedRoleBasicInfo;
-                });
+                SAMPLE_SHARED_APP_TENANT_DOMAIN)).thenReturn(sharedRoleBasicInfo);
 
         ServiceProvider serviceProvider = new ServiceProvider();
         serviceProvider.setApplicationResourceId(SAMPLE_MAIN_APP_ID);
         new SharedRoleMgtListener().doPostUpdateApplication(serviceProvider, SAMPLE_TENANT_DOMAIN, SAMPLE_USERNAME);
 
-        // The inherited role is not created as an organization custom role.
-        assertEquals(organizationCustomRoleMarkers, Collections.singletonList(null));
+        // The role is shared with the organization and linked to the main role.
         verify(mockedRoleManagementService, times(1)).addMainRoleToSharedRoleRelationship(SAMPLE_ROLE_ID,
                 SAMPLE_SHARED_ROLE_ID, SAMPLE_TENANT_DOMAIN, SAMPLE_SHARED_APP_TENANT_DOMAIN);
     }
